@@ -1,0 +1,26 @@
+name: Export research source
+on:
+  push:
+    branches: [research/native-roms-20261002]
+    paths: [.github/workflows/export-research-source.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: home-docker
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: d3d6528e536cbe2894ade76bba0c7cfc0e85ff8e
+          persist-credentials: false
+      - name: Export source only
+        run: git archive --format=tar.gz --output="$RUNNER_TEMP/orchard-source.tar.gz" HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orchard-source-d3d6528
+          path: ${{ runner.temp }}/orchard-source.tar.gz
+          retention-days: 1
+          if-no-files-found: error
+# Source transport only; no emulator execution or firmware acquisition.
