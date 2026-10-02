@@ -1,0 +1,59 @@
+# Research references
+
+Consulted for the 2026-10-02 baseline. These references describe sources, not
+redistributed dependencies. Repository status and release versions can change;
+implementation evidence should pin a commit or document revision.
+
+## Primary technical specifications
+
+1. [ARM920T Technical Reference Manual, ARM DDI 0151C](https://documentation-service.arm.com/static/5e8e2a5b88295d1e18d381bb).
+   CP15 control/reset state, MMU, domain/AP/S/R permissions, exception behavior
+   and cache/TLB interface. Current cache behavior is deliberately only a
+   coherent functional approximation, not a cache model.
+2. [Samsung S3C2410A User's Manual, 2004](https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf).
+   Vendor manual mirrored by Arm/Keil. ARM/Thumb instruction formats in
+   chapters 3–4; memory controller, clock, interrupt, GPIO, PWM, UART, LCD,
+   USB and other peripheral chapters. Only a subset is currently implemented.
+3. [WebUSB specification](https://wicg.github.io/webusb/).
+   Browser access to USB devices; not host-OS virtual-device creation.
+
+The manual instruction-format diagrams, MMU permission table and CP15 reset
+values were inspected directly. No manual PDF is bundled.
+
+## Existing projects
+
+- [webemu48, web-port](https://github.com/zyf722/webemu48/tree/web-port),
+  inspected tree `4223aee5a965cd5c861c601e0f36e9be4922ceb4`.
+  Native/browser separation and project experience; inherited GPL core is not
+  Orchard source. README blob `a5e5fdb428df13a007c5b1cb1a355acc20f1ae16`.
+- [hpclang roadmap](https://github.com/zyf722/hpclang/blob/main/docs/development/roadmap.md),
+  inspected blob `c937fb84b33d5dc5a27b0b8a8b69e7a5941ba4c4`.
+  Durable milestone/gate style, separate functional and visible-UI evidence.
+- [hpclang development board](https://github.com/zyf722/hpclang/issues/1).
+  Live concise Now/Next/Recently-closed tracking; not a substitute for design docs.
+- [hpclang fixture provenance](https://github.com/zyf722/hpclang/blob/main/docs/development/fixtures.md),
+  inspected blob `265e169c2f47345d22f70044d676fe8c5acf4765`.
+  Complete NOR versus updater, HP39g+ dump identity, HP48gII USB revision and
+  distinct HP49g+/50g bootloaders.
+- [hpclang platform records](https://github.com/zyf722/hpclang/blob/main/docs/development/platforms.md),
+  inspected blob `c263a6a6d87039df9e2d2ff7e1b7de1f6805ff81`.
+- [hpclang stock USB research](https://github.com/zyf722/hpclang/blob/main/docs/development/stock-usb-transport.md).
+  Relevant next-reading and behavioral comparison target; no implementation
+  was transplanted. The live board supplied the initial transport scope.
+- [x50ng archived GitHub repository](https://github.com/gwenhael-le-moine/x50ng)
+  and [current Codeberg project](https://codeberg.org/gwh/x50ng).
+  Machine-level ARM comparison target. The GitHub listing points to Codeberg;
+  the latter was not retrievable during this session. No x50ng implementation
+  is included or claimed to have been fully audited here.
+
+## Documentation tools
+
+- [Zensical setup](https://zensical.org/docs/setup/basics/): TOML `[project]`
+  configuration and navigation.
+- [Zensical build](https://zensical.org/docs/usage/build/): `build --strict`.
+- [Zensical package](https://pypi.org/project/zensical/0.0.67/): version 0.0.67,
+  released 2026-09-30; pinned for the initial documentation environment.
+
+Pinning the direct documentation dependency is not a lockfile for every
+transitive Python package. A complete reproducible docs environment is part
+of M0 follow-up. Configuration/link checks are not a successful site render.

@@ -1,0 +1,13 @@
+{
+  "name": "orchard-emu",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "node tools/build-web.mjs",
+    "dev": "node tools/serve.mjs",
+    "check": "node --check web/main.js && node --check web/worker.js && node --check tools/build-web.mjs && node --check tools/serve.mjs && node --check tools/rom-info.mjs"
+  }
+}

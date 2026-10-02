@@ -1,0 +1,32 @@
+[project]
+site_name = "Orchard Development"
+site_description = "ARM hardware emulation for the HP Apples calculator family"
+site_url = "https://zyf722.github.io/orchard-emu/"
+repo_url = "https://github.com/zyf722/orchard-emu"
+repo_name = "zyf722/orchard-emu"
+docs_dir = "docs"
+site_dir = "site"
+nav = [
+  { "Development" = [
+    "index.md",
+    "development/architecture.md",
+    "development/models.md",
+    "development/roadmap.md",
+    "development/board.md",
+    "development/roms.md",
+    "development/virtual-link.md",
+    "development/web.md",
+    "development/validation.md",
+    "development/licensing.md",
+    "development/references.md",
+    "development/handoff.md",
+  ] },
+]
+
+[project.theme]
+features = [
+  "navigation.sections",
+  "navigation.indexes",
+  "navigation.path",
+  "navigation.tracking",
+]

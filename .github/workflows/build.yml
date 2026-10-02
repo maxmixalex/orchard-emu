@@ -1,0 +1,75 @@
+name: Build
+
+# Opt-in until repository runner access and the baseline are accepted.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: orchard-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: home-docker
+    container: ubuntu:24.04
+    timeout-minutes: 20
+    steps:
+      - name: Install isolated build tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates git clang lld cmake ninja-build python3-venv
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build native core and CLI
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel
+          build/orchard models
+      - name: Analyze native C
+        shell: bash
+        run: |
+          mkdir -p build/analysis
+          for file in src/*.c app/main.c; do
+            clang --analyze -std=c17 -Wall -Wextra -Werror -Iinclude -Isrc "$file" \
+              -o "build/analysis/$(basename "$file").plist"
+          done
+          python3 - <<'PYCODE'
+          import pathlib, plistlib
+          reports = list(pathlib.Path("build/analysis").glob("*.plist"))
+          assert len(reports) == 7, "Missing analyzer output"
+          issues = {p.name: plistlib.loads(p.read_bytes())["diagnostics"] for p in reports}
+          assert not any(issues.values()), issues
+          PYCODE
+      - name: Build browser core
+        run: |
+          npm run check
+          npm run build
+          node --input-type=module -e '
+            import {readFile} from "node:fs/promises";
+            const {instance:{exports:c}} = await WebAssembly.instantiate(await readFile("dist/orchard.wasm"), {});
+            for(let id=1; id<=6; ++id) if(c.create(id)!==0 || !c.profile(id,0)) throw Error("profile ABI");
+            console.log("WASM exports and six profiles initialize; stock boot is unverified");'
+      - name: Build documentation
+        run: |
+          python3 tools/check-docs.py
+          python3 -m venv build/docs-venv
+          build/docs-venv/bin/pip install -r tools/requirements-docs.txt
+          build/docs-venv/bin/zensical build --strict
+      - name: Upload production web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: orchard-web
+          path: dist/
+          if-no-files-found: error
+      - name: Upload documentation site
+        uses: actions/upload-artifact@v4
+        with:
+          name: orchard-docs
+          path: site/
+          if-no-files-found: error

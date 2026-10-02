@@ -1,0 +1,2 @@
+# Verified release on PyPI: 2026-09-30. Development dependency only.
+zensical==0.0.67
