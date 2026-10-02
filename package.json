@@ -10,7 +10,7 @@
   "scripts": {
     "build": "node tools/build-web.mjs",
     "dev": "node tools/serve.mjs",
-    "check": "node --check web/main.js && node --check web/worker.js && node --check tools/build-web.mjs && node --check tools/serve.mjs && node --check tools/rom-info.mjs && node --check tools/check-wasm.mjs && node --check tools/probe-rom.mjs && node --check tools/rom-inputs.mjs && node --check tools/probe-gpio-window.mjs && node --check tests/rom-tools.mjs",
+    "check": "node --check web/main.js && node --check web/worker.js && node --check tools/build-web.mjs && node --check tools/serve.mjs && node --check tools/rom-info.mjs && node --check tools/check-wasm.mjs && node --check tools/probe-rom.mjs && node --check tools/rom-inputs.mjs && node --check tools/probe-gpio-window.mjs && node --check tests/rom-tools.mjs && node --check tests/circuit-wasm.mjs",
     "test:wasm": "node tools/check-wasm.mjs",
     "test:tools": "node tests/rom-tools.mjs"
   }

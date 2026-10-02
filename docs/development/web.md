@@ -76,3 +76,11 @@ in the deploy job, and checks published HTML. The first deployment succeeded
 in [Documentation #1](https://github.com/zyf722/orchard-emu/actions/runs/36984188560).
 The diagnostic emulator's `dist/` and private NOR inputs are not Pages content.
 This is publication evidence, not production browser-calculator E2E.
+
+## New core input exports
+
+Production WASM exports `keyboard_attach`, `keyboard_matrix`,
+`keyboard_dedicated` and `nor_select`. The test harness exercises these exports
+with a generated SRAM guest through actual emulated IRQ entry and WFI return.
+The workbench UI does not call them automatically and has no interactive
+calculator keyboard yet. This core test under Node is not browser UI E2E.

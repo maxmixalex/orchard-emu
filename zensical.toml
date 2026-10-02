@@ -16,6 +16,7 @@ nav = [
     "development/roms.md",
     "development/native-roms.md",
     "development/boot-research.md",
+    "development/input.md",
     "development/virtual-link.md",
     "development/web.md",
     "development/validation.md",

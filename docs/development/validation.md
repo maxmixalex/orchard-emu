@@ -1,45 +1,91 @@
 # Validation
 
-## Current local acceptance — 2026-10-02 native-input research
+## Current local acceptance: electrical input and software ID
 
-These are results from checked-in tests and explicit local research commands.
-They do not certify a complete ARM920T, a real board's idle pin levels, or a
-responsive stock calculator. Ordinary CI is ROM-free.
+Base revision: `d3d6528`. Current commit-specific CI/artifact evidence belongs
+in [issue #1](https://github.com/zyf722/orchard-emu/issues/1). The checks below
+were run locally before publication; they do not certify a complete board or
+interactive stock boot.
 
-| Check | Observed local result | Boundary |
+| Check | Observed result | Scope |
 | --- | --- | --- |
-| GCC 14.2 Release build and CTest | Pass | C17 core, CLI and test targets |
-| Clang 17 Debug ASan/UBSan and CTest | Pass | Same maintained core suite |
-| Shared native / test-WASM regression | **100,423 assertions each**, zero failures | Not an independent ARM emulator oracle |
-| ROM tooling checks | **45 checks**, pass | Synthetic metadata, format rejection, bounded reads and GPIO syntax |
-| Invalid CLI GPIO arguments | **14 cases**, pass | Fail before output creation |
-| Six generated-guest integrations | All pass | Production native CLI/WASM, explicit GPIO input, UART, LCD and cold replay |
-| Ten real-NOR / native-boot probe scenarios | All host comparisons and cold replays pass | Strict and explicitly conditioned cases below; no stock boot |
-| HP48gII bounded input sweep | **2,048 variants**, all agree; also under ASan/UBSan | One 8,192-quantum checkpoint window, not all future execution |
-| Clang static analysis | 13 translation units, no diagnostics | Includes the optional native research helper |
-| JavaScript syntax and production WASM build | Pass | No actual browser lifecycle E2E in this slice |
-| Documentation navigation/local targets | 14 pages, pass | Strict Zensical rendering is a separate remote gate |
+| GCC 14.2 Release build / CTest | Pass | Maintained core regression |
+| Clang 17 Debug ASan/UBSan / CTest | Pass | Same ROM-free core suite |
+| Shared native / test-WASM regression | **102,528 assertions**, zero failures on each | Not an independent ARM CPU oracle |
+| ROM tooling | 45 existing checks pass | Local file identity/format/GPIO parsing |
+| Six generated-guest integrations | Pass, including cold replay | Production native CLI/WASM |
+| New circuit guest | Pass | Native/WASM released-key and NOR-ID state; dynamic production-WASM IRQ sequence |
+| Firmware probes | 13 native/WASM comparisons and independent cold replays pass | Ten prior scenarios plus two progressed 48gII cases and one no-key 50g case |
+| Optimized ASan/UBSan firmware probe | Progressed 48gII D-low case matches | RelWithDebInfo native vs production WASM, including cold replay |
+| Clang static analysis | 15 translation units, zero diagnostics | Core, CLI, regression and existing GPIO-window helper |
+| JavaScript syntax | Pass | No browser lifecycle claim |
+| Documentation navigation/targets | 15 pages, pass | Strict rendering remains a separately observed CI gate |
 
-The C suite's checks remain active with `NDEBUG` in Release. New cases cover
-explicit GPIO inputs, output/input separation, rejected masks, release/reset,
-and all 2,048 combinations in an independently constructed RMW sequence.
-The test-only WASM module is not distributed; the integration uses the separately
-built production module. Seed for the existing deterministic random checks:
-`0x09202410`. None of these counts is a count of supported instructions or
-independent stock-ROM boot scenarios.
+New C cases cover 56 raw switches across eight selected columns, passive-net
+propagation, conflicting strong drives, floating/unknown alternate-function
+nets, direct keys, all eight EINT trigger encodings, pending masks/groups,
+W1C, pin-history isolation and the explicit digital-filter stop. NOR cases
+cover part/capacity checks, command sequencing, upper address/data bits, ID
+read widths, reset, byte preservation and unsupported operations. Checks stay
+active in Release. These are assertion counts, not counts of physical keys,
+independent CPU instructions or HP boot scenarios.
 
-## Reproduce the ROM-free checks
+## Production circuit guest
+
+`tests/circuit-wasm.mjs` constructs a new synthetic guest and copies its code
+into SRAM through guest instructions. It then issues actual NOR-ID commands,
+checks the manufacturer/device words, returns to array read, programs GPIO
+and EINT, clears initial configuration-time pending interrupts and enters WFI.
+The production native CLI and production WASM agree on all 16 registers,
+CPSR, execution counters and released-key/ID witnesses.
+
+The production WASM test then presses/releases raw matrix position (3,2) and
+ON. Its guest IRQ handler records four IRQ entries, reads the changing pads,
+acknowledges pending sources, restores SPSR and returns to WFI each time.
+Cold reset detaches the keyboard; explicit reattachment and the same event
+sequence reproduce the same final state. **Dynamic events are tested on
+production WASM here, not through the native CLI or a real browser UI.**
+Two additional invalid CLI component-value cases are rejected. The previous
+14 invalid GPIO cases remain in the existing integration test.
+
+## Firmware scope
+
+The ten earlier strict/conditioned scenarios are repeated unchanged; their
+results remain in [boot research](boot-research.md). The new 48gII probes use
+its unchanged pinned full NOR, an attached keyboard, explicitly selected
+SST39VF1601, G `f801:f800`, and D `cc7f:0` or `cc7f:cc7f`. Both reach 8,210,200
+instructions and the OS-region LCD `4d000068` stop with no guest exceptions.
+Their exposed execution results agree after excluding only the recorded
+D-level metadata. Each host's independent cold replay agrees.
+
+The new 50g case has its unchanged native boot region with erased OS sectors,
+an attached released keyboard, D `cc7f:0` and G `f801:f800`. It consumes its
+2-million-quantum budget polling recovery input without a diagnostic stop.
+It is not a full dump, interactive-key acceptance or stock OS boot.
+
+Clang Debug instrumentation of the long 48gII probe exceeded the local time
+budget; that full Debug firmware run is **not** claimed passed. A separate
+Clang RelWithDebInfo ASan/UBSan build completed the same native/WASM cold-probe
+comparison successfully. The short maintained CTest suite passes with Debug
+instrumentation. These are distinct checks and should not be conflated.
+
+All firmware probes compare registers, CPSR, CP15/fault state, counters,
+stop metadata, pixels and UART. Probe v3 additionally compares native-reported
+component and GPIO settings against the requested conditions. Reports bind
+the immutable source/backing bytes and exact executable hashes. Ordinary CI
+runs only ROM-free tests. The exploratory 50g strong-drive contention case in
+the boot document is not one of the 13 accepted no-key probe scenarios.
+
+## Commands
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
-./build/orchard-regression
 npm run check
 npm run test:tools
 npm run build
 npm run test:wasm
-
 cmake -S . -B build-sanitize -DCMAKE_C_COMPILER=clang \
   -DCMAKE_BUILD_TYPE=Debug -DORCHARD_SANITIZE=ON
 cmake --build build-sanitize --parallel
@@ -47,87 +93,23 @@ ctest --test-dir build-sanitize --output-on-failure
 python3 tools/check-docs.py
 ```
 
-`npm run test:wasm` expects native binaries under `build/`;
-`ORCHARD_BUILD_DIR` selects another directory. Temporary synthetic flash files
-are removed on success or failure. Tests and the optional GPIO-window helper
-are neither installed nor included in `dist/`.
+`ORCHARD_BUILD_DIR` selects another native build directory for probes and
+WASM comparisons. Use `RelWithDebInfo` plus `ORCHARD_SANITIZE=ON` for the
+instrumented long-ROM probe described above. No test-only WASM module, source
+fixture, ROM or report enters `dist/` or CMake install outputs.
 
-## Explicit firmware research cases
+## Remote gates and publication
 
-At a 2,000,000-quantum budget, the following ten cases were run twice on each
-host. They were also repeated with the sanitizer-native CLI against production
-WASM. All exposed registers, CPSR, CP15 control, fault state, counters, stop
-metadata, framebuffer and UART agree; cold replays agree. Every case reports
-zero guest exceptions/data-fault state and `boot_verified=false`.
+The previous accepted main was `d3d6528`, Build #6 / Documentation #3, with
+100,423 assertions and 14 documentation pages. M0 remains closed. The new
+checks above require a new observed Build/Documentation result; the existing
+workflow dynamically inventories source files for static analysis and runs
+the extended WASM script before artifact publication.
 
-| Input / external condition | Retired instructions | Stop PC | Next missing device |
-| --- | ---: | --- | --- |
-| HP39g+ full NOR, strict | 514,293 | `000035e8` | LCD `4d000068` |
-| HP48gII full NOR, strict | 94,497 | `08001820` | GPDDAT `56000034` |
-| HP48gII full NOR, D input mask `cc7f`, all low / all high | 1,121,326 each | `08001b60` | GPGDAT `56000064` |
-| HP49g+ original boot region, strict | 415,989 | `08001afc` | GPDDAT `56000034` |
-| HP49g+ boot region, D mask `cc50`, all low / all high | 419,223 each | `08002148` | USB write `52000144` |
-| HP50g original boot region, strict | 94,497 | `08001820` | GPDDAT `56000034` |
-| HP50g boot region, D mask `cc7f`, all low / all high | 153,879 each | `08001b60` | GPGDAT `56000064` |
-
-The paired rows represent two cases each. Low/high equality does not establish
-all intermediate inputs or the electrical state of a physical board. The
-49g+/50g cases supply only the unchanged 16 KiB native boot region with an
-explicit erased remainder, **not the OS or a recovered full dump**.
-See [native input provenance](native-roms.md) and [boot research](boot-research.md).
-
-The conditioned HP50g boot-only case produces 858 nonzero raw pixels. Forensic
-inspection finds a boot recovery menu in the guest buffer, but the current
-controller preview has a per-byte bit-order counterexample. The readable
-alternative interpretation is not accepted as a verified panel mapping.
-No stock UI or validated display rendering is claimed from those pixels.
-
-```sh
-node tools/probe-rom.mjs --model hp48gii --rom /private/48gii.bin \
-  --ticks 2000000 --gpio-input D:cc7f:0 --output /new/path/48-low.json
-node tools/probe-rom.mjs --model hp50g --bootloader /private/boot-50g.bin \
-  --ticks 2000000 --gpio-input D:cc7f:cc7f --output /new/path/50-high.json
-node tools/probe-gpio-window.mjs /private/48gii.bin
-```
-
-Probe v2 records original input identity, backing-image construction, explicit
-GPIO conditions and executable hashes separately. It snapshots input bytes
-once so all runs use the same bytes. Existing output files are not overwritten.
-Cold reset releases external inputs; the probe explicitly reapplies them.
-The web workbench does not silently install these conditions.
-
-The GPIO-window wrapper admits only the pinned HP48gII hash. The native helper
-checks the exact stop PC, opcode, input mask and configuration before taking
-an internal checkpoint. Each variant reexecutes the stopped instruction and
-8,192 quanta; all inherit the same already-consumed diagnostic tick. It compares
-every PC, final exposed architectural state, SRAM, LCD registers and driven
-output pins. All variants end at `08002a2c`; SRAM differences are zero and NOR
-is unchanged. This is a bounded sensitivity experiment, not a cold boot or
-proof of unbounded equivalence. It is opt-in and never runs on normal CI.
-
-## Remote evidence and deployment
-
-The prior accepted implementation is `d08d349`, [Build #5](https://github.com/zyf722/orchard-emu/actions/runs/36987825036)
-and [Documentation #2](https://github.com/zyf722/orchard-emu/actions/runs/36987825071).
-Those runs accepted the previous 88,023-assertion/13-page baseline and published
-Pages, not this slice's expanded counts. M0 was originally closed by Build
-#2/#3. Current revision-specific CI conclusions and artifact links are tracked
-in [issue #1](https://github.com/zyf722/orchard-emu/issues/1).
-
-The build workflow runs the expanded ROM-free tests and static analysis. The
-Documentation workflow strictly renders the site, publishes only documentation,
-and checks the live homepage, provenance pages and exact `revision.txt` commit.
-Local Zensical installation was unavailable; no local strict-render success is
-asserted. An observed remote strict render is required for its acceptance.
-
-Firmware and manuals acquired on the private research branch were downloaded
-for local investigation, not executed there. No firmware, reports, private
-traces, signed URLs or research artifacts enter Git or Pages. Repository
-visibility is unchanged.
-
-## Open correctness gates
-
-Independent CPU conformance, undefined exceptions, precise abort/writeback,
-cache/TLB semantics, keyboard wiring, the LCD `+0x68` read and panel bit mapping
-remain open. Stock ARM payload return, sustained calculator usability, actual
-browser lifecycle E2E, SD and USB transfers require independent witnesses.
+Pages publishes only the strict-built Zensical site. Deployment checks verify
+live content and exact `revision.txt`. Local Zensical remains unavailable;
+do not substitute a local link check for a site-render pass. The repository
+stays private. No firmware, manuals, private traces or reference emulator
+implementation is committed. Browser E2E, full board timing/pad bias, actual
+all-model key usability, LCD `+0x68`/panel mapping, full CPU conformance, stock
+ARM return and USB remain open.

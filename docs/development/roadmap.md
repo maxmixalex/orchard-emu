@@ -75,6 +75,15 @@ I2C and power management are not silently treated as present.
 first selected machine's cold-boot dependencies without placeholder readbacks,
 firmware patches or instruction-interpreter model hacks.
 
+### Electrical-input continuation
+
+The opt-in raw switch/EINT model and explicit SST39VF1601 software ID subset
+now advance the original HP48gII NOR to its OS-region LCD initialization.
+The default machine remains strict, and digital filters, ambient board bias,
+flash programming and physical timing remain open. The 39g+ and conditioned
+48gII now share an unidentified LCD `+0x68` dependency. This narrows M2/M3;
+it does not close either gate. See [electrical input](input.md).
+
 ## M3 — First genuine stock cold boot
 
 **Genuine full-NOR execution established for HP39g+ and HP48gII; interactive

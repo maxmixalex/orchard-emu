@@ -32,7 +32,8 @@ const char *orchard_status_string(orchard_status s) {
         "unimplemented MMIO", "unimplemented NOR command", "unpredictable ARM operation",
         "UART host queue full", "big-endian mode not implemented", "unsupported LCD mode",
         "physical memory outside implemented banks",
-        "watchdog reset requested; reset propagation not implemented"
+        "watchdog reset requested; reset propagation not implemented",
+        "contradictory external GPIO drives"
     };
     return (unsigned)s < sizeof(names) / sizeof(names[0]) ? names[s] : "unknown status";
 }
@@ -54,6 +55,7 @@ void orchard_reset(orchard_machine *m) {
     o_zero(m->boot_sram, sizeof(m->boot_sram));
     o_zero(&m->stop, sizeof(m->stop));
     m->ticks = 0;
+    m->nor_sequence = 0; m->nor_id_mode = false;
 }
 orchard_status orchard_load_rom(orchard_machine *m, const void *bytes, size_t length) {
     if (!m || !bytes) return ORCHARD_BAD_ARGUMENT;

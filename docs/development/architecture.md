@@ -17,8 +17,9 @@ NOR / SRAM / S3C2410 peripheral state / model wiring
 raw LCD output, physical key inputs, UART/USB host transport
 ```
 
-The last line is a target interface: only raw LCD preview and a functional
-UART0 byte queue exist in this baseline. Physical keys and USB do not.
+Raw LCD preview, a functional UART0 queue, and an opt-in electrical keyboard
+with unfiltered EINT sampling exist. Printed-key mapping, browser key controls,
+complete board wiring and USB remain open; see [electrical input](input.md).
 
 A stock image begins at physical address zero with MMU/caches off and the CPU
 in supervisor mode with IRQ/FIQ masked. The guest supplies its own reset code,
@@ -35,6 +36,7 @@ host-side Saturn shortcut is planned. See the ARM/Samsung manuals in
 | MMU | `src/mmu.c` | CP15 subset, guest table walks, access permission and alignment checks |
 | Physical bus | `src/bus.c` | NOR, external SRAM and 4 KiB internal SRAM bounds, MMIO routing, single-scan STN decode |
 | SoC | `src/soc.c`, `src/watchdog.c`, `src/interrupt.c`, `src/gpio.c`, `src/rtc.c` | Functional timers/UART/watchdog, two-level IRQ arbitration, GPIO latches and RTC subset |
+| Input / NOR | `src/keyboard.c`, `src/nor.c` | Opt-in switch network, unfiltered EINT and explicit read/software-ID NOR subset |
 | Machine | `src/machine.c` | Reset, loader, profiles and deterministic scheduler |
 | Native host | `app/main.c` | Full-NOR loading, bounded CLI run, JSON/PGM/UART files |
 | Web host | `app/wasm.c`, `web/` | Freestanding WASM adapter, Worker and diagnostic workbench |
@@ -68,9 +70,10 @@ halt the emulator rather than delivering a guest undefined-instruction trap.
 NOR is at `0x00000000`; external SRAM is at `0x08000000`, with exact per-profile
 bounds. Internal boot SRAM occupies exactly `0x40000000..0x40000fff`; there is
 no NAND controller or NAND image behind it. HP40gs uses 2 MiB NOR.
-Flash does not silently mirror or pad. NOR command state machines are not yet
-implemented: a 16-bit read-array reset is accepted, while other writes stop.
-This alone prevents claiming ordinary stock firmware boot compatibility.
+Flash does not silently mirror or pad. An explicitly selected SST39VF1601
+implements array read and software identification; program/erase/CFI/security
+remain diagnostic stops. The default unspecified part only accepts read-array
+reset. Part identity is not inferred from a ROM hash or profile size.
 
 One virtual tick is counted before advancing the current functional peripherals;
 a peripheral diagnostic stop therefore includes its triggering tick. A tick advances the peripherals and either takes
@@ -83,8 +86,9 @@ INTC implements two-level selection/rotation and a latched awarded IRQ.
 Timers implement functional countdown, not real PLL/PCLK timing. Clock and
 memory-controller registers largely retain values rather than change timing.
 GPIO configuration, pull-up and output-latch state exists; DAT reads with
-unresolved input pins stop. Routing-register storage is not external pin
-simulation. UART is an error-free byte stream, not full FIFO/baud timing.
+unresolved input pins stop. With the keyboard attached, its switch network
+supplies pad levels and unfiltered EINT detection. Other alternate-function
+producers and digital filters are not silently treated as implemented. UART is an error-free byte stream, not full FIFO/baud timing.
 
 RTC uses a deterministic cold-fixture epoch and a provisional 12-million-quanta
 timebase, not the host clock. Normal calendar carry and tick/alarm interrupts
@@ -111,9 +115,10 @@ annunciators and per-model electrical details still need independent witnesses.
 The decoder rejects dual scan/TFT and nonzero dithering rather than displaying
 them as single-scan monochrome. The UI reserves a separate annunciator region; no icons are faked.
 
-A later keyboard implementation will inject **physical switch transitions**
-into the board GPIO matrix with deterministic press/release timestamps. It
-must not bypass firmware by editing Saturn keyboard variables. Model skins
+The optional keyboard API changes **physical switch connections** between
+bounded run calls. EINT sampling and guest IRQ handlers consume those levels;
+no Saturn keyboard variables are edited. Cold reset releases and detaches the
+circuit. Raw switch positions are not a complete printed-key map. Model skins
 are a separate presentation concern and may only use independently licensed
 artwork.
 
@@ -133,8 +138,9 @@ register/countdown behavior. See [validation](validation.md).
 external input stimulus. It is serialized by the same machine owner as CPU
 execution. Only input-configured pins use these levels; output pins retain
 latch readback. Undefined input bits remain diagnostic stops. Cold reset clears
-stimuli; probes reapply them for identical replay. No EINT, keyboard switch
-matrix, implicit pull-up resolution or measured board wiring is implied.
+stimuli; probes reapply them for identical replay. The static API alone implies no EINT or board wiring. Explicit keyboard
+attachment adds switch/pull-up resolution and unfiltered EINT sampling. Static
+known levels are strong drives, not weak bias resistors.
 
 The native CLI accepts repeated `--gpio-input D:cc7f:0` options, once per port.
 The WASM export is `gpio_inputs(port, known, levels)`. `probe-rom.mjs` accepts a

@@ -3,7 +3,7 @@
 Continue in private `zyf722/orchard-emu`, preserving `main` ancestry and
 [issue #1](https://github.com/zyf722/orchard-emu/issues/1). M0 is accepted; M1
 CPU conformance and M2/M3 board/stock-boot work remain open. The starting
-revision for native-input research was `d08d349`.
+revision for the electrical-input continuation was `d3d6528`.
 
 ## Available inputs and provenance
 
@@ -25,7 +25,9 @@ Strict defaults still stop the genuine HP39g+ at LCD `4d000068` and the genuine
 HP48gII at GPDDAT `56000034`. No convenient generic MMIO readback was introduced.
 The new external-input API is an explicit stimulus source; unspecified pins
 remain unresolved. Cold reset releases stimuli, and probes reapply their
-recorded settings. It does not implement external interrupts or key wiring.
+recorded settings. By itself it supplies only strong static drives. Explicit keyboard attachment
+now adds a passive switch network and unfiltered EINT sampling; see
+[electrical input](input.md). Do not mistake the static inputs for weak pull-ups.
 
 A bounded exhaustive GPDDAT experiment isolates an input-insensitive RMW window.
 Separately, conditioned HP48gII cold runs advance to GPGDAT; native boot-only
@@ -63,6 +65,9 @@ The research acquisition branch is separate from main and contains only
 acquisition workflow definitions. Its private one-day artifacts are not
 source assets. No reference emulator implementation was imported.
 
-Prioritize GPG/physical keyboard behavior and both LCD questions using real
-trace evidence. Continue missing native-region acquisition without rebranding
+The conditioned 48gII now reaches the OS flash region, enables its MMU and
+stops at the same LCD `+0x68` dependency as 39g+. Prioritize that shared LCD
+question, panel ordering and the remaining external pad bias. The latest
+probe adds `--keyboard apples` and `--nor-device sst39vf1601`; reports record
+those assumptions explicitly. Neither strict defaults nor NOR bytes change. Continue missing native-region acquisition without rebranding
 an updater or boot-only recovery experiment as a genuine full-dump gate.

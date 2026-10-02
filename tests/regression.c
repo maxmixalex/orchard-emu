@@ -553,12 +553,180 @@ static void rtc_calendar(void) {
     CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_MMIO);
 }
 
+static void keyboard_and_eint(void) {
+    orchard_reset(&machine);
+    CHECK(orchard_keyboard_matrix(&machine, 0, 0, true) == ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_keyboard_attach(NULL, true) == ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_keyboard_attach(&machine, true) == ORCHARD_OK);
+    CHECK(orchard_keyboard_matrix(&machine, 8, 0, true) == ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_keyboard_matrix(&machine, 0, 7, true) == ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_keyboard_dedicated(&machine, 7, true) == ORCHARD_BAD_ARGUMENT);
+    uint32_t value;
+    /* Initial floating GPG11..15 and unrelated GPG0 are not guessed. */
+    CHECK(!o_phys_read(&machine, 0x56000064, 4, &value));
+    CHECK(machine.stop.detail == 0xf801);
+    orchard_reset(&machine);
+    CHECK(orchard_keyboard_attach(&machine, true) == ORCHARD_OK);
+    CHECK(orchard_gpio_inputs(&machine, ORCHARD_GPIO_G, 1, 0) == ORCHARD_OK);
+    CHECK(o_phys_write(&machine, 0x56000068, 4, 1));
+    /* Every raw matrix switch: selected column pulls exactly one row low.
+       Other seven columns remain high-impedance inputs with weak pull-ups. */
+    for (unsigned col = 0; col < 8; ++col) for (unsigned row = 0; row < 7; ++row) {
+        CHECK(orchard_keyboard_matrix(&machine, col, row, true) == ORCHARD_OK);
+        for (unsigned selected = 0; selected < 8; ++selected) {
+            CHECK(o_phys_write(&machine, 0x56000060, 4, 1u | (1u << (16u + selected * 2u))));
+            CHECK(o_phys_write(&machine, 0x56000064, 4, 0));
+            CHECK(o_phys_read(&machine, 0x56000064, 4, &value));
+            CHECK((value & 0xfeu) == (selected == col ? 0xfeu ^ (1u << (row + 1)) : 0xfeu));
+        }
+        CHECK(orchard_keyboard_matrix(&machine, col, row, false) == ORCHARD_OK);
+    }
+    /* A three-switch rectangle propagates through a floating column (ghost).
+       This is a passive switch topology test, not a six-board diode survey. */
+    CHECK(o_phys_write(&machine, 0x56000060, 4, 0x10001));
+    CHECK(orchard_keyboard_matrix(&machine, 0, 0, true) == ORCHARD_OK);
+    CHECK(orchard_keyboard_matrix(&machine, 1, 0, true) == ORCHARD_OK);
+    CHECK(orchard_keyboard_matrix(&machine, 1, 1, true) == ORCHARD_OK);
+    CHECK(o_phys_read(&machine, 0x56000064, 4, &value));
+    CHECK((value & 6u) == 0);
+    CHECK(orchard_keyboard_matrix(&machine, 1, 0, false) == ORCHARD_OK);
+    CHECK(o_phys_read(&machine, 0x56000064, 4, &value));
+    CHECK((value & 6u) == 4);
+    /* Conflicting external drive must not be hidden by the keyboard model. */
+    CHECK(orchard_gpio_inputs(&machine, ORCHARD_GPIO_G, 3, 2) == ORCHARD_OK);
+    CHECK(!o_phys_read(&machine, 0x56000064, 4, &value));
+    CHECK(machine.stop.status == ORCHARD_GPIO_CONTENTION);
+    orchard_reset(&machine);
+    CHECK(!machine.soc.keyboard_attached && !machine.soc.keyboard_switches);
+    CHECK(orchard_keyboard_attach(&machine, true) == ORCHARD_OK);
+    CHECK(orchard_gpio_inputs(&machine, ORCHARD_GPIO_F, 0x8e, 0) == ORCHARD_OK);
+    /* GPF direct keys are active high, with a known released baseline. */
+    const unsigned pins[] = {0, 4, 5, 6};
+    for (unsigned i = 0; i < 4; ++i) {
+        CHECK(orchard_keyboard_dedicated(&machine, pins[i], true) == ORCHARD_OK);
+        CHECK(o_phys_read(&machine, 0x56000054, 4, &value));
+        CHECK(value == (1u << pins[i]));
+        CHECK(orchard_keyboard_dedicated(&machine, pins[i], false) == ORCHARD_OK);
+    }
+    /* Test every EXTINT trigger encoding via GPF4, grouped IRQ4. */
+    for (unsigned mode = 0; mode < 8; ++mode) {
+        orchard_reset(&machine);
+        CHECK(orchard_keyboard_attach(&machine, true) == ORCHARD_OK);
+        CHECK(o_phys_write(&machine, 0x56000050, 4, 2u << 8));
+        CHECK(o_phys_write(&machine, 0x56000088, 4, mode << 16));
+        CHECK(o_phys_write(&machine, 0x560000a4, 4, 0));
+        o_eint_tick(&machine);
+        CHECK(((machine.soc.gpio[0xa8 / 4] & 16u) != 0) == (mode == 0));
+        machine.soc.gpio[0xa8 / 4] = machine.soc.srcpnd = 0;
+        CHECK(orchard_keyboard_dedicated(&machine, 4, true) == ORCHARD_OK);
+        o_eint_tick(&machine);
+        bool rising = mode == 1 || mode >= 4;
+        CHECK(((machine.soc.gpio[0xa8 / 4] & 16u) != 0) == rising);
+        CHECK(((machine.soc.srcpnd & 16u) != 0) == rising);
+        machine.soc.gpio[0xa8 / 4] = machine.soc.srcpnd = 0;
+        o_eint_tick(&machine);
+        CHECK(((machine.soc.gpio[0xa8 / 4] & 16u) != 0) == (mode == 1));
+        machine.soc.gpio[0xa8 / 4] = machine.soc.srcpnd = 0;
+        CHECK(orchard_keyboard_dedicated(&machine, 4, false) == ORCHARD_OK);
+        o_eint_tick(&machine);
+        CHECK(((machine.soc.gpio[0xa8 / 4] & 16u) != 0) == (mode == 0 || mode == 2 || mode == 3 || mode >= 6));
+    }
+    /* Matrix rows remain readable as EINT inputs. IRQ5 pend survives masking. */
+    orchard_reset(&machine); CHECK(orchard_keyboard_attach(&machine, true) == ORCHARD_OK);
+    CHECK(o_phys_write(&machine, 0x56000068, 4, 1));
+    CHECK(o_phys_write(&machine, 0x56000060, 4, 0x5555aaa9));
+    CHECK(o_phys_write(&machine, 0x5600008c, 4, 0x22222222));
+    o_eint_tick(&machine);
+    CHECK(orchard_keyboard_matrix(&machine, 0, 0, true) == ORCHARD_OK);
+    CHECK(o_phys_read(&machine, 0x56000064, 4, &value));
+    CHECK(!(value & 2));
+    o_eint_tick(&machine);
+    CHECK(machine.soc.gpio[0xa8 / 4] & (1u << 9)); CHECK(!(machine.soc.srcpnd & 32));
+    CHECK(o_phys_write(&machine, 0x560000a4, 4, 0)); o_eint_tick(&machine);
+    CHECK(machine.soc.srcpnd & 32);
+    CHECK(o_phys_write(&machine, 0x560000a8, 4, 1u << 9));
+    CHECK(o_phys_write(&machine, 0x4a000000, 4, 32)); o_eint_tick(&machine);
+    CHECK(!(machine.soc.srcpnd & 32));
+    /* Pin reconfiguration does not invent an edge or reset another port's history. */
+    CHECK(o_phys_write(&machine, 0x56000050, 4, 2));
+    CHECK(o_phys_write(&machine, 0x56000088, 4, 4)); o_eint_tick(&machine);
+    CHECK(o_phys_write(&machine, 0x56000060, 4, 0x10001));
+    CHECK(orchard_keyboard_dedicated(&machine, 0, true) == ORCHARD_OK); o_eint_tick(&machine);
+    CHECK(machine.soc.srcpnd & 1);
+    CHECK(o_phys_write(&machine, 0x56000060, 4, 2u << 16));
+    CHECK(o_phys_write(&machine, 0x56000090, 4, 8)); o_eint_tick(&machine);
+    CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_MMIO);
+    orchard_reset(&machine);
+    CHECK(orchard_keyboard_attach(&machine, true) == ORCHARD_OK);
+    CHECK(orchard_gpio_inputs(&machine, ORCHARD_GPIO_G, 1, 0) == ORCHARD_OK);
+    CHECK(o_phys_write(&machine, 0x56000068, 4, 1));
+    CHECK(o_phys_write(&machine, 0x56000060, 4, 3u << 16));
+    CHECK(orchard_keyboard_matrix(&machine, 0, 0, true) == ORCHARD_OK);
+    CHECK(!o_phys_read(&machine, 0x56000064, 4, &value));
+    CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_MMIO && machine.stop.detail == 2);
+    orchard_reset(&machine);
+}
+static void nor_identification(void) {
+    orchard_reset(&machine);
+    CHECK(orchard_nor_select(NULL, ORCHARD_NOR_SST39VF1601) == ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_nor_select(&machine, (orchard_nor_device)99) == ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_nor_select(&machine, ORCHARD_NOR_SST39VF1601) == ORCHARD_OK);
+    put_word(machine.flash, 0xea000006);
+    uint32_t value;
+    CHECK(o_phys_write(&machine, 0x1aaaa, 2, 0xffaa)); /* Higher address/data lines ignored. */
+    CHECK(o_phys_write(&machine, 0x25554, 2, 0xee55));
+    CHECK(o_phys_write(&machine, 0x3aaaa, 2, 0xab90));
+    CHECK(o_phys_read(&machine, 0, 2, &value) && value == 0xbf);
+    CHECK(o_phys_read(&machine, 2, 2, &value) && value == 0x234b);
+    CHECK(o_phys_read(&machine, 0, 4, &value) && value == 0x234b00bf);
+    CHECK(o_phys_read(&machine, 3, 1, &value) && value == 0x23);
+    uint8_t original[4];
+    CHECK(orchard_read_memory(&machine, 0, original, 4) == ORCHARD_OK &&
+          original[0] == 6 && original[1] == 0 && original[2] == 0 && original[3] == 0xea);
+    CHECK(o_phys_write(&machine, 0x1fe, 2, 0xf0));
+    CHECK(o_phys_read(&machine, 0, 4, &value) && value == 0xea000006);
+    CHECK(o_phys_write(&machine, 0xaaaa, 2, 0xaa));
+    CHECK(o_phys_write(&machine, 0x5554, 2, 0x55));
+    CHECK(o_phys_write(&machine, 0xaaaa, 2, 0x90));
+    orchard_reset(&machine);
+    CHECK(machine.nor_device == ORCHARD_NOR_SST39VF1601 && !machine.nor_id_mode && machine.nor_sequence == 0);
+    CHECK(o_phys_read(&machine, 0, 4, &value) && value == 0xea000006);
+    CHECK(o_phys_write(&machine, 0xaaaa, 2, 0xaa));
+    CHECK(o_phys_write(&machine, 0x5555, 2, 0x55) == false); /* Physical API does not round odd writes. */
+    CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_FLASH);
+    orchard_reset(&machine);
+    CHECK(o_phys_write(&machine, 0x5554, 2, 0x55)); /* Wrong order aborts SDP to read mode. */
+    CHECK(o_phys_write(&machine, 0xaaaa, 2, 0x90));
+    CHECK(!machine.nor_id_mode);
+    CHECK(o_phys_write(&machine, 0xaaaa, 2, 0xaa));
+    CHECK(o_phys_write(&machine, 0x5554, 2, 0x55));
+    CHECK(!o_phys_write(&machine, 0xaaaa, 2, 0xa0));
+    CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_FLASH && machine.nor_sequence == 2);
+    orchard_reset(&machine); CHECK(orchard_nor_select(&machine, ORCHARD_NOR_UNSPECIFIED) == ORCHARD_OK);
+    CHECK(orchard_init(&machine, sizeof(machine), 1) != NULL);
+    CHECK(orchard_nor_select(&machine, ORCHARD_NOR_SST39VF1601) == ORCHARD_BAD_ARGUMENT);
+    CHECK(machine.nor_device == ORCHARD_NOR_UNSPECIFIED);
+    CHECK(orchard_init(&machine, sizeof(machine), 6) != NULL);
+    CHECK(orchard_nor_select(&machine, ORCHARD_NOR_SST39VF1601) == ORCHARD_OK);
+    CHECK(!o_phys_write(&machine, 0xaaaa, 1, 0xaa));
+    CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_FLASH && machine.nor_sequence == 0);
+    orchard_reset(&machine);
+    CHECK(o_phys_write(&machine, 0xaaaa, 2, 0xaa));
+    CHECK(o_phys_write(&machine, 0x5554, 2, 0x55));
+    CHECK(o_phys_write(&machine, 0xaaaa, 2, 0x90));
+    CHECK(!o_phys_read(&machine, 4, 2, &value));
+    CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_FLASH);
+    orchard_reset(&machine);
+    CHECK(orchard_nor_select(&machine, ORCHARD_NOR_UNSPECIFIED) == ORCHARD_OK);
+
+}
+
 EXPORT("regression") unsigned orchard_regression(void) {
     checks = failures = first_failure = 0; seed = 0x09202410;
     if (!orchard_init(&machine, sizeof(machine), 6)) return 1;
     arithmetic(); shifter(); conditions(); decoded_arithmetic(); instruction_edges();
     banking_and_exception(); mmu_and_bus(); watchdog(); queues_and_profiles();
-    boot_sram_and_lcd(); gpio_and_reset(); gpio_stimuli(); interrupt_arbitration(); rtc_calendar();
+    boot_sram_and_lcd(); gpio_and_reset(); gpio_stimuli(); interrupt_arbitration(); rtc_calendar(); keyboard_and_eint(); nor_identification();
     return failures;
 }
 EXPORT("checks") unsigned orchard_regression_checks(void) { return checks; }

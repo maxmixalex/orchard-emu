@@ -19,6 +19,9 @@ void o_gpio_reset(o_soc *s) {
     o_zero(s->gpio, sizeof(s->gpio));
     o_zero(s->gpio_input_known, sizeof(s->gpio_input_known));
     o_zero(s->gpio_input_levels, sizeof(s->gpio_input_levels));
+    s->keyboard_attached = false;
+    s->keyboard_switches = 0;
+    s->keyboard_direct = s->eint_known = s->eint_levels = 0;
     s->gpio[0] = 0x7fffff;
     s->gpio[0x38 / 4] = 0xf000;
     s->gpio[0x68 / 4] = 0xf800;
@@ -43,8 +46,16 @@ bool o_gpio_register(orchard_machine *m, uint32_t address, uint32_t *value, bool
         if (field == 4 && !write && port != 0) {
             uint32_t config = s->gpio[port * 4], inputs = 0;
             for (unsigned pin = 0; pin < bits; ++pin)
-                if (((config >> (pin * 2u)) & 3u) == 0) inputs |= 1u << pin;
-            uint32_t unresolved = inputs & ~s->gpio_input_known[port];
+                if (((config >> (pin * 2u)) & 3u) == 0 ||
+                    (s->keyboard_attached && (port == ORCHARD_GPIO_F || port == ORCHARD_GPIO_G) &&
+                     ((config >> (pin * 2u)) & 3u) == 2)) inputs |= 1u << pin;
+            uint32_t known, levels, conflicts;
+            o_gpio_sample(m, port, &known, &levels, &conflicts);
+            if (conflicts & inputs) {
+                o_stop(m, ORCHARD_GPIO_CONTENTION, address, conflicts & inputs);
+                return false;
+            }
+            uint32_t unresolved = inputs & ~known;
             if (unresolved) {
                 o_stop(m, ORCHARD_UNIMPLEMENTED_MMIO, address, unresolved);
                 return false;
@@ -53,7 +64,7 @@ bool o_gpio_register(orchard_machine *m, uint32_t address, uint32_t *value, bool
                overwrite latches; later direction changes keep those separate.
                Alternate-function readback remains an unspecified latch choice. */
             *value = ((s->gpio[off / 4] & ~inputs) |
-                      (s->gpio_input_levels[port] & inputs)) & mask;
+                      (levels & inputs)) & mask;
             return true;
         }
     } else {
@@ -72,8 +83,14 @@ bool o_gpio_register(orchard_machine *m, uint32_t address, uint32_t *value, bool
     }
     uint32_t *r = &s->gpio[off / 4];
     if (write) {
+        uint32_t changed = *r ^ (*value & mask);
         if (clear) *r &= ~(*value & mask);
         else *r = *value & mask;
+        if (off == 0x50 || off == 0x60) {
+            unsigned count = off == 0x50 ? 8 : 16, first = off == 0x50 ? 0 : 8;
+            for (unsigned pin = 0; pin < count; ++pin)
+                if (changed & (3u << (pin * 2u))) s->eint_known &= ~(1u << (first + pin));
+        }
     } else *value = *r & mask;
     return true;
 }

@@ -12,6 +12,7 @@ static void usage(FILE *out) {
           "  orchard models\n"
           "  orchard run --model SLUG --rom FULL-NOR.bin [--ticks N]\n"
           "              [--trace FILE.jsonl] [--frame FILE.pgm]\n"
+          "              [--keyboard apples] [--nor-device sst39vf1601]\n"
           "              [--uart-in FILE] [--uart-out FILE]\n"
           "              [--gpio-input PORT:KNOWN_HEX:LEVELS_HEX] ...\n\n"
           "GPIO input stimuli are explicit research conditions, not board wiring.\n"
@@ -69,6 +70,8 @@ int main(int argc, char **argv) {
     const char *slug = NULL, *rompath = NULL, *tracepath = NULL, *framepath = NULL;
     const char *inpath = NULL, *outpath = NULL;
     uint64_t budget = 100000;
+    bool keyboard = false;
+    orchard_nor_device nor = ORCHARD_NOR_UNSPECIFIED;
     uint32_t gpio_known[8] = {0}, gpio_levels[8] = {0};
     bool gpio_set[8] = {false};
     for (int i = 2; i < argc; i += 2) {
@@ -88,6 +91,12 @@ int main(int argc, char **argv) {
                 return 64;
             }
             gpio_set[port] = true; gpio_known[port] = known; gpio_levels[port] = levels;
+        } else if (strcmp(key, "--keyboard") == 0) {
+            if (strcmp(value, "apples") != 0) { fputs("Expected --keyboard apples\n", stderr); return 64; }
+            keyboard = true;
+        } else if (strcmp(key, "--nor-device") == 0) {
+            if (strcmp(value, "sst39vf1601") != 0) { fputs("Unknown NOR device\n", stderr); return 64; }
+            nor = ORCHARD_NOR_SST39VF1601;
         } else if (strcmp(key, "--ticks") == 0) {
             char *end;
             for (const char *digit = value; *digit; ++digit) {
@@ -137,6 +146,9 @@ int main(int argc, char **argv) {
             fputs("GPIO mask exceeds port width or levels exceed the known mask\n", stderr);
             result = 64; goto cleanup;
         }
+    }
+    if (orchard_nor_select(m, nor) != ORCHARD_OK || orchard_keyboard_attach(m, keyboard) != ORCHARD_OK) {
+        fputs("Hardware configuration incompatible with model\n", stderr); result = 64; goto cleanup;
     }
     trace = open_output(tracepath);
     output = open_output(outpath);
@@ -207,7 +219,8 @@ int main(int argc, char **argv) {
                first_input ? "" : ",", 'A' + (int)port, gpio_known[port], gpio_levels[port]);
         first_input = false;
     }
-    puts("]}");
+    printf("],\"keyboard\":\"%s\",\"nor_device\":\"%s\"}\n",
+           keyboard ? "apples" : "detached", nor ? "sst39vf1601" : "unspecified");
     result = state.stop.status == ORCHARD_OK && frame_status == ORCHARD_OK ? 0 : 2;
 cleanup:
     if (rom && fclose(rom) != 0) result = 74;

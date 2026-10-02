@@ -1,5 +1,67 @@
 # Native NOR bring-up
 
+## Current continuation: shared LCD blocker
+
+Starting from `d3d6528`, the opt-in electrical keyboard and explicit
+SST39VF1601 software ID now let the unchanged HP48gII full NOR pass the
+bootloader's keyboard/flash-identification checks, reach code in the original
+OS flash region, enable its MMU and stop at LCD `0x4d000068`.
+
+| Configuration | Retired instructions | PC | Result |
+| --- | ---: | --- | --- |
+| HP39g+ genuine full NOR, default strict | 514,293 | `000035e8` | Existing LCD `+0x68` stop |
+| HP48gII genuine full NOR, default strict | 94,497 | `08001820` | Existing GPDDAT stop |
+| HP48gII full NOR, keyboard + SST39VF1601 + recorded pads | 8,210,200 | `0000707c` | OS-region LCD `+0x68` read; not an interactive boot |
+| HP50g native boot-only, keyboard + recorded pads, all keys released | 2,000,000 | `08001310` | Recovery polling, budget exhausted without diagnostic stop |
+
+The new 48gII conditions are `--keyboard apples --nor-device sst39vf1601`
+and `--gpio-input D:cc7f:0,G:f801:f800`. A separate cold run with D levels
+`cc7f` has the same complete exposed execution result except its input metadata.
+Both native/WASM comparisons and each host's cold replay agree. Both stop at
+tick 8,210,201, instruction `e5950068`, with CP15 control `0000107f`, zero
+exceptions/faults and a disabled/blank LCD. Native ASan/UBSan with optimization
+reproduces the D-low result. The new part/keyboard inputs are explicit test
+conditions, not automatically selected defaults or measured pad idle levels.
+
+The bootloader actually writes the AA/55/90 command sequence and reads the
+manufacturer/device halfwords. Their combined identity is `00bf234b`; F0
+returns the selected NOR component to array reads. Flash bytes remain unchanged.
+See [electrical input](input.md) for primary chip/wiring sources and the
+limits of the identification state machine.
+
+This narrows the next blocker: **39g+ and the progressed 48gII independently
+read the same unidentified LCD offset**. It still has no accepted definition.
+No zero-value shortcut or ROM patch was added. The original OS-region PC and
+MMU enable are forward progress, not evidence of responsive calculator UI.
+
+The 50g boot-only no-key experiment uses D `cc7f:0` and G `f801:f800`, without
+selecting a NOR part. It still supplies no OS. Its existing 858 nonzero pixels
+and per-byte bit-order counterexample remain unaccepted panel output. A local
+exploratory key-1 press at tick 2,000,000 (raw column 3, row 5) instead exposes
+contention on GPG11 at tick 2,168,087: the explicit strong high test drive fights
+a guest-driven output through the closed switch. This is **not** accepted
+real-ROM key interoperability. It is a concrete reason not to turn no-key
+ambient stimuli into an automatic board preset. The reproducible ROM-free
+production-WASM IRQ test uses only nonconflicting pad conditions.
+
+```sh
+node tools/probe-rom.mjs --model hp48gii --rom /private/48gii.bin \
+  --ticks 10000000 --keyboard apples --nor-device sst39vf1601 \
+  --gpio-input D:cc7f:0,G:f801:f800 --output /new/path/48-keyboard.json
+node tools/probe-rom.mjs --model hp50g --bootloader /private/boot-50g.bin \
+  --ticks 2000000 --keyboard apples \
+  --gpio-input D:cc7f:0,G:f801:f800 --output /new/path/50-recovery.json
+```
+
+Probe v3 records the component selection, attachment and external drives and
+reapplies all conditions after reset. Full-NOR, boot-only and generated guests
+remain distinct. Ordinary CI still has no firmware dependency.
+
+## Previous native-input research (`d3d6528`)
+
+The following sections retain the earlier baseline and its bounded experiments;
+statements about the then-unimplemented keyboard refer to that revision.
+
 ## Strict full-NOR baseline (unchanged by external-stimulus support)
 
 Two **unmodified full physical NORs** now execute in Orchard: the user's

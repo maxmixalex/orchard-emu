@@ -36,6 +36,8 @@ void o_soc_reset(o_soc *s) {
 static unsigned timer_shift(unsigned channel) { return channel ? 4u * channel + 4u : 0; }
 void o_soc_tick(orchard_machine *m) {
     o_soc *s = &m->soc;
+    o_eint_tick(m);
+    if (m->stop.status != ORCHARD_OK) return;
     o_rtc_tick(m);
     if (m->stop.status != ORCHARD_OK) return;
     o_watchdog_tick(m);

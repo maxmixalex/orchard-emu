@@ -11,7 +11,7 @@ const errors = ['ready', 'bad argument', 'full-NOR size mismatch', 'not a full A
   'no ROM loaded', 'unsupported instruction', 'unsupported CP15 operation', 'unimplemented MMIO',
   'unimplemented NOR command', 'unpredictable ARM operation', 'UART host queue full',
   'big-endian mode not implemented', 'unsupported LCD mode', 'physical bus error',
-  'watchdog reset requested; reset propagation not implemented'];
+  'watchdog reset requested; reset propagation not implemented', 'contradictory external GPIO drives'];
 function pause() { running = false; clearTimeout(timer); timer = undefined; }
 function snapshot() {
   const state = new Uint32Array(core.memory.buffer, core.snapshot(), 33).slice();

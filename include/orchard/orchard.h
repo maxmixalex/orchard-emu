@@ -26,7 +26,8 @@ typedef enum {
     ORCHARD_UNSUPPORTED_ENDIAN,
     ORCHARD_UNSUPPORTED_LCD,
     ORCHARD_BUS_ERROR,
-    ORCHARD_UNIMPLEMENTED_RESET
+    ORCHARD_UNIMPLEMENTED_RESET,
+    ORCHARD_GPIO_CONTENTION
 } orchard_status;
 
 typedef struct {
@@ -86,8 +87,9 @@ size_t orchard_uart_receive(orchard_machine *m, uint8_t *data, size_t capacity);
  * Replace the known input mask/levels of one port. Unspecified input pins
  * remain unresolved; output-mode pins read their guest-controlled latch.
  * Levels must be a subset of known_mask. Zero mask releases the whole port.
- * Cold reset/loading a ROM clears stimuli. Does not synthesize EINT edges or
- * clear an existing diagnostic stop. Call only from the machine's owner.
+ * Cold reset/loading a ROM clears stimuli. EINT sampling is opt-in through
+ * keyboard attachment; this call does not clear an existing diagnostic stop.
+ * Call only from the machine's owner.
  */
 typedef enum {
     ORCHARD_GPIO_B = 1, ORCHARD_GPIO_C, ORCHARD_GPIO_D, ORCHARD_GPIO_E,
@@ -95,6 +97,24 @@ typedef enum {
 } orchard_gpio_port;
 orchard_status orchard_gpio_inputs(orchard_machine *m, orchard_gpio_port port,
                                    uint32_t known_mask, uint32_t levels);
+/* Opt-in Apples electrical keyboard: columns GPG8..15, rows GPG1..7,
+ * dedicated active-high inputs GPF0/4/5/6. Matrix indices are raw switch
+ * positions, not 56 physical keys or a model-specific printed-key map.
+ * Attach releases keys; cold reset detaches it. Unrelated/floating GPIO pads
+ * still need explicit inputs. EINT0..23 is sampled without digital filters
+ * while attached. Key events must be delivered by the machine owner between
+ * bounded run calls. A switch change never clears a diagnostic stop.
+ */
+orchard_status orchard_keyboard_attach(orchard_machine *m, bool attached);
+orchard_status orchard_keyboard_matrix(orchard_machine *m, unsigned column, unsigned row, bool down);
+orchard_status orchard_keyboard_dedicated(orchard_machine *m, unsigned gpf_pin, bool down);
+/* Optional physical NOR part: array reads / software ID only for now.
+ * A selected part survives cold reset, while command/ID state is reset.
+ * Selection does not modify the supplied NOR bytes and is not inferred from
+ * the calculator model or file contents. Program/erase remain unsupported.
+ */
+typedef enum { ORCHARD_NOR_UNSPECIFIED = 0, ORCHARD_NOR_SST39VF1601 } orchard_nor_device;
+orchard_status orchard_nor_select(orchard_machine *m, orchard_nor_device device);
 /* Raw STN pixels, one intensity byte per pixel. No skin or annunciator overlays. */
 orchard_status orchard_framebuffer(const orchard_machine *m, uint8_t *pixels,
                                    size_t capacity);

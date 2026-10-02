@@ -107,3 +107,17 @@ one-day retention. None of the firmware, manuals, signed download URLs or
 private traces is committed or published on Pages. MIT covers Orchard's
 original implementation, not HP's firmware. See [boot research](boot-research.md)
 for actual execution results and the explicit GPIO conditions.
+
+## Continuation search and chip provenance
+
+The follow-up search found no newly verified original 39gs/40gs native bytes
+or complete 49g+/50g dump. The located 39gs text attachment still could not be
+retrieved; the inventory above is unchanged. Searches for 40gs bootloader/dump
+and the shared LCD offset did not produce an admissible new binary or a
+register definition.
+
+The original 48gII mirror author's hardware article identifies the replacement
+part as SST39VF1601. Its manufacturer's software-ID specification now supports
+an **explicit** probe component, separate from the NOR-file identity. The
+component and electrical-input evidence is recorded in [electrical input](input.md);
+no new or modified firmware was required for the OS-region progression.

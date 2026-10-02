@@ -12,7 +12,10 @@ firmware's Saturn interpreter is intended to run as guest ARM software, without 
 
 The current core includes a CP15/MMU subset, bounded execution and diagnostic
 stops, internal/external SRAM, GPIO latches and explicit input stimuli, IRQ arbitration, a functional RTC,
-timers/UART0/watchdog and a raw single-scan STN LCD preview.
+timers/UART0/watchdog and a raw single-scan STN LCD preview. An opt-in electrical
+keyboard/EINT model and explicit SST39VF1601 identification now let the unchanged
+HP48gII NOR reach its OS-region LCD initialization. The same unknown LCD `+0x68`
+read blocks both 39g+ and this conditioned 48gII run; neither has booted its UI.
 The browser UI remains a diagnostic workbench. See [real-ROM progression](docs/development/boot-research.md).
 
 ## Build and verify
@@ -65,6 +68,7 @@ for recovered regions, hashes, rejected lookalikes and remaining acquisition gap
 [Live board](https://github.com/zyf722/orchard-emu/issues/1) ·
 [Architecture](docs/development/architecture.md) ·
 [Models](docs/development/models.md) ·
+[Electrical input](docs/development/input.md) ·
 [Virtual links](docs/development/virtual-link.md)
 
 Zensical is configured in `zensical.toml`. Install

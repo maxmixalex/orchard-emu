@@ -12,14 +12,22 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2), options = {};
 for (let i = 0; i < args.length; i += 2) {
   const key = args[i];
-  if (!['--model', '--rom', '--bootloader', '--gpio-input', '--ticks', '--output'].includes(key) || !args[i + 1] || key in options)
-    throw new Error('Usage: node tools/probe-rom.mjs --model SLUG (--rom FULL-NOR | --bootloader NATIVE-BOOT.bin) [--gpio-input D:cc7f:0] [--ticks 1000000] [--output NEW.json]');
+  if (!['--model', '--rom', '--bootloader', '--gpio-input', '--keyboard', '--nor-device', '--ticks', '--output'].includes(key) || !args[i + 1] || key in options)
+    throw new Error('Usage: node tools/probe-rom.mjs --model SLUG (--rom FULL-NOR | --bootloader NATIVE-BOOT.bin) [--gpio-input D:cc7f:0,G:f801:f800] [--keyboard apples] [--nor-device sst39vf1601] [--ticks 1000000] [--output NEW.json]');
   options[key] = args[i + 1];
 }
 const id = names.indexOf(options['--model']) + 1;
 if (!id || Boolean(options['--rom']) === Boolean(options['--bootloader']))
   throw new Error('Specify a known model and exactly one of --rom or --bootloader');
 const stimuli = parseGpio(options['--gpio-input']);
+const keyboard = options['--keyboard'] ?? 'detached';
+const norDevice = options['--nor-device'] ?? 'unspecified';
+if (options['--keyboard'] && keyboard !== 'apples') throw new Error('Expected --keyboard apples');
+if (options['--nor-device'] && norDevice !== 'sst39vf1601') throw new Error('Expected --nor-device sst39vf1601');
+const hardwareArgs = [
+  ...(keyboard === 'apples' ? ['--keyboard', keyboard] : []),
+  ...(norDevice === 'sst39vf1601' ? ['--nor-device', norDevice] : []),
+];
 const textBudget = options['--ticks'] ?? '1000000', budget = Number(textBudget);
 if (!/^\d+$/.test(textBudget) || !Number.isSafeInteger(budget) || budget < 1 || budget > 10000000)
   throw new Error('Tick budget must be an integer between 1 and 10000000');
@@ -46,7 +54,7 @@ try {
     const frame = resolve(dir, `frame-${index}.pgm`), uart = resolve(dir, `uart-${index}.out`);
     const process = spawnSync(nativeExe, ['run', '--model', names[id - 1], '--rom', romPath,
       '--ticks', String(budget), '--frame', frame, '--uart-out', uart,
-      ...stimuli.flatMap(s => ['--gpio-input', s.cli])],
+      ...hardwareArgs, ...stimuli.flatMap(s => ['--gpio-input', s.cli])],
     { encoding: 'utf8', timeout: 60000, maxBuffer: 1024 * 1024 });
     if (process.error) throw process.error;
     assert([0, 2].includes(process.status), `CLI failed: ${process.stderr}`);
@@ -62,6 +70,8 @@ try {
     return { state, pixels, uart: await readFile(uart) };
   }
   function wasmRun() {
+    assert.equal(c.nor_select(norDevice === 'sst39vf1601' ? 1 : 0), 0, 'NOR part incompatible with capacity');
+    assert.equal(c.keyboard_attach(keyboard === 'apples' ? 1 : 0), 0);
     for (const s of stimuli) assert.equal(c.gpio_inputs(s.port, s.known, s.levels), 0);
     let status = 0;
     const uart = [];
@@ -80,6 +90,8 @@ try {
   assert.deepEqual(n, await nativeRun(1), 'Native cold replay differs');
   c.reset();
   assert.deepEqual(w, wasmRun(), 'WASM cold replay differs');
+  assert.equal(n.state.keyboard, keyboard);
+  assert.equal(n.state.nor_device, norDevice);
   assert.deepEqual(n.state.gpio_inputs, stimuli.map(s => ({ port: s.name, known_mask: hex(s.known), levels: hex(s.levels) })));
   assert.deepEqual(n.state.registers, s.slice(0, 16).map(hex));
   assert.equal(n.state.cpsr, hex(s[16]));
@@ -95,9 +107,10 @@ try {
     assert.equal(n.state.stop[key], hex(s[index]));
   assert.equal(n.state.frame_status, w.frameStatus);
   assert.deepEqual(n.pixels, w.pixels); assert.deepEqual(n.uart, w.uart);
-  const report = { schema: 'orchard-nor-probe-v2', model: names[id - 1], input_bytes: rom.length,
+  const report = { schema: 'orchard-nor-probe-v3', model: names[id - 1], input_bytes: rom.length,
     input_sha256: inputHash, identified_fixture: prepared.source.identified_fixture, input_kind: prepared.input_kind,
     source_input: prepared.source, construction: prepared.construction,
+    keyboard, nor_device: norDevice,
     gpio_inputs: stimuli.map(s => ({ port: s.name, known_mask: hex(s.known), levels: hex(s.levels) })),
     native_binary_sha256: sha(await readFile(nativeExe)), wasm_sha256: sha(wasm), budget,
     native_wasm_equal: true, native_replay_equal: true, wasm_replay_equal: true,

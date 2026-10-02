@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Reproducible, ROM-free native/WASM checks. Uses only generated guest bytes.
 import assert from 'node:assert/strict';
+import { checkCircuit } from '../tests/circuit-wasm.mjs';
 import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
@@ -21,7 +22,7 @@ const testModule = resolve(build, 'regression.wasm');
 command(process.env.CLANG || 'clang', [
   '--target=wasm32', '-std=c17', '-O2', '-ffreestanding', '-nostdlib', '-fno-builtin',
   '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc',
-  ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'watchdog', 'gpio', 'interrupt', 'rtc'].map(s => `src/${s}.c`),
+  ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor'].map(s => `src/${s}.c`),
   'tests/regression.c', '-o', testModule, '-Wl,--no-entry', '-Wl,--stack-first',
   '-Wl,-z,stack-size=524288', '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216',
 ]);
@@ -134,3 +135,5 @@ try {
     console.log(`${names[id - 1]}: synthetic reset/MMIO/ARM/Thumb/SWI/GPIO/UART/LCD/WFI native=WASM, replay OK`);
   }
 } finally { await rm(dir, { recursive: true, force: true }); }
+
+await checkCircuit(root, build);

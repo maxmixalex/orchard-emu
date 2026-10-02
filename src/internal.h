@@ -48,6 +48,9 @@ typedef struct {
     uint32_t srcpnd, intmod, intmsk, intpnd, subsrcpnd, intsubmsk, priority;
     uint32_t memc[13], clock[6], gpio[48], lcd[20];
     uint32_t gpio_input_known[8], gpio_input_levels[8];
+    bool keyboard_attached;
+    uint64_t keyboard_switches;
+    uint32_t keyboard_direct, eint_known, eint_levels;
     uint32_t uart[3][11];
     uint32_t tcfg0, tcfg1, tcon, tcntb[5], tcmpb[4], count[5];
     uint32_t phase[5];
@@ -62,6 +65,9 @@ struct orchard_machine {
     o_soc soc;
     uint64_t ticks;
     bool loaded;
+    orchard_nor_device nor_device;
+    unsigned nor_sequence;
+    bool nor_id_mode;
     orchard_stop stop;
     uint8_t flash[O_FLASH_MAX];
     uint8_t ram[O_RAM_MAX];
@@ -90,6 +96,8 @@ uint32_t o_shift(uint32_t value, unsigned kind, unsigned amount,
 void o_thumb(orchard_machine *m, uint16_t op);
 bool o_cp15(orchard_machine *m, uint32_t op);
 
+bool o_nor_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value);
+bool o_nor_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);
 bool o_phys_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);
 bool o_phys_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value);
 bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
@@ -101,6 +109,9 @@ void o_soc_reset(o_soc *s);
 void o_soc_tick(orchard_machine *m);
 void o_irq_update(o_soc *s);
 void o_gpio_reset(o_soc *s);
+void o_gpio_sample(const orchard_machine *m, unsigned port, uint32_t *known,
+                   uint32_t *levels, uint32_t *conflicts);
+void o_eint_tick(orchard_machine *m);
 bool o_gpio_register(orchard_machine *m, uint32_t address, uint32_t *value, bool write);
 void o_rtc_reset(o_soc *s);
 void o_rtc_tick(orchard_machine *m);

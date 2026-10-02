@@ -64,3 +64,19 @@ EXPORT("uart_receive") unsigned web_uart_receive(void) {
 EXPORT("gpio_inputs") unsigned web_gpio_inputs(unsigned port, uint32_t known_mask, uint32_t levels) {
     return orchard_gpio_inputs(&machine, (orchard_gpio_port)port, known_mask, levels);
 }
+
+EXPORT("keyboard_attach") unsigned web_keyboard_attach(unsigned attached) {
+    if (attached > 1) return ORCHARD_BAD_ARGUMENT;
+    return orchard_keyboard_attach(&machine, attached != 0);
+}
+EXPORT("keyboard_matrix") unsigned web_keyboard_matrix(unsigned col, unsigned row, unsigned down) {
+    if (down > 1) return ORCHARD_BAD_ARGUMENT;
+    return orchard_keyboard_matrix(&machine, col, row, down != 0);
+}
+EXPORT("keyboard_dedicated") unsigned web_keyboard_dedicated(unsigned pin, unsigned down) {
+    if (down > 1) return ORCHARD_BAD_ARGUMENT;
+    return orchard_keyboard_dedicated(&machine, pin, down != 0);
+}
+EXPORT("nor_select") unsigned web_nor_select(unsigned device) {
+    return orchard_nor_select(&machine, (orchard_nor_device)device);
+}

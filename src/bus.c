@@ -9,8 +9,7 @@ static uint32_t read_le(const uint8_t *p, unsigned width) {
 bool o_phys_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value) {
     if (!value || (width != 1 && width != 2 && width != 4)) return false;
     if (address < m->profile->flash_bytes && width <= m->profile->flash_bytes - address) {
-        *value = read_le(m->flash + address, width);
-        return true;
+        return o_nor_read(m, address, width, value);
     }
     if (address >= O_RAM_BASE && address - O_RAM_BASE < m->profile->ram_bytes &&
         width <= m->profile->ram_bytes - (address - O_RAM_BASE)) {
@@ -29,9 +28,7 @@ bool o_phys_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
 bool o_phys_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value) {
     if (width != 1 && width != 2 && width != 4) return false;
     if (address < m->profile->flash_bytes && width <= m->profile->flash_bytes - address) {
-        if (width == 2 && (value & 0xffffu) == 0xf0u) return true; /* Read-array reset. */
-        o_stop(m, ORCHARD_UNIMPLEMENTED_FLASH, address, value);
-        return false;
+        return o_nor_write(m, address, width, value);
     }
     if (address >= O_RAM_BASE && address - O_RAM_BASE < m->profile->ram_bytes &&
         width <= m->profile->ram_bytes - (address - O_RAM_BASE)) {
