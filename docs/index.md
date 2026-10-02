@@ -20,3 +20,8 @@ Start with [architecture](development/architecture.md), then consult
 [models](development/models.md), [ROM inputs](development/roms.md) and
 [virtual links](development/virtual-link.md). The
 [handoff](development/handoff.md) records what has and has not been published.
+
+New research: [native boot-region inventory](development/native-roms.md) and
+[explicit GPIO sensitivity experiments](development/boot-research.md). Original
+HP49g+/HP50g boot code now runs separately from the genuine full-dump fixtures;
+no additional complete stock OS or full-NOR capture is claimed.

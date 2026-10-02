@@ -53,6 +53,8 @@ function syntheticNor(size, height) {
   reg(0x4d00001c, 9);
   reg(0x4d000010, 2); // BSWP: bytes stored in ascending address order
   reg(0x4d000000, 0x21); // 1bpp single-scan STN framebuffer
+  reg(0x56000030, 0); // Explicit input-mode test, not inferred board wiring.
+  load(0, 0x56000034); word(0xe5907000); // LDR r7,[r0]
   const targetLiteral = literals.length;
   load(0, 0); word(0xe12fff10); // BX r0
   literals[targetLiteral].value = pc | 1;
@@ -85,7 +87,7 @@ try {
     await writeFile(input, rom); await writeFile(uartIn, Buffer.from('!'));
     const run = JSON.parse(command(resolve(build, `orchard${suffix}`), [
       'run', '--model', names[id - 1], '--rom', input, '--ticks', '1000',
-      '--uart-in', uartIn, '--uart-out', uartOut, '--frame', frame,
+      '--uart-in', uartIn, '--uart-out', uartOut, '--frame', frame, '--gpio-input', 'D:ffff:5aa5',
     ]));
     assert.equal(run.boot_verified, false);
     assert.equal(run.status, 'budget-exhausted');
@@ -95,11 +97,12 @@ try {
     new Uint8Array(c.memory.buffer, c.rom_buffer(), size).set(rom);
     assert.equal(c.load(size), 0);
     function execute() {
+      assert.equal(c.gpio_inputs(3, 0xffff, 0x5aa5), 0);
       new Uint8Array(c.memory.buffer, c.uart_input(), 1)[0] = 33;
       assert.equal(c.uart_send(1), 1);
       assert.equal(c.run(1000), 0);
       const state = new Uint32Array(c.memory.buffer, c.snapshot(), 33).slice();
-      assert.equal(state[4], 8); assert.equal(state[15], sleepPc);
+      assert.equal(state[7], 0x5aa5); assert.equal(state[4], 8); assert.equal(state[15], sleepPc);
       assert.equal(state[16], parseInt(run.cpsr, 16));
       assert.equal(state[20], Number(run.instructions)); assert.equal(state[22], 1000);
       assert.equal(state[24], 1); assert.equal(state[26], 1);
@@ -114,8 +117,20 @@ try {
     const pgm = await readFile(frame), header = Buffer.from(`P5\n${width} ${height}\n255\n`);
     assert.deepEqual(pgm.subarray(0, header.length), header);
     assert.deepEqual(pgm.subarray(header.length), first.pixels.map(byte => 255 - byte));
+    if (id === 1) {
+      const invalid = ['', 'A:0:0', 'I:0:0', 'D:10000:0', 'F:100:0', 'D:1:2', 'D:-1:0', 'D: 1:0',
+        'D:0x1:0', 'D:1:', 'D:1:0junk', 'D:fffffffff:0', 'D:1:000000000'];
+      for (const value of invalid) {
+        const result = spawnSync(resolve(build, `orchard${suffix}`), ['run', '--model', names[id - 1],
+          '--rom', input, '--gpio-input', value], { encoding: 'utf8', timeout: 10000 });
+        assert.ifError(result.error); assert.equal(result.status, 64, `Invalid GPIO accepted: ${value}`);
+      }
+      const duplicate = spawnSync(resolve(build, `orchard${suffix}`), ['run', '--model', names[id - 1],
+        '--rom', input, '--gpio-input', 'D:1:0', '--gpio-input', 'D:1:1'], { encoding: 'utf8', timeout: 10000 });
+      assert.ifError(duplicate.error); assert.equal(duplicate.status, 64);
+    }
     c.reset();
     assert.deepEqual(execute(), first, 'Cold reset and identical input must replay identically');
-    console.log(`${names[id - 1]}: synthetic reset/MMIO/ARM/Thumb/SWI/UART/LCD/WFI native=WASM, replay OK`);
+    console.log(`${names[id - 1]}: synthetic reset/MMIO/ARM/Thumb/SWI/GPIO/UART/LCD/WFI native=WASM, replay OK`);
   }
 } finally { await rm(dir, { recursive: true, force: true }); }

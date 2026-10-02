@@ -1,40 +1,68 @@
 # Continuation handoff
 
-Work remains in private `zyf722/orchard-emu`, `main`, preserving the MIT
-initialization ancestry and [issue #1](https://github.com/zyf722/orchard-emu/issues/1).
-M0 is accepted. Commit `351a0da` adds the actual Pages workflow and private
-research acquisition. No force push, duplicate board or visibility change.
+Continue in private `zyf722/orchard-emu`, preserving `main` ancestry and
+[issue #1](https://github.com/zyf722/orchard-emu/issues/1). M0 is accepted; M1
+CPU conformance and M2/M3 board/stock-boot work remain open. The starting
+revision for native-input research was `d08d349`.
 
-## Inputs are available
+## Available inputs and provenance
 
-The user supplied the exact HP39g+ D1.55 full NOR. The original author's
-HP48gII USB-revision full-NOR mirror was downloaded and hash-checked, then
-retrieved for local work. Both input identities and the three uploaded updater
-identities are in [ROM provenance](roms.md). Do not repeat the old LFS-pointer
-blocker or restart the retired dump tool. These are not bundled source assets.
+The user's HP39g+ D1.55 and the preserved HP48gII USB-revision full NOR are
+available and hash-pinned. Do not repeat the old LFS-pointer access blocker or
+restart the retired dumper. The user-uploaded 39gs/40gs 2.22 and 49g+/50g 2.15
+archives are official updaters, not complete native captures.
 
-## Current implementation
+This slice adds independently preserved HP49g+ and HP50g original 16 KiB boot
+regions. Their exact hashes, embedded version strings and sources are in
+[native ROM research](native-roms.md). A 2019 HP39gs boot-region contribution
+was located, but the attachment could not be retrieved. HP40gs native boot/full
+NOR acquisition remains open. Two misleading `raw`/2 MiB candidates were
+inspected and excluded; do not rediscover them as full dumps on filename alone.
 
-[Boot research](boot-research.md) records the real reset trace progression,
-new boot SRAM, GPIO/reset-state, IRQ arbitration, RTC and LCD-lane work.
-Native and WASM now execute both original images to explicit missing-hardware
-stops, without guest exceptions. Neither shows an interactive stock UI.
+## Current execution boundary
 
-Next investigations: HP39g+ LCD read at `0x4d000068`, and HP48gII input
-sources at GPDDAT `0x56000034`. Resolve actual device semantics rather than
-masking the stop, patching firmware or using arbitrary input levels. Further
-CPU/MMU conformance and abort/writeback work remain independent requirements.
+Strict defaults still stop the genuine HP39g+ at LCD `4d000068` and the genuine
+HP48gII at GPDDAT `56000034`. No convenient generic MMIO readback was introduced.
+The new external-input API is an explicit stimulus source; unspecified pins
+remain unresolved. Cold reset releases stimuli, and probes reapply their
+recorded settings. It does not implement external interrupts or key wiring.
 
-## Verification and publication
+A bounded exhaustive GPDDAT experiment isolates an input-insensitive RMW window.
+Separately, conditioned HP48gII cold runs advance to GPGDAT; native boot-only
+49g+ advances to a USB write, and native boot-only 50g reaches GPGDAT with a
+recovery-menu framebuffer. All those conditions and limits are recorded in
+[boot research](boot-research.md). None is a stock OS boot.
 
-`tests/regression.c` and `tools/check-wasm.mjs` run without HP firmware.
-`tools/probe-rom.mjs` takes an explicit local NOR and compares both hosts and
-cold replays. Reports bind input and executable hashes; they are not stock
-boot certificates. Keep definitions in Git and generated reports/private
-inputs outside production artifacts. See [validation](validation.md).
+The HP50g buffer also reveals a raw LCD bit-order counterexample. An offline
+LSB-first interpretation produces readable recovery text, but that does not
+authorize silently changing panel/controller semantics. Resolve controller
+fetch order, pixel shift order and board mapping independently. LCD `+0x68`
+remains unidentified; the firmware's drain/toggle loop is only a hypothesis
+source, not a known register definition.
 
-The [Zensical site](https://zyf722.github.io/orchard-emu/) is deployed to Pages.
-The first strict build and deployment succeeded in Documentation #1, run
-36984188560. The documentation-only workflow does not publish the emulator
-workbench, firmware or private research artifact. Check current Actions and
-issue #1 for acceptance of later implementation revisions.
+## Repeatable tools
+
+`rom-info.mjs` identifies full NOR, original native boot regions, updaters and
+the archived Emu48+ input. `probe-rom.mjs` takes exactly one `--rom` or
+`--bootloader`, records construction/stimuli, and compares native/WASM cold
+runs/replays from identical input bytes. The boot-only mode preserves the
+original region and declares an erased remainder; it supplies no OS.
+
+`probe-gpio-window.mjs` validates the exact HP48gII hash before invoking the
+optional native checkpoint helper. Its 2,048 combinations and 8,192-quantum
+window are deliberately bounded. It is not an automatic patch, a public
+resume API or an ordinary CI test. See [validation](validation.md) for exact
+commands, counts and sanitizer scope.
+
+## Publication and next work
+
+[GitHub Pages](https://zyf722.github.io/orchard-emu/) serves strict-built
+Zensical documentation only. Deployment checks inspect content and the exact
+commit in `revision.txt`; the workbench and firmware are not part of that site.
+The research acquisition branch is separate from main and contains only
+acquisition workflow definitions. Its private one-day artifacts are not
+source assets. No reference emulator implementation was imported.
+
+Prioritize GPG/physical keyboard behavior and both LCD questions using real
+trace evidence. Continue missing native-region acquisition without rebranding
+an updater or boot-only recovery experiment as a genuine full-dump gate.

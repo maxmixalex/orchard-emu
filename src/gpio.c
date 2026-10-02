@@ -5,8 +5,20 @@
 #include "internal.h"
 
 static const unsigned port_bits[8] = {23, 11, 16, 16, 16, 8, 16, 11};
+orchard_status orchard_gpio_inputs(orchard_machine *m, orchard_gpio_port port,
+                                   uint32_t known_mask, uint32_t levels) {
+    if (!m || !m->profile || (unsigned)port < 1 || (unsigned)port > 7)
+        return ORCHARD_BAD_ARGUMENT;
+    uint32_t mask = (1u << port_bits[port]) - 1u;
+    if ((known_mask & ~mask) || (levels & ~known_mask)) return ORCHARD_BAD_ARGUMENT;
+    m->soc.gpio_input_known[port] = known_mask;
+    m->soc.gpio_input_levels[port] = levels;
+    return ORCHARD_OK;
+}
 void o_gpio_reset(o_soc *s) {
     o_zero(s->gpio, sizeof(s->gpio));
+    o_zero(s->gpio_input_known, sizeof(s->gpio_input_known));
+    o_zero(s->gpio_input_levels, sizeof(s->gpio_input_levels));
     s->gpio[0] = 0x7fffff;
     s->gpio[0x38 / 4] = 0xf000;
     s->gpio[0x68 / 4] = 0xf800;
@@ -32,10 +44,17 @@ bool o_gpio_register(orchard_machine *m, uint32_t address, uint32_t *value, bool
             uint32_t config = s->gpio[port * 4], inputs = 0;
             for (unsigned pin = 0; pin < bits; ++pin)
                 if (((config >> (pin * 2u)) & 3u) == 0) inputs |= 1u << pin;
-            if (inputs) {
-                o_stop(m, ORCHARD_UNIMPLEMENTED_MMIO, address, inputs);
+            uint32_t unresolved = inputs & ~s->gpio_input_known[port];
+            if (unresolved) {
+                o_stop(m, ORCHARD_UNIMPLEMENTED_MMIO, address, unresolved);
                 return false;
             }
+            /* Output latches do not drive input reads. External levels do not
+               overwrite latches; later direction changes keep those separate.
+               Alternate-function readback remains an unspecified latch choice. */
+            *value = ((s->gpio[off / 4] & ~inputs) |
+                      (s->gpio_input_levels[port] & inputs)) & mask;
+            return true;
         }
     } else {
         switch (off) {

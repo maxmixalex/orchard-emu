@@ -60,3 +60,7 @@ EXPORT("uart_output") uintptr_t web_uart_output(void) { return (uintptr_t)uart_o
 EXPORT("uart_receive") unsigned web_uart_receive(void) {
     return (unsigned)orchard_uart_receive(&machine, uart_output, sizeof(uart_output));
 }
+
+EXPORT("gpio_inputs") unsigned web_gpio_inputs(unsigned port, uint32_t known_mask, uint32_t levels) {
+    return orchard_gpio_inputs(&machine, (orchard_gpio_port)port, known_mask, levels);
+}

@@ -126,3 +126,17 @@ Clock input is a provisional functional quantum; full PLL/PCLK timing remains
 open. A watchdog reset request produces `ORCHARD_UNIMPLEMENTED_RESET`, not a
 fake cold reset that erases external SRAM. Directed tests cover the supported
 register/countdown behavior. See [validation](validation.md).
+
+## Explicit external GPIO inputs
+
+`orchard_gpio_inputs(machine, port, known_mask, levels)` replaces one port's
+external input stimulus. It is serialized by the same machine owner as CPU
+execution. Only input-configured pins use these levels; output pins retain
+latch readback. Undefined input bits remain diagnostic stops. Cold reset clears
+stimuli; probes reapply them for identical replay. No EINT, keyboard switch
+matrix, implicit pull-up resolution or measured board wiring is implied.
+
+The native CLI accepts repeated `--gpio-input D:cc7f:0` options, once per port.
+The WASM export is `gpio_inputs(port, known, levels)`. `probe-rom.mjs` accepts a
+comma-separated list and records it in its report. This API is a foundation
+for board wiring and bounded sensitivity experiments, not a firmware shortcut.

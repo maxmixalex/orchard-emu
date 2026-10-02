@@ -159,3 +159,19 @@ genuine full-NOR traces to drive M2/M3, starting with LCD offset 0x68 and
 model-correct GPIO input sources. Keep all six profiles present but avoid
 six parallel speculative peripheral implementations. M5 presentation polish
 and M6 host-OS bridging must not displace the first stock boot gate.
+
+## Native-region / external-input research follow-up
+
+Matching HP49g+ and HP50g native boot regions are acquired and exercised with
+explicitly erased OS sectors. The HP39gs original boot-region contribution is
+located but its attachment is not recovered; HP40gs remains an acquisition gap.
+A file named `raw` and the 2 MiB Emu48+ archive were independently excluded as
+native dumps. See [native ROM research](native-roms.md).
+
+M2 now includes explicit GPIO input-level injection and an exhaustive bounded
+HP48gII GPDDAT sensitivity experiment. Conditional startup reaches GPGDAT after
+LCD setup and firmware checking; this does not establish the keyboard matrix
+or close M3. The strict no-stimulus stops remain recorded separately. The
+HP50g recovery buffer exposes a panel bit-order counterexample, so nonblank
+pixels alone remain insufficient for display acceptance. CPU conformance,
+LCD status/FIFO semantics and all six stock-UI gates are still open.

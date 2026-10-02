@@ -4,12 +4,14 @@ An original MIT-licensed ARM hardware emulator for **HP 39g+, 39gs, 40gs,
 48gII (USB revision), 49g+, and 50g**.
 
 **Hardware bring-up, not yet a usable calculator.** Genuine HP39g+ and HP48gII
-full NORs now execute from reset to reproducible early hardware stops. One C17
-core runs natively and as WebAssembly; no stock UI boot is accepted yet. The firmware's Saturn interpreter is intended to run as
-guest ARM software, without replacing it with Emu48 or patching the ROM.
+full NORs execute from reset; matching HP49g+/HP50g native boot regions now
+also run as explicitly boot-only research inputs. No complete 49g+/50g dump
+is claimed. One C17
+core runs natively and as WebAssembly; no stock UI boot is accepted yet. The
+firmware's Saturn interpreter is intended to run as guest ARM software, without replacing it with Emu48 or patching the ROM.
 
 The current core includes a CP15/MMU subset, bounded execution and diagnostic
-stops, internal/external SRAM, GPIO latches, IRQ arbitration, a functional RTC,
+stops, internal/external SRAM, GPIO latches and explicit input stimuli, IRQ arbitration, a functional RTC,
 timers/UART0/watchdog and a raw single-scan STN LCD preview.
 The browser UI remains a diagnostic workbench. See [real-ROM progression](docs/development/boot-research.md).
 
@@ -23,6 +25,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 npm run check
+npm run test:tools
 npm run build
 npm run test:wasm
 npm run dev
@@ -30,7 +33,7 @@ npm run dev
 
 The checked-in regression suite runs natively and in WASM. A generated,
 ROM-free guest compares all six profiles through reset, MMIO, ARM/Thumb, SWI,
-UART, LCD and WFI, including reset/replay. This is not a six-model stock-boot
+GPIO, UART, LCD and WFI, including reset/replay. This is not a six-model stock-boot
 claim. See [validation](docs/development/validation.md) for commands and limits.
 Tests stay outside `dist/` and are not installed with the native application.
 
@@ -42,8 +45,18 @@ node tools/probe-rom.mjs --model hp39gplus --rom /path/to/full-nor.bin
 
 The input must be a complete physical NOR of the selected model's exact size.
 Exit zero means the budget finished, not that the OS booted. The CLI provides
-`--trace`, `--frame`, `--uart-in` and `--uart-out`; outputs must be new paths.
+`--trace`, `--frame`, `--uart-in`, `--uart-out` and explicit `--gpio-input`; outputs must be new paths.
 The browser server is local-only at `127.0.0.1:8080`; ROM bytes are not uploaded.
+
+Native boot regions and original full NORs are separate research inputs:
+
+```sh
+node tools/rom-info.mjs /path/to/boot-50g.bin
+node tools/probe-rom.mjs --model hp50g --bootloader /path/to/boot-50g.bin
+```
+
+The boot-only probe supplies no OS. See [native ROM research](docs/development/native-roms.md)
+for recovered regions, hashes, rejected lookalikes and remaining acquisition gaps.
 
 ## Development
 

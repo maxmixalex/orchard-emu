@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "orchard/orchard.h"
 #include <errno.h>
+#include <ctype.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +12,9 @@ static void usage(FILE *out) {
           "  orchard models\n"
           "  orchard run --model SLUG --rom FULL-NOR.bin [--ticks N]\n"
           "              [--trace FILE.jsonl] [--frame FILE.pgm]\n"
-          "              [--uart-in FILE] [--uart-out FILE]\n\n"
+          "              [--uart-in FILE] [--uart-out FILE]\n"
+          "              [--gpio-input PORT:KNOWN_HEX:LEVELS_HEX] ...\n\n"
+          "GPIO input stimuli are explicit research conditions, not board wiring.\n"
           "Full physical NOR images only. No firmware or bootloader is bundled.\n"
           "Default budget: 100000 ticks; ticks are not hardware clock cycles.\n"
           "Exit 0 = budget completed, 2 = emulator stopped, 64 = input error,\n"
@@ -39,6 +42,24 @@ static FILE *open_output(const char *name) {
     if (!f) fprintf(stderr, "%s: %s\n", name, strerror(errno));
     return f;
 }
+static bool parse_gpio(const char *text, unsigned *port, uint32_t *known, uint32_t *levels) {
+    if (text[0] < 'B' || text[0] > 'H' || text[1] != ':') return false;
+    const char *p = text + 2;
+    uint32_t fields[2];
+    for (unsigned field = 0; field < 2; ++field) {
+        const char *first = p;
+        while (isxdigit((unsigned char)*p)) ++p;
+        if (p == first || p - first > 8 || (field == 0 ? *p != ':' : *p != '\0')) return false;
+        char *end;
+        errno = 0;
+        unsigned long value = strtoul(first, &end, 16);
+        if (errno || end != p || value > UINT32_MAX) return false;
+        fields[field] = (uint32_t)value;
+        if (field == 0) ++p;
+    }
+    *port = (unsigned)(text[0] - 'A'); *known = fields[0]; *levels = fields[1];
+    return true;
+}
 int main(int argc, char **argv) {
     if (argc == 1 || (argc == 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0))) {
         usage(stdout); return 0;
@@ -48,6 +69,8 @@ int main(int argc, char **argv) {
     const char *slug = NULL, *rompath = NULL, *tracepath = NULL, *framepath = NULL;
     const char *inpath = NULL, *outpath = NULL;
     uint64_t budget = 100000;
+    uint32_t gpio_known[8] = {0}, gpio_levels[8] = {0};
+    bool gpio_set[8] = {false};
     for (int i = 2; i < argc; i += 2) {
         if (i + 1 == argc) { fprintf(stderr, "Missing value for %s\n", argv[i]); return 64; }
         const char *key = argv[i], *value = argv[i + 1];
@@ -57,7 +80,15 @@ int main(int argc, char **argv) {
         else if (strcmp(key, "--frame") == 0) framepath = value;
         else if (strcmp(key, "--uart-in") == 0) inpath = value;
         else if (strcmp(key, "--uart-out") == 0) outpath = value;
-        else if (strcmp(key, "--ticks") == 0) {
+        else if (strcmp(key, "--gpio-input") == 0) {
+            unsigned port;
+            uint32_t known, levels;
+            if (!parse_gpio(value, &port, &known, &levels) || gpio_set[port]) {
+                fputs("Use --gpio-input PORT:KNOWN_HEX:LEVELS_HEX once per port B..H\n", stderr);
+                return 64;
+            }
+            gpio_set[port] = true; gpio_known[port] = known; gpio_levels[port] = levels;
+        } else if (strcmp(key, "--ticks") == 0) {
             char *end;
             for (const char *digit = value; *digit; ++digit) {
                 if (*digit < '0' || *digit > '9') {
@@ -100,6 +131,12 @@ int main(int argc, char **argv) {
         fprintf(stderr, "ROM rejected: %s (expected %u bytes, read %zu)\n",
                 orchard_status_string(status), p->flash_bytes, size);
         result = 64; goto cleanup;
+    }
+    for (unsigned port = 1; port <= 7; ++port) if (gpio_set[port]) {
+        if (orchard_gpio_inputs(m, (orchard_gpio_port)port, gpio_known[port], gpio_levels[port]) != ORCHARD_OK) {
+            fputs("GPIO mask exceeds port width or levels exceed the known mask\n", stderr);
+            result = 64; goto cleanup;
+        }
     }
     trace = open_output(tracepath);
     output = open_output(outpath);
@@ -163,6 +200,13 @@ int main(int argc, char **argv) {
            state.cp15_control, state.fault_status, state.fault_address);
     for (unsigned r = 0; r < 16; ++r)
         printf("%s\"%08" PRIx32 "\"", r ? "," : "", state.registers[r]);
+    fputs("],\"gpio_inputs\":[", stdout);
+    bool first_input = true;
+    for (unsigned port = 1; port <= 7; ++port) if (gpio_set[port]) {
+        printf("%s{\"port\":\"%c\",\"known_mask\":\"%08" PRIx32 "\",\"levels\":\"%08" PRIx32 "\"}",
+               first_input ? "" : ",", 'A' + (int)port, gpio_known[port], gpio_levels[port]);
+        first_input = false;
+    }
     puts("]}");
     result = state.stop.status == ORCHARD_OK && frame_status == ORCHARD_OK ? 0 : 2;
 cleanup:

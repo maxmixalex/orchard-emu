@@ -74,3 +74,20 @@ The undocumented HP39g+ LCD offset `0x68` remains a research question. The
 reviewed manual does not establish its semantics; no emulator's convenient
 readback has been promoted to hardware truth. Kernel register headers surfaced
 in searches supplied only corroborating register facts, not implementation.
+
+## Native-region and GPIO follow-up (2026-10-02)
+
+- [HP49g+/HP50g original ARM boot-region archive](https://www.hpcalc.org/details/9335),
+  acquired and hash-verified; [Emu48+ 2.15 image](https://www.hpcalc.org/details/6744),
+  acquired and format-inspected. These bytes are research inputs, not vendored code.
+- [Bernd Grubert's HP39gs boot-region contribution](https://www.hpmuseum.org/forum/post-117443.html),
+  2019-06-07. Indexed provenance found; attachment retrieval failed with HTTP 403.
+- [HP39GS-Explorer ROM directory](https://github.com/Yanye0xFF/HP39GS-Explorer/tree/master/rom).
+  Git blob identity independently establishes that its `raw` file is the official updater.
+- [newRPL target_50g LCD hardware access](https://github.com/c3d/db48x-from-newrpl/blob/063bd8e1ee9b641701a11488cd2a02dd540d87cf/firmware/sys/target_50g/lcd.c),
+  blob `429bf955d6775ea4b4d54fed3702fa5595230739`. Pin-use descriptions identify
+  GPD7 as LCD power and GPD9/12/13 as contrast-control signals. No implementation
+  was imported; these descriptions do not independently establish every HP48gII pin.
+
+Full identities, rejected candidates and limitations are in [native ROM research](native-roms.md).
+The original vendor manual remains the source for GPIO input/output semantics.

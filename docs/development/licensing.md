@@ -44,3 +44,10 @@ C compiler/linker, CMake, Node and optional Zensical are external build tools,
 not vendored project source. The current browser uses platform fonts and no
 npm libraries. The freestanding WASM core has no linked third-party emulator
 or libc implementation. Native builds use the host standard C library.
+
+Native-region follow-up also inspects original HP firmware bytes and published
+newRPL hardware-pin descriptions as behavioral evidence. It does not copy
+firmware routines or another emulator's implementation into Orchard. The
+native-region inspector stores identities, not the firmware. Research reports
+keep genuine dumps, boot-only constructed backing and explicit GPIO conditions
+separate; the preservation archive's distribution notice is not an MIT license.

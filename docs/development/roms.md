@@ -67,8 +67,9 @@ restricted to this private repository.
 | `hp4950v215/4950_215.bin` | `b08235fbf7d6ab3c5ad64b82d3ffe7004f942fafe90d0449ab3b0e5c3b0bc8a0` |
 
 Their headers are respectively `KINPOHP39G+IMAGE`, `KINPOHP40G+IMAGE` and
-`KINPOUPDATEIMAGE`. They are not full native ARM reset images. Genuine boot
-areas remain a separate acquisition task; replacing them with another model's
+`KINPOUPDATEIMAGE`. They are not full native ARM reset images. Matching HP49g+/HP50g boot regions have now been acquired separately;
+their hashes and explicit boot-only probing are in [native ROM research](native-roms.md).
+HP39gs/HP40gs native boot areas remain an acquisition task; replacing them with another model's
 bootloader would be a noncanonical experiment, not full-dump acceptance.
 
 ## Input handling
@@ -83,3 +84,12 @@ limitations. Keep acquisition authority and file storage separate from software
 licensing; possession alone does not grant redistribution rights. Do not put
 signed download URLs, personal filenames, extracted firmware or LFS objects
 in public documentation or deployment directories.
+
+## Explicit research inputs
+
+`--rom` still requires a complete-size physical image. The separate
+`--bootloader` option preserves a verified matching boot region and supplies
+an erased remainder, with no OS or full-dump claim. `--gpio-input` supplies
+known pin levels as an explicit experimental condition, not authenticated board
+wiring. Both conditions appear in the version-2 probe report. Cold replays
+reapply identical stimuli, and both hosts read the same local byte snapshot.

@@ -384,6 +384,64 @@ static unsigned interrupt_number(unsigned group, unsigned request) {
     static const int bases[6] = {-1,4,10,16,22,27};
     return (unsigned)(bases[group] + (int)request);
 }
+static void gpio_stimuli(void) {
+    orchard_reset(&machine);
+    const unsigned widths[8] = {0, 11, 16, 16, 16, 8, 16, 11};
+    uint32_t value = 0;
+    CHECK(orchard_gpio_inputs(NULL, ORCHARD_GPIO_D, 0, 0) == ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_gpio_inputs(&machine, (orchard_gpio_port)0, 0, 0) == ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_gpio_inputs(&machine, (orchard_gpio_port)8, 0, 0) == ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_gpio_inputs(&machine, (orchard_gpio_port)-1, 0, 0) == ORCHARD_BAD_ARGUMENT);
+    for (unsigned port = 1; port <= 7; ++port) {
+        uint32_t mask = (1u << widths[port]) - 1u, addr = 0x56000000u + port * 16u;
+        uint32_t outputs = 0;
+        for (unsigned bit = 0; bit < widths[port]; ++bit) outputs |= 1u << (bit * 2u);
+        CHECK(orchard_gpio_inputs(&machine, (orchard_gpio_port)port, mask, mask & 0x5555u) == ORCHARD_OK);
+        CHECK(o_phys_read(&machine, addr + 4u, 4, &value) && value == (mask & 0x5555u));
+        CHECK(o_phys_write(&machine, addr + 4u, 4, mask & 0xaaaau));
+        CHECK(o_phys_read(&machine, addr + 4u, 4, &value) && value == (mask & 0x5555u));
+        CHECK(o_phys_write(&machine, addr, 4, outputs));
+        CHECK(o_phys_read(&machine, addr + 4u, 4, &value) && value == (mask & 0xaaaau));
+        CHECK(orchard_gpio_inputs(&machine, (orchard_gpio_port)port, mask + 1u, 0) == ORCHARD_BAD_ARGUMENT);
+        CHECK(orchard_gpio_inputs(&machine, (orchard_gpio_port)port, mask, mask + 1u) == ORCHARD_BAD_ARGUMENT);
+        CHECK(machine.soc.gpio_input_levels[port] == (mask & 0x5555u));
+        CHECK(o_phys_write(&machine, addr, 4, 0));
+        CHECK(orchard_gpio_inputs(&machine, (orchard_gpio_port)port, mask & ~1u, 0) == ORCHARD_OK);
+        CHECK(!o_phys_read(&machine, addr + 4u, 4, &value));
+        CHECK(machine.stop.detail == 1 && machine.stop.address == addr + 4u);
+        o_zero(&machine.stop, sizeof(machine.stop));
+        CHECK(orchard_gpio_inputs(&machine, (orchard_gpio_port)port, 0, 0) == ORCHARD_OK);
+        CHECK(!o_phys_read(&machine, addr + 4u, 4, &value) && machine.stop.detail == mask);
+        o_zero(&machine.stop, sizeof(machine.stop));
+    }
+    /* Independently generated ARM RMW sequence: all 2048 external combinations
+       leave the actual output pins unchanged. This is a bounded property,
+       not proof of a board's idle levels or arbitrary future execution. */
+    const uint32_t input_mask = 0xcc7f, output_mask = 0x3380;
+    for (unsigned variant = 0; variant < 2048; ++variant) {
+        uint32_t levels = 0;
+        unsigned index = 0;
+        for (unsigned pin = 0; pin < 16; ++pin) if (input_mask & (1u << pin))
+            levels |= ((variant >> index++) & 1u) << pin;
+        o_gpio_reset(&machine.soc);
+        CHECK(orchard_gpio_inputs(&machine, ORCHARD_GPIO_D, input_mask, levels) == ORCHARD_OK);
+        CHECK(o_phys_write(&machine, 0x56000030, 4, 0x05054000));
+        instruction(0xe5941034u, false, 0x100); /* LDR r1,[r4,#0x34] */
+        put_word(machine.ram + 0x104, 0xe0010000u); /* AND r0,r1,r0 */
+        put_word(machine.ram + 0x108, 0xe3800c03u); /* ORR r0,r0,#0x300 */
+        put_word(machine.ram + 0x10c, 0xe5860000u); /* STR r0,[r6] */
+        machine.cpu.r[0] = input_mask; machine.cpu.r[4] = 0x56000000; machine.cpu.r[6] = 0x56000034;
+        for (unsigned i = 0; i < 4; ++i) o_cpu_step(&machine);
+        CHECK(machine.stop.status == ORCHARD_OK && machine.cpu.r[15] == O_RAM_BASE + 0x110);
+        CHECK((machine.soc.gpio[0x34 / 4] & output_mask) == 0x300);
+        CHECK(o_phys_read(&machine, 0x56000034, 4, &value) && value == (levels | 0x300));
+        CHECK(machine.soc.srcpnd == 0); /* Read-level stimuli do not implement EINT. */
+    }
+    orchard_reset(&machine);
+    CHECK(machine.soc.gpio_input_known[3] == 0 && machine.soc.gpio_input_levels[3] == 0);
+    CHECK(!o_phys_read(&machine, 0x56000034, 4, &value));
+    CHECK(machine.stop.detail == 0xffff);
+}
 static void interrupt_arbitration(void) {
     uint32_t value;
     orchard_reset(&machine);
@@ -500,7 +558,7 @@ EXPORT("regression") unsigned orchard_regression(void) {
     if (!orchard_init(&machine, sizeof(machine), 6)) return 1;
     arithmetic(); shifter(); conditions(); decoded_arithmetic(); instruction_edges();
     banking_and_exception(); mmu_and_bus(); watchdog(); queues_and_profiles();
-    boot_sram_and_lcd(); gpio_and_reset(); interrupt_arbitration(); rtc_calendar();
+    boot_sram_and_lcd(); gpio_and_reset(); gpio_stimuli(); interrupt_arbitration(); rtc_calendar();
     return failures;
 }
 EXPORT("checks") unsigned orchard_regression_checks(void) { return checks; }

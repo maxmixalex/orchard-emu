@@ -81,6 +81,20 @@ orchard_status orchard_read_memory(const orchard_machine *m, uint32_t address,
 /* Functional UART0 queues; these are not USB or a host-OS virtual device. */
 size_t orchard_uart_send(orchard_machine *m, const uint8_t *data, size_t length);
 size_t orchard_uart_receive(orchard_machine *m, uint8_t *data, size_t capacity);
+/* External GPIO stimuli, not model wiring or a high-level keyboard interface.
+ * Port numbers match B=1 through H=7; port A has no input mode.
+ * Replace the known input mask/levels of one port. Unspecified input pins
+ * remain unresolved; output-mode pins read their guest-controlled latch.
+ * Levels must be a subset of known_mask. Zero mask releases the whole port.
+ * Cold reset/loading a ROM clears stimuli. Does not synthesize EINT edges or
+ * clear an existing diagnostic stop. Call only from the machine's owner.
+ */
+typedef enum {
+    ORCHARD_GPIO_B = 1, ORCHARD_GPIO_C, ORCHARD_GPIO_D, ORCHARD_GPIO_E,
+    ORCHARD_GPIO_F, ORCHARD_GPIO_G, ORCHARD_GPIO_H
+} orchard_gpio_port;
+orchard_status orchard_gpio_inputs(orchard_machine *m, orchard_gpio_port port,
+                                   uint32_t known_mask, uint32_t levels);
 /* Raw STN pixels, one intensity byte per pixel. No skin or annunciator overlays. */
 orchard_status orchard_framebuffer(const orchard_machine *m, uint8_t *pixels,
                                    size_t capacity);

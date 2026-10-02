@@ -1,6 +1,6 @@
 # Native NOR bring-up
 
-## Inputs and result scope
+## Strict full-NOR baseline (unchanged by external-stimulus support)
 
 Two **unmodified full physical NORs** now execute in Orchard: the user's
 HP39g+ D1.55 dump and the hash-pinned HP48gII USB-revision mirror. Both reach
@@ -77,7 +77,7 @@ single scan. Directed asymmetric-word tests replace that ambiguity; TFT/dual
 scan and nonzero dithering remain unsupported. Board-specific panel wiring,
 annunciator rows, polarity, LCD timing and FIFO behavior are not established.
 
-## Current investigations
+## LCD status investigation
 
 HP39g+ polls LCD offset `0x68` immediately before enabling video. The reviewed
 S3C2410A manual lists the normal LCD registers through LPCSEL at offset `0x60`,
@@ -85,10 +85,69 @@ but does not identify this read. The observed firmware loop toggles ENVID
 while the value is nonzero. That is evidence to investigate a possible hidden
 status/FIFO facility, **not enough to assign it a name or return zero**.
 
-HP48gII stops on a GPIO read containing input-configured pins. The next step
-is to establish their board connections and idle levels independently, not to
-reuse output-latch bits as fabricated external inputs. Full NOR availability
-is no longer the blocker for either model.
+## GPDDAT dependency: read-modify-write, not a keyboard decision
+
+Disassembly of the unmodified HP48gII image shows the blocked read is followed
+by masking with `0xcc7f`, setting output bits `0x300`, and writing GPDDAT.
+It preserves input bits while changing outputs; it is not interpreting a key.
+The S3C2410A manual, chapter 9, specifies separate external-input and output-latch
+readback. The new `orchard_gpio_inputs()` interface therefore supplies **only
+explicit externally known levels**; it does not reuse latches as inputs.
+
+Ports B through H have independent known/level masks. Unspecified input bits
+still stop, bad masks fail without mutation, output mode still reads the guest
+latch, and reset clears external stimuli. The function neither creates EINT
+edges nor implements a keyboard matrix. Native CLI and WASM expose the same
+interface; no automatic board preset or generic MMIO fallback was added.
+
+The native checkpoint probe exhausts **all 2,048 combinations** of the eleven
+GPDDAT input bits. From the checked pending-read checkpoint, each variant runs
+8,192 more ticks, ending at `PC=0x08002a2c`. Every PC trace, exposed architectural
+state, external SRAM byte, LCD register and driven output bit agrees; NOR stays
+unchanged. This closes input-value sensitivity for that bounded window only,
+not arbitrary future firmware or actual idle-level measurements. The separate
+ROM-free C regression tests the minimized ARM read/modify/write sequence.
+
+```sh
+node tools/probe-gpio-window.mjs /private/48gii.bin
+node tools/probe-rom.mjs --model hp48gii --rom /private/48gii.bin \
+  --gpio-input D:cc7f:0 --ticks 2000000
+node tools/probe-rom.mjs --model hp48gii --rom /private/48gii.bin \
+  --gpio-input D:cc7f:cc7f --ticks 2000000
+```
+
+Both longer, independently cold-started conditions pass LCD setup and the
+bootloader's firmware-check path, then stop at GPGDAT `0x56000064`,
+`PC=0x08001b60`, after **1,121,326 instructions**. Their CPU outputs agree,
+with no guest exceptions. The source NOR is still the original full dump;
+the explicitly supplied external signals make these **conditional** witnesses,
+not strict no-stimulus boot acceptance. The framebuffer remains blank.
+
+## Original HP49g+/HP50g boot regions
+
+The matching 16 KiB regions are now available; see [preservation research](native-roms.md).
+The remaining NOR is explicitly erased in these experiments, not populated with
+an invented or cross-model OS. Budget: 2,000,000 ticks; all cases replay on each
+host and agree between the native CLI and production WASM.
+
+| Input / explicit condition | Instructions | Stop PC | Missing access | Nonzero raw pixels |
+| --- | ---: | --- | --- | ---: |
+| HP49g+ boot region, no GPIO stimulus | 415,989 | `0x08001afc` | GPDDAT, mask `0xcc50` | 0 |
+| HP49g+, D known `cc50`, low or high | 419,223 | `0x08002148` | USB write `0x52000144` | 0 |
+| HP50g boot region, no GPIO stimulus | 94,497 | `0x08001820` | GPDDAT, mask `0xcc7f` | 0 |
+| HP50g, D known `cc7f`, low or high | 153,879 | `0x08001b60` | GPGDAT `0x56000064` | 858 |
+
+All four stop classes have zero guest exceptions and data-fault state. The
+HP50g bootloader produces recovery-menu framebuffer content because the OS
+sectors are erased. This is **not** the calculator OS booting or USB working.
+
+That nonblank framebuffer also exposes an outstanding display issue: the raw
+controller preview has per-byte reversed character bits. A separate memory
+inspection with LSB-first pixel extraction resolves the bootloader's recovery
+text and version. This establishes the guest buffer's bit convention, **not**
+the complete electrical panel mapping. The SoC decoder has not been silently
+changed to fit a readable screenshot. Correct panel bit order is now an
+explicit counterexample/gate, alongside the already unresolved FIFO/status read.
 
 ## Reproduce locally
 

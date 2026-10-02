@@ -29,6 +29,7 @@ jobs:
           "$RUNNER_TEMP/orchard-docs-venv/bin/pip" install --disable-pip-version-check -r tools/requirements-docs.txt
           "$RUNNER_TEMP/orchard-docs-venv/bin/zensical" build --strict
           test -f site/index.html
+          printf '%s\n' "$GITHUB_SHA" > site/revision.txt
           test -z "$(find site -type f \( -iname '*.bin' -o -iname '*.raw' -o -iname '*.rom' -o -iname '*.xz' \) -print -quit)"
       - uses: actions/upload-pages-artifact@v4
         with:
@@ -59,3 +60,11 @@ jobs:
             "${base}development/roms/?revision=${GITHUB_SHA}" -o "$RUNNER_TEMP/orchard-roms.html"
           grep -q 'Orchard' "$RUNNER_TEMP/orchard-index.html"
           grep -q '4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937' "$RUNNER_TEMP/orchard-roms.html"
+          curl --fail --location --proto '=https' --proto-redir '=https' \
+            --max-time 25 --retry 5 --retry-delay 3 --retry-all-errors \
+            "${base}development/native-roms/?revision=${GITHUB_SHA}" -o "$RUNNER_TEMP/orchard-native-roms.html"
+          curl --fail --location --proto '=https' --proto-redir '=https' \
+            --max-time 25 --retry 5 --retry-delay 3 --retry-all-errors \
+            "${base}revision.txt?revision=${GITHUB_SHA}" -o "$RUNNER_TEMP/orchard-revision.txt"
+          grep -q 'dfa544617039e1bff0f62b9f51a943e57ff756d12bb81478de7aec41a5b73a28' "$RUNNER_TEMP/orchard-native-roms.html"
+          test "$(cat "$RUNNER_TEMP/orchard-revision.txt")" = "$GITHUB_SHA"

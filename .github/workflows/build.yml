@@ -58,14 +58,14 @@ jobs:
         shell: bash
         run: |
           mkdir -p build/analysis
-          for file in src/*.c app/main.c tests/regression.c; do
+          for file in src/*.c app/main.c tests/regression.c tools/probe-gpio-window.c; do
             clang --analyze -std=c17 -Wall -Wextra -Werror -Iinclude -Isrc "$file" \
               -o "build/analysis/$(basename "$file").plist"
           done
           python3 - <<'PYCODE'
           import pathlib, plistlib
           reports = list(pathlib.Path("build/analysis").glob("*.plist"))
-          sources = list(pathlib.Path("src").glob("*.c")) + [pathlib.Path("app/main.c"), pathlib.Path("tests/regression.c")]
+          sources = list(pathlib.Path("src").glob("*.c")) + [pathlib.Path("app/main.c"), pathlib.Path("tests/regression.c"), pathlib.Path("tools/probe-gpio-window.c")]
           assert {p.stem for p in reports} == {p.name for p in sources}, "Missing analyzer output"
           issues = {p.name: plistlib.loads(p.read_bytes())["diagnostics"] for p in reports}
           assert not any(issues.values()), issues
@@ -73,6 +73,7 @@ jobs:
       - name: Build browser core
         run: |
           npm run check
+          npm run test:tools
           npm run build
           npm run test:wasm
       - name: Build documentation
