@@ -94,3 +94,21 @@ EXPORT("lcd_probe68_reads") uint64_t web_lcd_probe68_reads(void) {
 EXPORT("frame_view") unsigned web_frame_view(unsigned view) {
     return orchard_framebuffer_view(&machine, (orchard_frame_view)view, pixels, sizeof(pixels));
 }
+
+EXPORT("adc_input") unsigned web_adc_input(unsigned channel, unsigned known, unsigned code) {
+    if (known > 1) return ORCHARD_BAD_ARGUMENT;
+    return orchard_adc_input(&machine, channel, known != 0, code);
+}
+
+EXPORT("peripheral_snapshot") uintptr_t web_peripheral_snapshot(void) {
+    static uint32_t words[10];
+    if (!machine.profile) return 0;
+    orchard_peripheral_state s;
+    orchard_get_peripheral_state(&machine, &s);
+    words[0] = s.lcd_control; words[1] = s.lcd_source_pending;
+    words[2] = s.lcd_interrupt_pending; words[3] = s.lcd_interrupt_mask;
+    words[4] = (uint32_t)s.lcd_frames; words[5] = (uint32_t)(s.lcd_frames >> 32);
+    words[6] = s.adc_control; words[7] = s.adc_data;
+    words[8] = s.adc_remaining; words[9] = s.adc_valid;
+    return (uintptr_t)words;
+}

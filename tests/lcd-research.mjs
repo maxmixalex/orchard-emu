@@ -12,9 +12,10 @@ export async function checkLCDResearch(root, build) {
   try {
     const rom = Buffer.alloc(0x100000, 255);
     rom.writeUInt32LE(0xea000006, 0);
-    [0xe59f5018, 0xe5950068, 0xe3a01021, 0xe5851000, 0xe5950068, 0xeafffffe]
+    [0xe59f5018, 0xe5950068, 0xe59f1018, 0xe5851000, 0xe5950068, 0xeafffffe]
       .forEach((op, i) => rom.writeUInt32LE(op, 0x20 + i * 4));
     rom.writeUInt32LE(0x4d000000, 0x40);
+    rom.writeUInt32LE(0x221, 0x48); // Valid single-scan CLKVAL=2, ENVID=1.
     const input = resolve(dir, 'generated.bin'); await writeFile(input, rom, { flag: 'wx' });
     const cli = resolve(build, process.platform === 'win32' ? 'orchard.exe' : 'orchard');
     const common = ['run', '--model', 'hp39gplus', '--rom', input, '--ticks', '64'];

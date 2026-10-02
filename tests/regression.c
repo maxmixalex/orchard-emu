@@ -333,6 +333,7 @@ static void boot_sram_and_lcd(void) {
         }
         CHECK(pixels[131] == 0);
     }
+    CHECK(write_reg(0x4d000000, 0x20)); /* Disable before changing scan mode. */
     CHECK(write_reg(0x4d000000, 1)); /* Dual scan is not single scan. */
     CHECK(orchard_framebuffer(&machine, pixels, sizeof(pixels)) == ORCHARD_UNSUPPORTED_LCD);
     orchard_reset(&machine);

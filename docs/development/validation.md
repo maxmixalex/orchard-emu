@@ -1,85 +1,79 @@
 # Validation
 
-## Current local acceptance: LCD hypotheses and scheduled recovery keys
+## Current local acceptance: LCD scan/IRQ and normal ADC
 
-Base revision `54f316d`. All results below were observed locally before
-publication. Current commit-specific remote Build/Documentation outcomes are
-recorded in [issue #1](https://github.com/zyf722/orchard-emu/issues/1). M0 remains
-closed; this slice does not close full CPU, board or stock-boot acceptance.
+Base revision `5f93b3f`. The exact imported source tree was verified before
+editing. Current commit-specific CI and Pages acceptance is recorded in
+[issue #1](https://github.com/zyf722/orchard-emu/issues/1). M0 remains closed;
+these functional peripheral results do not close CPU, board or stock-boot gates.
 
-| Check | Observed result | Scope |
+| Check | Observed local result | Scope |
 | --- | --- | --- |
-| GCC 14.2 Release CTest | Pass | Maintained original core and native CLI |
+| GCC 14.2 Release CTest | Pass | Three Release-active test executables |
 | Clang 17 Debug ASan/UBSan CTest | Pass | ROM-free regression |
-| Clang 17 RelWithDebInfo ASan/UBSan CTest | Pass | Optimized instrumented core |
-| Shared native / test-WASM regression | **115,545 assertions each**, zero failures | Not an independent CPU oracle |
-| ROM/probe tool checks | **60 checks** pass | Includes event bounds, ordering and syntax |
-| Six generated-guest integrations | Pass | Production CLI/WASM state, UART, LCD and replay |
-| Existing circuit guest | Pass | Native/WASM initial ID/key state; WASM matrix/ON four-IRQ sequence |
-| Scheduled circuit guest | Pass | Native CLI and production WASM matrix press/release, two IRQ returns and WFI, cold replay |
-| New LCD research guest | Pass | Strict vs gated disabled read, enabled-video rejection, count/reset and event boundaries |
-| New invalid native CLI cases | **22 cases**, pass before output creation | Bias, policy, frame view and event schedule; prior cases retained |
-| Ten firmware/negative-control scenarios | Host comparison and cold replay pass | Exact conditions/results in boot research, not stock boot |
-| Three optimized sanitizer firmware probes | Pass | 39g+ LCD, 48gII ADC and 50g key-1 paths |
-| Clang static analysis | **17 translation units**, no diagnostics | Includes CLI, regression and optional GPIO-window helper |
-| JS syntax and production WASM build | Pass | No actual browser lifecycle test |
-| Documentation navigation/local targets | **16 pages**, pass | Strict rendering is a separate remote gate |
+| Clang 17 RelWithDebInfo ASan/UBSan CTest | Pass | Optimized instrumentation |
+| Native/test-WASM assertions | **120,118 each**, zero failures | Not independent CPU differential |
+| Existing ROM tool checks | 60 pass | Existing formats/events/pad syntax |
+| New ADC parser/CLI rejection cases | 14 CLI cases pass; parser checks pass | Reject before output creation |
+| Six production synthetic integrations | Pass | State/UART/pixels and reset/replay |
+| Existing circuit and LCD-policy guests | Pass | Scheduled keys, IRQ/WFI, strict/idle-zero boundaries |
+| New ADC/LCD guest | Pass, both hosts and cold replay | Two distinct peripheral IRQs, valid samples 0/1023 and unresolved-input control |
+| Real firmware/control probes | 13 host comparisons and cold replays pass | Exact conditions in boot research, not stock boot |
+| Static analysis | 19 translation units, zero diagnostics | Source, CLI, three C tests and research helper |
+| JS syntax / WASM build | Pass | Not actual browser lifecycle E2E |
+| Documentation navigation/targets | 17 pages | Strict site rendering is a separately observed gate |
 
-The unchanged main regression contributes 102,528 assertions; the new
-`tests/lcd-input.c` contributes 13,017, for 115,545 on each host. Both are
-CTest executables and separately compiled test-only WASM modules.
-The additional C assertions test all raw keyboard switches with weak bias,
-strong/weak priority, unresolved opposing bias, reset and validation; guarded
-LCD reads and actual LDR execution; absolute bus-word lane addressing at two
-base alignments, changing line alignment, four swap settings and three pixel
-depths; nonlinear BLUELUT; and separate controller/packed-memory captures.
-The tests remain active in Release. Seed: `0x09202410`.
+The current counts are 102,530 core + 13,017 prior LCD/input + 4,571 new
+LCD/ADC assertions. Two extra core assertions disable video before a decoder
+mode-change check; this is a test precondition adjustment, not a claimed CPU
+fix. Previous synthetic guests also now program valid CLKVAL=2 instead of the
+old zero-clock placeholder. The prior raw-frame parity test remains intact.
 
-A local regression-sensitivity check temporarily restored the former relative
-lane rule, producing 1,089 failing assertions, and separately restored linear
-2-bpp intensity, producing 4,192. These are multiple assertions for two behavior
-regressions, **not thousands of independent bugs**. The restored corrected
-source passes the suite. Neither experiment modified a ROM or ran on CI.
+## What the new tests exercise
 
-## Production-host checks
+The C suite checks all eight ADC mux channels across nine clock divisions,
+sample hold versus later input changes, exact pre/post-completion boundaries,
+RO completion flags, data validity, subsource and main masking, acknowledgment,
+standby pause/resume, read-start, reset/release, atomic rejection of unresolved
+inputs and busy reconfiguration, bounds, widths and unsupported touch modes.
 
-The ROM-free LCD guest executes a normal LDR of `+0x68` with video disabled,
-then enables video and reads again. Strict mode stops on the first access;
-explicit idle-zero records one unverified read and stops on the second.
-Both hosts agree. A tick-zero event is consumed, but a future event is not
-applied after the diagnostic stop. Same-tick ordering, chronological limits,
-invalid masks, unsigned-overflow input and the 64-event bound are tested.
+LCD cases cover both single-scan modes, every WDLY/WLH table combination,
+read-only LINECNT, unchanged state across repeated reads, masked sources,
+newly unmasked pending delivery, independent W1C latches, both acknowledgment
+orders with elapsed ticks between writes, new-frame retriggering, enable/reset
+phase and explicit unsupported-mode/FIFO/LPC/TFT checks.
 
-The scheduled circuit test uses real guest GPIO/EINT setup and exception
-handlers, not direct IRQ injection. Native CLI events at ticks 2,000 and 2,256
-match production-WASM switch changes at the same boundaries. Both return to
-WFI after two guest IRQs and repeat from cold reset. The older four-event
-matrix/ON sequence remains separately tested on WASM. No test module enters
-`dist/` or the native install targets.
+The generated production guest configures ADC and LCD itself. Its first ADC
+conversion produces an actual guest IRQ 31; its handler reads DAT0 and clears
+the sub/main requests, then returns using SPSR. A later frame generates IRQ
+16; the handler stops video and acknowledges LCD pending **before** source,
+then returns to WFI. Both endpoints 0/1023 produce the expected sample, one
+ADC IRQ and one LCD IRQ. The no-input control stops at sampling with no fake
+result. All exposed architecture and LCD/ADC diagnostics match across hosts
+and independent cold replays. No test module or synthetic image is packaged.
 
-## Firmware experiment boundary
+Two deliberate external mutations were rejected by the new regression: a
+four-clock ADC conversion and relatching an already acknowledged LCD source
+every tick. The latter adds an elapsed-tick acknowledgment-order counterexample;
+these mutations never entered the production source or Git tree.
 
-[Boot research](boot-research.md) lists all ten scenarios and exact results.
-Each runs twice per host, comparing all 16 registers, CPSR, CP15/fault state,
-counters, stop details, UART, the selected framebuffer interpretation and
-applied-event counts. Original/backing-image hashes and compiled executable
-hashes are recorded separately. The report schema is now `orchard-nor-probe-v4`.
-It records strong inputs, weak bias, components, key schedule, view and the
-unverified-read count. It never upgrades `boot_verified` to true.
+## Firmware probes and instrumentation
 
-The negative strong-drive scenario correctly reports contention and consumes
-only the press event. Matching this expected failure across hosts does not
-turn it into keyboard compatibility evidence. The positive HP50g choices
-reach distinct USB/SD register writes after both press and release. They still
-contain no operating system. The idle-zero 39g+/48gII scenarios are explicitly
-hypothesis-enabled, not canonical hardware boot gates.
+[Boot research](boot-research.md) lists thirteen current scenarios. They compare
+registers, CPSR, CP15/fault state, counters, exact stops, source/backing hashes,
+explicit component/pad/ADC conditions, scheduled events, pixels and UART. Probe
+v5 adds pure LCD/ADC diagnostic comparison without triggering READ_START or
+acknowledging interrupts. `adc_valid=false` distinguishes uninitialized backing
+storage from a valid zero sample.
 
-Three long probes repeat with optimized ASan/UBSan: 39g+ keyboard/idle-zero,
-48gII component/idle-zero and HP50g weak-bias key 1. Their native state and
-cold replay match production WASM. This does not claim all ten cases were
-rerun under instrumentation or that the earlier full Debug timeout is solved.
+The progressed 39g+ USB, HP48gII AIN7=512 USB and HP50g key-1 cases were also
+repeated with the optimized Clang ASan/UBSan native CLI against production
+WASM, including cold replay. Only these selected firmware scenarios, not all
+thirteen, constitute instrumented full-probe evidence. Short CTest suites run
+with Debug instrumentation separately. Local orchestration timeouts do not
+count as passes; only complete JSON comparisons were admitted.
 
-## Reproduction
+## Commands
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -96,20 +90,21 @@ ctest --test-dir build-sanitize --output-on-failure
 python3 tools/check-docs.py
 ```
 
-Use `RelWithDebInfo` and `ORCHARD_SANITIZE=ON` for the long instrumented probes;
-`ORCHARD_BUILD_DIR` selects the native directory. Probe commands are in boot
-research. Firmware remains local and unchanged; ordinary CI is ROM-free.
+Use `RelWithDebInfo` plus sanitizers for long instrumented firmware probes;
+`ORCHARD_BUILD_DIR` selects the native build. Firmware input examples are in
+[ADC](adc.md) and [boot research](boot-research.md). Ordinary CI remains ROM-free.
 
-## Remote and remaining gates
+## Remote gates and limits
 
-Prior accepted `54f316d` used 102,528 assertions and 15 pages. Its green build
-is not automatically evidence for this slice. The existing Build workflow
-runs all expanded maintained tests, and Documentation performs strict Zensical
-rendering, Pages publication and exact deployed-revision verification. Observe
-those new outcomes before accepting them. Local package-network access still
-prevents a local Zensical render; link checks are not a substitute.
+The preceding `5f93b3f`/Build #8 used 115,545 assertions and 16 pages. Its green
+result does not automatically accept this revision. The same workflow runs
+the new tests before packaging, and Documentation performs strict Zensical
+rendering, Pages deployment and exact deployed-revision verification. Local
+installation of pinned Zensical 0.0.67 failed because the package was not
+available from this environment; no local strict-render pass is claimed.
 
-No firmware, private trace, reference source or manual is published. A separate
-packed-memory interpretation does not resolve panel wiring. LCD `+0x68`, LCD
-scan/pending behavior, ADC, real board bias, full ARM conformance, stock UI,
-native payload return, USB/SD transfers and actual browser E2E remain open.
+No firmware, manuals, private reports or reference implementation enters Git
+or Pages. ADC codes are not a measured battery circuit, functional LCD ticks
+are not physical timing, and the idle-zero option is still an unverified
+hypothesis. Stock UI, correct panel/annunciators, independent CPU conformance,
+USB/SD transfer, native payload return and actual browser E2E remain open.

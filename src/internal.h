@@ -45,8 +45,19 @@ typedef struct {
 } o_rtc;
 
 typedef struct {
+    uint32_t con, tsc, delay;
+    uint32_t remaining;
+    uint16_t inputs[8], sample, data;
+    uint8_t known;
+    bool valid;
+} o_adc;
+
+typedef struct {
     uint32_t srcpnd, intmod, intmsk, intpnd, subsrcpnd, intsubmsk, priority;
-    uint32_t memc[13], clock[6], gpio[48], lcd[20];
+    uint32_t memc[13], clock[6], gpio[48], lcd[25];
+    uint32_t lcd_phase, lcd_line;
+    uint64_t lcd_frames;
+    o_adc adc;
     uint32_t gpio_input_known[8], gpio_input_levels[8];
     uint32_t gpio_bias_known[8], gpio_bias_levels[8];
     bool lcd_probe68_idle_zero;
@@ -123,6 +134,14 @@ bool o_rtc_register(orchard_machine *m, uint32_t address, unsigned width, uint32
 void o_watchdog_reset(o_soc *s);
 void o_watchdog_tick(orchard_machine *m);
 bool o_watchdog_register(o_soc *s, uint32_t address, uint32_t *value, bool write);
+void o_adc_reset(o_adc *a);
+void o_adc_tick(orchard_machine *m);
+bool o_adc_register(orchard_machine *m, uint32_t address, unsigned width,
+                    uint32_t *value, bool write);
+void o_lcd_reset(o_soc *s);
+void o_lcd_tick(orchard_machine *m);
+bool o_lcd_register(orchard_machine *m, uint32_t address, unsigned width,
+                    uint32_t *value, bool write);
 bool o_lcd_probe68_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);
 bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);
 bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value);

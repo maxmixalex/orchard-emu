@@ -41,11 +41,49 @@ reapplies the requested policy after reset. An experiment with a nonzero count
 cannot close the canonical hardware or stock-boot gate. `boot_verified` remains
 false even when a run budget finishes successfully.
 
-With current explicit input conditions, the HP39g+ image passes this read once
-and next stops on LCDSRCPND (`0x4d000058`), while HP48gII next stops on an ADC
-configuration **write** (`0x58000000`, value `0x42f8`). Those locations have
-normal vendor documentation, but their peripherals are still unimplemented.
-Without the option, both established LCD stops remain unchanged.
+The previous `5f93b3f` baseline exposed LCDSRCPND and ADC configuration as
+subsequent dependencies. The current implementation passes those accesses.
+With explicit ADC samples, the conditioned 39g+ and 48gII runs now stop at
+USB initialization; see [boot research](boot-research.md). Without idle-zero,
+both established LCD `+0x68` stops remain unchanged.
+
+## Documented register and functional scan model
+
+LCDINTPND, LCDSRCPND and LCDINTMSK are separate state, with reset values
+0, 0 and 3. Frame events latch the source even while masked. Unmasking an
+already-pending source can request service; remasking does not erase an
+already-latched request. Pending and source have W1C acknowledgment. Both
+acknowledgment orders work: clearing INTPND first must not recreate the same
+old event every scheduling quantum. IRQ 16 is routed through the existing
+main interrupt controller. The vendor register definitions are supplemented
+by the Linux s3c2410fb hardware driver's acknowledgment sequence; no driver
+implementation was imported (see [references](references.md)).
+
+The read-only LINECNT now advances with virtual time rather than reads.
+Single-scan monochrome/2-bpp/4-bpp modes count from LINEVAL down to zero,
+reload, count a completed frame and generate frame synchronization events.
+The line period uses guest CLKVAL, HOZVAL, WDLY, WLH and LINEBLANK. Repeated
+register reads and diagnostic snapshots do not advance it. Enabling starts
+from LINEVAL and phase zero; disabling freezes the current count. The first
+frame event occurs after a full frame. These startup/freeze conventions and
+one functional HCLK per scheduler quantum are explicit approximations, not
+verified physical edge timing or PLL/clock-gating behavior.
+
+The manual is internally inconsistent: the formula on page 15-4 gives powers
+of two for WDLY/WLH, while register tables 15-28/15-29 specify 16/32/48/64 HCLK.
+The functional model follows the explicit tables. This discrepancy remains a
+physical-timing verification item, rather than being silently hidden.
+
+CLKVAL below 2, unsupported display modes, reserved timing fields and live
+mode/timing reprogramming while video stays enabled stop explicitly. Valid
+clock settings were added to the old synthetic guests; their CLKVAL=0 had
+only worked because the prior implementation did not run a scan clock.
+
+There is **no FIFO occupancy, fetch arbitration, underflow or analog panel**
+model. FIFO interrupts must remain masked; attempts to unmask them stop.
+Enabling LPC3600, a TFT temporary palette or nonzero dithering also stops.
+LCD `+0x68` remains separate, unidentified and strict by default. A working
+scan counter/frame IRQ is not evidence of correct physical panel pixels.
 
 ## Controller stream versus packed-memory inspection
 
@@ -91,9 +129,10 @@ HP50g per-byte pixel-order difference between raw stream and packed memory.
 
 ## Required next evidence
 
-Implement documented LCD pending/mask/scan behavior and ADC from their actual
-interfaces, with bounded regressions. Separately measure or recover stronger
-independent evidence for `+0x68`, and establish controller-to-panel bit wiring.
+The functional scan/IRQ and [normal ADC](adc.md) paths now have maintained
+regressions. Next model the concrete USB initialization dependency, while
+separately recovering stronger independent evidence for `+0x68` and actual
+controller-to-panel bit wiring.
 Keep strict and hypothesis-enabled firmware records side by side. A rendered
 recovery menu, successful budget or comparison between two builds of the same
 core is not a stock operating-system or independent ARM-conformance pass.

@@ -1,6 +1,70 @@
 # Native NOR bring-up
 
-## Current continuation: weak bias, real recovery keys and gated LCD reads
+## Current continuation: functional LCD and ADC to USB initialization
+
+Base revision `5f93b3f`. Two unchanged full NORs now pass the previously
+missing LCD/ADC operations and reach the same USB write, **under the explicit
+idle-zero LCD hypothesis and recorded inputs**. Strict default stops remain
+unchanged; no stock UI or USB transfer is accepted. All firmware experiments
+below ran locally, not on CI. Source and executable hashes are in private
+probe-v5 records. No new original firmware was acquired.
+
+| Local case | Instructions | Stop PC | Next access/result |
+| --- | ---: | --- | --- |
+| HP39g+ strict | 514,293 | `000035e8` | `4d000068` / unsupported MMIO |
+| HP39g+ idle-zero only | 516,679 | `00002d2c` | `56000054` / unsupported MMIO |
+| HP39g+ idle-zero + keyboard/F pads | 518,896 | `0000888c` | `52000144` / unsupported MMIO |
+| HP48gII strict | 94,497 | `08001820` | `56000034` / unsupported MMIO |
+| HP48gII components, strict LCD | 8,210,200 | `0000707c` | `4d000068` / unsupported MMIO |
+| HP48gII idle-zero, ADC input unspecified | 8,212,490 | `00004f58` | `58000000` / unresolved AIN7 |
+| Same, AIN7 code 0 | 8,214,810 | `0000c7ec` | `52000144` / unsupported MMIO |
+| Same, AIN7 code 512 | 8,214,816 | `0000c7ec` | `52000144` / unsupported MMIO |
+| Same, AIN7 code 1023 | 8,214,816 | `0000c7ec` | `52000144` / unsupported MMIO |
+| HP50g boot-only, released keys | 3,000,000 | `08001310` | budget completed / recovery polling |
+| HP50g boot-only, key 1 press/release | 2,634,075 | `08001d58` | `52000144` / unsupported MMIO |
+| HP50g boot-only, key 2 press/release | 2,634,106 | `08003334` | `5a000004` / unsupported MMIO |
+| HP50g strong-drive negative control | 2,168,086 | `08001c44` | `56000064` / GPIO contention |
+
+All thirteen cases have zero guest exceptions/data faults. Each idle-zero
+case records exactly one unverified read. The new LCD scanner changes visible
+peripheral state (LINECNT/frame/source latches) even where the earlier CPU
+checkpoint is unchanged; old whole-report hashes must not be reused.
+
+The 39g+ condition remains attached keyboard and strong F `8e:0`. HP48gII
+uses keyboard, selected SST39VF1601, strong D `cc7f:0` and G `1:0`, weak G
+`f800:f800`. No AIN is implied by those conditions. Its first real ADC start
+selects AIN7; the three explicit sample codes are independent test conditions,
+not measured battery voltage. ADC completes before the USB stop; its valid
+result is 0/512/1023 respectively and is compared across hosts. The low-code
+branch differs by six instructions. Both systems now stop at USB `52000144`
+with value 1, at different original OS PCs. Video has been enabled, but the
+visible buffers are still blank and neither calculator UI is booted.
+
+The four 50g controls retain their unchanged native 16 KiB boot-only input,
+erased OS sectors, prior pad/bias settings and exact press/release schedules.
+Positive choices still reach USB/card initialization; the strong-drive control
+still stops before release. Packed-LSB remains memory inspection, not verified
+panel wiring. No-key/negative-control images have 858 nonzero inspected pixels,
+and the selection paths have 175. There is still no complete 50g NOR here.
+
+Probe v5 compares all previously exposed architecture, conditions, event counts,
+view pixels and UART, plus side-effect-free LCD/ADC diagnostic state: LINECNT,
+source/pending/mask, frame count, ADC control, valid data and remaining ticks.
+Each host starts cold and repeats independently. This is stronger host parity,
+not an independent CPU/hardware oracle. Firmware remains outside the repository.
+
+```sh
+node tools/probe-rom.mjs --model hp48gii --rom /private/48gii.bin \
+  --ticks 10000000 --keyboard apples --nor-device sst39vf1601 \
+  --gpio-input D:cc7f:0,G:1:0 --gpio-bias G:f800:f800 \
+  --lcd-probe68 idle-zero --adc-input 7:512 --frame-view packed-lsb
+```
+
+See [LCD semantics/limits](lcd.md), [ADC inputs](adc.md), and
+[validation](validation.md). The following sections preserve earlier results;
+the table above owns current checkpoints.
+
+## Historical 5f93b3f: weak bias, recovery keys and gated LCD reads
 
 Base revision `54f316d`. The core now separates weak bias from strong GPIO
 stimuli and can schedule raw matrix changes on native CLI as well as WASM.

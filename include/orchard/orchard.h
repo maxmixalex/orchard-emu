@@ -27,7 +27,8 @@ typedef enum {
     ORCHARD_UNSUPPORTED_LCD,
     ORCHARD_BUS_ERROR,
     ORCHARD_UNIMPLEMENTED_RESET,
-    ORCHARD_GPIO_CONTENTION
+    ORCHARD_GPIO_CONTENTION,
+    ORCHARD_UNRESOLVED_ANALOG
 } orchard_status;
 
 typedef struct {
@@ -64,6 +65,16 @@ typedef struct {
     orchard_stop stop;
 } orchard_state;
 
+/* Read-only diagnostic state; adc_data is meaningful only when adc_valid.
+   This getter never acknowledges an IRQ or starts a conversion. */
+typedef struct {
+    uint32_t lcd_control, lcd_source_pending, lcd_interrupt_pending, lcd_interrupt_mask;
+    uint64_t lcd_frames;
+    uint32_t adc_control, adc_data, adc_remaining;
+    bool adc_valid;
+} orchard_peripheral_state;
+void orchard_get_peripheral_state(const orchard_machine *m, orchard_peripheral_state *state);
+
 const orchard_profile *orchard_get_profile(unsigned id);
 const char *orchard_status_string(orchard_status status);
 /* Arena must be aligned to orchard_machine_alignment(). No core allocator. */
@@ -82,6 +93,11 @@ orchard_status orchard_read_memory(const orchard_machine *m, uint32_t address,
 /* Functional UART0 queues; these are not USB or a host-OS virtual device. */
 size_t orchard_uart_send(orchard_machine *m, const uint8_t *data, size_t length);
 size_t orchard_uart_receive(orchard_machine *m, uint8_t *data, size_t capacity);
+/* Explicit ideal ADC sample code, NOT a battery voltage/model default.
+   Channels 0..7 and codes 0..1023. Cold reset releases all inputs.
+   Unknown channels stop when sampled. A started conversion holds its sample. */
+orchard_status orchard_adc_input(orchard_machine *m, unsigned channel,
+                                  bool known, unsigned code);
 /* External GPIO stimuli, not model wiring or a high-level keyboard interface.
  * Port numbers match B=1 through H=7; port A has no input mode.
  * Replace the known input mask/levels of one port. Unspecified input pins

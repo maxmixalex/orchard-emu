@@ -10,16 +10,15 @@ is claimed. One C17
 core runs natively and as WebAssembly; no stock UI boot is accepted yet. The
 firmware's Saturn interpreter is intended to run as guest ARM software, without replacing it with Emu48 or patching the ROM.
 
-The current core includes a CP15/MMU subset, bounded execution and diagnostic
-stops, internal/external SRAM, GPIO latches and explicit input stimuli, IRQ arbitration, a functional RTC,
-timers/UART0/watchdog and a raw single-scan STN LCD preview. An opt-in electrical
-keyboard/EINT model and explicit SST39VF1601 identification now let the unchanged
-HP48gII NOR reach its OS-region LCD initialization. The same unknown LCD `+0x68`
-read blocks both 39g+ and this conditioned 48gII run; neither has booted its UI.
-An explicit, counted LCD idle-zero research option exposes later LCD/ADC
-stops without changing strict defaults. Weak-bias and scheduled-key experiments
-let the original HP50g recovery code select USB/card initialization; neither
-controller transfer nor a stock OS boot is accepted. The browser UI remains a diagnostic workbench. See [real-ROM progression](docs/development/boot-research.md).
+The C17 core includes ARM/Thumb and a CP15/MMU subset, physical SRAM/NOR,
+GPIO/keyboard/EINT, timers/RTC/watchdog, functional LCD scan/frame interrupts
+and normal ADC with explicit sample inputs. Unknown hardware still stops.
+An explicit, counted LCD idle-zero hypothesis lets the original 39g+ and
+48gII NORs reach USB initialization; it does not change strict defaults or
+certify stock boot. Original 50g recovery code responds to scheduled keys,
+but its input is boot-only and no USB/card transfer is implemented.
+The browser remains a diagnostic workbench. See [boot research](docs/development/boot-research.md),
+[LCD limits](docs/development/lcd.md) and [ADC conditions](docs/development/adc.md).
 
 ## Build and verify
 

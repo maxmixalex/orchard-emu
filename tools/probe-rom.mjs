@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Local NOR/boot-region comparison with explicit provenance and external stimuli.
 import assert from 'node:assert/strict';
-import { models as names, prepareInput, parseGpio, parseKeyEvents, readFirmware, sha256 as sha } from './rom-inputs.mjs';
+import { models as names, prepareInput, parseGpio, parseKeyEvents, parseAdc, readFirmware, sha256 as sha } from './rom-inputs.mjs';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
@@ -12,8 +12,8 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2), options = {};
 for (let i = 0; i < args.length; i += 2) {
   const key = args[i];
-  if (!['--model', '--rom', '--bootloader', '--gpio-input', '--gpio-bias', '--lcd-probe68', '--frame-view', '--key-at', '--keyboard', '--nor-device', '--ticks', '--output'].includes(key) || !args[i + 1] || key in options)
-    throw new Error('Usage: node tools/probe-rom.mjs --model SLUG (--rom FULL-NOR | --bootloader NATIVE-BOOT.bin) [--gpio-input D:cc7f:0,G:f801:f800] [--gpio-bias G:f800:f800] [--lcd-probe68 idle-zero] [--frame-view packed-lsb] [--key-at TICK:COL:ROW:DOWN,...] [--keyboard apples] [--nor-device sst39vf1601] [--ticks 1000000] [--output NEW.json]');
+  if (!['--model', '--rom', '--bootloader', '--gpio-input', '--gpio-bias', '--adc-input', '--lcd-probe68', '--frame-view', '--key-at', '--keyboard', '--nor-device', '--ticks', '--output'].includes(key) || !args[i + 1] || key in options)
+    throw new Error('Usage: node tools/probe-rom.mjs --model SLUG (--rom FULL-NOR | --bootloader NATIVE-BOOT.bin) [--gpio-input D:cc7f:0,G:f801:f800] [--gpio-bias G:f800:f800] [--adc-input 7:512] [--lcd-probe68 idle-zero] [--frame-view packed-lsb] [--key-at TICK:COL:ROW:DOWN,...] [--keyboard apples] [--nor-device sst39vf1601] [--ticks 1000000] [--output NEW.json]');
   options[key] = args[i + 1];
 }
 const id = names.indexOf(options['--model']) + 1;
@@ -21,6 +21,7 @@ if (!id || Boolean(options['--rom']) === Boolean(options['--bootloader']))
   throw new Error('Specify a known model and exactly one of --rom or --bootloader');
 const stimuli = parseGpio(options['--gpio-input']);
 const biases = parseGpio(options['--gpio-bias']);
+const adcInputs = parseAdc(options['--adc-input']);
 const lcdProbe = options['--lcd-probe68'] ?? 'strict';
 const frameView = options['--frame-view'] ?? 'controller';
 if (options['--lcd-probe68'] && lcdProbe !== 'idle-zero') throw new Error('Expected --lcd-probe68 idle-zero');
@@ -30,6 +31,7 @@ const norDevice = options['--nor-device'] ?? 'unspecified';
 if (options['--keyboard'] && keyboard !== 'apples') throw new Error('Expected --keyboard apples');
 if (options['--nor-device'] && norDevice !== 'sst39vf1601') throw new Error('Expected --nor-device sst39vf1601');
 const hardwareArgs = [
+  ...adcInputs.flatMap(s => ['--adc-input', `${s.channel}:${s.code}`]),
   ...(lcdProbe === 'idle-zero' ? ['--lcd-probe68', lcdProbe] : []),
   ...(frameView === 'packed-lsb' ? ['--frame-view', frameView] : []),
   ...biases.flatMap(s => ['--gpio-bias', s.cli]),
@@ -85,6 +87,7 @@ try {
     assert.equal(c.keyboard_attach(keyboard === 'apples' ? 1 : 0), 0);
     for (const s of stimuli) assert.equal(c.gpio_inputs(s.port, s.known, s.levels), 0);
     for (const s of biases) assert.equal(c.gpio_bias(s.port, s.known, s.levels), 0);
+    for (const s of adcInputs) assert.equal(c.adc_input(s.channel, 1, s.code), 0);
     assert.equal(c.lcd_probe68(lcdProbe === 'idle-zero' ? 1 : 0), 0);
     let status = 0;
     const uart = [];
@@ -106,12 +109,18 @@ try {
     const frameStatus = c.frame_view(frameView === 'packed-lsb' ? 1 : 0);
     const pixels = frameStatus ? null : Buffer.from(new Uint8Array(c.memory.buffer,
       c.frame_buffer(), c.profile(id, 2) * c.profile(id, 3)));
-    return { words, frameStatus, pixels, uart: Buffer.concat(uart), applied, unverifiedReads: c.lcd_probe68_reads().toString() };
+    const p = [...new Uint32Array(c.memory.buffer, c.peripheral_snapshot(), 10)];
+    const peripherals = { lcd_control: p[0], lcd_source_pending: p[1], lcd_interrupt_pending: p[2],
+      lcd_interrupt_mask: p[3], lcd_frames: u64(p, 4), adc_control: p[6], adc_data: p[7],
+      adc_remaining: p[8], adc_valid: Boolean(p[9]) };
+    return { words, peripherals, frameStatus, pixels, uart: Buffer.concat(uart), applied, unverifiedReads: c.lcd_probe68_reads().toString() };
   }
   const n = await nativeRun(0), w = wasmRun(), s = w.words;
   assert.deepEqual(n, await nativeRun(1), 'Native cold replay differs');
   c.reset();
   assert.deepEqual(w, wasmRun(), 'WASM cold replay differs');
+  assert.deepEqual(n.state.adc_inputs, adcInputs);
+  assert.deepEqual(n.state.peripherals, w.peripherals);
   assert.equal(n.state.keyboard, keyboard);
   assert.equal(n.state.lcd_probe68, lcdProbe);
   assert.equal(n.state.lcd_unverified_reads, w.unverifiedReads);
@@ -135,10 +144,10 @@ try {
     assert.equal(n.state.stop[key], hex(s[index]));
   assert.equal(n.state.frame_status, w.frameStatus);
   assert.deepEqual(n.pixels, w.pixels); assert.deepEqual(n.uart, w.uart);
-  const report = { schema: 'orchard-nor-probe-v4', model: names[id - 1], input_bytes: rom.length,
+  const report = { schema: 'orchard-nor-probe-v5', model: names[id - 1], input_bytes: rom.length,
     input_sha256: inputHash, identified_fixture: prepared.source.identified_fixture, input_kind: prepared.input_kind,
     source_input: prepared.source, construction: prepared.construction,
-    keyboard, nor_device: norDevice, lcd_probe68: lcdProbe,
+    adc_inputs: adcInputs, keyboard, nor_device: norDevice, lcd_probe68: lcdProbe,
     lcd_unverified_reads: w.unverifiedReads, frame_view: frameView, key_events: events,
     gpio_bias: biases.map(s => ({ port: s.name, known_mask: hex(s.known), levels: hex(s.levels) })),
     gpio_inputs: stimuli.map(s => ({ port: s.name, known_mask: hex(s.known), levels: hex(s.levels) })),

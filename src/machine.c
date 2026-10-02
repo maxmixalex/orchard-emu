@@ -33,7 +33,8 @@ const char *orchard_status_string(orchard_status s) {
         "UART host queue full", "big-endian mode not implemented", "unsupported LCD mode",
         "physical memory outside implemented banks",
         "watchdog reset requested; reset propagation not implemented",
-        "contradictory external GPIO drives"
+        "contradictory external GPIO drives",
+        "unresolved ADC input or conversion data"
     };
     return (unsigned)s < sizeof(names) / sizeof(names[0]) ? names[s] : "unknown status";
 }
@@ -144,4 +145,19 @@ size_t orchard_uart_receive(orchard_machine *m, uint8_t *data, size_t capacity) 
     size_t n = 0;
     while (n < capacity && o_q_pop(&m->soc.tx, &data[n])) ++n;
     return n;
+}
+
+void orchard_get_peripheral_state(const orchard_machine *m, orchard_peripheral_state *state) {
+    if (!m || !m->profile || !state) return;
+    o_zero(state, sizeof(*state));
+    const o_soc *s = &m->soc;
+    state->lcd_control = (s->lcd[0] & ~(0x3ffu << 18)) | (s->lcd_line << 18);
+    state->lcd_source_pending = s->lcd[0x58 / 4];
+    state->lcd_interrupt_pending = s->lcd[0x54 / 4];
+    state->lcd_interrupt_mask = s->lcd[0x5c / 4];
+    state->lcd_frames = s->lcd_frames;
+    state->adc_control = s->adc.con;
+    state->adc_data = s->adc.data;
+    state->adc_remaining = s->adc.remaining;
+    state->adc_valid = s->adc.valid;
 }

@@ -68,7 +68,7 @@ then the remaining peripherals actually exercised by firmware.
 
 A register retaining its last written value is not full peripheral support.
 Use bounded events in a virtual clock domain and explicit peripheral reset
-state. Unknown accesses stop and enter a trace inventory. DMA, USB, SD, ADC,
+state. Unknown accesses stop and enter a trace inventory. DMA, USB, SD, touch modes,
 I2C and power management are not silently treated as present.
 
 **Gate:** independently specified register tests and boot traces cover the
@@ -197,3 +197,19 @@ pretending that the earlier silicon behavior is known. See [LCD evidence](lcd.md
 The user plans to provide HP39gs and HP49g+ full dumps later. Their acquisition
 is deferred and should not displace available-ROM hardware work. Keep those
 forthcoming inputs distinct from currently available updates/boot-only regions.
+
+## Functional LCD / ADC continuation (after 5f93b3f)
+
+LCD frame-source/pending/mask, W1C and time-driven single-scan LINECNT now
+have directed regressions. Normal ADC sample/hold, prescaler, standby,
+read-start, completion/subinterrupt and explicit inputs are implemented.
+A production guest exercises both peripheral interrupts and SPSR/WFI returns
+on native and WASM hosts. FIFO, actual clocks, touch modes and analog hardware
+remain open, not implied by these functional interfaces.
+
+Conditioned original 39g+ and 48gII full NORs now converge on USB `52000144`
+initialization. Implement that documented controller path next, with separate
+register, enumeration and transfer gates. Strict LCD `+0x68` behavior remains
+unchanged; each progressed case still carries a counted hypothesis. Neither
+M2 physical-board acceptance nor M3 stock cold boot is closed by this progress.
+See [LCD](lcd.md), [ADC](adc.md), and the current [boot table](boot-research.md).

@@ -1,54 +1,46 @@
 # Continuation handoff
 
-Work in private `zyf722/orchard-emu`, preserving main ancestry and existing
-issue #1. M0 is closed. The baseline for this slice was `54f316d`; current
-accepted revision and remote run IDs belong in the issue. Do not force-push.
+Private `zyf722/orchard-emu`; preserve main ancestry and existing issue #1.
+Base for this slice: `5f93b3f`. The live issue owns current accepted commit,
+Build and Pages results. Do not force-push or change repository visibility.
 
-## User's updated input plan
+## Input plan
 
-The user will later provide **HP39gs and HP49g+ full NOR dumps from their own
-machines**. Defer those acquisition tasks and continue with available inputs;
-do not restart the retired dumper, keep searching the blocked 39gs attachment
-as the main task, or ask for a dump now. When bytes arrive, hash and classify
-them before use; an updater remains different from a physical full NOR.
+The user will later provide original **HP39gs and HP49g+ full NOR dumps** from
+their machines. Do not request those now or restart the retired dumper. This
+is deferred input work, not a development blocker. Available full dumps remain
+HP39g+ D1.55 and HP48gII USB revision. The two original 16 KiB 49g+/50g boot
+regions remain separately classified with erased OS backing. No new firmware
+was acquired. See [native inventory](native-roms.md).
 
-Available inputs remain the user's HP39g+ D1.55 full NOR, the pinned community
-HP48gII full NOR, and distinct original HP49g+/HP50g 16 KiB native boot regions.
-Native-region experiments declare erased OS sectors. No new original firmware
-was acquired in this continuation. See [native inventory](native-roms.md).
+## Current dependency
 
-## Current progress and next dependency
+The documented LCD source/pending registers and functional scan counter now
+work; normal ADC has explicit sample inputs and completion IRQ. Conditioned
+39g+ reaches original OS PC `0000888c`; conditioned 48gII with AIN7=0/512/1023
+reaches `0000c7ec`. Both next write 1 to USB `52000144`. With no analog input,
+48gII instead stops at its real AIN7 conversion start (`00004f58`).
 
-[Boot research](boot-research.md) records ten cold-probe scenarios. Weak bias
-replaces only explicitly selected strong-high column stimuli. Real HP50g
-boot-only matrix press/release now selects USB/card initialization without a
-contention failure. USB and SD controllers then stop on their first missing
-register operations. This is real guest menu control, not transfer acceptance
-or a running stock OS. Native CLI/WASM schedules and cold replays agree.
+Every idle-zero run still records one unverified LCD `+0x68` read. Strict
+39g+/48gII checkpoints remain unchanged. The next useful implementation is
+the actual USB device-controller initialization, followed by guest descriptor
+and host transactions. Do not call register acceptance enumeration or transfer.
 
-Default strict full-NOR stops remain unchanged. Explicit disabled-video
-`--lcd-probe68 idle-zero` admits one counted research read, after which HP39g+
-with keyboard stops on LCDSRCPND and HP48gII with components stops on ADC
-configuration. The read is a **hypothesis**, not established hardware semantics.
-Maintain that separation while implementing the next documented dependencies.
+LCD timing is functional and includes a documented manual discrepancy for
+WDLY/WLH. FIFO, physical clocks/panel mapping and real pad/analog bias are not
+closed. `packed-lsb` is memory inspection, not the physical LCD. ADC codes are
+not battery voltages. See [LCD](lcd.md), [ADC](adc.md) and [boot research](boot-research.md).
 
-`--frame-view packed-lsb` is diagnostic guest-memory interpretation, not the
-physical panel. The default controller path now has correct absolute-word lane
-addressing and BLUELUT lookup, but actual controller-to-panel bit wiring is
-still open. Do not turn a readable diagnostic menu into a hardware claim.
+## Validation / publication
 
-## Reproduction and publication
+Three CTest suites run natively and as test-only WASM. The production peripheral
+guest exercises ADC and LCD IRQ entry/acknowledgment/SPSR return/WFI on both
+hosts. Probe v5 records ADC conditions and side-effect-free peripheral state,
+in addition to previous architecture and event schedules. Thirteen firmware
+comparisons/cold replays and three selected optimized-sanitizer scenarios are
+recorded in [validation](validation.md).
 
-Probe v4 records strong pads, weak bias, key events, component selection,
-LCD policy/count and framebuffer view alongside immutable input and binary
-identities. Both hosts apply events at the same virtual boundaries and replay
-from cold reset. Only three selected firmware cases were also repeated under
-optimized ASan/UBSan; the short maintained suite passes Debug instrumentation.
-See [validation](validation.md) for the exact scope.
-
-Build and test locally before pushing. Production distributions exclude tests,
-firmware and private reports. Zensical Pages publishes documentation only and
-verifies live content plus `revision.txt`; do not change repository visibility.
-The separate research branch exports source only. Neither MAME nor x49gp code
-was imported; their inspected LCD approximations are transparently recorded
-in [licensing](licensing.md) and [references](references.md).
+Run locally before pushing. Tests belong in the source repository but not
+production packages. Firmware/manuals/private traces never enter Git or Pages.
+Zensical deployment publishes docs only and verifies live content/revision.
+M0 stays closed; no current conditioned run closes M3 or independent CPU gates.

@@ -25,3 +25,8 @@ New research: [native boot-region inventory](development/native-roms.md) and
 [explicit GPIO sensitivity experiments](development/boot-research.md). Original
 HP49g+/HP50g boot code now runs separately from the genuine full-dump fixtures;
 no additional complete stock OS or full-NOR capture is claimed.
+
+Current peripheral work: [LCD scan/interrupts](development/lcd.md) and
+[normal ADC with explicit inputs](development/adc.md). Conditioned full-NOR
+runs now reach USB initialization; no USB enumeration/transfer or stock UI
+boot is implied. Strict default checkpoints remain separate.

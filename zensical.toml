@@ -18,6 +18,7 @@ nav = [
     "development/boot-research.md",
     "development/input.md",
     "development/lcd.md",
+    "development/adc.md",
     "development/virtual-link.md",
     "development/web.md",
     "development/validation.md",

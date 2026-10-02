@@ -111,3 +111,18 @@ The original vendor manual remains the source for GPIO input/output semantics.
 The new guarded read, bias resolver, decoder corrections and tests are original
 Orchard code. See [LCD evidence](lcd.md) and [licensing](licensing.md) for the
 separation between specifications, firmware observations and emulator choices.
+
+## LCD interrupts and normal ADC
+
+- Samsung S3C2410A manual, sections 15-4, 15-26..15-38, 16-4..16-11 and
+  14-17. The timing formula and WDLY/WLH tables disagree for some settings;
+  the functional model follows the explicit tables and records the discrepancy.
+- [Linux s3c2410fb hardware driver, pinned revision](https://code.googlesource.com/linux/torvalds/linux/+/91f28da8c9a054286d6917ce191349455c479478/drivers/video/fbdev/s3c2410fb.c).
+  Its frame-IRQ acknowledgment writes the frame bit to LCDINTPND then
+  LCDSRCPND. Only this hardware-use sequence was consulted; no driver
+  implementation was copied or translated into Orchard. The resulting
+  original latches are tested with both acknowledgment orders.
+
+The ADC accepts ideal digital sample codes, not captured voltages. Functional
+HCLK/PCLK quanta, initial scan phase, inactive ADC status lanes and standby
+phase retention are modeling conventions, not new physical measurements.

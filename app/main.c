@@ -16,6 +16,7 @@ static void usage(FILE *out) {
           "              [--gpio-bias PORT:MASK_HEX:LEVELS_HEX] ...\n"
           "              [--key-at TICK:COLUMN:ROW:0_OR_1] ...\n"
           "              [--lcd-probe68 idle-zero] [--frame-view packed-lsb]\n"
+          "              [--adc-input CHANNEL:CODE] ... (decimal 0..7:0..1023)\n"
           "              [--uart-in FILE] [--uart-out FILE]\n"
           "              [--gpio-input PORT:KNOWN_HEX:LEVELS_HEX] ...\n\n"
           "GPIO input stimuli are explicit research conditions, not board wiring.\n"
@@ -64,6 +65,19 @@ static bool parse_gpio(const char *text, unsigned *port, uint32_t *known, uint32
     *port = (unsigned)(text[0] - 'A'); *known = fields[0]; *levels = fields[1];
     return true;
 }
+static bool parse_adc(const char *text, unsigned *channel, unsigned *code) {
+    if (text[0] < '0' || text[0] > '7' || text[1] != ':') return false;
+    const char *p = text + 2;
+    if (!*p) return false;
+    unsigned value = 0, digits = 0;
+    for (; *p; ++p) {
+        if (*p < '0' || *p > '9' || ++digits > 4) return false;
+        value = 10u * value + (unsigned)(*p - '0');
+    }
+    if (value > 1023) return false;
+    *channel = (unsigned)(text[0] - '0'); *code = value;
+    return true;
+}
 typedef struct { uint64_t tick; unsigned col, row, down; } key_event;
 static bool parse_key(const char *text, key_event *event) {
     uint64_t fields[4] = {0};
@@ -98,6 +112,8 @@ int main(int argc, char **argv) {
     orchard_nor_device nor = ORCHARD_NOR_UNSPECIFIED;
     uint32_t gpio_known[8] = {0}, gpio_levels[8] = {0};
     bool gpio_set[8] = {false};
+    bool adc_set[8] = {false};
+    unsigned adc_codes[8] = {0};
     for (int i = 2; i < argc; i += 2) {
         if (i + 1 == argc) { fprintf(stderr, "Missing value for %s\n", argv[i]); return 64; }
         const char *key = argv[i], *value = argv[i + 1];
@@ -121,6 +137,13 @@ int main(int argc, char **argv) {
                 fputs("Use --gpio-bias PORT:MASK_HEX:LEVELS_HEX once per port B..H\n", stderr); return 64;
             }
             bias_set[port] = true; bias_known[port] = known; bias_levels[port] = levels;
+        } else if (strcmp(key, "--adc-input") == 0) {
+            unsigned channel, code;
+            if (!parse_adc(value, &channel, &code) || adc_set[channel]) {
+                fputs("Use --adc-input CHANNEL:CODE once per channel (decimal 0..7:0..1023)\n", stderr);
+                return 64;
+            }
+            adc_set[channel] = true; adc_codes[channel] = code;
         } else if (strcmp(key, "--lcd-probe68") == 0) {
             if (strcmp(value, "idle-zero") != 0) { fputs("Expected --lcd-probe68 idle-zero\n", stderr); return 64; }
             lcd_idle_zero = true;
@@ -201,6 +224,11 @@ int main(int argc, char **argv) {
             fputs("Invalid GPIO bias mask/levels\n", stderr); result = 64; goto cleanup;
         }
     if (orchard_lcd_probe68(m, lcd_idle_zero) != ORCHARD_OK) { result = 64; goto cleanup; }
+    for (unsigned channel = 0; channel < 8; ++channel) if (adc_set[channel]) {
+        if (orchard_adc_input(m, channel, true, adc_codes[channel]) != ORCHARD_OK) {
+            fputs("Invalid ADC stimulus\n", stderr); result = 64; goto cleanup;
+        }
+    }
     trace = open_output(tracepath);
     output = open_output(outpath);
     if ((tracepath && !trace) || (outpath && !output)) goto cleanup;
@@ -293,7 +321,21 @@ int main(int argc, char **argv) {
     for (unsigned i = 0; i < event_count; ++i)
         printf("%s{\"tick\":\"%" PRIu64 "\",\"column\":%u,\"row\":%u,\"down\":%u}",
                i ? "," : "", events[i].tick, events[i].col, events[i].row, events[i].down);
-    puts("]}");
+    fputs("],\"adc_inputs\":[", stdout);
+    bool first_adc = true;
+    for (unsigned channel = 0; channel < 8; ++channel) if (adc_set[channel]) {
+        printf("%s{\"channel\":%u,\"code\":%u}", first_adc ? "" : ",", channel, adc_codes[channel]);
+        first_adc = false;
+    }
+    orchard_peripheral_state peripheral;
+    orchard_get_peripheral_state(m, &peripheral);
+    printf("],\"peripherals\":{\"lcd_control\":%" PRIu32 ",\"lcd_source_pending\":%" PRIu32
+           ",\"lcd_interrupt_pending\":%" PRIu32 ",\"lcd_interrupt_mask\":%" PRIu32
+           ",\"lcd_frames\":\"%" PRIu64 "\",\"adc_control\":%" PRIu32 ",\"adc_data\":%" PRIu32
+           ",\"adc_remaining\":%" PRIu32 ",\"adc_valid\":%s}}\n",
+           peripheral.lcd_control, peripheral.lcd_source_pending, peripheral.lcd_interrupt_pending,
+           peripheral.lcd_interrupt_mask, peripheral.lcd_frames, peripheral.adc_control,
+           peripheral.adc_data, peripheral.adc_remaining, peripheral.adc_valid ? "true" : "false");
     result = state.stop.status == ORCHARD_OK && frame_status == ORCHARD_OK ? 0 : 2;
 cleanup:
     if (rom && fclose(rom) != 0) result = 74;

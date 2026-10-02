@@ -100,3 +100,18 @@ export function parseKeyEvents(text, budget) {
     return { tick, column, row, down };
   });
 }
+
+// Exact, explicit ideal sample codes. No inferred voltage or default channel.
+export function parseAdc(text) {
+  if (text === undefined) return [];
+  if (typeof text !== 'string' || !text) throw new Error('Empty ADC input list');
+  const seen = new Set();
+  return text.split(',').map(item => {
+    const match = /^([0-7]):([0-9]{1,4})$/.exec(item);
+    if (!match) throw new Error('Expected decimal CHANNEL:CODE (0..7:0..1023)');
+    const channel = Number(match[1]), code = Number(match[2]);
+    if (code > 1023 || seen.has(channel)) throw new Error('ADC code out of range or duplicate channel');
+    seen.add(channel);
+    return { channel, code };
+  }).sort((a, b) => a.channel - b.channel);
+}

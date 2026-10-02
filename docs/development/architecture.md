@@ -156,3 +156,20 @@ an exposed read counter and reset behavior, not a resolved register definition.
 See [LCD evidence](lcd.md). Weak pad bias and chronological native-host events
 extend the external circuit/host interfaces without editing guest variables;
 [probe v4](boot-research.md) records every supplied condition.
+
+## LCD / normal ADC scheduling
+
+`src/lcd.c` now owns the documented LCD registers, W1C frame/source latches
+and functional single-scan timing. Reading LINECNT is observational. Frame
+requests feed interrupt 16; unsupported FIFO interrupts cannot be unmasked.
+`src/adc.c` owns normal conversion, holding an explicitly supplied sample for
+five divided ADC clocks and raising subsource 10 on completion. No AIN has an
+implicit board/battery value. See [LCD](lcd.md) and [ADC](adc.md) for exact
+clock, startup, unsupported-mode and analog/panel limitations.
+
+The scheduler supplies one provisional HCLK/PCLK quantum to these devices
+before guest execution. This does not implement the real clock tree. The pure
+`orchard_get_peripheral_state`/`peripheral_snapshot` interface separates
+observation from MMIO reads that can start ADC conversion. The latter exports
+ten 32-bit words: LCD control/source/pending/mask, frame count low/high, ADC
+control/data/remaining/valid. Existing 33-word CPU snapshots are unchanged.
