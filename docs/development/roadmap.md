@@ -53,7 +53,10 @@ checks are useful evidence, not this complete gate.
 
 ## M2 — Boot-relevant SoC and board model
 
-**A small functional subset exists, including watchdog countdown/reload/IRQ.**
+**In progress, driven by genuine full-NOR traces.** Internal boot SRAM, GPIO
+reset/latch state, two-level IRQ arbitration and a functional RTC now join
+the watchdog/timer/UART subset. Both admitted ROMs pass the original reset
+status stop. See [boot research](boot-research.md).
 
 Watchdog reset propagation is still an explicit diagnostic stop, not an
 implemented reset domain. See [validation](validation.md).
@@ -74,12 +77,15 @@ firmware patches or instruction-interpreter model hacks.
 
 ## M3 — First genuine stock cold boot
 
-**Real-ROM execution has not started.**
+**Genuine full-NOR execution established for HP39g+ and HP48gII; interactive
+stock cold boot is still open.**
 
-First target: the existing hardware-acquired HP39g+ D1.55 full NOR from
-hpclang. The size/hash/provenance are known; local binary access is unresolved.
-HP50g remains a useful reference, not a substitute for the native HP39g+
-bootloader. See [handoff](handoff.md).
+The two verified inputs execute 514,293 and 94,497 instructions, respectively,
+without guest exceptions before explicit hardware stops. Native and WASM
+state/replay agree. HP39g+ enables its own MMU and reaches LCD initialization;
+HP48gII reaches copied SRAM startup code. Both displays remain blank.
+The full NORs are available locally; update packages for the other models do
+not replace missing native boot areas. See [ROM provenance](roms.md).
 
 Record four separate witnesses: reset/bootloader progression; initialized LCD;
 interactive stock UI; native ARM payload execution and return to a responsive
@@ -148,7 +154,8 @@ unqualified support claims for optional or missing devices.
 
 ## Working order
 
-Finish M0 publication/evidence tooling, then use M1 edge cases and the first
-real full-NOR boot trace to drive M2/M3. Keep all six profiles present but avoid
+M0 and initial Pages deployment are accepted. Use M1 edge cases and the two
+genuine full-NOR traces to drive M2/M3, starting with LCD offset 0x68 and
+model-correct GPIO input sources. Keep all six profiles present but avoid
 six parallel speculative peripheral implementations. M5 presentation polish
 and M6 host-OS bridging must not displace the first stock boot gate.

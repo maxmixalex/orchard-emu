@@ -66,3 +66,13 @@ The next browser gate must use the unmodified `dist/` assets on a permitted
 local origin and cover actual file selection, generation changes during load,
 run/pause, step/reset, invalid ROM/hex input, addressed MMIO stops, UART pressure,
 no outbound ROM requests, screenshots and console errors on desktop/mobile.
+
+## Documentation publishing
+
+The [documentation site](https://zyf722.github.io/orchard-emu/) is deployed by
+`.github/workflows/docs.yml` on documentation/configuration changes. It builds
+Zensical strictly, uploads **only** `site/`, uses Pages/OIDC permissions only
+in the deploy job, and checks published HTML. The first deployment succeeded
+in [Documentation #1](https://github.com/zyf722/orchard-emu/actions/runs/36984188560).
+The diagnostic emulator's `dist/` and private NOR inputs are not Pages content.
+This is publication evidence, not production browser-calculator E2E.

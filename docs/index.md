@@ -5,8 +5,9 @@ interpreter and a progressively implemented S3C2410-class machine. Its goal is
 unmodified stock firmware running from a complete physical NOR dump, natively
 and in a browser, with useful virtual PC connectivity.
 
-**Current boundary:** an executing, locally validated bring-up core, not a
-stock-OS-capable calculator. The six model records specify candidate physical
+**Current boundary:** two genuine full NORs execute to early hardware stops;
+no stock-OS-capable calculator is claimed. [Boot research](development/boot-research.md)
+records the exact inputs, progression and remaining blockers. The six model records specify candidate physical
 memory/display profiles; they are not a claim of six validated boards.
 
 The [roadmap](development/roadmap.md) owns durable milestones and acceptance

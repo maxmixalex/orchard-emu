@@ -5,7 +5,7 @@
 static const orchard_profile profiles[] = {
     {1, "hp39gplus", "HP 39g+", "hp39", 0x100000, 0x40000, 131, 64, false},
     {2, "hp39gs", "HP 39gs", "hp39", 0x100000, 0x40000, 131, 64, false},
-    {3, "hp40gs", "HP 40gs", "hp39", 0x100000, 0x40000, 131, 64, false},
+    {3, "hp40gs", "HP 40gs", "hp39", 0x200000, 0x40000, 131, 64, false},
     {4, "hp48gii", "HP 48gII (USB revision)", "hp48", 0x200000, 0x40000, 131, 64, false},
     {5, "hp49gplus", "HP 49g+", "hp4950", 0x200000, 0x80000, 131, 80, true},
     {6, "hp50g", "HP 50g", "hp4950", 0x200000, 0x80000, 131, 80, true}
@@ -51,6 +51,7 @@ void orchard_reset(orchard_machine *m) {
     o_cpu_reset(&m->cpu);
     o_soc_reset(&m->soc);
     o_zero(m->ram, m->profile->ram_bytes);
+    o_zero(m->boot_sram, sizeof(m->boot_sram));
     o_zero(&m->stop, sizeof(m->stop));
     m->ticks = 0;
 }
@@ -121,6 +122,11 @@ orchard_status orchard_read_memory(const orchard_machine *m, uint32_t address,
     if (address >= O_RAM_BASE && address - O_RAM_BASE < m->profile->ram_bytes &&
         length <= m->profile->ram_bytes - (address - O_RAM_BASE)) {
         o_copy(destination, m->ram + address - O_RAM_BASE, length);
+        return ORCHARD_OK;
+    }
+    if (address >= O_BOOT_SRAM_BASE && address - O_BOOT_SRAM_BASE < O_BOOT_SRAM_SIZE &&
+        length <= O_BOOT_SRAM_SIZE - (address - O_BOOT_SRAM_BASE)) {
+        o_copy(destination, m->boot_sram + address - O_BOOT_SRAM_BASE, length);
         return ORCHARD_OK;
     }
     return ORCHARD_BUS_ERROR;

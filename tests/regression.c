@@ -304,11 +304,203 @@ static void queues_and_profiles(void) {
         CHECK(machine.ticks == 0 && machine.loaded && machine.soc.rx.count == 0);
     }
 }
+static void boot_sram_and_lcd(void) {
+    orchard_reset(&machine);
+    uint32_t value;
+    uint8_t byte = 99, pixels[131 * 80];
+    CHECK(o_phys_write(&machine, O_BOOT_SRAM_BASE, 4, 0x80402010));
+    CHECK(o_phys_read(&machine, O_BOOT_SRAM_BASE + 3, 1, &value) && value == 0x80);
+    CHECK(o_phys_write(&machine, O_BOOT_SRAM_BASE + O_BOOT_SRAM_SIZE - 2, 2, 0x1234));
+    CHECK(!o_phys_write(&machine, O_BOOT_SRAM_BASE + O_BOOT_SRAM_SIZE - 1, 2, 0));
+    CHECK(!o_phys_read(&machine, O_BOOT_SRAM_BASE - 1, 1, &value));
+    CHECK(!o_phys_read(&machine, O_BOOT_SRAM_BASE + O_BOOT_SRAM_SIZE, 1, &value));
+    CHECK(orchard_read_memory(&machine, O_BOOT_SRAM_BASE + 2, &byte, 1) == ORCHARD_OK && byte == 0x40);
+    CHECK(orchard_read_memory(&machine, O_BOOT_SRAM_BASE + O_BOOT_SRAM_SIZE - 1, &byte, 2) == ORCHARD_BUS_ERROR);
+    CHECK(write_reg(0x4d000004, 0)); /* One scan line, other output rows remain blank. */
+    CHECK(write_reg(0x4d000014, O_BOOT_SRAM_BASE >> 1));
+    CHECK(write_reg(0x4d000018, 10));
+    CHECK(write_reg(0x4d00001c, 10));
+    CHECK(write_reg(0x4d000000, 0x21));
+    /* Independent lane order for BSWP/HWSWP combinations; first word only. */
+    const unsigned offsets[4][4] = {{3,2,1,0}, {1,0,3,2}, {0,1,2,3}, {2,3,0,1}};
+    for (unsigned swap = 0; swap < 4; ++swap) {
+        CHECK(write_reg(0x4d000010, swap));
+        CHECK(orchard_framebuffer(&machine, pixels, sizeof(pixels)) == ORCHARD_OK);
+        for (unsigned x = 0; x < 32; ++x) {
+            unsigned source_byte = offsets[swap][x / 8u];
+            unsigned source_bit = 7u - x % 8u;
+            CHECK(pixels[x] == (((0x80402010u >> (source_byte * 8u + source_bit)) & 1u) ? 255 : 0));
+        }
+        CHECK(pixels[131] == 0);
+    }
+    CHECK(write_reg(0x4d000000, 1)); /* Dual scan is not single scan. */
+    CHECK(orchard_framebuffer(&machine, pixels, sizeof(pixels)) == ORCHARD_UNSUPPORTED_LCD);
+    orchard_reset(&machine);
+    CHECK(o_phys_read(&machine, O_BOOT_SRAM_BASE, 4, &value) && value == 0);
+    CHECK(write_reg(0x4d00004c, 0));
+    CHECK(read_reg(0x4d00004c, &value) && value == 0);
+    CHECK(!o_phys_read(&machine, 0x4d000068, 4, &value));
+    CHECK(machine.stop.address == 0x4d000068 && machine.stop.status == ORCHARD_UNIMPLEMENTED_MMIO);
+    CHECK(orchard_get_profile(3)->flash_bytes == 0x200000u);
+}
+static void gpio_and_reset(void) {
+    orchard_reset(&machine);
+    uint32_t value;
+    CHECK(read_reg(0x560000b4, &value) && value == 1);
+    CHECK(write_reg(0x560000b4, 6));
+    CHECK(read_reg(0x560000b4, &value) && value == 1);
+    CHECK(write_reg(0x560000b4, 1));
+    CHECK(read_reg(0x560000b4, &value) && value == 0);
+    CHECK(write_reg(0x560000b4, 1));
+    CHECK(read_reg(0x560000b4, &value) && value == 0);
+    for (unsigned off = 0xb8; off <= 0xbc; off += 4) {
+        CHECK(write_reg(0x56000000u + off, 0x12345678));
+        CHECK(read_reg(0x56000000u + off, &value) && value == 0x12345678);
+    }
+    CHECK(read_reg(0x56000000, &value) && value == 0x7fffff);
+    CHECK(read_reg(0x56000038, &value) && value == 0xf000);
+    CHECK(read_reg(0x56000068, &value) && value == 0xf800);
+    CHECK(read_reg(0x56000080, &value) && value == 0x10330);
+    CHECK(write_reg(0x56000004, UINT32_MAX));
+    CHECK(read_reg(0x56000004, &value) && value == 0x7fffff);
+    CHECK(write_reg(0x56000030, 0x55555555)); /* Every GPD pin is an output. */
+    CHECK(write_reg(0x56000034, 0x1234ffff));
+    CHECK(read_reg(0x56000034, &value) && value == 0xffff);
+    CHECK(write_reg(0x56000030, 0x55555554)); /* GPD0 now externally driven. */
+    CHECK(!o_phys_read(&machine, 0x56000034, 4, &value));
+    CHECK(machine.stop.address == 0x56000034 && machine.stop.detail == 1);
+    orchard_reset(&machine);
+    CHECK(read_reg(0x560000b4, &value) && value == 1);
+    CHECK(read_reg(0x560000b8, &value) && value == 0);
+    CHECK(write_reg(0x56000010, UINT32_MAX));
+    CHECK(read_reg(0x56000010, &value) && value == 0x3fffff);
+    CHECK(!o_phys_write(&machine, 0x560000bc, 2, 9));
+    CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_MMIO);
+    orchard_reset(&machine);
+    CHECK(!o_phys_read(&machine, 0x56000094, 4, &value)); /* Reserved, not EINTFLT0. */
+    CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_MMIO);
+}
+static unsigned interrupt_number(unsigned group, unsigned request) {
+    static const int bases[6] = {-1,4,10,16,22,27};
+    return (unsigned)(bases[group] + (int)request);
+}
+static void interrupt_arbitration(void) {
+    uint32_t value;
+    orchard_reset(&machine);
+    CHECK(read_reg(0x4a00000c, &value) && value == 0x7f);
+    for (unsigned group = 0; group < 6; ++group) {
+        for (unsigned selector = 0; selector < 4; ++selector) {
+            for (unsigned mask = 1; mask < 64; ++mask) {
+                unsigned present = mask;
+                if (group == 0 || group == 5) present &= 30u;
+                if (group == 1 || group == 4) present &= ~4u;
+                if (!present) continue;
+                orchard_reset(&machine);
+                machine.soc.intmsk = 0;
+                machine.soc.priority = selector << (7u + 2u * group); /* Fixed mode. */
+                for (unsigned r = 0; r < 6; ++r) if (present & (1u << r))
+                    machine.soc.srcpnd |= 1u << interrupt_number(group, r);
+                const unsigned orders[4][6] = {{0,1,2,3,4,5},{0,2,3,4,1,5},{0,3,4,1,2,5},{0,4,1,2,3,5}};
+                unsigned rank = 0;
+                while (!(present & (1u << orders[selector][rank]))) ++rank;
+                unsigned want = interrupt_number(group, orders[selector][rank]);
+                o_irq_update(&machine.soc);
+                CHECK(machine.soc.intpnd == (1u << want));
+                CHECK(read_reg(0x4a000014, &value) && value == want);
+            }
+        }
+    }
+    for (unsigned sel = 0; sel < 4; ++sel) {
+        orchard_reset(&machine);
+        machine.soc.intmsk = 0;
+        machine.soc.srcpnd = (1u<<4)|(1u<<10)|(1u<<16)|(1u<<22);
+        machine.soc.priority = (sel << 19) | (1u << 6);
+        o_irq_update(&machine.soc);
+        CHECK(machine.soc.intpnd == (1u << (4u + 6u * sel)));
+        uint32_t awarded = machine.soc.intpnd, priority = machine.soc.priority;
+        o_irq_update(&machine.soc);
+        CHECK(machine.soc.intpnd == awarded && machine.soc.priority == priority);
+        CHECK(((priority >> 19) & 3u) == ((sel + 1u) & 3u));
+    }
+    orchard_reset(&machine);
+    machine.soc.intmsk = 0;
+    machine.soc.srcpnd = (1u << 6) | (1u << 24) | (1u << 9);
+    machine.soc.intmod = 1u << 9;
+    o_irq_update(&machine.soc);
+    CHECK(machine.soc.intpnd == 0); /* Reserved sources and FIQ not awarded. */
+    machine.soc.intmod = 0;
+    o_irq_update(&machine.soc);
+    CHECK(machine.soc.intpnd == (1u << 9));
+}
+static void rtc_edge(void) {
+    machine.soc.rtc.divider = 32767;
+    o_rtc_clock(&machine);
+}
+static void rtc_calendar(void) {
+    orchard_reset(&machine);
+    uint32_t value;
+    CHECK(o_phys_read(&machine, 0x57000088, 4, &value) && value == 0);
+    CHECK(o_phys_read(&machine, 0x5700007c, 1, &value) && value == 1);
+    CHECK(o_phys_write(&machine, 0x57000070, 1, 0x12));
+    CHECK(o_phys_read(&machine, 0x57000070, 1, &value) && value == 0); /* RTCEN=0. */
+    CHECK(o_phys_write(&machine, 0x57000040, 1, 1));
+    CHECK(o_phys_write(&machine, 0x57000070, 1, 0x59));
+    CHECK(o_phys_write(&machine, 0x57000074, 1, 0x59));
+    CHECK(o_phys_write(&machine, 0x57000078, 1, 0x23));
+    CHECK(o_phys_write(&machine, 0x5700007c, 1, 0x28));
+    CHECK(o_phys_write(&machine, 0x57000084, 1, 2));
+    rtc_edge(); /* Leap year 2000, not 1900. */
+    CHECK(machine.stop.status == ORCHARD_OK);
+    CHECK(machine.soc.rtc.reg[15] == 0x29 && machine.soc.rtc.reg[12] == 0);
+    CHECK(machine.soc.rtc.reg[14] == 0 && machine.soc.rtc.reg[16] == 1);
+    CHECK(o_phys_write(&machine, 0x57000088, 1, 1));
+    CHECK(o_phys_write(&machine, 0x5700007c, 1, 0x28));
+    CHECK(o_phys_write(&machine, 0x57000070, 1, 0x59));
+    CHECK(o_phys_write(&machine, 0x57000074, 1, 0x59));
+    CHECK(o_phys_write(&machine, 0x57000078, 1, 0x23));
+    rtc_edge();
+    CHECK(machine.soc.rtc.reg[15] == 1 && machine.soc.rtc.reg[17] == 3);
+    CHECK(o_phys_write(&machine, 0x57000088, 1, 0x99));
+    CHECK(o_phys_write(&machine, 0x57000084, 1, 0x12));
+    CHECK(o_phys_write(&machine, 0x5700007c, 1, 0x31));
+    CHECK(o_phys_write(&machine, 0x57000070, 1, 0x59));
+    CHECK(o_phys_write(&machine, 0x57000074, 1, 0x59));
+    CHECK(o_phys_write(&machine, 0x57000078, 1, 0x23));
+    rtc_edge();
+    CHECK(machine.soc.rtc.reg[18] == 0 && machine.soc.rtc.reg[17] == 1 && machine.soc.rtc.reg[15] == 1);
+    CHECK(o_phys_write(&machine, 0x57000054, 1, 1));
+    CHECK(o_phys_write(&machine, 0x57000050, 1, 0x41));
+    rtc_edge();
+    CHECK(machine.soc.srcpnd & (1u << 30));
+    machine.soc.srcpnd = 0;
+    CHECK(o_phys_write(&machine, 0x57000044, 1, 0x81)); /* 2 / 128 second. */
+    machine.soc.rtc.divider = 0;
+    for (unsigned i = 0; i < 511; ++i) o_rtc_clock(&machine);
+    CHECK(!(machine.soc.srcpnd & (1u << 8)));
+    o_rtc_clock(&machine);
+    CHECK(machine.soc.srcpnd & (1u << 8));
+    orchard_reset(&machine);
+    for (unsigned i = 0; i < O_FUNCTIONAL_TIMEBASE_HZ; ++i) o_rtc_tick(&machine);
+    CHECK(machine.soc.rtc.reg[12] == 1 && machine.soc.rtc.phase == 0 && machine.soc.rtc.divider == 0);
+    CHECK(o_phys_write(&machine, 0x57000040, 1, 9));
+    rtc_edge();
+    CHECK(machine.soc.rtc.reg[12] == 1);
+    CHECK(!o_phys_write(&machine, 0x57000040, 1, 7));
+    CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_MMIO && machine.soc.rtc.reg[0] == 9);
+    orchard_reset(&machine);
+    CHECK(!o_phys_read(&machine, 0x57000071, 1, &value));
+    CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_MMIO);
+    orchard_reset(&machine);
+    CHECK(!o_phys_read(&machine, 0x57000070, 2, &value));
+    CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_MMIO);
+}
+
 EXPORT("regression") unsigned orchard_regression(void) {
     checks = failures = first_failure = 0; seed = 0x09202410;
     if (!orchard_init(&machine, sizeof(machine), 6)) return 1;
     arithmetic(); shifter(); conditions(); decoded_arithmetic(); instruction_edges();
     banking_and_exception(); mmu_and_bus(); watchdog(); queues_and_profiles();
+    boot_sram_and_lcd(); gpio_and_reset(); interrupt_arbitration(); rtc_calendar();
     return failures;
 }
 EXPORT("checks") unsigned orchard_regression_checks(void) { return checks; }

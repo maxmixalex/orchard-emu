@@ -1,9 +1,6 @@
 name: Prepare local research
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: ['.github/workflows/research-inputs.yml']
 permissions:
   contents: read
 jobs:

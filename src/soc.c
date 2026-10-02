@@ -19,7 +19,10 @@ bool o_q_pop(o_queue *q, uint8_t *byte) {
 void o_soc_reset(o_soc *s) {
     o_zero(s, sizeof(*s));
     s->intmsk = UINT32_MAX;
+    o_gpio_reset(s);
+    o_rtc_reset(s);
     s->intsubmsk = 0x7ff;
+    s->priority = 0x7f;
     o_watchdog_reset(s);
     s->clock[0] = 0xffffff; /* LOCKTIME */
     s->clock[1] = 0x5c080;  /* MPLLCON */
@@ -30,20 +33,11 @@ void o_soc_reset(o_soc *s) {
     s->memc[7] = s->memc[8] = 0x18008;
     s->memc[9] = 0xac0000;
 }
-void o_irq_update(o_soc *s) {
-    uint32_t sub = s->subsrcpnd & ~s->intsubmsk;
-    if (sub & 7u) s->srcpnd |= 1u << 28;
-    if (sub & (7u << 3)) s->srcpnd |= 1u << 23;
-    if (sub & (7u << 6)) s->srcpnd |= 1u << 15;
-    if (sub & (3u << 9)) s->srcpnd |= 1u << 31;
-    if (!s->intpnd) {
-        uint32_t irq = s->srcpnd & ~s->intmsk & ~s->intmod;
-        s->intpnd = irq & (0u - irq); /* Initial fixed-priority policy only. */
-    }
-}
 static unsigned timer_shift(unsigned channel) { return channel ? 4u * channel + 4u : 0; }
 void o_soc_tick(orchard_machine *m) {
     o_soc *s = &m->soc;
+    o_rtc_tick(m);
+    if (m->stop.status != ORCHARD_OK) return;
     o_watchdog_tick(m);
     if (m->stop.status != ORCHARD_OK) return;
     for (unsigned ch = 0; ch < 5; ++ch) {
@@ -67,22 +61,11 @@ void o_soc_tick(orchard_machine *m) {
     }
     if (s->rx.count && (s->uart[0][1] & 3u) == 1u) s->subsrcpnd |= 1u;
 }
-static bool known_gpio(unsigned index) {
-    /* Configuration/pull-up registers only. Actual board input pins are not
-       invented; DAT reads stop until the model's wiring has been established. */
-    return index == 0 || index == 4 || index == 6 || index == 8 || index == 10 ||
-           index == 12 || index == 14 || index == 16 || index == 18 ||
-           index == 20 || index == 22 || index == 24 || index == 26 ||
-           index == 28 || index == 30;
-}
 static uint32_t *plain_register(o_soc *s, uint32_t address) {
     if (address >= 0x48000000u && address <= 0x48000030u) return &s->memc[(address & 0xffu) / 4u];
     if (address >= 0x4c000000u && address <= 0x4c000014u) return &s->clock[(address & 0xffu) / 4u];
-    if (address >= 0x4d000000u && address <= 0x4d00001cu) return &s->lcd[(address & 0xffu) / 4u];
-    if (address >= 0x56000000u && address <= 0x56000078u) {
-        unsigned index = (address & 0xffu) / 4u;
-        if (known_gpio(index)) return &s->gpio[index];
-    }
+    if (address >= 0x4d000000u && address <= 0x4d000028u) return &s->lcd[(address & 0xffu) / 4u];
+    if (address == 0x4d00004cu) return &s->lcd[0x4c / 4];
     return NULL;
 }
 static bool timer_register(orchard_machine *m, uint32_t address, uint32_t *value, bool write) {
@@ -151,9 +134,12 @@ static bool uart_register(orchard_machine *m, uint32_t address, unsigned width, 
 }
 bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value) {
     o_soc *s = &m->soc;
+    if (o_rtc_register(m, address, width, value, false)) return true;
     if (uart_register(m, address, width, value, false)) return true;
     if (width == 4 && !(address & 3u)) {
         if (o_watchdog_register(s, address, value, false)) return true;
+        if (o_gpio_register(m, address, value, false)) return true;
+        if (m->stop.status != ORCHARD_OK) return false;
         uint32_t *reg = plain_register(s, address);
         if (reg) { *value = *reg; return true; }
         if (address >= 0x51000000u && address <= 0x51000040u && timer_register(m, address, value, false)) return true;
@@ -161,6 +147,7 @@ bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
         case 0x4a000000: *value = s->srcpnd; return true;
         case 0x4a000004: *value = s->intmod; return true;
         case 0x4a000008: *value = s->intmsk; return true;
+        case 0x4a00000c: *value = s->priority; return true;
         case 0x4a000010: *value = s->intpnd; return true;
         case 0x4a000014:
             *value = 0;
@@ -176,17 +163,30 @@ bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
 }
 bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value) {
     o_soc *s = &m->soc;
+    if (o_rtc_register(m, address, width, &value, true)) return true;
+    if (m->stop.status != ORCHARD_OK) return false;
     if (uart_register(m, address, width, &value, true)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
     if (width == 4 && !(address & 3u)) {
         if (o_watchdog_register(s, address, &value, true)) return true;
+        if (o_gpio_register(m, address, &value, true)) return true;
+        if (m->stop.status != ORCHARD_OK) return false;
         uint32_t *reg = plain_register(s, address);
-        if (reg) { *reg = value; return true; }
+        if (reg) {
+            if (address == 0x4d00004cu) {
+                if (value & 0x7ffffu) {
+                    o_stop(m, ORCHARD_UNSUPPORTED_LCD, address, value); return false;
+                }
+                value = 0; /* Disabled dithering; nonzero modes are not implemented. */
+            }
+            *reg = value; return true;
+        }
         if (address >= 0x51000000u && address <= 0x51000040u && timer_register(m, address, &value, true)) return true;
         switch (address) {
         case 0x4a000000: s->srcpnd &= ~value; return true;
         case 0x4a000004: s->intmod = value; return true;
         case 0x4a000008: s->intmsk = value; return true;
+        case 0x4a00000c: s->priority = value & 0x1fffffu; return true;
         case 0x4a000010: s->intpnd &= ~value; return true;
         case 0x4a000018: s->subsrcpnd &= ~value; return true;
         case 0x4a00001c: s->intsubmsk = value & 0x7ffu; return true;

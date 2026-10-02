@@ -14,6 +14,7 @@ nav = [
     "development/roadmap.md",
     "development/board.md",
     "development/roms.md",
+    "development/boot-research.md",
     "development/virtual-link.md",
     "development/web.md",
     "development/validation.md",

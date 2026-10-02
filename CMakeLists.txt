@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(orchard VERSION 0.1.0 LANGUAGES C)
 option(ORCHARD_SANITIZE "Enable host address and undefined-behaviour sanitizers" OFF)
 add_library(orchard STATIC
-  src/machine.c src/cpu.c src/thumb.c src/mmu.c src/bus.c src/soc.c src/watchdog.c)
+  src/machine.c src/cpu.c src/thumb.c src/mmu.c src/bus.c src/soc.c src/watchdog.c src/gpio.c src/interrupt.c src/rtc.c)
 target_include_directories(orchard PUBLIC include)
 target_compile_features(orchard PUBLIC c_std_17)
 set_target_properties(orchard PROPERTIES C_EXTENSIONS OFF)

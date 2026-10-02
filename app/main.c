@@ -152,12 +152,18 @@ int main(int argc, char **argv) {
            "\"exceptions\":\"%" PRIu64 "\",\"pc\":\"%08" PRIx32 "\","
            "\"cpsr\":\"%08" PRIx32 "\",\"sleeping\":%s,\"stop\":{\"code\":%u,"
            "\"reason\":\"%s\",\"pc\":\"%08" PRIx32 "\",\"instruction\":\"%08" PRIx32 "\","
-           "\"address\":\"%08" PRIx32 "\",\"detail\":\"%08" PRIx32 "\"},\"frame_status\":%u}\n",
+           "\"address\":\"%08" PRIx32 "\",\"detail\":\"%08" PRIx32 "\"},\"frame_status\":%u,"
+           "\"cp15_control\":\"%08" PRIx32 "\",\"fault_status\":\"%08" PRIx32 "\","
+           "\"fault_address\":\"%08" PRIx32 "\",\"registers\":[",
            p->slug, state.stop.status == ORCHARD_OK ? "budget-exhausted" : "stopped",
            state.ticks, state.instructions, state.exceptions, state.registers[15], state.cpsr,
            state.sleeping ? "true" : "false", (unsigned)state.stop.status,
            orchard_status_string(state.stop.status), state.stop.pc, state.stop.instruction,
-           state.stop.address, state.stop.detail, (unsigned)frame_status);
+           state.stop.address, state.stop.detail, (unsigned)frame_status,
+           state.cp15_control, state.fault_status, state.fault_address);
+    for (unsigned r = 0; r < 16; ++r)
+        printf("%s\"%08" PRIx32 "\"", r ? "," : "", state.registers[r]);
+    puts("]}");
     result = state.stop.status == ORCHARD_OK && frame_status == ORCHARD_OK ? 0 : 2;
 cleanup:
     if (rom && fclose(rom) != 0) result = 74;

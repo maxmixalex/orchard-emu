@@ -46,3 +46,16 @@ jobs:
     steps:
       - uses: actions/deploy-pages@v4
         id: deployment
+      - name: Verify published documentation
+        env:
+          PAGES_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          base="${PAGES_URL%/}/"
+          curl --fail --location --proto '=https' --proto-redir '=https' \
+            --max-time 25 --retry 5 --retry-delay 3 --retry-all-errors \
+            "${base}?revision=${GITHUB_SHA}" -o "$RUNNER_TEMP/orchard-index.html"
+          curl --fail --location --proto '=https' --proto-redir '=https' \
+            --max-time 25 --retry 5 --retry-delay 3 --retry-all-errors \
+            "${base}development/roms/?revision=${GITHUB_SHA}" -o "$RUNNER_TEMP/orchard-roms.html"
+          grep -q 'Orchard' "$RUNNER_TEMP/orchard-index.html"
+          grep -q '4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937' "$RUNNER_TEMP/orchard-roms.html"

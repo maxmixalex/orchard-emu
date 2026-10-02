@@ -20,7 +20,10 @@
 #define O_FLASH_MAX 0x200000u
 #define O_RAM_MAX 0x80000u
 #define O_RAM_BASE 0x08000000u
+#define O_BOOT_SRAM_BASE 0x40000000u
+#define O_BOOT_SRAM_SIZE 0x1000u
 #define O_QUEUE 1024u
+#define O_FUNCTIONAL_TIMEBASE_HZ 12000000u
 
 typedef struct {
     uint8_t data[O_QUEUE];
@@ -37,13 +40,19 @@ typedef struct {
 } o_cpu;
 
 typedef struct {
-    uint32_t srcpnd, intmod, intmsk, intpnd, subsrcpnd, intsubmsk;
-    uint32_t memc[13], clock[6], gpio[48], lcd[8];
+    uint8_t reg[19];
+    uint32_t phase, divider, tick_count;
+} o_rtc;
+
+typedef struct {
+    uint32_t srcpnd, intmod, intmsk, intpnd, subsrcpnd, intsubmsk, priority;
+    uint32_t memc[13], clock[6], gpio[48], lcd[20];
     uint32_t uart[3][11];
     uint32_t tcfg0, tcfg1, tcon, tcntb[5], tcmpb[4], count[5];
     uint32_t phase[5];
     uint32_t wtcon, wtdat, wtcnt, wtphase;
     o_queue rx, tx;
+    o_rtc rtc;
 } o_soc;
 
 struct orchard_machine {
@@ -55,6 +64,7 @@ struct orchard_machine {
     orchard_stop stop;
     uint8_t flash[O_FLASH_MAX];
     uint8_t ram[O_RAM_MAX];
+    uint8_t boot_sram[O_BOOT_SRAM_SIZE];
 };
 
 void o_zero(void *p, size_t size);
@@ -89,6 +99,12 @@ void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool 
 void o_soc_reset(o_soc *s);
 void o_soc_tick(orchard_machine *m);
 void o_irq_update(o_soc *s);
+void o_gpio_reset(o_soc *s);
+bool o_gpio_register(orchard_machine *m, uint32_t address, uint32_t *value, bool write);
+void o_rtc_reset(o_soc *s);
+void o_rtc_tick(orchard_machine *m);
+void o_rtc_clock(orchard_machine *m);
+bool o_rtc_register(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value, bool write);
 void o_watchdog_reset(o_soc *s);
 void o_watchdog_tick(orchard_machine *m);
 bool o_watchdog_register(o_soc *s, uint32_t address, uint32_t *value, bool write);

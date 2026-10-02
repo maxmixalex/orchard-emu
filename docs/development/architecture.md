@@ -33,8 +33,8 @@ host-side Saturn shortcut is planned. See the ARM/Samsung manuals in
 | Public API | `include/orchard/orchard.h` | Opaque caller-owned machine, profiles, bounded execution, diagnostics and I/O |
 | CPU | `src/cpu.c`, `src/thumb.c` | Original ARM/Thumb dispatch, flags, register banks and exception entry/return |
 | MMU | `src/mmu.c` | CP15 subset, guest table walks, access permission and alignment checks |
-| Physical bus | `src/bus.c` | NOR/SRAM bounds, MMIO routing, candidate STN framebuffer decode |
-| SoC | `src/soc.c`, `src/watchdog.c` | Functional INTC/timers/UART/watchdog; selected register storage |
+| Physical bus | `src/bus.c` | NOR, external SRAM and 4 KiB internal SRAM bounds, MMIO routing, single-scan STN decode |
+| SoC | `src/soc.c`, `src/watchdog.c`, `src/interrupt.c`, `src/gpio.c`, `src/rtc.c` | Functional timers/UART/watchdog, two-level IRQ arbitration, GPIO latches and RTC subset |
 | Machine | `src/machine.c` | Reset, loader, profiles and deterministic scheduler |
 | Native host | `app/main.c` | Full-NOR loading, bounded CLI run, JSON/PGM/UART files |
 | Web host | `app/wasm.c`, `web/` | Freestanding WASM adapter, Worker and diagnostic workbench |
@@ -65,7 +65,9 @@ halt the emulator rather than delivering a guest undefined-instruction trap.
 
 ## Bus and timing model
 
-NOR is at `0x00000000`; SRAM is at `0x08000000`, with exact per-profile bounds.
+NOR is at `0x00000000`; external SRAM is at `0x08000000`, with exact per-profile
+bounds. Internal boot SRAM occupies exactly `0x40000000..0x40000fff`; there is
+no NAND controller or NAND image behind it. HP40gs uses 2 MiB NOR.
 Flash does not silently mirror or pad. NOR command state machines are not yet
 implemented: a 16-bit read-array reset is accepted, while other writes stop.
 This alone prevents claiming ordinary stock firmware boot compatibility.
@@ -77,12 +79,18 @@ clock cycle, oscillator tick or real millisecond. Guest time does not depend
 on browser animation timestamps. The native host and browser may run different
 batch sizes but must preserve the same virtual ordering.
 
-INTC currently uses a fixed priority selection, not the full priority arbiter.
-Timers implement a bounded functional countdown, not real PLL/PCLK timing.
-Clock and memory-controller registers mostly retain values rather than
-reconfigure bus timing. GPIO configuration/pull-up storage exists, but DAT
-reads stop because board input wiring has not been established. UART is a
-functional error-free host stream, not cycle-accurate FIFO/baud simulation.
+INTC implements two-level selection/rotation and a latched awarded IRQ.
+Timers implement functional countdown, not real PLL/PCLK timing. Clock and
+memory-controller registers largely retain values rather than change timing.
+GPIO configuration, pull-up and output-latch state exists; DAT reads with
+unresolved input pins stop. Routing-register storage is not external pin
+simulation. UART is an error-free byte stream, not full FIFO/baud timing.
+
+RTC uses a deterministic cold-fixture epoch and a provisional 12-million-quanta
+timebase, not the host clock. Normal calendar carry and tick/alarm interrupts
+are implemented; test modes, round reset, retained battery state and power-off
+wakeup are not. See [boot research](boot-research.md) for the RTC word-access
+compatibility observation and the exact remaining hardware stops.
 
 ## Stop and mutation rules
 
@@ -98,9 +106,10 @@ warmstart or power-key event. No battery-backed state is persisted yet.
 ## Display and input
 
 The LCD decoder reads guest-programmed addresses and candidate 1/2/4-bpp STN
-layout. It is not a synthetic screenshot renderer. Bit order, panel mapping,
-annunciators and per-model electrical details need independent ROM/hardware
-witnesses. The UI reserves a separate annunciator region; no icons are faked.
+layout. It is not a synthetic screenshot renderer. Word-MSB-first ordering and BSWP/HWSWP have directed lane tests. Panel mapping,
+annunciators and per-model electrical details still need independent witnesses.
+The decoder rejects dual scan/TFT and nonzero dithering rather than displaying
+them as single-scan monochrome. The UI reserves a separate annunciator region; no icons are faked.
 
 A later keyboard implementation will inject **physical switch transitions**
 into the board GPIO matrix with deterministic press/release timestamps. It

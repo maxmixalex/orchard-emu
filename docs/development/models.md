@@ -1,6 +1,6 @@
 # Model profiles
 
-These are candidate physical configurations, following the existing hpclang
+These are physical configurations, starting from the existing hpclang
 platform/fixture research. They are not claims that Orchard currently boots
 these machines. The 48gII target is explicitly the **second-generation USB
 revision**, not every product carrying that name.
@@ -9,7 +9,7 @@ revision**, not every product carrying that name.
 | ---: | --- | --- | ---: | ---: | --- | --- | --- |
 | 1 | `hp39gplus` | HP 39g+ | 1 MiB | 256 KiB | 131 × 64 | No | Unverified |
 | 2 | `hp39gs` | HP 39gs | 1 MiB | 256 KiB | 131 × 64 | No | Unverified |
-| 3 | `hp40gs` | HP 40gs | 1 MiB | 256 KiB | 131 × 64 | No | Unverified |
+| 3 | `hp40gs` | HP 40gs | 2 MiB | 256 KiB | 131 × 64 | No | Unverified |
 | 4 | `hp48gii` | HP 48gII, USB revision | 2 MiB | 256 KiB | 131 × 64 | No | Unverified |
 | 5 | `hp49gplus` | HP 49g+ | 2 MiB | 512 KiB | 131 × 80 | Yes | Unverified |
 | 6 | `hp50g` | HP 50g | 2 MiB | 512 KiB | 131 × 80 | Yes | Unverified |
@@ -43,3 +43,11 @@ input and a repeatable witness. Sharing a family or an LCD size is insufficient.
 
 Every revision exception belongs in a profile/wiring description with a
 source, not a model-specific patch to the ARM instruction interpreter.
+
+## Full-NOR bring-up update
+
+The HP39g+ and HP48gII full images now execute locally to reproducible early
+boot stops; neither has a working stock UI. See [boot research](boot-research.md).
+HP40gs NOR capacity is corrected to 2 MiB using HP's 2007 specification sheet,
+not inherited from the HP39gs sibling. All other stock/UI promotion gates
+remain open; supplied update packages are not full physical dumps.

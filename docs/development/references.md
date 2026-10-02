@@ -57,3 +57,20 @@ values were inspected directly. No manual PDF is bundled.
 Pinning the direct documentation dependency is not a lockfile for every
 transitive Python package. A complete reproducible docs environment is part
 of M0 follow-up. Configuration/link checks are not a successful site render.
+
+## Native NOR bring-up references
+
+- Samsung manual chapters 6, 9, 14, 15 and 17: internal 4 KiB SRAM, GPIO/reset
+  registers, two-level IRQ arbitration, STN word/byte order and RTC. The RTC
+  control table (page 17-5) was also inspected as a rendered page.
+- [HP 40gs Specification Sheet](https://www.manualslib.com/manual/704129/Hp-Hp-40gs.html?page=2),
+  HP 4AA1-0863ENUC, June 2007: 2 MiB flash and 256 KiB RAM.
+- [lyc8503's hardware modification write-up](https://blog.lyc8503.net/post/hp39gs-modify/),
+  2021: original source of the separately acquired HP48gII full-NOR mirror.
+- [GitHub Pages custom workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages):
+  site-only upload and OIDC deployment.
+
+The undocumented HP39g+ LCD offset `0x68` remains a research question. The
+reviewed manual does not establish its semantics; no emulator's convenient
+readback has been promoted to hardware truth. Kernel register headers surfaced
+in searches supplied only corroborating register facts, not implementation.

@@ -21,7 +21,7 @@ const testModule = resolve(build, 'regression.wasm');
 command(process.env.CLANG || 'clang', [
   '--target=wasm32', '-std=c17', '-O2', '-ffreestanding', '-nostdlib', '-fno-builtin',
   '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc',
-  ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'watchdog'].map(s => `src/${s}.c`),
+  ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'watchdog', 'gpio', 'interrupt', 'rtc'].map(s => `src/${s}.c`),
   'tests/regression.c', '-o', testModule, '-Wl,--no-entry', '-Wl,--stack-first',
   '-Wl,-z,stack-size=524288', '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216',
 ]);
@@ -51,7 +51,8 @@ function syntheticNor(size, height) {
   reg(0x4d000014, 0x08001000 >>> 1);
   reg(0x4d000018, ((0x08001000 + 18 * height) >>> 1) & 0x1fffff);
   reg(0x4d00001c, 9);
-  reg(0x4d000000, 1); // provisional 1bpp STN framebuffer
+  reg(0x4d000010, 2); // BSWP: bytes stored in ascending address order
+  reg(0x4d000000, 0x21); // 1bpp single-scan STN framebuffer
   const targetLiteral = literals.length;
   load(0, 0); word(0xe12fff10); // BX r0
   literals[targetLiteral].value = pc | 1;

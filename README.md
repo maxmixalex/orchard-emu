@@ -3,14 +3,15 @@
 An original MIT-licensed ARM hardware emulator for **HP 39g+, 39gs, 40gs,
 48gII (USB revision), 49g+, and 50g**.
 
-**Hardware bring-up: no HP stock ROM has been boot-verified yet.** One C17 core
-runs natively and as WebAssembly, executing ARM/Thumb guest instructions from
-the reset vector. The firmware's Saturn interpreter is intended to run as
+**Hardware bring-up, not yet a usable calculator.** Genuine HP39g+ and HP48gII
+full NORs now execute from reset to reproducible early hardware stops. One C17
+core runs natively and as WebAssembly; no stock UI boot is accepted yet. The firmware's Saturn interpreter is intended to run as
 guest ARM software, without replacing it with Emu48 or patching the ROM.
 
 The current core includes a CP15/MMU subset, bounded execution and diagnostic
-stops, basic timers/interrupts/UART0, watchdog countdown and a raw LCD preview.
-The browser UI is a diagnostic workbench, not yet a usable calculator skin.
+stops, internal/external SRAM, GPIO latches, IRQ arbitration, a functional RTC,
+timers/UART0/watchdog and a raw single-scan STN LCD preview.
+The browser UI remains a diagnostic workbench. See [real-ROM progression](docs/development/boot-research.md).
 
 ## Build and verify
 
@@ -36,6 +37,7 @@ Tests stay outside `dist/` and are not installed with the native application.
 ```sh
 ./build/orchard models
 ./build/orchard run --model hp39gplus --rom /path/to/full-nor.bin --ticks 100000
+node tools/probe-rom.mjs --model hp39gplus --rom /path/to/full-nor.bin
 ```
 
 The input must be a complete physical NOR of the selected model's exact size.
@@ -45,6 +47,7 @@ The browser server is local-only at `127.0.0.1:8080`; ROM bytes are not uploaded
 
 ## Development
 
+[Documentation](https://zyf722.github.io/orchard-emu/) ·
 [Roadmap](docs/development/roadmap.md) ·
 [Live board](https://github.com/zyf722/orchard-emu/issues/1) ·
 [Architecture](docs/development/architecture.md) ·
@@ -55,8 +58,10 @@ Zensical is configured in `zensical.toml`. Install
 `tools/requirements-docs.txt` in a virtual environment and run
 `zensical serve` or `zensical build --strict`. The `home-docker` workflow runs
 on pushes to `main` and manual dispatch; it validates native/WASM and docs,
-then uploads production web and documentation artifacts. It does not publish
-this private repository to Pages or accept untrusted fork PRs on the runner.
+then uploads production artifacts. A separate Documentation workflow publishes
+only the strict-built Zensical site to GitHub Pages and checks the live pages.
+The repository stays private; firmware and the emulator workbench are not
+published with the docs. Untrusted fork PRs do not run on the self-hosted runner.
 
 ## License and firmware
 

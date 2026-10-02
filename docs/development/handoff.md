@@ -1,46 +1,40 @@
 # Continuation handoff
 
-## Repository
+Work remains in private `zyf722/orchard-emu`, `main`, preserving the MIT
+initialization ancestry and [issue #1](https://github.com/zyf722/orchard-emu/issues/1).
+M0 is accepted. Commit `351a0da` adds the actual Pages workflow and private
+research acquisition. No force push, duplicate board or visibility change.
 
-Work is in private `zyf722/orchard-emu`, branch `main`, with
-[issue #1](https://github.com/zyf722/orchard-emu/issues/1) as the live board.
-The first source import is `2840885f1c5bd649fe002a4a24c6abd638c96cde`, parented
-to the existing MIT initialization commit `f7246e5`. Keep this ancestry; do
-not recreate the repository, duplicate the board or force-push.
+## Inputs are available
 
-The 2026-10-02 continuation adds the maintained regression corpus, CPU edge
-fixes and functional watchdog. See [validation](validation.md) for commands,
-results and limitations. Tests are repository development inputs, not runtime
-or distribution content. Generated fixtures, reports and firmware are excluded
-from the production web and native install targets.
+The user supplied the exact HP39g+ D1.55 full NOR. The original author's
+HP48gII USB-revision full-NOR mirror was downloaded and hash-checked, then
+retrieved for local work. Both input identities and the three uploaded updater
+identities are in [ROM provenance](roms.md). Do not repeat the old LFS-pointer
+blocker or restart the retired dump tool. These are not bundled source assets.
 
-The build workflow runs on `main` pushes and manual dispatch, on `home-docker`.
-It validates native Release, sanitizer, WASM and documentation builds, then
-uploads web/site artifacts. Read the actual run before claiming success.
-No Pages publication or visibility change is configured.
+## Current implementation
 
-## Preferred first stock fixture
+[Boot research](boot-research.md) records the real reset trace progression,
+new boot SRAM, GPIO/reset-state, IRQ arbitration, RTC and LCD-lane work.
+Native and WASM now execute both original images to explicit missing-hardware
+stops, without guest exceptions. Neither shows an interactive stock UI.
 
-The existing hpclang file is
-`tests/e2e/fixtures/hp39gplus/flash.bin.xz`. This is the hardware-acquired
-HP39g+ D1.55 full NOR, not a new dumper task.
+Next investigations: HP39g+ LCD read at `0x4d000068`, and HP48gII input
+sources at GPDDAT `0x56000034`. Resolve actual device semantics rather than
+masking the stop, patching firmware or using arbitrary input levels. Further
+CPU/MMU conformance and abort/writeback work remain independent requirements.
 
-| Identity | Value |
-| --- | --- |
-| Raw size | 1,048,576 bytes |
-| Raw SHA-256 | `95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67` |
-| Compressed size | 462,392 bytes |
-| Compressed LFS SHA-256 | `814cda6572b78fb20ec6b40bbb48cda44def717887113f569cb2e1885487ece8` |
+## Verification and publication
 
-The connected repository read supplies the LFS pointer, not its binary.
-Local HTTPS retrieval failed with DNS errors. The existing hpclang Runtime
-artifact `hp39-stock-runtime-e2e` from run `36369507309` was downloaded and
-inspected: it contains payload/log/frame evidence but no full NOR. That
-artifact does not resolve fixture availability and has not been imported.
+`tests/regression.c` and `tools/check-wasm.mjs` run without HP firmware.
+`tools/probe-rom.mjs` takes an explicit local NOR and compares both hosts and
+cold replays. Reports bind input and executable hashes; they are not stock
+boot certificates. Keep definitions in Git and generated reports/private
+inputs outside production artifacts. See [validation](validation.md).
 
-After obtaining the existing binary, verify the compressed and raw hashes,
-keep the original bytes unchanged, and run a bounded trace from reset. Record
-the first unsupported PC/instruction/address and resolve it against a primary
-manual plus a minimized local regression. Do not start speculative per-model
-ROM patching, replace the bootloader or infer stock support from the synthetic
-tests. No firmware, signed URLs or credentials belong in Orchard source.
+The [Zensical site](https://zyf722.github.io/orchard-emu/) is deployed to Pages.
+The first strict build and deployment succeeded in Documentation #1, run
+36984188560. The documentation-only workflow does not publish the emulator
+workbench, firmware or private research artifact. Check current Actions and
+issue #1 for acceptance of later implementation revisions.
