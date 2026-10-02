@@ -1,0 +1,42 @@
+name: Prepare local research
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/research-inputs.yml']
+permissions:
+  contents: read
+jobs:
+  acquire:
+    if: github.repository == 'zyf722/orchard-emu' && github.event.repository.private == true
+    runs-on: home-docker
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Acquire pinned HP48gII full NOR for local research
+        env:
+          TARGET: ${{ runner.temp }}/orchard-research
+        run: |
+          mkdir -p "$TARGET"
+          curl --fail --location --proto '=https' --proto-redir '=https' --max-time 90 --retry 2 \
+            'https://blog.lyc8503.net/post/hp39gs-modify/48gii.bin' -o "$TARGET/48gii.bin"
+          test "$(wc -c < "$TARGET/48gii.bin")" -eq 2097152
+          printf '%s  %s\n' '4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937' "$TARGET/48gii.bin" | sha256sum --check
+      - name: Export exact source for offline local reproduction
+        run: git archive --format=tar.gz --output="$RUNNER_TEMP/orchard-source.tar.gz" HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: private-hp48gii-research
+          path: ${{ runner.temp }}/orchard-research/48gii.bin
+          retention-days: 1
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orchard-research-source
+          path: ${{ runner.temp }}/orchard-source.tar.gz
+          retention-days: 1
+          if-no-files-found: error
+# Acquisition only: no emulator execution or debugging occurs on the runner.
+# Private one-day artifacts are not source commits, Pages content or releases.
