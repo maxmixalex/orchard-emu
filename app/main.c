@@ -13,6 +13,9 @@ static void usage(FILE *out) {
           "  orchard run --model SLUG --rom FULL-NOR.bin [--ticks N]\n"
           "              [--trace FILE.jsonl] [--frame FILE.pgm]\n"
           "              [--keyboard apples] [--nor-device sst39vf1601]\n"
+          "              [--gpio-bias PORT:MASK_HEX:LEVELS_HEX] ...\n"
+          "              [--key-at TICK:COLUMN:ROW:0_OR_1] ...\n"
+          "              [--lcd-probe68 idle-zero] [--frame-view packed-lsb]\n"
           "              [--uart-in FILE] [--uart-out FILE]\n"
           "              [--gpio-input PORT:KNOWN_HEX:LEVELS_HEX] ...\n\n"
           "GPIO input stimuli are explicit research conditions, not board wiring.\n"
@@ -61,6 +64,23 @@ static bool parse_gpio(const char *text, unsigned *port, uint32_t *known, uint32
     *port = (unsigned)(text[0] - 'A'); *known = fields[0]; *levels = fields[1];
     return true;
 }
+typedef struct { uint64_t tick; unsigned col, row, down; } key_event;
+static bool parse_key(const char *text, key_event *event) {
+    uint64_t fields[4] = {0};
+    for (unsigned i = 0; i < 4; ++i) {
+        if (*text < '0' || *text > '9') return false;
+        while (*text >= '0' && *text <= '9') {
+            unsigned digit = (unsigned)(*text++ - '0');
+            if (fields[i] > (UINT64_MAX - digit) / 10u) return false;
+            fields[i] = fields[i] * 10u + digit;
+        }
+        if (i < 3) { if (*text++ != ':') return false; }
+        else if (*text) return false;
+    }
+    if (fields[1] >= 8 || fields[2] >= 7 || fields[3] > 1) return false;
+    *event = (key_event){fields[0], (unsigned)fields[1], (unsigned)fields[2], (unsigned)fields[3]};
+    return true;
+}
 int main(int argc, char **argv) {
     if (argc == 1 || (argc == 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0))) {
         usage(stdout); return 0;
@@ -70,7 +90,11 @@ int main(int argc, char **argv) {
     const char *slug = NULL, *rompath = NULL, *tracepath = NULL, *framepath = NULL;
     const char *inpath = NULL, *outpath = NULL;
     uint64_t budget = 100000;
-    bool keyboard = false;
+    bool keyboard = false, lcd_idle_zero = false;
+    orchard_frame_view frame_view = ORCHARD_FRAME_CONTROLLER;
+    key_event events[64]; unsigned event_count = 0, next_event = 0;
+    uint32_t bias_known[8] = {0}, bias_levels[8] = {0};
+    bool bias_set[8] = {false};
     orchard_nor_device nor = ORCHARD_NOR_UNSPECIFIED;
     uint32_t gpio_known[8] = {0}, gpio_levels[8] = {0};
     bool gpio_set[8] = {false};
@@ -91,6 +115,25 @@ int main(int argc, char **argv) {
                 return 64;
             }
             gpio_set[port] = true; gpio_known[port] = known; gpio_levels[port] = levels;
+        } else if (strcmp(key, "--gpio-bias") == 0) {
+            unsigned port; uint32_t known, levels;
+            if (!parse_gpio(value, &port, &known, &levels) || bias_set[port]) {
+                fputs("Use --gpio-bias PORT:MASK_HEX:LEVELS_HEX once per port B..H\n", stderr); return 64;
+            }
+            bias_set[port] = true; bias_known[port] = known; bias_levels[port] = levels;
+        } else if (strcmp(key, "--lcd-probe68") == 0) {
+            if (strcmp(value, "idle-zero") != 0) { fputs("Expected --lcd-probe68 idle-zero\n", stderr); return 64; }
+            lcd_idle_zero = true;
+        } else if (strcmp(key, "--frame-view") == 0) {
+            if (strcmp(value, "packed-lsb") != 0) { fputs("Expected --frame-view packed-lsb\n", stderr); return 64; }
+            frame_view = ORCHARD_FRAME_PACKED_LSB;
+        } else if (strcmp(key, "--key-at") == 0) {
+            key_event event;
+            if (event_count == 64 || !parse_key(value, &event) ||
+                (event_count && event.tick < events[event_count - 1].tick)) {
+                fputs("Expected up to 64 chronological --key-at TICK:COL:ROW:0_OR_1 events\n", stderr); return 64;
+            }
+            events[event_count++] = event;
         } else if (strcmp(key, "--keyboard") == 0) {
             if (strcmp(value, "apples") != 0) { fputs("Expected --keyboard apples\n", stderr); return 64; }
             keyboard = true;
@@ -113,6 +156,9 @@ int main(int argc, char **argv) {
     }
     const orchard_profile *p = slug ? find_model(slug) : NULL;
     if (!p || !rompath) { usage(stderr); return 64; }
+    if (event_count && (!keyboard || events[event_count - 1].tick >= budget)) {
+        fputs("Key events require --keyboard apples and a tick below the run budget\n", stderr); return 64;
+    }
     /* Refuse obvious destructive path collisions, even before opening outputs. */
     const char *outputs[] = {tracepath, framepath, outpath};
     for (unsigned i = 0; i < 3; ++i) if (outputs[i]) {
@@ -150,6 +196,11 @@ int main(int argc, char **argv) {
     if (orchard_nor_select(m, nor) != ORCHARD_OK || orchard_keyboard_attach(m, keyboard) != ORCHARD_OK) {
         fputs("Hardware configuration incompatible with model\n", stderr); result = 64; goto cleanup;
     }
+    for (unsigned port = 1; port <= 7; ++port) if (bias_set[port])
+        if (orchard_gpio_bias(m, (orchard_gpio_port)port, bias_known[port], bias_levels[port]) != ORCHARD_OK) {
+            fputs("Invalid GPIO bias mask/levels\n", stderr); result = 64; goto cleanup;
+        }
+    if (orchard_lcd_probe68(m, lcd_idle_zero) != ORCHARD_OK) { result = 64; goto cleanup; }
     trace = open_output(tracepath);
     output = open_output(outpath);
     if ((tracepath && !trace) || (outpath && !output)) goto cleanup;
@@ -162,6 +213,12 @@ int main(int argc, char **argv) {
     orchard_state state;
     orchard_get_state(m, &state);
     while (state.ticks < budget && state.stop.status == ORCHARD_OK) {
+        while (next_event < event_count && events[next_event].tick == state.ticks) {
+            const key_event *e = &events[next_event++];
+            if (orchard_keyboard_matrix(m, e->col, e->row, e->down != 0) != ORCHARD_OK) {
+                fputs("Key event rejected\n", stderr); result = 64; goto cleanup;
+            }
+        }
         if (input) {
             if (position == available && !feof(input)) {
                 available = fread(incoming, 1, sizeof(incoming), input); position = 0;
@@ -171,6 +228,8 @@ int main(int argc, char **argv) {
         }
         uint32_t slice = trace ? 1u : 256u;
         if (budget - state.ticks < slice) slice = (uint32_t)(budget - state.ticks);
+        if (next_event < event_count && events[next_event].tick - state.ticks < slice)
+            slice = (uint32_t)(events[next_event].tick - state.ticks);
         (void)orchard_run(m, slice);
         orchard_get_state(m, &state);
         if (trace && fprintf(trace,
@@ -184,7 +243,7 @@ int main(int argc, char **argv) {
     orchard_status frame_status = ORCHARD_OK;
     if (framepath) {
         uint8_t pixels[131 * 80];
-        frame_status = orchard_framebuffer(m, pixels, sizeof(pixels));
+        frame_status = orchard_framebuffer_view(m, frame_view, pixels, sizeof(pixels));
         if (frame_status == ORCHARD_OK) {
             FILE *frame = open_output(framepath);
             if (!frame) goto cleanup;
@@ -219,8 +278,22 @@ int main(int argc, char **argv) {
                first_input ? "" : ",", 'A' + (int)port, gpio_known[port], gpio_levels[port]);
         first_input = false;
     }
-    printf("],\"keyboard\":\"%s\",\"nor_device\":\"%s\"}\n",
-           keyboard ? "apples" : "detached", nor ? "sst39vf1601" : "unspecified");
+    fputs("],\"gpio_bias\":[", stdout);
+    bool first_bias = true;
+    for (unsigned port = 1; port <= 7; ++port) if (bias_set[port]) {
+        printf("%s{\"port\":\"%c\",\"known_mask\":\"%08" PRIx32 "\",\"levels\":\"%08" PRIx32 "\"}",
+               first_bias ? "" : ",", 'A' + (int)port, bias_known[port], bias_levels[port]);
+        first_bias = false;
+    }
+    printf("],\"keyboard\":\"%s\",\"nor_device\":\"%s\",\"lcd_probe68\":\"%s\","
+           "\"lcd_unverified_reads\":\"%" PRIu64 "\",\"frame_view\":\"%s\",\"key_events_applied\":%u,\"key_events\":[",
+           keyboard ? "apples" : "detached", nor ? "sst39vf1601" : "unspecified",
+           lcd_idle_zero ? "idle-zero" : "strict", orchard_lcd_probe68_reads(m),
+           frame_view == ORCHARD_FRAME_PACKED_LSB ? "packed-lsb" : "controller", next_event);
+    for (unsigned i = 0; i < event_count; ++i)
+        printf("%s{\"tick\":\"%" PRIu64 "\",\"column\":%u,\"row\":%u,\"down\":%u}",
+               i ? "," : "", events[i].tick, events[i].col, events[i].row, events[i].down);
+    puts("]}");
     result = state.stop.status == ORCHARD_OK && frame_status == ORCHARD_OK ? 0 : 2;
 cleanup:
     if (rom && fclose(rom) != 0) result = 74;

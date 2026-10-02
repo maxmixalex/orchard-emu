@@ -82,3 +82,21 @@ export async function readFirmware(path) {
     return buffer.subarray(0, used);
   } finally { await file.close(); }
 }
+
+// Research-wrapper budgets are safe JS integers; the native CLI accepts uint64.
+export function parseKeyEvents(text, budget) {
+  if (!Number.isSafeInteger(budget) || budget < 1) throw new Error('Invalid event budget');
+  if (text === undefined) return [];
+  if (typeof text !== 'string' || !text.length) throw new Error('Empty key event list');
+  const parts = text.split(',');
+  if (parts.length > 64) throw new Error('At most 64 key events');
+  let previous = -1;
+  return parts.map(part => {
+    if (!/^\d+:\d+:\d+:\d+$/.test(part)) throw new Error('Expected TICK:COL:ROW:0_OR_1');
+    const [tick, column, row, down] = part.split(':').map(Number);
+    if (![tick, column, row, down].every(Number.isSafeInteger) || tick < previous || tick >= budget ||
+        column >= 8 || row >= 7 || down > 1) throw new Error('Key event outside chronological/bounded range');
+    previous = tick;
+    return { tick, column, row, down };
+  });
+}

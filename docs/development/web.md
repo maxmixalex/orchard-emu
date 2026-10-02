@@ -84,3 +84,9 @@ Production WASM exports `keyboard_attach`, `keyboard_matrix`,
 with a generated SRAM guest through actual emulated IRQ entry and WFI return.
 The workbench UI does not call them automatically and has no interactive
 calculator keyboard yet. This core test under Node is not browser UI E2E.
+
+The new weak-bias, LCD-policy, packed-memory and scheduled-key experiments are
+available through the shared core/WASM exports and native/probe tools. The
+production page does not expose these controls yet; no browser interaction
+or page-level keyboard acceptance is implied by the Node WASM tests. Default
+page rendering remains the controller view and default LCD handling is strict.

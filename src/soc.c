@@ -136,6 +136,7 @@ static bool uart_register(orchard_machine *m, uint32_t address, unsigned width, 
 }
 bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value) {
     o_soc *s = &m->soc;
+    if (o_lcd_probe68_read(m, address, width, value)) return true;
     if (o_rtc_register(m, address, width, value, false)) return true;
     if (uart_register(m, address, width, value, false)) return true;
     if (width == 4 && !(address & 3u)) {

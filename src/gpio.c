@@ -15,10 +15,22 @@ orchard_status orchard_gpio_inputs(orchard_machine *m, orchard_gpio_port port,
     m->soc.gpio_input_levels[port] = levels;
     return ORCHARD_OK;
 }
+orchard_status orchard_gpio_bias(orchard_machine *m, orchard_gpio_port port,
+                                 uint32_t known_mask, uint32_t levels) {
+    if (!m || !m->profile || (unsigned)port < 1 || (unsigned)port > 7)
+        return ORCHARD_BAD_ARGUMENT;
+    uint32_t mask = (1u << port_bits[port]) - 1u;
+    if ((known_mask & ~mask) || (levels & ~known_mask)) return ORCHARD_BAD_ARGUMENT;
+    m->soc.gpio_bias_known[port] = known_mask;
+    m->soc.gpio_bias_levels[port] = levels;
+    return ORCHARD_OK;
+}
 void o_gpio_reset(o_soc *s) {
     o_zero(s->gpio, sizeof(s->gpio));
     o_zero(s->gpio_input_known, sizeof(s->gpio_input_known));
     o_zero(s->gpio_input_levels, sizeof(s->gpio_input_levels));
+    o_zero(s->gpio_bias_known, sizeof(s->gpio_bias_known));
+    o_zero(s->gpio_bias_levels, sizeof(s->gpio_bias_levels));
     s->keyboard_attached = false;
     s->keyboard_switches = 0;
     s->keyboard_direct = s->eint_known = s->eint_levels = 0;

@@ -45,9 +45,12 @@ void o_gpio_sample(const orchard_machine *m, unsigned port, uint32_t *known,
     *known = s->gpio_input_known[port];
     *levels = s->gpio_input_levels[port];
     *conflicts = 0;
+    uint32_t weak_only = s->gpio_bias_known[port] & ~*known;
+    *known |= weak_only;
+    *levels |= s->gpio_bias_levels[port] & weak_only;
     if (!s->keyboard_attached) return;
     if (port == ORCHARD_GPIO_F) {
-        *conflicts = (*levels ^ s->keyboard_direct) & *known & 0x71u;
+        *conflicts = (s->gpio_input_levels[port] ^ s->keyboard_direct) & s->gpio_input_known[port] & 0x71u;
         *known |= 0x71u;
         *levels = (*levels & ~0x71u) | s->keyboard_direct;
         return;
@@ -64,19 +67,22 @@ void o_gpio_sample(const orchard_machine *m, unsigned port, uint32_t *known,
         unsigned *d = &drive[root(parents, pin)];
         if (direction == 1) *d |= latch & (1u << pin) ? 2u : 1u;
         else if (direction == 0 || direction == 2) {
-            if (*known & (1u << pin)) *d |= *levels & (1u << pin) ? 2u : 1u;
+            if (s->gpio_input_known[port] & (1u << pin))
+                *d |= s->gpio_input_levels[port] & (1u << pin) ? 2u : 1u;
             if (!(s->gpio[port * 4 + 2] & (1u << pin))) *d |= 4u;
         }
         else *d |= 8u; /* Unmodeled alternate-function drive: net unresolved. */
+        if (s->gpio_bias_known[port] & (1u << pin))
+            *d |= s->gpio_bias_levels[port] & (1u << pin) ? 4u : 16u;
     }
     for (unsigned pin = 1; pin < 16; ++pin) {
         unsigned d = drive[root(parents, pin)];
         uint32_t bit = 1u << pin;
         *known &= ~bit; *levels &= ~bit;
         if ((d & 3u) == 3u) *conflicts |= bit;
-        else if (d && !(d & 8u)) {
+        else if (!(d & 8u) && ((d & 3u) || (d & 20u) == 4u || (d & 20u) == 16u)) {
             *known |= bit;
-            if (!(d & 1u)) *levels |= bit;
+            if ((d & 2u) || (!(d & 1u) && (d & 4u))) *levels |= bit;
         }
     }
 }

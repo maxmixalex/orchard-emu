@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Reproducible, ROM-free native/WASM checks. Uses only generated guest bytes.
 import assert from 'node:assert/strict';
+import { checkLCDResearch } from '../tests/lcd-research.mjs';
 import { checkCircuit } from '../tests/circuit-wasm.mjs';
 import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -18,20 +19,25 @@ function command(executable, args) {
   return result.stdout;
 }
 await mkdir(build, { recursive: true });
-const testModule = resolve(build, 'regression.wasm');
-command(process.env.CLANG || 'clang', [
-  '--target=wasm32', '-std=c17', '-O2', '-ffreestanding', '-nostdlib', '-fno-builtin',
-  '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc',
-  ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor'].map(s => `src/${s}.c`),
-  'tests/regression.c', '-o', testModule, '-Wl,--no-entry', '-Wl,--stack-first',
-  '-Wl,-z,stack-size=524288', '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216',
-]);
-const { instance: { exports: test } } = await WebAssembly.instantiate(await readFile(testModule), {});
-const native = JSON.parse(command(resolve(build, `orchard-regression${suffix}`), []));
-assert.equal(test.regression(), 0, `WASM regression failed at C line ${test.first_failure()}`);
-assert.equal(test.checks(), native.checks, 'Native and WASM must execute the same assertions');
-assert.equal(native.failures, 0);
-console.log(`Core regression: ${native.checks} assertions pass on native and WASM`);
+let totalAssertions = 0;
+for (const name of ['regression', 'lcd-input']) {
+  const testModule = resolve(build, `${name}.wasm`);
+  command(process.env.CLANG || 'clang', [
+    '--target=wasm32', '-std=c17', '-O2', '-ffreestanding', '-nostdlib', '-fno-builtin',
+    '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc',
+    ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'lcd'].map(s => `src/${s}.c`),
+    `tests/${name}.c`, '-o', testModule, '-Wl,--no-entry', '-Wl,--stack-first',
+    '-Wl,-z,stack-size=524288', '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216',
+  ]);
+  const { instance: { exports: test } } = await WebAssembly.instantiate(await readFile(testModule), {});
+  const native = JSON.parse(command(resolve(build, `orchard-${name}${suffix}`), []));
+  assert.equal(test.regression(), 0, `WASM regression failed at C line ${test.first_failure()}`);
+  assert.equal(test.checks(), native.checks, 'Native and WASM must execute the same assertions');
+  assert.equal(native.failures, 0);
+  console.log(`${name}: ${native.checks} assertions pass on native and WASM`);
+  totalAssertions += native.checks;
+}
+console.log(`Combined core regression: ${totalAssertions} assertions on each host`);
 
 // Minimal independent guest: reset -> MMIO -> ARM/Thumb/BX PC -> SWI -> WFI.
 // This fixture is generated in a temporary directory and is never packaged.
@@ -137,3 +143,5 @@ try {
 } finally { await rm(dir, { recursive: true, force: true }); }
 
 await checkCircuit(root, build);
+
+await checkLCDResearch(root, build);

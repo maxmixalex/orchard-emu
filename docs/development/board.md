@@ -1,31 +1,24 @@
 # Development board
 
-[Issue #1](https://github.com/zyf722/orchard-emu/issues/1) owns the current
-commit and observed CI/Pages outcomes. [Roadmap](roadmap.md) owns gates;
-[validation](validation.md) and [boot research](boot-research.md) own evidence.
+[Issue #1](https://github.com/zyf722/orchard-emu/issues/1) owns the exact accepted
+commit and remote outcomes. [Roadmap](roadmap.md) owns gates; [validation](validation.md),
+[boot research](boot-research.md) and [LCD evidence](lcd.md) own reproducible evidence.
 
-## Implemented locally, before publication
+## Implemented in the current slice
 
-- [x] Preserve the M0 baseline and native-input distinctions from `d3d6528`.
-- [x] Original opt-in electrical keyboard: raw switch connections, internal pull-ups, explicit drives, contention and unresolved pads.
-- [x] Unfiltered EINT edge/level detection, pending/mask/group routing and guest IRQ/WFI handling; digital filters remain explicit stops.
-- [x] Explicit SST39VF1601 software ID state machine; no inferred device ID or flash mutation.
-- [x] Unchanged HP48gII NOR reaches original OS-region LCD initialization with recorded keyboard/part/pad conditions; native/WASM cold replay agrees.
-- [x] Production-WASM generated guest handles matrix and ON press/release through its IRQ vector and returns to WFI.
-- [x] Probe v3 records attachment, part and strong input conditions; maintain ROM-free regression and production packaging separation.
+- [x] Separate weak external bias from strong drives, with unresolved/conflicting nets preserved.
+- [x] Schedule bounded raw matrix events at exact virtual ticks on the native CLI; compare the same events on production WASM and cold replay.
+- [x] Real HP50g boot-only press/release selects distinct USB/card initialization paths without the former artificial strong-drive short.
+- [x] Fix word-relative LCD lane addressing and nonlinear 2-bpp BLUELUT; keep packed-memory inspection distinct from raw controller output.
+- [x] Add explicit, counted, disabled-video-only LCD `+0x68` idle-zero research mode. Strict defaults remain unchanged; register semantics are not declared solved.
+- [x] Identify later conditioned HP39g+ LCDSRCPND and HP48gII ADC dependencies without modifying their NORs.
+- [x] Maintain ROM-free tests, production-artifact separation and strict Pages deployment.
 
 ## Now / next
 
-- [ ] Resolve the **shared** 39g+/48gII LCD `+0x68` read from independent evidence. No arbitrary zero-read implementation is present.
-- [ ] Correct the recorded LCD controller/panel bit-order counterexample.
-- [ ] Establish the remaining external pad bias and per-model populated switch maps; static high test drives are not a board preset.
-- [ ] Recover original 39gs/40gs native inputs and complete 49g+/50g NORs; the current acquisition inventory remains unchanged.
-- [ ] M1 independent CPU correctness; M3 first responsive stock cold boot.
-
-Strict defaults retain the prior stops. The opt-in 48gII run reaches
-`PC=0000707c` / LCD `4d000068` after 8,210,200 instructions, but its LCD is
-still disabled. The boot-only HP50g runs a 2-million-quantum recovery poll with
-keys released; this is neither an OS boot nor completed key interoperability.
-Full board timing, all-model keyboard/UI, browser E2E, retained state and USB
-are independent open gates. Run locally before pushing; synchronize observed
-CI acceptance in the issue and publish only documentation to Pages.
+- [ ] Model documented LCD pending/mask/scan behavior and ADC from vendor specifications and local regression cases.
+- [ ] Obtain stronger independent evidence for LCD `+0x68` and physical panel bit mapping; do not promote the research option into an implicit default.
+- [ ] Establish physical pad bias and populated per-model key maps beyond conditioned recovery-menu experiments.
+- [ ] Integrate the user's own HP39gs and HP49g+ full NOR dumps when supplied later. They are not a blocker for current work; do not request a new dump now.
+- [ ] Continue HP40gs/HP50g complete-input work when useful, preserving the updater/boot-region/full-dump distinction.
+- [ ] M1 conformance and M3 responsive stock boot remain open. Successful conditional or boot-only execution closes neither gate.

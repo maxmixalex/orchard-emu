@@ -80,3 +80,17 @@ EXPORT("keyboard_dedicated") unsigned web_keyboard_dedicated(unsigned pin, unsig
 EXPORT("nor_select") unsigned web_nor_select(unsigned device) {
     return orchard_nor_select(&machine, (orchard_nor_device)device);
 }
+
+EXPORT("gpio_bias") unsigned web_gpio_bias(unsigned port, uint32_t mask, uint32_t levels) {
+    return orchard_gpio_bias(&machine, (orchard_gpio_port)port, mask, levels);
+}
+EXPORT("lcd_probe68") unsigned web_lcd_probe68(unsigned enabled) {
+    if (enabled > 1) return ORCHARD_BAD_ARGUMENT;
+    return orchard_lcd_probe68(&machine, enabled != 0);
+}
+EXPORT("lcd_probe68_reads") uint64_t web_lcd_probe68_reads(void) {
+    return orchard_lcd_probe68_reads(&machine);
+}
+EXPORT("frame_view") unsigned web_frame_view(unsigned view) {
+    return orchard_framebuffer_view(&machine, (orchard_frame_view)view, pixels, sizeof(pixels));
+}

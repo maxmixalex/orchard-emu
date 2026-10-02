@@ -51,3 +51,11 @@ firmware routines or another emulator's implementation into Orchard. The
 native-region inspector stores identities, not the firmware. Research reports
 keep genuine dumps, boot-only constructed backing and explicit GPIO conditions
 separate; the preservation archive's distribution notice is not an MIT license.
+
+During the LCD follow-up, selected MAME S3C24xx DMA and x49gp LCD implementation
+snippets were **read for comparative research**. They expose existing modeling
+choices, not authoritative silicon semantics. The new source was written from
+vendor register/data-format facts, original test expectations and explicit
+hypothesis boundaries; no foreign implementation, translated routine or data
+structure was imported. This history is not described as a formal clean-room
+process. The exact inspected references are recorded in [references](references.md) and in LCD evidence.

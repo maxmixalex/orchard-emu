@@ -94,6 +94,29 @@ export async function checkCircuit(root, build) {
     const first = execute(); c.reset();
     assert.equal(c.keyboard_matrix(3, 2, 1), 1); // cold reset releases/detaches
     assert.deepEqual(execute(), first, 'Dynamic production keyboard replay differs');
+    // The native CLI now schedules the same two matrix transitions at
+    // exact virtual boundaries, not at host wall-clock times.
+    const scheduledArgs = [...args, '--ticks', '2512', '--gpio-bias', 'G:f800:f800',
+      '--key-at', '2000:3:2:1', '--key-at', '2256:3:2:0'];
+    const scheduled = spawnSync(cli, scheduledArgs, { encoding: 'utf8', timeout: 15000 });
+    assert.ifError(scheduled.error); assert.equal(scheduled.status, 0, scheduled.stdout + scheduled.stderr);
+    const ns = JSON.parse(scheduled.stdout);
+    assert.equal(ns.key_events_applied, 2); assert.equal(ns.exceptions, '2');
+    function scheduledWasm() {
+      c.reset(); assert.equal(c.nor_select(1), 0); assert.equal(c.keyboard_attach(1), 0);
+      assert.equal(c.gpio_inputs(5, 0x8e, 0), 0); assert.equal(c.gpio_bias(6, 0xf800, 0xf800), 0);
+      assert.equal(c.run(2000), 0);
+      assert.equal(c.keyboard_matrix(3, 2, 1), 0); assert.equal(c.run(256), 0);
+      assert.equal(c.keyboard_matrix(3, 2, 0), 0); assert.equal(c.run(256), 0);
+      return snap();
+    }
+    const ws = scheduledWasm(); assert.deepEqual(scheduledWasm(), ws);
+    assert.deepEqual(ns.registers.map(x => parseInt(x, 16)), ws.slice(0, 16));
+    assert.equal(parseInt(ns.cpsr, 16), ws[16]); assert.equal(Number(ns.instructions), ws[20]);
+    assert.equal(Number(ns.ticks), ws[22]); assert.equal(ws[10], 2); assert.equal(ws[26], 1);
+    const scheduledAgain = spawnSync(cli, scheduledArgs, { encoding: 'utf8', timeout: 15000 });
+    assert.ifError(scheduledAgain.error); assert.equal(scheduledAgain.stdout, scheduled.stdout);
+    console.log('Scheduled circuit guest: native CLI/WASM matrix press/release, two IRQ returns and WFI replay agree');
     for (const [option, value] of [['--keyboard', 'bad'], ['--nor-device', 'bad']]) {
       const failed = spawnSync(cli, ['run', '--model', 'hp50g', '--rom', input, option, value], { encoding: 'utf8' });
       assert.ifError(failed.error); assert.equal(failed.status, 64);

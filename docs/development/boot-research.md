@@ -1,6 +1,69 @@
 # Native NOR bring-up
 
-## Current continuation: shared LCD blocker
+## Current continuation: weak bias, real recovery keys and gated LCD reads
+
+Base revision `54f316d`. The core now separates weak bias from strong GPIO
+stimuli and can schedule raw matrix changes on native CLI as well as WASM.
+The following are **local** probes with source/binary hashes, exposed-state
+comparison and independent cold replay on both hosts. No input NOR changes.
+All listed cases have zero guest exceptions and data-fault state.
+
+| Input and explicit condition | Retired instructions | Stop PC | Result |
+| --- | ---: | --- | --- |
+| HP39g+ full NOR, strict | 514,293 | `000035e8` | LCD `4d000068`, unchanged |
+| HP48gII full NOR, strict | 94,497 | `08001820` | GPDDAT `56000034`, unchanged |
+| HP39g+, idle-zero only | 516,679 | `00002d2c` | GPFDAT `56000054` |
+| HP39g+, idle-zero + keyboard + F input `8e:0` | 518,006 | `000036b0` | LCDSRCPND `4d000058` read |
+| HP48gII, components/pads below, strict LCD | 8,210,200 | `0000707c` | LCD `4d000068`, unchanged |
+| Same HP48gII with idle-zero | 8,212,481 | `00004f34` | ADC `58000000` write, value `42f8` |
+| HP50g boot-only, weak bias, no key | 3,000,000 | `08001310` | Recovery polling; budget completed |
+| HP50g boot-only, weak bias, key 1 press/release | 2,634,075 | `08001d58` | USB `52000144` write |
+| HP50g boot-only, weak bias, key 2 press/release | 2,634,106 | `08003334` | SD `5a000004` write |
+| HP50g boot-only, former strong-high columns, key 1 | 2,168,086 | `08001c44` | Expected GPG11 contention; negative control |
+
+The stopped cases consume one more tick than their instruction count. Every
+idle-zero case records exactly **one unverified LCD read**; all other rows
+record zero. Default strict behavior is unchanged. The optional read is bounded
+to disabled-video word reads and is not claimed as the real register semantics;
+see [LCD evidence](lcd.md). No case is an accepted stock calculator boot.
+
+The component-enabled HP48gII uses `--keyboard apples --nor-device sst39vf1601`,
+strong pads `D:cc7f:0,G:1:0`, and weak bias `G:f800:f800`. The 50g uses the same
+keyboard/pads/bias, but no selected NOR-ID part and only its original 16 KiB
+boot region with erased OS sectors. Selection events are at ticks 2,000,000
+(press) and 2,400,000 (release), within a 3,000,000-quantum budget. Raw key 1 is
+(3,5), key 2 is (2,5). Both events are consumed before the positive USB/SD
+stops; the negative strong-drive case stops before release and reports one
+applied event. This isolates the earlier artificial electrical conflict.
+
+Firmware-decoded menu choices now follow different device paths, with no host
+jump, guest-memory edit or keyboard-queue injection. USB and SD transactions
+are **not implemented** by reaching these writes. The no-key packed-memory
+view has 858 nonzero pixels; after a selection it has 175. Packed-memory
+readability remains distinct from a validated physical LCD image.
+
+The 39g+ keyboard/idle-zero, 48gII component/idle-zero and 50g key-1 cases also
+repeat under optimized Clang ASan/UBSan with native/WASM agreement and cold
+replay. The instrumented long probes are not full Debug-timing measurements.
+
+```sh
+node tools/probe-rom.mjs --model hp48gii --rom /private/48gii.bin \
+  --ticks 10000000 --keyboard apples --nor-device sst39vf1601 \
+  --gpio-input D:cc7f:0,G:1:0 --gpio-bias G:f800:f800 \
+  --lcd-probe68 idle-zero --frame-view packed-lsb
+node tools/probe-rom.mjs --model hp50g --bootloader /private/boot-50g.bin \
+  --ticks 3000000 --keyboard apples --gpio-input D:cc7f:0,G:1:0 \
+  --gpio-bias G:f800:f800 --key-at 2000000:3:5:1,2400000:3:5:0 \
+  --frame-view packed-lsb
+```
+
+## Earlier progression records
+
+The sections below preserve the earlier strict and strong-drive experiments.
+Their then-current blockers are historical checkpoints; the table above owns
+this continuation's scope. Prior full-dump identities remain unchanged.
+
+### Current continuation: shared LCD blocker
 
 Starting from `d3d6528`, the opt-in electrical keyboard and explicit
 SST39VF1601 software ID now let the unchanged HP48gII full NOR pass the
@@ -57,12 +120,12 @@ Probe v3 records the component selection, attachment and external drives and
 reapplies all conditions after reset. Full-NOR, boot-only and generated guests
 remain distinct. Ordinary CI still has no firmware dependency.
 
-## Previous native-input research (`d3d6528`)
+### Previous native-input research (`d3d6528`)
 
 The following sections retain the earlier baseline and its bounded experiments;
 statements about the then-unimplemented keyboard refer to that revision.
 
-## Strict full-NOR baseline (unchanged by external-stimulus support)
+### Strict full-NOR baseline (unchanged by external-stimulus support)
 
 Two **unmodified full physical NORs** now execute in Orchard: the user's
 HP39g+ D1.55 dump and the hash-pinned HP48gII USB-revision mirror. Both reach
@@ -88,7 +151,7 @@ repeatability and host consistency, **not an independent CPU oracle or boot
 completion**. No ROM patches, replacement bootloaders, GPIO input guesses or
 unknown-register zero-read fallbacks were used.
 
-## Dependencies resolved from the trace
+### Dependencies resolved from the trace
 
 The prior published core stopped both images after 71 instructions at
 `PC=0x78`, reading `GSTATUS2` (`0x560000b4`). Implementing its power-reset
@@ -116,7 +179,7 @@ that aligned word reads must also be accommodated. Orchard aliases the low
 byte and chooses zero for the upper lanes. Those upper-lane electrical values
 have not been measured on hardware.
 
-## Explicit modeling limits
+### Explicit modeling limits
 
 The cold-fixture RTC seed is **2000-01-01 00:00:00, weekday 7**. It is a
 repeatable external starting condition, not a date extracted from the dump.
@@ -139,7 +202,7 @@ single scan. Directed asymmetric-word tests replace that ambiguity; TFT/dual
 scan and nonzero dithering remain unsupported. Board-specific panel wiring,
 annunciator rows, polarity, LCD timing and FIFO behavior are not established.
 
-## LCD status investigation
+### LCD status investigation
 
 HP39g+ polls LCD offset `0x68` immediately before enabling video. The reviewed
 S3C2410A manual lists the normal LCD registers through LPCSEL at offset `0x60`,
@@ -147,7 +210,7 @@ but does not identify this read. The observed firmware loop toggles ENVID
 while the value is nonzero. That is evidence to investigate a possible hidden
 status/FIFO facility, **not enough to assign it a name or return zero**.
 
-## GPDDAT dependency: read-modify-write, not a keyboard decision
+### GPDDAT dependency: read-modify-write, not a keyboard decision
 
 Disassembly of the unmodified HP48gII image shows the blocked read is followed
 by masking with `0xcc7f`, setting output bits `0x300`, and writing GPDDAT.
@@ -185,7 +248,7 @@ with no guest exceptions. The source NOR is still the original full dump;
 the explicitly supplied external signals make these **conditional** witnesses,
 not strict no-stimulus boot acceptance. The framebuffer remains blank.
 
-## Original HP49g+/HP50g boot regions
+### Original HP49g+/HP50g boot regions
 
 The matching 16 KiB regions are now available; see [preservation research](native-roms.md).
 The remaining NOR is explicitly erased in these experiments, not populated with
@@ -211,7 +274,7 @@ the complete electrical panel mapping. The SoC decoder has not been silently
 changed to fit a readable screenshot. Correct panel bit order is now an
 explicit counterexample/gate, alongside the already unresolved FIFO/status read.
 
-## Reproduce locally
+### Reproduce locally
 
 Build the native CLI and production WASM first, then:
 

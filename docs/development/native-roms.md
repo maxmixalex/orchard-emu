@@ -5,6 +5,14 @@ labels are not evidence that an image contains a physical ARM boot region.
 The local inspector distinguishes admitted full NORs, native boot regions,
 updaters and the archived Emu48+ image using exact hashes.
 
+## Updated acquisition priority
+
+The user will later provide full HP39gs and HP49g+ NOR dumps from their own
+hardware. These remain **pending**, not acquired or verified. Work continues
+with the existing HP39g+/HP48gII full inputs and HP49g+/HP50g native boot regions;
+no new original firmware was admitted in this continuation. Do not spend the
+current work cycle repeating the blocked HP39gs attachment retrieval.
+
 ## Six-model inventory
 
 | Model | Verified material available locally | Remaining native input |

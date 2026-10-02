@@ -34,7 +34,7 @@ host-side Saturn shortcut is planned. See the ARM/Samsung manuals in
 | Public API | `include/orchard/orchard.h` | Opaque caller-owned machine, profiles, bounded execution, diagnostics and I/O |
 | CPU | `src/cpu.c`, `src/thumb.c` | Original ARM/Thumb dispatch, flags, register banks and exception entry/return |
 | MMU | `src/mmu.c` | CP15 subset, guest table walks, access permission and alignment checks |
-| Physical bus | `src/bus.c` | NOR, external SRAM and 4 KiB internal SRAM bounds, MMIO routing, single-scan STN decode |
+| Physical bus | `src/bus.c` | NOR, external SRAM and 4 KiB internal SRAM bounds, MMIO routing; inspection in `src/lcd.c` |
 | SoC | `src/soc.c`, `src/watchdog.c`, `src/interrupt.c`, `src/gpio.c`, `src/rtc.c` | Functional timers/UART/watchdog, two-level IRQ arbitration, GPIO latches and RTC subset |
 | Input / NOR | `src/keyboard.c`, `src/nor.c` | Opt-in switch network, unfiltered EINT and explicit read/software-ID NOR subset |
 | Machine | `src/machine.c` | Reset, loader, profiles and deterministic scheduler |
@@ -146,3 +146,13 @@ The native CLI accepts repeated `--gpio-input D:cc7f:0` options, once per port.
 The WASM export is `gpio_inputs(port, known, levels)`. `probe-rom.mjs` accepts a
 comma-separated list and records it in its report. This API is a foundation
 for board wiring and bounded sensitivity experiments, not a firmware shortcut.
+
+## Counted hypotheses and observation layers
+
+`src/lcd.c` separates the default controller stream from a packed-memory
+inspection view. The latter is never automatically treated as panel wiring.
+Its guarded `+0x68` policy is an explicitly enabled research assumption, with
+an exposed read counter and reset behavior, not a resolved register definition.
+See [LCD evidence](lcd.md). Weak pad bias and chronological native-host events
+extend the external circuit/host interfaces without editing guest variables;
+[probe v4](boot-research.md) records every supplied condition.

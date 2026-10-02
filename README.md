@@ -16,7 +16,10 @@ timers/UART0/watchdog and a raw single-scan STN LCD preview. An opt-in electrica
 keyboard/EINT model and explicit SST39VF1601 identification now let the unchanged
 HP48gII NOR reach its OS-region LCD initialization. The same unknown LCD `+0x68`
 read blocks both 39g+ and this conditioned 48gII run; neither has booted its UI.
-The browser UI remains a diagnostic workbench. See [real-ROM progression](docs/development/boot-research.md).
+An explicit, counted LCD idle-zero research option exposes later LCD/ADC
+stops without changing strict defaults. Weak-bias and scheduled-key experiments
+let the original HP50g recovery code select USB/card initialization; neither
+controller transfer nor a stock OS boot is accepted. The browser UI remains a diagnostic workbench. See [real-ROM progression](docs/development/boot-research.md).
 
 ## Build and verify
 
@@ -68,6 +71,7 @@ for recovered regions, hashes, rejected lookalikes and remaining acquisition gap
 [Live board](https://github.com/zyf722/orchard-emu/issues/1) ·
 [Architecture](docs/development/architecture.md) ·
 [Models](docs/development/models.md) ·
+[LCD evidence](docs/development/lcd.md) ·
 [Electrical input](docs/development/input.md) ·
 [Virtual links](docs/development/virtual-link.md)
 

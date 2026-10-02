@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
-import { inspectInput, prepareInput, parseGpio, readFirmware } from '../tools/rom-inputs.mjs';
+import { inspectInput, prepareInput, parseGpio, parseKeyEvents, readFirmware } from '../tools/rom-inputs.mjs';
 let checks = 0;
 function test(fn) { fn(); ++checks; }
 for (const marker of ['KINPOHP39G+IMAGE', 'KINPOHP40G+IMAGE', 'KINPOUPDATEIMAGE']) {
@@ -34,6 +34,15 @@ for (const bad of ['A:1:0', 'I:1:0', 'D:1:2', 'F:100:0', 'D:10000:0', 'D:1:0,D:1
 test(() => assert.deepEqual(parseGpio(undefined), []));
 test(() => assert.deepEqual(parseGpio('d:cc7f:0'), [{ port: 3, name: 'D', known: 0xcc7f, levels: 0, cli: 'D:cc7f:0' }]));
 test(() => assert.equal(parseGpio('B:7ff:555,F:ff:0').length, 2));
+for (const bad of ['', '1:8:0:1', '1:0:7:1', '1:0:0:2', '-1:0:0:1',
+  '2:0:0:1,1:0:0:0', '100:0:0:1', '1.0:0:0:1', '1:0:0:1,', '1:0:0',
+  '9007199254740992:0:0:1', Array(65).fill('1:0:0:1').join(',')])
+  test(() => assert.throws(() => parseKeyEvents(bad, 100)));
+test(() => assert.deepEqual(parseKeyEvents(undefined, 1), []));
+test(() => assert.deepEqual(parseKeyEvents('0:3:2:1,0:3:2:0,99:7:6:1', 100), [
+  { tick: 0, column: 3, row: 2, down: 1 }, { tick: 0, column: 3, row: 2, down: 0 },
+  { tick: 99, column: 7, row: 6, down: 1 }]));
+test(() => assert.throws(() => parseKeyEvents(undefined, NaN)));
 const temp = await mkdtemp(resolve(tmpdir(), 'orchard-rom-tools-'));
 try {
   const good = resolve(temp, 'good'); await writeFile(good, region);

@@ -91,3 +91,23 @@ in searches supplied only corroborating register facts, not implementation.
 
 Full identities, rejected candidates and limitations are in [native ROM research](native-roms.md).
 The original vendor manual remains the source for GPIO input/output semantics.
+
+## LCD and weak-bias follow-up
+
+- Samsung 2004 manual pages 15-9 through 15-14 and 15-31 through 15-38:
+  STN pixel groups, LCDCON5 BSWP/HWSWP, BLUELUT and documented LCD interrupt
+  register addresses. Rendered diagrams/tables were inspected locally because
+  the web PDF screenshot service failed. The manual still does not name `+0x68`.
+- [x49gp LCD source](https://github.com/claudiobsd/x49gp/blob/master/s3c2410_lcd.c),
+  inspected blob `3c7745863fabb8da5cfac974daae92ea76a50967`: unnamed `+0x68`
+  storage with reset zero, read-driven scan approximation and fixed-width
+  packed-memory rendering. Comparative evidence only, not imported code or
+  a hardware specification. It motivates an explicit experiment, not a default.
+- [MAME S3C24xx LCD DMA source](https://github.com/mamedev/mame/blob/0c77e0bc49ff302e248dbe9be4659448f07705d9/src/devices/machine/s3c24xx.hxx),
+  inspected blob `f6ef1925eb25522650827fd0bf4f7f63bf6941e0`, selected lines
+  230–440: a comparison of word-relative DMA lanes and palette interpretation.
+  No implementation was copied or translated into Orchard.
+
+The new guarded read, bias resolver, decoder corrections and tests are original
+Orchard code. See [LCD evidence](lcd.md) and [licensing](licensing.md) for the
+separation between specifications, firmware observations and emulator choices.

@@ -48,6 +48,9 @@ typedef struct {
     uint32_t srcpnd, intmod, intmsk, intpnd, subsrcpnd, intsubmsk, priority;
     uint32_t memc[13], clock[6], gpio[48], lcd[20];
     uint32_t gpio_input_known[8], gpio_input_levels[8];
+    uint32_t gpio_bias_known[8], gpio_bias_levels[8];
+    bool lcd_probe68_idle_zero;
+    uint64_t lcd_probe68_reads;
     bool keyboard_attached;
     uint64_t keyboard_switches;
     uint32_t keyboard_direct, eint_known, eint_levels;
@@ -120,6 +123,7 @@ bool o_rtc_register(orchard_machine *m, uint32_t address, unsigned width, uint32
 void o_watchdog_reset(o_soc *s);
 void o_watchdog_tick(orchard_machine *m);
 bool o_watchdog_register(o_soc *s, uint32_t address, uint32_t *value, bool write);
+bool o_lcd_probe68_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);
 bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);
 bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value);
 bool o_q_push(o_queue *q, uint8_t byte);

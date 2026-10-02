@@ -184,3 +184,16 @@ or close M3. The strict no-stimulus stops remain recorded separately. The
 HP50g recovery buffer exposes a panel bit-order counterexample, so nonblank
 pixels alone remain insufficient for display acceptance. CPU conformance,
 LCD status/FIFO semantics and all six stock-UI gates are still open.
+
+## Current conditional-research boundary
+
+The LCD/input continuation adds weak bias and deterministic native/WASM key
+schedules, real HP50g recovery selection, corrected inspection addressing/LUT,
+and an explicit counted idle-zero experiment at LCD `+0x68`. These are progress
+within M2/research, **not closure of M3**. Canonical stock boot excludes an
+unverified read policy; later LCD/ADC dependencies may be developed without
+pretending that the earlier silicon behavior is known. See [LCD evidence](lcd.md).
+
+The user plans to provide HP39gs and HP49g+ full dumps later. Their acquisition
+is deferred and should not displace available-ROM hardware work. Keep those
+forthcoming inputs distinct from currently available updates/boot-only regions.

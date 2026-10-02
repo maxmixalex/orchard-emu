@@ -97,6 +97,14 @@ typedef enum {
 } orchard_gpio_port;
 orchard_status orchard_gpio_inputs(orchard_machine *m, orchard_gpio_port port,
                                    uint32_t known_mask, uint32_t levels);
+/* Explicit weak external bias. Same mask/level convention as gpio_inputs:
+ * mask=1,level=1 adds a pull-up; mask=1,level=0 adds a pull-down.
+ * Strong drives dominate. Opposing weak biases without a strong drive leave
+ * a net unresolved, not shorted. This is digital resolution, not resistance
+ * or analog timing. Cold reset releases bias. No board default is inferred.
+ */
+orchard_status orchard_gpio_bias(orchard_machine *m, orchard_gpio_port port,
+                                 uint32_t known_mask, uint32_t levels);
 /* Opt-in Apples electrical keyboard: columns GPG8..15, rows GPG1..7,
  * dedicated active-high inputs GPF0/4/5/6. Matrix indices are raw switch
  * positions, not 56 physical keys or a model-specific printed-key map.
@@ -115,6 +123,19 @@ orchard_status orchard_keyboard_dedicated(orchard_machine *m, unsigned gpf_pin, 
  */
 typedef enum { ORCHARD_NOR_UNSPECIFIED = 0, ORCHARD_NOR_SST39VF1601 } orchard_nor_device;
 orchard_status orchard_nor_select(orchard_machine *m, orchard_nor_device device);
+/* Opt-in, unverified LCD +0x68 hypothesis. When enabled, aligned word reads
+ * return zero ONLY while ENVID is clear. Other widths, active-display reads,
+ * writes and neighboring unknown addresses still stop. No FIFO is implied.
+ * Count every such read; disabling the option does not erase that evidence.
+ * Cold reset disables the hypothesis and clears its count. */
+orchard_status orchard_lcd_probe68(orchard_machine *m, bool idle_zero);
+uint64_t orchard_lcd_probe68_reads(const orchard_machine *m);
+/* CONTROLLER is the documented raw STN stream. PACKED_LSB is an alternative
+ * memory-inspection view, NOT a verified physical panel mapping. Selecting a
+ * view never changes the CPU, LCD registers, or probe68 policy/counter. */
+typedef enum { ORCHARD_FRAME_CONTROLLER = 0, ORCHARD_FRAME_PACKED_LSB } orchard_frame_view;
+orchard_status orchard_framebuffer_view(const orchard_machine *m, orchard_frame_view view,
+                                        uint8_t *pixels, size_t capacity);
 /* Raw STN pixels, one intensity byte per pixel. No skin or annunciator overlays. */
 orchard_status orchard_framebuffer(const orchard_machine *m, uint8_t *pixels,
                                    size_t capacity);

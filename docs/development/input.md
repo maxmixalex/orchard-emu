@@ -96,8 +96,52 @@ node tools/probe-rom.mjs --model hp48gii --rom /private/48gii.bin \
   --gpio-input D:cc7f:0,G:f801:f800 --output /new/path/48-input.json
 ```
 
-Probe v3 records keyboard attachment, NOR part, strong external drives and
+Probe v4 additionally records weak bias, key schedules and LCD research settings; it records keyboard attachment, NOR part, strong external drives and
 source/backing hashes separately. It reattaches conditions after cold reset.
 The full dump is unchanged. This configuration reaches the original OS flash
 region and its LCD `+0x68` read, **not a responsive stock UI**. Results and
 remaining electrical assumptions are in [boot research](boot-research.md).
+
+## Weak bias and deterministic key events
+
+`orchard_gpio_bias(machine, port, mask, levels)` models an explicit weak
+external bias: known high bits are pull-ups and known low bits are pull-downs.
+It is separate from `orchard_gpio_inputs()`, whose values are strong drives.
+Strong high/low wins over a weak opposite bias. Opposing weak biases with no
+strong driver leave a net unresolved; contradictory strong drives remain a
+contention stop. Connected keyboard pads share these contributions, and cold
+reset removes both kinds of external stimulus. Bias values and resistance
+ratios have not been measured on the target boards: this is a digital,
+functional circuit model, not an analog solver or default motherboard preset.
+
+CLI `--gpio-bias G:f800:f800` attaches weak column bias without forcing those
+pads high against the guest's outputs. With `--gpio-input D:cc7f:0,G:1:0` and
+an attached keyboard, this removes the earlier artificial HP50g key-1 short.
+Do not describe those conditions as measured idle levels.
+
+The native CLI now supports up to 64 chronological events:
+
+```sh
+# Append to an explicit run using --keyboard apples:
+--key-at 2000000:3:5:1 --key-at 2400000:3:5:0
+```
+
+Fields are decimal virtual tick, raw column, raw row and down=1/up=0. An event
+at tick N applies after N quanta, before the next quantum. Tick-zero events
+are valid; same-tick events execute in argument order. All events must be
+below the run budget. Execution slices end at event boundaries, including
+while the CPU waits for an interrupt. An early diagnostic stop never applies
+later events. The CLI reports both the schedule and the actual applied count.
+
+The probe accepts a comma-separated `--key-at` list and applies the identical
+schedule to production WASM, replaying both hosts from cold reset. A ROM-free
+circuit guest now verifies two matrix-triggered IRQ entries, guest exception
+return and WFI on **both native CLI and production WASM**, in addition to the
+previous WASM-only four-event matrix/ON test. The browser key interface remains
+unimplemented.
+
+The real HP50g boot-only guest interprets raw (3,5) as recovery selection 1
+and (2,5) as selection 2 under these conditions. Press/release selects USB and
+card initialization respectively, stopping on their unimplemented MMIO.
+No event leaves it polling recovery input. This is bootloader input evidence,
+not all-model printed-key or complete transfer acceptance. See [boot research](boot-research.md).
