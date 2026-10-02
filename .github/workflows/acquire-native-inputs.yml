@@ -10,62 +10,36 @@ jobs:
   acquire:
     if: github.repository == 'zyf722/orchard-emu' && github.event.repository.private == true
     runs-on: home-docker
-    timeout-minutes: 6
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: d08d349f3f87d184e86815a9d7dcf3e226ab5e2e
-          persist-credentials: false
-      - name: Export exact baseline source
-        run: git archive --format=tar.gz --output="$RUNNER_TEMP/orchard-source.tar.gz" HEAD
-      - name: Acquire public primary research material
+      - name: Acquire the archived emulator ROM for offline format inspection
         env:
-          TARGET: ${{ runner.temp }}/native-research
-        shell: bash
+          TARGET: ${{ runner.temp }}/rom-format-research
         run: |
           mkdir -p "$TARGET"
           python3 - <<'PY'
-          import hashlib, html, json, os, pathlib, re, urllib.request
-          from urllib.parse import urljoin, urlsplit
+          import hashlib, io, json, os, pathlib, urllib.request, zipfile
+          from urllib.parse import urlsplit
+          url = 'https://www.hpcalc.org/hp49/pc/rom/hp4950emurom.zip'
           out = pathlib.Path(os.environ['TARGET'])
-          report = []
-          def get(url, name, limit=16000000):
-              try:
-                  req = urllib.request.Request(url, headers={'User-Agent': 'Orchard hardware preservation research'})
-                  with urllib.request.urlopen(req, timeout=50) as response:
-                      if urlsplit(response.url).scheme != 'https':
-                          raise ValueError('Non-HTTPS redirect')
-                      data = response.read(limit + 1)
-                      if len(data) > limit: raise ValueError('Size limit')
-                  (out / name).write_bytes(data)
-                  report.append(dict(url=url, name=name, size=len(data), sha256=hashlib.sha256(data).hexdigest()))
-                  return data
-              except Exception as exc:
-                  report.append(dict(url=url, name=name, error=str(exc)))
-                  return None
-          get('https://www.hpcalc.org/hp49/pc/rom/hp-arm-models-bootloader.zip', 'hp-arm-models-bootloader.zip', 100000)
-          page = get('https://www.hpmuseum.org/forum/post-117443.html', 'hp39gs-bootloader-post.html', 2000000)
-          if page:
-              text = page.decode('utf-8', errors='replace')
-              links = re.findall(r'href=[\"\x27]([^\"\x27]+)[\"\x27][^>]*>\s*bootldr\.txt\s*</a>', text, flags=re.I)
-              for i, link in enumerate(links[:2]):
-                  url = urljoin('https://www.hpmuseum.org/forum/', html.unescape(link))
-                  if urlsplit(url).hostname == 'www.hpmuseum.org' and '/attachment.php' in url:
-                      get(url, 'hp39gs-bootldr-%d.txt' % i, 100000)
-          get('https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf', 's3c2410-manual.pdf')
-          (out / 'acquisition.json').write_text(json.dumps(report, indent=2) + '\n')
+          with urllib.request.urlopen(url, timeout=60) as response:
+              if urlsplit(response.url).scheme != 'https': raise ValueError('HTTPS required')
+              data = response.read(1000001)
+          if len(data) != 662123: raise ValueError('Archive size differs from preservation listing')
+          (out / 'hp4950emurom.zip').write_bytes(data)
+          with zipfile.ZipFile(io.BytesIO(data)) as archive:
+              member = archive.getinfo('rom.49g')
+              if member.file_size != 2097152: raise ValueError('Unexpected image size')
+              image = archive.read(member)
+          report = dict(source=url, archive_sha256=hashlib.sha256(data).hexdigest(),
+                        image_sha256=hashlib.sha256(image).hexdigest(), image_size=len(image))
+          (out / 'identity.json').write_text(json.dumps(report, indent=2)+'\n')
           print(json.dumps(report, indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: native-research-inputs
-          path: ${{ runner.temp }}/native-research/
+          name: emulator-rom-format-research
+          path: ${{ runner.temp }}/rom-format-research/
           retention-days: 1
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
-        with:
-          name: orchard-source-d08d349
-          path: ${{ runner.temp }}/orchard-source.tar.gz
-          retention-days: 1
-          if-no-files-found: error
-# Acquisition only. No emulator execution, debugging, source import or Pages publication.
+# Binary acquisition only. No emulator execution, no firmware in Git or Pages.
