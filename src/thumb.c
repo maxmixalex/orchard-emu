@@ -73,7 +73,12 @@ void o_thumb(orchard_machine *m, uint16_t op) {
         else if (kind == 1) (void)o_add(c, a, ~b, 1, true);
         else if (kind == 2) o_putr(c, rd, b);
         else {
-            if ((op & 0x87u) || rs == 15) { fail(m, op); return; }
+            if (op & 0x87u) { fail(m, op); return; }
+            /* Samsung manual 4-15: word-aligned Thumb BX PC enters ARM at
+               PC+4. The halfword-only aligned case is unpredictable. */
+            if (rs == 15 && (c->r[15] & 2u)) {
+                o_stop(m, ORCHARD_UNPREDICTABLE, c->r[15], op); return;
+            }
             c->cpsr = (c->cpsr & ~O_T) | (b & 1u ? O_T : 0);
             o_putr(c, 15, b);
         }

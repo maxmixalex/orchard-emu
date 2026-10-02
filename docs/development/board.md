@@ -1,40 +1,32 @@
 # Development board
 
-The live board is [GitHub issue #1](https://github.com/zyf722/orchard-emu/issues/1).
-This page records the working convention and a compact repository snapshot;
-the [roadmap](roadmap.md) owns milestone definitions and [validation](validation.md)
-records the scope of each observed result.
+[Issue #1](https://github.com/zyf722/orchard-emu/issues/1) is the live board,
+including remote CI results. This repository snapshot describes the current
+code slice; [roadmap](roadmap.md) owns milestone gates and
+[validation](validation.md) owns reproducible local evidence.
 
-## Current baseline
+## Implemented and locally accepted
 
-- [x] Original MIT C17 ARM/Thumb core, native CLI and freestanding WASM host.
-- [x] Six candidate physical profiles, strict full-NOR loader and bounded runs.
-- [x] Functional INTC/PWM/UART0 subset and raw STN framebuffer inspection.
-- [x] Source, browser workbench, Zensical configuration and opt-in build workflow imported while preserving the existing LICENSE commit.
-- [x] Existing issue #1 retained as the live board; no duplicate board or history rewrite.
-- [ ] M0: strict Zensical rendering, observed remote CI and maintained regression corpus.
-- [ ] M1: independent CPU conformance, abort/writeback and undefined-instruction audit.
-- [ ] M2/M3: obtain the verified full-NOR bytes locally and resolve the first actual boot dependency.
+- [x] Original MIT source import, preserving the LICENSE initialization history.
+- [x] Checked-in CTest regression, also compiled/executed as a test-only WASM module.
+- [x] Six-profile generated-guest comparison using production CLI/WASM, with state, UART, LCD and reset/replay checks.
+- [x] Legal Thumb BX PC transition and ARMv4 MUL/MULL/MSR operand restrictions.
+- [x] Watchdog registers, functional countdown, reload and IRQ; reset propagation remains an explicit stop.
+- [x] Release and ASan/UBSan validation; build workflow runs these checks before packaging.
 
-## Fixture priority
+## Now / next
 
-Start with the existing HP39g+ D1.55 hardware dump from hpclang, not a new ROM
-dumper. Its size/hash/provenance are known; the connected file read currently
-returns a Git LFS pointer, not the binary. Local binary retrieval has failed.
-Do not substitute another model's bootloader or mark real-ROM execution passed.
-See [ROM inputs](roms.md) and the [handoff](handoff.md).
+- [ ] M0: observe strict documentation and remote build acceptance; see the live issue for run results.
+- [ ] M1: expand independent CPU comparison, undefined exceptions and abort/writeback cases.
+- [ ] M2/M3: admit the existing HP39g+ full NOR locally and record the first genuine boot stop.
+- [ ] Close model-correct NOR/GPIO/LCD dependencies before claiming stock UI support.
 
-## Next
+The existing HP39g+ dump is already acquired. Its LFS pointer and provenance
+are known; local binary retrieval is still unresolved. Do not restart the
+retired ROM dumper or substitute another model's bootloader. See
+[handoff](handoff.md).
 
-Complete boot-relevant peripheral behavior using primary register references
-and local directed checks, then use a real full-NOR trace to set priorities.
-Keep physical keyboard wiring, LCD annunciators, stock ARM launch/return and
-USB endpoint/host/transfer behavior as separate, evidence-backed gates.
-
-## Update rule
-
-Keep issue #1 concise. Durable diagnosis belongs in these development pages.
-A checked box needs an implementation revision, input, command and observed
-outcome. Synchronize README, roadmap, validation and the issue after accepted
-changes. A profile, synthetic guest or successful build is not a stock boot.
-Run locally before CI; do not use the remote runner as an open-ended debugger.
+A profile, green synthetic guest or successful build is not a stock boot.
+Keep all-six-model usability, browser E2E, stock ARM return and virtual USB as
+separate gates. Run locally before pushing; keep durable diagnosis in docs
+and short status in the issue.

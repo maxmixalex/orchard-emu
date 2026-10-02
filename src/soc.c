@@ -20,6 +20,7 @@ void o_soc_reset(o_soc *s) {
     o_zero(s, sizeof(*s));
     s->intmsk = UINT32_MAX;
     s->intsubmsk = 0x7ff;
+    o_watchdog_reset(s);
     s->clock[0] = 0xffffff; /* LOCKTIME */
     s->clock[1] = 0x5c080;  /* MPLLCON */
     s->clock[2] = 0x28080;  /* UPLLCON */
@@ -43,6 +44,8 @@ void o_irq_update(o_soc *s) {
 static unsigned timer_shift(unsigned channel) { return channel ? 4u * channel + 4u : 0; }
 void o_soc_tick(orchard_machine *m) {
     o_soc *s = &m->soc;
+    o_watchdog_tick(m);
+    if (m->stop.status != ORCHARD_OK) return;
     for (unsigned ch = 0; ch < 5; ++ch) {
         unsigned shift = timer_shift(ch);
         if (!(s->tcon & (1u << shift))) continue;
@@ -150,6 +153,7 @@ bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
     o_soc *s = &m->soc;
     if (uart_register(m, address, width, value, false)) return true;
     if (width == 4 && !(address & 3u)) {
+        if (o_watchdog_register(s, address, value, false)) return true;
         uint32_t *reg = plain_register(s, address);
         if (reg) { *value = *reg; return true; }
         if (address >= 0x51000000u && address <= 0x51000040u && timer_register(m, address, value, false)) return true;
@@ -175,6 +179,7 @@ bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t
     if (uart_register(m, address, width, &value, true)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
     if (width == 4 && !(address & 3u)) {
+        if (o_watchdog_register(s, address, &value, true)) return true;
         uint32_t *reg = plain_register(s, address);
         if (reg) { *reg = value; return true; }
         if (address >= 0x51000000u && address <= 0x51000040u && timer_register(m, address, &value, true)) return true;

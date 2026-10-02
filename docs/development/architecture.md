@@ -34,7 +34,7 @@ host-side Saturn shortcut is planned. See the ARM/Samsung manuals in
 | CPU | `src/cpu.c`, `src/thumb.c` | Original ARM/Thumb dispatch, flags, register banks and exception entry/return |
 | MMU | `src/mmu.c` | CP15 subset, guest table walks, access permission and alignment checks |
 | Physical bus | `src/bus.c` | NOR/SRAM bounds, MMIO routing, candidate STN framebuffer decode |
-| SoC | `src/soc.c` | Functional INTC/timers/UART; selected register storage |
+| SoC | `src/soc.c`, `src/watchdog.c` | Functional INTC/timers/UART/watchdog; selected register storage |
 | Machine | `src/machine.c` | Reset, loader, profiles and deterministic scheduler |
 | Native host | `app/main.c` | Full-NOR loading, bounded CLI run, JSON/PGM/UART files |
 | Web host | `app/wasm.c`, `web/` | Freestanding WASM adapter, Worker and diagnostic workbench |
@@ -70,7 +70,8 @@ Flash does not silently mirror or pad. NOR command state machines are not yet
 implemented: a 16-bit read-array reset is accepted, while other writes stop.
 This alone prevents claiming ordinary stock firmware boot compatibility.
 
-One virtual tick advances the current functional peripherals and either takes
+One virtual tick is counted before advancing the current functional peripherals;
+a peripheral diagnostic stop therefore includes its triggering tick. A tick advances the peripherals and either takes
 an interrupt, dispatches an instruction, or stays in WFI. It is **not** a CPU
 clock cycle, oscillator tick or real millisecond. Guest time does not depend
 on browser animation timestamps. The native host and browser may run different
@@ -106,3 +107,13 @@ into the board GPIO matrix with deterministic press/release timestamps. It
 must not bypass firmware by editing Saturn keyboard variables. Model skins
 are a separate presentation concern and may only use independently licensed
 artwork.
+
+## Watchdog continuation
+
+`src/watchdog.c` models WTCON/WTDAT/WTCNT, their reset values, the prescaler
+and four divider settings, countdown/reload and interrupt 9. WTDAT writes do
+not silently initialize WTCNT. Illegal register widths/offsets remain visible.
+Clock input is a provisional functional quantum; full PLL/PCLK timing remains
+open. A watchdog reset request produces `ORCHARD_UNIMPLEMENTED_RESET`, not a
+fake cold reset that erases external SRAM. Directed tests cover the supported
+register/countdown behavior. See [validation](validation.md).

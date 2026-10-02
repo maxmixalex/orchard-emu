@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const out = resolve(root, 'dist');
 await mkdir(out, { recursive: true });
-const sources = ['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc'].map(name => `src/${name}.c`);
+const sources = ['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'watchdog'].map(name => `src/${name}.c`);
 const args = [
   '--target=wasm32', '-std=c17', '-O2', '-ffreestanding', '-nostdlib', '-fno-builtin',
   '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc',

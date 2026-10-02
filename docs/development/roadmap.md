@@ -23,13 +23,13 @@ interception is allowed in the canonical stock boot gate.
 - [x] Exact-size full-NOR loader; original firmware excluded from deliverables.
 - [x] Candidate six-model configuration, explicit stop states and bounded runs.
 - [x] Architecture, source-independence policy, roadmap, board and Zensical config.
-- [x] Import source while preserving the existing LICENSE history and link the existing live [issue #1](https://github.com/zyf722/orchard-emu/issues/1).
+- [x] Publish the source preserving the existing LICENSE ancestry and retain live [issue #1](https://github.com/zyf722/orchard-emu/issues/1).
 - [ ] Render Zensical with `--strict` and obtain the first remote build artifacts.
-- [ ] Establish a maintained, reproducible CPU regression corpus separate from deployment artifacts.
+- [x] Establish checked-in CTest/native/WASM regressions and a generated six-profile integration guest, separate from deployment artifacts.
 
 **Gate:** fresh checkout builds natively and for WASM, documentation renders,
 status claims point to durable evidence, and repository/board/implementation
-agree. Source publication does not close strict documentation, maintained regression or remote-CI acceptance.
+agree. Source and regression publication are implemented; remote rendering/build acceptance is recorded separately on the live board.
 
 ## M1 — ARM920T functional CPU correctness
 
@@ -50,7 +50,10 @@ checks are useful evidence, not this complete gate.
 
 ## M2 — Boot-relevant SoC and board model
 
-**A small functional subset exists.**
+**A small functional subset exists, including watchdog countdown/reload/IRQ.**
+
+Watchdog reset propagation is still an explicit diagnostic stop, not an
+implemented reset domain. See [validation](validation.md).
 
 Implement and validate in boot-trace order: NOR command/ID/status state
 machines; reset straps and SRAM bank decode; clocks; interrupt arbitration;
@@ -70,10 +73,10 @@ firmware patches or instruction-interpreter model hacks.
 
 **Real-ROM execution has not started.**
 
-First fixture priority: the existing hardware-acquired HP39g+ D1.55 full NOR
-from hpclang. Its provenance and size/hash are established; local binary
-retrieval is still blocked. HP50g remains a useful reference target but is not
-substituted for the native HP39g+ bootloader. See the [handoff](handoff.md).
+First target: the existing hardware-acquired HP39g+ D1.55 full NOR from
+hpclang. The size/hash/provenance are known; local binary access is unresolved.
+HP50g remains a useful reference, not a substitute for the native HP39g+
+bootloader. See [handoff](handoff.md).
 
 Record four separate witnesses: reset/bootloader progression; initialized LCD;
 interactive stock UI; native ARM payload execution and return to a responsive

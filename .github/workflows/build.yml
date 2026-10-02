@@ -1,7 +1,9 @@
 name: Build
 
-# Opt-in until repository runner access and the baseline are accepted.
+# Trusted main pushes only; fork PR code is not run on the self-hosted runner.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -21,7 +23,7 @@ jobs:
         run: |
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-            ca-certificates git clang lld cmake ninja-build python3-venv
+            ca-certificates git clang libclang-rt-dev lld cmake ninja-build python3-venv
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -31,18 +33,26 @@ jobs:
           cmake -S . -B build -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release
           cmake --build build --parallel
           build/orchard models
+          ctest --test-dir build --output-on-failure
+      - name: Sanitizer regression
+        run: |
+          cmake -S . -B build-sanitize -G Ninja -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_BUILD_TYPE=Debug -DORCHARD_SANITIZE=ON
+          cmake --build build-sanitize --parallel
+          ctest --test-dir build-sanitize --output-on-failure
       - name: Analyze native C
         shell: bash
         run: |
           mkdir -p build/analysis
-          for file in src/*.c app/main.c; do
+          for file in src/*.c app/main.c tests/regression.c; do
             clang --analyze -std=c17 -Wall -Wextra -Werror -Iinclude -Isrc "$file" \
               -o "build/analysis/$(basename "$file").plist"
           done
           python3 - <<'PYCODE'
           import pathlib, plistlib
           reports = list(pathlib.Path("build/analysis").glob("*.plist"))
-          assert len(reports) == 7, "Missing analyzer output"
+          sources = list(pathlib.Path("src").glob("*.c")) + [pathlib.Path("app/main.c"), pathlib.Path("tests/regression.c")]
+          assert {p.stem for p in reports} == {p.name for p in sources}, "Missing analyzer output"
           issues = {p.name: plistlib.loads(p.read_bytes())["diagnostics"] for p in reports}
           assert not any(issues.values()), issues
           PYCODE
@@ -50,11 +60,7 @@ jobs:
         run: |
           npm run check
           npm run build
-          node --input-type=module -e '
-            import {readFile} from "node:fs/promises";
-            const {instance:{exports:c}} = await WebAssembly.instantiate(await readFile("dist/orchard.wasm"), {});
-            for(let id=1; id<=6; ++id) if(c.create(id)!==0 || !c.profile(id,0)) throw Error("profile ABI");
-            console.log("WASM exports and six profiles initialize; stock boot is unverified");'
+          npm run test:wasm
       - name: Build documentation
         run: |
           python3 tools/check-docs.py

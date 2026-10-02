@@ -31,7 +31,8 @@ const char *orchard_status_string(orchard_status s) {
         "no ROM loaded", "unsupported instruction", "unsupported CP15 operation",
         "unimplemented MMIO", "unimplemented NOR command", "unpredictable ARM operation",
         "UART host queue full", "big-endian mode not implemented", "unsupported LCD mode",
-        "physical memory outside implemented banks"
+        "physical memory outside implemented banks",
+        "watchdog reset requested; reset propagation not implemented"
     };
     return (unsigned)s < sizeof(names) / sizeof(names[0]) ? names[s] : "unknown status";
 }
@@ -81,9 +82,9 @@ orchard_stop orchard_run(orchard_machine *m, uint32_t budget) {
     if (!m) return (orchard_stop){.status = ORCHARD_BAD_ARGUMENT};
     if (!m->loaded) return (orchard_stop){.status = ORCHARD_NO_ROM};
     for (uint32_t i = 0; i < budget && m->stop.status == ORCHARD_OK; ++i) {
+        ++m->ticks;
         o_soc_tick(m);
         if (m->stop.status != ORCHARD_OK) break;
-        ++m->ticks;
         o_irq_update(&m->soc);
         uint32_t pending = m->soc.srcpnd & ~m->soc.intmsk;
         if (pending) m->cpu.sleeping = false;

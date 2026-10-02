@@ -52,8 +52,9 @@ correctness. The separate annunciator area is explicitly marked unimplemented.
 ## Verification boundary
 
 The production static build and JavaScript syntax checks pass locally. The
-compiled WASM module executes the same synthetic boot witness as the native
-core under Node's WebAssembly runtime, with matching state, UART and pixels.
+compiled WASM module executes the checked-in regression suite and generated
+integration guest through `npm run test:wasm`, with matching native state,
+UART and pixels. This remains Node execution, not browser E2E.
 
 Full production browser E2E **did not run** in this session: browser navigation
 to both the local server and an intercepted test origin was denied with

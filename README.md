@@ -1,50 +1,47 @@
 # Orchard
 
-An original MIT-licensed ARM hardware emulator for the HP Apples calculators:
-**HP 39g+, 39gs, 40gs, 48gII, 49g+, and 50g**.
+An original MIT-licensed ARM hardware emulator for **HP 39g+, 39gs, 40gs,
+48gII (USB revision), 49g+, and 50g**.
 
-**Status: hardware bring-up, not yet a usable calculator emulator.** The same
-C17 core builds natively and as WebAssembly. Synthetic ARM/Thumb programs run
-on all six candidate profiles; **no HP stock ROM has been boot-verified in
-Orchard**. CPU conformance, NOR commands, board GPIO, accurate peripheral
-behavior and stock-OS boot remain active work. Six profiles are not six
-completed machines.
+**Hardware bring-up: no HP stock ROM has been boot-verified yet.** One C17 core
+runs natively and as WebAssembly, executing ARM/Thumb guest instructions from
+the reset vector. The firmware's Saturn interpreter is intended to run as
+guest ARM software, without replacing it with Emu48 or patching the ROM.
 
-Orchard executes the ARM instructions in a supplied full physical NOR image,
-starting at the reset vector. The intended stock Saturn interpreter runs as
-ordinary guest ARM software; Orchard does not substitute an Emu48 Saturn core,
-translate a Saturn ROM, inject a different bootloader or patch firmware.
+The current core includes a CP15/MMU subset, bounded execution and diagnostic
+stops, basic timers/interrupts/UART0, watchdog countdown and a raw LCD preview.
+The browser UI is a diagnostic workbench, not yet a usable calculator skin.
 
-## Build and run
+## Build and verify
 
-Native: a C17 compiler, CMake 3.20 or newer, and an ordinary build tool.
+Native: C17 compiler, CMake 3.20+, and a build tool. Web: Node.js 22+ and Clang
+with `wasm32` / `wasm-ld`. There are no npm runtime dependencies.
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
-./build/orchard models
-./build/orchard run --model hp50g --rom /path/to/full-nor.bin --ticks 100000
-```
-
-Exit zero means the instruction/tick budget finished, **not** successful OS
-boot. Unsupported operations report their PC, instruction and address.
-`--trace`, `--frame`, `--uart-in` and `--uart-out` provide bring-up diagnostics;
-outputs must be new paths and are not allowed to overwrite existing files.
-
-Web: Node.js 22+, Clang with the `wasm32` backend, and `wasm-ld` on PATH.
-There are no npm dependencies and no Emscripten or pthread requirement.
-
-```sh
+ctest --test-dir build --output-on-failure
 npm run check
 npm run build
+npm run test:wasm
 npm run dev
 ```
 
-The local server listens on `127.0.0.1:8080`. `dist/` is the static web build.
-The workbench loads a local ROM, shows raw LCD/register state and exposes a
-functional UART0 hex stream. It is not a calculator skin or a working Conn3x
-connection. A dedicated Worker owns the core; ROM bytes are not uploaded.
-See [web build and verification limits](docs/development/web.md).
+The checked-in regression suite runs natively and in WASM. A generated,
+ROM-free guest compares all six profiles through reset, MMIO, ARM/Thumb, SWI,
+UART, LCD and WFI, including reset/replay. This is not a six-model stock-boot
+claim. See [validation](docs/development/validation.md) for commands and limits.
+Tests stay outside `dist/` and are not installed with the native application.
+
+```sh
+./build/orchard models
+./build/orchard run --model hp39gplus --rom /path/to/full-nor.bin --ticks 100000
+```
+
+The input must be a complete physical NOR of the selected model's exact size.
+Exit zero means the budget finished, not that the OS booted. The CLI provides
+`--trace`, `--frame`, `--uart-in` and `--uart-out`; outputs must be new paths.
+The browser server is local-only at `127.0.0.1:8080`; ROM bytes are not uploaded.
 
 ## Development
 
@@ -52,31 +49,20 @@ See [web build and verification limits](docs/development/web.md).
 [Live board](https://github.com/zyf722/orchard-emu/issues/1) ·
 [Architecture](docs/development/architecture.md) ·
 [Models](docs/development/models.md) ·
-[Validation](docs/development/validation.md) ·
-[Virtual connectivity](docs/development/virtual-link.md)
+[Virtual links](docs/development/virtual-link.md)
 
-Zensical documentation is configured in `zensical.toml`:
-
-```sh
-python -m venv .venv
-# Activate .venv for your shell, then:
-python -m pip install -r tools/requirements-docs.txt
-zensical serve
-```
-
-`zensical build --strict` is the documentation acceptance command. The current
-handoff includes Markdown/configuration checks, not a completed Zensical render
-or a published site. The opt-in Actions workflow builds artifacts; it does not
-automatically publish this private repository to Pages.
+Zensical is configured in `zensical.toml`. Install
+`tools/requirements-docs.txt` in a virtual environment and run
+`zensical serve` or `zensical build --strict`. The `home-docker` workflow runs
+on pushes to `main` and manual dispatch; it validates native/WASM and docs,
+then uploads production web and documentation artifacts. It does not publish
+this private repository to Pages or accept untrusted fork PRs on the runner.
 
 ## License and firmware
 
-[MIT](LICENSE) applies to Orchard's original source and documentation. No
-Emu48/x50ng/QEMU implementation, calculator artwork, ROM or bootloader is
-bundled. Research sources and the independence boundary are recorded in
-[licensing](docs/development/licensing.md) and
-[references](docs/development/references.md).
-
-Supply only firmware you are entitled to use. Full dumps, updater packages
-and Saturn nibble images are different formats; see
-[ROM provenance and input rules](docs/development/roms.md).
+[MIT](LICENSE) covers original Orchard code and documentation. No Emu48,
+x50ng or QEMU implementation, ROM, bootloader, skin or font is bundled.
+See [licensing](docs/development/licensing.md),
+[references](docs/development/references.md), and
+[ROM provenance](docs/development/roms.md). Supply firmware you are entitled
+to use; an updater or Saturn nibble image is not a full physical NOR dump.

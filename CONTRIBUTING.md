@@ -19,8 +19,10 @@ Before review, compile with warnings as errors, run native sanitizers and
 independent instruction/peripheral regressions, build WASM, compare identical
 workloads, inspect real browser behavior where changed, and build Zensical
 strictly. Record commands, toolchain, fixture hashes, revision and limitations.
-The initial handoff's exploratory harness is not a maintained repository CI
-suite; establishing that suite is an explicit M0/M1 task.
+Run `ctest --test-dir build --output-on-failure` and `npm run test:wasm`.
+The latter executes the checked-in core regression in WASM and compares a
+generated guest against the production native CLI. Keep tests active in
+Release builds and outside installed/packaged production files.
 
 Update the README status, roadmap and live board together. Mark a model booted
 only with its own cold-boot and interactive-state witness. Test payload success,

@@ -42,6 +42,7 @@ typedef struct {
     uint32_t uart[3][11];
     uint32_t tcfg0, tcfg1, tcon, tcntb[5], tcmpb[4], count[5];
     uint32_t phase[5];
+    uint32_t wtcon, wtdat, wtcnt, wtphase;
     o_queue rx, tx;
 } o_soc;
 
@@ -88,6 +89,9 @@ void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool 
 void o_soc_reset(o_soc *s);
 void o_soc_tick(orchard_machine *m);
 void o_irq_update(o_soc *s);
+void o_watchdog_reset(o_soc *s);
+void o_watchdog_tick(orchard_machine *m);
+bool o_watchdog_register(o_soc *s, uint32_t address, uint32_t *value, bool write);
 bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);
 bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value);
 bool o_q_push(o_queue *q, uint8_t byte);

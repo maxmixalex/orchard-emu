@@ -218,6 +218,9 @@ static void psr_transfer(orchard_machine *m, uint32_t op, bool read) {
         c->r[rd] = *target;
         return;
     }
+    if (!(op & (1u << 25)) && (op & 15u) == 15) {
+        unpredictable(m, op); return;
+    }
     uint32_t mask = 0;
     for (unsigned b = 0; b < 4; ++b)
         if (op & (1u << (16u + b))) mask |= 255u << (b * 8u);
@@ -234,7 +237,10 @@ static void multiply(orchard_machine *m, uint32_t op, bool wide) {
     o_cpu *c = &m->cpu;
     unsigned rm = op & 15u, rs = (op >> 8) & 15u;
     unsigned hi = (op >> 16) & 15u, lo = (op >> 12) & 15u;
-    if (rm == 15 || rs == 15 || hi == 15 || (wide && (lo == 15 || hi == lo))) {
+    /* ARMv4T, Samsung manual 3-23/3-26: Rm must not overlap the
+       destination; long multiply requires RdHi, RdLo and Rm distinct. */
+    if (rm == 15 || rs == 15 || hi == 15 || hi == rm ||
+        (wide && (lo == 15 || hi == lo || lo == rm))) {
         unpredictable(m, op); return;
     }
     bool accumulate = (op & (1u << 21)) != 0;
