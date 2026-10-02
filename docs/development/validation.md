@@ -80,14 +80,36 @@ A requested watchdog reset stops with `ORCHARD_UNIMPLEMENTED_RESET`; it does
 not erase SRAM and pretend the physical reset domain has been implemented.
 The scheduler counts the tick that produces such a peripheral stop.
 
-## Remaining gates and remote results
+## Remote acceptance — Build #2
 
-A strict Zensical render could not run locally because the package is absent
-and network/DNS access failed. The workflow runs the strict build on the
-configured runner; observed remote conclusions belong in
-[issue #1](https://github.com/zyf722/orchard-emu/issues/1) and the associated
-Actions run, not in an assumed local pass. Static-analysis results are checked
-by the workflow and may be reproduced with `clang --analyze`.
+[Build #2](https://github.com/zyf722/orchard-emu/actions/runs/36981413547),
+commit `ecc0470edf432227124e875f5a099099d7621ea3`, completed successfully on
+2026-10-02. Runner: `home-docker`, Ubuntu 24.04, Clang 18.1.3, Node 22.23.3.
+Native Release/CTest, ASan/UBSan, nine-unit static analysis, JavaScript checks,
+production WASM build, the 83,297-assertion shared suite and all six synthetic
+integration/replay cases passed. Zensical 0.0.67 rendered all twelve source
+pages with `build --strict` and reported no issues.
+
+The workflow uploaded `orchard-web` (artifact `11215750649`) and `orchard-docs`
+(artifact `11216240163`). The web artifact was downloaded and verified against
+its reported SHA-256:
+`25398dfa19a5ee8086865f622980367ccbc85e762593c9f497ee877cc01a3ba8`.
+It contains only LICENSE, HTML/CSS/JS and production WASM: no tests or firmware.
+No Pages deployment or repository visibility change was made.
+
+Build #1 stopped before checkout because a nested job container required a
+Docker socket that this runner does not expose. `ecc0470` removes the redundant
+container and uses the runner directly; no Docker service/configuration was
+changed. That first failure was infrastructure setup, not a failing CPU test.
+The Actions v4 dependencies emit a nonfatal Node-runtime deprecation warning;
+toolchain/action version modernization remains a separate maintenance item.
+
+## Remaining gates
+
+The strict docs render above is **remote** evidence. Local package installation
+was blocked by network/DNS; no local Zensical-render pass is claimed. M0's
+engineering baseline is closed by the successful checkout/build/test/docs
+workflow, not by assuming unavailable local commands succeeded.
 
 No real HP NOR was executed, no browser lifecycle test was rerun, and no stock
 keyboard/UI, native stock payload return, SD or USB transfer is accepted.

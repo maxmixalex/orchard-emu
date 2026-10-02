@@ -17,19 +17,22 @@ interception is allowed in the canonical stock boot gate.
 
 ## M0 — Repository, contracts and evidence discipline
 
-**In progress.**
+**Complete for the engineering baseline** on `ecc0470` in
+[Build #2](https://github.com/zyf722/orchard-emu/actions/runs/36981413547). CPU conformance and stock boot remain open.
 
 - [x] Original C17 core, native CLI and freestanding WASM build.
 - [x] Exact-size full-NOR loader; original firmware excluded from deliverables.
 - [x] Candidate six-model configuration, explicit stop states and bounded runs.
 - [x] Architecture, source-independence policy, roadmap, board and Zensical config.
 - [x] Publish the source preserving the existing LICENSE ancestry and retain live [issue #1](https://github.com/zyf722/orchard-emu/issues/1).
-- [ ] Render Zensical with `--strict` and obtain the first remote build artifacts.
+- [x] Render Zensical with `--strict` and obtain verified production web and documentation artifacts (Build #2).
 - [x] Establish checked-in CTest/native/WASM regressions and a generated six-profile integration guest, separate from deployment artifacts.
 
 **Gate:** fresh checkout builds natively and for WASM, documentation renders,
 status claims point to durable evidence, and repository/board/implementation
-agree. Source and regression publication are implemented; remote rendering/build acceptance is recorded separately on the live board.
+agree. Build #2 exercised native Release/CTest, ASan/UBSan, static analysis,
+WASM regression/integration and strict Zensical rendering. See
+[validation](validation.md) for the accepted revision and limits.
 
 ## M1 — ARM920T functional CPU correctness
 

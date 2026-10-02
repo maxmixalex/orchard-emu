@@ -5,7 +5,7 @@ including remote CI results. This repository snapshot describes the current
 code slice; [roadmap](roadmap.md) owns milestone gates and
 [validation](validation.md) owns reproducible local evidence.
 
-## Implemented and locally accepted
+## Accepted engineering baseline
 
 - [x] Original MIT source import, preserving the LICENSE initialization history.
 - [x] Checked-in CTest regression, also compiled/executed as a test-only WASM module.
@@ -13,10 +13,10 @@ code slice; [roadmap](roadmap.md) owns milestone gates and
 - [x] Legal Thumb BX PC transition and ARMv4 MUL/MULL/MSR operand restrictions.
 - [x] Watchdog registers, functional countdown, reload and IRQ; reset propagation remains an explicit stop.
 - [x] Release and ASan/UBSan validation; build workflow runs these checks before packaging.
+- [x] M0: strict Zensical rendering and first fully green remote build on `ecc0470`, with production web/docs artifacts. [Build #2](https://github.com/zyf722/orchard-emu/actions/runs/36981413547).
 
 ## Now / next
 
-- [ ] M0: observe strict documentation and remote build acceptance; see the live issue for run results.
 - [ ] M1: expand independent CPU comparison, undefined exceptions and abort/writeback cases.
 - [ ] M2/M3: admit the existing HP39g+ full NOR locally and record the first genuine boot stop.
 - [ ] Close model-correct NOR/GPIO/LCD dependencies before claiming stock UI support.
