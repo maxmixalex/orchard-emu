@@ -1,0 +1,80 @@
+name: Transport verified skins and HP39 source
+on:
+  push:
+    branches: [transport/skins-pages-20261003]
+    paths: [.github/workflows/transport-skins.yml]
+permissions:
+  contents: write
+jobs:
+  transport:
+    runs-on: home-docker
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+      - name: Reconstruct verified source on its exact base
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DELTA="$RUNNER_TEMP/orchard-skins-source.xz"
+          python3 - <<'PY'
+          import hashlib, os
+          from pathlib import Path
+          root = Path('_source-transport')
+          assert len(list(root.iterdir())) == 4
+          data = b''.join((root / f'part-{i}').read_bytes() for i in range(4))
+          assert len(data) == 31616
+          assert hashlib.sha256(data).hexdigest() == '582d64c37042ac75df4f6caacd03d35ad25fea0de5e00885f9a524dfd4bdf4b9'
+          Path(os.environ['DELTA']).write_bytes(data)
+          PY
+          git checkout --detach 1001d1506cee13de47ce4d57b276ca3b8fdd9777
+          python3 - <<'PY'
+          import hashlib, json, lzma, os, subprocess
+          from pathlib import Path, PurePosixPath
+          data = Path(os.environ['DELTA']).read_bytes()
+          assert hashlib.sha256(data).hexdigest() == '582d64c37042ac75df4f6caacd03d35ad25fea0de5e00885f9a524dfd4bdf4b9'
+          decoder = lzma.LZMADecompressor(memlimit=128 * 1024 * 1024)
+          raw = decoder.decompress(data, max_length=1000001)
+          assert decoder.eof and not decoder.unused_data and len(raw) <= 1000000
+          manifest = json.loads(raw)
+          assert manifest['base'] == '1001d1506cee13de47ce4d57b276ca3b8fdd9777'
+          assert manifest['base_tree'] == 'b51604f4e4dab6ec8156db195e7c5928ab36599a'
+          assert manifest['tree'] == 'be74b2ee0edf07652c51c7e018b9ccf39df97c4a'
+          assert subprocess.check_output(['git', 'write-tree'], text=True).strip() == manifest['base_tree']
+          assert len(manifest['changes']) == 44
+          seen = set()
+          for item in manifest['changes']:
+              name = item['path']; rel = PurePosixPath(name)
+              assert not rel.is_absolute() and '..' not in rel.parts and '.git' not in rel.parts and name not in seen
+              seen.add(name)
+              path = Path(name)
+              assert not path.is_symlink() and not any(p.is_symlink() for p in path.parents)
+              old = path.read_bytes() if path.exists() else None
+              assert (hashlib.sha256(old).hexdigest() if old is not None else None) == item['old'], name
+              lines = (old or b'').decode('utf-8').splitlines(keepends=True)
+              end = len(lines)
+              for start, stop, value in reversed(item['edits']):
+                  assert 0 <= start <= stop <= end and isinstance(value, str)
+                  lines[start:stop] = value.splitlines(keepends=True)
+                  end = start
+              result = ''.join(lines).encode('utf-8')
+              assert hashlib.sha256(result).hexdigest() == item['new'], name
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(result)
+          subprocess.run(['git', 'add', '--', *sorted(seen)], check=True)
+          assert subprocess.check_output(['git', 'write-tree'], text=True).strip() == manifest['tree']
+          print('All 44 file hashes and complete local source tree verified')
+          PY
+          # Workflow edits are applied separately by the authorized connector.
+          git restore --source=1001d1506cee13de47ce4d57b276ca3b8fdd9777 --staged --worktree .github/workflows/build.yml .github/workflows/docs.yml
+          test "$(git write-tree)" = ff2b178cae21ee9734e42653dc1865c8aca4cdfa
+          git diff --cached --check
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit \
+            -m 'feat: add licensed calculator skins, guest annunciators and conditional HP39 HOME' \
+            -m 'Original HP39g+ full NOR reaches HOME and evaluates two expressions on native and production WASM with independent cold replay, without SRAM mirroring. SST39VF800A, LCD and analog assumptions remain explicit. Shift/Alpha framebuffer segment changes are observed in original HP39/48 firmware.' \
+            -m 'Pin seven outlined hp-calcs-svg skins and derived hit geometry, preserve Apache attribution separately from the MIT core, and assemble a firmware-free emulator subpath beside documentation. Local validation: 202097 assertions per host, seven sanitizer suites, 27 analysis units, 17075 Unicorn cases and skin/Worker checks. Actual browser-origin E2E remains blocked; no firmware, private evidence or fonts committed.'
+          git push origin HEAD:refs/heads/integration/skins-pages-20261003
+          git rev-parse HEAD HEAD^{tree}
+# Source transport only: no emulator execution, firmware or private evidence.
+# Main is updated separately after connector verification.
