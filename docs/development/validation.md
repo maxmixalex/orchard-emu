@@ -1,6 +1,51 @@
 # Validation
 
-## Current local acceptance: LCD scan/IRQ and normal ADC
+## Current local acceptance: USB configuration and EP0
+
+Base `a9e03bd`; remote commit-specific CI/Pages outcomes belong in issue #1.
+Current local results, run before publication:
+
+| Check | Observed result | Boundary |
+| --- | --- | --- |
+| Release CTest / Debug and optimized ASan/UBSan CTest | Four suites pass | Release-active tests |
+| Native / test-WASM | **145,021 assertions each** | Prior 120,118 plus 24,903 USB checks, not CPU conformance |
+| Existing tool checks | 60 pass | Prior rejection checks retained |
+| Six production synthetic integrations, circuit/LCD/ADC guests | Pass | Previous state/UART/pixels/IRQ/replay gates retained |
+| New original USB guest | Pass both hosts, twice each | Seven requests, configuration readback, 26 IRQ entries, WFI |
+| Five ordinary firmware/control probes | Native=WASM; cold replays agree | Two strict, two progressed full NORs, one 50g recovery/key-1 case |
+| Original HP50g control session | Six requests and status stages, both hosts/replays | Guest descriptors and active address 7; not Bulk or all control requests |
+| Optimized sanitizer firmware probes | Two progressed full NORs plus original EP0 session pass | These three, not every historical firmware scenario |
+| Clang analysis | **22 separately named translation units**, no diagnostics | Report filenames include path to prevent src/usb.c and tests/usb.c collision |
+| JS syntax / production WASM / docs navigation | Pass; 18 pages | Strict Zensical and actual browser behavior are separate gates |
+
+The USB test covers short/exact/multipacket replies, status synchronization,
+SETUP supersession, stalled transfers, reset, address activation, FIFO ownership,
+buffer pressure and invalid widths/modes/addresses. The short descriptor case
+caught a real model error: rejecting guest prefetch while awaiting host status.
+The fix follows the manual's SETUP_END/flush behavior. DATA_END without
+IN_PKT_RDY does not fabricate a data packet; a subsequent original firmware
+GET_CONFIGURATION remains an explicitly unaccepted counterexample.
+
+`npm run test:wasm` now assembles a new ARM guest temporarily with Clang/lld,
+then uses production public APIs and independent C/JS host drivers. Temporary
+ROM-free images are removed. `tools/probe-usb.mjs` admits only the hash-pinned
+50g original boot region and records erased backing separately. Results include
+registers, counters, control phase, endpoint state and request/reply bytes.
+The two full-NOR probes reach a zero-fill store into NOR; exceptions are now
+10/11 rather than zero, while data-fault state remains zero. See [USB](usb.md)
+and [boot research](boot-research.md) for all current checkpoints and limits.
+
+The command sequence below remains applicable. Add the optional local command:
+
+```sh
+node tools/probe-usb.mjs --bootloader /private/boot-50g.bin --output /new/path/usb.json
+```
+
+No original firmware or generated test binary enters Git, Pages or dist.
+Current remote CI is not inferred from the old green baseline; it must be
+observed for the new commit. Historical sections below retain their own scope.
+
+## Historical a9e03bd: LCD scan/IRQ and normal ADC
 
 Base revision `5f93b3f`. The exact imported source tree was verified before
 editing. Current commit-specific CI and Pages acceptance is recorded in

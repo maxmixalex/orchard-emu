@@ -7,7 +7,7 @@ A usable link can exist at three different levels. Keep them separately named:
 | Level | Meaning | Current status |
 | --- | --- | --- |
 | Host byte stream | The emulated UART exchanges bytes with a host adapter | Functional UART0 queues and CLI files/UI hex injection exist; stock protocols unverified |
-| Internal virtual USB | Guest USB device controller talks to a modeled host inside Orchard | Not implemented |
+| Internal virtual USB | Guest USB device controller talks to a modeled host inside Orchard | EP0 subset and original 50g boot-only control replay exist; Bulk/file transfers open |
 | Host-OS virtual device | Windows/Linux/macOS enumerates a device that existing PC software can use | Not implemented; optional native companion work |
 
 The first level does not imply the second or third. A UART channel inside the
@@ -29,7 +29,7 @@ FIFO model, a PTY, an open TCP listener, Kermit, HP object transfer or Conn3x.
 Nothing currently creates an operating-system USB device or opens the user's
 real USB hardware.
 
-## Planned USB architecture
+## USB architecture and remaining layers
 
 ```text
 Guest HP stock transfer code
@@ -77,3 +77,7 @@ timeouts, partial packets, queue pressure, disconnect, reset and a responsive
 post-transfer stock UI. Native host-OS enumeration and legacy PC software
 interoperation require an additional witness; an internal transfer does not
 close those checkboxes.
+
+Current implemented layers and accepted original-firmware control packets are
+in [USB](usb.md). EP0 request success is not a completed HP object/file protocol
+or an operating-system-visible virtual device.

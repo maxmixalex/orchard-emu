@@ -112,3 +112,36 @@ EXPORT("peripheral_snapshot") uintptr_t web_peripheral_snapshot(void) {
     words[8] = s.adc_remaining; words[9] = s.adc_valid;
     return (uintptr_t)words;
 }
+
+/* Fixed-size EP0 packet buffers, separate from UART and ROM staging. */
+static uint8_t usb_packet[16];
+static uint32_t usb_length;
+EXPORT("usb_packet") uintptr_t web_usb_packet(void) { return (uintptr_t)usb_packet; }
+EXPORT("usb_length") unsigned web_usb_length(void) { return usb_length; }
+EXPORT("usb_attach") unsigned web_usb_attach(unsigned attached) {
+    return attached > 1 ? ORCHARD_BAD_ARGUMENT : orchard_usb_attach(&machine, attached != 0);
+}
+EXPORT("usb_bus_reset") unsigned web_usb_bus_reset(unsigned asserted) {
+    return asserted > 1 ? ORCHARD_USB_BAD_ARGUMENT : orchard_usb_bus_reset(&machine, asserted != 0);
+}
+EXPORT("usb_sof") unsigned web_usb_sof(unsigned frame) { return orchard_usb_sof(&machine, frame); }
+EXPORT("usb_setup") unsigned web_usb_setup(unsigned address, unsigned length) {
+    if (length != 8) return ORCHARD_USB_BAD_ARGUMENT;
+    return orchard_usb_setup(&machine, address, usb_packet, length);
+}
+EXPORT("usb_out") unsigned web_usb_out(unsigned address, unsigned length) {
+    if (length > sizeof(usb_packet)) return ORCHARD_USB_BAD_ARGUMENT;
+    return orchard_usb_out(&machine, address, usb_packet, length);
+}
+EXPORT("usb_in") unsigned web_usb_in(unsigned address, unsigned capacity) {
+    usb_length = 0;
+    if (capacity > sizeof(usb_packet)) return ORCHARD_USB_BAD_ARGUMENT;
+    size_t length = 0;
+    orchard_usb_result r = orchard_usb_in(&machine, address, usb_packet, capacity, &length);
+    usb_length = (uint32_t)length;
+    return r;
+}
+EXPORT("usb_snapshot") uintptr_t web_usb_snapshot(void) {
+    static uint32_t words[ORCHARD_USB_SNAPSHOT_WORDS];
+    return orchard_usb_snapshot(&machine, words, ORCHARD_USB_SNAPSHOT_WORDS) ? (uintptr_t)words : 0;
+}

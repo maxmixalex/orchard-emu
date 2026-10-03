@@ -113,12 +113,13 @@ try {
     const peripherals = { lcd_control: p[0], lcd_source_pending: p[1], lcd_interrupt_pending: p[2],
       lcd_interrupt_mask: p[3], lcd_frames: u64(p, 4), adc_control: p[6], adc_data: p[7],
       adc_remaining: p[8], adc_valid: Boolean(p[9]) };
-    return { words, peripherals, frameStatus, pixels, uart: Buffer.concat(uart), applied, unverifiedReads: c.lcd_probe68_reads().toString() };
+    return { usb: [...new Uint32Array(c.memory.buffer, c.usb_snapshot(), 48)], words, peripherals, frameStatus, pixels, uart: Buffer.concat(uart), applied, unverifiedReads: c.lcd_probe68_reads().toString() };
   }
   const n = await nativeRun(0), w = wasmRun(), s = w.words;
   assert.deepEqual(n, await nativeRun(1), 'Native cold replay differs');
   c.reset();
   assert.deepEqual(w, wasmRun(), 'WASM cold replay differs');
+  assert.deepEqual(n.state.usb, w.usb);
   assert.deepEqual(n.state.adc_inputs, adcInputs);
   assert.deepEqual(n.state.peripherals, w.peripherals);
   assert.equal(n.state.keyboard, keyboard);
@@ -144,7 +145,7 @@ try {
     assert.equal(n.state.stop[key], hex(s[index]));
   assert.equal(n.state.frame_status, w.frameStatus);
   assert.deepEqual(n.pixels, w.pixels); assert.deepEqual(n.uart, w.uart);
-  const report = { schema: 'orchard-nor-probe-v5', model: names[id - 1], input_bytes: rom.length,
+  const report = { schema: 'orchard-nor-probe-v6', model: names[id - 1], input_bytes: rom.length,
     input_sha256: inputHash, identified_fixture: prepared.source.identified_fixture, input_kind: prepared.input_kind,
     source_input: prepared.source, construction: prepared.construction,
     adc_inputs: adcInputs, keyboard, nor_device: norDevice, lcd_probe68: lcdProbe,

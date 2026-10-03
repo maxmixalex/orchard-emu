@@ -332,10 +332,15 @@ int main(int argc, char **argv) {
     printf("],\"peripherals\":{\"lcd_control\":%" PRIu32 ",\"lcd_source_pending\":%" PRIu32
            ",\"lcd_interrupt_pending\":%" PRIu32 ",\"lcd_interrupt_mask\":%" PRIu32
            ",\"lcd_frames\":\"%" PRIu64 "\",\"adc_control\":%" PRIu32 ",\"adc_data\":%" PRIu32
-           ",\"adc_remaining\":%" PRIu32 ",\"adc_valid\":%s}}\n",
+           ",\"adc_remaining\":%" PRIu32 ",\"adc_valid\":%s},\"usb\":[",
            peripheral.lcd_control, peripheral.lcd_source_pending, peripheral.lcd_interrupt_pending,
            peripheral.lcd_interrupt_mask, peripheral.lcd_frames, peripheral.adc_control,
            peripheral.adc_data, peripheral.adc_remaining, peripheral.adc_valid ? "true" : "false");
+    uint32_t usb_words[ORCHARD_USB_SNAPSHOT_WORDS];
+    orchard_usb_snapshot(m, usb_words, ORCHARD_USB_SNAPSHOT_WORDS);
+    for (unsigned i = 0; i < ORCHARD_USB_SNAPSHOT_WORDS; ++i)
+        printf("%s%" PRIu32, i ? "," : "", usb_words[i]);
+    puts("]}");
     result = state.stop.status == ORCHARD_OK && frame_status == ORCHARD_OK ? 0 : 2;
 cleanup:
     if (rom && fclose(rom) != 0) result = 74;

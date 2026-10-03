@@ -14,9 +14,11 @@ The C17 core includes ARM/Thumb and a CP15/MMU subset, physical SRAM/NOR,
 GPIO/keyboard/EINT, timers/RTC/watchdog, functional LCD scan/frame interrupts
 and normal ADC with explicit sample inputs. Unknown hardware still stops.
 An explicit, counted LCD idle-zero hypothesis lets the original 39g+ and
-48gII NORs reach USB initialization; it does not change strict defaults or
+48gII NORs pass USB initialization and next stop on a zero-fill store into NOR; it does not change strict defaults or
 certify stock boot. Original 50g recovery code responds to scheduled keys,
-but its input is boot-only and no USB/card transfer is implemented.
+but its input is boot-only. Its guest descriptors and six EP0 control requests
+now pass native/WASM replay; Bulk/card transfer and host-OS enumeration are open.
+See [USB scope and counterexamples](docs/development/usb.md).
 The browser remains a diagnostic workbench. See [boot research](docs/development/boot-research.md),
 [LCD limits](docs/development/lcd.md) and [ADC conditions](docs/development/adc.md).
 

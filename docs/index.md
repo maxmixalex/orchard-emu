@@ -28,5 +28,9 @@ no additional complete stock OS or full-NOR capture is claimed.
 
 Current peripheral work: [LCD scan/interrupts](development/lcd.md) and
 [normal ADC with explicit inputs](development/adc.md). Conditioned full-NOR
-runs now reach USB initialization; no USB enumeration/transfer or stock UI
+runs pass USB initialization but next stop on a zero-fill store into NOR; no stock UI
 boot is implied. Strict default checkpoints remain separate.
+
+The original 50g boot-only input now answers six local EP0 control requests.
+See [USB](development/usb.md) for guest descriptors, host APIs and the explicit
+limits: no Bulk, complete standard-request compatibility or host-OS device.
