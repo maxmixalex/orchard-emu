@@ -53,7 +53,7 @@ API is `orchard_adc_input(machine, channel, known, code)`; the WASM export is
 `adc_input(channel, known, code)`. Releasing an input uses `known=false, code=0`.
 Cold reset releases every ADC input and invalidates previous conversion data.
 
-Probe v5 accepts comma-separated `--adc-input 0:0,7:512`, records every input,
+Probe v6 (extending v5 with USB diagnostics) accepts comma-separated `--adc-input 0:0,7:512`, records every input,
 reapplies it on cold replay and compares the native-reported conditions with
 the request. `orchard_get_peripheral_state()` and WASM `peripheral_snapshot()`
 inspect ADC/LCD state without reading side-effecting MMIO. A diagnostic data

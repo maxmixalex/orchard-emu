@@ -1,7 +1,7 @@
-import { checkUSB } from '../tests/usb-wasm.mjs';
 // SPDX-License-Identifier: MIT
 // Reproducible, ROM-free native/WASM checks. Uses only generated guest bytes.
 import assert from 'node:assert/strict';
+import { checkUSB } from '../tests/usb-wasm.mjs';
 import { checkPeripherals } from '../tests/peripheral-wasm.mjs';
 import { checkLCDResearch } from '../tests/lcd-research.mjs';
 import { checkCircuit } from '../tests/circuit-wasm.mjs';
@@ -151,3 +151,6 @@ await checkLCDResearch(root, build);
 await checkPeripherals(root, build);
 
 await checkUSB(root, build);
+
+const { checkUSBControl } = await import("../tests/usb-control.mjs");
+await checkUSBControl(root, build);

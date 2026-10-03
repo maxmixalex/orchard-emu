@@ -7,7 +7,7 @@ A usable link can exist at three different levels. Keep them separately named:
 | Level | Meaning | Current status |
 | --- | --- | --- |
 | Host byte stream | The emulated UART exchanges bytes with a host adapter | Functional UART0 queues and CLI files/UI hex injection exist; stock protocols unverified |
-| Internal virtual USB | Guest USB device controller talks to a modeled host inside Orchard | EP0 subset and original 50g boot-only control replay exist; Bulk/file transfers open |
+| Internal virtual USB | Guest USB device controller talks to a modeled packet host inside Orchard | Functional PIO subset; real HP50g bootloader descriptor/control responses and synthetic bulk tests pass locally; complete control/stock transfers remain open |
 | Host-OS virtual device | Windows/Linux/macOS enumerates a device that existing PC software can use | Not implemented; optional native companion work |
 
 The first level does not imply the second or third. A UART channel inside the
@@ -29,7 +29,7 @@ FIFO model, a PTY, an open TCP listener, Kermit, HP object transfer or Conn3x.
 Nothing currently creates an operating-system USB device or opens the user's
 real USB hardware.
 
-## USB architecture and remaining layers
+## USB architecture and current boundary
 
 ```text
 Guest HP stock transfer code
@@ -40,6 +40,12 @@ Guest HP stock transfer code
   -> HP39 typed-file or HP48/49/50 object transfer protocol
   -> browser file operations / native host adapter
 ```
+
+[USB device research](usb.md) records the current original implementation,
+143-step real-bootloader transcript and unresolved GET_CONFIGURATION request.
+The declared endpoints and strings are obtained from the guest. Physical
+VBUS/pull-up sensing, a browser USB interface and host-OS enumeration are not
+provided by the logical packet host.
 
 Use guest-provided descriptors. Do not fabricate VID/PID, endpoint layout or
 successful enumeration from the selected model name. Implement bus reset,
@@ -77,7 +83,3 @@ timeouts, partial packets, queue pressure, disconnect, reset and a responsive
 post-transfer stock UI. Native host-OS enumeration and legacy PC software
 interoperation require an additional witness; an internal transfer does not
 close those checkboxes.
-
-Current implemented layers and accepted original-firmware control packets are
-in [USB](usb.md). EP0 request success is not a completed HP object/file protocol
-or an operating-system-visible virtual device.

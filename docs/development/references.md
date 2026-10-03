@@ -127,13 +127,21 @@ The ADC accepts ideal digital sample codes, not captured voltages. Functional
 HCLK/PCLK quanta, initial scan phase, inactive ADC status lanes and standby
 phase retention are modeling conventions, not new physical measurements.
 
-## USB continuation
 
-Samsung S3C2410A chapter 13 supplies register widths/reset bits, indexed CSRs,
-FIFO ownership and EP0 SETUP_END/DATA_END semantics (13-12/13-13). The same
-vendor PDF was rendered locally for register-table inspection. USB-IF's
-[USB 2.0 specification library](https://www.usb.org/document-library/usb-20-specification)
-provides generic control-stage/address context, not evidence that Orchard
-implements high-speed USB or complete conformance. No reference emulator USB
-implementation was imported for this slice. Actual descriptor values derive
-from hash-pinned guest execution, not a host-side table.
+## USB PIO and packet-host continuation (2026-10-03)
+
+- Samsung S3C2410A User's Manual, revision 1.0 (March 2004), chapter 13:
+  sections 13-3 through 13-24 supply the byte/word register map, software
+  address update, EP0 control stages, endpoint CSR/FIFO ownership and bulk
+  DMA configuration definitions. The EP0 CSR and IN-CSR tables were inspected
+  as locally rendered pages after web PDF screenshots failed to fetch.
+- The previously acquired original HP50g boot region is used as an input,
+  with its exact hash and erased remainder recorded separately. Its emitted
+  device/configuration/string descriptors and CSR access sequence are observed
+  behavior, not a replacement specification for undocumented controller cases.
+
+`src/usb.c`, its host/session helpers and generated tests are original code.
+No new reference-emulator or hardware-driver implementation was imported in
+this slice. GET_CONFIGURATION remains unresolved; DATA_END without IN-ready
+is not silently changed to yield the expected response. The input inventory
+and firmware redistribution boundary remain unchanged.

@@ -130,7 +130,8 @@ HP50g per-byte pixel-order difference between raw stream and packed memory.
 ## Required next evidence
 
 The functional scan/IRQ and [normal ADC](adc.md) paths now have maintained
-regressions. Next model the concrete USB initialization dependency, while
+regressions. The subsequent [USB continuation](usb.md) now models that
+initialization dependency and exposes the next full-NOR stop, while
 separately recovering stronger independent evidence for `+0x68` and actual
 controller-to-panel bit wiring.
 Keep strict and hypothesis-enabled firmware records side by side. A rendered

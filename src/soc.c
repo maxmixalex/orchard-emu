@@ -141,9 +141,9 @@ static bool uart_register(orchard_machine *m, uint32_t address, unsigned width, 
 }
 bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value) {
     o_soc *s = &m->soc;
-    if (o_usb_register(m, address, width, value, false)) return true;
-    if (m->stop.status != ORCHARD_OK) return false;
     if (o_lcd_register(m, address, width, value, false)) return true;
+    if (m->stop.status != ORCHARD_OK) return false;
+    if (o_usb_register(m, address, width, value, false)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
     if (o_adc_register(m, address, width, value, false)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
@@ -176,9 +176,9 @@ bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
 }
 bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value) {
     o_soc *s = &m->soc;
-    if (o_usb_register(m, address, width, &value, true)) return true;
-    if (m->stop.status != ORCHARD_OK) return false;
     if (o_lcd_register(m, address, width, &value, true)) return true;
+    if (m->stop.status != ORCHARD_OK) return false;
+    if (o_usb_register(m, address, width, &value, true)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
     if (o_adc_register(m, address, width, &value, true)) return true;
     if (m->stop.status != ORCHARD_OK) return false;

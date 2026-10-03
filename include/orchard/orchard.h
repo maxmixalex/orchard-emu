@@ -28,7 +28,8 @@ typedef enum {
     ORCHARD_BUS_ERROR,
     ORCHARD_UNIMPLEMENTED_RESET,
     ORCHARD_GPIO_CONTENTION,
-    ORCHARD_UNRESOLVED_ANALOG
+    ORCHARD_UNRESOLVED_ANALOG,
+    ORCHARD_UNSUPPORTED_USB
 } orchard_status;
 
 typedef struct {
@@ -93,38 +94,43 @@ orchard_status orchard_read_memory(const orchard_machine *m, uint32_t address,
 /* Functional UART0 queues; these are not USB or a host-OS virtual device. */
 size_t orchard_uart_send(orchard_machine *m, const uint8_t *data, size_t length);
 size_t orchard_uart_receive(orchard_machine *m, uint8_t *data, size_t capacity);
-/* Functional USB-device registers and opt-in packet-level EP0 host.
- * All calls are serialized by the machine owner between bounded runs.
- * No host-OS device, physical cable sensing, raw PID/CRC/retries or timing.
- * Attachment changes reset only the USB block; cold reset detaches it.
- * A bus-reset edge resets USB registers/FIFOs, not CPU/RAM/NOR or main IRQs.
- * Successful IN calls include the host ACK; short buffers do not consume data.
- * SETUP is exactly eight bytes. OUT/IN operate only on control endpoint zero.
- * NAK, STALL and wrong-address/no-device are not CPU diagnostic stops.
+/* Functional, acknowledged USB transactions, NOT a host-OS virtual device.
+ * Call only between run() slices on the machine owner. No descriptor contents
+ * are synthesized. The caller explicitly supplies bus presence/reset/SOF.
+ * Cold reset detaches the host. Disconnect does not reset guest registers.
+ * Reset signaling resets the USB block only; guest CPU/SRAM remain unchanged.
+ * PIO EP0 (8/16-byte packets) and single-packet bulk EP1..4 (64-byte MAXP).
+ * CRC/bit timing, DMA, ISO, dual-packet bulk and automatic suspend are absent.
  */
 typedef enum {
     ORCHARD_USB_ACK = 0, ORCHARD_USB_NAK, ORCHARD_USB_STALL,
-    ORCHARD_USB_NO_DEVICE, ORCHARD_USB_BAD_ARGUMENT
+    ORCHARD_USB_NO_RESPONSE, ORCHARD_USB_BAD_ARGUMENT,
+    ORCHARD_USB_UNSUPPORTED, ORCHARD_USB_BUFFER_SMALL
 } orchard_usb_result;
-orchard_status orchard_usb_attach(orchard_machine *m, bool attached);
-orchard_usb_result orchard_usb_bus_reset(orchard_machine *m, bool asserted);
-orchard_usb_result orchard_usb_sof(orchard_machine *m, unsigned frame);
-orchard_usb_result orchard_usb_setup(orchard_machine *m, unsigned address,
-                                     const uint8_t *packet, size_t length);
+typedef struct {
+    uint32_t address, active_address, power, index, ep_pending, bus_pending;
+    uint32_t ep_enable, bus_enable, frame, phase;
+    uint32_t max_packet[5], in_csr[5], out_csr[5], tx_bytes[5], rx_bytes[5];
+    uint64_t resets, setups, in_packets, out_packets;
+    bool connected;
+} orchard_usb_state;
+void orchard_get_usb_state(const orchard_machine *m, orchard_usb_state *state);
+orchard_status orchard_usb_connect(orchard_machine *m, bool connected);
+orchard_status orchard_usb_reset_signal(orchard_machine *m, bool asserted);
+orchard_status orchard_usb_sof(orchard_machine *m, unsigned frame);
+/* setup must be DATA0, endpoint 0, exactly 8 bytes. OUT uses explicit DATA0/1;
+ * duplicate DATA packets are ACKed without re-enqueueing. One call represents
+ * a complete valid packet; it does not write guest RAM or advance guest time. */
 orchard_usb_result orchard_usb_out(orchard_machine *m, unsigned address,
-                                   const uint8_t *packet, size_t length);
+                                  unsigned endpoint, bool setup, unsigned data1,
+                                  const uint8_t *bytes, size_t length);
+/* On ACK result, length/data1 describe one packet. ack=false previews/retries
+ * without consuming it; ack=true includes host ACK, advancing FIFO/toggle.
+ * BUFFER_SMALL reports required length with no transaction side effects.
+ * No IN data means NAK, never an invented zero-length successful packet. */
 orchard_usb_result orchard_usb_in(orchard_machine *m, unsigned address,
-                                  uint8_t *packet, size_t capacity, size_t *length);
-/* Pure, version-1 snapshot, no MMIO read side effects. Returns 48, or zero
- * without writing on invalid arguments. Words 0..12: function_address,power,
- * ep_pending,usb_pending,ep_enable,usb_enable,index,frame,active_address,
- * control_stage,remaining,attached,reset_asserted. Then 7 words per endpoint:
- * max_packet_bytes,in_csr1,in_csr2,out_csr1,out_csr2,rx_unread,tx_bytes.
- * Stages: idle=0,setup=1,data-in=2,data-out=3,status-in=4,status-out=5.
- */
-#define ORCHARD_USB_SNAPSHOT_WORDS 48u
-size_t orchard_usb_snapshot(const orchard_machine *m, uint32_t *words, size_t capacity);
-
+                                 unsigned endpoint, bool ack, uint8_t *bytes,
+                                 size_t capacity, size_t *length, unsigned *data1);
 /* Explicit ideal ADC sample code, NOT a battery voltage/model default.
    Channels 0..7 and codes 0..1023. Cold reset releases all inputs.
    Unknown channels stop when sampled. A started conversion holds its sample. */

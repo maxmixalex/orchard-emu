@@ -1,228 +1,164 @@
 # Orchard roadmap
 
-The [development board](board.md) owns immediate work. This document owns
-milestones, dependency order and completion criteria. No milestone is closed
-merely because an interface, profile or passing build exists.
+The [development board](board.md) owns immediate work and [issue #1](https://github.com/zyf722/orchard-emu/issues/1)
+records accepted commits and CI/Pages outcomes. This document owns milestones,
+dependency order and completion criteria. A profile, passing build or exhausted
+run budget never substitutes for a hardware/stock-boot witness.
 
 ## Project target
 
-> Boot unmodified, complete physical NOR images on six modeled HP Apples
-> machines; run stock calculator software and native ARM applications;
-> expose the same machine through a responsive browser and useful virtual PC links.
+Boot unmodified complete physical NORs on HP39g+, HP39gs, HP40gs, HP48gII USB
+revision, HP49g+ and HP50g. Run the guest ARM Saturn interpreter and native ARM
+applications, using one original MIT C17 machine core for native and browser
+hosts. Provide useful virtual PC connectivity without requiring a ROM patch,
+replacement bootloader, custom OS or host-side Saturn interception.
 
-The core remains original MIT code. External emulators are research and
-optional out-of-process comparison tools, not redistributed implementation.
-No mandatory ROM patch, custom OS, generic replacement bootloader or Saturn
-interception is allowed in the canonical stock boot gate.
+External emulators are research or optional out-of-process comparison tools,
+not implementation dependencies in the original core. Firmware storage and
+publication remain separate from source, Pages and production packages.
 
 ## M0 — Repository, contracts and evidence discipline
 
-**Complete for the engineering baseline** on `ecc0470` in
-[Build #2](https://github.com/zyf722/orchard-emu/actions/runs/36981413547). CPU conformance and stock boot remain open.
+**Engineering baseline complete**, originally accepted on `ecc0470` in
+[Build #2](https://github.com/zyf722/orchard-emu/actions/runs/36981413547).
 
-- [x] Original C17 core, native CLI and freestanding WASM build.
-- [x] Exact-size full-NOR loader; original firmware excluded from deliverables.
-- [x] Candidate six-model configuration, explicit stop states and bounded runs.
-- [x] Architecture, source-independence policy, roadmap, board and Zensical config.
-- [x] Publish the source preserving the existing LICENSE ancestry and retain live [issue #1](https://github.com/zyf722/orchard-emu/issues/1).
-- [x] Render Zensical with `--strict` and obtain verified production web and documentation artifacts (Build #2).
-- [x] Establish checked-in CTest/native/WASM regressions and a generated six-profile integration guest, separate from deployment artifacts.
+The baseline includes native/WASM builds, bounded diagnostics, exact-size NOR
+loading, six candidate profiles, original-source licensing, maintained CTest
+and generated-guest regressions, Zensical documentation and the live board.
+Pages deployment and revision verification exist. New revisions require their
+own observed checks; the original green build is not evidence for new code.
 
-**Gate:** fresh checkout builds natively and for WASM, documentation renders,
-status claims point to durable evidence, and repository/board/implementation
-agree. Build #2 exercised native Release/CTest, ASan/UBSan, static analysis,
-WASM regression/integration and strict Zensical rendering. See
-[validation](validation.md) for the accepted revision and limits.
+**Gate:** a fresh checkout builds, maintained tests run, the documentation
+strictly renders, production outputs exclude test/firmware assets, and source,
+roadmap, board and evidence agree. CPU conformance and stock boot are not M0.
 
 ## M1 — ARM920T functional CPU correctness
 
-**Initial implementation; not conformance-closed.**
+**Initial implementation; conformance gate open.**
 
-M1.1 covers instruction decode, PC pipeline semantics, shifter/carry/overflow,
-ARM/Thumb transitions, banked state, user restrictions and exception returns.
-M1.2 covers CP15, FCSE, all supported table levels, AP/S/R/domain semantics,
-prefetch/data aborts and exception-vector relocation. M1.3 closes abort
-writeback/partial-transfer details and separates legal undefined opcodes from
-unimplemented implementation-defined operations.
+M1.1 covers decode restrictions, PC pipeline semantics, shifting/carry/overflow,
+ARM/Thumb transitions, banked registers, privilege rules and exception returns.
+M1.2 covers CP15, FCSE, table walks, AP/S/R/domain permissions, aborts and vector
+relocation. M1.3 covers precise partial transfer/writeback, legal undefined
+instructions versus unimplemented operations, and cache/TLB/lockdown behavior.
 
-**Gate:** reference-derived edge cases, randomized arithmetic and isolated
-instruction differentials pass on native and WASM builds. Failures minimize
-to an instruction/initial-state witness. Sanitizers pass, and unsupported
-cases are enumerated rather than accidentally accepted. Current synthetic
-checks are useful evidence, not this complete gate.
+**Gate:** independently derived edge cases and bounded instruction differentials
+pass on the native and WASM core. Failures reduce to explicit input/state
+witnesses. Sanitizers pass; unsupported or implementation-defined cases are
+identified rather than silently normalized to another CPU model. Comparing two
+builds of Orchard is regression evidence, not an independent CPU oracle.
 
 ## M2 — Boot-relevant SoC and board model
 
-**In progress, driven by genuine full-NOR traces.** Internal boot SRAM, GPIO
-reset/latch state, two-level IRQ arbitration and a functional RTC now join
-the watchdog/timer/UART subset. Both admitted ROMs pass the original reset
-status stop. See [boot research](boot-research.md).
+**In progress, driven by genuine NOR traces.**
 
-Watchdog reset propagation is still an explicit diagnostic stop, not an
-implemented reset domain. See [validation](validation.md).
+Implemented functional pieces include internal/external SRAM, GPIO latches,
+explicit strong/weak pad conditions, opt-in passive keyboard circuits and
+unfiltered EINT, two-level IRQ arbitration, RTC/timers/watchdog, LCD scan/frame
+interrupts, normal ADC with explicit samples, and USB PIO/packet transactions.
+Explicit SST39VF1601 selection supports array/software-ID behavior, not erase
+or programming. Register storage alone is not full peripheral support.
 
-Implement and validate in boot-trace order: NOR command/ID/status state
-machines; reset straps and SRAM bank decode; clocks; interrupt arbitration;
-timers/RTC/watchdog; GPIO and physical-key matrix; LCD DMA/panel layout;
-then the remaining peripherals actually exercised by firmware.
+Open work includes physical clock/reset domains, verified component identities
+and pad bias, populated per-model keys, LCD panel/annunciator mapping, flash
+command/write behavior, DMA, SD, power management and other traced peripherals.
+Watchdog reset propagation, digital input filters and unsupported modes remain
+explicit. Resolve dependencies from bounded traces with primary references and
+minimal regressions, not convenient zero returns or interpreter model hacks.
 
-A register retaining its last written value is not full peripheral support.
-Use bounded events in a virtual clock domain and explicit peripheral reset
-state. Unknown accesses stop and enter a trace inventory. DMA, USB, SD, touch modes,
-I2C and power management are not silently treated as present.
-
-**Gate:** independently specified register tests and boot traces cover the
-first selected machine's cold-boot dependencies without placeholder readbacks,
-firmware patches or instruction-interpreter model hacks.
-
-### Electrical-input continuation
-
-The opt-in raw switch/EINT model and explicit SST39VF1601 software ID subset
-now advance the original HP48gII NOR to its OS-region LCD initialization.
-The default machine remains strict, and digital filters, ambient board bias,
-flash programming and physical timing remain open. The 39g+ and conditioned
-48gII now share an unidentified LCD `+0x68` dependency. This narrows M2/M3;
-it does not close either gate. See [electrical input](input.md).
+**Gate:** one model's cold-boot dependencies work with independently supported
+register/pin behavior and unmodified firmware, without unverified readback
+policies. The LCD `+0x68` idle-zero experiment does not close this gate.
 
 ## M3 — First genuine stock cold boot
 
-**Genuine full-NOR execution established for HP39g+ and HP48gII; interactive
-stock cold boot is still open.**
+**Full-NOR execution established; responsive stock UI still open.**
 
-The two verified inputs execute 514,293 and 94,497 instructions, respectively,
-without guest exceptions before explicit hardware stops. Native and WASM
-state/replay agree. HP39g+ enables its own MMU and reaches LCD initialization;
-HP48gII reaches copied SRAM startup code. Both displays remain blank.
-The full NORs are available locally; update packages for the other models do
-not replace missing native boot areas. See [ROM provenance](roms.md).
+Original HP39g+ and HP48gII full dumps execute from reset. Under documented
+component/pad/ADC conditions and one counted LCD hypothesis, both pass USB
+initialization and next attempt zero-fill at physical NOR base. Strict default
+checkpoints remain separate. See [current boot research](boot-research.md).
 
-Record four separate witnesses: reset/bootloader progression; initialized LCD;
-interactive stock UI; native ARM payload execution and return to a responsive
-stock UI. Neither a nonblank screen nor a guest PASS word closes all four.
+Record four separate witnesses: bootloader progression, initialized LCD,
+interactive stock UI, and native ARM payload execution followed by return to a
+responsive stock UI. A guest PASS word, recovery menu or nonblank buffer is
+insufficient. Boot-only backing with erased OS sectors is not a full NOR.
 
-**Gate:** a hash-pinned, model-correct full NOR cold-boots without mutation,
-accepts physical key transitions, survives reset and repeated idle/use runs,
-executes a small ARM payload, and returns correctly. Compare deterministic
-trace checkpoints and actual observable behavior, not identical host timing.
+**Gate:** one model-correct hash-pinned full dump cold-boots without mutation or
+unverified hardware shortcuts, accepts physical press/release, survives reset
+and sustained use/idle, runs an ARM payload and returns correctly. Virtual
+checkpoints are compared independently of host timing.
 
 ## M4 — All six model/revision gates
 
-**Profiles exist; all six stock gates are open.**
+**Profiles exist; all six stock acceptance gates remain open.**
 
-Promote HP39g+, HP39gs, HP40gs, HP48gII USB revision, HP49g+ and HP50g
-individually. Verify real memory bounds, model identity, bootloader, keys,
-LCD body/annunciators, reset behavior and native-code entry/return.
+Promote each model separately using its own bootloader and immutable full-NOR
+manifest. Check physical memory bounds, model identity, keys, LCD body and
+annunciators, reset behavior and ARM entry/return. The 48gII target is the USB
+revision, not every calculator sold under that name.
 
-**Gate:** six independent fixture manifests and six cold-boot/interaction/
-ARM-return witnesses. An updater paired with a replacement bootloader must
-remain a separate noncanonical experiment and cannot close full-dump boot.
+**Gate:** six independent cold-boot, interaction and ARM-return witnesses.
+An updater combined with different boot code cannot close a full-dump gate.
+The user's later HP39gs/HP49g+ full dumps are deferred inputs, not a reason to
+stop work on the available machines or repeat the acquisition request.
 
 ## M5 — Usable browser calculator
 
-**Diagnostic workbench exists; usable calculator is open.**
+**Diagnostic workbench exists; calculator usability gate open.**
 
-Add correctly licensed skins, a physical-key input layer, distinct annunciator
-layout, calibrated LCD presentation, state persistence/versioning and export,
-and performance controls. Preserve a single Worker state owner, bounded run
-slices, cancellation and model/ROM generation isolation.
+Add correctly licensed skins, printed-key mappings over physical switches,
+separate annunciators, calibrated LCD output, versioned persistence/export and
+performance controls. Preserve single-Worker ownership, bounded slices,
+cancellation and model/ROM generation isolation.
 
-**Gate:** real production assets pass browser E2E on all six models: load,
-boot, keys, resize, sustained interaction, reset, save/restore and ROM change.
-No shared-state race, main-thread instruction loop, stale frame or ROM upload.
-Native/WASM state equivalence remains a separate gate from page usability.
+**Gate:** production assets pass real browser load/boot/key/resize/reset/
+save-restore/ROM-change and sustained-interaction E2E. No stale state, UI-thread
+instruction loop or ROM upload. Node WASM tests do not certify page behavior.
 
 ## M6 — Virtual PC connectivity
 
-**Functional UART0 and an EP0 USB control subset exist; stock file transfers and full USB acceptance are open.**
+**Functional UART and USB PIO packet host exist; stock transfer gates open.**
 
-- M6.1: tested bidirectional UART host stream, bounded queues, cancellation,
-  disconnect and replay; optional native PTY/TCP adapter.
-- M6.2: S3C2410 USB device controller: reset, EP0 control requests, guest
-  descriptors, indexed endpoint CSR/FIFO behavior, interrupts and SOF.
-- M6.3: in-process virtual USB host and actual firmware transfer protocols;
-  typed HP39 files and HP48/49/50 objects remain distinct above transport.
-- M6.4: optional native host-OS bridge for existing PC software, with separate
-  enumeration, driver, protocol, disconnect and security acceptance.
+M6.1 covers UART bytes, bounded queues, cancellation/replay/disconnect and an
+optional native PTY/TCP adapter. M6.2 covers USB reset, EP0 control requests,
+indexed CSR/FIFO ownership, guest descriptors, interrupts and SOF. M6.3 adds
+internal host transactions and real firmware protocols, keeping typed HP39
+files distinct from HP48/49/50 objects. M6.4 is an optional host-OS bridge with
+its own driver, enumeration, legacy software, disconnect and security gates.
 
-**Gate:** stock firmware completes real bidirectional transfers on each enabled
-model, hashes match, partial/disconnected transfers recover and the stock UI
-remains usable. Internal virtual USB is not host-OS USB enumeration. See
-[virtual connectivity](virtual-link.md).
+The original HP50g boot region supplies device/configuration/string responses
+and completes SET_ADDRESS/SET_CONFIGURATION status. GET_CONFIGURATION remains
+an explicit NAK counterexample. Synthetic 64-byte bulk tests and the retained
+control guest pass; neither is stock object transfer or firmware installation.
+See [USB](usb.md) and [virtual links](virtual-link.md).
+
+**Gate:** actual stock firmware completes both transfer directions, hashes
+match, failures/cancellation/disconnect recover, and the stock UI remains
+responsive. Internal packet exchange is not OS-level device enumeration.
 
 ## M7 — Stability and releases
 
-Close long-run correctness, deterministic snapshots, memory/CPU resource
-budgets, Windows/Linux/macOS packaging, browser compatibility, dependency and
-license auditing, contributor workflows and release notes. Improve performance
-only after correctness witnesses exist; a JIT is optional and must share the
-same architectural state contract.
+**Release gate open.**
 
-**Gate:** reproducible builds, sustained all-model interaction, documented
-compatibility matrix and known issues, no firmware in distribution, and no
-unqualified support claims for optional or missing devices.
+Close long-run correctness, deterministic snapshots, resource budgets,
+Windows/Linux/macOS packaging, browser compatibility, reproducible dependencies,
+license audits, contributor/release workflows and known-issue documentation.
+Optimize only after correctness witnesses exist; a JIT is optional and must
+preserve the same architectural state contract.
 
-## Working order
+**Gate:** reproducible production packages, sustained all-model use, a precise
+compatibility matrix and no firmware or unqualified optional-device claims.
 
-M0 and initial Pages deployment are accepted. Use M1 edge cases and the two
-genuine full-NOR traces to drive M2/M3, starting with LCD offset 0x68 and
-model-correct GPIO input sources. Keep all six profiles present but avoid
-six parallel speculative peripheral implementations. M5 presentation polish
-and M6 host-OS bridging must not displace the first stock boot gate.
+## Working order and research boundaries
 
-## Native-region / external-input research follow-up
+Prioritize M1 correctness and traced M2/M3 dependencies: the NOR-base startup
+store, unresolved EP0 response, and independently supported LCD/panel/pad
+behavior. Maintain native/WASM regressions while adding independent evidence.
+M5 skin polish and M6 host-OS bridging must not displace the first stock UI.
 
-Matching HP49g+ and HP50g native boot regions are acquired and exercised with
-explicitly erased OS sectors. The HP39gs original boot-region contribution is
-located but its attachment is not recovered; HP40gs remains an acquisition gap.
-A file named `raw` and the 2 MiB Emu48+ archive were independently excluded as
-native dumps. See [native ROM research](native-roms.md).
-
-M2 now includes explicit GPIO input-level injection and an exhaustive bounded
-HP48gII GPDDAT sensitivity experiment. Conditional startup reaches GPGDAT after
-LCD setup and firmware checking; this does not establish the keyboard matrix
-or close M3. The strict no-stimulus stops remain recorded separately. The
-HP50g recovery buffer exposes a panel bit-order counterexample, so nonblank
-pixels alone remain insufficient for display acceptance. CPU conformance,
-LCD status/FIFO semantics and all six stock-UI gates are still open.
-
-## Current conditional-research boundary
-
-The LCD/input continuation adds weak bias and deterministic native/WASM key
-schedules, real HP50g recovery selection, corrected inspection addressing/LUT,
-and an explicit counted idle-zero experiment at LCD `+0x68`. These are progress
-within M2/research, **not closure of M3**. Canonical stock boot excludes an
-unverified read policy; later LCD/ADC dependencies may be developed without
-pretending that the earlier silicon behavior is known. See [LCD evidence](lcd.md).
-
-The user plans to provide HP39gs and HP49g+ full dumps later. Their acquisition
-is deferred and should not displace available-ROM hardware work. Keep those
-forthcoming inputs distinct from currently available updates/boot-only regions.
-
-## Functional LCD / ADC continuation (after 5f93b3f)
-
-LCD frame-source/pending/mask, W1C and time-driven single-scan LINECNT now
-have directed regressions. Normal ADC sample/hold, prescaler, standby,
-read-start, completion/subinterrupt and explicit inputs are implemented.
-A production guest exercises both peripheral interrupts and SPSR/WFI returns
-on native and WASM hosts. FIFO, actual clocks, touch modes and analog hardware
-remain open, not implied by these functional interfaces.
-
-Conditioned original 39g+ and 48gII full NORs now converge on USB `52000144`
-initialization. Implement that documented controller path next, with separate
-register, enumeration and transfer gates. Strict LCD `+0x68` behavior remains
-unchanged; each progressed case still carries a counted hypothesis. Neither
-M2 physical-board acceptance nor M3 stock cold boot is closed by this progress.
-See [LCD](lcd.md), [ADC](adc.md), and the current [boot table](boot-research.md).
-
-## USB EP0 continuation (after a9e03bd)
-
-Original USB register/index/FIFO/IRQ state and explicit EP0 host packet APIs
-are implemented. A ROM-free guest returns descriptors/configuration through
-26 IRQ entries on both hosts. Original HP50g boot-only code answers six control
-requests with native/WASM cold replay; its GET_CONFIGURATION counterexample
-and Bulk transport remain open. This partially advances M6.2/M6.3, not their
-full gate and not M6.4 host-OS enumeration.
-
-Conditioned full NORs now stop on a zero-fill store into physical NOR at zero.
-Investigate its cause rather than silently permitting writes. M1/M3 remain
-open; all physical LCD/pad/analog hypotheses keep their previous restrictions.
+Historical checkpoints, commands and negative controls are linked by exact
+revision from [boot research](boot-research.md); current local acceptance is in
+[validation](validation.md). Explicit weak bias, ideal ADC codes, functional
+clocks, packed-memory views and the counted idle-zero hypothesis are separate
+conditions, never silently promoted to verified board defaults.

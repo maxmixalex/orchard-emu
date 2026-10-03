@@ -113,35 +113,45 @@ EXPORT("peripheral_snapshot") uintptr_t web_peripheral_snapshot(void) {
     return (uintptr_t)words;
 }
 
-/* Fixed-size EP0 packet buffers, separate from UART and ROM staging. */
-static uint8_t usb_packet[16];
-static uint32_t usb_length;
-EXPORT("usb_packet") uintptr_t web_usb_packet(void) { return (uintptr_t)usb_packet; }
-EXPORT("usb_length") unsigned web_usb_length(void) { return usb_length; }
-EXPORT("usb_attach") unsigned web_usb_attach(unsigned attached) {
-    return attached > 1 ? ORCHARD_BAD_ARGUMENT : orchard_usb_attach(&machine, attached != 0);
+static uint8_t usb_bytes[64];
+static size_t usb_length;
+static unsigned usb_data1;
+EXPORT("usb_buffer") uintptr_t web_usb_buffer(void) { return (uintptr_t)usb_bytes; }
+EXPORT("usb_connect") unsigned web_usb_connect(unsigned connected) {
+    return connected > 1 ? ORCHARD_BAD_ARGUMENT : orchard_usb_connect(&machine, connected != 0);
 }
-EXPORT("usb_bus_reset") unsigned web_usb_bus_reset(unsigned asserted) {
-    return asserted > 1 ? ORCHARD_USB_BAD_ARGUMENT : orchard_usb_bus_reset(&machine, asserted != 0);
+EXPORT("usb_reset_signal") unsigned web_usb_reset_signal(unsigned asserted) {
+    return asserted > 1 ? ORCHARD_BAD_ARGUMENT : orchard_usb_reset_signal(&machine, asserted != 0);
 }
 EXPORT("usb_sof") unsigned web_usb_sof(unsigned frame) { return orchard_usb_sof(&machine, frame); }
-EXPORT("usb_setup") unsigned web_usb_setup(unsigned address, unsigned length) {
-    if (length != 8) return ORCHARD_USB_BAD_ARGUMENT;
-    return orchard_usb_setup(&machine, address, usb_packet, length);
+EXPORT("usb_out") unsigned web_usb_out(unsigned address, unsigned ep, unsigned setup,
+                                        unsigned data1, unsigned length) {
+    if (length > sizeof(usb_bytes) || setup > 1) return ORCHARD_USB_BAD_ARGUMENT;
+    return orchard_usb_out(&machine, address, ep, setup != 0, data1, usb_bytes, length);
 }
-EXPORT("usb_out") unsigned web_usb_out(unsigned address, unsigned length) {
-    if (length > sizeof(usb_packet)) return ORCHARD_USB_BAD_ARGUMENT;
-    return orchard_usb_out(&machine, address, usb_packet, length);
+EXPORT("usb_in") unsigned web_usb_in(unsigned address, unsigned ep, unsigned ack) {
+    usb_length = 0; usb_data1 = 0;
+    if (ack > 1) return ORCHARD_USB_BAD_ARGUMENT;
+    return orchard_usb_in(&machine, address, ep, ack != 0, usb_bytes, sizeof(usb_bytes), &usb_length, &usb_data1);
 }
-EXPORT("usb_in") unsigned web_usb_in(unsigned address, unsigned capacity) {
-    usb_length = 0;
-    if (capacity > sizeof(usb_packet)) return ORCHARD_USB_BAD_ARGUMENT;
-    size_t length = 0;
-    orchard_usb_result r = orchard_usb_in(&machine, address, usb_packet, capacity, &length);
-    usb_length = (uint32_t)length;
-    return r;
-}
+EXPORT("usb_length") unsigned web_usb_length(void) { return (unsigned)usb_length; }
+EXPORT("usb_data1") unsigned web_usb_data1(void) { return usb_data1; }
 EXPORT("usb_snapshot") uintptr_t web_usb_snapshot(void) {
-    static uint32_t words[ORCHARD_USB_SNAPSHOT_WORDS];
-    return orchard_usb_snapshot(&machine, words, ORCHARD_USB_SNAPSHOT_WORDS) ? (uintptr_t)words : 0;
+    static uint32_t words[44];
+    if (!machine.profile) return 0;
+    orchard_usb_state u; orchard_get_usb_state(&machine, &u);
+    words[0] = u.address; words[1] = u.active_address; words[2] = u.power;
+    words[3] = u.index; words[4] = u.ep_pending; words[5] = u.bus_pending;
+    words[6] = u.ep_enable; words[7] = u.bus_enable; words[8] = u.frame;
+    words[9] = u.phase; words[10] = u.connected;
+    for (unsigned e = 0; e < 5; ++e) {
+        words[11 + 5*e] = u.max_packet[e]; words[12 + 5*e] = u.in_csr[e];
+        words[13 + 5*e] = u.out_csr[e]; words[14 + 5*e] = u.tx_bytes[e];
+        words[15 + 5*e] = u.rx_bytes[e];
+    }
+    words[36] = (uint32_t)u.resets; words[37] = (uint32_t)(u.resets >> 32);
+    words[38] = (uint32_t)u.setups; words[39] = (uint32_t)(u.setups >> 32);
+    words[40] = (uint32_t)u.in_packets; words[41] = (uint32_t)(u.in_packets >> 32);
+    words[42] = (uint32_t)u.out_packets; words[43] = (uint32_t)(u.out_packets >> 32);
+    return (uintptr_t)words;
 }

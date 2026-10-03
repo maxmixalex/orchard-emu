@@ -332,15 +332,28 @@ int main(int argc, char **argv) {
     printf("],\"peripherals\":{\"lcd_control\":%" PRIu32 ",\"lcd_source_pending\":%" PRIu32
            ",\"lcd_interrupt_pending\":%" PRIu32 ",\"lcd_interrupt_mask\":%" PRIu32
            ",\"lcd_frames\":\"%" PRIu64 "\",\"adc_control\":%" PRIu32 ",\"adc_data\":%" PRIu32
-           ",\"adc_remaining\":%" PRIu32 ",\"adc_valid\":%s},\"usb\":[",
+           ",\"adc_remaining\":%" PRIu32 ",\"adc_valid\":%s}",
            peripheral.lcd_control, peripheral.lcd_source_pending, peripheral.lcd_interrupt_pending,
            peripheral.lcd_interrupt_mask, peripheral.lcd_frames, peripheral.adc_control,
            peripheral.adc_data, peripheral.adc_remaining, peripheral.adc_valid ? "true" : "false");
-    uint32_t usb_words[ORCHARD_USB_SNAPSHOT_WORDS];
-    orchard_usb_snapshot(m, usb_words, ORCHARD_USB_SNAPSHOT_WORDS);
-    for (unsigned i = 0; i < ORCHARD_USB_SNAPSHOT_WORDS; ++i)
-        printf("%s%" PRIu32, i ? "," : "", usb_words[i]);
-    puts("]}");
+    orchard_usb_state usb;
+    orchard_get_usb_state(m, &usb);
+    printf(",\"usb\":{\"address\":%" PRIu32 ",\"active_address\":%" PRIu32
+           ",\"power\":%" PRIu32 ",\"index\":%" PRIu32
+           ",\"ep_pending\":%" PRIu32 ",\"bus_pending\":%" PRIu32
+           ",\"ep_enable\":%" PRIu32 ",\"bus_enable\":%" PRIu32
+           ",\"frame\":%" PRIu32 ",\"phase\":%" PRIu32 ",\"connected\":%s,\"endpoints\":[",
+           usb.address, usb.active_address, usb.power, usb.index, usb.ep_pending,
+           usb.bus_pending, usb.ep_enable, usb.bus_enable, usb.frame, usb.phase,
+           usb.connected ? "true" : "false");
+    for (unsigned ep = 0; ep < 5; ++ep)
+        printf("%s{\"max_packet\":%" PRIu32 ",\"in_csr\":%" PRIu32
+               ",\"out_csr\":%" PRIu32 ",\"tx_bytes\":%" PRIu32 ",\"rx_bytes\":%" PRIu32 "}",
+               ep ? "," : "", usb.max_packet[ep], usb.in_csr[ep], usb.out_csr[ep],
+               usb.tx_bytes[ep], usb.rx_bytes[ep]);
+    printf("],\"resets\":\"%" PRIu64 "\",\"setups\":\"%" PRIu64
+           "\",\"in_packets\":\"%" PRIu64 "\",\"out_packets\":\"%" PRIu64 "\"}}\n",
+           usb.resets, usb.setups, usb.in_packets, usb.out_packets);
     result = state.stop.status == ORCHARD_OK && frame_status == ORCHARD_OK ? 0 : 2;
 cleanup:
     if (rom && fclose(rom) != 0) result = 74;

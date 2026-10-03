@@ -11,16 +11,20 @@ core runs natively and as WebAssembly; no stock UI boot is accepted yet. The
 firmware's Saturn interpreter is intended to run as guest ARM software, without replacing it with Emu48 or patching the ROM.
 
 The C17 core includes ARM/Thumb and a CP15/MMU subset, physical SRAM/NOR,
-GPIO/keyboard/EINT, timers/RTC/watchdog, functional LCD scan/frame interrupts
-and normal ADC with explicit sample inputs. Unknown hardware still stops.
+GPIO/keyboard/EINT, timers/RTC/watchdog, functional LCD scan/frame interrupts,
+normal ADC with explicit sample inputs, and a functional USB device/packet host.
+Unknown hardware still stops.
 An explicit, counted LCD idle-zero hypothesis lets the original 39g+ and
-48gII NORs pass USB initialization and next stop on a zero-fill store into NOR; it does not change strict defaults or
+48gII NORs pass USB initialization; it does not change strict defaults or
 certify stock boot. Original 50g recovery code responds to scheduled keys,
-but its input is boot-only. Its guest descriptors and six EP0 control requests
-now pass native/WASM replay; Bulk/card transfer and host-OS enumeration are open.
-See [USB scope and counterexamples](docs/development/usb.md).
+and its original bootloader now returns real USB descriptors, strings and
+address/configuration status responses to a virtual packet host. Its input is
+boot-only; GET_CONFIGURATION remains unresolved, and no stock file/card
+transfer or host-OS virtual device is accepted. See [USB evidence](docs/development/usb.md).
 The browser remains a diagnostic workbench. See [boot research](docs/development/boot-research.md),
-[LCD limits](docs/development/lcd.md) and [ADC conditions](docs/development/adc.md).
+[LCD limits](docs/development/lcd.md) and [ADC conditions](docs/development/adc.md). The USB continuation is reconciled onto `80a1466`, retaining its control guest
+and extending the packet API to bulk endpoints. The live board records each
+accepted commit and observed Build/Pages result.
 
 ## Build and verify
 
@@ -60,6 +64,7 @@ Native boot regions and original full NORs are separate research inputs:
 ```sh
 node tools/rom-info.mjs /path/to/boot-50g.bin
 node tools/probe-rom.mjs --model hp50g --bootloader /path/to/boot-50g.bin
+node tools/probe-usb.mjs /path/to/boot-50g.bin /new/path/usb-control.json
 ```
 
 The boot-only probe supplies no OS. See [native ROM research](docs/development/native-roms.md)

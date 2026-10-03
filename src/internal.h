@@ -53,17 +53,21 @@ typedef struct {
 } o_adc;
 
 typedef struct {
-    uint8_t maxp, in1, in2, out1, out2;
-    uint8_t rx[64], tx[64], rx_size, rx_pos, tx_size;
+    uint8_t tx[64], rx[64];
+    unsigned tx_count, rx_count, rx_pos;
+    uint8_t maxp, in1, in2, out1, out2, tx_toggle, rx_toggle;
+    uint8_t dma[6];
 } o_usb_ep;
 typedef struct {
-    uint8_t function_address, active_address, power, ep_pending, usb_pending;
-    uint8_t ep_enable, usb_enable, index, stage;
-    uint16_t frame, remaining;
-    bool attached, reset_asserted, direction_in, stalled;
     o_usb_ep ep[5];
-    uint8_t dma[4][6];
+    uint8_t address, active_address, power, index, ep_pending, bus_pending;
+    uint8_t ep_enable, bus_enable;
+    uint16_t frame, control_length;
+    unsigned phase;
+    bool connected, control_in;
+    uint64_t resets, setups, in_packets, out_packets;
 } o_usb;
+
 typedef struct {
     uint32_t srcpnd, intmod, intmsk, intpnd, subsrcpnd, intsubmsk, priority;
     uint32_t memc[13], clock[6], gpio[48], lcd[25];
@@ -132,10 +136,6 @@ bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
 bool o_load(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t *value);
 bool o_store(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t value);
 void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool fetch);
-void o_usb_reset(o_usb *u);
-void o_usb_tick(orchard_machine *m);
-bool o_usb_register(orchard_machine *m, uint32_t address, unsigned width,
-                     uint32_t *value, bool write);
 void o_soc_reset(o_soc *s);
 void o_soc_tick(orchard_machine *m);
 void o_irq_update(o_soc *s);
@@ -151,6 +151,10 @@ bool o_rtc_register(orchard_machine *m, uint32_t address, unsigned width, uint32
 void o_watchdog_reset(o_soc *s);
 void o_watchdog_tick(orchard_machine *m);
 bool o_watchdog_register(o_soc *s, uint32_t address, uint32_t *value, bool write);
+void o_usb_reset(o_usb *u);
+void o_usb_tick(orchard_machine *m);
+bool o_usb_register(orchard_machine *m, uint32_t address, unsigned width,
+                    uint32_t *value, bool write);
 void o_adc_reset(o_adc *a);
 void o_adc_tick(orchard_machine *m);
 bool o_adc_register(orchard_machine *m, uint32_t address, unsigned width,

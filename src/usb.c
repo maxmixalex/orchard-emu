@@ -1,300 +1,326 @@
 /* SPDX-License-Identifier: MIT
- * Original functional S3C2410A USB-device model. Samsung manual ch.13.
- * Packet-level EP0 host adapter; no wire timing, DMA or bulk host yet.
+ * Original functional S3C2410A USB device model. Samsung manual (2004),
+ * chapter 13: byte/word registers, indexed CSRs, FIFO and interrupt semantics.
+ * Packet boundary API assumes a valid USB packet (no wire/CRC/DMA model).
  */
 #include "internal.h"
 
-#define BASE 0x52000000u
-#define U_OUT 1u
-#define U_IN 2u
-#define U_STALL 4u
-#define U_END 8u
-#define U_SETUP_END 16u
-#define U_SEND_STALL 32u
-
-enum { IDLE, SETUP, DATA_IN, DATA_OUT, STATUS_IN, STATUS_OUT };
+#define U_BASE 0x52000000u
+#define U_IRQ (1u << 25)
+#define E0_OUT 1u
+#define E0_IN 2u
+#define E0_SENT 4u
+#define E0_END 8u
+#define E0_SETUP_END 16u
+#define E0_STALL 32u
+/* Control stage numbers are exposed only as diagnostic state, not host actions. */
+enum { U_IDLE, U_SETUP, U_DATA_IN, U_DATA_OUT, U_STATUS_IN, U_STATUS_OUT };
 
 void o_usb_reset(o_usb *u) {
     o_zero(u, sizeof(*u));
-    u->ep_enable = 0x1f; /* Defined bits: manual's 0xff reset includes reserved bits. */
-    u->usb_enable = 4;
-    for (unsigned i = 0; i < 5; ++i) {
-        u->ep[i].maxp = 1;
-        u->ep[i].in2 = 0x20;
+    /* Reserved bits read zero even though the register table says 0xff. */
+    u->ep_enable = 0x1f;
+    u->bus_enable = 4;
+    for (unsigned n = 0; n < 5; ++n) {
+        u->ep[n].maxp = 1;
+        u->ep[n].in2 = 0x20;
     }
 }
 void o_usb_tick(orchard_machine *m) {
-    const o_usb *u = &m->soc.usb;
+    o_usb *u = &m->soc.usb;
+    /* Pending USB events are latched until their own W1C, independently of
+       main SRCPND/INTPND. Resume has no separate enable bit (13-9). */
     if ((u->ep_pending & u->ep_enable) ||
-        (u->usb_pending & (u->usb_enable | 2u)))
-        m->soc.srcpnd |= 1u << 25;
+        (u->bus_pending & (u->bus_enable | 2u))) m->soc.srcpnd |= U_IRQ;
 }
-static bool stop(orchard_machine *m, uint32_t address, uint32_t detail) {
-    o_stop(m, ORCHARD_UNIMPLEMENTED_MMIO, address, detail);
-    return false;
-}
-static void clear_rx(o_usb_ep *e) { e->rx_size = e->rx_pos = 0; }
-static void clear_tx(o_usb_ep *e) { e->tx_size = 0; }
-static void control_clear(o_usb *u) {
-    clear_rx(&u->ep[0]); clear_tx(&u->ep[0]);
-    u->ep[0].in1 = 0;
-    u->stage = IDLE; u->remaining = 0; u->stalled = false;
-}
-static void control_complete(o_usb *u) {
-    if (u->function_address & 0x80u) {
-        u->active_address = u->function_address & 127u;
-        u->function_address &= 127u;
-    }
-    control_clear(u);
-    u->ep_pending |= 1u;
-}
-orchard_status orchard_usb_attach(orchard_machine *m, bool attached) {
+orchard_status orchard_usb_connect(orchard_machine *m, bool connected) {
     if (!m || !m->profile) return ORCHARD_BAD_ARGUMENT;
-    /* An adapter lifecycle boundary, not a physical cable/pull-up simulation.
-       A changed attachment resets only the USB block, never CPU/RAM/NOR. */
-    if (m->soc.usb.attached != attached) {
-        o_usb_reset(&m->soc.usb);
-        m->soc.usb.attached = attached;
-    }
+    m->soc.usb.connected = connected;
     return ORCHARD_OK;
 }
-orchard_usb_result orchard_usb_bus_reset(orchard_machine *m, bool asserted) {
-    if (!m || !m->profile) return ORCHARD_USB_BAD_ARGUMENT;
+orchard_status orchard_usb_reset_signal(orchard_machine *m, bool asserted) {
+    if (!m || !m->profile || !m->soc.usb.connected) return ORCHARD_BAD_ARGUMENT;
     o_usb *u = &m->soc.usb;
-    if (!u->attached) return ORCHARD_USB_NO_DEVICE;
-    if (asserted && !u->reset_asserted) {
-        o_usb_reset(u); u->attached = true;
-        u->reset_asserted = true; u->power = 8; u->usb_pending = 4;
-    } else if (!asserted) {
-        u->reset_asserted = false; u->power &= ~8u;
-    }
-    o_usb_tick(m);
-    return ORCHARD_USB_ACK;
+    if (asserted && !(u->power & 8u)) {
+        uint64_t resets = u->resets, setups = u->setups;
+        uint64_t in = u->in_packets, out = u->out_packets;
+        o_usb_reset(u);
+        u->connected = true;
+        u->resets = resets + 1; u->setups = setups;
+        u->in_packets = in; u->out_packets = out;
+        u->power = 8;
+        u->bus_pending = 4;
+    } else if (!asserted) u->power &= (uint8_t)~8u;
+    return ORCHARD_OK;
 }
-orchard_usb_result orchard_usb_sof(orchard_machine *m, unsigned frame) {
-    if (!m || !m->profile || frame > 0x7ffu) return ORCHARD_USB_BAD_ARGUMENT;
-    o_usb *u = &m->soc.usb;
-    if (!u->attached || u->reset_asserted) return ORCHARD_USB_NO_DEVICE;
-    u->frame = (uint16_t)frame;
-    return ORCHARD_USB_ACK;
+orchard_status orchard_usb_sof(orchard_machine *m, unsigned frame) {
+    if (!m || !m->profile || frame > 2047 || !m->soc.usb.connected ||
+        (m->soc.usb.power & 8u)) return ORCHARD_BAD_ARGUMENT;
+    m->soc.usb.frame = (uint16_t)frame;
+    return ORCHARD_OK;
 }
-static orchard_usb_result address_check(const orchard_machine *m, unsigned address) {
-    if (!m || !m->profile || address > 127) return ORCHARD_USB_BAD_ARGUMENT;
+void orchard_get_usb_state(const orchard_machine *m, orchard_usb_state *state) {
+    if (!m || !state) return;
     const o_usb *u = &m->soc.usb;
-    return !u->attached || u->reset_asserted || u->active_address != address
-        ? ORCHARD_USB_NO_DEVICE : ORCHARD_USB_ACK;
-}
-static orchard_usb_result stall_packet(orchard_machine *m) {
-    o_usb *u = &m->soc.usb;
-    if (u->stalled || (u->ep[0].in1 & U_SEND_STALL)) {
-        u->stalled = true;
-        u->ep[0].in1 = (u->ep[0].in1 & ~(U_SEND_STALL | U_IN)) | U_STALL;
-        clear_tx(&u->ep[0]);
-        u->ep_pending |= 1u;
-        o_usb_tick(m);
-        return ORCHARD_USB_STALL;
+    o_zero(state, sizeof(*state));
+    state->address = u->address; state->active_address = u->active_address;
+    state->power = u->power; state->index = u->index;
+    state->ep_pending = u->ep_pending; state->bus_pending = u->bus_pending;
+    state->ep_enable = u->ep_enable; state->bus_enable = u->bus_enable;
+    state->frame = u->frame; state->phase = u->phase;
+    state->connected = u->connected; state->resets = u->resets;
+    state->setups = u->setups; state->in_packets = u->in_packets;
+    state->out_packets = u->out_packets;
+    for (unsigned n = 0; n < 5; ++n) {
+        const o_usb_ep *e = &u->ep[n];
+        state->max_packet[n] = e->maxp * 8u;
+        state->in_csr[n] = e->in1 | (uint32_t)e->in2 << 8;
+        state->out_csr[n] = e->out1 | (uint32_t)e->out2 << 8;
+        state->tx_bytes[n] = e->tx_count;
+        state->rx_bytes[n] = e->rx_count - e->rx_pos;
     }
-    return ORCHARD_USB_ACK;
 }
-orchard_usb_result orchard_usb_setup(orchard_machine *m, unsigned address,
-                                     const uint8_t *packet, size_t length) {
-    if (!packet || length != 8) return ORCHARD_USB_BAD_ARGUMENT;
-    orchard_usb_result r = address_check(m, address);
-    if (r != ORCHARD_USB_ACK) return r;
-    o_usb *u = &m->soc.usb;
-    bool interrupted = u->stage != IDLE && !u->stalled;
-    control_clear(u);
-    /* A superseding SETUP cancels a pending address update as well. */
-    u->function_address = u->active_address;
-    o_copy(u->ep[0].rx, packet, 8); u->ep[0].rx_size = 8;
-    u->remaining = (uint16_t)((unsigned)packet[6] | (unsigned)packet[7] << 8);
-    u->direction_in = (packet[0] & 128u) != 0;
-    u->stage = SETUP;
-    u->ep[0].in1 = U_OUT | (interrupted ? U_SETUP_END : 0);
-    u->ep_pending |= 1u;
-    o_usb_tick(m);
-    return ORCHARD_USB_ACK;
+static bool unsupported(orchard_machine *m, uint32_t address, uint32_t detail) {
+    o_stop(m, ORCHARD_UNSUPPORTED_USB, address, detail);
+    return false;
+}
+static unsigned maxp(const o_usb_ep *e) { return e->maxp * 8u; }
+static bool mode_supported(const o_usb_ep *e, unsigned ep) {
+    return ep ? e->maxp == 8 && !(e->dma[0] & 7u) &&
+                !(e->in2 & 0x40u) && !(e->out2 & 0x40u)
+              : e->maxp == 1 || e->maxp == 2;
+}
+static bool available(const o_usb *u, unsigned address) {
+    return u->connected && !(u->power & 10u) && u->active_address == address;
+}
+static void control_done(o_usb *u) {
+    o_usb_ep *e = &u->ep[0];
+    u->phase = U_IDLE;
+    e->in1 &= (uint8_t)~(E0_END | E0_IN | E0_OUT);
+    e->tx_count = e->rx_count = e->rx_pos = 0;
+    if (u->address & 128u) {
+        u->active_address = u->address & 127u;
+        u->address &= 127u;
+    }
+    u->ep_pending |= 1;
+}
+static orchard_usb_result stall(o_usb *u, unsigned ep, bool in) {
+    o_usb_ep *e = &u->ep[ep];
+    if (!ep) { e->in1 |= E0_SENT; e->in1 &= (uint8_t)~E0_STALL; }
+    else if (in) { e->in1 |= 0x20; e->in1 &= (uint8_t)~1u; }
+    else e->out1 |= 0x40;
+    u->ep_pending |= (uint8_t)(1u << ep);
+    return ORCHARD_USB_STALL;
 }
 orchard_usb_result orchard_usb_out(orchard_machine *m, unsigned address,
-                                   const uint8_t *packet, size_t length) {
-    if ((!packet && length) || length > 16) return ORCHARD_USB_BAD_ARGUMENT;
-    orchard_usb_result r = address_check(m, address);
-    if (r != ORCHARD_USB_ACK) return r;
-    r = stall_packet(m); if (r != ORCHARD_USB_ACK) return r;
-    o_usb *u = &m->soc.usb; o_usb_ep *e = &u->ep[0];
-    if (u->stage == STATUS_OUT) {
-        if (length) return ORCHARD_USB_BAD_ARGUMENT;
-        bool early = !(e->in1 & U_END);
-        control_complete(u);
-        if (early) u->ep[0].in1 |= U_SETUP_END;
-        o_usb_tick(m); return ORCHARD_USB_ACK;
+                                  unsigned ep, bool setup, unsigned data1,
+                                  const uint8_t *bytes, size_t length) {
+    if (!m || !m->profile || address > 127 || ep >= 5 || data1 > 1 ||
+        length > 64 || (!bytes && length) || (setup && (ep || data1 || length != 8)))
+        return ORCHARD_USB_BAD_ARGUMENT;
+    o_usb *u = &m->soc.usb;
+    o_usb_ep *e = &u->ep[ep];
+    if (!available(u, address)) return ORCHARD_USB_NO_RESPONSE;
+    if (!mode_supported(e, ep)) return ORCHARD_USB_UNSUPPORTED;
+    if (setup) {
+        bool interrupted = u->phase != U_IDLE && !(e->in1 & E0_END);
+        e->tx_count = e->rx_count = e->rx_pos = 0;
+        e->in1 = E0_OUT | (interrupted ? E0_SETUP_END : 0);
+        e->tx_toggle = e->rx_toggle = 1;
+        u->address = u->active_address; /* Abandon uncommitted SET_ADDRESS. */
+        o_copy(e->rx, bytes, length); e->rx_count = (unsigned)length;
+        u->control_length = (uint16_t)((unsigned)bytes[6] | (unsigned)bytes[7] << 8);
+        u->control_in = (bytes[0] & 0x80u) != 0;
+        u->phase = U_SETUP;
+        u->ep_pending |= 1; ++u->setups;
+        return ORCHARD_USB_ACK;
     }
-    if (u->stage != DATA_OUT || (e->in1 & (U_OUT | U_SETUP_END))) return ORCHARD_USB_NAK;
-    if (length > e->maxp * 8u || length > u->remaining) return ORCHARD_USB_BAD_ARGUMENT;
-    o_copy(e->rx, packet, length); e->rx_size = (uint8_t)length; e->rx_pos = 0;
-    u->remaining -= (uint16_t)length;
-    e->in1 |= U_OUT; u->ep_pending |= 1u;
-    o_usb_tick(m);
+    if ((!ep && (e->in1 & (E0_STALL | E0_SENT))) || (ep && (e->out1 & 0x20u)))
+        return stall(u, ep, false);
+    if (!ep && (u->phase == U_STATUS_OUT || u->phase == U_DATA_IN)) {
+        if (length || data1 != 1) return stall(u, ep, false);
+        /* A host can end a control read at wLength before firmware sets
+           DATA_END (e.g. an exact multiple of MAXP). Report SETUP_END and
+           discard any speculative next packet, rather than NAKing status. */
+        bool early = !(e->in1 & E0_END);
+        control_done(u);
+        if (early) e->in1 |= E0_SETUP_END;
+        ++u->out_packets;
+        return ORCHARD_USB_ACK;
+    }
+    if ((!ep && u->phase != U_DATA_OUT) || (ep && (e->in2 & 0x20u)))
+        return ORCHARD_USB_NAK;
+    if (length > maxp(e)) return stall(u, ep, false);
+    /* A retry of the last ACKed OUT must not enqueue data or interrupt again. */
+    if (data1 != e->rx_toggle) return ORCHARD_USB_ACK;
+    if (ep ? (e->out1 & 1u) != 0 : (e->in1 & E0_OUT) != 0) return ORCHARD_USB_NAK;
+    o_copy(e->rx, bytes, length); e->rx_count = (unsigned)length; e->rx_pos = 0;
+    if (ep) e->out1 |= 1; else e->in1 |= E0_OUT;
+    e->rx_toggle ^= 1;
+    u->ep_pending |= (uint8_t)(1u << ep); ++u->out_packets;
     return ORCHARD_USB_ACK;
 }
 orchard_usb_result orchard_usb_in(orchard_machine *m, unsigned address,
-                                  uint8_t *packet, size_t capacity, size_t *length) {
-    if (!length || (!packet && capacity)) return ORCHARD_USB_BAD_ARGUMENT;
-    *length = 0;
-    orchard_usb_result r = address_check(m, address);
-    if (r != ORCHARD_USB_ACK) return r;
-    r = stall_packet(m); if (r != ORCHARD_USB_ACK) return r;
-    o_usb *u = &m->soc.usb; o_usb_ep *e = &u->ep[0];
-    if (u->stage == STATUS_IN && (e->in1 & U_END)) {
-        control_complete(u); o_usb_tick(m); return ORCHARD_USB_ACK;
+                                 unsigned ep, bool ack, uint8_t *bytes,
+                                 size_t capacity, size_t *length, unsigned *data1) {
+    if (!m || !m->profile || address > 127 || ep >= 5 || !length || !data1 ||
+        (!bytes && capacity)) return ORCHARD_USB_BAD_ARGUMENT;
+    *length = 0; *data1 = 0;
+    o_usb *u = &m->soc.usb; o_usb_ep *e = &u->ep[ep];
+    if (!available(u, address)) return ORCHARD_USB_NO_RESPONSE;
+    if (!mode_supported(e, ep)) return ORCHARD_USB_UNSUPPORTED;
+    if ((!ep && (e->in1 & (E0_STALL | E0_SENT))) || (ep && (e->in1 & 0x10u)))
+        return stall(u, ep, true);
+    bool status = !ep && u->phase == U_STATUS_IN && (e->in1 & E0_END);
+    if (!status && ((!ep && (u->phase != U_DATA_IN || !(e->in1 & E0_IN))) ||
+        (ep && (!(e->in2 & 0x20u) || !(e->in1 & 1u))))) return ORCHARD_USB_NAK;
+    *length = status ? 0 : e->tx_count;
+    *data1 = status ? 1 : e->tx_toggle;
+    if (capacity < *length) return ORCHARD_USB_BUFFER_SMALL;
+    o_copy(bytes, e->tx, *length);
+    if (ack) {
+        ++u->in_packets;
+        if (status) control_done(u);
+        else {
+            e->in1 &= (uint8_t)~(ep ? 1u : E0_IN);
+            e->tx_count = 0; e->tx_toggle ^= 1;
+            u->ep_pending |= (uint8_t)(1u << ep);
+            if (!ep && (e->in1 & E0_END)) u->phase = U_STATUS_OUT;
+        }
     }
-    if (u->stage != DATA_IN || !(e->in1 & U_IN) || (e->in1 & U_SETUP_END)) return ORCHARD_USB_NAK;
-    if (capacity < e->tx_size || e->tx_size > u->remaining) return ORCHARD_USB_BAD_ARGUMENT;
-    *length = e->tx_size; o_copy(packet, e->tx, *length);
-    u->remaining -= e->tx_size;
-    if (e->tx_size < e->maxp * 8u || !u->remaining || (e->in1 & U_END)) u->stage = STATUS_OUT;
-    clear_tx(e); e->in1 &= ~U_IN;
-    u->ep_pending |= 1u; o_usb_tick(m);
     return ORCHARD_USB_ACK;
 }
-size_t orchard_usb_snapshot(const orchard_machine *m, uint32_t *words, size_t capacity) {
-    if (!m || !m->profile || !words || capacity < ORCHARD_USB_SNAPSHOT_WORDS) return 0;
-    const o_usb *u = &m->soc.usb;
-    words[0] = u->function_address; words[1] = u->power;
-    words[2] = u->ep_pending; words[3] = u->usb_pending;
-    words[4] = u->ep_enable; words[5] = u->usb_enable;
-    words[6] = u->index; words[7] = u->frame;
-    words[8] = u->active_address; words[9] = u->stage;
-    words[10] = u->remaining; words[11] = u->attached; words[12] = u->reset_asserted;
-    for (unsigned i = 0; i < 5; ++i) {
-        const o_usb_ep *e = &u->ep[i]; unsigned j = 13 + i * 7;
-        words[j] = e->maxp * 8u; words[j+1] = e->in1; words[j+2] = e->in2;
-        words[j+3] = e->out1; words[j+4] = e->out2;
-        words[j+5] = e->rx_size - e->rx_pos; words[j+6] = e->tx_size;
-    }
-    return ORCHARD_USB_SNAPSHOT_WORDS;
-}
-static bool fifo(orchard_machine *m, unsigned ep, uint32_t *value, bool write) {
+static bool fifo(orchard_machine *m, unsigned ep, uint32_t address, uint32_t *v, bool write) {
     o_usb *u = &m->soc.usb; o_usb_ep *e = &u->ep[ep];
-    uint32_t addr = BASE + 0x1c0u + ep * 4u;
-    if (ep == 0 && (e->in1 & U_SETUP_END)) return stop(m, addr, write ? *value : 0);
+    unsigned limit = ep ? 64u : 16u;
+    if (!mode_supported(e, ep) || (!ep && (e->in1 & E0_SETUP_END)))
+        return unsupported(m, address, write ? *v : 0);
     if (write) {
-        unsigned limit = ep ? 64u : 16u;
-        unsigned ready = ep ? 1u : U_IN;
-        if ((e->in1 & ready) || e->tx_size >= limit || e->tx_size >= e->maxp * 8u)
-            return stop(m, addr, *value);
-        /* Small replies may be staged after SETUP is drained, before the
-           combined SERVICED_OUT/IN_PKT_RDY write advances the phase. */
-        bool drained_setup = u->stage == SETUP && u->direction_in &&
-                             e->rx_pos == e->rx_size;
-        if (ep == 0 && u->stage != DATA_IN && u->stage != STATUS_IN &&
-            u->stage != STATUS_OUT && !drained_setup)
-            return stop(m, addr, *value);
-        e->tx[e->tx_size++] = (uint8_t)*value;
-        if (ep && (e->in2 & 128u) && e->tx_size == e->maxp * 8u) e->in1 |= 1u;
+        if ((e->in1 & (ep ? 1u : E0_IN)) || e->tx_count >= maxp(e) || e->tx_count >= limit)
+            return unsupported(m, address, write ? *v : 0);
+        e->tx[e->tx_count++] = (uint8_t)*v;
+        if (ep && (e->in2 & 0x80u) && e->tx_count == maxp(e)) e->in1 |= 1;
     } else {
-        unsigned ready = ep ? e->out1 & 1u : e->in1 & U_OUT;
-        if (!ready || e->rx_pos >= e->rx_size) return stop(m, addr, 0);
-        *value = e->rx[e->rx_pos++];
-        if (ep && (e->out2 & 128u) && e->rx_pos == e->rx_size) {
-            e->out1 &= ~1u; clear_rx(e);
+        if (e->rx_pos >= e->rx_count) return unsupported(m, address, 0);
+        *v = e->rx[e->rx_pos++];
+        if (ep && (e->out2 & 0x80u) && e->rx_pos == e->rx_count) {
+            e->out1 &= (uint8_t)~1u; e->rx_count = e->rx_pos = 0;
         }
     }
     return true;
 }
-static bool csr0(orchard_machine *m, uint8_t v) {
+static bool ep0_csr(orchard_machine *m, uint32_t value) {
     o_usb *u = &m->soc.usb; o_usb_ep *e = &u->ep[0];
-    if (v & 128u) e->in1 &= ~U_SETUP_END;
+    uint8_t v = (uint8_t)value;
+    e->in1 = (uint8_t)((e->in1 & ~(E0_SENT | E0_STALL)) |
+                      (e->in1 & v & E0_SENT) | (v & E0_STALL));
+    if (v & 128u) e->in1 &= (uint8_t)~E0_SETUP_END;
     if (v & 64u) {
-        clear_rx(e); e->in1 &= ~U_OUT;
-        if (u->stage == SETUP) u->stage = !u->remaining ? STATUS_IN : u->direction_in ? DATA_IN : DATA_OUT;
+        e->in1 &= (uint8_t)~E0_OUT; e->rx_count = e->rx_pos = 0;
+        if (u->phase == U_SETUP)
+            u->phase = !u->control_length ? U_STATUS_IN : u->control_in ? U_DATA_IN : U_DATA_OUT;
     }
-    e->in1 = (e->in1 & ~U_SEND_STALL) | (v & U_SEND_STALL);
-    if (!(v & U_STALL)) e->in1 &= ~U_STALL;
-    if (v & U_END) {
-        e->in1 |= U_END;
-        if (u->stage == DATA_OUT && !(e->in1 & U_OUT)) u->stage = STATUS_IN;
+    if (v & E0_IN) e->in1 |= E0_IN;
+    if (v & E0_END) {
+        e->in1 |= E0_END;
+        if (u->phase == U_DATA_OUT) u->phase = U_STATUS_IN;
     }
-    if (v & U_IN) e->in1 |= U_IN;
     return true;
 }
-bool o_usb_register(orchard_machine *m, uint32_t address, unsigned width,
-                     uint32_t *value, bool write) {
-    if (address < BASE || address >= BASE + 0x10000u) return false;
-    if ((width != 1 && width != 4) || (address & 3u)) return stop(m, address, write ? *value : width);
+bool o_usb_register(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value, bool write) {
+    if (address < U_BASE || address >= U_BASE + 0x10000u) return false;
+    if ((width != 1 && width != 4) || (address & 3u))
+        return unsupported(m, address, width);
     o_usb *u = &m->soc.usb;
-    uint32_t off = address - BASE;
+    uint32_t off = address - U_BASE;
     uint8_t v = write ? (uint8_t)*value : 0;
-    if (off >= 0x1c0 && off <= 0x1d0) return fifo(m, (off - 0x1c0) / 4u, value, write);
-    /* DMA configuration may be prepared, but enabling/running it is explicit. */
-    const unsigned dma_base[4] = {0x200, 0x218, 0x240, 0x258};
-    for (unsigned i = 0; i < 4; ++i) if (off >= dma_base[i] && off <= dma_base[i] + 20) {
-        unsigned slot = (off - dma_base[i]) / 4;
-        if (write) {
-            if (!slot && (v & 7u)) return stop(m, address, v);
-            u->dma[i][slot] = slot ? v : v & 0x88u;
-        } else *value = slot ? u->dma[i][slot] : u->dma[i][slot] & 8u;
-        return true;
-    }
-    if (off == 0x180 || off == 0x184 || off == 0x188 || off == 0x190 || off == 0x194 || off == 0x198 || off == 0x19c) {
-        if (u->index >= 5) return stop(m, address, u->index);
+    if (off >= 0x1c0 && off <= 0x1d0) return fifo(m, (off - 0x1c0) / 4, address, value, write);
+    if (off >= 0x180 && off <= 0x19c) {
+        if (u->index >= 5) return unsupported(m, address, u->index);
         o_usb_ep *e = &u->ep[u->index];
-        if (!write) {
-            switch (off) {
-            case 0x180: *value = e->maxp; break;
-            case 0x184: *value = e->in1; break;
-            case 0x188: *value = e->in2; break;
-            case 0x190: *value = e->out1; break;
-            case 0x194: *value = e->out2; break;
-            case 0x198: *value = e->rx_size - e->rx_pos; break;
-            default: *value = 0; break;
-            }
-            return true;
-        }
         switch (off) {
         case 0x180:
-            v &= 15u;
-            if ((v != 1 && v != 2 && v != 4 && v != 8) || (!u->index && v > 2) || e->rx_size || e->tx_size)
-                return stop(m, address, v);
-            e->maxp = v; return true;
+            if (write) e->maxp = v & 15u; else *value = e->maxp;
+            return true;
         case 0x184:
-            if (!u->index) return csr0(m, v);
-            if (v & 8u) { clear_tx(e); e->in1 &= ~1u; u->ep_pending |= 1u << u->index; }
-            e->in1 = (e->in1 & 1u) | (v & 0x10u) | (e->in1 & v & 0x20u);
-            if ((v & 1u) && !(v & (8u | 16u))) e->in1 |= 1u;
+            if (!write) { *value = e->in1; return true; }
+            if (!u->index) return ep0_csr(m, v);
+            e->in1 = (uint8_t)((e->in1 & 1u) | (e->in1 & v & 0x20u) | (v & 0x10u));
+            if ((v & 1u) && !(v & 0x10u)) e->in1 |= 1u;
+            if (v & 0x40u) e->tx_toggle = 0;
+            if (v & 8u) {
+                e->in1 &= (uint8_t)~1u; e->tx_count = 0;
+                u->ep_pending |= (uint8_t)(1u << u->index);
+            }
             return true;
         case 0x188:
-            if (v & 64u) return stop(m, address, v);
-            e->in2 = v & 0xb0u; return true;
+            if (write) {
+                if (v & 0x40u) return unsupported(m, address, v);
+                e->in2 = v & 0xb0u;
+            } else *value = e->in2;
+            return true;
         case 0x190:
-            if (!u->index && v) return stop(m, address, v);
-            if ((v & 16u) || !(v & 1u)) { clear_rx(e); e->out1 &= ~1u; }
-            e->out1 = (e->out1 & v & 0x41u) | (v & 0x20u); return true;
+            if (!write) { *value = e->out1; return true; }
+            if (!u->index) return unsupported(m, address, v);
+            e->out1 = (uint8_t)((e->out1 & v & 0x41u) | (v & 0x20u));
+            if (v & 128u) e->rx_toggle = 0;
+            if (!(e->out1 & 1u) || (v & 16u)) {
+                e->out1 &= (uint8_t)~1u; e->rx_count = e->rx_pos = 0;
+            }
+            return true;
         case 0x194:
-            if (v & 64u) return stop(m, address, v);
-            e->out2 = v & 0xa0u; return true;
-        default: return stop(m, address, v); /* Read-only count. */
+            if (write) {
+                if (v & 0x40u) return unsupported(m, address, v);
+                e->out2 = v & 0xa0u;
+            } else *value = e->out2;
+            return true;
+        case 0x198: case 0x19c:
+            if (write) return unsupported(m, address, v);
+            *value = off == 0x198 ? e->rx_count - e->rx_pos : 0;
+            return true;
+        default: return false;
         }
+    }
+    static const uint16_t dma_base[4] = {0x200, 0x218, 0x240, 0x258};
+    for (unsigned n = 0; n < 4; ++n) {
+        if (off < dma_base[n] || off > dma_base[n] + 20u) continue;
+        unsigned slot = (off - dma_base[n]) / 4;
+        o_usb_ep *e = &u->ep[n + 1];
+        if (write) {
+            if (!slot && (v & 7u)) return unsupported(m, address, v);
+            e->dma[slot] = slot == 5 ? v & 15u : slot ? v : v & 0x88u;
+        } else *value = e->dma[slot];
+        return true;
     }
     switch (off) {
     case 0x140:
-        if (write) u->function_address = v; else *value = u->function_address;
-        break;
+        if (write) u->address = v | 128u; else *value = u->address;
+        return true;
     case 0x144:
         if (write) {
-            if (v & 4u) return stop(m, address, v); /* No remote-resume timing yet. */
-            u->power = (u->power & 10u) | (v & 1u);
+            if (v & 4u) return unsupported(m, address, v); /* Remote resume timing. */
+            u->power = (uint8_t)((u->power & 10u) | (v & 1u));
         } else *value = u->power;
-        break;
-    case 0x148: if (write) u->ep_pending &= ~v; else *value = u->ep_pending; break;
-    case 0x158: if (write) u->usb_pending &= ~v; else *value = u->usb_pending; break;
-    case 0x15c: if (write) u->ep_enable = v & 31u; else *value = u->ep_enable; break;
-    case 0x16c: if (write) u->usb_enable = v & 5u; else *value = u->usb_enable; break;
-    case 0x178: if (write) u->index = v; else *value = u->index; break;
+        return true;
+    case 0x148:
+        if (write) u->ep_pending &= (uint8_t)~v; else *value = u->ep_pending;
+        return true;
+    case 0x158:
+        if (write) u->bus_pending &= (uint8_t)~v; else *value = u->bus_pending;
+        return true;
+    case 0x15c:
+        if (write) u->ep_enable = v & 0x1fu; else *value = u->ep_enable;
+        return true;
+    case 0x16c:
+        if (write) u->bus_enable = v & 5u; else *value = u->bus_enable;
+        return true;
     case 0x170: case 0x174:
-        if (write) return stop(m, address, v);
-        *value = off == 0x170 ? u->frame & 255u : u->frame >> 8; break;
-    default: return stop(m, address, write ? *value : width);
+        if (write) return unsupported(m, address, v);
+        *value = off == 0x170 ? u->frame & 255u : u->frame >> 8;
+        return true;
+    case 0x178:
+        if (write) u->index = v; else *value = u->index;
+        return true;
+    default: return false;
     }
-    return true;
 }

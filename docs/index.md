@@ -28,9 +28,9 @@ no additional complete stock OS or full-NOR capture is claimed.
 
 Current peripheral work: [LCD scan/interrupts](development/lcd.md) and
 [normal ADC with explicit inputs](development/adc.md). Conditioned full-NOR
-runs pass USB initialization but next stop on a zero-fill store into NOR; no stock UI
-boot is implied. Strict default checkpoints remain separate.
-
-The original 50g boot-only input now answers six local EP0 control requests.
-See [USB](development/usb.md) for guest descriptors, host APIs and the explicit
-limits: no Bulk, complete standard-request compatibility or host-OS device.
+runs pass the former USB initialization stop. [USB packet-host research](development/usb.md)
+now records real HP50g bootloader descriptors and control status responses,
+plus synthetic bulk tests. Complete control conformance, stock file transfer
+and stock UI boot remain open; strict default checkpoints remain separate.
+The packet-host continuation preserves the `80a1466` Git ancestry and its
+control guest. Current CI and Pages acceptance is recorded in issue #1.

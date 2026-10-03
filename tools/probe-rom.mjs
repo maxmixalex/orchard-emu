@@ -113,15 +113,22 @@ try {
     const peripherals = { lcd_control: p[0], lcd_source_pending: p[1], lcd_interrupt_pending: p[2],
       lcd_interrupt_mask: p[3], lcd_frames: u64(p, 4), adc_control: p[6], adc_data: p[7],
       adc_remaining: p[8], adc_valid: Boolean(p[9]) };
-    return { usb: [...new Uint32Array(c.memory.buffer, c.usb_snapshot(), 48)], words, peripherals, frameStatus, pixels, uart: Buffer.concat(uart), applied, unverifiedReads: c.lcd_probe68_reads().toString() };
+    const u = [...new Uint32Array(c.memory.buffer, c.usb_snapshot(), 44)];
+    const usb = { address: u[0], active_address: u[1], power: u[2], index: u[3],
+      ep_pending: u[4], bus_pending: u[5], ep_enable: u[6], bus_enable: u[7],
+      frame: u[8], phase: u[9], connected: Boolean(u[10]),
+      endpoints: Array.from({ length: 5 }, (_, ep) => ({ max_packet: u[11 + ep * 5],
+        in_csr: u[12 + ep * 5], out_csr: u[13 + ep * 5], tx_bytes: u[14 + ep * 5], rx_bytes: u[15 + ep * 5] })),
+      resets: u64(u, 36), setups: u64(u, 38), in_packets: u64(u, 40), out_packets: u64(u, 42) };
+    return { words, peripherals, usb, frameStatus, pixels, uart: Buffer.concat(uart), applied, unverifiedReads: c.lcd_probe68_reads().toString() };
   }
   const n = await nativeRun(0), w = wasmRun(), s = w.words;
   assert.deepEqual(n, await nativeRun(1), 'Native cold replay differs');
   c.reset();
   assert.deepEqual(w, wasmRun(), 'WASM cold replay differs');
-  assert.deepEqual(n.state.usb, w.usb);
   assert.deepEqual(n.state.adc_inputs, adcInputs);
   assert.deepEqual(n.state.peripherals, w.peripherals);
+  assert.deepEqual(n.state.usb, w.usb);
   assert.equal(n.state.keyboard, keyboard);
   assert.equal(n.state.lcd_probe68, lcdProbe);
   assert.equal(n.state.lcd_unverified_reads, w.unverifiedReads);

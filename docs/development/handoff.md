@@ -1,42 +1,23 @@
 # Continuation handoff
 
-Private `zyf722/orchard-emu`; preserve main ancestry and existing issue #1.
-Base for this slice: `a9e03bd`. The live issue owns current accepted commit,
-Build and Pages results. Do not force-push or change repository visibility.
+The reconciled USB continuation is parented on remote `80a1466`; it also
+incorporates the independently preserved `orchard-usb-a9e03bd.patch`. No
+force-push or repository visibility change is authorized or needed.
+Current accepted revision, CI and Pages status belong in issue #1.
 
-## Input plan
+The newer packet API supersedes the provisional EP0-only helper/API. Its
+original assembly control guest remains active alongside the new bulk guest.
+Re-run all maintained native/WASM suites before further changes.
 
-The user will later provide original **HP39gs and HP49g+ full NOR dumps** from
-their machines. Do not request those now or restart the retired dumper. This
-is deferred input work, not a development blocker. Available full dumps remain
-HP39g+ D1.55 and HP48gII USB revision. The two original 16 KiB 49g+/50g boot
-regions remain separately classified with erased OS backing. No new firmware
-was acquired. See [native inventory](native-roms.md).
+The user will later provide HP39gs/HP49g+ full NORs; do not request them now.
+Available full dumps remain HP39g+ and HP48gII. The HP50g experiment uses only
+its unchanged native 16 KiB bootloader and erased OS backing. No firmware is
+committed or published.
 
-## Current dependency
+Next concrete issues: the original HP50g GET_CONFIGURATION reply remains NAK,
+and conditioned HP39g+/HP48gII full-NOR startup attempts a zero-fill at physical
+NOR base. Preserve strict LCD defaults and the counted idle-zero hypothesis.
+Neither issue can be hidden by invented packet readiness or writable ROM.
 
-USB register initialization now proceeds on both original full NORs. With
-prior explicit conditions and one counted LCD idle-zero read, HP39g+ stops at
-`00022440` and HP48gII at `00027380`, both attempting a zero-fill store to
-physical NOR address zero. Do not discard the store or make NOR writable;
-trace memory conventions/cache/MMU/NOR behavior independently. Strict default
-LCD/GPIO stops remain unchanged, and no stock UI is booted.
-
-Original HP50g boot-only recovery now completes six local EP0 control requests
-on native and WASM, including guest device/configuration descriptors, delayed
-address activation and SET_CONFIGURATION status. GET_CONFIGURATION remains a
-counterexample; Bulk and host-OS enumeration are not implemented. Source and
-erased backing remain separately identified. See [USB evidence](usb.md).
-
-## Validation / publication
-
-Four CTest suites, 145,021 assertions per native/test-WASM host, six existing
-integrations and an original USB IRQ guest pass. Five ordinary firmware probes
-and one six-request USB session agree across hosts/cold replays. Two progressed
-full NORs and that control session also pass optimized sanitizers. See
-[validation](validation.md) for exact current versus historical scope.
-
-Run locally before pushing. Tests belong in the source repository but not
-production packages. Firmware/manuals/private traces never enter Git or Pages.
-Zensical deployment publishes docs only and verifies live content/revision.
-M0 stays closed; no current conditioned run closes M3 or independent CPU gates.
+See [USB](usb.md), [boot research](boot-research.md) and
+[validation](validation.md) for command/input/evidence details.

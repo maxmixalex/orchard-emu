@@ -34,7 +34,8 @@ const char *orchard_status_string(orchard_status s) {
         "physical memory outside implemented banks",
         "watchdog reset requested; reset propagation not implemented",
         "contradictory external GPIO drives",
-        "unresolved ADC input or conversion data"
+        "unresolved ADC input or conversion data",
+        "unsupported USB operation or FIFO state"
     };
     return (unsigned)s < sizeof(names) / sizeof(names[0]) ? names[s] : "unknown status";
 }
