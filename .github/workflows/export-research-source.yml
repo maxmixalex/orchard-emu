@@ -9,33 +9,18 @@ permissions:
 jobs:
   export:
     runs-on: home-docker
-    timeout-minutes: 5
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: 1001d1506cee13de47ce4d57b276ca3b8fdd9777
+          ref: 2e02b32746e6ab9eed123015572fabd3e8b8f893
           persist-credentials: false
-      - name: Export pinned source and skin assets
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/source-export/skins"
-          git archive --format=tar.gz --output="$RUNNER_TEMP/source-export/orchard-source.tar.gz" HEAD
-          GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 --branch artifact https://github.com/zyf722/hp-calcs-svg.git "$RUNNER_TEMP/skin-source"
-          cd "$RUNNER_TEMP/skin-source"
-          test "$(git rev-parse HEAD)" = 4c2f261ae9ded0e0010d0ed53264c574ead66213
-          for model in hp39gplus hp39gs hp40gs hp48gii hp49gplus hp50g hp50g-blue; do
-            mkdir -p "$RUNNER_TEMP/source-export/skins/$model"
-            cp "$model/"*_outlined.svg "$model/resolved_design.json" "$RUNNER_TEMP/source-export/skins/$model/"
-          done
-          for name in LICENSE NOTICE README.md; do
-            if test -f "$name"; then cp "$name" "$RUNNER_TEMP/source-export/skins/"; fi
-          done
-          git rev-parse HEAD > "$RUNNER_TEMP/source-export/skins/revision.txt"
+      - name: Export source only
+        run: git archive --format=tar.gz --output="$RUNNER_TEMP/orchard-source.tar.gz" HEAD
       - uses: actions/upload-artifact@v4
         with:
-          name: orchard-source-and-skins-1001d15
-          path: ${{ runner.temp }}/source-export/
+          name: orchard-source-2e02b32
+          path: ${{ runner.temp }}/orchard-source.tar.gz
           retention-days: 1
           if-no-files-found: error
 # Source transport only. No firmware, fonts or emulator execution.
