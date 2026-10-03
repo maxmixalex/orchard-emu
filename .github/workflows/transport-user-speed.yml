@@ -1,0 +1,81 @@
+name: Transport verified user frontend and performance source
+on:
+  push:
+    branches: [transport/user-speed-20261003]
+    paths: [.github/workflows/transport-user-speed.yml]
+permissions:
+  contents: write
+jobs:
+  transport:
+    runs-on: home-docker
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+      - name: Reconstruct exact locally tested source
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DELTA="$RUNNER_TEMP/orchard-user-speed.xz"
+          python3 - <<'PY'
+          import hashlib, os
+          from pathlib import Path
+          root = Path('_source-transport')
+          assert len(list(root.iterdir())) == 4
+          data = b''.join((root / f'part-{i}').read_bytes() for i in range(4))
+          assert len(data) == 23904
+          assert hashlib.sha256(data).hexdigest() == 'cd3c4051cf510c215e467b481b859e246d109a18649db59fd0f21c5ea074220b'
+          Path(os.environ['DELTA']).write_bytes(data)
+          PY
+          git checkout --detach 78ef22fa4735f3fd62f3e536acb845ade27e1289
+          python3 - <<'PY'
+          import hashlib, json, lzma, os, subprocess
+          from pathlib import Path, PurePosixPath
+          data = Path(os.environ['DELTA']).read_bytes()
+          assert hashlib.sha256(data).hexdigest() == 'cd3c4051cf510c215e467b481b859e246d109a18649db59fd0f21c5ea074220b'
+          decoder = lzma.LZMADecompressor(memlimit=128 * 1024 * 1024)
+          raw = decoder.decompress(data, max_length=1000001)
+          assert decoder.eof and not decoder.unused_data and len(raw) <= 1000000
+          manifest = json.loads(raw)
+          assert manifest['schema'] == 1
+          assert manifest['base'] == '78ef22fa4735f3fd62f3e536acb845ade27e1289'
+          assert manifest['base_tree'] == '867a8892f1fcba6983ba25e556aa66596533e667'
+          assert manifest['tree'] == '41120dab8279216cd962d7cfa78c35cac7f51751'
+          assert subprocess.check_output(['git', 'write-tree'], text=True).strip() == manifest['base_tree']
+          assert len(manifest['changes']) == 29
+          seen = set()
+          for item in manifest['changes']:
+              name = item['path']; rel = PurePosixPath(name)
+              assert not rel.is_absolute() and '..' not in rel.parts and '.git' not in rel.parts and name not in seen
+              seen.add(name)
+              path = Path(name)
+              assert not path.is_symlink() and not any(p.is_symlink() for p in path.parents)
+              old = path.read_bytes() if path.exists() else None
+              assert (hashlib.sha256(old).hexdigest() if old is not None else None) == item['old'], name
+              lines = (old or b'').decode('utf-8').splitlines(keepends=True)
+              end = len(lines)
+              for start, stop, value in reversed(item['edits']):
+                  assert 0 <= start <= stop <= end and isinstance(value, str)
+                  lines[start:stop] = value.splitlines(keepends=True)
+                  end = start
+              result = ''.join(lines).encode('utf-8')
+              assert hashlib.sha256(result).hexdigest() == item['new'], name
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(result)
+          subprocess.run(['git', 'add', '--', *sorted(seen)], check=True)
+          assert subprocess.check_output(['git', 'write-tree'], text=True).strip() == manifest['tree']
+          print('All 29 file hashes and complete local source tree verified')
+          PY
+          # Workflow edits are applied separately by the authorized connector.
+          git restore --source=78ef22fa4735f3fd62f3e536acb845ade27e1289 --staged --worktree .github/workflows/build.yml
+          test "$(git write-tree)" = affece994196ae4dda0d4bf46b71f55a4360cf34
+          git diff --cached --check
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit \
+            -m 'feat: separate user calculator and optimize ARM execution hot paths' \
+            -m 'Automatic compatible ROM identification and minimal user snapshots; preserve the full workbench at debug.html. Memoize unchanged keyboard/EINT inputs with exact dependency checks, retain level/W1C/edge semantics, skip empty arbitration, lower full CPU checkpoints efficiently, and build WASM with O3/LTO/bulk-memory. Preserve guest timing, physical taps and fault checks.' \
+            -m 'Local validation before publication: 323175 assertions per native/test-WASM host, eight sanitizer and reference suites, 28 clean analysis units, 17075 Unicorn cases and user/Worker/skin/Pages tests. Original HP39g+ and HP48gII cold HOME calculations replay twice per host. Identical full workloads measured approximately 6x faster, with all compared state equal. Actual browser-origin E2E and physical hardware assumptions remain open. No firmware or private evidence is committed.'
+          git push origin HEAD:refs/heads/integration/user-speed-20261003
+          git rev-parse HEAD HEAD^{tree}
+# Data-only publication of already locally tested source. No emulator execution.
+# The transport branch is not part of the main source or its ancestry.
