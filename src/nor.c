@@ -1,12 +1,14 @@
 /* SPDX-License-Identifier: MIT
- * Read/Software-ID subset of SST39VF1601 (SST S71223-05-000, Tables 3/6).
+ * Read/Software-ID subsets: SST39VF1601 (S71223-05-000 Tables 3/6)
+ * and SST39VF800A (Microchip DS20005001B pp. 9-11).
  * Selection is explicit: file size is not evidence of the installed chip.
  * Program/erase/CFI/security operations are diagnostic stops, never success.
  */
 #include "internal.h"
 orchard_status orchard_nor_select(orchard_machine *m, orchard_nor_device device) {
-    if (!m || !m->profile || (unsigned)device > ORCHARD_NOR_SST39VF1601 ||
-        (device != ORCHARD_NOR_UNSPECIFIED && m->profile->flash_bytes != 0x200000))
+    if (!m || !m->profile || (unsigned)device > ORCHARD_NOR_SST39VF800A ||
+        (device == ORCHARD_NOR_SST39VF1601 && m->profile->flash_bytes != 0x200000) ||
+        (device == ORCHARD_NOR_SST39VF800A && m->profile->flash_bytes != 0x100000))
         return ORCHARD_BAD_ARGUMENT;
     m->nor_device = device;
     m->nor_sequence = 0;
@@ -19,7 +21,7 @@ bool o_nor_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
        through SDP decoding; this is not a generic ROM-write discard. A stop
        on either cycle preserves preceding command effects, as two bus cycles
        would. Physical range validation belongs to o_phys_write(). */
-    if (width == 4 && !(address & 3u) && m->nor_device == ORCHARD_NOR_SST39VF1601) {
+    if (width == 4 && !(address & 3u) && (m->nor_device == ORCHARD_NOR_SST39VF1601 || m->nor_device == ORCHARD_NOR_SST39VF800A)) {
         return o_nor_write(m, address, 2, value & 0xffffu) &&
                o_nor_write(m, address + 2, 2, value >> 16);
     }
@@ -57,7 +59,7 @@ bool o_nor_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *
         if (address >= 4 || width > 4u - address) {
             o_stop(m, ORCHARD_UNIMPLEMENTED_FLASH, address, width); return false;
         }
-        uint32_t id = UINT32_C(0x234b00bf);
+        uint32_t id = m->nor_device == ORCHARD_NOR_SST39VF800A ? UINT32_C(0x278100bf) : UINT32_C(0x234b00bf);
         *value = id >> (8u * address);
         if (width < 4) *value &= (1u << (width * 8u)) - 1u;
         return true;

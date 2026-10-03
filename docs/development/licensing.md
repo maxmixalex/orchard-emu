@@ -1,8 +1,11 @@
 # Licensing and implementation independence
 
 Orchard's original source and documentation are offered under the MIT license
-in the repository root. This baseline contains no vendored emulator core,
-calculator ROM, bootloader, KML, bitmap skin, HP logo or font file.
+in the repository root. No external emulator implementation, calculator ROM, bootloader, KML or font
+file is bundled. The web build now includes pinned **outlined calculator art**
+from hp-calcs-svg, separately Apache-2.0. Its LICENSE and NOTICE accompany the
+assets; the original MIT license does not relicense artwork or HP trademarks.
+See [asset provenance](skins-segments.md).
 
 ## What was studied
 

@@ -61,7 +61,7 @@ Implemented functional pieces include internal/external SRAM, GPIO latches,
 explicit strong/weak pad conditions, opt-in passive keyboard circuits and
 unfiltered EINT, two-level IRQ arbitration, RTC/timers/watchdog, LCD scan/frame
 interrupts, normal ADC with explicit samples, and USB PIO/packet transactions.
-Explicit SST39VF1601 selection supports array/software-ID behavior, not erase
+Explicit SST39VF1601 / SST39VF800A selection supports array/software-ID behavior, not erase
 or programming. Register storage alone is not full peripheral support.
 
 Open work includes physical clock/reset domains, verified component identities
@@ -167,7 +167,7 @@ compatibility matrix and no firmware or unqualified optional-device claims.
 
 Prioritize validation of the conditional HP48gII startup: independent SRAM
 address-wiring/LCD evidence, real-OS operation coverage and ARM payload return.
-Maintain local cold replay before CI. The HP39g+ NOR component and unresolved
+Maintain local cold replay before CI. Independent HP39g+ component identification and unresolved
 EP0 response remain separate dependencies; full USB/SD work and skin polish
 must not displace a reliable, correctly presented first calculator.
 
@@ -176,3 +176,15 @@ revision from [boot research](boot-research.md); current local acceptance is in
 [validation](validation.md). Explicit weak bias, ideal ADC codes, functional
 clocks, packed-memory views and the counted idle-zero hypothesis are separate
 conditions, never silently promoted to verified board defaults.
+
+## Skin / segments / HP39g+ continuation
+
+The separate [HP39g+ D1.55 path](hp39-startup.md) now reaches HOME and both
+arithmetic results with an explicit 1 MiB component and **exact** SRAM decode.
+This is a second conditional functional witness, not closure of physical-board
+M2/M3 or all-model M4. The original dumps are not modified.
+
+M5 now includes seven pinned outlined skins, 51 geometric hit regions per
+model, a separate guest-driven status strip, two hash-checked HOME setups,
+and an emulator subdirectory in the same Pages site. Actual browser-origin
+E2E, persistence and sustained full-key compatibility remain open.

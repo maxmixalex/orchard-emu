@@ -164,3 +164,11 @@ EXPORT("usb_snapshot") uintptr_t web_usb_snapshot(void) {
     words[42] = (uint32_t)u.out_packets; words[43] = (uint32_t)(u.out_packets >> 32);
     return (uintptr_t)words;
 }
+
+static uint8_t annunciator_levels[6];
+EXPORT("annunciators") unsigned web_annunciators(void) {
+    return orchard_annunciators(&machine, annunciator_levels);
+}
+EXPORT("annunciator_buffer") uintptr_t web_annunciator_buffer(void) {
+    return (uintptr_t)annunciator_levels;
+}

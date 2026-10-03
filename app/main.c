@@ -12,7 +12,7 @@ static void usage(FILE *out) {
           "  orchard models\n"
           "  orchard run --model SLUG --rom FULL-NOR.bin [--ticks N]\n"
           "              [--trace FILE.jsonl] [--frame FILE.pgm]\n"
-          "              [--keyboard apples] [--nor-device sst39vf1601]\n"
+          "              [--keyboard apples] [--nor-device sst39vf1601|sst39vf800a]\n"
           "              [--sram-decode bank1-mirror] (explicit wiring hypothesis)\n"
           "              [--gpio-bias PORT:MASK_HEX:LEVELS_HEX] ...\n"
           "              [--key-at TICK:COLUMN:ROW:0_OR_1] ...\n"
@@ -164,8 +164,8 @@ int main(int argc, char **argv) {
             if (strcmp(value, "apples") != 0) { fputs("Expected --keyboard apples\n", stderr); return 64; }
             keyboard = true;
         } else if (strcmp(key, "--nor-device") == 0) {
-            if (strcmp(value, "sst39vf1601") != 0) { fputs("Unknown NOR device\n", stderr); return 64; }
-            nor = ORCHARD_NOR_SST39VF1601;
+            if (strcmp(value, "sst39vf1601") != 0 && strcmp(value, "sst39vf800a") != 0) { fputs("Unknown NOR device\n", stderr); return 64; }
+            nor = strcmp(value, "sst39vf800a") == 0 ? ORCHARD_NOR_SST39VF800A : ORCHARD_NOR_SST39VF1601;
         } else if (strcmp(key, "--sram-decode") == 0) {
             if (sram_set || strcmp(value, "bank1-mirror") != 0) {
                 fputs("Expected one --sram-decode bank1-mirror\n", stderr); return 64;
@@ -324,7 +324,7 @@ int main(int argc, char **argv) {
     }
     printf("],\"keyboard\":\"%s\",\"nor_device\":\"%s\",\"lcd_probe68\":\"%s\","
            "\"lcd_unverified_reads\":\"%" PRIu64 "\",\"frame_view\":\"%s\",\"key_events_applied\":%u,\"key_events\":[",
-           keyboard ? "apples" : "detached", nor ? "sst39vf1601" : "unspecified",
+           keyboard ? "apples" : "detached", nor == ORCHARD_NOR_SST39VF800A ? "sst39vf800a" : nor ? "sst39vf1601" : "unspecified",
            lcd_idle_zero ? "idle-zero" : "strict", orchard_lcd_probe68_reads(m),
            frame_view == ORCHARD_FRAME_PACKED_LSB ? "packed-lsb" : "controller", next_event);
     for (unsigned i = 0; i < event_count; ++i)
@@ -349,6 +349,11 @@ int main(int argc, char **argv) {
            "\",\"sram_alias_writes\":\"%" PRIu64 "\"",
            sram == ORCHARD_SRAM_BANK1_MIRROR ? "bank1-mirror" : "exact",
            orchard_sram_alias_reads(m), orchard_sram_alias_writes(m));
+    uint8_t segment_levels[6];
+    orchard_status segment_status = orchard_annunciators(m, segment_levels);
+    printf(",\"annunciators\":{\"status\":%u,\"levels\":[", (unsigned)segment_status);
+    for (unsigned i = 0; i < 6; ++i) printf("%s%u", i ? "," : "", (unsigned)segment_levels[i]);
+    printf("]}");
     orchard_usb_state usb;
     orchard_get_usb_state(m, &usb);
     printf(",\"usb\":{\"address\":%" PRIu32 ",\"active_address\":%" PRIu32

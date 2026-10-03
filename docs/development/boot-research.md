@@ -118,3 +118,10 @@ commands, negative controls and limitations:
 
 These historical counts are not added to present test or stock-boot coverage.
 No historical commit, ROM identity or canonical strict gate was replaced.
+
+## HP39g+ update
+
+The older unspecified-component stop above remains a valid strict control,
+not the current furthest conditional progression. A separate 1 MiB
+SST39VF800A selection now reaches original D1.55 HOME and both arithmetic
+results with exact SRAM decode. See the [HP39 startup witness](hp39-startup.md).

@@ -1,4 +1,21 @@
-# Browser calculator workbench
+# Browser emulator
+
+**[Launch on GitHub Pages](https://zyf722.github.io/orchard-emu/emulator/)**
+
+The online app and downloadable build use the same production files. All assets
+are same-origin; selected ROM bytes stay in the browser and are not uploaded.
+The seven outlined skins and separate state symbols are documented in
+[skins and segments](skins-segments.md). The controls remain usable without
+a skin through the accessible text-keypad fallback.
+
+**HP39g+ D1.55:** select the corresponding machine and `HP39g+ HOME · experimental`,
+load the exact documented full NOR, Run, then F6/OK at Memory Clear. This uses
+SST39VF800A as an explicit component hypothesis, exact SRAM, F inputs, AIN0=1023
+and counted LCD idle-zero. It does not select the HP48 mirroring policy.
+
+The remaining text describes the existing HP48 setup and shared lifecycle.
+
+## Earlier shared browser calculator workbench
 
 ## Use the experimental HP48gII setup
 
@@ -36,7 +53,7 @@ alias writes and unverified LCD reads remain visible.
 ## Keys and lifecycle
 
 The original functional keypad exposes 51 HP48 primary-key positions; it is
-not a calculator-case skin. Label/scan facts are cross-checked against the
+also available as an accessible fallback below the calculator-case skin. Label/scan facts are cross-checked against the
 [hpclang physical key map](https://github.com/zyf722/hpclang/blob/d1dd4688cc850bff1bf4c290c0d26a5e0619f55c/runtime/core/keyboard-key-map.c).
 No driver implementation is copied. All labels being mapped is not evidence
 that every key has passed stock-OS functional acceptance. Current live-ROM
@@ -67,7 +84,7 @@ across actual browsers remains an E2E acceptance item.
 
 The default HOME setup shows packed LSB **memory inspection**, not verified
 controller-to-panel wiring. The other view remains selectable. The separate
-annunciator region is reserved but unmapped; the rectangular LCD has margins
+annunciator region now shows packed guest segments, with modifier evidence on 39g+/48gII; the rectangular LCD has margins
 and is not clipped into rounded corners.
 
 Pause before exporting diagnostics. The JSON contains the input hash, exact

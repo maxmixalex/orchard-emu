@@ -20,3 +20,12 @@ navigation is environment-blocked and remains an open acceptance item.
 [firmware inputs](development/native-roms.md) and [licensing](development/licensing.md)
 record the implementation and provenance boundaries. Pages contains documents,
 not firmware or production calculator binaries.
+
+## Current browser and 39g+ continuation
+
+[Open the emulator](https://zyf722.github.io/orchard-emu/emulator/) uses the
+pinned hp-calcs-svg artwork and local full-NOR selection.
+[HP39g+ D1.55](development/hp39-startup.md) now has its own conditional HOME
+and arithmetic witness without SRAM mirroring.
+[Skins and status segments](development/skins-segments.md) describes the
+separate guest-driven annunciator strip and the remaining mapping limits.

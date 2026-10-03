@@ -162,3 +162,10 @@ word-to-halfword adaptation uses the existing original command decoder.
 [hpclang keyboard mapping at d1dd4688](https://github.com/zyf722/hpclang/blob/d1dd4688cc850bff1bf4c290c0d26a5e0619f55c/runtime/core/keyboard-key-map.c)
 supplies the raw switch coordinates for F6, digits, arithmetic and ENTER.
 Mapping facts are used in the startup schedule; no driver code is imported.
+
+## Skin / segment / 1 MiB component sources
+
+- [hp-calcs-svg artifact](https://github.com/zyf722/hp-calcs-svg/tree/4c2f261ae9ded0e0010d0ed53264c574ead66213): outlined art and resolved geometry; Apache-2.0/NOTICE from main `000dfac8ba89fb10c780c18f79230b935d191285`. Every build input is hash-pinned.
+- [webemu48 web-port interface](https://github.com/zyf722/webemu48/blob/4223aee5a965cd5c861c601e0f36e9be4922ceb4/web/frontend/index.html): user-selected UX reference, not imported implementation.
+- [x49gp LCD research](https://github.com/claudiobsd/x49gp/blob/master/s3c2410_lcd.c): inspected blob `3c7745863fabb8da5cfac974daae92ea76a50967`, packed x=131/rows0–5 routing clue. No GPL source/bitmap imported. Original firmware modifier transitions are separately checked.
+- [Microchip SST39LFX00A/SST39VFX00A data sheet DS20005001](https://ww1.microchip.com/downloads/aemDocuments/documents/MPD/ProductDocuments/DataSheets/SST39LFX00A-SST39VFX00A-2-Mbit-4-Mbit-8-Mbit-x16-Multi-Purpose-Flash-DS20005001.pdf): x16 capacity, Software Data Protection, IDs and command table; SST39VF800A is 1 MiB with device ID2781. This specifies a component, not proof of the HP39g+ bill of materials.

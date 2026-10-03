@@ -1,0 +1,62 @@
+{
+  "repository": "zyf722/hp-calcs-svg",
+  "revision": "4c2f261ae9ded0e0010d0ed53264c574ead66213",
+  "files": [
+    {
+      "path": "hp39gplus/HP39gplus_outlined.svg",
+      "sha256": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26"
+    },
+    {
+      "path": "hp39gplus/resolved_design.json",
+      "sha256": "e44b0d046384a8b3b6056921462ff7c0b83209a006890dc6bbb61cf337f38574"
+    },
+    {
+      "path": "hp39gs/HP39gs_outlined.svg",
+      "sha256": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458"
+    },
+    {
+      "path": "hp39gs/resolved_design.json",
+      "sha256": "40fe74ff1f928e775c503d4f98ba765b3c64d028133d509bb125f6a79aea78c7"
+    },
+    {
+      "path": "hp40gs/HP40gs_outlined.svg",
+      "sha256": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2"
+    },
+    {
+      "path": "hp40gs/resolved_design.json",
+      "sha256": "19d1a98cec2bce7186d6c8d9ff6be4591b463291ae26769c4cc1918fb0cdb53f"
+    },
+    {
+      "path": "hp48gii/HP48gII_outlined.svg",
+      "sha256": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f"
+    },
+    {
+      "path": "hp48gii/resolved_design.json",
+      "sha256": "d690064c3c30b2c1fbc82a79df97ebfbf8cc3425d52b9e2f6769870db2b3de08"
+    },
+    {
+      "path": "hp49gplus/HP49gplus_outlined.svg",
+      "sha256": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71"
+    },
+    {
+      "path": "hp49gplus/resolved_design.json",
+      "sha256": "7cf0d127fa88a6818332d2038c2d41acdc38bc1b458311dab3fd19fa3b7076ad"
+    },
+    {
+      "path": "hp50g/HP50g_outlined.svg",
+      "sha256": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433"
+    },
+    {
+      "path": "hp50g/resolved_design.json",
+      "sha256": "06b70613f742a33dfd811d29404fc4f0357ad712bb4d73ff779f46addbf20ef3"
+    },
+    {
+      "path": "hp50g-blue/HP50gBlue_outlined.svg",
+      "sha256": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e"
+    },
+    {
+      "path": "hp50g-blue/resolved_design.json",
+      "sha256": "eada8142665d8a97e384a9484c748bf175d5e77770249278e2d803ee35736df4"
+    }
+  ]
+}

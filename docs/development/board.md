@@ -18,11 +18,23 @@ milestones; [startup](startup.md) and [web](web.md) define the current scope.
 - [ ] Actual browser-origin file/key/lifecycle E2E; local Chromium navigation is policy-blocked, not passed.
 - [ ] Broader original-OS key coverage, retained state, reset and sustained-use acceptance.
 - [ ] Independently establish SRAM address pins, LCD `+0x68`, actual panel and pad/ADC/clock behavior.
-- [ ] HP39g+ NOR component path, original HP50g GET_CONFIGURATION and real file/object transfers.
+- [x] Separate HP39g+ SST39VF800A experimental path reaches HOME and both calculations without SRAM mirroring.
+- [ ] Independently confirm the actual component; resolve original HP50g GET_CONFIGURATION and real file/object transfers.
 - [ ] Integrate later user-provided HP39gs/HP49g+ full dumps without blocking current work.
 
 M0 remains accepted. Conditional HP48 OS functionality does not close complete
 M1 CPU conformance, M2/M3 physical-board acceptance or M4 all-model support.
 Neither mapped keys nor Node Worker execution is a real-browser key survey.
 Firmware, private traces/screenshots and reports are excluded from source and
-production packages. Pages publishes documentation only.
+production packages. Pages publishes documentation and the emulator under `/emulator/`.
+
+## Current additions from 1001d15
+
+- [x] Seven pinned outlined skins with exact key geometry and separate licenses.
+- [x] Guest-packed status segment accessor and modifier transitions on both original systems.
+- [x] Model-specific 39g+ HOME setup and UI/Worker full-NOR hash validation.
+- [x] Pages assembly preserves documents and adds the same-origin emulator with asset hashes.
+- [ ] Deployment acceptance is recorded by exact commit/run in issue #1 after observation.
+
+Independent physical SRAM/LCD/NOR/pad verification is not replaced by functional
+arithmetic or a skin. Browser-origin navigation remains policy-blocked locally.

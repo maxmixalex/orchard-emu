@@ -31,7 +31,7 @@ const norDevice = options['--nor-device'] ?? 'unspecified';
 const sramDecode = options['--sram-decode'] ?? 'exact';
 if (options['--sram-decode'] && sramDecode !== 'bank1-mirror') throw new Error('Expected --sram-decode bank1-mirror');
 if (options['--keyboard'] && keyboard !== 'apples') throw new Error('Expected --keyboard apples');
-if (options['--nor-device'] && norDevice !== 'sst39vf1601') throw new Error('Expected --nor-device sst39vf1601');
+if (options['--nor-device'] && !['sst39vf1601', 'sst39vf800a'].includes(norDevice)) throw new Error('Expected --nor-device sst39vf1601 or sst39vf800a');
 const hardwareArgs = [
   ...(sramDecode === 'bank1-mirror' ? ['--sram-decode', sramDecode] : []),
   ...adcInputs.flatMap(s => ['--adc-input', `${s.channel}:${s.code}`]),
@@ -39,7 +39,7 @@ const hardwareArgs = [
   ...(frameView === 'packed-lsb' ? ['--frame-view', frameView] : []),
   ...biases.flatMap(s => ['--gpio-bias', s.cli]),
   ...(keyboard === 'apples' ? ['--keyboard', keyboard] : []),
-  ...(norDevice === 'sst39vf1601' ? ['--nor-device', norDevice] : []),
+  ...(norDevice !== 'unspecified' ? ['--nor-device', norDevice] : []),
 ];
 const budget = parseProbeBudget(options['--ticks']);
 const events = parseKeyEvents(options['--key-at'], budget);
@@ -85,7 +85,7 @@ try {
   }
   function wasmRun() {
     assert.equal(c.sram_select(sramDecode === 'bank1-mirror' ? 1 : 0), 0);
-    assert.equal(c.nor_select(norDevice === 'sst39vf1601' ? 1 : 0), 0, 'NOR part incompatible with capacity');
+    assert.equal(c.nor_select(norDevice === 'sst39vf1601' ? 1 : norDevice === 'sst39vf800a' ? 2 : 0), 0, 'NOR part incompatible with capacity');
     assert.equal(c.keyboard_attach(keyboard === 'apples' ? 1 : 0), 0);
     for (const s of stimuli) assert.equal(c.gpio_inputs(s.port, s.known, s.levels), 0);
     for (const s of biases) assert.equal(c.gpio_bias(s.port, s.known, s.levels), 0);
@@ -122,7 +122,9 @@ try {
       endpoints: Array.from({ length: 5 }, (_, ep) => ({ max_packet: u[11 + ep * 5],
         in_csr: u[12 + ep * 5], out_csr: u[13 + ep * 5], tx_bytes: u[14 + ep * 5], rx_bytes: u[15 + ep * 5] })),
       resets: u64(u, 36), setups: u64(u, 38), in_packets: u64(u, 40), out_packets: u64(u, 42) };
-    return { words, peripherals, usb, frameStatus, pixels, uart: Buffer.concat(uart), applied, aliasReads: c.sram_alias_reads().toString(), aliasWrites: c.sram_alias_writes().toString(), unverifiedReads: c.lcd_probe68_reads().toString() };
+    const segmentStatus = c.annunciators();
+    const annunciators = {status: segmentStatus, levels: [...new Uint8Array(c.memory.buffer,c.annunciator_buffer(),6)]};
+    return { words, peripherals, usb, annunciators, frameStatus, pixels, uart: Buffer.concat(uart), applied, aliasReads: c.sram_alias_reads().toString(), aliasWrites: c.sram_alias_writes().toString(), unverifiedReads: c.lcd_probe68_reads().toString() };
   }
   const n = await nativeRun(0), w = wasmRun(), s = w.words;
   assert.deepEqual(n, await nativeRun(1), 'Native cold replay differs');
@@ -131,6 +133,7 @@ try {
   assert.deepEqual(n.state.adc_inputs, adcInputs);
   assert.deepEqual(n.state.peripherals, w.peripherals);
   assert.deepEqual(n.state.usb, w.usb);
+  assert.deepEqual(n.state.annunciators, w.annunciators);
   assert.equal(n.state.sram_decode, sramDecode);
   assert.equal(n.state.sram_alias_reads, w.aliasReads);
   assert.equal(n.state.sram_alias_writes, w.aliasWrites);
@@ -157,7 +160,7 @@ try {
     assert.equal(n.state.stop[key], hex(s[index]));
   assert.equal(n.state.frame_status, w.frameStatus);
   assert.deepEqual(n.pixels, w.pixels); assert.deepEqual(n.uart, w.uart);
-  const report = { schema: 'orchard-nor-probe-v7', model: names[id - 1], input_bytes: rom.length,
+  const report = { schema: 'orchard-nor-probe-v8', model: names[id - 1], input_bytes: rom.length,
     input_sha256: inputHash, identified_fixture: prepared.source.identified_fixture, input_kind: prepared.input_kind,
     source_input: prepared.source, construction: prepared.construction,
     adc_inputs: adcInputs, keyboard, nor_device: norDevice, sram_decode: sramDecode,

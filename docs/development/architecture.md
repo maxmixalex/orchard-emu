@@ -75,7 +75,7 @@ capacity. Exact-range decoding is the default; explicit `bank1-mirror` maps
 high addresses within nGCS1 to the same cells, without increasing RAM. Guest
 alias transactions are counted; debug reads are pure. See [startup](startup.md). Internal boot SRAM occupies exactly `0x40000000..0x40000fff`; there is
 no NAND controller or NAND image behind it. HP40gs uses 2 MiB NOR.
-Flash does not silently mirror or pad. An explicitly selected SST39VF1601
+Flash does not silently mirror or pad. An explicitly selected SST39VF1601 (2 MiB) or SST39VF800A (1 MiB)
 implements array read and software identification; program/erase/CFI/security
 remain diagnostic stops. The default unspecified part only accepts read-array
 reset. Selected x16 NOR receives aligned ARM word stores as two ordered
@@ -121,7 +121,10 @@ The LCD decoder reads guest-programmed addresses and candidate 1/2/4-bpp STN
 layout. It is not a synthetic screenshot renderer. Word-MSB-first ordering and BSWP/HWSWP have directed lane tests. Panel mapping,
 annunciators and per-model electrical details still need independent witnesses.
 The decoder rejects dual scan/TFT and nonzero dithering rather than displaying
-them as single-scan monochrome. The UI reserves a separate annunciator region; no icons are faked.
+them as single-scan monochrome. The UI now has a separate annunciator strip. A pure accessor reads packed
+column 131, rows 0–5; original HP39g+/48gII modifier transitions supply limited
+behavioral evidence. Other segment naming and physical panel routing remain
+provisional. Host keypresses never directly set annunciator values.
 
 The optional keyboard API changes **physical switch connections** between
 bounded run calls. EINT sampling and guest IRQ handlers consume those levels;

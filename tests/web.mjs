@@ -37,6 +37,9 @@ try{
  const view=await send({type:'view',generation:3,view:1},d=>d.type==='snapshot'&&d.generation===3&&d.frameView===1);
  assert.equal(view.loaded,false);assert.equal(view.running,false);assert.equal(view.state[22],0);
  await send({type:'load',generation:3,rom:new ArrayBuffer(8)},d=>d.type==='error');
+ await send({type:'create',generation:4,model:1,preset:'hp39-home'},d=>d.type==='created'&&d.generation===4);
+ const wrong39=new Uint8Array(0x100000);new DataView(wrong39.buffer).setUint32(0,0xeafffffe,true);
+ const rejected39=await send({type:'load',generation:4,rom:wrong39.buffer},d=>d.type==='error'&&d.generation===4);assert.match(rejected39.message,/hash/);
  assert.equal(HP48_ROM.length,64);
  console.log('Web: 51 unique keys, virtual tap boundaries/cancellation/pressure, setup ABI, production Worker run/pause/step/reset, stale-generation and ROM-hash rejection pass (Node adapter, not browser E2E).');
 }finally{await w.terminate();}

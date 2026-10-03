@@ -1,5 +1,37 @@
 # Validation
 
+## Skins / segments / HP39g+ continuation from 1001d15
+
+The new seven-suite native/test-WASM total is **202,097 assertions per host**:
+previous 200,839 plus 1,258 NOR800A/segment checks. The first complete local run
+passed all suites, existing production guests, 76 ROM/probe tool checks and
+the production Worker lifecycle tests. Seven Debug ASan/UBSan suites and the default 17,075-case independent Unicorn
+corpus also pass. Clang static analysis produced 27 separate clean reports.
+The new skin test checks all seven
+pinned files, each 51-position scan set, glass bounds, strip separation,
+attribution and the independent HP39 setup.
+
+The HP39g+ fixed 230M-tick run passed **two native and two production-WASM cold
+boots**, exact exposed architecture/peripheral state, raw pixels, UART and
+input identity. It shows `1+2=3`, then `7*8=56`, with zero SRAM alias reads or
+writes, 22 counted LCD hypothesis reads, and no data fault. Its frame hash is
+`efec8205f401a7189f3cd77eeaac6947165d480b383033c9796c86e95e9f6968`.
+
+Separate production-WASM studies start cold with the original HP39g+ or
+HP48gII full NOR. They observe Shift/Alpha latch and release cycles from
+packed segment samples, not host key state. See [segment evidence](skins-segments.md).
+The HP48 modifier run is not a rerun of its historical 300M arithmetic witness.
+An initial modifier/ON variant stopped on unimplemented MMIO; suspend/resume
+is not accepted. Repeated modifier taps complete the bounded study.
+
+Local Chromium still refuses the HTTP origin with ERR_BLOCKED_BY_ADMINISTRATOR.
+The policy was not changed. Static offline HTML/CSS rendering at 1360/390 px
+checked glass placement and overflow; it does not prove actual page interaction.
+Commit-specific CI, strict docs and live Pages results belong to issue #1.
+
+## Historical 1001d15 evidence
+
+
 ## Reconciled HOME and web-control continuation
 
 Base: remote `6372cbe`, preserving its x16 NOR implementation and tests while

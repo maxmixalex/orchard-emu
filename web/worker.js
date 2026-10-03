@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { HP48_ROM, applySetup, TapQueue } from './hp48.js';
+import { setupHash, isPlayable, applySetup, TapQueue } from './hp48.js';
 let core, model = 4, generation = 0, preset = 'strict', running = false, loaded = false;
 let timer = null, lastFrame = 0, tick = 0, events = [], eventOverflow = false, frameView = 0;
 const errors = ['ready','bad argument','full-NOR size mismatch','not a full ARM NOR image',
@@ -25,10 +25,12 @@ function sendUart() {
 function snapshot() {
   const s = state(); syncTick(s);
   const frameStatus = core.frame_view(frameView), width = core.profile(model,2), height = core.profile(model,3);
+  const annunciatorStatus = core.annunciators();
+  const annunciators = annunciatorStatus ? null : new Uint8Array(core.memory.buffer,core.annunciator_buffer(),6).slice();
   const pixels = frameStatus ? null : new Uint8Array(core.memory.buffer,core.frame_buffer(),width*height).slice();
   sendUart();
   postMessage({type:'snapshot',generation,state:s,width,height,pixels,running,loaded,model,preset,frameView,
-    frameStatus,reason:errors[s[28]] || 'unknown stop',pending:taps.pending,active:taps.active,
+    frameStatus,annunciatorStatus,annunciators,reason:errors[s[28]] || 'unknown stop',pending:taps.pending,active:taps.active,
     events:events.slice(),eventOverflow,aliasReads:core.sram_alias_reads().toString(),
     aliasWrites:core.sram_alias_writes().toString(),lcdReads:core.lcd_probe68_reads().toString()});
   lastFrame = performance.now();
@@ -66,7 +68,7 @@ self.onmessage=({data})=>{
       generation=data.generation;model=data.model;preset=data.preset;
       loaded=false;tick=0;events=[];eventOverflow=false;frameView=0;
       if(core.create(model)) throw new Error('Machine initialization failed');
-      applySetup(core,model,preset);frameView=preset==='hp48-home'?1:0;
+      applySetup(core,model,preset);frameView=isPlayable(model,preset)?1:0;
       postMessage({type:'created',generation,flash:core.profile(model,0),ram:core.profile(model,1)});snapshot();return;
     }
     if(data.generation!==generation) return;
@@ -78,7 +80,7 @@ self.onmessage=({data})=>{
       crypto.subtle.digest('SHA-256',bytes).then(hash=>{
         if(token!==generation) return;
         const digest=Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('');
-        if(preset==='hp48-home' && digest!==HP48_ROM) throw new Error('HOME research setup requires the documented HP48gII USB-revision full-NOR hash.');
+        if(setupHash(preset) && digest!==setupHash(preset)) throw new Error('HOME research setup requires the documented model-specific full-NOR hash.');
         new Uint8Array(core.memory.buffer,core.rom_buffer(),bytes.byteLength).set(new Uint8Array(bytes));
         const status=core.load(bytes.byteLength);if(status) throw new Error(errors[status]);
         tick=0;events=[];eventOverflow=false;applySetup(core,model,preset);loaded=true;
@@ -88,7 +90,7 @@ self.onmessage=({data})=>{
     else if(data.type==='run' && loaded) {if(!running && state()[28]===0){running=true;schedule();snapshot();}}
     else if(data.type==='step' && loaded) {pause();core.run(1);snapshot();}
     else if(data.type==='reset' && loaded) {pause();core.reset();tick=0;events=[];eventOverflow=false;applySetup(core,model,preset);snapshot();}
-    else if(data.type==='tap' && loaded && running && preset==='hp48-home') {taps.push(data.scan);snapshot();}
+    else if(data.type==='tap' && loaded && running && isPlayable(model,preset)) {taps.push(data.scan);snapshot();}
     else if(data.type==='release') {taps.clear(tick);snapshot();}
     else if(data.type==='view') {if(data.view!==0 && data.view!==1)throw new Error('Invalid frame view');frameView=data.view;snapshot();}
     else if(data.type==='uart' && loaded) {

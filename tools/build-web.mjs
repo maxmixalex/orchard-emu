@@ -18,7 +18,7 @@ const args = [
 const result = spawnSync(process.env.CLANG || 'clang', args, { cwd: root, stdio: 'inherit' });
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
-for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js']) {
+for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js']) {
   await copyFile(resolve(root, 'web', file), resolve(out, file));
 }
 await copyFile(resolve(root, "LICENSE"), resolve(out, "LICENSE"));
@@ -44,6 +44,13 @@ For the documented HP48gII USB-revision complete NOR:
 Pause cancels held/queued taps. Cold reset clears RAM; it is not a
 calculator warm reset. Switching tabs pauses. No save/restore yet.
 The setup uses unverified SRAM decode, LCD and pad/ADC assumptions.
-Other models remain strict bring-up targets; the HP48 keypad is not enabled
-for them. USB/Conn3x controls are not exposed in this page.
+For HP39g+ D1.55 choose HP39g+ HOME - experimental, run, then press F6
+at Memory Clear. This preset uses a separate 1 MiB NOR hypothesis and no
+SRAM mirroring. Other models remain strict bring-up targets. Skins do not
+imply that their original system has booted. Artwork: hp-calcs-svg, Apache-2.0;
+see licenses/hp-calcs-svg. Original core remains MIT. USB/Conn3x controls are not exposed in this page.
 `);
+
+const skins=spawnSync(process.env.PYTHON || 'python3',['tools/build-skins.py'],{cwd:root,stdio:'inherit'});
+if(skins.error)throw skins.error;
+if(skins.status!==0)process.exit(skins.status??1);

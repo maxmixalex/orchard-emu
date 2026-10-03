@@ -175,7 +175,7 @@ orchard_status orchard_keyboard_dedicated(orchard_machine *m, unsigned gpf_pin, 
  * Selection does not modify the supplied NOR bytes and is not inferred from
  * the calculator model or file contents. Program/erase remain unsupported.
  */
-typedef enum { ORCHARD_NOR_UNSPECIFIED = 0, ORCHARD_NOR_SST39VF1601 } orchard_nor_device;
+typedef enum { ORCHARD_NOR_UNSPECIFIED = 0, ORCHARD_NOR_SST39VF1601, ORCHARD_NOR_SST39VF800A } orchard_nor_device;
 orchard_status orchard_nor_select(orchard_machine *m, orchard_nor_device device);
 /* Explicit external SRAM address-decode hypothesis. EXACT is the default.
  * BANK1_MIRROR connects only the installed SRAM's address bits throughout
@@ -202,6 +202,11 @@ typedef enum { ORCHARD_FRAME_CONTROLLER = 0, ORCHARD_FRAME_PACKED_LSB } orchard_
 orchard_status orchard_framebuffer_view(const orchard_machine *m, orchard_frame_view view,
                                         uint8_t *pixels, size_t capacity);
 /* Raw STN pixels, one intensity byte per pixel. No skin or annunciator overlays. */
+/* Read-only packed display inspection: indices are I/O, left shift, right
+ * shift, alpha, battery, busy. These are six segment samples beyond the
+ * 131-column matrix, not extra visible columns. Physical routing unverified.
+ * Returns unsupported for a stream without a 160-pixel row / six lines. */
+orchard_status orchard_annunciators(const orchard_machine *m, uint8_t levels[6]);
 orchard_status orchard_framebuffer(const orchard_machine *m, uint8_t *pixels,
                                    size_t capacity);
 #ifdef __cplusplus

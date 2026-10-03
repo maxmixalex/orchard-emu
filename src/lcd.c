@@ -174,3 +174,30 @@ orchard_status orchard_framebuffer_view(const orchard_machine *m, orchard_frame_
 orchard_status orchard_framebuffer(const orchard_machine *m, uint8_t *pixels, size_t capacity) {
     return orchard_framebuffer_view(m, ORCHARD_FRAME_CONTROLLER, pixels, capacity);
 }
+
+orchard_status orchard_annunciators(const orchard_machine *m, uint8_t levels[6]) {
+    if (!m || !m->profile || !levels) return ORCHARD_BAD_ARGUMENT;
+    o_zero(levels, 6);
+    const uint32_t *r = m->soc.lcd;
+    if (!(r[0] & 1u)) return ORCHARD_OK;
+    unsigned mode = (r[0] >> 1) & 15u, panel = (r[0] >> 5) & 3u;
+    if (mode > 2 || panel == 0 || panel == 3) return ORCHARD_UNSUPPORTED_LCD;
+    unsigned bpp = 1u << mode, page = r[7] & 0x7ffu;
+    unsigned stride = (page + ((r[7] >> 11) & 0x7ffu)) * 2u;
+    unsigned lines = ((r[1] >> 14) & 0x3ffu) + 1u;
+    if (page * 16u != 160u * bpp || lines < 6) return ORCHARD_UNSUPPORTED_LCD;
+    uint32_t start = (r[5] & 0x3fffffffu) << 1;
+    uint32_t end = (start & 0xffc00000u) | ((r[6] & 0x1fffffu) << 1);
+    uint8_t result[6];
+    for (unsigned segment = 0; segment < 6; ++segment) {
+        uint32_t address = start + segment * stride + (131u * bpp) / 8u;
+        uint8_t byte;
+        if (end <= start || address < start || address >= end ||
+            orchard_read_memory(m, address, &byte, 1) != ORCHARD_OK) return ORCHARD_BUS_ERROR;
+        unsigned level = (byte >> ((131u * bpp) & 7u)) & ((1u << bpp) - 1u);
+        result[segment] = bpp == 2 ? (uint8_t)(((r[10] >> (level * 4u)) & 15u) * 17u)
+                                  : (uint8_t)(level * 255u / ((1u << bpp) - 1u));
+    }
+    o_copy(levels, result, 6);
+    return ORCHARD_OK;
+}
