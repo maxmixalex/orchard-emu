@@ -1,7 +1,7 @@
 # Continuation handoff
 
 Private `zyf722/orchard-emu`; preserve main ancestry and existing issue #1.
-Base for this slice: `5f93b3f`. The live issue owns current accepted commit,
+Base for this slice: `a9e03bd`. The live issue owns current accepted commit,
 Build and Pages results. Do not force-push or change repository visibility.
 
 ## Input plan
@@ -15,30 +15,26 @@ was acquired. See [native inventory](native-roms.md).
 
 ## Current dependency
 
-The documented LCD source/pending registers and functional scan counter now
-work; normal ADC has explicit sample inputs and completion IRQ. Conditioned
-39g+ reaches original OS PC `0000888c`; conditioned 48gII with AIN7=0/512/1023
-reaches `0000c7ec`. Both next write 1 to USB `52000144`. With no analog input,
-48gII instead stops at its real AIN7 conversion start (`00004f58`).
+USB register initialization now proceeds on both original full NORs. With
+prior explicit conditions and one counted LCD idle-zero read, HP39g+ stops at
+`00022440` and HP48gII at `00027380`, both attempting a zero-fill store to
+physical NOR address zero. Do not discard the store or make NOR writable;
+trace memory conventions/cache/MMU/NOR behavior independently. Strict default
+LCD/GPIO stops remain unchanged, and no stock UI is booted.
 
-Every idle-zero run still records one unverified LCD `+0x68` read. Strict
-39g+/48gII checkpoints remain unchanged. The next useful implementation is
-the actual USB device-controller initialization, followed by guest descriptor
-and host transactions. Do not call register acceptance enumeration or transfer.
-
-LCD timing is functional and includes a documented manual discrepancy for
-WDLY/WLH. FIFO, physical clocks/panel mapping and real pad/analog bias are not
-closed. `packed-lsb` is memory inspection, not the physical LCD. ADC codes are
-not battery voltages. See [LCD](lcd.md), [ADC](adc.md) and [boot research](boot-research.md).
+Original HP50g boot-only recovery now completes six local EP0 control requests
+on native and WASM, including guest device/configuration descriptors, delayed
+address activation and SET_CONFIGURATION status. GET_CONFIGURATION remains a
+counterexample; Bulk and host-OS enumeration are not implemented. Source and
+erased backing remain separately identified. See [USB evidence](usb.md).
 
 ## Validation / publication
 
-Three CTest suites run natively and as test-only WASM. The production peripheral
-guest exercises ADC and LCD IRQ entry/acknowledgment/SPSR return/WFI on both
-hosts. Probe v5 records ADC conditions and side-effect-free peripheral state,
-in addition to previous architecture and event schedules. Thirteen firmware
-comparisons/cold replays and three selected optimized-sanitizer scenarios are
-recorded in [validation](validation.md).
+Four CTest suites, 145,021 assertions per native/test-WASM host, six existing
+integrations and an original USB IRQ guest pass. Five ordinary firmware probes
+and one six-request USB session agree across hosts/cold replays. Two progressed
+full NORs and that control session also pass optimized sanitizers. See
+[validation](validation.md) for exact current versus historical scope.
 
 Run locally before pushing. Tests belong in the source repository but not
 production packages. Firmware/manuals/private traces never enter Git or Pages.

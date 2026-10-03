@@ -1,6 +1,46 @@
 # Native NOR bring-up
 
-## Current continuation: functional LCD and ADC to USB initialization
+## Current continuation: USB initialization and control transfers
+
+Base `a9e03bd`. USB device initialization now completes without a host attached.
+The unchanged full NORs next stop on **zero writes to physical address zero**:
+
+| Case | Instructions | Guest exceptions | PC / instruction |
+| --- | ---: | ---: | --- |
+| HP39g+ strict default | 514,293 | 0 | `000035e8` / unchanged LCD stop |
+| HP48gII strict default | 94,497 | 0 | `08001820` / unchanged GPIO stop |
+| HP39g+, prior keyboard/F pads and idle-zero | 523,027 | 10 | `00022440` / `28a0500c` |
+| HP48gII, prior components/pads, AIN7=512 and idle-zero | 8,219,130 | 11 | `00027380` / `28a0500c` |
+| HP50g boot-only, key 1, no host traffic | 4,999,999 | 1 | 5,000,000-quanta budget completed, no stop |
+
+The full-NOR stops are `STMHS r0!, {r2,r3,r12,lr}` with r0/data zero, in a
+zero-fill path. They still have zero data-fault status/address, but **not zero
+exception counts**: IRQ/SWI execution has now occurred. Video remains blank.
+Each progressed full NOR still uses one counted unverified LCD read. The
+strict controls use none. Input firmware has not been patched.
+
+A local HP39g+ trace reaches the clearing routine from initialization with
+start zero and length `0x1000`. Its current first-level descriptor maps that
+range to NOR, rather than external RAM. This is a concrete counterexample,
+not proof that flash programming is required. Cache/MMU behavior, firmware
+memory conventions and NOR write handling need independent investigation.
+The core does not ignore the store or convert NOR into writable RAM to proceed.
+
+All five listed scenarios compare native/WASM exposed CPU, LCD/ADC/USB state,
+UART/pixels and independent cold replay. The two progressed full NOR cases
+also complete optimized ASan/UBSan native comparisons/replays. They are local
+experiments, not ROM-dependent CI tests. This list does not claim that all
+thirteen historical scenarios were rerun in this slice.
+
+Separately, the original HP50g **boot-only** input completes six EP0 requests,
+including short/full device/configuration descriptors, address setting and
+SET_CONFIGURATION's status stage. Both hosts and their cold replays agree,
+also with optimized sanitizers. No LCD hypothesis is needed on this path.
+[USB evidence](usb.md) records the packet bytes, exact conditions and the
+remaining GET_CONFIGURATION failure. No Bulk transfer or stock OS boot is
+accepted. Schema v6 ordinary ROM probes add a pure 48-word USB snapshot.
+
+## Historical a9e03bd: functional LCD and ADC to USB initialization
 
 Base revision `5f93b3f`. Two unchanged full NORs now pass the previously
 missing LCD/ADC operations and reach the same USB write, **under the explicit

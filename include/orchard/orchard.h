@@ -93,6 +93,38 @@ orchard_status orchard_read_memory(const orchard_machine *m, uint32_t address,
 /* Functional UART0 queues; these are not USB or a host-OS virtual device. */
 size_t orchard_uart_send(orchard_machine *m, const uint8_t *data, size_t length);
 size_t orchard_uart_receive(orchard_machine *m, uint8_t *data, size_t capacity);
+/* Functional USB-device registers and opt-in packet-level EP0 host.
+ * All calls are serialized by the machine owner between bounded runs.
+ * No host-OS device, physical cable sensing, raw PID/CRC/retries or timing.
+ * Attachment changes reset only the USB block; cold reset detaches it.
+ * A bus-reset edge resets USB registers/FIFOs, not CPU/RAM/NOR or main IRQs.
+ * Successful IN calls include the host ACK; short buffers do not consume data.
+ * SETUP is exactly eight bytes. OUT/IN operate only on control endpoint zero.
+ * NAK, STALL and wrong-address/no-device are not CPU diagnostic stops.
+ */
+typedef enum {
+    ORCHARD_USB_ACK = 0, ORCHARD_USB_NAK, ORCHARD_USB_STALL,
+    ORCHARD_USB_NO_DEVICE, ORCHARD_USB_BAD_ARGUMENT
+} orchard_usb_result;
+orchard_status orchard_usb_attach(orchard_machine *m, bool attached);
+orchard_usb_result orchard_usb_bus_reset(orchard_machine *m, bool asserted);
+orchard_usb_result orchard_usb_sof(orchard_machine *m, unsigned frame);
+orchard_usb_result orchard_usb_setup(orchard_machine *m, unsigned address,
+                                     const uint8_t *packet, size_t length);
+orchard_usb_result orchard_usb_out(orchard_machine *m, unsigned address,
+                                   const uint8_t *packet, size_t length);
+orchard_usb_result orchard_usb_in(orchard_machine *m, unsigned address,
+                                  uint8_t *packet, size_t capacity, size_t *length);
+/* Pure, version-1 snapshot, no MMIO read side effects. Returns 48, or zero
+ * without writing on invalid arguments. Words 0..12: function_address,power,
+ * ep_pending,usb_pending,ep_enable,usb_enable,index,frame,active_address,
+ * control_stage,remaining,attached,reset_asserted. Then 7 words per endpoint:
+ * max_packet_bytes,in_csr1,in_csr2,out_csr1,out_csr2,rx_unread,tx_bytes.
+ * Stages: idle=0,setup=1,data-in=2,data-out=3,status-in=4,status-out=5.
+ */
+#define ORCHARD_USB_SNAPSHOT_WORDS 48u
+size_t orchard_usb_snapshot(const orchard_machine *m, uint32_t *words, size_t capacity);
+
 /* Explicit ideal ADC sample code, NOT a battery voltage/model default.
    Channels 0..7 and codes 0..1023. Cold reset releases all inputs.
    Unknown channels stop when sampled. A started conversion holds its sample. */

@@ -133,7 +133,7 @@ Native/WASM state equivalence remains a separate gate from page usability.
 
 ## M6 — Virtual PC connectivity
 
-**Functional UART0 host queues exist; stock transfers and USB are open.**
+**Functional UART0 and an EP0 USB control subset exist; stock file transfers and full USB acceptance are open.**
 
 - M6.1: tested bidirectional UART host stream, bounded queues, cancellation,
   disconnect and replay; optional native PTY/TCP adapter.
@@ -213,3 +213,16 @@ register, enumeration and transfer gates. Strict LCD `+0x68` behavior remains
 unchanged; each progressed case still carries a counted hypothesis. Neither
 M2 physical-board acceptance nor M3 stock cold boot is closed by this progress.
 See [LCD](lcd.md), [ADC](adc.md), and the current [boot table](boot-research.md).
+
+## USB EP0 continuation (after a9e03bd)
+
+Original USB register/index/FIFO/IRQ state and explicit EP0 host packet APIs
+are implemented. A ROM-free guest returns descriptors/configuration through
+26 IRQ entries on both hosts. Original HP50g boot-only code answers six control
+requests with native/WASM cold replay; its GET_CONFIGURATION counterexample
+and Bulk transport remain open. This partially advances M6.2/M6.3, not their
+full gate and not M6.4 host-OS enumeration.
+
+Conditioned full NORs now stop on a zero-fill store into physical NOR at zero.
+Investigate its cause rather than silently permitting writes. M1/M3 remain
+open; all physical LCD/pad/analog hypotheses keep their previous restrictions.

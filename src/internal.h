@@ -53,11 +53,24 @@ typedef struct {
 } o_adc;
 
 typedef struct {
+    uint8_t maxp, in1, in2, out1, out2;
+    uint8_t rx[64], tx[64], rx_size, rx_pos, tx_size;
+} o_usb_ep;
+typedef struct {
+    uint8_t function_address, active_address, power, ep_pending, usb_pending;
+    uint8_t ep_enable, usb_enable, index, stage;
+    uint16_t frame, remaining;
+    bool attached, reset_asserted, direction_in, stalled;
+    o_usb_ep ep[5];
+    uint8_t dma[4][6];
+} o_usb;
+typedef struct {
     uint32_t srcpnd, intmod, intmsk, intpnd, subsrcpnd, intsubmsk, priority;
     uint32_t memc[13], clock[6], gpio[48], lcd[25];
     uint32_t lcd_phase, lcd_line;
     uint64_t lcd_frames;
     o_adc adc;
+    o_usb usb;
     uint32_t gpio_input_known[8], gpio_input_levels[8];
     uint32_t gpio_bias_known[8], gpio_bias_levels[8];
     bool lcd_probe68_idle_zero;
@@ -119,6 +132,10 @@ bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
 bool o_load(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t *value);
 bool o_store(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t value);
 void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool fetch);
+void o_usb_reset(o_usb *u);
+void o_usb_tick(orchard_machine *m);
+bool o_usb_register(orchard_machine *m, uint32_t address, unsigned width,
+                     uint32_t *value, bool write);
 void o_soc_reset(o_soc *s);
 void o_soc_tick(orchard_machine *m);
 void o_irq_update(o_soc *s);

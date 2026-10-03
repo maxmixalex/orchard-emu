@@ -126,3 +126,14 @@ separation between specifications, firmware observations and emulator choices.
 The ADC accepts ideal digital sample codes, not captured voltages. Functional
 HCLK/PCLK quanta, initial scan phase, inactive ADC status lanes and standby
 phase retention are modeling conventions, not new physical measurements.
+
+## USB continuation
+
+Samsung S3C2410A chapter 13 supplies register widths/reset bits, indexed CSRs,
+FIFO ownership and EP0 SETUP_END/DATA_END semantics (13-12/13-13). The same
+vendor PDF was rendered locally for register-table inspection. USB-IF's
+[USB 2.0 specification library](https://www.usb.org/document-library/usb-20-specification)
+provides generic control-stage/address context, not evidence that Orchard
+implements high-speed USB or complete conformance. No reference emulator USB
+implementation was imported for this slice. Actual descriptor values derive
+from hash-pinned guest execution, not a host-side table.

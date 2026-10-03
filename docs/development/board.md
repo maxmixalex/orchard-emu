@@ -1,26 +1,26 @@
 # Development board
 
-[Issue #1](https://github.com/zyf722/orchard-emu/issues/1) records the exact
-accepted commit and remote Build/Pages results. [Roadmap](roadmap.md) owns
-gates; [validation](validation.md) and [boot research](boot-research.md) own
-the repeatable evidence.
+[Issue #1](https://github.com/zyf722/orchard-emu/issues/1) records the accepted
+commit and observed CI/Pages outcome. [Roadmap](roadmap.md) owns gates;
+[validation](validation.md), [USB](usb.md) and [boot research](boot-research.md)
+own the reproducible evidence.
 
-## Implemented in this slice
+## Implemented locally
 
-- [x] Stateful LCD source/pending/mask, read-only time-driven LINECNT and single-scan frame IRQ; unsupported FIFO/LPC/TFT behavior stays explicit.
-- [x] Normal ADC prescaler/sample-and-hold/completion, standby, read-start and IRQ; no implicit analog inputs or battery voltage.
-- [x] Explicit ADC stimuli and pure peripheral snapshots in the C API, CLI, WASM and probe-v5 reports.
-- [x] Unchanged conditioned HP39g+ and HP48gII full NORs both reach USB initialization; strict defaults and the counted LCD hypothesis remain separate.
-- [x] ROM-free guest takes ADC and LCD interrupts, acknowledges both and returns to WFI on native/WASM; unknown-input control and cold replays pass.
-- [x] Preserve scheduled recovery-key controls, maintained tests and firmware-free production artifacts.
+- [x] Original USB device registers/indexed endpoint state, bounded FIFOs and IRQ routing.
+- [x] Explicit packet-level EP0 host, reset, SETUP/data/status, NAK/STALL, short replies and delayed address.
+- [x] Original HP50g boot-only guest descriptors and six control requests on native/WASM, with cold replay.
+- [x] New ROM-free assembly guest: seven requests, 26 guest IRQ entries and return to WFI on both hosts.
+- [x] 145,021 assertions per host; four CTest suites; 22 separately named static-analysis units.
+- [x] Two unchanged conditioned full NORs advance beyond USB initialization; retain strict/hypothesis distinctions.
 
 ## Now / next
 
-- [ ] Implement the concrete USB `52000144` initialization dependency from the device specification; initialization, enumeration and actual transfer are separate gates.
-- [ ] Independently resolve LCD `+0x68`, physical scan timing/panel mapping, FIFO and real board analog/pad bias. Do not promote research conditions into defaults.
-- [ ] Integrate the user's later HP39gs/HP49g+ real NOR dumps without blocking current work or requesting them now.
-- [ ] M1 CPU conformance and M3 responsive stock cold boot/ARM return remain open; current conditional progression closes neither.
+- [ ] Diagnose the common zero-fill store into NOR at address zero; no blind ignored write or writable-NOR substitution.
+- [ ] Resolve original GET_CONFIGURATION's DATA_END/IN-ready counterexample, then implement and test Bulk endpoint transactions.
+- [ ] Independently resolve LCD +0x68, panel mapping and actual board clock/pad/analog behavior.
+- [ ] Integrate the user's later 39gs/49g+ full dumps when supplied, without blocking current work or asking now.
+- [ ] M1 independent CPU correctness, M3 interactive stock boot/native return, browser E2E and actual PC transfers.
 
-M0 remains closed. Pages publishes only documentation. Existing original NOR,
-boot-only backing, explicit component conditions and hypotheses keep distinct
-provenance; no newly reconstructed image is called a real hardware dump.
+No firmware or test artifacts in production packages. All original-firmware
+probes run locally. M0 remains closed; this slice does not close M1/M3/M6.
