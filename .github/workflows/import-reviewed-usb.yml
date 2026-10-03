@@ -1,0 +1,56 @@
+name: Transport reviewed USB source
+on:
+  push:
+    branches: [research/native-roms-20261002]
+    paths: [.github/workflows/import-reviewed-usb.yml, .research/source-transport/**]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  transport:
+    if: github.repository == 'zyf722/orchard-emu' && github.event.repository.private == true
+    runs-on: home-docker
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Verify immutable source-only transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, lzma, os, pathlib
+          root = pathlib.Path('.research/source-transport')
+          data = b''.join((root / ('usb-ep0.part%d' % i)).read_bytes() for i in range(4))
+          assert len(data) == 23732
+          assert hashlib.sha256(data).hexdigest() == '87b92753fe784df080343bffda01a38190077a86f499dbde5c0b27e7405ab3d1'
+          patch = lzma.decompress(data, memlimit=128 * 1024 * 1024)
+          assert len(patch) == 83851
+          assert hashlib.sha256(patch).hexdigest() == 'a11cb9b4084879809312afbc0697a310b0935fecc80aee376004e60fdd3c7065'
+          (pathlib.Path(os.environ['RUNNER_TEMP']) / 'orchard-reviewed.patch').write_bytes(patch)
+          PY
+      - uses: actions/checkout@v6
+        with:
+          ref: a9e03bd946b6c6cc47887f937458fe158236dd20
+      - name: Reconstruct locally reviewed tree on a transport branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = a9e03bd946b6c6cc47887f937458fe158236dd20
+          git apply --check --unidiff-zero "$RUNNER_TEMP/orchard-reviewed.patch"
+          git apply --index --unidiff-zero "$RUNNER_TEMP/orchard-reviewed.patch"
+          git diff --cached --check
+          test "$(git write-tree)" = 5a3ce51ac563e7d12193624ad370d04c30c05375
+          # Workflow changes are applied separately through the user's GitHub
+          # connection; the transport token does not need workflow permission.
+          git restore --source=HEAD --staged --worktree .github/workflows/build.yml
+          test "$(git write-tree)" = abba06e78278d97d3cebd1391ad97f51fc691d2c
+          target=refs/heads/research/usb-ep0-reviewed-20261003
+          test -z "$(git ls-remote origin "$target")"
+          git -c user.name='Orchard automation' -c user.email='orchard-automation@users.noreply.github.com' \
+            commit -m 'transport: locally reviewed USB source, pending workflow overlay'
+          git push origin "HEAD:$target"
+          git rev-parse HEAD
+# Source transport only. No firmware, emulator execution or CI debugging.
+# This job cannot advance main; the caller verifies the complete tree before doing so.
