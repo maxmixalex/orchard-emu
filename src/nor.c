@@ -14,6 +14,15 @@ orchard_status orchard_nor_select(orchard_machine *m, orchard_nor_device device)
     return ORCHARD_OK;
 }
 bool o_nor_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value) {
+    /* The explicitly selected x16 part receives two little-endian halfword
+       cycles for an aligned CPU word store (S3C2410A, Fig. 5-7). Both go
+       through SDP decoding; this is not a generic ROM-write discard. A stop
+       on either cycle preserves preceding command effects, as two bus cycles
+       would. Physical range validation belongs to o_phys_write(). */
+    if (width == 4 && !(address & 3u) && m->nor_device == ORCHARD_NOR_SST39VF1601) {
+        return o_nor_write(m, address, 2, value & 0xffffu) &&
+               o_nor_write(m, address + 2, 2, value >> 16);
+    }
     if (width != 2 || (address & 1u)) goto unsupported;
     unsigned byte = value & 255u;
     if (byte == 0xf0) {

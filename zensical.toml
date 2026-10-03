@@ -17,6 +17,7 @@ nav = [
     "development/roms.md",
     "development/native-roms.md",
     "development/boot-research.md",
+    "development/startup-memory.md",
     "development/input.md",
     "development/lcd.md",
     "development/adc.md",

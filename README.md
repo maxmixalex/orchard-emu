@@ -10,6 +10,13 @@ is claimed. One C17
 core runs natively and as WebAssembly; no stock UI boot is accepted yet. The
 firmware's Saturn interpreter is intended to run as guest ARM software, without replacing it with Emu48 or patching the ROM.
 
+The original HP48gII OS now draws its **Try To Recover Memory?** startup
+prompt under explicit component/pad/ADC and counted LCD research conditions.
+Selecting NO advances to a precisely located SRAM-boundary data abort; the
+normal calculator UI and physical panel mapping remain unverified. The x16
+NOR adapter preserves flash bytes rather than treating ROM as writable.
+See [startup memory and remaining boot gates](docs/development/startup-memory.md).
+
 The C17 core includes ARM/Thumb and a CP15/MMU subset, physical SRAM/NOR,
 GPIO/keyboard/EINT, timers/RTC/watchdog, functional LCD scan/frame interrupts,
 normal ADC with explicit sample inputs, and a functional USB device/packet host.

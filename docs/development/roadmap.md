@@ -80,8 +80,10 @@ policies. The LCD `+0x68` idle-zero experiment does not close this gate.
 **Full-NOR execution established; responsive stock UI still open.**
 
 Original HP39g+ and HP48gII full dumps execute from reset. Under documented
-component/pad/ADC conditions and one counted LCD hypothesis, both pass USB
-initialization and next attempt zero-fill at physical NOR base. Strict default
+component/pad/ADC conditions and counted LCD hypotheses, both pass USB
+initialization. The selected-x16 HP48gII now reaches a conditional OS memory-recovery
+prompt, then a SRAM-boundary data abort after NO; the unspecified-part HP39g+
+zero-store remains open. See [startup memory](startup-memory.md). Strict default
 checkpoints remain separate. See [current boot research](boot-research.md).
 
 Record four separate witnesses: bootloader progression, initialized LCD,
@@ -157,8 +159,8 @@ compatibility matrix and no firmware or unqualified optional-device claims.
 
 ## Working order and research boundaries
 
-Prioritize M1 correctness and traced M2/M3 dependencies: the NOR-base startup
-store, unresolved EP0 response, and independently supported LCD/panel/pad
+Prioritize M1 correctness and traced M2/M3 dependencies: the now-localized SRAM-boundary read after the
+HP48gII OS prompt, HP39g+ NOR component behavior, unresolved EP0 response, and independently supported LCD/panel/pad
 behavior. Maintain native/WASM regressions while adding independent evidence.
 M5 skin polish and M6 host-OS bridging must not displace the first stock UI.
 

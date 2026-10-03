@@ -1,112 +1,67 @@
 # Validation
 
-## Independent CPU continuation after `f5b3fdb`
+## Current local acceptance — x16 NOR / conditional OS prompt
 
-[CPU oracle evidence](cpu-oracle.md) records three 17,075-case seeded runs
-against separately installed Unicorn 2.1.4/TI925T, native and test-WASM. All
-51,225 executed case instances agree without skips. The default seed also
-passes with optimized native ASan/UBSan, and shared register/memory mutations
-are rejected by the independent oracle. Twelve transport rejection cases pass.
-No production CPU semantics changed; firmware checkpoints and the USB NAK
-counterexample remain unchanged. Existing CTest/174,166-assertion suites were
-rerun; static analysis now covers 23 separate units. The new CI step is ROM-free
-and the 19-page site does not include the external dependency or test modules.
-Current remote acceptance belongs to issue #1; the earlier USB acceptance
-below remains a distinct result rather than being relabeled CPU conformance.
+Base `e236fcc`. The only production-core change is the selected x16 NOR
+word-write adapter. No CPU instruction, MMU mapping, RAM capacity/alias,
+USB readiness, panel mapping or firmware bytes are changed.
 
-## Current local acceptance — USB continuation, 2026-10-03
-
-The USB work was originally prepared against `a9e03bd`. Before publication,
-remote `80a1466` was discovered and its exact tree was retrieved and compared.
-This continuation reconciles the local packet/bulk implementation onto that
-parent rather than rewriting history. The unchanged `80a1466` control guest
-is retained in `tests/usb-guest.S` and rerun using the expanded host API.
-The provisional EP0-only session helpers are superseded by one packet host.
-
-The following checks were rerun locally on the reconciled source before pushing.
-Current commit/CI/Pages acceptance is tracked in issue #1. The earlier
-145,021-assertion remote baseline and 174,166-assertion local patch are distinct
-historical inputs, not interchangeable evidence.
-
-| Check | Observed result | Scope |
+| Check | Local result | Scope |
 | --- | --- | --- |
-| GCC 14.2 Release CTest | 4/4 pass | Release-active maintained suites |
-| Clang 17 Debug ASan/UBSan CTest | 4/4 pass | ROM-free CPU/peripheral assertions |
-| Clang 17 RelWithDebInfo ASan/UBSan CTest | 4/4 pass | Optimized instrumentation |
-| Native / test-WASM assertions | **174,166 per host**, zero failures | 120,118 prior + 54,048 USB assertions; not independent CPU conformance |
-| ROM tooling checks | 60 pass | Existing file, event and input syntax checks |
-| Existing generated guests | Pass | Six profiles, keyboard/circuit, LCD policy, ADC/LCD IRQ returns and cold replay |
-| New USB generated guest | **49 exact steps** agree | Guest reset/setup IRQ, control reply, five bulk echoes and cold replay |
-| USB session input checks | 22 malformed commands and 4,096-command cap rejected | No state record from a malformed first command |
-| Original HP50g USB transcript | **143 exact steps** agree | Native/WASM exposed CPU/USB state and packets; both independent cold replays |
-| Optimized sanitizer USB transcript | All 143 steps and cold replays agree | Actual native helper with ASan/UBSan versus production WASM |
-| Existing firmware/control probes | 13 comparisons/replays pass | Disconnected USB; all old strict controls and new post-initialization stops |
-| Additional optimized sanitizer firmware probes | 39g+ and 48gII AIN7=512 pass | Complete native/WASM comparisons and cold replays, not all 13 instrumented |
-| Clang static analysis | 22 translation units, zero diagnostics | Production native code, four test suites, two research helpers |
-| JS syntax and production WASM build | Pass | No real-browser lifecycle or UI interaction claim |
-| Documentation navigation/local targets | 18 pages pass | Not a strict Zensical render |
-| Local Zensical strict render | Not run | Installation of pinned 0.0.67 failed: no available matching package |
-| Remote CI / updated Pages | See issue #1 for the resulting commit | Must be observed independently after pushing |
+| GCC 14.2 Release CTest | 5/5 pass | Release-active assertions |
+| Clang 17 Debug ASan/UBSan CTest | 5/5 pass | ROM-free suites |
+| Clang 17 optimized ASan/UBSan CTest | 5/5 pass | ROM-free suites |
+| Native / test-WASM assertions | **176,140 each**, zero failures | Prior 174,166 + 1,974 bus assertions |
+| ROM-tool checks | **75 pass** | Added bounded budgets and canonical GPIO order |
+| Six production integrations and existing circuit/LCD/ADC/USB guests | Pass | Prior controls and cold replay retained |
+| New executing-NOR guest | Pass, native / production WASM and both cold replays | 4 KiB STM zero-fill, unchanged executing ROM and vector/data reads, unknown-part negative control |
+| External Unicorn default corpus | **17,075 cases**, zero mismatches/skips | Same defined ARMv4T subset, not NOR or full-board proof |
+| Static analysis | 24 compilation units, no diagnostics | One additional test unit |
+| Documentation navigation / links | 20 pages | Remote strict render/Pages remains a separately observed gate |
 
-Static-analysis output now preserves source-relative paths. The new
-`src/usb.c` and `tests/usb.c` would otherwise collide under the prior basename
-naming scheme and hide a report. The prepared workflow checks the exact
-source/report path sets; all 22 separate local reports are present.
+The new bus suite compares an aligned word against two ordered halfword cycles
+across prefix/ID states, addresses and command values. It also tests invalid
+width/alignment, exact-end rejection before any cycle, explicit unimplemented
+program/erase/CFI/security commands, unknown-part rejection, capacity guards,
+and original ARM STM execution with byte-for-byte unchanged flash. SRAM
+remains exactly 256 KiB on the HP48gII profile; a boundary read stays unmapped.
+Restoring the old unconditional word rejection causes 1,579 of the 1,974 new
+checks to fail; restoring the adapter returns zero failures. That external
+mutation never entered the submitted tree.
 
-The assertion count includes byte-by-byte boundary checks and is not a count
-of supported instructions, unique tests, physical keys, or stock boots.
-No earlier assertion count is re-used as new evidence. CPU and existing
-peripheral C tests are unchanged; the new suite tests only original USB logic.
+A long probe exposed an existing metadata-normalization bug: the native CLI
+emits GPIO conditions in port order while the JavaScript parser preserved
+argument order. The parser now canonicalizes port order, with an explicit
+out-of-order regression. This changes reporting/order of disjoint stimuli,
+not their values or guest execution. No failed long-probe attempt is counted
+as a completed comparison.
 
-## USB tests and negative controls
+[Startup memory](startup-memory.md) records the genuine full-NOR checkpoints,
+original recovery prompt and first SRAM-boundary abort. Firmware results are
+separate from the ROM-free assertions. Four complete full-NOR comparisons now pass on native/production WASM and
+both cold replays: the unchanged strict 39g+/48gII checkpoints, the 50M-tick
+HP48gII prompt, and its exact first data-abort endpoint after NO. The original
+143-step HP50g boot-only USB session also passes again, retaining its NAK
+counterexample. The earlier 13-case table is historical, not a claim that all
+thirteen scenarios were rerun in this slice. A separate long optimized
+sanitizer prompt attempt exceeded the local execution limit and is not an
+accepted instrumented firmware result; the five short sanitizer CTest suites
+are accepted independently. Commit-specific CI, actual artifact verification
+and Pages results are recorded in issue #1 only after completion. No screenshot, trace, firmware or oracle
+binary is included in production packages. Earlier sections below are
+historical and do not automatically certify this revision.
 
-`tests/usb.c` tests byte/word registers, reset masks, indexed endpoint isolation,
-pure diagnostics, independent pending/acknowledgment, address staging,
-EP0 multi-packet data/status/preemption, packet toggles, delayed IN ACK,
-insufficient output capacity, control writes, duplicate OUT suppression,
-STALL, FIFO ownership, AUTO_SET/AUTO_CLR, flush and every payload length
-0 through 64 on all four bulk endpoints. Invalid widths/index, empty FIFO,
-unsupported ISO/DMA/small-MAXP buffering and malformed API arguments are
-explicit failures. No empty FIFO is converted to invented data.
 
-The original generated ARM guest uses its own IRQ vector and MMIO operations.
-It configures the controller, handles a bus reset, reads SETUP from FIFO,
-returns a synthetic three-byte control response, and echoes five bulk packets
-of lengths 1/7/63/64/0. Host retries without IN ACK retain ownership and data;
-duplicate OUTs do not reach the guest twice. All 49 commands are replayed on
-both native and production WASM with exposed state/payload comparisons.
+## Prior evidence by exact revision
 
-Two deliberate out-of-tree mutations are rejected by the USB C suite:
-consuming IN data without an ACK, and committing FUNC_ADDR immediately rather
-than after status acknowledgment. The test failures were observed; neither
-mutation entered the production source. This is an edge-condition test of
-the implemented contract, not independent silicon conformance.
+The [e236fcc validation record](https://github.com/zyf722/orchard-emu/blob/e236fccd55947c119b4439eee85e2aa9825831de/docs/development/validation.md)
+retains the complete USB publication, original 143-step transcript, thirteen
+pre-adapter firmware/control probes, historical sanitizer scope, and the
+three-seed Unicorn introduction. These are prior results, not additional
+current-case counts. [Independent CPU evidence](cpu-oracle.md) and
+[USB evidence](usb.md) retain their input and acceptance contracts.
 
-This synthetic bulk test is separate from the original HP50g bootloader
-experiment in [USB evidence](usb.md). In that experiment, GET_CONFIGURATION
-still returns NAK during the specified 16,000-quanta window. Success of
-other descriptor/status requests must not be reported as success of this
-request. A fresh SETUP and USB reset recover. No stock file, firmware update,
-Conn3x session or host-OS virtual device is verified.
-
-## Original firmware probes
-
-[Boot research](boot-research.md) gives current source identities, conditions,
-budgets, instruction/exception counts, and stops. All thirteen ordinary
-probes compare CPU, LCD/ADC, pure USB state, event counts, pixels, UART and
-cold replay. They do not attach a host. The two full NORs pass the prior
-USB initialization address and next store to physical NOR base in startup;
-neither has a usable stock UI. The explicit LCD +0x68 hypothesis is unchanged.
-
-`probe-usb.mjs` separately uses only the hash-pinned HP50g native 16 KiB boot
-region, pads/weak bias, key-1 schedule and an explicitly reset logical bus.
-It preserves the erased-OS construction and records source/binary hashes.
-The 143-step transcript compares every exposed CPU/USB word and every returned
-packet; it is not a comparison against an independent hardware/CPU oracle.
-The optimized sanitizer-native transcript is a separate observed run, not
-inferred from the Release result.
-
-## Reproduce
+## Repeatable commands
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -116,44 +71,15 @@ npm run check
 npm run test:tools
 npm run build
 npm run test:wasm
-
-cmake -S . -B build-sanitize -DCMAKE_C_COMPILER=clang \
-  -DCMAKE_BUILD_TYPE=Debug -DORCHARD_SANITIZE=ON
-cmake --build build-sanitize --parallel
-ctest --test-dir build-sanitize --output-on-failure
-python3 tools/check-docs.py
+npm run build:oracle
+# In a separate environment with tools/requirements-oracle.txt installed:
+python tools/check-unicorn.py
+python tools/check-docs.py
 ```
 
-For the optimized instrumented transcript, build with
-`-DCMAKE_BUILD_TYPE=RelWithDebInfo -DORCHARD_SANITIZE=ON` into
-`build-sanitize-opt`, then select it with `ORCHARD_BUILD_DIR`:
-
-```sh
-node tools/probe-usb.mjs /private/boot-50g.bin /new/path/usb.json
-ORCHARD_BUILD_DIR=build-sanitize-opt \
-  node tools/probe-usb.mjs /private/boot-50g.bin /new/path/usb-sanitized.json
-```
-
-The maintained source/tests and workflow changes are included in the continuation.
-`dist/` and CMake install contain no test helper, synthetic image, real firmware,
-manual or report. Distribution verification is separate from an actual browser
-E2E run. The existing documentation workflow must still be observed after
-publication: a local link check does not substitute for strict rendering or
-live deployed-revision verification.
-
-## Open gates
-
-GET_CONFIGURATION, wire-level USB timing/error handling, DMA and alternate
-buffer modes, stock protocol transfer, NOR/cache startup behavior, LCD +0x68,
-physical panel/pad/analog behavior, independent CPU conformance, native ARM
-payload return, persistence and real-browser lifecycle remain open. M0 stays
-historically accepted; this local continuation does not close M1/M3/M6.
-
-## Reconciliation acceptance
-
-The unchanged original remote control guest also passes descriptor, address,
-configuration and GET_CONFIGURATION requests with the new packet API on both
-hosts and independent cold replays. This preserves a positive control next
-to the original HP50g GET_CONFIGURATION counterexample. Provisional C/WASM
-USB names changed; no released ABI compatibility is promised at version 0.1.
-No remote source history is removed. Ordinary CI stays ROM-free.
+Debug and RelWithDebInfo instrumentation use Clang with
+`-DORCHARD_SANITIZE=ON` in separate build directories. Strict documentation
+rendering and Pages deployment must be observed separately from the Markdown
+navigation check. Ordinary CI remains ROM-free; long firmware checkpoints
+use private local inputs and the explicit command in
+[startup memory](startup-memory.md).

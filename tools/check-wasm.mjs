@@ -22,7 +22,7 @@ function command(executable, args) {
 }
 await mkdir(build, { recursive: true });
 let totalAssertions = 0;
-for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb']) {
+for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb', 'nor-bus']) {
   const testModule = resolve(build, `${name}.wasm`);
   command(process.env.CLANG || 'clang', [
     '--target=wasm32', '-std=c17', '-O2', '-ffreestanding', '-nostdlib', '-fno-builtin',
@@ -154,3 +154,6 @@ await checkUSB(root, build);
 
 const { checkUSBControl } = await import("../tests/usb-control.mjs");
 await checkUSBControl(root, build);
+
+const { checkNorBus } = await import('../tests/nor-wasm.mjs');
+await checkNorBus(root, build);

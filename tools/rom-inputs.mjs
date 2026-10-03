@@ -62,7 +62,7 @@ export function parseGpio(text) {
       throw new Error('Duplicate GPIO port, out-of-range mask, or levels outside known mask');
     seen.add(port);
     return { port, name, known, levels, cli: `${name}:${known.toString(16)}:${levels.toString(16)}` };
-  });
+  }).sort((a, b) => a.port - b.port);
 }
 
 export async function readFirmware(path) {
@@ -114,4 +114,13 @@ export function parseAdc(text) {
     seen.add(channel);
     return { channel, code };
   }).sort((a, b) => a.channel - b.channel);
+}
+
+// Bounded local research only; a completed budget does not certify OS boot.
+export function parseProbeBudget(text = '1000000') {
+  const budget = Number(text);
+  if (typeof text !== 'string' || !/^\d+$/.test(text) || !Number.isSafeInteger(budget) ||
+      budget < 1 || budget > 100000000)
+    throw new Error('Tick budget must be an integer between 1 and 100000000');
+  return budget;
 }

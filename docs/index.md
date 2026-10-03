@@ -5,8 +5,9 @@ interpreter and a progressively implemented S3C2410-class machine. Its goal is
 unmodified stock firmware running from a complete physical NOR dump, natively
 and in a browser, with useful virtual PC connectivity.
 
-**Current boundary:** two genuine full NORs execute to early hardware stops;
-no stock-OS-capable calculator is claimed. [Boot research](development/boot-research.md)
+**Current boundary:** the conditional HP48gII full-NOR run draws an original
+OS startup prompt and then encounters a SRAM-boundary abort after NO.
+No normally usable stock calculator is claimed. [Boot research](development/boot-research.md)
 records the exact inputs, progression and remaining blockers. The six model records specify candidate physical
 memory/display profiles; they are not a claim of six validated boards.
 
@@ -34,3 +35,11 @@ plus synthetic bulk tests. Complete control conformance, stock file transfer
 and stock UI boot remain open; strict default checkpoints remain separate.
 The packet-host continuation preserves the `80a1466` Git ancestry and its
 control guest. Current CI and Pages acceptance is recorded in issue #1.
+
+## Conditional stock-OS startup
+
+The unchanged HP48gII full NOR now draws its original memory-recovery prompt.
+This is not an accepted normal calculator boot: a NO response reaches a
+SRAM-boundary data abort, and LCD/pad/ADC conditions remain explicit research
+assumptions. See [startup memory](development/startup-memory.md) for the exact
+checkpoints and remaining gates, distinct from the HP50g boot-only USB menu.

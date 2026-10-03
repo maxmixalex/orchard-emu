@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Local NOR/boot-region comparison with explicit provenance and external stimuli.
 import assert from 'node:assert/strict';
-import { models as names, prepareInput, parseGpio, parseKeyEvents, parseAdc, readFirmware, sha256 as sha } from './rom-inputs.mjs';
+import { models as names, prepareInput, parseGpio, parseKeyEvents, parseAdc, parseProbeBudget, readFirmware, sha256 as sha } from './rom-inputs.mjs';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
@@ -38,9 +38,7 @@ const hardwareArgs = [
   ...(keyboard === 'apples' ? ['--keyboard', keyboard] : []),
   ...(norDevice === 'sst39vf1601' ? ['--nor-device', norDevice] : []),
 ];
-const textBudget = options['--ticks'] ?? '1000000', budget = Number(textBudget);
-if (!/^\d+$/.test(textBudget) || !Number.isSafeInteger(budget) || budget < 1 || budget > 10000000)
-  throw new Error('Tick budget must be an integer between 1 and 10000000');
+const budget = parseProbeBudget(options['--ticks']);
 const events = parseKeyEvents(options['--key-at'], budget);
 if (events.length && keyboard !== 'apples') throw new Error('Key events require --keyboard apples');
 hardwareArgs.push(...events.flatMap(e => ['--key-at', `${e.tick}:${e.column}:${e.row}:${e.down}`]));
