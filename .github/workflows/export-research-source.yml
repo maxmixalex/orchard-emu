@@ -14,21 +14,33 @@ jobs:
         with:
           ref: 2889f904115a316da501d25ffaa7301454a4a722
           persist-credentials: false
-      - name: Acquire pinned documentation wheels only
+      - name: Export base and already uploaded source blobs
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m venv "$RUNNER_TEMP/docs-acquire"
-          "$RUNNER_TEMP/docs-acquire/bin/pip" download --only-binary=:all: \
-            --python-version 3.13 --implementation cp --abi cp313 --abi abi3 --abi none \
-            --platform manylinux_2_17_x86_64 --platform manylinux_2_28_x86_64 --platform manylinux2014_x86_64 \
-            -r tools/requirements-docs.txt -d "$RUNNER_TEMP/docs-wheels"
-          cd "$RUNNER_TEMP/docs-wheels"
-          sha256sum *.whl > SHA256SUMS
+          mkdir -p "$RUNNER_TEMP/orchard-recovered"
+          git archive --format=tar.gz --output="$RUNNER_TEMP/orchard-recovered/orchard-source.tar.gz" HEAD
+          python3 - <<'PY'
+          import base64, hashlib, json, os, urllib.request
+          from pathlib import Path
+          shas = ['4fbf72339917ce7b8b08554c9a91470c28c94727', '63ad06bb3b0335e2f906d59f796a43654dcfa456', '94759d8b6375e2ef4fc51fe3ecae10c27cd69a13', '59b5856713ac11fd09097054bd4585e8dd5327e0', '02d520a4b72da39c06b64ec84ae920eba0ecd90a']
+          root = Path(os.environ['RUNNER_TEMP']) / 'orchard-recovered'
+          for i, sha in enumerate(shas):
+              request = urllib.request.Request('https://api.github.com/repos/zyf722/orchard-emu/git/blobs/' + sha, headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  value = json.load(response)
+              assert value['encoding'] == 'base64'
+              data = base64.b64decode(value['content'])
+              assert hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest() == sha
+              (root / f'part-{i}').write_bytes(data)
+          print('Recovered', len(shas), 'hash-verified source blobs')
+          PY
       - uses: actions/upload-artifact@v4
         with:
-          name: orchard-docs-wheels
-          path: ${{ runner.temp }}/docs-wheels/
-          retention-days: 1
+          name: orchard-interrupted-source-recovery
+          path: ${{ runner.temp }}/orchard-recovered/
+          retention-days: 3
           if-no-files-found: error
-# Acquisition only; no firmware or emulator tests. Strict rendering runs locally.
+# Source recovery only. No emulator execution, firmware or credentials exported.
