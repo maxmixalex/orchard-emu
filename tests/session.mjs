@@ -1,7 +1,16 @@
 // SPDX-License-Identifier: MIT
 import assert from 'node:assert/strict';
 import { Worker } from 'node:worker_threads';
+import { readFile } from 'node:fs/promises';
 import { encodeSession, decodeSession, MAX_SESSION_BYTES } from '../dist/session.js';
+// Structural guard for the independently rendered narrow-screen layout.
+// This checks the shipped selector contract, not browser layout or click behavior.
+const html=await readFile(new URL('../dist/index.html',import.meta.url),'utf8');
+const css=await readFile(new URL('../dist/calculator.css',import.meta.url),'utf8');
+assert.match(html,/<div class="actions session-actions"><button id="save-session"/);
+assert.match(css,/\.actions:not\(\.session-actions\)\{grid-column:2;grid-row:2\}/);
+assert.match(css,/\.session-actions\{grid-column:1\/-1;grid-row:4\}/);
+assert.match(css,/#open\{grid-column:1\/-1;grid-row:3\}/);
 const state=Uint8Array.from({length:4096},(_,i)=>i%251);
 const meta={model:1,romHash:'a'.repeat(64),preset:'hp39-home',frameView:1,state};
 const encoded=await encodeSession(meta), decoded=await decodeSession(encoded.buffer);

@@ -85,3 +85,11 @@ Actual browser-origin testing remains unavailable: the installed Chromium
 still rejects the local HTTP origin with `ERR_BLOCKED_BY_ADMINISTRATOR`.
 Its policy was not modified. Node Worker/envelope tests are not file-picker,
 real download, touch, background-tab or sustained browser E2E acceptance.
+
+The initial added button group collided with Pause/Restart on narrow screens
+because both inherited a fixed grid cell. The dedicated session row fixes
+that overlap. Offline Chromium HTML/CSS checks at 320, 390 and 720 pixels
+reproduced the old collision; the corrected layout at those widths and 1360
+pixels has no control overlap or horizontal overflow. The shipped selector
+contract is guarded in `tests/session.mjs`. This offline rendering does not
+replace the still-open browser-origin/file-picker interaction gate.
