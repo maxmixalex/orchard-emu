@@ -1,0 +1,80 @@
+name: Transport verified settings and timing source
+on:
+  push:
+    branches: [transport/settings-timing-20261003]
+    paths: [.github/workflows/transport-settings-timing.yml]
+permissions:
+  contents: write
+jobs:
+  transport:
+    runs-on: home-docker
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+      - name: Reconstruct exact locally tested source
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DELTA="$RUNNER_TEMP/orchard-settings-timing.xz"
+          python3 - <<'PY'
+          import hashlib, os
+          from pathlib import Path
+          root = Path('_source-transport')
+          assert len(list(root.iterdir())) == 6
+          data = b''.join((root / f'part-{i}').read_bytes() for i in range(6))
+          assert len(data) == 36896
+          assert hashlib.sha256(data).hexdigest() == '8db0493e1ca67f1a403df350bd690a5ccdcb0c206d7db338ea0bc2fb66e7dddc'
+          Path(os.environ['DELTA']).write_bytes(data)
+          PY
+          git checkout --detach 0b16b6bdae5fab290ade09afb93d9cf300905569
+          python3 - <<'PY'
+          import hashlib, json, lzma, os, subprocess
+          from pathlib import Path, PurePosixPath
+          data = Path(os.environ['DELTA']).read_bytes()
+          assert hashlib.sha256(data).hexdigest() == '8db0493e1ca67f1a403df350bd690a5ccdcb0c206d7db338ea0bc2fb66e7dddc'
+          decoder = lzma.LZMADecompressor(memlimit=128 * 1024 * 1024)
+          raw = decoder.decompress(data, max_length=1000001)
+          assert decoder.eof and not decoder.unused_data and len(raw) <= 1000000
+          manifest = json.loads(raw)
+          assert manifest['schema'] == 1
+          assert manifest['base'] == '0b16b6bdae5fab290ade09afb93d9cf300905569'
+          assert manifest['base_tree'] == '833c1fd55354fb7c794fc20de9b76517d75f10c2'
+          assert manifest['tree'] == '0273e42e9662a943c02562c0ab5fc6a0357f372b'
+          assert subprocess.check_output(['git', 'write-tree'], text=True).strip() == manifest['base_tree']
+          assert len(manifest['changes']) == 33
+          seen = set()
+          for item in manifest['changes']:
+              name = item['path']; rel = PurePosixPath(name)
+              assert not rel.is_absolute() and '..' not in rel.parts and '.git' not in rel.parts and name not in seen
+              assert not name.startswith('.github/')
+              seen.add(name)
+              path = Path(name)
+              assert not path.is_symlink() and not any(p.is_symlink() for p in path.parents)
+              old = path.read_bytes() if path.exists() else None
+              assert (hashlib.sha256(old).hexdigest() if old is not None else None) == item['old'], name
+              lines = (old or b'').decode('utf-8').splitlines(keepends=True)
+              end = len(lines)
+              for start, stop, value in reversed(item['edits']):
+                  assert 0 <= start <= stop <= end and isinstance(value, str)
+                  lines[start:stop] = value.splitlines(keepends=True)
+                  end = start
+              result = ''.join(lines).encode('utf-8')
+              assert hashlib.sha256(result).hexdigest() == item['new'], name
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(result)
+          subprocess.run(['git', 'add', '--', *sorted(seen)], check=True)
+          assert subprocess.check_output(['git', 'write-tree'], text=True).strip() == manifest['tree']
+          print('All 33 source hashes and final tree verified')
+          PY
+          git diff --cached --check
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit \
+            -m 'feat: add configurable calculator UX, pacing, autosave and virtual links' \
+            -m 'Add modal settings, exclusive skin/traditional views, viewport zoom, editable ordered physical key mappings, configurable blur/hidden pause, localStorage autosave and timestamped .ord files. Expose bounded UART and packet-level USB controls; retain guest descriptors and explicit protocol limitations. Keep user-facing controls separate from the debug workbench.' \
+            -m 'Pace the existing functional timebase instead of running user time at unlimited host throughput. Preserve explicit unlimited mode and cap catch-up. Optimize only quiet WFI spans, retaining event and interrupt precision. Validate shorter model-specific taps against genuine firmware and document the rejected HP39 schedule that dropped multiply.' \
+            -m 'Locally validated before publication: 436387 assertions per native/test-WASM host, eleven Release/reference/optimized-sanitizer suites, 34 clean analysis units, 17075 Unicorn cases and settings/Worker/session/connection/skin/publication checks. Both original-NOR cold arithmetic and checkpoint continuation replay. New virtual host enumerates the original 50g boot region; UART uses a generated ARM echo guest. Offline layouts are not browser-origin E2E. Physical clock calibration, stock file transfer and IrDA implementation remain open. No firmware, private sessions, fonts or reference-emulator implementation included.'
+          git push origin HEAD:refs/heads/integration/settings-timing-20261003
+          git rev-parse HEAD HEAD^{tree}
+# Data-only source transport; no firmware acquisition or emulator execution.
+# This branch is excluded from the clean integration commit's ancestry.
