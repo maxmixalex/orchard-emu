@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 2
+          fetch-depth: 3
       - name: Reconstruct locally verified source and publish staging ref
         shell: bash
         run: |
@@ -71,6 +71,9 @@ jobs:
           assert subprocess.check_output(['git', 'write-tree'], text=True).strip() == manifest['tree']
           print('43 source files verified; target tree', manifest['tree'])
           PY
+          # Workflow edits are applied separately by the authorized connector.
+          git restore --source=6372cbe021713a6523551ec604af65a244dc44e9 --staged --worktree .github/workflows/build.yml
+          test "$(git write-tree)" = 'b5c38fd73b665a9c59bc4f84de0014c0cdea7b18'
           git diff --cached --check
           git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit \
             -m 'feat: reconcile conditional HP48 HOME and expose web research controls' \
