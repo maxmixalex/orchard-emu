@@ -61,7 +61,8 @@ in-flight ADC completion, continued execution, banked registers, internal and
 external RAM, circular UART queues and partly consumed USB FIFOs. They reject
 wrong ROMs, damaged/truncated files, every changed header byte, bad versions,
 noncanonical booleans and invalid queue cursors even with a repaired checksum.
-The current suite has **757 assertions per host**. Browser-envelope and
+The current suite has **769 assertions per host**, including independent bitwise
+verification of both CRC fields on all six models. Browser-envelope and
 production Worker tests cover save/import/continued execution, exact ROM
 binding, corrupted payloads and stale-generation isolation.
 
@@ -131,3 +132,15 @@ The default is off. Neither settings nor autosave records enter deployed
 assets. The [Web Storage specification](https://html.spec.whatwg.org/multipage/webstorage.html)
 does not guarantee locking between agents; the
 [Storage standard](https://storage.spec.whatwg.org/) describes quotas and eviction.
+
+## Checksum cost
+
+The current implementation uses a byte-table form of the same reflected CRC32
+recurrence. It still reads and validates the complete NOR and serialized payload
+on every operation; no stale identity cache is introduced. The wire format is
+unchanged and checkpoints compare byte-for-byte with the previous implementation.
+An interleaved local benchmark reduced core save/import times by roughly a third;
+see [the validation record](validation.md#faster-checkpoints-unchanged-format).
+This reduces the synchronous Worker copy/checksum interval, not every source of
+browser/storage latency. CRC32 and the envelope hashes are integrity checks, not
+authentication.

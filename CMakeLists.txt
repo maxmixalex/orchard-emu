@@ -120,7 +120,9 @@ else()
   foreach(target IN LISTS orchard_checked_targets)
     target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic -Werror)
     if(ORCHARD_SANITIZE)
-      target_compile_options(${target} PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
+      # Keep sanitizer code instrumented with symbols and Release-active tests.
+      # Clang recommends O1+; O0 made bounded CRC/scheduler workloads time out.
+      target_compile_options(${target} PRIVATE -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer)
       target_link_options(${target} PRIVATE -fsanitize=address,undefined)
     endif()
   endforeach()

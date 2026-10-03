@@ -15,6 +15,9 @@ accepted revision, Build/Pages runs and post-publication verification.
 - [x] Opt-in bounded localStorage autosave, modal restore/confirm and quota/conflict handling.
 - [x] User UART stream and bounded USB host; original bootloader descriptors observed, stock file protocols still open.
 - [x] IR/IrDA assessment with primary sources, not a claimed implementation.
+- [x] Byte-table checkpoint CRC with unchanged format/full validation; independent checks on all six model capacities.
+- [x] Production Pacer + WASM RTC comparison across rates and host partitions.
+- [x] Explicit optimized sanitizer targets; all eleven suites pass locally within the original timeout limits.
 
 ## Next
 
@@ -28,3 +31,10 @@ accepted revision, Build/Pages runs and post-publication verification.
 Do not infer all-model or canonical physical-board support from skins, arithmetic,
 packet enumeration, synthetic tests or public asset availability. M0 remains
 accepted; the complete M1–M7 gates remain governed by their own witnesses.
+
+## Publication boundary
+
+Build #21 on c3e8a36 timed out in two O0 sanitizer tests, so that push did not
+publish the settings release. Its local O1/checksum follow-up is documented in
+[validation](validation.md); issue #1 records the newly observed Build, Pages
+and exact downloaded-artifact checks. Do not treat a source push as deployment.

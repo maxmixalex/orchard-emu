@@ -39,6 +39,8 @@ EXPORT("regression") unsigned regression(void){
  for(unsigned id=1;id<=6;id++){
   init(id);size_t n=orchard_checkpoint_size(&a);CHECK(n>4096+a.profile->ram_bytes&&n<600000);
   export_to(original,n);
+  CHECK(o_read_le(original+20,4)==crc(a.flash,a.profile->flash_bytes));
+  CHECK(o_read_le(original+28,4)==crc(original+32,n-32));
   CHECK(orchard_checkpoint_save(&a,a.ram,n)==ORCHARD_BAD_ARGUMENT);
   CHECK(orchard_checkpoint_save(&a,actual,n-1)==ORCHARD_BAD_ARGUMENT);
   CHECK(orchard_checkpoint_load(&a,a.ram,n)==ORCHARD_BAD_ARGUMENT);
