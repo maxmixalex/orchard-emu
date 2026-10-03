@@ -13,13 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: 2042ad8d05be5d70af2db01f9992c2b17e3e030e
+          ref: 980e1ec255f57884b26f47e8e212c7ccb60a8894
           persist-credentials: false
       - name: Export source only
         run: git archive --format=tar.gz --output="$RUNNER_TEMP/orchard-source.tar.gz" HEAD
       - uses: actions/upload-artifact@v4
         with:
-          name: orchard-source-2042ad8
+          name: orchard-source-980e1ec
           path: ${{ runner.temp }}/orchard-source.tar.gz
           retention-days: 1
           if-no-files-found: error
