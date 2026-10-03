@@ -18,7 +18,7 @@ const args = [
 const result = spawnSync(process.env.CLANG || 'clang', args, { cwd: root, stdio: 'inherit' });
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
-for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'calculator.js', 'session.js', 'calculator.css', 'catalog.js']) {
+for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'calculator.js', 'session.js', 'calculator.css', 'catalog.js', 'preferences.js', 'pacing.js', 'virtual-usb.js']) {
   await copyFile(resolve(root, 'web', file), resolve(out, file));
 }
 await copyFile(resolve(root, "LICENSE"), resolve(out, "LICENSE"));
@@ -41,8 +41,13 @@ HP39g+: at Memory Clear press the top-right key (OK).
 HP48gII: at Try To Recover Memory press the top-right key (NO), then again
 at Memory Clear (OK). Wait for HOME before typing a calculation.
 
-Use the skin keys or your computer keyboard. Switching away pauses;
-choose Resume to continue. Use Save session before restarting or closing. Load session restores its matching ROM.
+Settings select immersive/traditional view, size, keyboard sequences, focus
+policy and speed. Normal paces the functional clock; Unlimited accelerates
+both calculations and timers. Save exports <model>-YYYYMMDD-HHMMSS.ord.
+Restore accepts .ord and older .orchard files for the same ROM. Automatic
+localStorage saves are opt-in and do not store the ROM; keep exported backups.
+Connections exposes an internal serial stream and a virtual USB host. It is
+not host-OS device enumeration or a complete calculator file-transfer client.
 The beta supports two tested firmware versions, not all six target models.
 The developer workbench is debug.html. It retains strict hardware mode,
 research setup selectors, registers, counters, UART and diagnostics. Both

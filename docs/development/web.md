@@ -1,92 +1,68 @@
-# Browser calculator and developer workbench
+# Browser calculator
 
-**[Open calculator](https://zyf722.github.io/orchard-emu/emulator/)** ·
+[Open calculator](https://zyf722.github.io/orchard-emu/emulator/) ·
 [Developer workbench](https://zyf722.github.io/orchard-emu/emulator/debug.html)
 
-The ordinary page is for calculator use. Click **Open ROM** and select a
-supported complete ROM file. Its identity selects HP39g+ D1.55 or HP48gII and
-the corresponding compatibility settings automatically; there is no separate
-boot-setup question. The page starts the calculator when visible and focused.
-Unknown ROM versions and partial update files are rejected rather than being
-assigned an inappropriate profile. Files stay in the browser; none is bundled
-or uploaded. Other four target models are not presented as working calculators.
+The user page identifies the two supported complete ROMs automatically. It
+shows Open ROM, Pause/Resume, Restart, Save/Restore, Connections and Settings;
+CPU registers, boot presets and implementation counters stay in the workbench.
+The viewport-filling workspace switches between immersive outlined skin and
+traditional LCD/HTML keys in Settings, not a duplicate text keypad. Help is a
+question-button tooltip; confirmations and errors use native modal dialogs.
 
-For HP39g+, press the top-right soft key (OK) at **Memory Clear**. HP48gII first
-asks **Try To Recover Memory?**: the top-right key selects NO, then selects OK
-at Memory Clear. Wait for HOME, then use the physical skin or computer numbers,
-operators, arrows, F1–F6, Backspace and Enter. The page does not recognize screens
-or automatically dismiss firmware prompts. A text-keypad fallback is available.
+Settings configure scale, blur/background policies, speed, model-specific
+physical-key sequences and optional localStorage autosave. See
+[interaction and clock boundaries](interaction.md) and [sessions](sessions.md).
+Normal is paced to the existing functional timebase; it is not a measured
+ARM920T instruction/clock calibration. Other rates are explicit.
 
-**Pause/Resume** keeps the current machine in this tab. **Restart** and changing
-models clear the calculator memory and ask for confirmation when appropriate.
-**Save session** exports the paused machine without its ROM. After reopening
-the same ROM, **Load session** restores it; Resume continues from the saved
-point. Changes are not autosaved. See [sessions](sessions.md) for compatibility
-and integrity boundaries. Blur/hidden/pagehide pause and release queued
-keys, and returning does not automatically resume. A cached page retains its
-Worker instead of returning with a terminated core. These are not warm reset
-or battery-backed persistence.
+Connections now exposes virtual UART bytes and a bounded USB host that reads
+actual guest descriptors. It is not a physical PC device or a completed HP
+file/object-transfer client; see [virtual links](virtual-link.md). IR is
+[evaluated separately](infrared.md), not advertised as implemented.
 
-## Developer interface
+## Build and use
 
-`debug.html` is a separate entrypoint using the same core, skins and key input.
-It retains all six models, seven finishes, strict mode and the two experimental
-HOME configurations, CPU state, internal counters, LCD interpretation, UART
-bytes and paused diagnostic export. See [performance](performance.md) for the
-shared execution and separate Worker payload contracts. No research selector
-or register table is merely CSS-hidden in the user page.
+Build with Python 3, Node.js 22+, Clang and wasm-ld using `npm run build`;
+`npm run dev` serves the result on loopback, normally port 8123. The compiled
+ZIP needs only Node.js: extract and run `node serve.mjs`. No npm packages or
+ROMs are included. Use HTTP on localhost or HTTPS, not file URLs.
 
-The supported HOME configurations still carry exactly the documented
-[NOR/SRAM/LCD assumptions](startup.md) and the separate
-[HP39g+ configuration](hp39-startup.md). Their promotion to an automatically
-selected user configuration is a UX change, not physical-board certification.
-The user page says Beta; the detailed uncertainty remains in this workbench
-and the documentation, not repeated beside every key press.
+Open the original full NOR. On HP39g+, acknowledge Memory Clear with F6/OK;
+on HP48gII first choose F6/NO at Try To Recover Memory, then F6/OK. These are
+guest screens, not host-detected states. Restart clears memory; a saved HOME
+session can be restored instead. Both main thread and Worker bind the image
+to the documented hash. The displayed Beta is not an all-model support claim.
 
-## Build and offline use
+## Ownership, rendering and lifecycle
 
-Source builds need Python 3, Node.js 22+, Clang and wasm-ld. No npm dependency
-installation is required:
+One Worker owns CPU and peripheral state. Its user pump runs bounded 1024-tick
+calls in tasks capped around 6 ms, independently draining UART and polling the
+USB host; user frame delivery is limited to about 30 Hz. Unchanged LCD pixels
+reuse their ImageData and do not repaint. Unchanged key/annunciator attributes
+are not rewritten. Debug snapshots retain their existing state layout.
 
-```sh
-npm run build
-npm run dev
-```
+Key macros are atomic bounded queues of switch transitions. Blur/hidden always
+release keys even when pause is disabled. Pagehide pauses for safe cache return;
+persisted pageshow does not automatically resume. Generation IDs reject old
+ROM reads, snapshots, saves and restores. Private ROMs are never uploaded.
 
-Extracted production ZIPs only need Node 22+: run `node serve.mjs` and open the
-printed loopback URL (default port 8123). `debug.html` opens the workbench at
-the same origin. Do not use `file://`. All skins, scripts and WASM are local
-or same-origin; artwork retains its separate Apache-2.0 attribution.
+Seven skins retain Apache-2.0 attribution separately from the original MIT
+core. Both matrix and guest-driven annunciator strip share the same data in
+either view. Packed-LSB remains an explicit compatibility interpretation, not
+an independently verified physical panel model. See [skins](skins-segments.md).
 
-## Timing, input and display
+## Publication and verification
 
-One Worker owns the ARM machine. Short 256-tick core calls are batched into
-bounded tasks; UART is drained after each call and frame updates are throttled
-independently. The optimized Worker no longer copies a debugger snapshot on
-every call. All successful budget counters remain exact; stopping reads back
-actual state. Physical taps still use 2 million guest ticks down and a
-2-million-tick release gap, with a maximum of 32 queued taps. No host text-paste
-or calculator shortcut substitutes for guest input.
+Build runs native/reference/sanitizer and production-module checks, strict
+Zensical rendering and publication allowlists, then creates one tested site.
+Pages promotes the exact successful current-main artifact, checks source and
+hashes, and verifies all public HTTPS assets. It never recompiles during deploy.
+Tests, firmware, saved sessions, reports and fonts are excluded.
 
-The separate annunciator strip reads guest display samples. Shift/Alpha
-changes are independently observed on the two original systems; remaining
-physical routing is provisional. The LCD is inset inside the rounded glass.
-Details are in [skins and segments](skins-segments.md).
-
-## Validation and publication
-
-Existing `test:web` exercises the unchanged production Worker through a Node
-browser-global adapter. `test:calculator` checks entrypoint separation, the
-compatibility catalog and minimal user payload; skin and lifecycle suites are
-separate. They do not imply an actual browser file-picker/focus/touch pass.
-The current environment's Chromium navigation still returns
-`ERR_BLOCKED_BY_ADMINISTRATOR`; no policy was changed. Desktop/mobile layout
-was inspected with application scripts removed and local art inlined. That
-is static layout verification, not interactive browser E2E.
-
-Build tests and strictly renders the complete site once, then produces
-`orchard-pages`. Pages accepts only that successful, same-repository current-
-main Build, verifies source stamps and all allowlisted asset hashes, deploys,
-and checks published HTTPS assets. Both frontends use the identical WASM
-in the downloaded ZIP and the website. A changed UI does not acquire a different
-interpreter or silently weaker correctness settings.
+Node tests use the unmodified production Worker through browser-global/asset
+adapters. Preference, macro, pacing, storage and connection tests complement
+those. Offline Chromium layout checks do not execute application modules.
+Actual localhost-origin navigation still returns ERR_BLOCKED_BY_ADMINISTRATOR
+here; no policy was modified. No real file-picker, focus/touch/background,
+localStorage persistence or end-to-end browser acceptance is claimed.

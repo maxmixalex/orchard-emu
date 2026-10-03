@@ -1,5 +1,50 @@
 # Validation
 
+## Settings, pacing and connection continuation on 0b16b6b
+
+Local Release and retained-reference eleven-suite builds pass. Native and
+test-WASM now run **436,387 assertions each**, including 6,208 additional WFI
+quiet-window/reference comparisons. Eleven optimized ASan/UBSan suites pass;
+the unoptimized local Debug sanitizer attempt exceeded the existing 30-second
+limits in checkpoint/scheduler tests, not reported as a pass. No timeout budget
+was enlarged to hide that outcome. Remote Debug acceptance is recorded separately.
+The independent Unicorn corpus passes 17,075 cases with no mismatch or skip.
+Clang static analysis produced 34 separate clean reports.
+
+All existing production guests and Worker/calculator/skin/publication checks
+pass. New ROM-free tests cover preference validation, atomic eight-tap macros,
+pacing at three rates/chunk sizes, bounded catch-up, slow hosts, configurable
+release/pause, local-save size/format/quota/conflict handling, .ord filename
+naming, generated ARM USB enumeration and actual guest UART echo. A production
+Worker automatic snapshot is restored successfully and does not pause its
+uninterrupted source machine.
+
+Both complete fixed original-NOR arithmetic witnesses were rerun: two native
+and two production-WASM cold starts per model reproduce the established frame
+hashes and state comparisons. The existing checkpoint continuation probe also
+passes on both, including native import of a WASM checkpoint. These remain
+local firmware experiments with the prior board/LCD assumptions.
+
+The first 600k/360k HP39 tap trial loses multiply (`78` rather than `7*8`);
+intermediate pairs also fail phase variation. The retained 1.5M/0.9M pair
+passes eight starts. HP48's 0.6M/0.36M pair passes eight starts. The optional
+`probe-interaction.mjs` cold-starts both with those taps and obtains the exact
+reference arithmetic frames; HP39 ALPHA then VARS visibly enters A. These are
+not tests of every key or every prior Alpha-lock state.
+
+The unchanged new user USB host was separately run on the original HP50g
+bootloader with its declared pad/keyboard conditions. It reads 03F0:0121,
+HP Company, HPx9G+ Device, and two 64-byte bulk endpoint descriptors. It is
+not a full-ROM system, stock file transfer, or a fix for GET_CONFIGURATION.
+
+Offline HTML/CSS checks pass 16 width/view/zoom cases and twelve modal bounds
+cases. The live production HTTP origin remains blocked by Chromium policy.
+No real browser file-picker/localStorage/download/touch/focus E2E is claimed.
+New Markdown strict rendering and GitHub/Pages acceptance must be observed
+separately; issue #1 holds the accepted revision and exact run/artifact IDs.
+
+## Historical evidence
+
 ## Scheduler and sessions after 980e1ec
 
 Local Release, sanitizer and reference runs use eleven CTest suites. The

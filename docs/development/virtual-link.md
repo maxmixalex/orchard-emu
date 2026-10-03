@@ -1,5 +1,31 @@
 # Virtual PC connectivity
 
+## User connection panel
+
+Connections in the user page now exposes a bounded UART0 byte stream and
+in-process USB host. UART receive bytes and actual guest transmit bytes are
+shown in a capped log; partial queue acceptance reports the accepted count.
+USB connect runs bus reset, EP0 descriptor reads, SET_ADDRESS and configuration
+using guest FIFO responses. Metadata is never invented from a model selector.
+NAK/no response is retried within a virtual-time deadline, while STALL and
+unsupported operations are reported. Bulk operations send/read individual
+packets only and preserve controller ACK/toggle behavior.
+
+The new production host was locally exercised with the original HP50g
+boot-only fixture and existing explicit GPIO/keyboard conditions. It reads
+VID:PID 03F0:0121, HP Company, HPx9G+ Device and bulk endpoints 81/03 with
+64-byte packets. This is the bootloader recovery mode, not an original OS
+file-transfer witness or a newly enabled user-model preset. Enter an applicable
+guest transfer mode before connecting; unsupported modes time out visibly.
+The original GET_CONFIGURATION NAK counterexample is not resolved by this host,
+which does not issue that request during enumeration.
+
+The page creates no OS USB/serial device and does not invoke WebUSB/WebSerial
+to access real hardware. Conn3x interoperation and HP typed-file/object protocol
+remain open. Serial routing, FIFO timing and physical board connectors remain
+separate from the UART0 host queue. Restoring a session disconnects host links.
+See the [infrared assessment](infrared.md) for the next independent transport.
+
 ## Three different meanings
 
 A usable link can exist at three different levels. Keep them separately named:

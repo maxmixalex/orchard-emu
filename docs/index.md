@@ -29,3 +29,8 @@ pinned hp-calcs-svg artwork and local full-NOR selection.
 and arithmetic witness without SRAM mirroring.
 [Skins and status segments](development/skins-segments.md) describes the
 separate guest-driven annunciator strip and the remaining mapping limits.
+
+The current [user interaction guide](development/interaction.md) covers settings,
+physical macros, pacing and lifecycle. [Sessions](development/sessions.md)
+covers manual and opt-in automatic saves; [connections](development/virtual-link.md)
+separates byte/packet exchange from stock protocols and OS device bridging.

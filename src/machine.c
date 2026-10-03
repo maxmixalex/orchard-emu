@@ -90,6 +90,17 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled) {
     if (!m) return (orchard_stop){.status = ORCHARD_BAD_ARGUMENT};
     if (!m->loaded) return (orchard_stop){.status = ORCHARD_NO_ROM};
     for (uint32_t i = 0; i < budget && m->stop.status == ORCHARD_OK; ++i) {
+        /* A sleeping CPU executes no instruction. Only cross an interval
+           already proven free of peripheral transitions, and never postpone
+           a wake request or a latched, unmasked CPU interrupt. */
+        if (scheduled && m->quiet_left && m->cpu.sleeping &&
+            !(m->soc.srcpnd & ~m->soc.intmsk) &&
+            (!m->soc.intpnd || (m->cpu.cpsr & O_I))) {
+            uint32_t n = m->quiet_left < budget - i ? m->quiet_left : budget - i;
+            m->quiet_left -= n; m->deferred_ticks += n; m->ticks += n;
+            i += n - 1u;
+            continue;
+        }
         ++m->ticks;
         if (scheduled && m->quiet_left) {
             --m->quiet_left;

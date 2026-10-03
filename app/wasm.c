@@ -188,3 +188,6 @@ EXPORT("checkpoint_load") unsigned web_checkpoint_load(unsigned length) {
     if(length>sizeof(checkpoint_bytes))return ORCHARD_BAD_ARGUMENT;
     return orchard_checkpoint_load(&machine,checkpoint_bytes,length);
 }
+
+/* Provisional virtual timebase shared by RTC and the user host pacer. */
+EXPORT("timebase_hz") unsigned web_timebase_hz(void) { return O_FUNCTIONAL_TIMEBASE_HZ; }

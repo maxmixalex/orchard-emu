@@ -2,10 +2,12 @@
 
 ## Calculator use
 
-**Save session** pauses the calculator, releases queued/held host keys and
-exports a local `.orchard` file. Keep the file downloaded by the browser.
-The page does not autosave, and it does not persist the ROM. To resume later,
-open the same original ROM and choose **Load session**, then **Resume**.
+**Save** pauses the calculator, releases queued/held host keys and
+exports `<model>-<yyyymmdd-hhmmss>.ord`, using local wall time for the filename
+only. Legacy `.orchard` files are still accepted: the validated format is
+unchanged. Keep the exported backup. To resume later, open the same original
+ROM and choose **Restore**, then **Resume**. Optional automatic local saves
+are described below; the ROM is never persisted.
 Restoring a saved HOME session avoids repeating cold boot and its prompts.
 Restart still clears the current RAM; it does not delete exported files.
 
@@ -45,7 +47,7 @@ architectural changes must bump the format version or supply an explicit
 migration. Do not silently accept a different layout. This first format has
 no old-version migration requirement.
 
-The Worker pauses before encoding/import, binds asynchronous results to a
+For manual save and every import the Worker pauses first, binds asynchronous results to a
 machine generation and operation token, and leaves restored machines paused.
 Its host input queue is empty on import; physical inputs are released rather
 than resurrecting a stuck browser key. A failed import leaves the current
@@ -93,3 +95,39 @@ reproduced the old collision; the corrected layout at those widths and 1360
 pixels has no control overlap or horizontal overflow. The shipped selector
 contract is guarded in `tests/session.mjs`. This offline rendering does not
 replace the still-open browser-origin/file-picker interaction gate.
+
+## Opt-in automatic saves
+
+Settings / Storage enables localStorage snapshots at a chosen interval. One
+latest envelope per exact supported-ROM hash is stored under Orchard's own
+prefix. An automatic copy is taken only between core runs with no queued/held
+host keys or active EP0 job. Unlike manual export it does not pause execution
+or clear an input sequence. Hashing occurs on a copied buffer, and every async
+completion is guarded by model generation, operation and request identity.
+
+The next load of that same ROM offers Restore or Start new in a modal. Escape
+dismissal preserves the old save and stays paused with autosave blocked, rather
+than silently overwriting it. Selecting another ROM never imports the old one.
+Import validates the existing state/envelope and leaves execution paused.
+Host USB links are detached and serial subscriptions cleared: a restored core
+state is not restoration of another program's USB transactions.
+
+Each complete record uses one setItem operation. Web Locks serialize saves
+when supported, with a compare-token check and storage-event detection of
+foreign-tab updates. Without Web Locks the token check is best effort, not a
+cross-tab atomic lock. A conflict stops autosave rather than intentionally
+replacing another tab's latest snapshot. Quota/access failures are visible,
+leave the preceding complete record intact, and do not disable manual export.
+Deleting local saves touches only Orchard's own prefix and asks confirmation.
+
+localStorage is synchronous and capacity/eviction policies belong to the
+browser. Saves are therefore infrequent, not per animation frame. Periodic
+copies are the primary safety net: a pagehide-triggered asynchronous snapshot
+is best effort and may not finish before the document is frozen or closed.
+No claim of zero-loss shutdown is made. Private/incognito storage may be
+unavailable or cleared, and saved calculator data remains private user data.
+
+The default is off. Neither settings nor autosave records enter deployed
+assets. The [Web Storage specification](https://html.spec.whatwg.org/multipage/webstorage.html)
+does not guarantee locking between agents; the
+[Storage standard](https://storage.spec.whatwg.org/) describes quotas and eviction.

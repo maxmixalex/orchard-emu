@@ -3,9 +3,11 @@
 ## User interface
 
 `/emulator/` is the calculator. It contains model selection, Open ROM,
-Pause/Resume, Restart, the physical skin/keypad and a short startup guide.
+Pause/Resume, Restart, Save/Restore, Connections and Settings. The view is
+immersive skin or traditional LCD/keys; help is a tooltip.
 It has no boot-setup picker, CPU register table, tick counter, SRAM/LCD
-research counters, UART console or instruction trace. The two supported NOR
+research counters or instruction trace. Raw connection bytes are confined to
+the connection dialog, not a permanent debug console. The two supported NOR
 identities select the existing model-specific compatibility configuration
 automatically. Other target models are marked unavailable in this interface.
 Unrecognized firmware is rejected with a user-facing explanation, not silently
@@ -14,7 +16,7 @@ assigned the settings of a different ROM. The Worker verifies the hash too.
 `/emulator/debug.html` retains the developer workbench, including strict mode,
 experimental configurations, every model/finish, registers, counters, UART,
 LCD interpretation and diagnostics. Both entrypoints share the same ARM core,
-physical-key mapping, firmware data, skins and lifecycle behavior. They are
+physical-key mapping, firmware data, skins and architectural state. Lifecycle and pacing policies are audience-specific. They are
 not separate emulators. The ordinary page remains a beta: hiding engineering
 controls does not promote unmeasured hardware behavior to physical validation.
 
@@ -268,3 +270,32 @@ machines twice natively and twice in production WASM. These times are not
 early-HOME latency, a confidence interval, browser FPS or a real-device ratio.
 The new session feature separately avoids repeating startup; it is not counted
 as an execution speedup. Reprofile CPU decode/dispatch before the next change.
+
+## Pacing and bounded waiting after 0b16b6b
+
+The unlimited user Worker coupled emulated timer speed to host throughput.
+Normal now limits deterministic execution to the existing 12M-quanta reference
+per wall second; faster/slower/unlimited modes are explicit. See
+[interaction](interaction.md). A speed cap is not an interpreter performance
+regression, nor evidence of a fully calibrated physical clock. Slow hosts may
+still fall behind. No guest computation is skipped to maintain wall time.
+
+The new core fast path skips only CPU-WFI quanta strictly within a scheduler
+interval already known to contain no external transition and no pending CPU
+wakeup/IRQ. It advances the same deferred peripheral phases and ticks, then
+uses the existing full step at the event boundary. It never skips an ARM
+instruction. 6,208 additional comparisons cover partitioned budgets, phases,
+mask/pending IRQ/FIQ and sleeping state against the retained per-tick path.
+The native/test-WASM scheduler suite is now 28,090 assertions.
+
+A generated 12M-quanta WFI guest compared old/new implementations with identical
+complete checkpoint bytes. Its tiny idle workload is not a useful general
+HOME speed ratio; no new overall HOME acceleration percentage is claimed.
+The new user renderer avoids unchanged pixel/key/segment DOM work, reuses
+ImageData and drains up to 1024-quanta execution slices in bounded 6 ms tasks.
+
+Input latency cannot safely be improved by arbitrary hold/gap cuts: the first
+HP39 trial lost multiply and other candidate timings failed phase variation.
+The retained per-model timings reproduce the two reference calculations at
+eight start phases each. Clock-domain calibration, a broader key survey and
+decoded-block/JIT work remain distinct open tasks.

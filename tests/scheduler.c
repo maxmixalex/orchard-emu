@@ -90,6 +90,18 @@ EXPORT("regression") unsigned regression(void) {
     init();a->cpu.sleeping=true;*b=*a;
     for(unsigned i=0;i<100;i++)compare(i*37);
     CHECK(a->cpu.instructions==0);
+    /* Sleeping skips stop BEFORE an IRQ/FIQ or a latched CPU request. Test
+       wake acceptance, masked sources, budget partitions and all phases. */
+    for(unsigned mode=0;mode<4;mode++) for(unsigned phase=0;phase<16;phase++) {
+        init();a->cpu.sleeping=true;a->soc.wtcon=32|4;a->soc.wtphase=phase;
+        a->soc.wtcnt=2;a->soc.wtdat=3;a->soc.intmsk=~(1u<<9);
+        if(mode==0)a->cpu.cpsr &= ~O_I;
+        if(mode==1){a->cpu.cpsr &= ~O_F;a->soc.intmod=1u<<9;}
+        if(mode==2){a->cpu.cpsr &= ~O_I;a->soc.intpnd=1u<<9;}
+        if(mode==3)a->soc.intmsk=UINT32_MAX;
+        *b=*a;
+        for(unsigned part=1;part<=16;part++)compare(part);
+    }
     return failures;
 }
 EXPORT("checks") unsigned get_checks(void){return checks;}

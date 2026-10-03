@@ -104,3 +104,25 @@ to the ROM identity and imports atomically. Schema changes require versioning.
 Do not describe this as automatic storage, native warm reset or a completed
 browser file-picker/download test. Continue broader original-OS use, physical
 hardware validation and decoded CPU work without blocking on deferred dumps.
+
+## Settings / timing continuation on 0b16b6b
+
+The ordinary UI has been refactored into a viewport workspace and native modal
+settings/connection controls. `preferences.js` owns validated per-model mapping
+and optional localStorage records; `pacing.js` owns wall-time credit only;
+`virtual-usb.js` advances an actual bounded EP0/packet host without running CPU
+instructions itself. Debug stays unlimited with historical physical-tap timing.
+The user Worker uses model-specific validated taps; avoid undoing the HP39
+longer dwell after the short multiply-loss counterexample.
+
+Core changes are deliberately small: one functional-timebase export and a
+reference-tested WFI skip inside already-known quiet windows. The clock-rate
+fix is not a calibrated PLL or invented cursor overlay. Physical clock-domain
+work remains pending. Raw UART/USB controls are not Conn3x/file transfer.
+
+Autosave copies between core runs, does not interrupt active taps/EP0 jobs,
+never includes ROM and guards stale async results. Exit saving is best effort.
+No private session, ROM or report is added to source or Pages. Re-run actual
+production Worker tests, real-NOR short-key and fixed startup witnesses, and
+then verify the accepted CI artifact. Documentation and issue #1 must retain
+the separation of local checks, remote builds, asset deployment and browser E2E.

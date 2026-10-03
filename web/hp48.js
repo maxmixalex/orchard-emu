@@ -59,6 +59,11 @@ export class TapQueue {
     if (this.queue.length + (this.active !== null ? 1 : 0) >= 32) throw new Error('Key queue full; wait for the pending taps.');
     this.queue.push(scan);
   }
+  pushMany(scans) {
+    if (!Array.isArray(scans) || !scans.length || scans.length > 8 || scans.some(s => !KEYS.has(s))) throw new Error('Invalid key sequence');
+    if (this.pending + scans.length > 32) throw new Error('Key queue full; wait for the pending taps.');
+    this.queue.push(...scans);
+  }
   update(tick) {
     if (this.active !== null && tick >= this.releaseAt) {
       this.change(this.active, false, tick); this.active = null; this.readyAt = tick + this.gap;

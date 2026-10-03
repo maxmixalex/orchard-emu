@@ -83,3 +83,17 @@ or deploy a failed/superseded Build.
 trademarks. No external emulator implementation, firmware or font file is bundled.
 Outlined calculator art is separately Apache-2.0, with its LICENSE/NOTICE
 in `licenses/hp-calcs-svg`; see [licensing](docs/development/licensing.md).
+
+## Settings and connections
+
+Settings switches immersive/traditional view, scale, pause-on-focus/background,
+per-model key sequences and optional automatic local saves. Normal uses a
+fixed functional time rate instead of running clocks at maximum host speed;
+physical timing is still being refined. CPU research details stay in the
+developer workbench. Save exports `<model>-<yyyymmdd-hhmmss>.ord`; Restore also
+accepts earlier `.orchard` files. No ROM is stored or uploaded.
+
+Connections exposes virtual UART bytes and USB guest descriptors/individual
+packets, not a PC device or complete HP file-transfer client. See
+[interaction](docs/development/interaction.md), [sessions](docs/development/sessions.md),
+and [the infrared assessment](docs/development/infrared.md).

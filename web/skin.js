@@ -6,7 +6,7 @@ const ATTRS=new Set(['d','x','y','width','height','rx','ry','cx','cy','r']);
 const NAMES=['I/O','Left shift','Right shift','Alpha','Battery','Busy'];
 export class SkinView {
   constructor(stage, tap) {
-    this.stage=stage;this.tap=tap;this.epoch=0;this.enabled=false;this.appliedEnabled=null;this.buttons=[];this.rgb=[194,208,202];
+    this.stage=stage;this.tap=tap;this.epoch=0;this.enabled=false;this.appliedEnabled=null;this.buttons=[];this.lastActive=-1;this.lastSegments='';this.rgb=[194,208,202];
     this.image=stage.querySelector('.skin-image');this.hits=stage.querySelector('.skin-keys');
     this.glass=stage.querySelector('.glass-overlay');this.indicators=stage.querySelectorAll('[data-segment]');
     this.manifest=fetch(new URL('skins/manifest.json',import.meta.url)).then(r=>{
@@ -16,7 +16,7 @@ export class SkinView {
     this.manifest.catch(()=>{});
   }
   async show(model,blue=false) {
-    const token=++this.epoch;this.buttons=[];this.appliedEnabled=null;this.hits.replaceChildren();this.image.hidden=true;
+    const token=++this.epoch;this.buttons=[];this.appliedEnabled=null;this.lastActive=-1;this.lastSegments='';this.hits.replaceChildren();this.image.hidden=true;
     this.glass.hidden=true;
     const manifest=await this.manifest;
     if(token!==this.epoch)return;
@@ -58,17 +58,19 @@ export class SkinView {
     for(const key of this.buttons){key.setAttribute('aria-disabled',String(!enabled));key.setAttribute('tabindex',enabled?'0':'-1');}
   }
   update(active,levels,status,model) {
-    for(const key of this.buttons)key.setAttribute('aria-pressed',String(Number(key.dataset.scan)===active));
+    if(this.lastActive!==active){for(const key of this.buttons)key.setAttribute('aria-pressed',String(Number(key.dataset.scan)===active));this.lastActive=active;}
     // Packed routing: 39g+/48gII Shift/Alpha transitions were checked against
     // original guests; the remaining labels follow recorded reference routing.
     // A visible unavailable state is distinct from six known-off segments.
     const mapped=model===1||model>=4,known=mapped&&status===0&&levels?.length===6;
-    for(const indicator of this.indicators){
+    const signature=`${model}:${known}:${Array.from(levels||[]).join(',')}`;
+    if(this.lastSegments!==signature) for(const indicator of this.indicators){
       const i=Number(indicator.dataset.segment),level=known?levels[i]:0;
       indicator.style.opacity=String(level/255);
       indicator.setAttribute('aria-label',`${model===1&&i===1?'Shift':NAMES[i]}: ${known?(level?'on':'off'):'unmapped'}`);
     }
-    this.stage.querySelector('.annunciator-strip').dataset.known=String(known);
+    if(this.lastSegments!==signature)this.stage.querySelector('.annunciator-strip').dataset.known=String(known);
+    this.lastSegments=signature;
     return !mapped?'Status segments: mapping for this model is not yet verified.':status?`Status segments unavailable (LCD format ${status}).`:'Status segments: guest data · Shift/Alpha checked on 39g+ and 48gII; other routing remains provisional.';
   }
 }

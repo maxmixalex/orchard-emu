@@ -221,3 +221,20 @@ before any peripheral event. CPU instructions and interrupt acceptance retain
 their original ordering. Every MMIO access and public run boundary synchronizes
 state. This optimizes host work, not physical hardware fidelity. Tests and
 [measurements](performance.md) compare against the accepted 980e1ec path.
+
+## Settings / pacing / local storage / connection continuation
+
+M5 adds native settings dialogs, mutually exclusive skin/traditional views,
+viewport sizing, per-model macro bindings, opt-in localStorage autosave and
+`.ord` export naming. Actual browser-origin E2E remains open. The Normal
+time governor fixes the missing wall-rate limit; it does not close M2's
+physical clock-domain calibration or certify the absolute cursor period.
+
+M6 now exposes UART bytes and guest-derived USB enumeration/individual packets
+to users. Full stock object/file transfer and an OS-level device bridge remain
+open. [Infrared](infrared.md) is assessed as useful after those protocols and
+clock foundations; no IrDA toggle is presented as a completed virtual link.
+
+Continue CPU throughput work independently of pacing. WFI quiet-interval
+skipping preserves the reference timeline and has dedicated comparisons; no
+decoded-block or JIT implementation is claimed in this slice.

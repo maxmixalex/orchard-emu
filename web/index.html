@@ -1,39 +1,28 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="color-scheme" content="light"><title>Orchard · Calculator</title>
-  <link rel="stylesheet" href="calculator.css"><link rel="icon" href="data:,">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light"><title>Orchard</title>
+<link rel="stylesheet" href="calculator.css"><link rel="icon" href="data:,">
 </head>
-<body>
-<header><a class="brand" href="./">Orchard</a><span class="beta">Beta</span><nav><a href="#help">Help</a><a href="https://zyf722.github.io/orchard-emu/">Documentation</a></nav></header>
-<main>
-  <aside class="controls" aria-label="Calculator controls">
-    <div><p class="eyebrow">YOUR CALCULATOR</p><h1 id="machine-title">HP 39g+</h1></div>
-    <label class="model-label" for="model">Model</label>
-    <select id="model" disabled>
-      <option value="1">HP 39g+</option><option value="4">HP 48gII</option>
-      <option value="2" disabled>HP 39gs · coming soon</option><option value="3" disabled>HP 40gs · coming soon</option>
-      <option value="5" disabled>HP 49g+ · coming soon</option><option value="6" disabled>HP 50g · coming soon</option>
-    </select>
-    <button id="open" class="primary" disabled>Open ROM…</button>
-    <input id="rom" type="file" accept=".bin,.rom,.raw" hidden aria-label="Open calculator ROM">
-    <p class="privacy">Your ROM stays on this device.</p>
-    <div class="actions"><button id="run" disabled>Resume</button><button id="reset" disabled>Restart</button></div>
-    <div class="actions session-actions"><button id="save-session" disabled>Save session</button><button id="load-session" disabled>Load session…</button></div>
-    <input id="session-file" type="file" accept=".orchard" hidden aria-label="Load saved session">
-    <p id="session-note" class="privacy" role="status"></p>
-    <p id="status" class="status" role="status">Loading…</p>
-    <div id="error" role="alert" hidden></div>
-    <section id="help" class="help">
-      <h2>Getting started</h2>
-      <p>Open your calculator’s complete ROM file. Its model and settings are detected automatically.</p>
-      <p id="boot-help">When “Memory Clear” appears, press the top-right key (OK).</p>
-      <p>Click the calculator keys, or use your keyboard’s numbers, operators and Enter.</p>
-      <p>Switching away pauses the calculator. Save session exports your current calculator state without its ROM. After reopening the same ROM, Load session restores your work without repeating startup. Changes are not saved automatically.</p>
-    </section>
-    <details class="text-keypad"><summary>Text keypad</summary><div id="keypad" aria-label="Calculator keys"></div></details>
-  </aside>
+<body data-view="immersive">
+<header>
+  <a class="brand" href="./">Orchard</a><span class="beta">Beta</span>
+  <label class="sr-only" for="model">Calculator</label>
+  <select id="model" disabled><option value="1">HP 39g+</option><option value="4">HP 48gII</option></select>
+  <button id="open" class="primary" disabled>Open ROM</button>
+  <div class="header-end"><span id="status" role="status">Loading…</span><div class="help-anchor">
+    <button id="help" aria-label="Help" aria-describedby="help-tip" aria-expanded="false">?</button>
+    <div id="help-tip" role="tooltip"><p>Open your complete ROM, then use the calculator keys.</p><p id="boot-help"></p></div>
+  </div><button id="settings-open">Settings</button></div>
+</header>
+<div class="toolbar" role="toolbar" aria-label="Calculator actions">
+  <div class="actions"><button id="run" disabled>Resume</button><button id="reset" disabled>Restart</button></div>
+  <div class="actions session-actions"><button id="save-session" disabled>Save</button><button id="load-session" disabled>Restore</button></div>
+  <button id="connect-open" disabled>Connections</button>
+  <span id="session-note" role="status"></span>
+</div>
+<main id="workspace">
   <section id="calculator" tabindex="0" aria-label="Calculator input">
         <div class="calculator-stage" id="skin-stage">
           <img class="skin-image" alt="Calculator skin" hidden>
@@ -50,8 +39,60 @@
             <canvas id="lcd" width="131" height="64" aria-label="Guest LCD framebuffer"></canvas>
           </div>
         </div>
+    <div id="keypad" aria-label="Calculator keys" hidden></div>
   </section>
 </main>
-<footer>Original core: <a href="LICENSE">MIT</a> · Calculator artwork: <a href="https://github.com/zyf722/hp-calcs-svg">zyf722 / hp-calcs-svg</a> (<a href="licenses/hp-calcs-svg/LICENSE.txt">Apache-2.0</a>, <a href="licenses/hp-calcs-svg/NOTICE.txt">NOTICE</a>). Unofficial; HP marks remain their owners’ property. No firmware or font files bundled. <a href="debug.html">Developer workbench</a></footer>
+<footer>
+  <span>Orchard · <a href="LICENSE">MIT</a> · <a href="debug.html">Developer</a></span>
+  <span>Artwork <a href="https://github.com/zyf722/hp-calcs-svg">hp-calcs-svg</a> · <a href="licenses/hp-calcs-svg/LICENSE.txt">Apache-2.0</a> / <a href="licenses/hp-calcs-svg/NOTICE.txt">NOTICE</a>. Unofficial; HP marks belong to their owners.</span>
+</footer>
+<input id="rom" type="file" accept=".bin,.rom,.raw" hidden aria-label="Open calculator ROM">
+<input id="session-file" type="file" accept=".ord,.orchard" hidden aria-label="Restore saved session">
+<dialog id="settings-dialog" aria-labelledby="settings-title">
+<form id="settings-form">
+  <div class="dialog-title"><h1 id="settings-title">Settings</h1><button type="button" data-close="settings-dialog" aria-label="Close settings">×</button></div>
+  <nav class="tabs" aria-label="Settings sections"><button type="button" data-tab="general" aria-pressed="true">General</button><button type="button" data-tab="keyboard" aria-pressed="false">Keyboard</button><button type="button" data-tab="storage" aria-pressed="false">Storage</button></nav>
+  <section data-panel="general">
+    <label class="field">View<select id="view-mode"><option value="immersive">Immersive</option><option value="traditional">Traditional</option></select></label>
+    <label class="field">Size <output id="zoom-value">100%</output><input id="zoom" type="range" min="50" max="180" step="5" value="100"></label>
+    <label class="check"><input id="pause-blur" type="checkbox">Pause when focus is lost</label>
+    <label class="check"><input id="pause-hidden" type="checkbox">Pause in background tabs</label>
+    <label class="field">Speed<select id="speed"><option value="0.5">Half</option><option value="1">Normal</option><option value="2">Double</option><option value="0">Unlimited</option></select></label>
+    <p class="hint">Normal uses a fixed pace; hardware timing is still being refined. Faster modes speed up the cursor and timers. Browsers may limit background tabs.</p>
+  </section>
+  <section data-panel="keyboard" hidden>
+    <p id="mapping-model" class="hint"></p>
+    <label class="field">Binding<select id="binding-list"></select></label>
+    <div class="inline"><button id="binding-new" type="button">New</button><button id="binding-delete" type="button">Remove</button><button id="binding-defaults" type="button">Defaults</button></div>
+    <label class="field">Computer key<input id="binding-code" readonly placeholder="Click here and press a key" aria-label="Capture computer key"></label>
+    <label class="field">Calculator sequence</label><div id="binding-steps"></div>
+    <div class="inline"><button id="step-add" type="button">Add key</button><button id="binding-apply" type="button">Set binding</button></div>
+    <p class="hint">Keys are tapped in order, not held together. On HP 39g+, A defaults to ALPHA → VARS. Bindings are specific to each calculator.</p>
+    <p id="binding-error" class="error-text" role="status"></p>
+  </section>
+  <section data-panel="storage" hidden>
+    <label class="check"><input id="autosave" type="checkbox">Save automatically on this device</label>
+    <label class="field">Save interval<select id="auto-interval"><option value="15">15 seconds</option><option value="30">30 seconds</option><option value="60">1 minute</option><option value="120">2 minutes</option></select></label>
+    <p class="hint">Uses localStorage for calculator memory, not the ROM. Open the same ROM to restore. Closing may lose changes since the last save; keep exported backups.</p>
+    <button id="clear-local" type="button">Delete local saves</button><p id="storage-status" class="hint" role="status"></p>
+  </section>
+  <div class="dialog-actions"><button type="button" data-close="settings-dialog">Cancel</button><button class="primary" type="submit">Apply</button></div>
+</form>
+</dialog>
+<dialog id="connection-dialog" aria-labelledby="connection-title">
+  <div class="dialog-title"><h1 id="connection-title">Connections</h1><button data-close="connection-dialog" aria-label="Close connections">×</button></div>
+  <p class="hint">Virtual connections inside the emulator, not USB or serial devices on your computer. Calculator file protocols are not yet implemented.</p>
+  <section><div class="connection-row"><h2>Serial byte stream</h2><button id="serial-toggle">Connect</button></div><p id="serial-status" class="hint">Disconnected</p></section>
+  <section><div class="connection-row"><h2>USB host</h2><button id="usb-toggle">Connect</button></div><p id="usb-status" class="hint">Disconnected</p><p id="usb-info"></p></section>
+  <details><summary>Byte exchange</summary>
+    <div class="inline"><label class="field">Connection<select id="link-target"><option value="serial">Serial</option><option value="usb">USB bulk</option></select></label><label class="field">Format<select id="link-format"><option value="text">Text (UTF-8)</option><option value="hex">Hex</option></select></label></div>
+    <label class="field">Data<textarea id="link-input" rows="3" spellcheck="false"></textarea></label>
+    <div class="inline"><button id="link-send">Send</button><button id="link-receive">Read USB</button><button id="link-clear">Clear log</button></div>
+  </details>
+  <pre id="link-log" aria-label="Connection log"></pre>
+</dialog>
+<dialog id="message-dialog" aria-labelledby="message-title">
+  <h1 id="message-title"></h1><p id="message-text"></p><div class="dialog-actions"><button id="message-cancel">Cancel</button><button id="message-ok" class="primary">OK</button></div>
+</dialog>
 <script type="module" src="calculator.js"></script>
 </body></html>
