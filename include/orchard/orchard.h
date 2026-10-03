@@ -177,6 +177,17 @@ orchard_status orchard_keyboard_dedicated(orchard_machine *m, unsigned gpf_pin, 
  */
 typedef enum { ORCHARD_NOR_UNSPECIFIED = 0, ORCHARD_NOR_SST39VF1601 } orchard_nor_device;
 orchard_status orchard_nor_select(orchard_machine *m, orchard_nor_device device);
+/* Explicit external SRAM address-decode hypothesis. EXACT is the default.
+ * BANK1_MIRROR connects only the installed SRAM's address bits throughout
+ * nGCS1 (0x08000000..0x0fffffff); it does not allocate additional RAM.
+ * No board is automatically assigned this unmeasured wiring. Configuration
+ * persists across cold reset like a physical component; access counters reset.
+ * Pure debug/framebuffer reads do not increment bus-transaction counters.
+ */
+typedef enum { ORCHARD_SRAM_EXACT = 0, ORCHARD_SRAM_BANK1_MIRROR } orchard_sram_decode;
+orchard_status orchard_sram_select(orchard_machine *m, orchard_sram_decode decode);
+uint64_t orchard_sram_alias_reads(const orchard_machine *m);
+uint64_t orchard_sram_alias_writes(const orchard_machine *m);
 /* Opt-in, unverified LCD +0x68 hypothesis. When enabled, aligned word reads
  * return zero ONLY while ENVID is clear. Other widths, active-display reads,
  * writes and neighboring unknown addresses still stop. No FIFO is implied.

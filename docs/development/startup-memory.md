@@ -1,4 +1,8 @@
-# Startup memory: first conditional stock-OS prompt
+# Historical startup memory investigation (6372cbe)
+
+This page preserves the earlier prompt/boundary-abort record. Current
+conditional HOME and browser-control results are in [startup](startup.md) and
+[web](web.md); the restrictions below describe that historical exact-decode run.
 
 ## Progress and acceptance boundary
 

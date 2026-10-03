@@ -36,7 +36,7 @@ host-side Saturn shortcut is planned. See the ARM/Samsung manuals in
 | Public API | `include/orchard/orchard.h` | Opaque caller-owned machine, profiles, bounded execution, diagnostics and I/O |
 | CPU | `src/cpu.c`, `src/thumb.c` | Original ARM/Thumb dispatch, flags, register banks and exception entry/return |
 | MMU | `src/mmu.c` | CP15 subset, guest table walks, access permission and alignment checks |
-| Physical bus | `src/bus.c` | NOR, external SRAM and 4 KiB internal SRAM bounds, MMIO routing; inspection in `src/lcd.c` |
+| Physical bus | `src/bus.c`, `src/sram.c` | NOR, external SRAM and 4 KiB internal SRAM bounds, MMIO routing; inspection in `src/lcd.c` |
 | SoC | `src/soc.c`, `src/watchdog.c`, `src/gpio.c`, `src/interrupt.c`, `src/rtc.c` | Functional timers/UART/watchdog, two-level IRQ arbitration, GPIO latches and RTC subset |
 | Input / NOR | `src/keyboard.c`, `src/nor.c` | Opt-in switch network, unfiltered EINT and explicit read/software-ID NOR subset |
 | USB | `src/usb.c` | Functional EP0 / 64-byte bulk PIO, explicit packet host API, USB reset and IRQ25; no descriptor shortcuts |
@@ -71,12 +71,17 @@ halt the emulator rather than delivering a guest undefined-instruction trap.
 ## Bus and timing model
 
 NOR is at `0x00000000`; external SRAM is at `0x08000000`, with exact per-profile
-bounds. Internal boot SRAM occupies exactly `0x40000000..0x40000fff`; there is
+capacity. Exact-range decoding is the default; explicit `bank1-mirror` maps
+high addresses within nGCS1 to the same cells, without increasing RAM. Guest
+alias transactions are counted; debug reads are pure. See [startup](startup.md). Internal boot SRAM occupies exactly `0x40000000..0x40000fff`; there is
 no NAND controller or NAND image behind it. HP40gs uses 2 MiB NOR.
 Flash does not silently mirror or pad. An explicitly selected SST39VF1601
 implements array read and software identification; program/erase/CFI/security
 remain diagnostic stops. The default unspecified part only accepts read-array
-reset. Part identity is not inferred from a ROM hash or profile size.
+reset. Selected x16 NOR receives aligned ARM word stores as two ordered
+halfword device cycles; each uses the actual command decoder. Invalid SDP
+sequences leave the array unchanged, while unsupported program/erase still
+stops. Part identity is not inferred from a ROM hash or profile size.
 
 One virtual tick is counted before advancing the current functional peripherals;
 a peripheral diagnostic stop therefore includes its triggering tick. A tick advances the peripherals and either takes

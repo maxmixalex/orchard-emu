@@ -38,7 +38,7 @@ a later switch closure may connect that drive against a guest-driven output.
 Cold reset detaches the keyboard and releases switches and external inputs.
 A caller must reattach/reapply conditions for an identical replay. Host events
 occur only between bounded run calls; they do not resume a diagnostic stop.
-The current browser workbench has no interactive key controls yet.
+The browser workbench now exposes an explicit HP48-only keypad; see [web](web.md).
 
 ## External interrupts
 
@@ -137,8 +137,7 @@ The probe accepts a comma-separated `--key-at` list and applies the identical
 schedule to production WASM, replaying both hosts from cold reset. A ROM-free
 circuit guest now verifies two matrix-triggered IRQ entries, guest exception
 return and WFI on **both native CLI and production WASM**, in addition to the
-previous WASM-only four-event matrix/ON test. The browser key interface remains
-unimplemented.
+previous WASM-only four-event matrix/ON test. The browser HP48 keypad now uses a separate bounded tap queue; see [web](web.md).
 
 The real HP50g boot-only guest interprets raw (3,5) as recovery selection 1
 and (2,5) as selection 2 under these conditions. Press/release selects USB and

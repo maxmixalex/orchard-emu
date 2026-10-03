@@ -145,3 +145,20 @@ No new reference-emulator or hardware-driver implementation was imported in
 this slice. GET_CONFIGURATION remains unresolved; DATA_END without IN-ready
 is not silently changed to yield the expected response. The input inventory
 and firmware redistribution boundary remain unchanged.
+
+## Full-system startup continuation
+
+[S3C2410A UM chapter 5](https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf),
+figure 5-1 (PDF page 192), x16 ROM/SRAM interfaces (figures 5-7/5-8) and bus
+width selection: consulted for external bus width and nGCS1 boundaries. These
+are vendor SoC diagrams, **not an HP board schematic** or proof of high-address
+SRAM wiring. The explicit mirror option remains a conditional model.
+
+[SST39VF160x/320x manufacturer data sheet, S71223](https://ww1.microchip.com/downloads/en/DeviceDoc/S71223_.pdf),
+Software Data Protection (PDF page 4): invalid command sequences return to
+read mode; writes are not equivalent to programming the NOR array. The new
+word-to-halfword adaptation uses the existing original command decoder.
+
+[hpclang keyboard mapping at d1dd4688](https://github.com/zyf722/hpclang/blob/d1dd4688cc850bff1bf4c290c0d26a5e0619f55c/runtime/core/keyboard-key-map.c)
+supplies the raw switch coordinates for F6, digits, arithmetic and ENTER.
+Mapping facts are used in the startup schedule; no driver code is imported.

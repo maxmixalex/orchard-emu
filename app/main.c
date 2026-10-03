@@ -13,6 +13,7 @@ static void usage(FILE *out) {
           "  orchard run --model SLUG --rom FULL-NOR.bin [--ticks N]\n"
           "              [--trace FILE.jsonl] [--frame FILE.pgm]\n"
           "              [--keyboard apples] [--nor-device sst39vf1601]\n"
+          "              [--sram-decode bank1-mirror] (explicit wiring hypothesis)\n"
           "              [--gpio-bias PORT:MASK_HEX:LEVELS_HEX] ...\n"
           "              [--key-at TICK:COLUMN:ROW:0_OR_1] ...\n"
           "              [--lcd-probe68 idle-zero] [--frame-view packed-lsb]\n"
@@ -110,6 +111,8 @@ int main(int argc, char **argv) {
     uint32_t bias_known[8] = {0}, bias_levels[8] = {0};
     bool bias_set[8] = {false};
     orchard_nor_device nor = ORCHARD_NOR_UNSPECIFIED;
+    orchard_sram_decode sram = ORCHARD_SRAM_EXACT;
+    bool sram_set = false;
     uint32_t gpio_known[8] = {0}, gpio_levels[8] = {0};
     bool gpio_set[8] = {false};
     bool adc_set[8] = {false};
@@ -163,6 +166,11 @@ int main(int argc, char **argv) {
         } else if (strcmp(key, "--nor-device") == 0) {
             if (strcmp(value, "sst39vf1601") != 0) { fputs("Unknown NOR device\n", stderr); return 64; }
             nor = ORCHARD_NOR_SST39VF1601;
+        } else if (strcmp(key, "--sram-decode") == 0) {
+            if (sram_set || strcmp(value, "bank1-mirror") != 0) {
+                fputs("Expected one --sram-decode bank1-mirror\n", stderr); return 64;
+            }
+            sram_set = true; sram = ORCHARD_SRAM_BANK1_MIRROR;
         } else if (strcmp(key, "--ticks") == 0) {
             char *end;
             for (const char *digit = value; *digit; ++digit) {
@@ -223,6 +231,7 @@ int main(int argc, char **argv) {
         if (orchard_gpio_bias(m, (orchard_gpio_port)port, bias_known[port], bias_levels[port]) != ORCHARD_OK) {
             fputs("Invalid GPIO bias mask/levels\n", stderr); result = 64; goto cleanup;
         }
+    if (orchard_sram_select(m, sram) != ORCHARD_OK) { result = 64; goto cleanup; }
     if (orchard_lcd_probe68(m, lcd_idle_zero) != ORCHARD_OK) { result = 64; goto cleanup; }
     for (unsigned channel = 0; channel < 8; ++channel) if (adc_set[channel]) {
         if (orchard_adc_input(m, channel, true, adc_codes[channel]) != ORCHARD_OK) {
@@ -336,6 +345,10 @@ int main(int argc, char **argv) {
            peripheral.lcd_control, peripheral.lcd_source_pending, peripheral.lcd_interrupt_pending,
            peripheral.lcd_interrupt_mask, peripheral.lcd_frames, peripheral.adc_control,
            peripheral.adc_data, peripheral.adc_remaining, peripheral.adc_valid ? "true" : "false");
+    printf(",\"sram_decode\":\"%s\",\"sram_alias_reads\":\"%" PRIu64
+           "\",\"sram_alias_writes\":\"%" PRIu64 "\"",
+           sram == ORCHARD_SRAM_BANK1_MIRROR ? "bank1-mirror" : "exact",
+           orchard_sram_alias_reads(m), orchard_sram_alias_writes(m));
     orchard_usb_state usb;
     orchard_get_usb_state(m, &usb);
     printf(",\"usb\":{\"address\":%" PRIu32 ",\"active_address\":%" PRIu32

@@ -120,7 +120,7 @@ export function parseAdc(text) {
 export function parseProbeBudget(text = '1000000') {
   const budget = Number(text);
   if (typeof text !== 'string' || !/^\d+$/.test(text) || !Number.isSafeInteger(budget) ||
-      budget < 1 || budget > 100000000)
-    throw new Error('Tick budget must be an integer between 1 and 100000000');
+      budget < 1 || budget > 500000000)
+    throw new Error('Tick budget must be an integer between 1 and 500000000');
   return budget;
 }

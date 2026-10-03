@@ -77,14 +77,16 @@ policies. The LCD `+0x68` idle-zero experiment does not close this gate.
 
 ## M3 — First genuine stock cold boot
 
-**Full-NOR execution established; responsive stock UI still open.**
+**Conditional HP48gII HOME and basic arithmetic observed; canonical gate open.**
 
-Original HP39g+ and HP48gII full dumps execute from reset. Under documented
-component/pad/ADC conditions and counted LCD hypotheses, both pass USB
-initialization. The selected-x16 HP48gII now reaches a conditional OS memory-recovery
-prompt, then a SRAM-boundary data abort after NO; the unspecified-part HP39g+
-zero-store remains open. See [startup memory](startup-memory.md). Strict default
-checkpoints remain separate. See [current boot research](boot-research.md).
+Original HP39g+ and HP48gII full dumps execute from reset. The local continuation
+based on `e236fcc` now takes HP48gII through memory recovery/clear and HOME,
+then computes `1+2=3` and `7*8=56` with actual physical switch input. It uses
+selected x16 NOR bus adaptation, an explicit SRAM bank1-mirror hypothesis,
+declared pad/ADC inputs, counted LCD idle-zero reads and packed-memory display.
+This is functional stock OS execution, not a canonical physical-board result.
+See [the startup witness](startup.md); native payload/return and sustained use
+are still separate, uncompleted checks. No other model inherits this result.
 
 Record four separate witnesses: bootloader progression, initialized LCD,
 interactive stock UI, and native ARM payload execution followed by return to a
@@ -112,7 +114,11 @@ stop work on the available machines or repeat the acquisition request.
 
 ## M5 — Usable browser calculator
 
-**Diagnostic workbench exists; calculator usability gate open.**
+**Experimental HP48gII controls implemented; full browser usability gate open.**
+
+The [page](web.md) exposes an opt-in HOME setup, physical tap queue, cold reset
+and diagnostics. Node Worker tests are not HTTP/file-picker/browser lifecycle
+E2E; that gate remains open.
 
 Add correctly licensed skins, printed-key mappings over physical switches,
 separate annunciators, calibrated LCD output, versioned persistence/export and
@@ -159,10 +165,11 @@ compatibility matrix and no firmware or unqualified optional-device claims.
 
 ## Working order and research boundaries
 
-Prioritize M1 correctness and traced M2/M3 dependencies: the now-localized SRAM-boundary read after the
-HP48gII OS prompt, HP39g+ NOR component behavior, unresolved EP0 response, and independently supported LCD/panel/pad
-behavior. Maintain native/WASM regressions while adding independent evidence.
-M5 skin polish and M6 host-OS bridging must not displace the first stock UI.
+Prioritize validation of the conditional HP48gII startup: independent SRAM
+address-wiring/LCD evidence, real-OS operation coverage and ARM payload return.
+Maintain local cold replay before CI. The HP39g+ NOR component and unresolved
+EP0 response remain separate dependencies; full USB/SD work and skin polish
+must not displace a reliable, correctly presented first calculator.
 
 Historical checkpoints, commands and negative controls are linked by exact
 revision from [boot research](boot-research.md); current local acceptance is in

@@ -20,6 +20,7 @@
 #define O_FLASH_MAX 0x200000u
 #define O_RAM_MAX 0x80000u
 #define O_RAM_BASE 0x08000000u
+#define O_RAM_BANK_SIZE 0x08000000u
 #define O_BOOT_SRAM_BASE 0x40000000u
 #define O_BOOT_SRAM_SIZE 0x1000u
 #define O_QUEUE 1024u
@@ -97,6 +98,8 @@ struct orchard_machine {
     uint64_t ticks;
     bool loaded;
     orchard_nor_device nor_device;
+    orchard_sram_decode sram_decode;
+    uint64_t sram_alias_reads, sram_alias_writes;
     unsigned nor_sequence;
     bool nor_id_mode;
     orchard_stop stop;
@@ -127,6 +130,9 @@ uint32_t o_shift(uint32_t value, unsigned kind, unsigned amount,
 void o_thumb(orchard_machine *m, uint16_t op);
 bool o_cp15(orchard_machine *m, uint32_t op);
 
+bool o_sram_copy(const orchard_machine *m, uint32_t address, void *destination, size_t length);
+bool o_sram_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);
+bool o_sram_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value);
 bool o_nor_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value);
 bool o_nor_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);
 bool o_phys_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);

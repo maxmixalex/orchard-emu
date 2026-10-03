@@ -22,12 +22,12 @@ function command(executable, args) {
 }
 await mkdir(build, { recursive: true });
 let totalAssertions = 0;
-for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb', 'nor-bus']) {
+for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb', 'nor-bus', 'memory']) {
   const testModule = resolve(build, `${name}.wasm`);
   command(process.env.CLANG || 'clang', [
     '--target=wasm32', '-std=c17', '-O2', '-ffreestanding', '-nostdlib', '-fno-builtin',
     '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc',
-    ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'lcd', 'adc', 'usb'].map(s => `src/${s}.c`),
+    ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb'].map(s => `src/${s}.c`),
     `tests/${name}.c`, '-o', testModule, '-Wl,--no-entry', '-Wl,--stack-first',
     '-Wl,-z,stack-size=524288', '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216',
   ]);
@@ -157,3 +157,4 @@ await checkUSBControl(root, build);
 
 const { checkNorBus } = await import('../tests/nor-wasm.mjs');
 await checkNorBus(root, build);
+await import("../tests/memory-tools.mjs");

@@ -77,6 +77,15 @@ EXPORT("keyboard_dedicated") unsigned web_keyboard_dedicated(unsigned pin, unsig
     if (down > 1) return ORCHARD_BAD_ARGUMENT;
     return orchard_keyboard_dedicated(&machine, pin, down != 0);
 }
+EXPORT("sram_select") unsigned web_sram_select(unsigned decode) {
+    return orchard_sram_select(&machine, (orchard_sram_decode)decode);
+}
+EXPORT("sram_alias_reads") uint64_t web_sram_alias_reads(void) {
+    return orchard_sram_alias_reads(&machine);
+}
+EXPORT("sram_alias_writes") uint64_t web_sram_alias_writes(void) {
+    return orchard_sram_alias_writes(&machine);
+}
 EXPORT("nor_select") unsigned web_nor_select(unsigned device) {
     return orchard_nor_select(&machine, (orchard_nor_device)device);
 }

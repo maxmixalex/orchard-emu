@@ -146,4 +146,6 @@ The packet API models a complete valid OUT transaction, not a separately lost
 OUT-handshake ACK or every retry of a completed control status stage.
 
 Host-OS device enumeration, Conn3x interoperability, stock object/file transfer,
-firmware installation, and complete calculator boot are separate open gates.
+firmware installation, and canonical calculator hardware acceptance are separate
+open gates. The newer [conditional HP48gII HOME witness](startup.md) is a
+disconnected-USB operating-system run, not additional USB protocol evidence.

@@ -57,6 +57,7 @@ void orchard_reset(orchard_machine *m) {
     o_zero(m->boot_sram, sizeof(m->boot_sram));
     o_zero(&m->stop, sizeof(m->stop));
     m->ticks = 0;
+    m->sram_alias_reads = m->sram_alias_writes = 0;
     m->nor_sequence = 0; m->nor_id_mode = false;
 }
 orchard_status orchard_load_rom(orchard_machine *m, const void *bytes, size_t length) {
@@ -123,11 +124,7 @@ orchard_status orchard_read_memory(const orchard_machine *m, uint32_t address,
         o_copy(destination, m->flash + address, length);
         return ORCHARD_OK;
     }
-    if (address >= O_RAM_BASE && address - O_RAM_BASE < m->profile->ram_bytes &&
-        length <= m->profile->ram_bytes - (address - O_RAM_BASE)) {
-        o_copy(destination, m->ram + address - O_RAM_BASE, length);
-        return ORCHARD_OK;
-    }
+    if (o_sram_copy(m, address, destination, length)) return ORCHARD_OK;
     if (address >= O_BOOT_SRAM_BASE && address - O_BOOT_SRAM_BASE < O_BOOT_SRAM_SIZE &&
         length <= O_BOOT_SRAM_SIZE - (address - O_BOOT_SRAM_BASE)) {
         o_copy(destination, m->boot_sram + address - O_BOOT_SRAM_BASE, length);

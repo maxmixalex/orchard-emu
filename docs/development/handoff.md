@@ -1,27 +1,25 @@
 # Continuation handoff
 
-Current base is `e236fcc`, preserving the reconciled USB publication and the
-separate Unicorn common-ISA differential. Exact accepted commit, CI and Pages
-outcomes belong in issue #1. No history or repository visibility change.
+The HOME continuation has been reconciled on top of remote `6372cbe`, not
+force-applied over it. Its exact source tree was verified before merging.
+Keep the upstream x16 adapter in `src/nor.c`; there is no duplicate in the bus.
+Both upstream NOR regressions and the local memory/SRAM regressions remain
+active. The shared probe budget parser retains its rejection tests, with an
+explicit 500-million-tick upper bound for the maintained startup witness.
 
-The [startup-memory record](startup-memory.md) is the next-work entry point.
-The selected-x16 HP48gII now reaches an original OS memory-recovery prompt.
-Its NO transition hits a first data abort at tick 61,249,398, PC `1ce24`,
-FAR `08040000`. Investigate actual SRAM decoding / preceding guest state;
-do not silently enlarge memory or discard the fault. The 39g+ unspecified
-NOR component remains strict at its earlier zero-store.
+[Startup](startup.md) owns the fixed original-NOR HOME/two-calculation record.
+[Web](web.md) owns the new experimental setup and physical-tap interface.
+[Validation](validation.md) distinguishes native/WASM replay, production
+Worker tests, offline layout inspection and the still-blocked browser-origin
+E2E. Issue #1 owns the exact accepted commit and observed CI/Pages outcomes;
+local checks alone do not imply remote acceptance.
 
-The prompt is conditional: extra F pads, AIN0=1023, AIN7=512, four counted LCD
-idle-zero reads, and packed-LSB memory inspection are not measured board or
-panel defaults. After NO the LCD count is five. Neither the prompt nor a
-long-running abort loop is normal OS boot. USB GET_CONFIGURATION remains a
-separate recorded bootloader counterexample.
+Next: verify production-page load/input/lifecycle on an allowed origin;
+expand real-OS key/use/reset coverage and persistence; independently resolve
+SRAM address wiring, LCD `+0x68` and panel mapping. Do not relabel the declared
+HOME experiment as a fully verified board or all-six-model gate.
 
-The user will later provide HP39gs/HP49g+ full NORs; do not request them now.
-Available full dumps remain HP39g+ and HP48gII. The 50g USB experiment contains
-only its original 16 KiB boot region with erased OS backing. No firmware,
-manuals, private traces, screenshots or external binaries are committed.
-
-Run the five CTest suites, production/native-WASM tests and independent CPU
-checks locally before publication. Test definitions stay outside production
-packages. Pages publishes only documentation and verifies its exact revision.
+The user's later HP39gs/HP49g+ complete NORs remain deferred. Do not request
+them now, restart the retired dumper or make the blocked forum attachment the
+main task. HP39g+ NOR part identification and HP50g GET_CONFIGURATION remain
+separate open items. Ordinary CI and production packages stay ROM-free.

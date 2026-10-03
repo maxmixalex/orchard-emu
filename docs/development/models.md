@@ -10,7 +10,7 @@ revision**, not every product carrying that name.
 | 1 | `hp39gplus` | HP 39g+ | 1 MiB | 256 KiB | 131 × 64 | No | Unverified |
 | 2 | `hp39gs` | HP 39gs | 1 MiB | 256 KiB | 131 × 64 | No | Unverified |
 | 3 | `hp40gs` | HP 40gs | 2 MiB | 256 KiB | 131 × 64 | No | Unverified |
-| 4 | `hp48gii` | HP 48gII, USB revision | 2 MiB | 256 KiB | 131 × 64 | No | Unverified |
+| 4 | `hp48gii` | HP 48gII, USB revision | 2 MiB | 256 KiB | 131 × 64 | No | Conditional HOME; hardware gate open |
 | 5 | `hp49gplus` | HP 49g+ | 2 MiB | 512 KiB | 131 × 80 | Yes | Unverified |
 | 6 | `hp50g` | HP 50g | 2 MiB | 512 KiB | 131 × 80 | Yes | Unverified |
 
@@ -46,8 +46,10 @@ source, not a model-specific patch to the ARM instruction interpreter.
 
 ## Full-NOR bring-up update
 
-The HP39g+ and HP48gII full images now execute locally to reproducible early
-boot stops; neither has a working stock UI. See [boot research](boot-research.md).
+The HP48gII full image now reaches stock HOME and performs two calculations
+with the explicit conditions in [startup](startup.md). Canonical hardware
+acceptance remains open; its physical SRAM capacity is still 256 KiB. HP39g+
+keeps its separate startup blockers. See [boot research](boot-research.md).
 HP40gs NOR capacity is corrected to 2 MiB using HP's 2007 specification sheet,
 not inherited from the HP39gs sibling. All other stock/UI promotion gates
 remain open; supplied update packages are not full physical dumps.
