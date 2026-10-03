@@ -172,3 +172,19 @@ EXPORT("annunciators") unsigned web_annunciators(void) {
 EXPORT("annunciator_buffer") uintptr_t web_annunciator_buffer(void) {
     return (uintptr_t)annunciator_levels;
 }
+
+/* Bounded interchange buffer, distinct from ROM and emulated machine storage. */
+static uint8_t checkpoint_bytes[600000];
+EXPORT("checkpoint_buffer") uintptr_t web_checkpoint_buffer(void) { return (uintptr_t)checkpoint_bytes; }
+EXPORT("checkpoint_size") unsigned web_checkpoint_size(void) {
+    return (unsigned)orchard_checkpoint_size(&machine);
+}
+EXPORT("checkpoint_save") unsigned web_checkpoint_save(void) {
+    size_t n=orchard_checkpoint_size(&machine);
+    if(!n||n>sizeof(checkpoint_bytes))return ORCHARD_BAD_ARGUMENT;
+    return orchard_checkpoint_save(&machine,checkpoint_bytes,n);
+}
+EXPORT("checkpoint_load") unsigned web_checkpoint_load(unsigned length) {
+    if(length>sizeof(checkpoint_bytes))return ORCHARD_BAD_ARGUMENT;
+    return orchard_checkpoint_load(&machine,checkpoint_bytes,length);
+}

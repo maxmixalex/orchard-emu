@@ -44,7 +44,7 @@ class PagesTest(unittest.TestCase):
                 path.write_bytes(old)
 
     def test_no_unlisted_or_firmware(self):
-        for name in ('flash.bin', 'mock.html', 'font.woff2', 'tests.js'):
+        for name in ('flash.bin', 'mock.html', 'font.woff2', 'tests.js', 'session.orchard', 'ram.state'):
             with self.subTest(name=name):
                 path = self.dist / name; path.write_text('unpublishable')
                 with self.assertRaises(ValueError): self.build()

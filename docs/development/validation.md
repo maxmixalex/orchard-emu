@@ -1,5 +1,36 @@
 # Validation
 
+## Scheduler and sessions after 980e1ec
+
+Local Release, sanitizer and reference runs use eleven CTest suites. The
+native/test-WASM total is **430,179 assertions per host**: previous 407,540,
+21,882 scheduler checks and 757 checkpoint checks. The default independent
+Unicorn 17,075-case shared ARMv4T corpus passes without mismatches or skips.
+Clang static analysis produced 34 separate clean reports. Node
+envelope/production Worker session checks pass alongside prior user/debug,
+keyboard, skin, lifecycle and publication checks. No CPU ISA semantics change.
+
+Both unchanged full NORs passed the maintained cold-HOME/two-calculation
+witness twice natively and twice on production WASM. The same-input full
+benchmark matches all prior output and measures ~1.4x throughput over 980e1ec;
+see [performance](performance.md). A deliberately missing MMIO synchronization
+fails eight new scheduling assertions; the mutant is not in the repository.
+
+The new [session](sessions.md) study saves after the first original calculation,
+restores to a fresh machine and completes the second calculation. Every
+serialized architectural state byte matches uninterrupted execution. A native
+process imports the same file and advances 50,000 ticks with byte-identical
+output to WASM. Neither saved RAM nor ROM is committed or distributed.
+Long firmware runs are ordinary local builds, not sanitizer or ordinary CI.
+
+The installed Chromium still refuses the production HTTP origin with
+ERR_BLOCKED_BY_ADMINISTRATOR. No policy was changed; browser downloads/file
+selection, touch and background behavior are not accepted as E2E. Exact remote
+Build/Pages/artifact acceptance is recorded in issue #1 after observation.
+
+## Prior execution-optimization evidence
+
+
 ## Execution continuation from 2042ad8
 
 The accepted incoming baseline is `2042ad8`: Build #17 and Pages #14 succeeded.

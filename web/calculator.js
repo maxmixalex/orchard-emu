@@ -2,6 +2,7 @@
 import { CALCULATORS, identifyROM } from './catalog.js';
 import { keyRows, shortcut } from './hp48.js';
 import { SkinView } from './skin.js';
+import { MAX_SESSION_BYTES } from './session.js';
 import { bindLifecycle } from './lifecycle.js';
 const $=id=>document.getElementById(id);
 const worker=new Worker(new URL('worker.js',import.meta.url),{type:'module'});
@@ -16,6 +17,8 @@ function controls(){
   $('open').disabled=!ready||busy;$('model').disabled=!ready||busy;
   $('run').disabled=!loaded||busy||stopped;$('run').textContent=running?'Pause':'Resume';
   $('reset').disabled=!loaded||busy;
+  $('save-session').disabled=!loaded||busy||stopped;
+  $('load-session').disabled=!loaded||busy;
   const enabled=loaded&&running&&!stopped&&!busy;
   skin.setEnabled(enabled);for(const b of buttons.values())b.disabled=!enabled;
 }
@@ -33,7 +36,7 @@ function draw(data){
   for(const [scan,b] of buttons)b.setAttribute('aria-pressed',String(scan===data.active));
 }
 function create(rom=null){
-  ++generation;pending=rom;loaded=running=stopped=false;last=null;error('');
+  ++generation;$('session-note').textContent='';pending=rom;loaded=running=stopped=false;last=null;error('');
   $('model').value=String(model.id);$('machine-title').textContent=model.name;$('boot-help').textContent=model.help;
   buttons.clear();$('keypad').replaceChildren();
   for(const row of keyRows(model.id)){
@@ -63,13 +66,22 @@ worker.onmessage=({data})=>{
   if(data.type==='created'){
     if(pending){const rom=pending;pending=null;worker.postMessage({type:'load',generation,rom},[rom]);}
     else{busy=false;controls();}
+  }else if(data.type==='checkpoint-saved'){
+    busy=false;running=false;controls();
+    const url=URL.createObjectURL(new Blob([data.file],{type:'application/octet-stream'}));
+    const a=document.createElement('a');a.href=url;a.download=`orchard-${model.id}-${new Date().toISOString().replaceAll(':','-')}.orchard`;
+    document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    $('session-note').textContent='Session exported. Keep the downloaded file; use Load session to resume it later.';
+  }else if(data.type==='checkpoint-restored'){
+    busy=false;running=false;controls();error('');
+    $('session-note').textContent='Session restored. Press Resume to continue where you left off.';
   }else if(data.type==='loaded'){loaded=true;busy=false;controls();if(!document.hidden&&document.hasFocus())send('run');}
   else if(data.type==='snapshot'){
     last=data;loaded=data.loaded;running=data.running;stopped=data.stopped;
     draw(data);controls();
     if(stopped){status('Stopped');error('A compatibility issue interrupted the calculator. Restart it to try again.');}
     else if(busy)status('Opening ROM…');else status(!loaded?'Open a ROM to begin.':running?'Running':'Paused');
-  }else if(data.type==='error'){busy=false;running=false;error('The calculator could not complete this operation. Restart or open a supported ROM.');controls();}
+  }else if(data.type==='error'){busy=false;running=false;error(data.message||'The calculator could not complete this operation.');controls();}
 };
 worker.onerror=()=>{ready=loaded=running=false;busy=false;error('The calculator stopped unexpectedly. Reload the page to restart it.');controls();};
 function tap(scan){if(loaded&&running&&!stopped&&!busy)send('tap',{scan});}
@@ -89,3 +101,15 @@ window.addEventListener('keydown',event=>{
 });
 bindLifecycle(window,document,()=>{if(loaded)send('pause');});
 controls();
+
+$('save-session').onclick=()=>{if(!loaded||busy)return;busy=true;error('');controls();send('checkpoint-save');};
+$('load-session').onclick=()=>{$('session-file').value='';$('session-file').click();};
+$('session-file').onchange=async()=>{
+  const file=$('session-file').files[0];if(!file||!loaded||busy)return;
+  busy=true;send('pause');error('');controls();const token=generation;
+  try{
+    if(file.size>MAX_SESSION_BYTES)throw new Error('This session file is too large.');
+    const bytes=await file.arrayBuffer();if(token!==generation)return;
+    worker.postMessage({type:'checkpoint-load',generation,file:bytes},[bytes]);
+  }catch(e){if(token===generation){busy=false;error(e.message);controls();}}
+};

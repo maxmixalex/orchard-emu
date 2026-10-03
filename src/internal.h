@@ -128,6 +128,7 @@ typedef struct {
 
 struct orchard_machine {
     const orchard_profile *profile;
+    uint32_t quiet_left, deferred_ticks; /* Host-only, flushed at public boundaries. */
     o_translation translations[O_TRANSLATIONS];
     o_cpu cpu;
     o_soc soc;
@@ -184,6 +185,9 @@ bool o_store(orchard_machine *m, uint32_t address, unsigned width, bool user, ui
 void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool fetch);
 void o_soc_reset(o_soc *s);
 void o_soc_tick(orchard_machine *m);
+void o_schedule_plan(orchard_machine *m);
+void o_schedule_sync(orchard_machine *m);
+orchard_stop o_run_reference(orchard_machine *m, uint32_t budget);
 void o_irq_update(o_soc *s);
 void o_gpio_reset(o_soc *s);
 void o_gpio_sample(const orchard_machine *m, unsigned port, uint32_t *known,

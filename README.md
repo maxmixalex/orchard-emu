@@ -34,7 +34,10 @@ compatibility settings automatically. CPU counters, boot setup and internal
 research controls live in the separate **[developer workbench](https://zyf722.github.io/orchard-emu/emulator/debug.html)**.
 Both pages use the same optimized core, not different levels of emulation.
 At startup use the top-right soft key for NO/OK as prompted; wait for HOME
-before entering calculations. Memory is not saved on close or restart yet.
+before entering calculations. **Save session** exports the paused machine to a
+local file without its ROM. Open the same ROM and choose **Load session** to
+continue without another cold boot. Changes are not saved automatically.
+See [saved sessions](docs/development/sessions.md).
 
 [Performance and benchmarks](docs/development/performance.md) ·
 [Browser usage](docs/development/web.md) ·

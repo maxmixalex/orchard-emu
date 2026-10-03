@@ -81,7 +81,7 @@ ARM no-checkpoint path and a 64-entry host translation memo. Every hit checks
 live descriptor words and translation context; MMIO/aliased table storage and
 NOR ID mode take the uncached bus path. Do not replace these checks with stale
 TLB-like semantics. Offsets are relative to the current machine arena and reset
-clears them. Future persistence must treat this as disposable host state.
+clears them. Saved-session import treats this as disposable host state.
 
 `ORCHARD_REFERENCE` disables EINT memoization and these execution optimizations.
 `tests/execution.c` compares the full checkpoint/walker paths; the independent
@@ -89,3 +89,18 @@ Unicorn corpus and full original-system cold replay also pass. Full-workload
 speed is approximately 1.30x relative to already optimized 2042ad8 in this
 session, not an additional 6x and not a measured hardware speed ratio.
 Publication acceptance belongs to issue #1, not an assumed successful push.
+
+
+## Continuation from 980e1ec
+
+The next-event scheduler materializes all delayed phase increments at MMIO and
+public run boundaries. Preserve the exact per-tick reference and the directed
+ADC/USB-latch/timer regressions; merely measuring speed is insufficient. Its
+quiet intervals never skip guest instructions, timing events or fault checks.
+
+Portable checkpoint APIs and user-facing Save/Load session now exist. The
+serialized format excludes immutable NOR and disposable host caches, is bound
+to the ROM identity and imports atomically. Schema changes require versioning.
+Do not describe this as automatic storage, native warm reset or a completed
+browser file-picker/download test. Continue broader original-OS use, physical
+hardware validation and decoded CPU work without blocking on deferred dumps.

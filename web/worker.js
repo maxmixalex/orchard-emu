@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
+import { encodeSession, decodeSession } from './session.js';
 import { setupHash, isPlayable, applySetup, TapQueue } from './hp48.js';
 let audience = 'debug';
+let romHash='', operation=0, busy=false;
 let core, model = 4, generation = 0, preset = 'strict', running = false, loaded = false;
 let timer = null, lastFrame = 0, tick = 0, events = [], eventOverflow = false, frameView = 0;
 const errors = ['ready','bad argument','full-NOR size mismatch','not a full ARM NOR image',
@@ -61,7 +63,7 @@ function pump() {
   } catch (error) { fail(error); }
 }
 function fail(error) {
-  running=false;
+  busy=false;running=false;
   try { taps.clear(tick); } catch { /* Original error takes precedence. */ }
   postMessage({type:'error',generation,message:error instanceof Error?error.message:String(error)});
   if (core && core.snapshot()) snapshot();
@@ -70,7 +72,7 @@ self.onmessage=({data})=>{
   if (!core || !data || typeof data.type !== 'string') return;
   try {
     if (data.type==='create') {
-      pause();
+      pause();++operation;busy=false;romHash='';
       if (!Number.isSafeInteger(data.generation) || !Number.isInteger(data.model) || !core.profile(data.model,0)) throw new Error('Invalid machine');
       if (data.audience !== undefined && !['debug','calculator'].includes(data.audience)) throw new Error('Invalid audience');
       generation=data.generation;model=data.model;preset=data.preset;audience=data.audience||'debug';
@@ -81,23 +83,50 @@ self.onmessage=({data})=>{
     }
     if(data.generation!==generation) return;
     if(data.type==='load') {
-      pause();loaded=false;
+      pause();loaded=false;busy=true;const job=++operation;
       if(!(data.rom instanceof ArrayBuffer) || data.rom.byteLength!==core.profile(model,0)) throw new Error('A complete physical NOR of the selected capacity is required.');
       // Main UI hashes locally before load. Worker authenticates the research fixture too.
       const token=generation, bytes=data.rom;
       crypto.subtle.digest('SHA-256',bytes).then(hash=>{
-        if(token!==generation) return;
+        if(token!==generation||job!==operation) return;
         const digest=Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('');
         if(setupHash(preset) && digest!==setupHash(preset)) throw new Error('HOME research setup requires the documented model-specific full-NOR hash.');
         new Uint8Array(core.memory.buffer,core.rom_buffer(),bytes.byteLength).set(new Uint8Array(bytes));
         const status=core.load(bytes.byteLength);if(status) throw new Error(errors[status]);
-        tick=0;events=[];eventOverflow=false;applySetup(core,model,preset);loaded=true;
+        tick=0;events=[];eventOverflow=false;applySetup(core,model,preset);loaded=true;romHash=digest;busy=false;
         postMessage({type:'loaded',generation});snapshot();
-      }).catch(error=>{if(token===generation)fail(error);});
+      }).catch(error=>{if(token===generation&&job===operation)fail(error);});
+    } else if(data.type==='checkpoint-save' && loaded && !busy) {
+      pause();busy=true;const token=generation,job=++operation;
+      const length=core.checkpoint_size();
+      if(!length||length>600000||core.checkpoint_save())throw new Error('Unable to save this calculator state.');
+      const bytes=new Uint8Array(core.memory.buffer,core.checkpoint_buffer(),length).slice();
+      encodeSession({model,romHash,preset,frameView,state:bytes}).then(file=>{
+        if(token!==generation||job!==operation)return;
+        busy=false;postMessage({type:'checkpoint-saved',generation,file},[file.buffer]);snapshot();
+      }).catch(error=>{if(token===generation&&job===operation)fail(error);});
+    } else if(data.type==='checkpoint-load' && loaded && !busy) {
+      pause();busy=true;const token=generation,job=++operation;
+      decodeSession(data.file).then(saved=>{
+        if(token!==generation||job!==operation)return;
+        if(saved.model!==model||saved.romHash!==romHash||saved.preset!==preset)
+          throw new Error('This session belongs to a different ROM or calculator. Open its original ROM first.');
+        if(saved.state.length!==core.checkpoint_size())throw new Error('This session version is not supported.');
+        new Uint8Array(core.memory.buffer,core.checkpoint_buffer(),saved.state.length).set(saved.state);
+        if(core.checkpoint_load(saved.state.length))throw new Error('The session is damaged or incompatible. Your current calculator was not replaced.');
+        // Session files created here have no held keys. Also release all inputs
+        // on import from a native host; never resurrect a stuck physical key.
+        if(isPlayable(model,preset)) {
+          for(let c=0;c<8;c++)for(let r=0;r<7;r++)core.keyboard_matrix(c,r,0);
+          for(const pin of [0,4,5,6])core.keyboard_dedicated(pin,0);
+        }
+        frameView=saved.frameView;syncTick();events=[];eventOverflow=false;busy=false;
+        postMessage({type:'checkpoint-restored',generation});snapshot();
+      }).catch(error=>{if(token===generation&&job===operation)fail(error);});
     } else if(data.type==='pause') {pause();snapshot();}
-    else if(data.type==='run' && loaded) {if(!running && state()[28]===0){running=true;schedule();snapshot();}}
-    else if(data.type==='step' && loaded) {pause();core.run(1);snapshot();}
-    else if(data.type==='reset' && loaded) {pause();core.reset();tick=0;events=[];eventOverflow=false;applySetup(core,model,preset);snapshot();}
+    else if(data.type==='run' && loaded && !busy) {if(!running && state()[28]===0){running=true;schedule();snapshot();}}
+    else if(data.type==='step' && loaded && !busy) {pause();core.run(1);snapshot();}
+    else if(data.type==='reset' && loaded) {++operation;busy=false;pause();core.reset();tick=0;events=[];eventOverflow=false;applySetup(core,model,preset);snapshot();}
     else if(data.type==='tap' && loaded && running && isPlayable(model,preset)) {taps.push(data.scan);snapshot();}
     else if(data.type==='release') {taps.clear(tick);snapshot();}
     else if(data.type==='view') {if(data.view!==0 && data.view!==1)throw new Error('Invalid frame view');frameView=data.view;snapshot();}

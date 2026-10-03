@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const out = resolve(root, 'dist');
 await mkdir(out, { recursive: true });
-const sources = ['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb'].map(name => `src/${name}.c`);
+const sources = ['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'checkpoint', 'scheduler', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb'].map(name => `src/${name}.c`);
 const args = [
   '--target=wasm32', '-std=c17', '-O3', '-flto', '-mbulk-memory', '-ffreestanding', '-nostdlib', '-fno-builtin',
   '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc',
@@ -18,7 +18,7 @@ const args = [
 const result = spawnSync(process.env.CLANG || 'clang', args, { cwd: root, stdio: 'inherit' });
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
-for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'calculator.js', 'calculator.css', 'catalog.js']) {
+for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'calculator.js', 'session.js', 'calculator.css', 'catalog.js']) {
   await copyFile(resolve(root, 'web', file), resolve(out, file));
 }
 await copyFile(resolve(root, "LICENSE"), resolve(out, "LICENSE"));
@@ -42,7 +42,7 @@ HP48gII: at Try To Recover Memory press the top-right key (NO), then again
 at Memory Clear (OK). Wait for HOME before typing a calculation.
 
 Use the skin keys or your computer keyboard. Switching away pauses;
-choose Resume to continue. Restart/model changes clear memory; no saving yet.
+choose Resume to continue. Use Save session before restarting or closing. Load session restores its matching ROM.
 The beta supports two tested firmware versions, not all six target models.
 The developer workbench is debug.html. It retains strict hardware mode,
 research setup selectors, registers, counters, UART and diagnostics. Both

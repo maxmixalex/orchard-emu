@@ -88,6 +88,14 @@ void orchard_reset(orchard_machine *m);
 /* Each call is bounded. A zero budget does nothing. Unsupported devices stop. */
 orchard_stop orchard_run(orchard_machine *m, uint32_t tick_budget);
 void orchard_get_state(const orchard_machine *m, orchard_state *state);
+/* Portable versioned state, excluding immutable NOR. Load the matching ROM first.
+ * Caller supplies a non-overlapping buffer of exactly checkpoint_size bytes.
+ * Invalid data/ROM/version is rejected without changing the current machine.
+ * CRC is corruption detection, not authentication; hosts should bind SHA-256. */
+size_t orchard_checkpoint_size(const orchard_machine *m);
+orchard_status orchard_checkpoint_save(const orchard_machine *m, void *buffer, size_t length);
+orchard_status orchard_checkpoint_load(orchard_machine *m, const void *buffer, size_t length);
+
 /* Physical memory debug access; MMIO is deliberately not exposed here. */
 orchard_status orchard_read_memory(const orchard_machine *m, uint32_t address,
                                    void *destination, size_t length);

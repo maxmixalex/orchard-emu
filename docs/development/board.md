@@ -15,9 +15,11 @@ Build/Pages run IDs and online checks. [Roadmap](roadmap.md) defines acceptance;
 
 ## Next
 
-- [ ] Reprofile remaining costs; investigate event-driven scheduling or decoded blocks without changing guest timing.
+- [x] Profile 980e1ec, implement bounded next-event phase accounting with MMIO/run-boundary synchronization and per-tick reference tests.
+- [x] Portable Save/Load session: both original systems continue after restoration; native/WASM complete state agrees.
+- [ ] Reprofile CPU decode/dispatch next; no decoded-block engine or JIT is included yet.
 - [ ] Actual browser file/touch/focus/background/reset E2E; local Chromium origin navigation remains policy-blocked.
-- [ ] Broader original-OS keys and sustained use, persistence, warm reset and power management.
+- [ ] Broader original-OS keys and sustained use, automatic persistence, warm reset and power management.
 - [ ] Independently establish physical SRAM address wiring, LCD mapping/+0x68, NOR identity and pad/ADC/clock conditions.
 - [ ] Native ARM payload/return and original-OS USB/file transfers; preserve the HP50g GET_CONFIGURATION counterexample.
 - [ ] Integrate later user-provided HP39gs/HP49g+ full dumps; do not request them again or block present work on acquisition.

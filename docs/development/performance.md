@@ -214,8 +214,57 @@ promoting SRAM, LCD, NOR identity or analog assumptions to verified hardware.
 
 ## Next optimization targets
 
-Reprofile this version before adding further complexity. Event-driven
-peripheral scheduling and decoded execution blocks remain candidates, not
-implemented features. Preserve exception precision, self-modifying code,
+Reprofile this version before adding further complexity. At that revision event-driven peripheral scheduling and decoded blocks were
+candidates. The scheduler continuation below now implements the former; decoded
+execution blocks remain future work. Preserve exception precision, self-modifying code,
 MMIO side effects and key/interrupt ordering. The reference build and original
 ROM replay are correctness gates; wall-time improvements alone are not.
+
+
+## Next-event phase accounting (continuation from 980e1ec)
+
+A new 30M-tick native `-pg` sample identifies about 13.4% self time in the SoC
+poll loop, 9.3% in EINT and additional time in per-peripheral tick calls. Each
+peripheral entry was called 30 million times even though most quanta produced
+no external transition. Instrumentation identifies a target, not a benchmark.
+
+The new scheduler computes the earliest RTC oscillator tick, ADC completion,
+LCD line transition, watchdog divider expiry or PWM divider expiry after a
+normal full peripheral step. Until **strictly before** that boundary, it
+retains every ARM instruction and CPU IRQ/FIQ acceptance check but aggregates
+only phase increments. No new interrupt arbitration is needed while the
+unchanged request state and latches remain stable. The exact old full step
+handles the event, in its original EINT/RTC/USB/ADC/LCD/watchdog/PWM/UART order.
+
+Every MMIO read/write first materializes deferred phases and invalidates the
+plan. Every public run return does the same, including stops. Thus reads see
+the right count, W1C can reassert on the next tick, and CPU/host changes cannot
+reuse a stale deadline. Host input enters only between bounded run calls.
+The retained `o_run_reference` uses per-tick peripherals; ORCHARD_REFERENCE
+builds select that path along with prior execution references. The scheduler
+is host optimization state, never checkpoint or hardware clock state.
+
+The 21,882-assertion scheduling suite compares full CPU state, peripheral state,
+stop details and RAM against that reference under 1,600 randomized states,
+partitioned budgets, mid-window MMIO, ADC start, main USB W1C with a live child
+latch, timer reload, invalid LCD, watchdog stop and WFI. Removing MMIO
+synchronization in an external mutant fails **eight assertions**. The original
+core and new session checks remain independent of this suite.
+
+### Same-host, same-input full workload
+
+Clang 17 / Node 22.16.0, identical O3/LTO/bulk-memory flags, fresh machines,
+exact unchanged NORs and the same physical-key schedule. One timed full pair
+per model, excluding load/compilation and browser timer policy:
+
+| Original system / HOME + two calculations | 980e1ec | This continuation | Throughput |
+| --- | ---: | ---: | ---: |
+| HP39g+ / 230M quanta | 10.695 s | 7.534 s | 1.42x |
+| HP48gII / 300M quanta | 14.096 s | 10.046 s | 1.40x |
+
+All compared registers, peripheral/USB state, pixels, segments, UART, events
+and assumption counters match exactly. Separate full startup tools replay both
+machines twice natively and twice in production WASM. These times are not
+early-HOME latency, a confidence interval, browser FPS or a real-device ratio.
+The new session feature separately avoids repeating startup; it is not counted
+as an execution speedup. Reprofile CPU decode/dispatch before the next change.

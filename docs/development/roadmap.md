@@ -123,7 +123,10 @@ opt-in HOME setups, seven skins, all model/debug controls and diagnostics.
 Physical taps and guest-driven annunciators share the optimized core. Node Worker tests are not HTTP/file-picker/browser
 lifecycle E2E; that gate remains open.
 
-Next are calibrated LCD output, versioned persistence/export, broader stock-key
+Manual versioned session export/import is now implemented and tested across
+native/WASM, including continuation of both original systems. Automatic
+persistence, migration and actual browser file-operation acceptance remain open.
+Next are calibrated LCD output and broader stock-key
 coverage and performance controls. Preserve single-Worker ownership, bounded slices,
 cancellation and model/ROM generation isolation.
 
@@ -189,7 +192,7 @@ M2/M3 or all-model M4. The original dumps are not modified.
 M5 now includes seven pinned outlined skins, 51 geometric hit regions per
 model, a separate guest-driven status strip, two hash-checked HOME setups,
 and an emulator subdirectory in the same Pages site. Actual browser-origin
-E2E, persistence and sustained full-key compatibility remain open.
+E2E, automatic persistence and sustained full-key compatibility remain open.
 
 ## Performance continuation
 
@@ -199,6 +202,22 @@ WASM compilation. The next round adds exact-width reads, conservative
 no-checkpoint execution for non-faulting ARM classes, and host translation memo
 entries revalidated against live descriptors on every hit. Fallible instructions
 retain full rollback; the guest timeline and MMIO effects are unchanged.
-This host memo is not a guest TLB model. Event-driven scheduling and dynamic
+This host memo is not a guest TLB model. Bounded next-event phase scheduling is now implemented with a per-tick
+reference comparison. Decoded blocks and dynamic
 translation remain future work; no hardware speed ratio or complete browser
 E2E is claimed.
+
+
+## Scheduling and session continuation after 980e1ec
+
+M5 gains explicit Save/Load session file operations, without bundling the ROM
+or exposing research controls. This is portable machine state, not just a
+screenshot or SRAM dump. Original-OS continuation and native/WASM state identity
+pass; automatic storage, format migration and actual browser-origin file
+interaction remain separate tasks. See [sessions](sessions.md).
+
+The scheduler now defers only phase accounting in intervals that end strictly
+before any peripheral event. CPU instructions and interrupt acceptance retain
+their original ordering. Every MMIO access and public run boundary synchronizes
+state. This optimizes host work, not physical hardware fidelity. Tests and
+[measurements](performance.md) compare against the accepted 980e1ec path.

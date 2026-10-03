@@ -19,7 +19,10 @@ or automatically dismiss firmware prompts. A text-keypad fallback is available.
 
 **Pause/Resume** keeps the current machine in this tab. **Restart** and changing
 models clear the calculator memory and ask for confirmation when appropriate.
-There is no save/restore yet. Blur/hidden/pagehide pause and release queued
+**Save session** exports the paused machine without its ROM. After reopening
+the same ROM, **Load session** restores it; Resume continues from the saved
+point. Changes are not autosaved. See [sessions](sessions.md) for compatibility
+and integrity boundaries. Blur/hidden/pagehide pause and release queued
 keys, and returning does not automatically resume. A cached page retains its
 Worker instead of returning with a terminated core. These are not warm reset
 or battery-backed persistence.

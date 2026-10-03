@@ -58,6 +58,7 @@ void orchard_reset(orchard_machine *m) {
     o_zero(m->boot_sram, sizeof(m->boot_sram));
     o_zero(&m->stop, sizeof(m->stop));
     m->ticks = 0;
+    m->quiet_left = m->deferred_ticks = 0;
     m->sram_alias_reads = m->sram_alias_writes = 0;
     m->nor_sequence = 0; m->nor_id_mode = false;
 }
@@ -85,14 +86,21 @@ void o_stop(orchard_machine *m, orchard_status status, uint32_t address, uint32_
     m->stop.address = address;
     m->stop.detail = detail;
 }
-orchard_stop orchard_run(orchard_machine *m, uint32_t budget) {
+static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled) {
     if (!m) return (orchard_stop){.status = ORCHARD_BAD_ARGUMENT};
     if (!m->loaded) return (orchard_stop){.status = ORCHARD_NO_ROM};
     for (uint32_t i = 0; i < budget && m->stop.status == ORCHARD_OK; ++i) {
         ++m->ticks;
-        o_soc_tick(m);
-        if (m->stop.status != ORCHARD_OK) break;
-        o_irq_update(&m->soc);
+        if (scheduled && m->quiet_left) {
+            --m->quiet_left;
+            ++m->deferred_ticks;
+        } else {
+            o_schedule_sync(m);
+            o_soc_tick(m);
+            if (m->stop.status != ORCHARD_OK) break;
+            o_irq_update(&m->soc);
+            if (scheduled) o_schedule_plan(m);
+        }
         uint32_t pending = m->soc.srcpnd & ~m->soc.intmsk;
         if (pending) m->cpu.sleeping = false;
         if ((pending & m->soc.intmod) && !(m->cpu.cpsr & O_F))
@@ -101,7 +109,18 @@ orchard_stop orchard_run(orchard_machine *m, uint32_t budget) {
             o_exception(&m->cpu, O_IRQ, 0x18, m->cpu.r[15] + 4u);
         else if (!m->cpu.sleeping) o_cpu_step(m);
     }
+    o_schedule_sync(m);
     return m->stop;
+}
+orchard_stop orchard_run(orchard_machine *m, uint32_t budget) {
+#ifdef ORCHARD_REFERENCE
+    return run(m, budget, false);
+#else
+    return run(m, budget, true);
+#endif
+}
+orchard_stop o_run_reference(orchard_machine *m, uint32_t budget) {
+    return run(m, budget, false);
 }
 void orchard_get_state(const orchard_machine *m, orchard_state *state) {
     if (!m || !state) return;

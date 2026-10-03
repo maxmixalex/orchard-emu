@@ -20,6 +20,9 @@
     <input id="rom" type="file" accept=".bin,.rom,.raw" hidden aria-label="Open calculator ROM">
     <p class="privacy">Your ROM stays on this device.</p>
     <div class="actions"><button id="run" disabled>Resume</button><button id="reset" disabled>Restart</button></div>
+    <div class="actions"><button id="save-session" disabled>Save session</button><button id="load-session" disabled>Load session…</button></div>
+    <input id="session-file" type="file" accept=".orchard" hidden aria-label="Load saved session">
+    <p id="session-note" class="privacy" role="status"></p>
     <p id="status" class="status" role="status">Loading…</p>
     <div id="error" role="alert" hidden></div>
     <section id="help" class="help">
@@ -27,7 +30,7 @@
       <p>Open your calculator’s complete ROM file. Its model and settings are detected automatically.</p>
       <p id="boot-help">When “Memory Clear” appears, press the top-right key (OK).</p>
       <p>Click the calculator keys, or use your keyboard’s numbers, operators and Enter.</p>
-      <p>Switching away pauses the calculator. Restarting or closing this page clears its memory; saving is not available yet.</p>
+      <p>Switching away pauses the calculator. Save session exports your current calculator state without its ROM. After reopening the same ROM, Load session restores your work without repeating startup. Changes are not saved automatically.</p>
     </section>
     <details class="text-keypad"><summary>Text keypad</summary><div id="keypad" aria-label="Calculator keys"></div></details>
   </aside>
