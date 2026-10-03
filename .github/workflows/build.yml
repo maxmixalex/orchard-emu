@@ -65,7 +65,7 @@ jobs:
         run: |
           rm -rf build/analysis
           mkdir -p build/analysis
-          for file in src/*.c app/main.c tests/*.c tools/probe-gpio-window.c tools/usb-session.c tools/cpu-oracle.c; do
+          for file in src/*.c app/main.c tests/*.c tools/probe-gpio-window.c tools/usb-session.c tools/cpu-oracle.c tools/checkpoint-replay.c; do
             report="build/analysis/${file%.c}.plist"
             mkdir -p "$(dirname "$report")"
             clang --analyze -std=c17 -Wall -Wextra -Werror -Iinclude -Isrc "$file" \
@@ -75,7 +75,7 @@ jobs:
           import pathlib, plistlib
           analysis = pathlib.Path("build/analysis")
           reports = list(analysis.rglob("*.plist"))
-          sources = list(pathlib.Path("src").glob("*.c")) + [pathlib.Path("app/main.c"), *pathlib.Path("tests").glob("*.c"), pathlib.Path("tools/probe-gpio-window.c"), pathlib.Path("tools/usb-session.c"), pathlib.Path("tools/cpu-oracle.c")]
+          sources = list(pathlib.Path("src").glob("*.c")) + [pathlib.Path("app/main.c"), *pathlib.Path("tests").glob("*.c"), pathlib.Path("tools/probe-gpio-window.c"), pathlib.Path("tools/usb-session.c"), pathlib.Path("tools/cpu-oracle.c"), pathlib.Path("tools/checkpoint-replay.c")]
           assert {p.relative_to(analysis).as_posix() for p in reports} == {p.with_suffix(".plist").as_posix() for p in sources}, "Missing analyzer output"
           issues = {p.relative_to(analysis).as_posix(): plistlib.loads(p.read_bytes())["diagnostics"] for p in reports}
           assert not any(issues.values()), issues
