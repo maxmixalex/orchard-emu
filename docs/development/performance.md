@@ -25,7 +25,7 @@ the full message schema. `tests/calculator.mjs` checks this boundary along with
 separate entrypoints and rejection of unsupported firmware. These Node checks
 are not full browser DOM or file-picker acceptance.
 
-## Measured bottleneck and changes
+## First optimization round: 2042ad8
 
 A native Clang `-pg` sample of the unchanged 78ef22f HP39g+ path, 20 million
 virtual ticks, attributed 51.60% of sampled self time to `o_gpio_sample` and
@@ -112,13 +112,110 @@ memoized EINT against the retained pre-optimization algorithm. It checks warm
 cache reuse, all dependency mutations, every trigger mode, W1C and masks,
 detach/reattach, contention/unsupported states and reset. Existing CPU/MMU,
 USB/LCD/ADC and original-firmware regressions remain mandatory. Configure
-`-DORCHARD_REFERENCE=ON` for a native build without EINT memoization.
+`-DORCHARD_REFERENCE=ON` for a native build without the host EINT/execution
+optimizations. This option does not change the guest hardware configuration.
+
+## Execution hot paths: continuation from 2042ad8
+
+A new Clang `-pg` profile of 30M HP39g+ ticks on exact `2042ad8`
+puts physical reads, CPU dispatch/checkpoints and translation at roughly
+14.2%, 13.9% and 11.7% of sampled self time. These instrumented percentages
+identify candidates; they are not the timed before/after measurements.
+
+The second round retains all guest instructions and the same peripheral/input
+timeline. It changes host work in three places:
+
+* Exact-width byte-span reads avoid the intermediate SRAM copy. Constant-size
+  `__builtin_memcpy` on little-endian GCC/Clang is unaligned/alias-safe; the
+  portable/reference byte assembly remains available. Mirrored accesses that
+  wrap around the chip still use the bounded wrap path and retain counters.
+* Condition-failed ARM instructions, B/BL, and conservatively classified ALU
+  operations need no full CPU rollback copy. The ALU is the original helper.
+  Loads/stores, Thumb, PSR operations, exception returns, multiply, CP15 and
+  every class that may stop retain the original complete checkpoint path.
+  `o_cpu_step_reference` retains unconditional checkpoints for comparison.
+* A 64-entry host translation memo reuses successful 1 KiB mappings only after
+  checking the effective virtual page, translation base, domain/control words,
+  access privilege/direction and **both live page-table descriptor words**.
+  Unmapped/side-effecting or aliased table storage is never cached. NOR ID
+  mode bypasses hits. No failed translation is cached. Entries contain offsets,
+  not host pointers, and reset clears them.
+
+This is not an ARM TLB model. Page-table changes remain visible immediately,
+even without maintenance, exactly as in the original walking implementation.
+Physical data/code bytes are still fetched each time: there is no decoded-code
+cache, self-modifying-code shortcut, guest-time scaling, or ROM patch.
+
+### Same-input full-workload measurement
+
+Both binaries were built with Clang 17, identical `-O3 -flto -mbulk-memory`
+flags, and run on the same Linux x64 / Node 22.16.0 host. Unlike the first-round
+table, the baseline here is the **already optimized 2042ad8**, not 78ef22f.
+Each full workload ran once per binary; short 20M-tick checks alternated order
+across three cold starts per binary/model. Timing excludes load/compilation and
+browser scheduling. No real calculator was timed.
+
+| System / workload | 2042ad8 | This continuation | Throughput ratio |
+| --- | ---: | ---: | ---: |
+| HP39g+ / 230M ticks, HOME + two calculations | 14.382 s | 11.012 s | 1.31x |
+| HP48gII / 300M ticks, HOME + two calculations | 18.274 s | 14.099 s | 1.30x |
+
+The short-check median ratios were 1.39x and 1.35x respectively. Full-workload
+registers, exposed peripheral/USB state, pixels, segments, UART, input events
+and assumption counters matched the baseline exactly. Treat the full table as
+an observed pair, not a confidence interval or a first-screen latency claim.
+Do not multiply speed ratios measured in separate sessions into a purported
+hardware speed rating.
+
+Baseline WASM SHA-256:
+`93c434278f7c4dfe4bca2685d7ccfab0c9c84239d5e4f7dece7aec96a84f9f42`.
+Candidate WASM SHA-256:
+`40625515c6475b5ff97a35a4e85b51517d878da92d234e6d26fb97a479b3bc62`.
+These identify local builds, not the separately verified CI compiler output.
+
+### Direct cumulative check against the user-feedback version
+
+The exact `78ef22f` source was also rebuilt with its original flags on this
+same host. Three alternating 20M-tick cold runs per binary/model directly
+compared that version with this candidate; every compared output matched.
+This is a measured cumulative ratio, not the product of historical ratios.
+
+| System / 20M-tick startup segment | 78ef22f median | Current median | Ratio |
+| --- | ---: | ---: | ---: |
+| HP39g+ | 6.612 s | 0.920 s | 7.19x |
+| HP48gII | 6.507 s | 0.887 s | 7.33x |
+
+The old binary hash is
+`36df5cab5972e0ae026a028a68d2b91bf860df7f249de2444e2ee4c1e367c567`.
+These short startup segments are neither full HOME latency nor a real-machine
+speed comparison. The separate full-workload table above compares against
+2042ad8 and includes both original-OS calculations.
+
+### Regression boundaries
+
+`tests/execution.c` adds 84,365 assertions against the full-checkpoint decoder
+and uncached walker. Cases cover ARM decode restrictions/flags/PC destinations,
+Thumb and exceptional instructions; all page types/AP/domain/S/R combinations;
+1 KiB permission boundaries; both descriptor levels; FCSE, TTBR and control
+changes; alias writes into table storage; side-effecting UART table reads;
+NOR software-ID state; arena relocation and reset. Existing SRAM boundary,
+wrap, NOR command and guest peripheral tests remain active. The CPU comparison
+checks full architectural state, stop details, peripherals and all SRAM bytes.
+
+A deliberately broken local memo accepted an updated first-level descriptor
+without recomputing its mapping. The new suite failed ten assertions. That
+mutant and its reports are outside the repository and release artifacts.
+The default independent Unicorn 17,075-case ARMv4T subset also passes; it is
+not an oracle for ARM920T MMU/cache or physical-board fidelity.
+
+Both original-system witnesses then passed two native and two production-WASM
+cold runs each. This preserves the conditional HOME/arithmetic evidence without
+promoting SRAM, LCD, NOR identity or analog assumptions to verified hardware.
 
 ## Next optimization targets
 
-Profile the improved version before the next change. Candidates include
-bounded event-driven peripheral scheduling, decoded instruction blocks and
-translation caching with correct page-table/code-write invalidation. These
-are future work, not features of this revision. Retain a reference path and
-compare the exact guest timeline; increasing a displayed counter, skipping
-boot code or slowing virtual peripherals is not performance optimization.
+Reprofile this version before adding further complexity. Event-driven
+peripheral scheduling and decoded execution blocks remain candidates, not
+implemented features. Preserve exception precision, self-modifying code,
+MMIO side effects and key/interrupt ordering. The reference build and original
+ROM replay are correctness gates; wall-time improvements alone are not.

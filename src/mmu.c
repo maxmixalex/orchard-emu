@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT
- * ARM920T page-table walks; cache/TLB timing and lockdown are not simulated. */
+ * ARM920T page-table walks with live-descriptor host memoization.
+ * Guest cache/TLB timing and lockdown are not simulated. */
 #include "internal.h"
 
 void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool fetch) {
@@ -14,8 +15,18 @@ static bool permission(o_cpu *c, unsigned ap, bool user, bool write) {
     unsigned sr = (c->control >> 8) & 3u;
     return !write && (sr == 2 || (sr == 1 && !user));
 }
-bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
-                 bool user, uint32_t *physical) {
+static uint32_t table_offset(const orchard_machine *m, uint32_t address) {
+    if (address < m->profile->flash_bytes && 4u <= m->profile->flash_bytes - address && !m->nor_id_mode)
+        return (uint32_t)offsetof(orchard_machine, flash) + address;
+    if (address >= O_RAM_BASE && address - O_RAM_BASE < m->profile->ram_bytes &&
+        4u <= m->profile->ram_bytes - (address - O_RAM_BASE))
+        return (uint32_t)offsetof(orchard_machine, ram) + address - O_RAM_BASE;
+    if (address >= O_BOOT_SRAM_BASE && address - O_BOOT_SRAM_BASE <= O_BOOT_SRAM_SIZE - 4u)
+        return (uint32_t)offsetof(orchard_machine, boot_sram) + address - O_BOOT_SRAM_BASE;
+    return 0; /* MMIO, an SRAM alias, or an unmapped span must use the bus. */
+}
+static bool translate_walk(orchard_machine *m, uint32_t address, bool write, bool fetch,
+                           bool user, uint32_t *physical, o_translation *memo) {
     o_cpu *c = &m->cpu;
     if (!(c->control & 1u)) { *physical = address; return true; }
     uint32_t va = address;
@@ -28,13 +39,14 @@ bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
     unsigned type = l1 & 3u, domain = (l1 >> 5) & 15u;
     unsigned access = (c->domain >> (domain * 2u)) & 3u;
     unsigned ap;
+    uint32_t l2 = 0, l2addr = 0;
     bool section = type == 2;
     if (!type) { o_fault(c, va, 5, 0, fetch); return false; }
     if (section) {
         *physical = (l1 & 0xfff00000u) | (va & 0xfffffu);
         ap = (l1 >> 10) & 3u;
     } else {
-        uint32_t l2, l2addr = type == 1
+        l2addr = type == 1
             ? (l1 & 0xfffffc00u) | ((va >> 10) & 0x3fcu)
             : (l1 & 0xfffff000u) | ((va >> 8) & 0xffcu);
         if (!o_phys_read(m, l2addr, 4, &l2)) {
@@ -63,7 +75,51 @@ bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
     if (access != 3 && !permission(c, ap, user, write)) {
         o_fault(c, va, section ? 13 : 15, domain, fetch); return false;
     }
+    if (memo) {
+        uint32_t first = table_offset(m, l1addr);
+        uint32_t second = section ? 0 : table_offset(m, l2addr);
+        memo->first_offset = 0;
+        if (first && (section || second)) {
+            memo->virtual_page = va & ~1023u;
+            memo->physical_page = *physical & ~1023u;
+            memo->control = c->control;
+            memo->ttb = c->ttb;
+            memo->domain = c->domain;
+            memo->access = (unsigned)write | ((unsigned)user << 1);
+            memo->first_word = l1;
+            memo->second_offset = second;
+            memo->second_word = l2;
+            memo->first_offset = first;
+        }
+    }
     return true;
+}
+bool o_translate_reference(orchard_machine *m, uint32_t address, bool write, bool fetch,
+                           bool user, uint32_t *physical) {
+    return translate_walk(m, address, write, fetch, user, physical, NULL);
+}
+bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
+                 bool user, uint32_t *physical) {
+#ifdef ORCHARD_REFERENCE
+    return o_translate_reference(m, address, write, fetch, user, physical);
+#else
+    o_cpu *c = &m->cpu;
+    if (!(c->control & 1u)) { *physical = address; return true; }
+    uint32_t va = address;
+    if (va < 0x02000000u) va |= c->pid & 0xfe000000u;
+    unsigned access = (unsigned)write | ((unsigned)user << 1);
+    o_translation *memo = &m->translations[((va >> 10) ^ (va >> 20) ^ (access * 21u)) & (O_TRANSLATIONS - 1u)];
+    const uint8_t *bytes = (const uint8_t *)m;
+    if (memo->first_offset && memo->virtual_page == (va & ~1023u) &&
+        memo->control == c->control && memo->ttb == c->ttb &&
+        memo->domain == c->domain && memo->access == access && !m->nor_id_mode &&
+        o_read_le(bytes + memo->first_offset, 4) == memo->first_word &&
+        (!memo->second_offset || o_read_le(bytes + memo->second_offset, 4) == memo->second_word)) {
+        *physical = memo->physical_page | (va & 1023u);
+        return true;
+    }
+    return translate_walk(m, address, write, fetch, user, physical, memo);
+#endif
 }
 static bool aligned(orchard_machine *m, uint32_t address, unsigned width) {
     if (!(address & (width - 1u))) return true;
@@ -143,7 +199,8 @@ bool o_cp15(orchard_machine *m, uint32_t op) {
              (crm == 14 && (op2 == 1 || op2 == 2)))) {
         /* Coherent functional memory: maintenance has no dirty data to flush. */
     } else if (crn == 8 && (crm == 5 || crm == 6 || crm == 7) && op2 <= 1) {
-        /* No cached translations. The next access always walks guest tables. */
+        /* Host memo hits re-read their descriptors and context. No guest TLB
+           is modeled; changed guest tables are visible even without maintenance. */
     } else return false;
     return true;
 }

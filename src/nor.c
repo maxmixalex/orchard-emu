@@ -64,7 +64,6 @@ bool o_nor_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *
         if (width < 4) *value &= (1u << (width * 8u)) - 1u;
         return true;
     }
-    *value = 0;
-    for (unsigned i = 0; i < width; ++i) *value |= (uint32_t)m->flash[address + i] << (8u * i);
+    *value = o_read_le(m->flash + address, width);
     return true;
 }

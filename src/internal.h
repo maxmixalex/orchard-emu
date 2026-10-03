@@ -26,6 +26,22 @@
 #define O_QUEUE 1024u
 #define O_FUNCTIONAL_TIMEBASE_HZ 12000000u
 
+/* Exact-width, unaligned-safe host reads from an already checked byte span.
+ * Constant-size memcpy is recognized as a load, without pointer casts/aliasing
+ * UB. Byte assembly remains the portable big-endian/reference implementation. */
+static inline uint32_t o_read_le(const uint8_t *p, unsigned width) {
+#if !defined(ORCHARD_REFERENCE) && defined(__BYTE_ORDER__) && \
+    __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && (defined(__GNUC__) || defined(__clang__))
+    if (width == 4) { uint32_t v; __builtin_memcpy(&v, p, 4); return v; }
+    if (width == 2) { uint16_t v; __builtin_memcpy(&v, p, 2); return v; }
+    return p[0];
+#else
+    uint32_t value = 0;
+    for (unsigned i = 0; i < width; ++i) value |= (uint32_t)p[i] << (8u * i);
+    return value;
+#endif
+}
+
 typedef struct {
     uint8_t data[O_QUEUE];
     unsigned head, count;
@@ -101,8 +117,18 @@ typedef struct {
     o_rtc rtc;
 } o_soc;
 
+/* Host memoization, NOT guest TLB state. A hit revalidates both live table
+ * words and the full translation context. Offsets survive machine relocation;
+ * only side-effect-free, non-aliased physical table storage is admitted. */
+typedef struct {
+    uint32_t virtual_page, physical_page, control, ttb, domain, access;
+    uint32_t first_offset, first_word, second_offset, second_word;
+} o_translation;
+#define O_TRANSLATIONS 64u
+
 struct orchard_machine {
     const orchard_profile *profile;
+    o_translation translations[O_TRANSLATIONS];
     o_cpu cpu;
     o_soc soc;
     uint64_t ticks;
@@ -128,6 +154,8 @@ void o_set_cpsr(o_cpu *c, uint32_t value);
 uint32_t *o_spsr(o_cpu *c);
 void o_exception(o_cpu *c, unsigned mode, uint32_t vector, uint32_t link);
 void o_cpu_step(orchard_machine *m);
+/* Full-checkpoint dispatcher retained for test/reference comparison. */
+void o_cpu_step_reference(orchard_machine *m);
 uint32_t o_getr(const o_cpu *c, unsigned r);
 void o_putr(o_cpu *c, unsigned r, uint32_t value);
 uint32_t o_get_user(const o_cpu *c, unsigned r);
@@ -147,6 +175,8 @@ bool o_nor_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
 bool o_nor_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);
 bool o_phys_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);
 bool o_phys_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value);
+bool o_translate_reference(orchard_machine *m, uint32_t address, bool write, bool fetch,
+                           bool user, uint32_t *physical);
 bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
                  bool user, uint32_t *physical);
 bool o_load(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t *value);

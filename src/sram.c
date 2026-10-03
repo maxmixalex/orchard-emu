@@ -45,12 +45,25 @@ bool o_sram_copy(const orchard_machine *m, uint32_t address, void *destination, 
     return true;
 }
 bool o_sram_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value) {
+#ifndef ORCHARD_REFERENCE
+    uint32_t offset;
+    if (!value || (width != 1 && width != 2 && width != 4) ||
+        !span(m, address, width, &offset)) return false;
+    if (width <= m->profile->ram_bytes - offset) {
+        *value = o_read_le(m->ram + offset, width);
+    } else {
+        /* A mirrored unaligned span may wrap within the physical chip. */
+        uint32_t result = 0, mask = m->profile->ram_bytes - 1u;
+        for (unsigned i = 0; i < width; ++i)
+            result |= (uint32_t)m->ram[(offset + i) & mask] << (8u * i);
+        *value = result;
+    }
+#else
     uint8_t bytes[4];
     if (!value || (width != 1 && width != 2 && width != 4) ||
         !o_sram_copy(m, address, bytes, width)) return false;
-    uint32_t result = 0;
-    for (unsigned i = 0; i < width; ++i) result |= (uint32_t)bytes[i] << (8u * i);
-    *value = result;
+    *value = o_read_le(bytes, width);
+#endif
     if (aliased(m, address, width)) ++m->sram_alias_reads;
     return true;
 }

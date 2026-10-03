@@ -195,6 +195,10 @@ E2E, persistence and sustained full-key compatibility remain open.
 
 [Measured optimization](performance.md) removes repeated keyboard circuit
 resolution, empty IRQ arbitration and debugger snapshot churn, with optimized
-WASM compilation. Input timing and full CPU rollback checks are retained.
-Event-driven scheduling, translation caches and dynamic translation remain
-future work; no hardware speed ratio or complete browser E2E is claimed.
+WASM compilation. The next round adds exact-width reads, conservative
+no-checkpoint execution for non-faulting ARM classes, and host translation memo
+entries revalidated against live descriptors on every hit. Fallible instructions
+retain full rollback; the guest timeline and MMIO effects are unchanged.
+This host memo is not a guest TLB model. Event-driven scheduling and dynamic
+translation remain future work; no hardware speed ratio or complete browser
+E2E is claimed.

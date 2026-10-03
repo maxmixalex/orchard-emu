@@ -1,5 +1,40 @@
 # Validation
 
+## Execution continuation from 2042ad8
+
+The accepted incoming baseline is `2042ad8`: Build #17 and Pages #14 succeeded.
+This continuation changes host execution work, not the ordinary calculator UI
+or its two recognized ROM identities. The user/debug separation is preserved.
+
+Nine Release suites, nine Debug ASan/UBSan suites, and nine native reference
+suites pass locally. Native/test-WASM run **407,540 assertions each**, including
+84,365 new decoder/memory-translation checks. The independent Unicorn default
+corpus has **17,075 cases**, zero differences/skips. Static analysis produced
+**29 separate clean translation-unit reports**. Existing generated peripheral,
+USB, NOR and six-profile workloads pass, as do 76 tool checks, Worker/lifecycle,
+calculator-audience, skin and nine publication-contract tests.
+
+The added tests compare optimized execution with the retained full-checkpoint
+path and uncached walker, including live descriptor changes, alias writes,
+permissions, side effects, NOR ID state and relocation. A separately compiled
+invalid first-level cache produced ten failures; that mutant is not committed.
+
+On the identical complete original-ROM workloads, 2042ad8 versus this version
+measured **14.382 -> 11.012 seconds (HP39g+)** and **18.274 -> 14.099 seconds
+(HP48gII)** with all exposed state, pixels, segments, events and counters equal.
+Both maintained startup tools then passed two native and two production-WASM
+cold replays each. These are local firmware checks, not ordinary ROM-free CI.
+A direct, three-run-per-binary short comparison against rebuilt 78ef22f
+measured median ratios of 7.19x (39g+) and 7.33x (48gII), with equal outputs.
+See [performance](performance.md) for hashes, methods and timing limits.
+
+The tests do not certify complete physical hardware or actual browser E2E.
+A fresh Chromium attempt at the local production HTTP origin still returned
+`ERR_BLOCKED_BY_ADMINISTRATOR`; no browser policy was changed. New strict docs,
+CI-produced binaries and Pages deployment need their own observed acceptance;
+exact run/revision results are recorded in issue #1 after completion.
+
+
 ## User frontend and performance continuation from 78ef22f
 
 The normal `/emulator/` now omits research controls and metadata; the separate

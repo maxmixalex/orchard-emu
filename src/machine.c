@@ -51,6 +51,7 @@ orchard_machine *orchard_init(void *arena, size_t bytes, unsigned model_id) {
 }
 void orchard_reset(orchard_machine *m) {
     if (!m) return;
+    o_zero(m->translations, sizeof(m->translations));
     o_cpu_reset(&m->cpu);
     o_soc_reset(&m->soc);
     o_zero(m->ram, m->profile->ram_bytes);

@@ -73,3 +73,19 @@ updates its host tick count without a per-call debug snapshot allocation.
 See performance.md for the measured ~6× fixed-workload result and follow-on
 profiling targets. The ROMs, raw timing/state reports and layout previews are
 local-only evidence and must not enter production or Pages packages.
+
+## Execution continuation from 2042ad8
+
+The same user/debug UI now uses exact-width checked memory reads, a conservative
+ARM no-checkpoint path and a 64-entry host translation memo. Every hit checks
+live descriptor words and translation context; MMIO/aliased table storage and
+NOR ID mode take the uncached bus path. Do not replace these checks with stale
+TLB-like semantics. Offsets are relative to the current machine arena and reset
+clears them. Future persistence must treat this as disposable host state.
+
+`ORCHARD_REFERENCE` disables EINT memoization and these execution optimizations.
+`tests/execution.c` compares the full checkpoint/walker paths; the independent
+Unicorn corpus and full original-system cold replay also pass. Full-workload
+speed is approximately 1.30x relative to already optimized 2042ad8 in this
+session, not an additional 6x and not a measured hardware speed ratio.
+Publication acceptance belongs to issue #1, not an assumed successful push.

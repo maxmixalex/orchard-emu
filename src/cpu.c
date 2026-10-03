@@ -384,7 +384,36 @@ static void arm(orchard_machine *m, uint32_t op) {
         c->next_pc = c->r[15];
     } else o_stop(m, ORCHARD_UNSUPPORTED_INSTRUCTION, c->r[15], op);
 }
-void o_cpu_step(orchard_machine *m) {
+/* These classes cannot call the bus, change a register bank, or raise a
+ * diagnostic stop. All other instructions keep the complete rollback image.
+ * Classification is deliberately conservative; execution uses the SAME ALU
+ * helper as the reference path, not a second implementation of arithmetic. */
+static bool arm_without_checkpoint(orchard_machine *m, uint32_t op) {
+    o_cpu *c = &m->cpu;
+    if (!o_condition(c, op >> 28)) {
+        c->next_pc = c->r[15] + 4u;
+        return true;
+    }
+    if ((op & 0x0e000000u) == 0x0a000000u) {
+        uint32_t offset = (op & 0xffffffu) << 2;
+        if (offset & (1u << 25)) offset |= 0xfc000000u;
+        if (op & (1u << 24)) c->r[14] = c->r[15] + 4u;
+        c->next_pc = c->r[15] + 8u + offset;
+        return true;
+    }
+    if (op & 0x0c000000u) return false;
+    unsigned kind = (op >> 21) & 15u;
+    bool test = kind >= 8 && kind <= 11;
+    bool flags = (op & (1u << 20)) != 0;
+    if (test && !flags) return false; /* PSR, BX and miscellaneous encodings. */
+    if (!test && flags && ((op >> 12) & 15u) == 15) return false; /* SPSR return. */
+    if (!(op & (1u << 25)) && (op & 16u) &&
+        ((op & 128u) || ((op >> 8) & 15u) == 15)) return false;
+    c->next_pc = c->r[15] + 4u;
+    data_processing(m, op);
+    return true;
+}
+static void cpu_step(orchard_machine *m, bool fast) {
     o_cpu *c = &m->cpu;
     uint32_t pc = c->r[15], physical = 0, instruction = 0;
     unsigned width = c->cpsr & O_T ? 2 : 4;
@@ -397,6 +426,11 @@ void o_cpu_step(orchard_machine *m) {
         if (m->stop.status != ORCHARD_OK) return;
         if (!c->prefetch_abort) o_fault(c, pc, 8, 0, true);
         o_exception(c, O_ABT, 0xc, pc + 4u);
+        return;
+    }
+    if (fast && width == 4 && arm_without_checkpoint(m, instruction)) {
+        c->r[15] = c->next_pc;
+        ++c->instructions;
         return;
     }
     o_cpu before = *c;
@@ -416,4 +450,13 @@ void o_cpu_step(orchard_machine *m) {
         o_exception(c, O_ABT, 0x10, pc + 8u);
     } else c->r[15] = c->next_pc;
     ++c->instructions;
+}
+
+void o_cpu_step_reference(orchard_machine *m) { cpu_step(m, false); }
+void o_cpu_step(orchard_machine *m) {
+#ifdef ORCHARD_REFERENCE
+    cpu_step(m, false);
+#else
+    cpu_step(m, true);
+#endif
 }
