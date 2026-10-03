@@ -1,0 +1,85 @@
+name: Transport verified HOME source
+on:
+  push:
+    branches: [transport/hp48-home-web-20261003]
+    paths: [.github/workflows/transport-home-web.yml]
+permissions:
+  contents: write
+jobs:
+  transport:
+    runs-on: home-docker
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+      - name: Reconstruct locally verified source and publish staging ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DELTA="$RUNNER_TEMP/orchard-source-delta.json.gz"
+          python3 - <<'PY'
+          import base64, hashlib, os
+          from pathlib import Path
+          root = Path('_source-transport')
+          assert len(list(root.iterdir())) == 42
+          compressed = b''.join((root / f'part-{i:02}').read_bytes() for i in range(6))
+          compressed += b''.join(base64.b64decode((root / f'tail-{i:02}.b64').read_bytes(), validate=True) for i in range(36))
+          assert len(compressed) == 39582
+          assert hashlib.sha256(compressed).hexdigest() == '48ad6bbf36a9136ed3e5bd739cea9fd859106fe602b07d8f47741526d1698f47'
+          Path(os.environ['DELTA']).write_bytes(compressed)
+          print('Source manifest transport hash verified')
+          PY
+          git checkout --detach 6372cbe021713a6523551ec604af65a244dc44e9
+          python3 - <<'PY'
+          from pathlib import Path, PurePosixPath
+          import gzip, hashlib, json, subprocess, sys
+          import os
+          archive = Path(os.environ['DELTA'])
+          compressed = archive.read_bytes()
+          assert hashlib.sha256(compressed).hexdigest() == '48ad6bbf36a9136ed3e5bd739cea9fd859106fe602b07d8f47741526d1698f47'
+          with gzip.open(archive, 'rb') as stream:
+              raw = stream.read(1000001)
+          assert len(raw) <= 1000000
+          manifest = json.loads(raw)
+          assert manifest['schema'] == 1
+          assert manifest['base'] == '6372cbe021713a6523551ec604af65a244dc44e9'
+          assert manifest['tree'] == 'b51604f4e4dab6ec8156db195e7c5928ab36599a'
+          assert subprocess.check_output(['git', 'write-tree'], text=True).strip() == manifest['base_tree']
+          assert len(manifest['changes']) == 43
+          seen = set()
+          for item in manifest['changes']:
+              name = item['path']; rel = PurePosixPath(name)
+              assert not rel.is_absolute() and '..' not in rel.parts and name not in seen
+              assert '.git' not in rel.parts
+              seen.add(name)
+              path = Path(name)
+              assert not path.is_symlink() and not any(p.is_symlink() for p in path.parents)
+              old = path.read_bytes() if path.exists() else None
+              assert (hashlib.sha256(old).hexdigest() if old is not None else None) == item['old'], name
+              lines = (old or b'').decode('utf-8').splitlines(keepends=True)
+              end = len(lines)
+              for start, stop, value in reversed(item['edits']):
+                  assert 0 <= start <= stop <= end and isinstance(value, str)
+                  lines[start:stop] = value.splitlines(keepends=True)
+                  end = start
+              data = ''.join(lines).encode('utf-8')
+              assert hashlib.sha256(data).hexdigest() == item['new'], name
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(data)
+          subprocess.run(['git', 'add', '--', *sorted(seen)], check=True)
+          assert subprocess.check_output(['git', 'write-tree'], text=True).strip() == manifest['tree']
+          print('43 source files verified; target tree', manifest['tree'])
+          PY
+          git diff --cached --check
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit \
+            -m 'feat: reconcile conditional HP48 HOME and expose web research controls' \
+            -m 'Preserve the upstream NOR adapter and both NOR/memory regressions. Add explicit, hash-checked HP48 HOME research setup, bounded Worker batching, physical tap queue, 51-key interface, cancellation/generation isolation and portable local server. Strict defaults remain unchanged.' \
+            -m 'Locally validated before publication: 200839 native/test-WASM assertions, six sanitizer suites, 76 tool checks, 26 analysis units and 17075 Unicorn cases. Fixed HOME cold replay passes; actual production Worker HOME calculations replay exactly on native at its recorded key times. Browser-origin navigation is blocked, so actual page E2E remains unverified. SRAM/LCD/pad/ADC hypotheses remain explicit. No firmware or private evidence is committed.'
+          git push origin HEAD:refs/heads/integration/hp48-home-web-20261003
+          printf 'Verified staging commit: '
+          git rev-parse HEAD
+          printf 'Verified source tree: '
+          git rev-parse HEAD^{tree}
+# Data transport only. No emulator execution or firmware acquisition.
+# Main is updated separately through the connector after tree verification.
