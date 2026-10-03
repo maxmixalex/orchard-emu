@@ -80,6 +80,7 @@ jobs:
           npm run test:tools
           npm run build
           npm run test:wasm
+          npm run test:web
       - name: Independent CPU differential (developer-only dependency)
         run: |
           npm run build:oracle
