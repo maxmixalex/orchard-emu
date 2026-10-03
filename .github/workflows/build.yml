@@ -54,6 +54,12 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug -DORCHARD_SANITIZE=ON
           cmake --build build-sanitize --parallel
           ctest --test-dir build-sanitize --output-on-failure
+      - name: Reference execution regression
+        run: |
+          cmake -S . -B build-reference -G Ninja -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_BUILD_TYPE=Release -DORCHARD_REFERENCE=ON
+          cmake --build build-reference --parallel
+          ctest --test-dir build-reference --output-on-failure
       - name: Analyze native C
         shell: bash
         run: |
