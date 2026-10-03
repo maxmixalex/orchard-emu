@@ -1,13 +1,7 @@
-name: Documentation
+name: Pages
 on:
   push:
     branches: [main]
-    paths:
-      - 'docs/**'
-      - 'zensical.toml'
-      - 'tools/requirements-docs.txt'
-      - 'tools/check-docs.py'
-      - '.github/workflows/docs.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,17 +11,42 @@ concurrency:
 jobs:
   build:
     runs-on: home-docker
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - name: Install missing web build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          for package in clang lld python3-venv; do
+            if ! dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q 'ok installed'; then
+              missing+=("$package")
+            fi
+          done
+          if (( ${#missing[@]} )); then
+            sudo -n -E apt-get -o Acquire::Retries=3 update
+            sudo -n -E apt-get -o Acquire::Retries=3 install -y --no-install-recommends "${missing[@]}"
+          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build same-origin emulator with pinned skins
+        run: |
+          npm run check
+          npm run build
+          npm run test:web
+          npm run test:skins
       - name: Build strict Zensical site
         run: |
           python3 tools/check-docs.py
           python3 -m venv "$RUNNER_TEMP/orchard-docs-venv"
           "$RUNNER_TEMP/orchard-docs-venv/bin/pip" install --disable-pip-version-check -r tools/requirements-docs.txt
           "$RUNNER_TEMP/orchard-docs-venv/bin/zensical" build --strict
+          python3 tools/build-pages.py
+          test -f site/emulator/index.html
           test -f site/index.html
           printf '%s\n' "$GITHUB_SHA" > site/revision.txt
           test -z "$(find site -type f \( -iname '*.bin' -o -iname '*.raw' -o -iname '*.rom' -o -iname '*.xz' \) -print -quit)"
@@ -47,7 +66,7 @@ jobs:
     steps:
       - uses: actions/deploy-pages@v4
         id: deployment
-      - name: Verify published documentation
+      - name: Verify published documentation and emulator
         env:
           PAGES_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
@@ -68,3 +87,27 @@ jobs:
             "${base}revision.txt?revision=${GITHUB_SHA}" -o "$RUNNER_TEMP/orchard-revision.txt"
           grep -q 'dfa544617039e1bff0f62b9f51a943e57ff756d12bb81478de7aec41a5b73a28' "$RUNNER_TEMP/orchard-native-roms.html"
           test "$(cat "$RUNNER_TEMP/orchard-revision.txt")" = "$GITHUB_SHA"
+          export EMULATOR_URL="${base}emulator/"
+          python3 - <<'PYCODE'
+          import hashlib, json, os, time, urllib.request
+          base = os.environ['EMULATOR_URL']
+          revision = os.environ['GITHUB_SHA']
+          def get(name):
+              url = base + name + '?revision=' + revision
+              for attempt in range(6):
+                  try:
+                      with urllib.request.urlopen(url, timeout=25) as r:
+                          data = r.read(2000001)
+                      assert len(data) <= 2000000, 'Oversized asset'
+                      return data
+                  except Exception:
+                      if attempt == 5: raise
+                      time.sleep(3)
+          assert get('revision.txt').decode().strip() == revision
+          manifest = json.loads(get('asset-manifest.json'))
+          assert manifest['revision'] == revision
+          for name, digest in manifest['assets'].items():
+              assert not name.startswith('/') and '..' not in name.split('/')
+              assert hashlib.sha256(get(name)).hexdigest() == digest, name
+          print('Live emulator assets match the deployed build:', len(manifest['assets']))
+          PYCODE

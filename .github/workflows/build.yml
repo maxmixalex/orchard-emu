@@ -81,6 +81,7 @@ jobs:
           npm run build
           npm run test:wasm
           npm run test:web
+          npm run test:skins
       - name: Independent CPU differential (developer-only dependency)
         run: |
           npm run build:oracle
