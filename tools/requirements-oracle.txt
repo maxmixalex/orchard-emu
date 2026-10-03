@@ -1,0 +1,3 @@
+# Optional external developer oracle only. Not linked into Orchard or packaged.
+# Core GPLv2; upstream binding/header terms differ. See development/cpu-oracle.md.
+unicorn==2.1.4

@@ -59,3 +59,13 @@ vendor register/data-format facts, original test expectations and explicit
 hypothesis boundaries; no foreign implementation, translated routine or data
 structure was imported. This history is not described as a formal clean-room
 process. The exact inspected references are recorded in [references](references.md) and in LCD evidence.
+
+## Optional independent CPU oracle
+
+Unicorn 2.1.4 is an externally installed developer/CI dependency, not linked
+into Orchard's native or WASM core. Its upstream core is GPLv2; binding and
+header terms are separately stated upstream. The original Python comparison
+driver uses its public API while separate processes execute Orchard test
+records. No Unicorn source or binary is copied into Git, Pages, `dist/` or
+native install outputs. See [CPU oracle](cpu-oracle.md) for the exact process,
+model and evidence boundary. This does not assert formal clean-room review.

@@ -42,6 +42,12 @@ if(BUILD_TESTING)
   target_link_libraries(orchard-usb-session PRIVATE orchard)
   set_target_properties(orchard-usb-session PROPERTIES C_EXTENSIONS OFF)
   list(APPEND orchard_checked_targets orchard-usb orchard-usb-session)
+  # Isolated CPU test protocol; no external emulator is linked or installed.
+  add_executable(orchard-cpu-oracle tools/cpu-oracle.c)
+  target_link_libraries(orchard-cpu-oracle PRIVATE orchard)
+  target_include_directories(orchard-cpu-oracle PRIVATE src)
+  set_target_properties(orchard-cpu-oracle PROPERTIES C_EXTENSIONS OFF)
+  list(APPEND orchard_checked_targets orchard-cpu-oracle)
   # Opt-in, ROM-dependent research tool. Built but not run by CTest or installed.
   add_executable(orchard-gpio-window tools/probe-gpio-window.c)
   target_link_libraries(orchard-gpio-window PRIVATE orchard)

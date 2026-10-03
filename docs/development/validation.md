@@ -1,5 +1,19 @@
 # Validation
 
+## Independent CPU continuation after `f5b3fdb`
+
+[CPU oracle evidence](cpu-oracle.md) records three 17,075-case seeded runs
+against separately installed Unicorn 2.1.4/TI925T, native and test-WASM. All
+51,225 executed case instances agree without skips. The default seed also
+passes with optimized native ASan/UBSan, and shared register/memory mutations
+are rejected by the independent oracle. Twelve transport rejection cases pass.
+No production CPU semantics changed; firmware checkpoints and the USB NAK
+counterexample remain unchanged. Existing CTest/174,166-assertion suites were
+rerun; static analysis now covers 23 separate units. The new CI step is ROM-free
+and the 19-page site does not include the external dependency or test modules.
+Current remote acceptance belongs to issue #1; the earlier USB acceptance
+below remains a distinct result rather than being relabeled CPU conformance.
+
 ## Current local acceptance — USB continuation, 2026-10-03
 
 The USB work was originally prepared against `a9e03bd`. Before publication,

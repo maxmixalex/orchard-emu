@@ -32,3 +32,14 @@ The provisional EP0-only session/API is superseded by the packet host. Its
 original assembly guest remains active alongside the bulk guest. A successful
 local test is not a remote CI or deployment result; issue #1 records each
 observed result against its exact commit. No force push is required.
+
+## Independent CPU continuation (after `f5b3fdb`)
+
+- [x] Pin external Unicorn 2.1.4/TI925T and add separate native/test-WASM record runners; no external emulator links into production.
+- [x] Three local seeds: 17,075 cases each, 51,225 executed instances, zero mismatches/skips against Unicorn. Default seed also passes optimized native sanitizers.
+- [x] Shared register and memory mutations are rejected even when native/WASM agree. Add a ROM-free independent CI step.
+- [ ] Full ARM920T/privileged/MMU/cache conformance remains open. No production CPU fix or further stock boot is claimed from this corpus.
+
+See [independent CPU evidence](cpu-oracle.md). Commit-specific Build/Pages
+acceptance remains in issue #1; the full-NOR and USB counterexamples above
+are unchanged. The new test modules/dependency never enter production artifacts.

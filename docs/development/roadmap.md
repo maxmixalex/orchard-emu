@@ -36,6 +36,11 @@ roadmap, board and evidence agree. CPU conformance and stock boot are not M0.
 
 **Initial implementation; conformance gate open.**
 
+A first [independent Unicorn comparison](cpu-oracle.md) now passes a bounded
+common-ARMv4T corpus on native and test-WASM. It does not test complete ARM920T
+privileged/MMU/cache behavior or close this milestone. Unicorn remains a
+separate developer dependency, not a production interpreter replacement.
+
 M1.1 covers decode restrictions, PC pipeline semantics, shifting/carry/overflow,
 ARM/Thumb transitions, banked registers, privilege rules and exception returns.
 M1.2 covers CP15, FCSE, table walks, AP/S/R/domain permissions, aborts and vector

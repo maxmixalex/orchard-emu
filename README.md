@@ -76,6 +76,7 @@ for recovered regions, hashes, rejected lookalikes and remaining acquisition gap
 [Roadmap](docs/development/roadmap.md) ·
 [Live board](https://github.com/zyf722/orchard-emu/issues/1) ·
 [Architecture](docs/development/architecture.md) ·
+[Independent CPU tests](docs/development/cpu-oracle.md) ·
 [Models](docs/development/models.md) ·
 [LCD evidence](docs/development/lcd.md) ·
 [Electrical input](docs/development/input.md) ·
