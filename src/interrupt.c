@@ -26,6 +26,7 @@ void o_irq_update(o_soc *s) {
     if (s->intpnd) return; /* Preserve the awarded IRQ until W1C. */
     uint32_t requests = s->srcpnd & ~s->intmsk & ~s->intmod;
     requests &= ~((1u << 6) | (1u << 24)); /* Reserved interrupt sources. */
+    if (!requests) return; /* No arbitration or priority rotation without a request. */
     unsigned group_requests[6] = {
         (requests & 15u) << 1, (requests >> 4) & 63u,
         (requests >> 10) & 63u, (requests >> 16) & 63u,

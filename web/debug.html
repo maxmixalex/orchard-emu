@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light"><title>Orchard · Developer workbench</title>
+  <link rel="stylesheet" href="style.css"><link rel="icon" href="data:,">
+</head>
+<body>
+  <header><div class="brand">Orchard <span>Developer workbench</span></div><span class="phase">Experimental · 0.1</span></header>
+  <main>
+    <div class="notice"><strong>Original ROM, original calculator software.</strong>
+      HP48gII and HP39g+ have explicit experimental startup setups. The ARM core runs your original firmware; other models remain bring-up targets. No firmware is included or uploaded.</div>
+    <section class="toolbar" aria-label="Machine setup">
+      <label>Machine<select id="model" disabled><option value="1">HP 39g+</option><option value="2">HP 39gs</option><option value="3">HP 40gs</option><option value="4" selected>HP 48gII · USB revision</option><option value="5">HP 49g+</option><option value="6">HP 50g</option></select></label>
+      <label>Boot setup<select id="preset" disabled><option value="strict">Strict hardware research</option><option value="hp48-home">HP48gII HOME · experimental</option><option value="hp39-home">HP39g+ HOME · experimental</option></select></label>
+      <label class="file-field">Full physical NOR<input id="rom" type="file" accept=".bin,.rom,.raw" disabled></label>
+    </section>
+    <a href="./">← Back to calculator</a><div class="appearance"><label>Finish <select id="finish"><option value="standard">Standard</option><option value="blue">50g blue</option></select></label><a href="https://zyf722.github.io/orchard-emu/">Documentation ↗</a></div>
+    <p class="setup-note" id="setup-note">Strict mode does not assume missing hardware behavior. Changing setup cold-resets the machine; RAM is not saved.</p>
+    <div class="runbar"><div class="actions"><button id="run" class="primary" disabled>Run</button><button id="step" disabled>Step</button><button id="reset" disabled>Cold reset</button></div><span>Physical keys · local ROM · no uploads</span></div>
+    <div id="error" role="alert" hidden></div>
+    <div class="workspace">
+      <section class="panel machine-panel" id="calculator" tabindex="0" aria-label="Calculator input">
+        <div class="section-title"><h1 id="machine-title">HP 48gII</h1><span id="status" role="status">Loading core…</span></div>
+        <div class="calculator-stage" id="skin-stage">
+          <img class="skin-image" alt="Calculator skin" hidden>
+          <svg class="skin-keys" aria-label="Physical calculator keys"></svg>
+          <div class="glass-overlay" hidden>
+            <svg class="annunciator-strip" viewBox="0 0 393 18" role="img" aria-label="Guest status segments">
+              <g data-segment="1" transform="translate(22 9)"><path d="M9 -3H-1V-7L-9 0l8 7V3H9Z"/></g>
+              <g data-segment="2" transform="translate(89 9)"><path d="M-9 -3H1V-7L9 0 1 7V3H-9Z"/></g>
+              <g data-segment="3" transform="translate(156 9)"><text text-anchor="middle" y="5">α</text></g>
+              <g data-segment="4" transform="translate(223 9)"><rect x="-9" y="-5" width="16" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 -2h3v4H8zM-7 -3h3v6h-3z"/></g>
+              <g data-segment="5" transform="translate(290 9)"><path d="M-6 -7H6M-6 7H6M-5 -6C-5 -2-2 -2 0 0 2 2 5 2 5 6M5 -6C5 -2 2 -2 0 0-2 2-5 2-5 6" fill="none" stroke="currentColor" stroke-width="1.5"/></g>
+              <g data-segment="0" transform="translate(357 9)"><path d="M-10 -4H7M3 -8l5 4-5 4M10 4H-7M-3 0l-5 4 5 4" fill="none" stroke="currentColor" stroke-width="1.5"/></g>
+            </svg>
+            <canvas id="lcd" width="131" height="64" aria-label="Guest LCD framebuffer"></canvas>
+          </div>
+        </div>
+        <div class="display-caption" id="frame-status">No ROM loaded</div>
+        <p class="hint segment-note" id="segment-status">Status segments have no guest data yet.</p>
+        <p class="hint" id="boot-help">Choose the experimental HP48gII HOME setup, then load the documented complete NOR. Press Run; at “Try To Recover Memory?” press F6 (NO), then F6 (OK) at “Memory Clear”.</p>
+        <details class="text-keypad"><summary>Accessible text keypad</summary><div id="keypad" aria-label="Physical keys"></div></details>
+        <div class="key-footer"><span id="key-status">Keypad requires the HP48gII HOME setup.</span><button id="release" class="small" disabled>Cancel taps</button></div>
+        <p class="hint">Click to tap. Digits, arithmetic, Enter, Backspace, arrows and F1–F6 also work on your keyboard. Taps use virtual-time press/release; they are not typed into guest memory. Switching away pauses and releases keys.</p>
+      </section>
+      <section class="panel cpu-panel">
+        <div class="section-title"><h2>Execution</h2><button id="export" class="small" disabled>Export diagnostics</button></div>
+        <div class="metrics"><div><span>Instructions</span><strong id="instructions">0</strong></div><div><span>Virtual ticks</span><strong id="ticks">0</strong></div><div><span>Guest exceptions</span><strong id="exceptions">0</strong></div></div>
+        <div class="assumptions"><h3>Recorded research conditions</h3><p id="assumption-status">Strict defaults</p><p>SRAM alias reads / writes: <code id="aliases">0 / 0</code><br>Unverified LCD reads: <code id="lcd-reads">0</code></p></div>
+        <label class="view-field">LCD interpretation<select id="view" disabled><option value="0">Controller stream</option><option value="1">Packed LSB · memory inspection</option></select></label>
+        <p class="hint">Packed LSB makes the current stock display readable. Physical panel wiring, SRAM decode and LCD +0x68 still require verification. No canonical hardware certification is claimed.</p>
+        <dl class="facts"><div><dt>Processor target</dt><dd>ARM920T / ARMv4T</dd></div><div><dt>Physical memory</dt><dd id="memory">—</dd></div><div><dt>ROM</dt><dd id="filename">No file selected</dd></div></dl>
+        <details><summary>CPU registers</summary><dl class="registers" id="registers"></dl><div class="system-registers"><span>CPSR <code id="cpsr">000000d3</code></span><span>CP15 <code id="control">00000078</code></span><span id="isa">ARM · supervisor</span></div></details>
+        <div class="stop"><h3>Stop / data fault</h3><pre id="stop">No stop recorded.</pre></div>
+        <details><summary>ROM SHA-256</summary><code id="digest">No ROM loaded</code></details>
+        <p class="hint">Virtual ticks are scheduling quanta, not seconds or hardware cycles. Pause/export captures diagnostic state, not a resumable save. All ROM data stays in this tab.</p>
+      </section>
+    </div>
+    <details class="panel link-panel"><summary>UART0 bring-up tools · not USB / Conn3x</summary>
+      <form id="uart-form"><label class="sr-only" for="uart-input">Hexadecimal UART bytes</label><input id="uart-input" placeholder="48 65 6c 6c 6f" autocomplete="off" spellcheck="false" disabled><button id="uart-send" disabled>Send hex</button><button id="uart-clear" type="button">Clear log</button></form><pre id="uart-log">No guest output.</pre>
+    </details>
+    <footer>Original core: <a href="LICENSE">MIT</a> · Calculator artwork: <a href="https://github.com/zyf722/hp-calcs-svg">zyf722 / hp-calcs-svg</a> (<a href="licenses/hp-calcs-svg/LICENSE.txt">Apache-2.0</a>, <a href="licenses/hp-calcs-svg/NOTICE.txt">NOTICE</a>). Unofficial; HP marks remain their owners’ property. No firmware or font files bundled.</footer>
+  </main><script type="module" src="main.js"></script>
+</body></html>

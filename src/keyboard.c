@@ -90,10 +90,49 @@ void o_gpio_sample(const orchard_machine *m, unsigned port, uint32_t *known,
  * debounce. Unknown pads never create edges. Enabling/changing pin function
  * starts edge history afresh; level sources remain active until deasserted.
  */
+static void eint_pending(o_soc *s) {
+    uint32_t pending = s->gpio[0xa8 / 4] & ~s->gpio[0xa4 / 4];
+    if (pending & 0xf0u) s->srcpnd |= 1u << 4;
+    if (pending & 0xffff00u) s->srcpnd |= 1u << 5;
+}
+#ifndef ORCHARD_REFERENCE
+static bool eint_same(o_soc *s, uint32_t *key) {
+    unsigned n = 0;
+    for (unsigned p = ORCHARD_GPIO_F; p <= ORCHARD_GPIO_G; ++p) {
+        key[n++] = s->gpio[p * 4];
+        key[n++] = s->gpio[p * 4 + 1];
+        key[n++] = s->gpio[p * 4 + 2];
+        key[n++] = s->gpio_input_known[p];
+        key[n++] = s->gpio_input_levels[p];
+        key[n++] = s->gpio_bias_known[p];
+        key[n++] = s->gpio_bias_levels[p];
+    }
+    for (unsigned i = 0; i < 3; ++i) key[n++] = s->gpio[0x88 / 4 + i];
+    key[n++] = s->keyboard_attached;
+    const o_eint_cache *c = &s->eint_cache;
+    if (!c->valid || c->switches != s->keyboard_switches ||
+        c->direct != s->keyboard_direct || c->known != s->eint_known ||
+        c->levels != s->eint_levels) return false;
+    for (unsigned i = 0; i < n; ++i) if (key[i] != c->key[i]) return false;
+    return true;
+}
+#endif
 void o_eint_tick(orchard_machine *m) {
     o_soc *s = &m->soc;
-    if (!s->keyboard_attached) return;
-    uint32_t known = 0, levels = 0;
+    if (!s->keyboard_attached) { s->eint_cache.valid = false; return; }
+#ifndef ORCHARD_REFERENCE
+    uint32_t key[18];
+    if (eint_same(s, key)) {
+        /* Stable level sources reassert every quantum, even after W1C.
+           Edge sources do NOT reassert until another actual transition. */
+        s->srcpnd |= s->eint_cache.level_sources & 15u;
+        s->gpio[0xa8 / 4] |= s->eint_cache.level_sources & ~15u;
+        eint_pending(s);
+        return;
+    }
+#endif
+    s->eint_cache.valid = false;
+    uint32_t known = 0, levels = 0, level_sources = 0;
     for (unsigned p = ORCHARD_GPIO_F; p <= ORCHARD_GPIO_G; ++p) {
         uint32_t k, v, conflicts;
         o_gpio_sample(m, p, &k, &v, &conflicts);
@@ -119,6 +158,7 @@ void o_eint_tick(orchard_machine *m) {
             bool triggered = mode == 0 ? !high : mode == 1 ? high :
                 changed && (mode >= 6 || (mode >= 4 ? high : !high));
             if (triggered) {
+                if (mode <= 1) level_sources |= bit;
                 if (line < 4) s->srcpnd |= bit;
                 else s->gpio[0xa8 / 4] |= bit;
             }
@@ -126,7 +166,14 @@ void o_eint_tick(orchard_machine *m) {
     }
     s->eint_known = known;
     s->eint_levels = levels;
-    uint32_t pending = s->gpio[0xa8 / 4] & ~s->gpio[0xa4 / 4];
-    if (pending & 0xf0u) s->srcpnd |= 1u << 4;
-    if (pending & 0xffff00u) s->srcpnd |= 1u << 5;
+    eint_pending(s);
+#ifndef ORCHARD_REFERENCE
+    o_eint_cache *c = &s->eint_cache;
+    for (unsigned i = 0; i < 18; ++i) c->key[i] = key[i];
+    c->switches = s->keyboard_switches; c->direct = s->keyboard_direct;
+    c->known = known; c->levels = levels; c->level_sources = level_sources;
+    c->valid = true;
+#else
+    (void)level_sources;
+#endif
 }

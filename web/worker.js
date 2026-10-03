@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { setupHash, isPlayable, applySetup, TapQueue } from './hp48.js';
+let audience = 'debug';
 let core, model = 4, generation = 0, preset = 'strict', running = false, loaded = false;
 let timer = null, lastFrame = 0, tick = 0, events = [], eventOverflow = false, frameView = 0;
 const errors = ['ready','bad argument','full-NOR size mismatch','not a full ARM NOR image',
@@ -12,6 +13,7 @@ const taps = new TapQueue((scan, down, at) => {
   const status = scan < 56 ? core.keyboard_matrix(Math.floor(scan / 7), scan % 7, Number(down))
     : core.keyboard_dedicated([0,4,5,6][scan-56], Number(down));
   if (status) throw new Error(errors[status]);
+  if (audience !== 'debug') return;
   if (events.length < 512) events.push({tick: at, scan, down: Number(down)});
   else eventOverflow = true;
 });
@@ -20,7 +22,7 @@ function syncTick(s = state()) { tick = s[22] + s[23] * 4294967296; }
 function pause() { running = false; clearTimeout(timer); timer = null; taps.clear(tick); }
 function sendUart() {
   const n = core.uart_receive();
-  if (n) postMessage({ type:'uart-output',generation,bytes:new Uint8Array(core.memory.buffer,core.uart_output(),n).slice() });
+  if (n && audience === 'debug') postMessage({ type:'uart-output',generation,bytes:new Uint8Array(core.memory.buffer,core.uart_output(),n).slice() });
 }
 function snapshot() {
   const s = state(); syncTick(s);
@@ -29,7 +31,10 @@ function snapshot() {
   const annunciators = annunciatorStatus ? null : new Uint8Array(core.memory.buffer,core.annunciator_buffer(),6).slice();
   const pixels = frameStatus ? null : new Uint8Array(core.memory.buffer,core.frame_buffer(),width*height).slice();
   sendUart();
-  postMessage({type:'snapshot',generation,state:s,width,height,pixels,running,loaded,model,preset,frameView,
+  const visible = {type:'snapshot',generation,width,height,pixels,running,loaded,model,
+    stopped:s[28]!==0,frameStatus,annunciatorStatus,annunciators,pending:taps.pending,active:taps.active};
+  if (audience === 'calculator') postMessage(visible);
+  else postMessage({...visible,state:s,preset,frameView,
     frameStatus,annunciatorStatus,annunciators,reason:errors[s[28]] || 'unknown stop',pending:taps.pending,active:taps.active,
     events:events.slice(),eventOverflow,aliasReads:core.sram_alias_reads().toString(),
     aliasWrites:core.sram_alias_writes().toString(),lcdReads:core.lcd_probe68_reads().toString()});
@@ -46,7 +51,9 @@ function pump() {
     do {
       taps.update(tick);
       const budget = Math.min(256,taps.boundary(tick)-tick);
-      const status = core.run(budget); syncTick(); sendUart();
+      const status = core.run(budget);
+      if (status) syncTick(); else tick += budget;
+      sendUart();
       if (status) {pause();break;}
     } while (performance.now()<end);
     if (!running || performance.now()-lastFrame >= 50) snapshot();
@@ -65,7 +72,8 @@ self.onmessage=({data})=>{
     if (data.type==='create') {
       pause();
       if (!Number.isSafeInteger(data.generation) || !Number.isInteger(data.model) || !core.profile(data.model,0)) throw new Error('Invalid machine');
-      generation=data.generation;model=data.model;preset=data.preset;
+      if (data.audience !== undefined && !['debug','calculator'].includes(data.audience)) throw new Error('Invalid audience');
+      generation=data.generation;model=data.model;preset=data.preset;audience=data.audience||'debug';
       loaded=false;tick=0;events=[];eventOverflow=false;frameView=0;
       if(core.create(model)) throw new Error('Machine initialization failed');
       applySetup(core,model,preset);frameView=isPlayable(model,preset)?1:0;

@@ -9,7 +9,7 @@ const out = resolve(root, 'dist');
 await mkdir(out, { recursive: true });
 const sources = ['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb'].map(name => `src/${name}.c`);
 const args = [
-  '--target=wasm32', '-std=c17', '-O2', '-ffreestanding', '-nostdlib', '-fno-builtin',
+  '--target=wasm32', '-std=c17', '-O3', '-flto', '-mbulk-memory', '-ffreestanding', '-nostdlib', '-fno-builtin',
   '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc',
   ...sources, 'app/wasm.c', '-o', resolve(out, 'orchard.wasm'),
   '-Wl,--no-entry', '-Wl,--export-memory', '-Wl,--stack-first',
@@ -18,7 +18,7 @@ const args = [
 const result = spawnSync(process.env.CLANG || 'clang', args, { cwd: root, stdio: 'inherit' });
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
-for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js']) {
+for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'calculator.js', 'calculator.css', 'catalog.js']) {
   await copyFile(resolve(root, 'web', file), resolve(out, file));
 }
 await copyFile(resolve(root, "LICENSE"), resolve(out, "LICENSE"));
@@ -34,21 +34,23 @@ In this folder run: node serve.mjs
 Open the localhost URL printed by the server (default port 8123).
 Do not open index.html with file://. No firmware is included.
 
-For the documented HP48gII USB-revision complete NOR:
-1. Select HP48gII and HP48gII HOME - experimental.
-2. Select your own complete NOR and press Run.
-3. At Try To Recover Memory? press F6 (NO). Wait for Memory Clear,
-   then press F6 (OK). Wait for HOME before entering calculations.
-4. Click keys or use digits/operators/Enter on your computer keyboard.
+Open the calculator page and choose Open ROM. Its model and compatibility
+settings are selected automatically for the supported HP39g+ D1.55 and
+HP48gII complete ROMs. It starts when the page is visible and focused.
+HP39g+: at Memory Clear press the top-right key (OK).
+HP48gII: at Try To Recover Memory press the top-right key (NO), then again
+at Memory Clear (OK). Wait for HOME before typing a calculation.
 
-Pause cancels held/queued taps. Cold reset clears RAM; it is not a
-calculator warm reset. Switching tabs pauses. No save/restore yet.
-The setup uses unverified SRAM decode, LCD and pad/ADC assumptions.
-For HP39g+ D1.55 choose HP39g+ HOME - experimental, run, then press F6
-at Memory Clear. This preset uses a separate 1 MiB NOR hypothesis and no
-SRAM mirroring. Other models remain strict bring-up targets. Skins do not
-imply that their original system has booted. Artwork: hp-calcs-svg, Apache-2.0;
-see licenses/hp-calcs-svg. Original core remains MIT. USB/Conn3x controls are not exposed in this page.
+Use the skin keys or your computer keyboard. Switching away pauses;
+choose Resume to continue. Restart/model changes clear memory; no saving yet.
+The beta supports two tested firmware versions, not all six target models.
+The developer workbench is debug.html. It retains strict hardware mode,
+research setup selectors, registers, counters, UART and diagnostics. Both
+interfaces share the same optimized ARM/WASM core, skin and input mapping.
+All limitations and hardware assumptions are described in the documentation.
+
+Artwork: hp-calcs-svg, Apache-2.0; see licenses/hp-calcs-svg.
+The original emulator remains MIT. No ROM or font files are bundled.
 `);
 
 const skins=spawnSync(process.env.PYTHON || 'python3',['tools/build-skins.py'],{cwd:root,stdio:'inherit'});

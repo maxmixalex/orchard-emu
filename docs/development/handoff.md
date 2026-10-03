@@ -52,3 +52,24 @@ proxy, Docker daemon, package source or browser policy was modified.
 page may be retained in the back/forward cache. A persisted `pageshow` stays
 paused. `tests/lifecycle.mjs` checks dispatch through EventTarget, not an actual
 browser-cache round trip. Browser-origin verification remains blocked locally.
+
+## User frontend and performance continuation
+
+The default page is now the user calculator with automatic ROM identification;
+`debug.html` preserves the research workbench. Continue using the latter for
+strict mode, unknown ROMs, state/event export and component investigations.
+The two consumers share one Worker/core; `audience` controls snapshot detail.
+Do not put CPU counters or experimental boot-setup controls back into the user
+page. Keep current compatibility limits in short help and the documentation.
+
+The main CPU cost was repeated passive-keyboard/EINT evaluation, now guarded
+by exact dependency comparison. Level sources must still reassert after W1C,
+edge sources must not, and group masks are remapped every tick. Retain the
+reference algorithm and differential test when changing this optimization.
+CPU rollback checkpoints and guest timing are preserved. WASM uses O3, LTO
+and bulk-memory lowering; no JIT has been added. The successful Worker budget
+updates its host tick count without a per-call debug snapshot allocation.
+
+See performance.md for the measured ~6× fixed-workload result and follow-on
+profiling targets. The ROMs, raw timing/state reports and layout previews are
+local-only evidence and must not enter production or Pages packages.

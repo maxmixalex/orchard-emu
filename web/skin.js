@@ -6,7 +6,7 @@ const ATTRS=new Set(['d','x','y','width','height','rx','ry','cx','cy','r']);
 const NAMES=['I/O','Left shift','Right shift','Alpha','Battery','Busy'];
 export class SkinView {
   constructor(stage, tap) {
-    this.stage=stage;this.tap=tap;this.epoch=0;this.enabled=false;this.buttons=[];this.rgb=[194,208,202];
+    this.stage=stage;this.tap=tap;this.epoch=0;this.enabled=false;this.appliedEnabled=null;this.buttons=[];this.rgb=[194,208,202];
     this.image=stage.querySelector('.skin-image');this.hits=stage.querySelector('.skin-keys');
     this.glass=stage.querySelector('.glass-overlay');this.indicators=stage.querySelectorAll('[data-segment]');
     this.manifest=fetch(new URL('skins/manifest.json',import.meta.url)).then(r=>{
@@ -16,7 +16,7 @@ export class SkinView {
     this.manifest.catch(()=>{});
   }
   async show(model,blue=false) {
-    const token=++this.epoch;this.buttons=[];this.hits.replaceChildren();this.image.hidden=true;
+    const token=++this.epoch;this.buttons=[];this.appliedEnabled=null;this.hits.replaceChildren();this.image.hidden=true;
     this.glass.hidden=true;
     const manifest=await this.manifest;
     if(token!==this.epoch)return;
@@ -48,10 +48,13 @@ export class SkinView {
       group.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();activate();}});
       this.hits.append(group);this.buttons.push(group);
     }
+    this.appliedEnabled=null;
     this.setEnabled(this.enabled);
   }
   setEnabled(enabled) {
     this.enabled=enabled;
+    if(this.appliedEnabled===enabled)return;
+    this.appliedEnabled=enabled;
     for(const key of this.buttons){key.setAttribute('aria-disabled',String(!enabled));key.setAttribute('tabindex',enabled?'0':'-1');}
   }
   update(active,levels,status,model) {

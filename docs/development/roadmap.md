@@ -115,11 +115,12 @@ stop work on the available machines or repeat the acquisition request.
 
 ## M5 — Usable browser calculator
 
-**Experimental HP39g+/HP48gII controls and skins implemented; browser gate open.**
+**Separate calculator/workbench, optimized shared core and skins implemented; browser gate open.**
 
-The [page](web.md) exposes two opt-in HOME setups, seven separately licensed
-skins, printed-key mappings, physical tap queues, guest-driven annunciators,
-cold reset and diagnostics. Node Worker tests are not HTTP/file-picker/browser
+The [calculator page](web.md) automatically selects the supported ROM configuration
+and exposes normal calculator controls. The separate workbench retains both
+opt-in HOME setups, seven skins, all model/debug controls and diagnostics.
+Physical taps and guest-driven annunciators share the optimized core. Node Worker tests are not HTTP/file-picker/browser
 lifecycle E2E; that gate remains open.
 
 Next are calibrated LCD output, versioned persistence/export, broader stock-key
@@ -189,3 +190,11 @@ M5 now includes seven pinned outlined skins, 51 geometric hit regions per
 model, a separate guest-driven status strip, two hash-checked HOME setups,
 and an emulator subdirectory in the same Pages site. Actual browser-origin
 E2E, persistence and sustained full-key compatibility remain open.
+
+## Performance continuation
+
+[Measured optimization](performance.md) removes repeated keyboard circuit
+resolution, empty IRQ arbitration and debugger snapshot churn, with optimized
+WASM compilation. Input timing and full CPU rollback checks are retained.
+Event-driven scheduling, translation caches and dynamic translation remain
+future work; no hardware speed ratio or complete browser E2E is claimed.

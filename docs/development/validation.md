@@ -1,5 +1,56 @@
 # Validation
 
+## User frontend and performance continuation from 78ef22f
+
+The normal `/emulator/` now omits research controls and metadata; the separate
+`/emulator/debug.html` retains them. Model-specific compatible ROMs are identified
+by their existing immutable hashes, not by filename or a guessed boot setup.
+The two pages share the same core and physical inputs. No new hardware claim
+is implied by simplifying the UI.
+
+Eight native Release suites and all test-WASM suites pass **323,175 assertions
+per host**: previous 202,097 plus 121,078 EINT-equivalence assertions. The new
+suite compares the exact pre-optimization sampler against its memoized version
+through trigger modes, 12,000 dependency mutations, mask/W1C changes, history,
+attach/detach, errors and reset. A deliberately broken dependency comparison
+failed 10,675 assertions locally; that mutation is not committed. Both the
+Debug ASan/UBSan build and the native no-memoization reference build pass all
+eight suites. The default **17,075-case Unicorn** corpus passes with zero
+mismatches/skips; it remains a common ARMv4T subset, not full ARM920T validation.
+
+Clang static analysis completed with 28 separate clean translation-unit reports.
+The 76 tool checks, existing generated guests, production Worker lifecycle,
+seven skins, nine publication-contract tests and the new calculator-audience
+contract all pass locally. `tests/calculator.mjs` checks that user snapshots
+actually omit CPU/setup/event/counter data, rather than only hiding it with CSS.
+Node adapters are not browser DOM/file-picker tests. Actual Chromium HTTP
+navigation remains blocked by the environment's administrative policy, which
+was not changed. Script-free desktop/mobile layout inspection is not E2E.
+
+The full before/after WASM comparison preserves the exact guest timeline and
+produces the same architectural/peripheral state and calculation frame.
+Measured core workload times: HP39g+ **109.707 → 18.197 seconds**; HP48gII
+**141.675 → 23.641 seconds**, approximately 6× on this host. The inputs,
+compiler scope and reproducible command are in [performance](performance.md).
+These are fixed cold-start-plus-two-calculation workloads, not first-HOME
+latency, browser UI timing, or a measured real-hardware speed ratio. After
+that comparison, both maintained startup tools passed two native and two
+production-WASM cold replays per model. Hardware assumptions and counters
+are unchanged; there is no instruction skipping or virtual-time rescaling.
+
+The optimized production Worker also reached both original HP48 HOME results
+with live message arrival. Its 20 physical transitions were recorded at their
+actual guest ticks and replayed through the native CLI. All sixteen registers,
+CPSR/CP15/fault state, instruction/tick/exception counts, alias/LCD counters,
+applied key events and every final frame pixel matched. This checks the new
+host tick accounting; it does not assume identical host arrival times between
+sessions. Both supported real ROMs also passed the user catalog's automatic
+identification separately from the negative, ROM-free CI cases.
+
+Exact accepted source, new strict docs/CI and published Pages hashes are
+recorded in issue #1 after observation, not inferred from these local tests.
+
+
 ## Publication and lifecycle continuation after 2e02b32
 
 The first combined Pages attempt (#12) did not deploy: the runner's APT proxy

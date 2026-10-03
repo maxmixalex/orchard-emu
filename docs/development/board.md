@@ -49,3 +49,14 @@ arithmetic or a skin. Browser-origin navigation remains policy-blocked locally.
 
 Build #15 was green but Pages #12 failed before publication during an APT proxy
 outage. This follow-up does not claim that the failed run deployed anything.
+
+## User interface and speed feedback
+
+- [x] Separate `/emulator/` calculator from `debug.html`; automatic supported-ROM configuration.
+- [x] User Worker payload excludes internal counters and CPU state.
+- [x] Exact-key EINT memoization, empty-IRQ fast path, native CPU checkpoints and O3/LTO WASM.
+- [x] Added differential cache, audience and identical-work benchmark tools.
+- [ ] Record new revision, measured workload timings and deployment acceptance in issue #1.
+
+The new UI does not change the supported firmware identities or promote
+research assumptions to canonical hardware defaults.

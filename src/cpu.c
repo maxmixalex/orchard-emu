@@ -399,19 +399,18 @@ void o_cpu_step(orchard_machine *m) {
         o_exception(c, O_ABT, 0xc, pc + 4u);
         return;
     }
-    o_cpu before;
-    o_copy(&before, c, sizeof(before));
+    o_cpu before = *c;
     c->next_pc = pc + width;
     if (width == 2) o_thumb(m, (uint16_t)instruction);
     else arm(m, instruction);
     if (m->stop.status != ORCHARD_OK) {
         m->stop.instruction = instruction;
-        o_copy(c, &before, sizeof(before));
+        *c = before;
         return;
     }
     if (c->data_abort) {
         uint32_t far = c->far, fsr = c->dfsr;
-        o_copy(c, &before, sizeof(before));
+        *c = before;
         c->far = far;
         c->dfsr = fsr;
         o_exception(c, O_ABT, 0x10, pc + 8u);

@@ -28,19 +28,17 @@ Open the printed localhost URL (default port 8123). In a downloaded web build,
 only Node.js 22+ is needed: extract it and run `node serve.mjs` in that folder.
 Do not use `file://`. No ROM is bundled or uploaded.
 
-Select **HP48gII HOME · experimental**, load the documented full NOR, and press
-Run. At `Try To Recover Memory?`, tap F6 (NO); at `Memory Clear`, tap F6 (OK).
-The page exposes a 51-position keypad, computer-keyboard shortcuts, pause,
-cold reset, LCD view selection and diagnostic export. Taps are physical
-switch transitions, not guest-memory edits. Changing setup/reset clears RAM;
-switching away pauses. Save/restore and actual browser-origin E2E remain open.
-For HP39g+, select **HP39g+ HOME · experimental** and acknowledge Memory Clear
-with F6/OK. Both setups require their documented model-specific NOR hash.
-Seven pinned outlined skins and their exact hit geometry come from
-[hp-calcs-svg](https://github.com/zyf722/hp-calcs-svg). The separate status strip
-reads guest display data; Shift/Alpha transitions were checked on both systems.
-See [skins and status segments](docs/development/skins-segments.md) and
-[browser operation and verification](docs/development/web.md).
+The default page is a calculator: **Open ROM**, Pause/Resume, Restart and
+physical keys. It detects the two supported ROM identities and selects their
+compatibility settings automatically. CPU counters, boot setup and internal
+research controls live in the separate **[developer workbench](https://zyf722.github.io/orchard-emu/emulator/debug.html)**.
+Both pages use the same optimized core, not different levels of emulation.
+At startup use the top-right soft key for NO/OK as prompted; wait for HOME
+before entering calculations. Memory is not saved on close or restart yet.
+
+[Performance and benchmarks](docs/development/performance.md) ·
+[Browser usage](docs/development/web.md) ·
+[Skins and status segments](docs/development/skins-segments.md)
 
 ## Native and tests
 
@@ -55,6 +53,7 @@ npm run test:wasm
 npm run test:web
 npm run test:skins
 npm run test:pages
+npm run test:calculator
 ```
 
 [Startup](docs/development/startup.md) records the full-NOR witness and exact

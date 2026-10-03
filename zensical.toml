@@ -25,6 +25,7 @@ nav = [
     "development/usb.md",
     "development/virtual-link.md",
     "development/web.md",
+    "development/performance.md",
     "development/skins-segments.md",
     "development/hp39-startup.md",
     "development/validation.md",

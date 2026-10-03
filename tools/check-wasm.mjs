@@ -22,10 +22,10 @@ function command(executable, args) {
 }
 await mkdir(build, { recursive: true });
 let totalAssertions = 0;
-for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb', 'nor-bus', 'memory', 'segments-nor']) {
+for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb', 'nor-bus', 'memory', 'segments-nor', 'performance']) {
   const testModule = resolve(build, `${name}.wasm`);
   command(process.env.CLANG || 'clang', [
-    '--target=wasm32', '-std=c17', '-O2', '-ffreestanding', '-nostdlib', '-fno-builtin',
+    '--target=wasm32', '-std=c17', '-O3', '-flto', '-mbulk-memory', '-ffreestanding', '-nostdlib', '-fno-builtin',
     '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc',
     ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb'].map(s => `src/${s}.c`),
     `tests/${name}.c`, '-o', testModule, '-Wl,--no-entry', '-Wl,--stack-first',

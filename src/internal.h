@@ -69,6 +69,15 @@ typedef struct {
     uint64_t resets, setups, in_packets, out_packets;
 } o_usb;
 
+/* Host optimization state only. Exact input comparison, not a hash or a
+ * hardware debounce filter. It must never replace architectural EINT state. */
+typedef struct {
+    uint32_t key[18];
+    uint64_t switches;
+    uint32_t direct, known, levels, level_sources;
+    bool valid;
+} o_eint_cache;
+
 typedef struct {
     uint32_t srcpnd, intmod, intmsk, intpnd, subsrcpnd, intsubmsk, priority;
     uint32_t memc[13], clock[6], gpio[48], lcd[25];
@@ -83,6 +92,7 @@ typedef struct {
     bool keyboard_attached;
     uint64_t keyboard_switches;
     uint32_t keyboard_direct, eint_known, eint_levels;
+    o_eint_cache eint_cache;
     uint32_t uart[3][11];
     uint32_t tcfg0, tcfg1, tcon, tcntb[5], tcmpb[4], count[5];
     uint32_t phase[5];
