@@ -54,6 +54,7 @@ npm run build
 npm run test:wasm
 npm run test:web
 npm run test:skins
+npm run test:pages
 ```
 
 [Startup](docs/development/startup.md) records the full-NOR witness and exact
@@ -72,7 +73,9 @@ separate developer tool, never a linked dependency of the MIT runtime.
 Zensical configuration is in `zensical.toml`; install
 `tools/requirements-docs.txt` in a virtual environment and run
 `zensical build --strict`. Pages publishes documentation at the root and the emulator at `/emulator/`. Tests and
-private firmware evidence stay out of production packages.
+private firmware evidence stay out of production packages. Pages promotes the
+exact successful current-main Build artifact; it does not recompile the emulator
+or deploy a failed/superseded Build.
 
 [MIT](LICENSE) covers original source/documentation, not HP firmware or
 trademarks. No external emulator implementation, firmware or font file is bundled.

@@ -82,6 +82,7 @@ jobs:
           npm run test:wasm
           npm run test:web
           npm run test:skins
+          npm run test:pages
       - name: Independent CPU differential (developer-only dependency)
         run: |
           npm run build:oracle
@@ -94,15 +95,16 @@ jobs:
           python3 -m venv build/docs-venv
           build/docs-venv/bin/pip install -r tools/requirements-docs.txt
           build/docs-venv/bin/zensical build --strict
+          python3 tools/build-pages.py
       - name: Upload production web build
         uses: actions/upload-artifact@v4
         with:
           name: orchard-web
           path: dist/
           if-no-files-found: error
-      - name: Upload documentation site
+      - name: Upload tested Pages site
         uses: actions/upload-artifact@v4
         with:
-          name: orchard-docs
+          name: orchard-pages
           path: site/
           if-no-files-found: error

@@ -27,11 +27,28 @@ separate open items. Ordinary CI and production packages stay ROM-free.
 ## Current continuation from 1001d15
 
 Skins are build-time pinned/hashes checked, served locally under the emulator
-subdirectory, separately Apache-2.0 with NOTICE. The same Pages workflow builds
-documents plus the application; do not replace the established document URLs.
+subdirectory, separately Apache-2.0 with NOTICE. Build creates one tested `orchard-pages` artifact containing documents and
+the application. Pages consumes that exact successful main run without
+reinstalling a compiler. Do not replace the established document URLs.
 
 HP39g+ now has conditional HOME/arithmetic with its own 1 MiB NOR hypothesis
 and exact SRAM. Shift/Alpha segment changes were observed on 39g+ and 48gII.
 Do not describe the 39g+ path as still blocked at the old unspecified-part
 write, or describe the new segment strip as merely a host key highlight.
 Physical hardware assumptions and browser-origin E2E remain open.
+
+
+## Publication continuation after 2e02b32
+
+Build #15 succeeded, but the first combined Pages run #12 failed during an
+APT proxy outage before deployment. A pushed workflow was not a deployed site.
+The corrected pipeline promotes only an exact, successful current-main Build
+artifact, verifies all assets before upload, and rechecks main before deploy.
+The deployed revision and each emulator asset are checked over HTTPS afterward.
+Tests live in `tests/pages.py`; `npm run test:pages` is ROM-free. No runner
+proxy, Docker daemon, package source or browser policy was modified.
+
+`pagehide` now pauses/releases rather than terminating the Worker, since the
+page may be retained in the back/forward cache. A persisted `pageshow` stays
+paused. `tests/lifecycle.mjs` checks dispatch through EventTarget, not an actual
+browser-cache round trip. Browser-origin verification remains blocked locally.

@@ -11,7 +11,7 @@ milestones; [startup](startup.md) and [web](web.md) define the current scope.
 - [x] Original HP48gII HOME, `1+2=3`, `7*8=56`: native and production WASM, two cold runs each.
 - [x] Browser setup selector, 51 mapped key positions, bounded physical-tap queue, pause/cold reset, frame view and diagnostic export.
 - [x] Execute the unchanged production Worker through Node browser-global adapters; real-NOR taps produce the same calculation frame.
-- [x] Six native/test-WASM C suites, sanitizer suites, tool tests and production Worker regressions.
+- [x] Seven native/test-WASM C suites, sanitizer suites, tool tests and production Worker regressions.
 
 ## Next
 
@@ -38,3 +38,14 @@ production packages. Pages publishes documentation and the emulator under `/emul
 
 Independent physical SRAM/LCD/NOR/pad verification is not replaced by functional
 arithmetic or a skin. Browser-origin navigation remains policy-blocked locally.
+
+
+## Publication/lifecycle follow-up
+
+- [x] Replace duplicate Pages compilation with promotion of the exact successful current-main Build artifact.
+- [x] Require all production assets, source stamps and hashes; reject forbidden, extra and linked files locally before upload.
+- [x] Pause rather than terminate on pagehide; persisted pageshow stays paused. EventTarget dispatch regression passes.
+- [ ] Observe the new Build, Pages deployment and HTTPS hash verification; issue #1 owns exact accepted run IDs.
+
+Build #15 was green but Pages #12 failed before publication during an APT proxy
+outage. This follow-up does not claim that the failed run deployed anything.

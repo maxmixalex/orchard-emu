@@ -1,5 +1,44 @@
 # Validation
 
+## Publication and lifecycle continuation after 2e02b32
+
+The first combined Pages attempt (#12) did not deploy: the runner's APT proxy
+failed while fetching package indices and the resulting LLVM dependencies
+could not be resolved. Build #15 itself passed. These are separate outcomes.
+The new pipeline reuses the successful Build's complete website artifact;
+it does not retry package installation during deployment. Exact accepted
+commit/run and live verification results are recorded in issue #1.
+
+Local checks on the new source: seven Release CTest suites and **202,097
+native/test-WASM assertions per host**, 76 existing tool checks, existing
+production guest/Worker/skin checks, and the new lifecycle EventTarget tests
+pass. Nine publication-contract tests (including per-asset subcases) reject
+missing assets, firmware/fonts, extra files, invalid revisions, symlinks,
+oversized files, invalid WASM, wrong source stamps and tampered hashes.
+A separate local 12-case simulation of the actual workflow selector rejects
+fork, PR, failed, wrong-workflow and stale-source inputs. An integration dry
+run assembled new web assets beside the downloaded, previously strict-built
+documentation; this is not a new local Zensical render. CI must render the
+changed Markdown itself. No CPU or peripheral semantics changed in this slice.
+
+Both fixed full-NOR witnesses were rerun on this source: HP39g+ at 230M ticks
+and HP48gII at 300M, each two native and two production-WASM cold starts,
+with matching state, frame, input identity and replay. The two historical
+calculation-frame hashes below remain exact; 39g+ records zero alias accesses
+and 22 LCD hypothesis reads, 48gII one alias read/no alias writes and 24 LCD
+reads. Both separate modifier studies were also rerun and their released-key
+levels checked explicitly: 39 Shift 255/0, Alpha 255/0/255/0; 48 left/right
+Shift each 255/0, Alpha 255/255/0/255. These are local firmware experiments,
+not ordinary CI or actual browser-origin tests.
+
+The lifecycle fix removes unconditional Worker termination on `pagehide`,
+which could leave a back/forward-cache-restored document attached to a dead
+Worker. Hidden/blur/pagehide pause and release; persisted pageshow stays paused.
+The DOM event adapter is tested, not actual browser-cache restoration.
+Local Chromium still reports `ERR_BLOCKED_BY_ADMINISTRATOR` for the production
+HTTP origin. Neither policy changes nor an actual-browser E2E pass are claimed.
+
+
 ## Skins / segments / HP39g+ continuation from 1001d15
 
 The new seven-suite native/test-WASM total is **202,097 assertions per host**:

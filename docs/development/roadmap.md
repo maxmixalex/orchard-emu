@@ -77,16 +77,17 @@ policies. The LCD `+0x68` idle-zero experiment does not close this gate.
 
 ## M3 — First genuine stock cold boot
 
-**Conditional HP48gII HOME and basic arithmetic observed; canonical gate open.**
+**Conditional HP48gII and HP39g+ HOME/basic arithmetic observed; canonical gate open.**
 
-Original HP39g+ and HP48gII full dumps execute from reset. The local continuation
-based on `e236fcc` now takes HP48gII through memory recovery/clear and HOME,
-then computes `1+2=3` and `7*8=56` with actual physical switch input. It uses
-selected x16 NOR bus adaptation, an explicit SRAM bank1-mirror hypothesis,
-declared pad/ADC inputs, counted LCD idle-zero reads and packed-memory display.
-This is functional stock OS execution, not a canonical physical-board result.
-See [the startup witness](startup.md); native payload/return and sustained use
-are still separate, uncompleted checks. No other model inherits this result.
+Original HP39g+ and HP48gII full dumps execute from reset through their own
+startup prompts into HOME, then compute `1+2=3` and `7*8=56` with physical
+switch input. HP48gII uses selected SST39VF1601 and an explicit SRAM bank1-mirror
+hypothesis; HP39g+ uses a separate 1 MiB SST39VF800A hypothesis and exact SRAM.
+Both retain declared pad/ADC inputs, counted LCD idle-zero reads and a
+packed-memory display interpretation. This is functional stock OS execution,
+not a canonical physical-board result. See [HP48 startup](startup.md) and
+[HP39 startup](hp39-startup.md). Native payload/return and sustained use
+are separate, uncompleted checks. No other model inherits these results.
 
 Record four separate witnesses: bootloader progression, initialized LCD,
 interactive stock UI, and native ARM payload execution followed by return to a
@@ -114,15 +115,15 @@ stop work on the available machines or repeat the acquisition request.
 
 ## M5 — Usable browser calculator
 
-**Experimental HP48gII controls implemented; full browser usability gate open.**
+**Experimental HP39g+/HP48gII controls and skins implemented; browser gate open.**
 
-The [page](web.md) exposes an opt-in HOME setup, physical tap queue, cold reset
-and diagnostics. Node Worker tests are not HTTP/file-picker/browser lifecycle
-E2E; that gate remains open.
+The [page](web.md) exposes two opt-in HOME setups, seven separately licensed
+skins, printed-key mappings, physical tap queues, guest-driven annunciators,
+cold reset and diagnostics. Node Worker tests are not HTTP/file-picker/browser
+lifecycle E2E; that gate remains open.
 
-Add correctly licensed skins, printed-key mappings over physical switches,
-separate annunciators, calibrated LCD output, versioned persistence/export and
-performance controls. Preserve single-Worker ownership, bounded slices,
+Next are calibrated LCD output, versioned persistence/export, broader stock-key
+coverage and performance controls. Preserve single-Worker ownership, bounded slices,
 cancellation and model/ROM generation isolation.
 
 **Gate:** production assets pass real browser load/boot/key/resize/reset/

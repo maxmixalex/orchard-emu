@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { keyRows, shortcut, setupHash, isPlayable } from './hp48.js';
 import { SkinView } from './skin.js';
+import { bindLifecycle } from './lifecycle.js';
 const $=id=>document.getElementById(id), hex=n=>n.toString(16).padStart(8,'0');
 const count=(lo,hi)=>(BigInt(hi)<<32n)|BigInt(lo);
 const worker=new Worker(new URL('worker.js',import.meta.url),{type:'module'});
@@ -129,9 +130,7 @@ window.addEventListener('keydown',event=>{
   event.preventDefault();tap(scan);
 });
 function suspend(){if(loaded)message('pause');}
-window.addEventListener('blur',suspend);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)suspend();});
-window.addEventListener('pagehide',()=>worker.terminate());
+bindLifecycle(window,document,suspend);
 $('uart-form').addEventListener('submit',event=>{
   event.preventDefault();const text=$('uart-input').value.trim();
   if(!/^(?:[0-9a-f]{2})(?:\s+[0-9a-f]{2})*$/i.test(text)){error('Use space-separated hexadecimal bytes.');return;}

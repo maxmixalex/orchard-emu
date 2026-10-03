@@ -1,113 +1,112 @@
 name: Pages
 on:
-  push:
+  workflow_run:
+    workflows: [Build]
     branches: [main]
+    types: [completed]
   workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Successful Build run for the current main commit
+        required: true
+        type: string
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: orchard-pages
   cancel-in-progress: false
 jobs:
-  build:
+  prepare:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: home-docker
-    timeout-minutes: 15
+    timeout-minutes: 10
+    outputs:
+      ready: ${{ steps.source.outputs.ready }}
+      sha: ${{ steps.source.outputs.sha }}
     steps:
+      - name: Select successful trusted Build at current main
+        id: source
+        uses: actions/github-script@v7
+        env:
+          BUILD_RUN_ID: ${{ inputs.build_run_id }}
+        with:
+          script: |
+            core.setOutput('ready', 'false');
+            const run_id = Number(context.payload.workflow_run?.id || process.env.BUILD_RUN_ID);
+            if (!Number.isSafeInteger(run_id) || run_id < 1) throw new Error('Invalid Build run ID');
+            const repo = context.repo;
+            const {data: run} = await github.rest.actions.getWorkflowRun({...repo, run_id});
+            if (run.name !== 'Build' || run.path !== '.github/workflows/build.yml' ||
+                run.status !== 'completed' || run.conclusion !== 'success' ||
+                !['push', 'workflow_dispatch'].includes(run.event) || run.head_branch !== 'main' ||
+                run.repository.id !== context.payload.repository.id ||
+                run.head_repository.id !== context.payload.repository.id ||
+                !/^[a-f0-9]{40}$/.test(run.head_sha)) {
+              throw new Error('Refusing artifacts not produced by a successful trusted main Build');
+            }
+            const {data: head} = await github.rest.git.getRef({...repo, ref: 'heads/main'});
+            if (head.object.sha !== run.head_sha) {
+              core.notice('Skip superseded Build; never publish an older revision over current main');
+              return;
+            }
+            core.setOutput('sha', run.head_sha);
+            core.setOutput('run_id', String(run.id));
+            core.setOutput('ready', 'true');
       - uses: actions/checkout@v6
+        if: steps.source.outputs.ready == 'true'
         with:
+          ref: ${{ steps.source.outputs.sha }}
           persist-credentials: false
-      - name: Install missing web build tools
-        shell: bash
-        run: |
-          set -euo pipefail
-          missing=()
-          for package in clang lld python3-venv; do
-            if ! dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q 'ok installed'; then
-              missing+=("$package")
-            fi
-          done
-          if (( ${#missing[@]} )); then
-            sudo -n -E apt-get -o Acquire::Retries=3 update
-            sudo -n -E apt-get -o Acquire::Retries=3 install -y --no-install-recommends "${missing[@]}"
-          fi
-      - uses: actions/setup-node@v4
+      - name: Download tested complete Pages artifact
+        if: steps.source.outputs.ready == 'true'
+        uses: actions/download-artifact@v4
         with:
-          node-version: '22'
-      - name: Build same-origin emulator with pinned skins
-        run: |
-          npm run check
-          npm run build
-          npm run test:web
-          npm run test:skins
-      - name: Build strict Zensical site
-        run: |
-          python3 tools/check-docs.py
-          python3 -m venv "$RUNNER_TEMP/orchard-docs-venv"
-          "$RUNNER_TEMP/orchard-docs-venv/bin/pip" install --disable-pip-version-check -r tools/requirements-docs.txt
-          "$RUNNER_TEMP/orchard-docs-venv/bin/zensical" build --strict
-          python3 tools/build-pages.py
-          test -f site/emulator/index.html
-          test -f site/index.html
-          printf '%s\n' "$GITHUB_SHA" > site/revision.txt
-          test -z "$(find site -type f \( -iname '*.bin' -o -iname '*.raw' -o -iname '*.rom' -o -iname '*.xz' \) -print -quit)"
+          name: orchard-pages
+          path: site
+          run-id: ${{ steps.source.outputs.run_id }}
+          github-token: ${{ github.token }}
+      - name: Verify immutable build identity and assets
+        if: steps.source.outputs.ready == 'true'
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: python3 tools/verify-pages.py --site site --revision "$SOURCE_SHA"
       - uses: actions/upload-pages-artifact@v4
+        if: steps.source.outputs.ready == 'true'
         with:
           path: site
   deploy:
-    needs: build
+    needs: prepare
+    if: needs.prepare.outputs.ready == 'true'
     runs-on: home-docker
     timeout-minutes: 10
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          persist-credentials: false
+      - name: Recheck current main before publication
+        id: head
+        uses: actions/github-script@v7
+        env:
+          SOURCE_SHA: ${{ needs.prepare.outputs.sha }}
+        with:
+          script: |
+            const {data: head} = await github.rest.git.getRef({...context.repo, ref: 'heads/main'});
+            core.setOutput('current', String(head.object.sha === process.env.SOURCE_SHA));
       - uses: actions/deploy-pages@v4
         id: deployment
-      - name: Verify published documentation and emulator
+        if: steps.head.outputs.current == 'true'
+      - name: Verify all published emulator assets
+        if: steps.head.outputs.current == 'true'
         env:
           PAGES_URL: ${{ steps.deployment.outputs.page_url }}
-        run: |
-          base="${PAGES_URL%/}/"
-          curl --fail --location --proto '=https' --proto-redir '=https' \
-            --max-time 25 --retry 5 --retry-delay 3 --retry-all-errors \
-            "${base}?revision=${GITHUB_SHA}" -o "$RUNNER_TEMP/orchard-index.html"
-          curl --fail --location --proto '=https' --proto-redir '=https' \
-            --max-time 25 --retry 5 --retry-delay 3 --retry-all-errors \
-            "${base}development/roms/?revision=${GITHUB_SHA}" -o "$RUNNER_TEMP/orchard-roms.html"
-          grep -q 'Orchard' "$RUNNER_TEMP/orchard-index.html"
-          grep -q '4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937' "$RUNNER_TEMP/orchard-roms.html"
-          curl --fail --location --proto '=https' --proto-redir '=https' \
-            --max-time 25 --retry 5 --retry-delay 3 --retry-all-errors \
-            "${base}development/native-roms/?revision=${GITHUB_SHA}" -o "$RUNNER_TEMP/orchard-native-roms.html"
-          curl --fail --location --proto '=https' --proto-redir '=https' \
-            --max-time 25 --retry 5 --retry-delay 3 --retry-all-errors \
-            "${base}revision.txt?revision=${GITHUB_SHA}" -o "$RUNNER_TEMP/orchard-revision.txt"
-          grep -q 'dfa544617039e1bff0f62b9f51a943e57ff756d12bb81478de7aec41a5b73a28' "$RUNNER_TEMP/orchard-native-roms.html"
-          test "$(cat "$RUNNER_TEMP/orchard-revision.txt")" = "$GITHUB_SHA"
-          export EMULATOR_URL="${base}emulator/"
-          python3 - <<'PYCODE'
-          import hashlib, json, os, time, urllib.request
-          base = os.environ['EMULATOR_URL']
-          revision = os.environ['GITHUB_SHA']
-          def get(name):
-              url = base + name + '?revision=' + revision
-              for attempt in range(6):
-                  try:
-                      with urllib.request.urlopen(url, timeout=25) as r:
-                          data = r.read(2000001)
-                      assert len(data) <= 2000000, 'Oversized asset'
-                      return data
-                  except Exception:
-                      if attempt == 5: raise
-                      time.sleep(3)
-          assert get('revision.txt').decode().strip() == revision
-          manifest = json.loads(get('asset-manifest.json'))
-          assert manifest['revision'] == revision
-          for name, digest in manifest['assets'].items():
-              assert not name.startswith('/') and '..' not in name.split('/')
-              assert hashlib.sha256(get(name)).hexdigest() == digest, name
-          print('Live emulator assets match the deployed build:', len(manifest['assets']))
-          PYCODE
+          SOURCE_SHA: ${{ needs.prepare.outputs.sha }}
+        run: python3 tools/verify-pages.py --url "$PAGES_URL" --revision "$SOURCE_SHA"

@@ -13,10 +13,6 @@ load the exact documented full NOR, Run, then F6/OK at Memory Clear. This uses
 SST39VF800A as an explicit component hypothesis, exact SRAM, F inputs, AIN0=1023
 and counted LCD idle-zero. It does not select the HP48 mirroring policy.
 
-The remaining text describes the existing HP48 setup and shared lifecycle.
-
-## Earlier shared browser calculator workbench
-
 ## Use the experimental HP48gII setup
 
 Build with Node.js 22+, Clang and wasm-ld:
@@ -57,7 +53,8 @@ also available as an accessible fallback below the calculator-case skin. Label/s
 [hpclang physical key map](https://github.com/zyf722/hpclang/blob/d1dd4688cc850bff1bf4c290c0d26a5e0619f55c/runtime/core/keyboard-key-map.c).
 No driver implementation is copied. All labels being mapped is not evidence
 that every key has passed stock-OS functional acceptance. Current live-ROM
-coverage is F6, 1, 2, 7, 8, +, multiply and ENTER.
+coverage includes F6, 1, 2, 7, 8, +, multiply and ENTER, plus the dedicated
+Shift/Alpha cycles in [the segment study](skins-segments.md).
 
 Each activation queues a physical press for 2 million virtual ticks, followed
 by release and a 2-million-tick gap. These declared tap semantics prevent a
@@ -69,6 +66,12 @@ There is no text-paste or host-side calculation shortcut.
 
 Pause, cold reset, a model/setup change, blur and a hidden page clear queued
 keys and release an active switch. Switching back does not silently resume.
+`pagehide` also pauses instead of terminating the Worker: a page may be
+retained in the browser back/forward cache. Returning via a persisted
+`pageshow` remains paused, with Run available rather than a terminated worker.
+This is not disk persistence; closing or reloading still loses RAM.
+The event ordering follows the [HTML document lifecycle](https://html.spec.whatwg.org/multipage/document-lifecycle.html).
+
 Cold reset clears SRAM and reattaches the selected setup; it is not a retained
 calculator warm reset. The UI has no save/restore yet. Generation IDs reject
 old ROM reads, hashes, frames and Worker replies after setup changes.
@@ -112,3 +115,17 @@ but are layout-only evidence. HTTP origin loading, file-picker interactions,
 keyboard focus, background lifecycle and browser long-run E2E remain open.
 The available `agent-browser` executable was absent; Playwright/Chromium was
 used for those limited checks. See [validation](validation.md).
+
+
+## Build once, publish the tested files
+
+Build runs native/WASM regressions, web/skin checks, publication-contract tests
+and strict Zensical rendering, then assembles `orchard-pages` with `/emulator/`.
+Pages is triggered by successful Build completion, not directly by a push. It
+checks the producing workflow, same-repository main source and current commit,
+downloads that exact artifact, verifies source/hash/file allowlists, then deploys.
+The website and downloadable web archive therefore use the same compiled WASM.
+A failed Build cannot produce a new accepted deployment. A superseded Build is
+skipped rather than publishing an old revision. A manual Pages dispatch needs
+the successful Build run ID for current main. There is no second compiler or
+package installation in the deployment path.

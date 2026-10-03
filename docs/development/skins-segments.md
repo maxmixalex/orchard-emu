@@ -66,11 +66,14 @@ read bounds have separate ROM-free native/WASM tests.
 
 The existing Pages root and development URLs remain documentation. The web
 application is at **[Open emulator](https://zyf722.github.io/orchard-emu/emulator/)**.
-One `Pages` workflow builds both from the same commit. `tools/build-pages.py`
+The successful `Build` creates both from the same commit; `Pages` only verifies and deploys that artifact. `tools/build-pages.py`
 allows only production asset types, writes the source revision and hashes,
 and places the web bundle under `site/emulator/` without replacing documents.
+The `workflow_run` consumer accepts only successful, same-repository main Builds
+and skips superseded revisions. It never installs or reruns the compiler.
 Deployment checks fetch every emulator asset and compare its SHA-256 with the
-build manifest. Firmware, screenshots of firmware, test files and font files
+build manifest. Missing assets, unexpected files, symlinks, and a mismatched
+source revision fail closed before deployment. Firmware, screenshots of firmware, test files and font files
 are excluded. The page loads a local ROM; it has no firmware download/upload
 or analytics service.
 
