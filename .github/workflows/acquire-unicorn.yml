@@ -1,0 +1,46 @@
+name: Acquire external CPU oracle
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/native-roms-20261002]
+    paths: [.github/workflows/acquire-unicorn.yml]
+permissions:
+  contents: read
+jobs:
+  acquire:
+    runs-on: home-docker
+    timeout-minutes: 5
+    steps:
+      - name: Fetch and verify pinned upstream wheel
+        env:
+          TARGET: ${{ runner.temp }}/orchard-unicorn
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, urllib.request
+          from urllib.parse import urlsplit
+          out = pathlib.Path(os.environ['TARGET'])
+          out.mkdir(parents=True, exist_ok=True)
+          with urllib.request.urlopen('https://pypi.org/pypi/unicorn/2.1.4/json', timeout=30) as response:
+              metadata = json.load(response)
+          candidates = [item for item in metadata['urls'] if item['filename'].endswith('.whl') and 'manylinux' in item['filename'] and 'x86_64' in item['filename']]
+          assert len(candidates) == 1, [item['filename'] for item in candidates]
+          item = candidates[0]
+          assert pathlib.Path(item['filename']).name == item['filename']
+          assert urlsplit(item['url']).scheme == 'https' and urlsplit(item['url']).hostname == 'files.pythonhosted.org'
+          with urllib.request.urlopen(item['url'], timeout=90) as response:
+              assert urlsplit(response.url).scheme == 'https'
+              data = response.read(30000001)
+          assert len(data) <= 30000000 and len(data) == item['size']
+          assert hashlib.sha256(data).hexdigest() == item['digests']['sha256']
+          (out / item['filename']).write_bytes(data)
+          (out / 'identity.json').write_text(json.dumps({'version':'2.1.4','filename':item['filename'],'size':len(data),'sha256':item['digests']['sha256'],'source':item['url']}, indent=2) + '\n')
+          print(item['filename'], len(data), item['digests']['sha256'])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: external-unicorn-2.1.4
+          path: ${{ runner.temp }}/orchard-unicorn/
+          retention-days: 1
+          if-no-files-found: error
+# Acquisition only. No emulator tests run here. This GPL external developer
+# dependency never enters Orchard source, native/WASM builds, Pages or releases.
