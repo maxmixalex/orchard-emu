@@ -3,38 +3,32 @@ on:
   push:
     branches: [research/native-roms-20261002]
     paths: [.github/workflows/export-research-source.yml]
-  workflow_dispatch:
 permissions:
   contents: read
 jobs:
   export:
     runs-on: home-docker
-    timeout-minutes: 8
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
         with:
           ref: 2889f904115a316da501d25ffaa7301454a4a722
           persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Export source and acquire dependency cache
+      - name: Acquire pinned documentation wheels only
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/orchard-inputs" "$RUNNER_TEMP/orchard-dependencies"
-          git archive --format=tar.gz --output="$RUNNER_TEMP/orchard-inputs/orchard-source.tar.gz" HEAD
-          cd "$RUNNER_TEMP/orchard-dependencies"
-          printf '{"name":"orchard-frontend-dependencies","version":"1.0.0","private":true,"type":"module"}\n' > package.json
-          npm install --save-exact --ignore-scripts react react-dom @mantine/core @mantine/hooks i18next react-i18next react-simple-keyboard
-          npm install --save-dev --save-exact --ignore-scripts esbuild
-          npm ls --depth=0
-          tar -czf "$RUNNER_TEMP/orchard-inputs/frontend-dependencies.tar.gz" package.json package-lock.json node_modules
-          sha256sum "$RUNNER_TEMP/orchard-inputs/"*.tar.gz
+          python3 -m venv "$RUNNER_TEMP/docs-acquire"
+          "$RUNNER_TEMP/docs-acquire/bin/pip" download --only-binary=:all: \
+            --python-version 3.13 --implementation cp --abi cp313 --abi abi3 --abi none \
+            --platform manylinux_2_17_x86_64 --platform manylinux_2_28_x86_64 --platform manylinux2014_x86_64 \
+            -r tools/requirements-docs.txt -d "$RUNNER_TEMP/docs-wheels"
+          cd "$RUNNER_TEMP/docs-wheels"
+          sha256sum *.whl > SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: orchard-react-development-inputs
-          path: ${{ runner.temp }}/orchard-inputs/
+          name: orchard-docs-wheels
+          path: ${{ runner.temp }}/docs-wheels/
           retention-days: 1
           if-no-files-found: error
-# Acquisition only; all implementation, profiling and emulator tests run locally.
+# Acquisition only; no firmware or emulator tests. Strict rendering runs locally.
