@@ -1,4 +1,95 @@
-# Validation
+# Current frontend and host continuation
+
+The interrupted React work was not present in main `2889f90`. This continuation
+recovered hash-checked source fragments, rebuilt the missing frontend and
+revalidated the result locally. Exact publication revision and observed CI/
+Pages outcomes belong to issue #1, not this pre-publication record.
+
+## Implemented
+
+React/Mantine user controls, bundled English/Chinese translation resources,
+clickable PC key mapping, traditional modifier legends, PNG capture and a
+separate frame subscription now replace the vanilla calculator page. Existing
+Worker, session/envelope and lifecycle tests remain. The developer workbench
+uses the same unchanged core. See [React UI](react-ui.md).
+
+The standalone loopback [host prototype](host-mode.md) exposes USB/IP and raw
+serial. Generated ARM guest/TCP tests run both from source and the assembled
+package. They do not prove kernel driver or Conn3x compatibility.
+
+## Tests and scope
+
+Eleven native and test-WASM suites now contain **443,311 assertions per host**.
+The extra 6,912 assertions exercise 1,152 ARM single-transfer variants against
+the retained reference: different addressing flags, alignment, aliasing,
+PC destinations, memory bounds and MMIO. The attempted narrow rollback
+optimization did not show a reliable full-workload improvement and was removed;
+the extra tests remain. The shipped production C core is byte-for-byte the
+accepted `2889f90` source; no CPU/peripheral timing semantics change here.
+
+Local Release/reference/sanitizer suites, unchanged generated guests, Worker,
+preferences/session/RTC, frontend/controller, skin and publication contracts
+all passed. The independent Unicorn subset passed 17,075 cases with no
+mismatches or skips. Both original-NOR cold-start arithmetic probes completed
+two native and two production-WASM runs per model; frames and exposed states
+agree. The checkpoint probe resumed each after 1+2=3, completed 7*8=56 and
+matched uninterrupted serialized state; native continuation also matched.
+These ROM-dependent runs are local, ordinary builds, not CI/sanitizer startup.
+Strict Zensical rendered all 30 pages locally without issues. Remote run IDs
+and deployed-asset verification are recorded after observation in issue #1.
+
+Offline Chromium component tests use real React/Mantine but a fake Worker and
+explicit in-memory artwork, not an HTTP origin. They caught a genuine sizing
+regression: SkinView's inline aspect ratio incorrectly made the traditional
+screen container as tall as an entire case. Traditional mode now overrides
+that ratio, and a key-position assertion prevents its return. They also cover
+language Apply/Cancel, PC selection, printed legends, PNG download and four
+viewport widths. They are not original-firmware/browser-storage E2E.
+
+## Measured display investigation
+
+A local Node/V8 investigation at generated original-system states measures
+only the production LCD accessor, annunciator accessor and copied pixels.
+Median decode/copy cost was about **0.049 ms/frame on HP39g+ and 0.047 ms/frame
+on HP48gII**. At 30 calls/s this is about 1.5 ms of CPU time per second.
+Checkpoint bytes before/after sampling are equal. This does not include browser
+canvas drawing, CSS scaling, compositor work, messages or real time calibration.
+It does not support the decoder itself as the dominant observed slowdown.
+
+The initial new RGBA helper allocated a subarray per pixel; typed-array palette
+lookup removes that avoidable allocation. Its local 131x64 conversion dropped
+from roughly 0.34–0.36 ms to 0.019 ms. This is a rendering-helper microbenchmark,
+not a corresponding increase in calculator execution speed. The frontend also avoids unchanged
+canvas updates and any per-frame React state subscription. Core profiling
+instead shows interpretation/address translation as large CPU consumers.
+Increasing translation-cache capacity alone and the narrow-rollback prototype
+did not provide a reliable improvement, so neither is shipped. No headline
+CPU speedup is claimed. Normal's functional timebase and its unverified
+relationship to physical clocks are unchanged. See [performance](performance.md).
+
+## Reproduce
+
+```sh
+npm ci --ignore-scripts
+npm run build
+npm run test:wasm
+npm run test:web
+npm run test:calculator
+npm run test:skins
+npm run test:pages
+npm run test:host
+npm run build:host
+ORCHARD_HOST_ROOT=build/host-package npm run test:host
+```
+
+Native/reference/sanitizer and the independent Unicorn corpus retain their
+existing commands. `python3 tests/browser-components.py` is an optional local
+component test requiring Playwright and Chromium, not an unproven browser gate
+in normal CI. `tools/profile-display.mjs` needs private local ROM inputs and
+never acquires or publishes them.
+
+## Accepted history
+
 
 ## Settings release follow-up on c3e8a36
 

@@ -38,3 +38,14 @@ Build #21 on c3e8a36 timed out in two O0 sanitizer tests, so that push did not
 publish the settings release. Its local O1/checksum follow-up is documented in
 [validation](validation.md); issue #1 records the newly observed Build, Pages
 and exact downloaded-artifact checks. Do not treat a source push as deployment.
+
+
+## React / connection continuation
+
+- [x] Separate React/Mantine user frontend with English/Chinese i18n and PC keyboard editor.
+- [x] Printed modifier/Alpha legends; native/4x matrix PNG capture.
+- [x] Keep per-frame pixels outside React subscriptions; avoid unchanged canvas uploads.
+- [x] Add bounded standalone loopback USB/IP/raw serial and generated-guest TCP tests.
+- [x] Preserve extra single-transfer reference tests, reject unproductive CPU optimization prototypes.
+- [ ] Observe current Build/Pages and downloaded-package results in issue #1.
+- [ ] Real browser-origin E2E, kernel attachment/Conn3x transfer, physical clock calibration and substantive interpreter optimization remain open.

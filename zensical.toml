@@ -26,6 +26,8 @@ nav = [
     "development/virtual-link.md",
     "development/infrared.md",
     "development/web.md",
+    "development/react-ui.md",
+    "development/host-mode.md",
     "development/interaction.md",
     "development/performance.md",
     "development/sessions.md",

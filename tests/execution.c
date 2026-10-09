@@ -93,6 +93,33 @@ static void dispatch(void) {
         if (i < 1024) one_instruction(random_word(&seed) & 0xffffu, true, &seed);
     }
 }
+/* Directed single-transfer rollback: every addressing flag combination,
+ * PC/source/base overlap, alignment aborts and diagnostic MMIO stops. */
+static void single_rollbacks(void) {
+    const uint32_t addresses[]={O_RAM_BASE+0x300, O_RAM_BASE+0x301,
+        O_RAM_BASE+0x3fffc, 0x60000000u, 0x50000020u, 0x4d000068u};
+    for(unsigned flags=0;flags<64;flags++)
+    for(unsigned addr=0;addr<6;addr++)
+    for(unsigned dest=0;dest<3;dest++) {
+        initialize();
+        unsigned rd=dest==0?2u:dest==1?3u:15u;
+        uint32_t op=0xe4000004u|(flags<<20)|(3u<<16)|(rd<<12);
+        for(unsigned i=0;i<4;i++)fast.flash[0x100+i]=reference.flash[0x100+i]=(uint8_t)(op>>(8*i));
+        fast.cpu.r[15]=reference.cpu.r[15]=0x100;
+        fast.cpu.r[3]=reference.cpu.r[3]=addresses[addr];
+        fast.cpu.r[2]=reference.cpu.r[2]=0x87654321;
+        fast.cpu.r[4]=reference.cpu.r[4]=4;
+        fast.cpu.control=reference.cpu.control=0x7a; /* alignment checking */
+        fast.cpu.far=reference.cpu.far=0xdeadbeef;
+        fast.cpu.dfsr=reference.cpu.dfsr=0x123;
+        fast.cpu.next_pc=reference.cpu.next_pc=0xfeed;
+        o_cpu_step(&fast);o_cpu_step_reference(&reference);
+        CHECK(equal(&fast.cpu,&reference.cpu,sizeof fast.cpu));
+        CHECK(equal(&fast.stop,&reference.stop,sizeof fast.stop));
+        CHECK(equal(&fast.soc,&reference.soc,sizeof fast.soc));
+        CHECK(equal(fast.ram,reference.ram,sizeof fast.ram));
+    }
+}
 static void translate(uint32_t va, bool write, bool fetch, bool user) {
     o_zero(&fast.stop, sizeof fast.stop); o_zero(&reference.stop, sizeof reference.stop);
     fast.cpu.data_abort = fast.cpu.prefetch_abort = false;
@@ -193,7 +220,7 @@ static void translations(void) {
 }
 EXPORT("regression") unsigned run(void) {
     checks=failures=first_failure=0;
-    dispatch(); translations();
+    dispatch(); single_rollbacks(); translations();
     return failures;
 }
 EXPORT("checks") unsigned get_checks(void) { return checks; }

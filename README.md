@@ -19,11 +19,12 @@ This is conditional functional operation, not complete six-model support.
 
 
 ```sh
+npm ci --ignore-scripts
 npm run build
 npm run dev
 ```
 
-Python 3, Node.js 22+, Clang/wasm-ld are needed to build; there are no npm dependencies.
+Python 3, Node.js 22+, Clang/wasm-ld are needed to build; frontend dependencies are pinned in package-lock.json.
 Open the printed localhost URL (default port 8123). In a downloaded web build,
 only Node.js 22+ is needed: extract it and run `node serve.mjs` in that folder.
 Do not use `file://`. No ROM is bundled or uploaded.
@@ -98,3 +99,14 @@ Connections exposes virtual UART bytes and USB guest descriptors/individual
 packets, not a PC device or complete HP file-transfer client. See
 [interaction](docs/development/interaction.md), [sessions](docs/development/sessions.md),
 and [the infrared assessment](docs/development/infrared.md).
+
+
+## React user interface and host prototype
+
+The user frontend now uses React + Mantine, with English/Chinese settings, a
+clickable PC-keyboard editor, traditional Shift/Alpha legends and matrix PNG
+capture. Existing `.ord`/legacy sessions and opt-in autosave remain compatible.
+The independent loopback USB/IP/raw serial package (`npm run build:host`) is
+experimental: generated ARM/TCP tests pass, but OS attachment and Conn3x are
+not yet verified. See [frontend](docs/development/react-ui.md) and
+[host mode](docs/development/host-mode.md). No firmware or driver is bundled.

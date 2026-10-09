@@ -18,7 +18,7 @@ for(const [model,spec] of Object.entries(manifest.models)){
  for(const k of spec.keys){assert(['path','rect','circle'].includes(k.tag));assert(k.label);assert(!/url|javascript/i.test(k.transform));}
  assert(!/<(?:script|foreignObject|text|image)\b/i.test(data.toString()));
 }
-const html=(await read('index.html')).toString();
+const html=await readFile(new URL('../web/App.jsx',import.meta.url),'utf8');
 assert.equal((html.match(/data-segment="[0-5]"/g)||[]).length,6);
 assert(html.includes('glass-overlay'));assert(html.includes('licenses/hp-calcs-svg/NOTICE.txt'));
 assert.equal(keyRows(1).flat().find(k=>k[1]===58)[0],'ALPHA');

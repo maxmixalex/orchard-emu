@@ -15,7 +15,7 @@ export function endpoints(config){
 }
 export class VirtualUSB {
   constructor(core,hz,notify){this.c=core;this.hz=hz;this.notify=notify;this.connected=false;this.info=null;this.job=null;this.toggles=new Map();}
-  resetLocal(){this.connected=false;this.job=null;this.info=null;this.next=Infinity;this.toggles.clear();}
+  resetLocal(){this.connected=false;this.job=null;this.info=null;this.device=null;this.config=null;this.next=Infinity;this.toggles.clear();}
   disconnect(){this.c.usb_connect(0);this.resetLocal();this.notify({connected:false,phase:'Disconnected'});}
   start(tick){
     this.disconnect();
@@ -33,6 +33,7 @@ export class VirtualUSB {
       this.mps=first[7];
       this.readDescriptor(1,0,18,device=>{
         if(device.length!==18||device[0]!==18||device[1]!==1)throw new Error('Incomplete USB device descriptor.');
+        this.device=device.slice();
         this.info={vendor:device[8]|device[9]<<8,product:device[10]|device[11]<<8,manufacturer:'',name:'',endpoints:[]};
         this.request(setup(0,5,7),()=>{
           this.address=7;
@@ -40,7 +41,7 @@ export class VirtualUSB {
             if(header.length!==9||header[1]!==2)throw new Error('Missing USB configuration.');
             const n=header[2]|header[3]<<8;if(n<9||n>4096)throw new Error('USB configuration too large.');
             this.readDescriptor(2,0,n,config=>{
-              this.info.endpoints=endpoints(config);
+              this.info.endpoints=endpoints(config);this.config=config.slice();
               this.request(setup(0,9,config[5]),()=>this.strings(device));
             });
           });

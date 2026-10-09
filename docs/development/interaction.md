@@ -101,3 +101,8 @@ References: [HTML dialogs](https://html.spec.whatwg.org/multipage/interactive-el
 [S3C2410A manual](https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf),
 chapter 17. The latter describes a distinct RTC oscillator; it does not specify
 Orchard's provisional instruction-to-quantum timing.
+
+
+The current [React frontend](react-ui.md) adds English/Chinese selection and a
+clickable PC-keyboard editor; existing physical sequences and session settings
+remain compatible. Frames do not trigger React control-panel renders.

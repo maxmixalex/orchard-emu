@@ -126,3 +126,13 @@ No private session, ROM or report is added to source or Pages. Re-run actual
 production Worker tests, real-NOR short-key and fixed startup witnesses, and
 then verify the accepted CI artifact. Documentation and issue #1 must retain
 the separation of local checks, remote builds, asset deployment and browser E2E.
+
+
+## Current continuation
+
+Do not retry the old incomplete compressed React transport. The missing frontend
+was rebuilt and the standalone host prototype recovered/checked locally. The
+production C core stays unchanged: two attempted optimizations were not worth
+shipping; their directed tests remain. Publish the current tested tree rather
+than repeating historical performance claims. See react-ui.md, host-mode.md and
+the top of validation.md. Real browser-origin and OS/Conn3x gates remain open.

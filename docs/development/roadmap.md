@@ -238,3 +238,14 @@ clock foundations; no IrDA toggle is presented as a completed virtual link.
 Continue CPU throughput work independently of pacing. WFI quiet-interval
 skipping preserves the reference timeline and has dedicated comparisons; no
 decoded-block or JIT implementation is claimed in this slice.
+
+
+## React and host prototype checkpoint
+
+M5 now includes a React/Mantine bilingual frontend, visual PC key mapping,
+traditional legends and PNG capture; actual browser-origin E2E remains open.
+M6 includes a standalone loopback USB/IP/raw serial prototype validated with
+generated ARM guests and real TCP, not OS-level or Conn3x acceptance.
+Next gates: kernel client attach, stock transfer-mode enumeration and full
+bidirectional Conn3x/object exchange. Performance still needs interpreter and
+physical clock-domain work; small LCD decoding cost is not the primary finding.

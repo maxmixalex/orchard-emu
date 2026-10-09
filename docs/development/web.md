@@ -66,3 +66,12 @@ those. Offline Chromium layout checks do not execute application modules.
 Actual localhost-origin navigation still returns ERR_BLOCKED_BY_ADMINISTRATOR
 here; no policy was modified. No real file-picker, focus/touch/background,
 localStorage persistence or end-to-end browser acceptance is claimed.
+
+
+## Current user frontend
+
+The user page is now React/Mantine with bundled Chinese/English resources, a
+clickable PC-keyboard mapping editor, printed modifier legends and PNG capture.
+It preserves the existing model, pacing, storage and physical input contracts.
+See [React UI](react-ui.md) for implementation and verification boundaries.
+The old vanilla calculator controller is removed, not layered under React.

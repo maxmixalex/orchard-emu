@@ -23,3 +23,6 @@ __pycache__/
 *.jsonl
 *.orchard
 *.state
+
+/node_modules
+*.ord

@@ -72,3 +72,13 @@ driver uses its public API while separate processes execute Orchard test
 records. No Unicorn source or binary is copied into Git, Pages, `dist/` or
 native install outputs. See [CPU oracle](cpu-oracle.md) for the exact process,
 model and evidence boundary. This does not assert formal clean-room review.
+
+
+## Bundled frontend packages
+
+The npm dependency graph is locked. `tools/build-frontend.mjs` examines esbuild's
+actual input graph and places the complete notices of included packages in
+`licenses/frontend.txt` in the web build. A pinned upstream LICENSE is retained
+for react-remove-scroll-bar 2.3.8 because its package lacks that text. Original
+UI and host adapters remain MIT; hp-calcs-svg remains separately Apache-2.0.
+No Linux driver or external emulator implementation is copied or distributed.

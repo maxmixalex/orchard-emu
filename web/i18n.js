@@ -1,0 +1,55 @@
+// SPDX-License-Identifier: MIT
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+export const LANG_KEY='orchard:language:v1';
+export const en={
+  open:'Open ROM',pause:'Pause',resume:'Resume',restart:'Restart',save:'Save',restore:'Restore',capture:'Capture screen',settings:'Settings',connections:'Connections',help:'Help',
+  model:'Calculator',noROM:'Open a ROM to begin',loading:'Opening…',running:'Running',paused:'Paused',stopped:'Stopped',ready:'Ready',
+  general:'General',keyboard:'Keyboard',storage:'Storage',language:'Language',view:'Appearance',immersive:'Immersive',traditional:'Traditional',size:'Size',
+  pauseBlur:'Pause when focus is lost',pauseHidden:'Pause in background tabs',speed:'Speed',half:'Half',normal:'Normal',double:'Double',unlimited:'Unlimited',
+  autosave:'Save automatically on this device',interval:'Save interval',seconds:'{{count}} seconds',storagePrivacy:'ROMs are never stored or uploaded. Keep exported backups of important work.',
+  apply:'Apply',cancel:'Cancel',close:'Close',ok:'OK',delete:'Delete',switch:'Switch',startNew:'Start new',error:'Unable to complete the operation',
+  replaceMemory:'Replace the current calculator memory?',clearMemory:'Clear current memory? Exported session files will not be deleted.',
+  restoreLocal:'Restore local save?',localSaveTime:'Saved {{time}}',localKept:'Local save kept',autoSaved:'Saved on this device',autoStopped:'Automatic save stopped',foreignSave:'Another tab changed the local save',
+  exported:'Session exported',restored:'Restored · press Resume',savesDeleted:'Local saves deleted',deleteSaves:'Delete local saves',deleteSavesConfirm:'Delete Orchard saves on this device? Exported files will be kept.',
+  romError:'This ROM could not be opened. Choose the supported complete HP39g+ or HP48gII NOR, not an update or ZIP.',sessionError:'This saved session could not be restored.',saveError:'The file could not be exported.',
+  storageError:'Device storage is unavailable, full, or was changed by another tab. Your previous complete save has been kept where possible.',
+  workerFailure:'The calculator could not start. Reload the page and try again.',operationFailed:'The operation failed.',compatibilityError:'A compatibility issue stopped the calculator. Restart or restore an earlier session.',usbError:'The USB operation did not complete.',
+  skinError:'The skin could not load. Traditional mode is available.',captureError:'There is no valid screen to capture yet.',details:'Technical details',
+  boot1:'At “Memory Clear”, press the top-right key (OK).',boot4:'At “Try To Recover Memory?”, press the top-right key (NO), then again at “Memory Clear” (OK).',
+  helpText:'Open your complete ROM, then use the calculator keys. Save exports a session; Restore continues it using the same ROM.',
+  keyboardHint:'Select a PC key below, then choose its calculator-key sequence. Changes apply only when you press Apply.',
+  pcKey:'PC key',sequence:'Calculator sequence',addStep:'Add key',removeStep:'Remove key',unassign:'Unassign',defaultKey:'Reset this binding',captureKey:'Or press a key here',
+  keyStateHint:'Sequences use the calculator’s current Alpha/Shift mode; they do not force a character.',unassigned:'Unassigned',
+  serial:'Serial',usb:'USB',connect:'Connect',disconnect:'Disconnect',connected:'Connected',disconnected:'Disconnected',connecting:'Connecting…',
+  target:'Connection',format:'Format',text:'Text',hex:'Hexadecimal',data:'Data',send:'Send',receive:'Receive',clear:'Clear log',
+  linkNotice:'Virtual bytes and USB packets only. HP file transfer and a system-level calculator device are not yet verified.',invalidBytes:'Enter valid hex byte pairs. Serial accepts at most 1024 bytes; USB accepts one packet of at most 64 bytes.',
+  copyright:'Unofficial. HP marks belong to their owners.',artwork:'Artwork',developer:'Developer',screen1:'Original size',screen4:'4× pixels',
+};
+export const zh={
+  open:'打开 ROM',pause:'暂停',resume:'继续',restart:'重新启动',save:'保存',restore:'恢复',capture:'屏幕抓取',settings:'设置',connections:'连接',help:'帮助',
+  model:'计算器',noROM:'打开 ROM 开始使用',loading:'正在打开…',running:'运行中',paused:'已暂停',stopped:'已停止',ready:'就绪',
+  general:'常规',keyboard:'键盘',storage:'存储',language:'语言',view:'外观',immersive:'沉浸式',traditional:'传统',size:'尺寸',
+  pauseBlur:'失去焦点时暂停',pauseHidden:'切换到后台标签页时暂停',speed:'速度',half:'半速',normal:'正常',double:'两倍速',unlimited:'不限速',
+  autosave:'自动保存到本机',interval:'保存间隔',seconds:'{{count}} 秒',storagePrivacy:'ROM 不会保存或上传。重要内容请另外导出备份。',
+  apply:'应用',cancel:'取消',close:'关闭',ok:'确定',delete:'删除',switch:'切换',startNew:'重新开始',error:'未能完成操作',
+  replaceMemory:'替换当前计算器的内存？',clearMemory:'清空当前内存并重新启动？已导出的存档文件不会删除。',
+  restoreLocal:'恢复本机存档？',localSaveTime:'保存于 {{time}}',localKept:'已保留本机存档',autoSaved:'已保存到本机',autoStopped:'自动保存已停止',foreignSave:'其他标签页修改了本机存档',
+  exported:'存档已导出',restored:'已恢复，点击「继续」运行',savesDeleted:'已删除本机存档',deleteSaves:'删除本机存档',deleteSavesConfirm:'删除本机的 Orchard 自动存档？已导出的文件会保留。',
+  romError:'无法打开此 ROM。请选择支持的 HP39g+ 或 HP48gII 完整 NOR 镜像，而非升级包或 ZIP。',sessionError:'无法恢复此存档。',saveError:'无法导出文件。',
+  storageError:'本机存储不可用、已满，或存档被其他标签页修改。系统会尽可能保留此前的完整存档。',
+  workerFailure:'计算器未能启动，请刷新页面重试。',operationFailed:'操作未能完成。',compatibilityError:'兼容性问题导致计算器停止，请重新启动或恢复此前的存档。',usbError:'USB 操作未完成。',
+  skinError:'皮肤加载失败，可切换到传统模式。',captureError:'目前还没有可以抓取的屏幕。',details:'技术详情',
+  boot1:'出现「Memory Clear」时，按右上角软键（OK）。',boot4:'出现「Try To Recover Memory?」时，按右上角软键（NO）；出现「Memory Clear」后再按一次（OK）。',
+  helpText:'打开完整 ROM 后即可通过计算器按键操作。「保存」导出存档；下次打开相同 ROM 后可「恢复」继续使用。',
+  keyboardHint:'点击下方 PC 键盘中的按键，再选择对应的计算器按键序列。点击「应用」后才会生效。',
+  pcKey:'PC 按键',sequence:'计算器按键序列',addStep:'添加按键',removeStep:'移除按键',unassign:'取消映射',defaultKey:'恢复此键默认映射',captureKey:'也可在此按下按键',
+  keyStateHint:'序列遵循计算器当前的 Alpha／Shift 状态，不会强制写入字符。',unassigned:'未分配',
+  serial:'串口',usb:'USB',connect:'连接',disconnect:'断开',connected:'已连接',disconnected:'未连接',connecting:'正在连接…',
+  target:'连接类型',format:'格式',text:'文本',hex:'十六进制',data:'数据',send:'发送',receive:'接收',clear:'清空日志',
+  linkNotice:'目前提供虚拟字节流和 USB 数据包操作；HP 文件传输及系统级虚拟计算器尚未完成验证。',invalidBytes:'请输入有效的十六进制字节对。串口最多 1024 字节，USB 每包最多 64 字节。',
+  copyright:'非官方项目。HP 商标归其权利人所有。',artwork:'皮肤',developer:'开发版',screen1:'原始尺寸',screen4:'4 倍像素',
+};
+export function initialLanguage(storage,locale='en'){try{const l=storage?.getItem(LANG_KEY);if(l==='en'||l==='zh')return l;}catch{}return locale.toLowerCase().startsWith('zh')?'zh':'en';}
+i18n.use(initReactI18next).init({resources:{en:{translation:en},zh:{translation:zh}},lng:'en',fallbackLng:'en',interpolation:{escapeValue:false},react:{useSuspense:false}});
+export default i18n;

@@ -50,8 +50,7 @@ let policy={pauseOnBlur:false,pauseOnHidden:false};const unbind=bindLifecycle(pa
 page.dispatchEvent(new Event('blur'));document.dispatchEvent(new Event('visibilitychange'));assert.equal(pause,0);assert.equal(release,2);assert.equal(save,2);
 policy={pauseOnBlur:true,pauseOnHidden:false};page.dispatchEvent(new Event('blur'));assert.equal(pause,1);
 page.dispatchEvent(new Event('pagehide'));assert.equal(pause,2);unbind();page.dispatchEvent(new Event('blur'));assert.equal(pause,2);
-const html=await readFile(new URL('../dist/index.html',import.meta.url),'utf8'),js=await readFile(new URL('../dist/calculator.js',import.meta.url),'utf8');
+const html=await readFile(new URL('../web/App.jsx',import.meta.url),'utf8'),js=await readFile(new URL('../web/controller.js',import.meta.url),'utf8');
 assert(!/\b(?:alert|confirm|prompt)\s*\(/.test(js));assert(!html.includes('Text keypad'));assert(!html.includes('Getting started'));
-for(const id of ['settings-dialog','connection-dialog','message-dialog','view-mode','pause-blur','autosave','binding-steps','zoom'])assert(html.includes('id="'+id+'"'),id);
-assert.match(html,/role="tooltip"/);
+for(const component of ['<Modal','<Tabs','<Switch','<Slider','<Keyboard','<Tooltip'])assert(html.includes(component),component);
 console.log('Preferences: model-specific macro bindings, atomic queue, .ord names, settings/local save validation, quota/conflict preservation, configurable lifecycle and fixed-rate pacing pass.');

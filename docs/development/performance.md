@@ -299,3 +299,20 @@ HP39 trial lost multiply and other candidate timings failed phase variation.
 The retained per-model timings reproduce the two reference calculations at
 eight start phases each. Clock-domain calibration, a broader key survey and
 decoded-block/JIT work remain distinct open tasks.
+
+
+## LCD investigation in the React continuation
+
+`tools/profile-display.mjs` measures the real frame/annunciator accessors and
+copy cost without browser paint. HP39/48 median measurements are approximately
+0.049/0.047 ms per frame. This is small compared with available wall CPU time
+and does not implicate LCD decoding as the main bottleneck. Actual canvas,
+compositor and main-thread work require browser-origin measurement.
+
+The new frontend separates frame notifications from React control state,
+coalesces paints and skips unchanged pixels. RGBA palette lookup uses packed
+typed-array copies, not one temporary subarray per pixel. No guest clocks or
+registers are skipped. A narrow-transfer checkpoint and a larger translation
+memo were tried but gave no reliable overall gain, so both were removed.
+No new CPU throughput increase is claimed for this release. Normal still
+uses the prior functional reference, not calibrated physical PLL/PCLK domains.
