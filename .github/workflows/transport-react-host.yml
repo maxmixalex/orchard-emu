@@ -1,0 +1,92 @@
+name: Transport verified React and host source
+on:
+  push:
+    branches: [transport/react-host-20261009]
+    paths: [.github/workflows/transport-react-host.yml]
+permissions:
+  contents: write
+jobs:
+  transport:
+    runs-on: home-docker
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+      - name: Reconstruct exact locally tested source
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DELTA="$RUNNER_TEMP/orchard-react-host.xz"
+          python3 - <<'PY'
+          import hashlib, os
+          from pathlib import Path
+          root = Path('_source-transport')
+          assert len(list(root.iterdir())) == 9
+          parts = [(root / f'part-{i}').read_bytes() for i in range(8)]
+          # Repair a truncated transport tail, then verify the intended blob.
+          parts[5] = parts[5][:6063] + (root / 'part-5-tail').read_bytes()
+          assert len(parts[5]) == 6144
+          assert hashlib.sha1(b'blob 6144\0' + parts[5]).hexdigest() == 'b1dcfa74a8c121be35f34c9565755008dd4eb7a2'
+          data = b''.join(parts)
+          assert len(data) == 48628
+          assert hashlib.sha256(data).hexdigest() == '7d544defeeeebd22fcea5ddcd5f23746c6b0ddc4b6cb6496c0c40964c35450e3'
+          Path(os.environ['DELTA']).write_bytes(data)
+          PY
+          git checkout --detach 2889f904115a316da501d25ffaa7301454a4a722
+          python3 - <<'PY'
+          import hashlib, json, lzma, os, subprocess
+          from pathlib import Path, PurePosixPath
+          data = Path(os.environ['DELTA']).read_bytes()
+          assert hashlib.sha256(data).hexdigest() == '7d544defeeeebd22fcea5ddcd5f23746c6b0ddc4b6cb6496c0c40964c35450e3'
+          decoder = lzma.LZMADecompressor(memlimit=128 * 1024 * 1024)
+          raw = decoder.decompress(data, max_length=1000001)
+          assert decoder.eof and not decoder.unused_data and len(raw) <= 1000000
+          manifest = json.loads(raw)
+          assert manifest['schema'] == 1
+          assert manifest['base'] == '2889f904115a316da501d25ffaa7301454a4a722'
+          assert manifest['base_tree'] == 'a448c0c3c0a2b9b27c534e139120b6779da5db78'
+          assert manifest['tree'] == 'a654342f11dda9acc4047146dbd944e92164a80c'
+          assert subprocess.check_output(['git', 'write-tree'], text=True).strip() == manifest['base_tree']
+          assert len(manifest['changes']) == 50
+          seen = set()
+          for item in manifest['changes']:
+              name = item['path']; rel = PurePosixPath(name)
+              assert not rel.is_absolute() and '..' not in rel.parts and '.git' not in rel.parts and name not in seen
+              assert not name.startswith('.github/') or name == '.github/workflows/build.yml'
+              seen.add(name)
+              path = Path(name)
+              assert not path.is_symlink() and not any(p.is_symlink() for p in path.parents)
+              old = path.read_bytes() if path.exists() else None
+              assert (hashlib.sha256(old).hexdigest() if old is not None else None) == item['old'], name
+              if item['new'] is None:
+                  assert old is not None
+                  path.unlink()
+                  continue
+              lines = (old or b'').decode('utf-8').splitlines(keepends=True)
+              end = len(lines)
+              for start, stop, value in reversed(item['edits']):
+                  assert 0 <= start <= stop <= end and isinstance(value, str)
+                  lines[start:stop] = value.splitlines(keepends=True)
+                  end = start
+              result = ''.join(lines).encode('utf-8')
+              assert hashlib.sha256(result).hexdigest() == item['new'], name
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(result)
+          subprocess.run(['git', 'add', '-A', '--', *sorted(seen)], check=True)
+          assert subprocess.check_output(['git', 'write-tree'], text=True).strip() == manifest['tree']
+          print('50 source changes and complete locally tested tree verified')
+          PY
+          # Apply workflow changes separately through the authorized connector.
+          git restore --source=2889f904115a316da501d25ffaa7301454a4a722 --staged --worktree .github/workflows/build.yml
+          test "$(git write-tree)" = 031ec66757b2d00933da51331fa24a06e2762d20
+          git diff --cached --check
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit \
+            -m 'feat: ship bilingual React calculator and loopback host prototype' \
+            -m 'Replace the vanilla user frontend with React/Mantine and bundled English/Chinese resources. Retain separate Worker/frame ownership, sessions, local autosave, physical-key macros and virtual links. Add PC keyboard editing, modifier legends and PNG LCD capture.' \
+            -m 'Add independent Node USB/IP and raw TCP UART services using production guest endpoints, with bounded queues and loopback ownership. Synthetic ARM guests pass fragmented TCP/control/bulk/UNLINK and UART tests. Kernel attachment, HP drivers, Conn3x and stock file transfer remain unverified.' \
+            -m 'Locally validated before publication: 443311 assertions per native/test-WASM host, 11 Release/reference/sanitizer suites, 34 analyzer units, 17075 Unicorn cases and both original-system arithmetic/checkpoint witnesses. React/Mantine offline component tests use an explicit fake Worker; browser-origin E2E remains policy-blocked. LCD decode measured about 0.05 ms/frame, excluding browser rendering. Inconclusive CPU optimizations were reverted; production C and functional clock semantics are unchanged. No ROM, private session, font or reference-emulator code included.'
+          git push origin HEAD:refs/heads/integration/react-host-20261009
+          git rev-parse HEAD HEAD^{tree}
+# Data-only source publication. No firmware acquisition or emulator execution.
+# The clean integration history excludes this isolated transport branch.
