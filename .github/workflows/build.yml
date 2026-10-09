@@ -42,6 +42,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install locked frontend build dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Build native core and CLI
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release
@@ -90,6 +92,12 @@ jobs:
           npm run test:skins
           npm run test:calculator
           npm run test:pages
+      - name: Test and package loopback host
+        run: |
+          npm run test:host
+          npm run build:host
+          ORCHARD_HOST_ROOT=build/host-package npm run test:host
+          node build/host-package/host/run.mjs --help
       - name: Independent CPU differential (developer-only dependency)
         run: |
           npm run build:oracle
@@ -114,4 +122,10 @@ jobs:
         with:
           name: orchard-pages
           path: site/
+          if-no-files-found: error
+      - name: Upload standalone host prototype
+        uses: actions/upload-artifact@v4
+        with:
+          name: orchard-host
+          path: build/host-package/
           if-no-files-found: error
