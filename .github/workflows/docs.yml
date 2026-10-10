@@ -19,7 +19,7 @@ concurrency:
 jobs:
   prepare:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
-    runs-on: home-docker
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
       ready: ${{ steps.source.outputs.ready }}
@@ -78,7 +78,7 @@ jobs:
   deploy:
     needs: prepare
     if: needs.prepare.outputs.ready == 'true'
-    runs-on: home-docker
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
