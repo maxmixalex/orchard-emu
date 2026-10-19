@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "internal.h"
+#include "orchard/clock.h"
 
 #define EXPORT(name) __attribute__((export_name(name)))
 static orchard_machine machine;
@@ -30,6 +31,15 @@ EXPORT("load") unsigned web_load(unsigned length) {
 }
 EXPORT("run") unsigned web_run(unsigned budget) {
     return orchard_run(&machine, budget).status;
+}
+EXPORT("run_divided") unsigned web_run_divided(unsigned budget) {
+    return orchard_run_divided(&machine, budget).status;
+}
+EXPORT("clock_divisor") unsigned web_clock_divisor(void) {
+    return orchard_clock_divisor(&machine);
+}
+EXPORT("clock_snapshot") uintptr_t web_clock_snapshot(void) {
+    return machine.profile ? (uintptr_t)machine.soc.clock : 0;
 }
 EXPORT("reset") void web_reset(void) { if (machine.profile) orchard_reset(&machine); }
 EXPORT("snapshot") uintptr_t web_snapshot(void) {

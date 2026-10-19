@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "internal.h"
+#include "orchard/clock.h"
 
 /* Profile facts and confidence are recorded in docs/development/models.md. */
 static const orchard_profile profiles[] = {
@@ -86,7 +87,12 @@ void o_stop(orchard_machine *m, orchard_status status, uint32_t address, uint32_
     m->stop.address = address;
     m->stop.detail = detail;
 }
-static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled) {
+unsigned orchard_clock_divisor(const orchard_machine *m) {
+    if (!m || !m->profile) return 0;
+    uint32_t div = m->soc.clock[5];
+    return (1u + ((div >> 1) & 1u)) * (1u + (div & 1u));
+}
+static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, bool divided) {
     if (!m) return (orchard_stop){.status = ORCHARD_BAD_ARGUMENT};
     if (!m->loaded) return (orchard_stop){.status = ORCHARD_NO_ROM};
     for (uint32_t i = 0; i < budget && m->stop.status == ORCHARD_OK; ++i) {
@@ -101,6 +107,7 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled) {
             i += n - 1u;
             continue;
         }
+        unsigned slots = divided ? orchard_clock_divisor(m) : 1u;
         ++m->ticks;
         if (scheduled && m->quiet_left) {
             --m->quiet_left;
@@ -112,26 +119,37 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled) {
             o_irq_update(&m->soc);
             if (scheduled) o_schedule_plan(m);
         }
-        uint32_t pending = m->soc.srcpnd & ~m->soc.intmsk;
-        if (pending) m->cpu.sleeping = false;
-        if ((pending & m->soc.intmod) && !(m->cpu.cpsr & O_F))
-            o_exception(&m->cpu, O_FIQ, 0x1c, m->cpu.r[15] + 4u);
-        else if (m->soc.intpnd && !(m->cpu.cpsr & O_I))
-            o_exception(&m->cpu, O_IRQ, 0x18, m->cpu.r[15] + 4u);
-        else if (!m->cpu.sleeping) o_cpu_step(m);
+        /* Divider changes made by an instruction apply to the next quantum.
+           No slot advances RTC/PWM/LCD or skips the instruction interpreter. */
+        for (unsigned slot = 0; slot < slots && m->stop.status == ORCHARD_OK; ++slot) {
+            uint32_t pending = m->soc.srcpnd & ~m->soc.intmsk;
+            if (pending) m->cpu.sleeping = false;
+            if ((pending & m->soc.intmod) && !(m->cpu.cpsr & O_F))
+                o_exception(&m->cpu, O_FIQ, 0x1c, m->cpu.r[15] + 4u);
+            else if (m->soc.intpnd && !(m->cpu.cpsr & O_I))
+                o_exception(&m->cpu, O_IRQ, 0x18, m->cpu.r[15] + 4u);
+            else if (!m->cpu.sleeping) o_cpu_step(m);
+        }
     }
     o_schedule_sync(m);
     return m->stop;
 }
 orchard_stop orchard_run(orchard_machine *m, uint32_t budget) {
 #ifdef ORCHARD_REFERENCE
-    return run(m, budget, false);
+    return run(m, budget, false, false);
 #else
-    return run(m, budget, true);
+    return run(m, budget, true, false);
+#endif
+}
+orchard_stop orchard_run_divided(orchard_machine *m, uint32_t budget) {
+#ifdef ORCHARD_REFERENCE
+    return run(m, budget, false, true);
+#else
+    return run(m, budget, true, true);
 #endif
 }
 orchard_stop o_run_reference(orchard_machine *m, uint32_t budget) {
-    return run(m, budget, false);
+    return run(m, budget, false, false);
 }
 void orchard_get_state(const orchard_machine *m, orchard_state *state) {
     if (!m || !state) return;
