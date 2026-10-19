@@ -104,6 +104,11 @@ bool o_translate_reference(orchard_machine *m, uint32_t address, bool write, boo
                            bool user, uint32_t *physical) {
     return translate_walk(m, address, write, fetch, user, physical, NULL);
 }
+/* Specialize the small memo-hit path for instruction fetch/read/write under
+ * WASM LTO. Native separate compilation and the reference walker stay intact. */
+#if defined(__wasm__) && !defined(ORCHARD_REFERENCE) && (defined(__GNUC__) || defined(__clang__))
+__attribute__((always_inline))
+#endif
 bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
                  bool user, uint32_t *physical) {
 #ifdef ORCHARD_REFERENCE
