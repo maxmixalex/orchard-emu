@@ -19,10 +19,11 @@
     "test:pages": "python3 tests/pages.py",
     "test:calculator": "node tests/calculator.mjs && node tests/session.mjs && node tests/preferences.mjs && node tests/connections.mjs && node tests/pacing-rtc.mjs && npm run test:frontend",
     "build:frontend": "node tools/build-frontend.mjs",
-    "test:frontend": "node tests/frontend.mjs && node tests/controller.mjs",
+    "test:frontend": "node tests/frontend.mjs && node tests/controller.mjs && npm run test:continuation",
     "build:host": "node tools/build-host.mjs",
     "test:host": "node tests/host.mjs",
-    "test:components": "python3 tests/browser-components.py"
+    "test:components": "python3 tests/browser-components.py",
+    "test:continuation": "node tests/timing.mjs && node tests/keyboard-geometry.mjs && node tests/recording.mjs && node tests/attach.mjs"
   },
   "dependencies": {
     "@mantine/core": "9.6.3",

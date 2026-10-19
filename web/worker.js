@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 import { Pacer } from './pacing.js';
+import { TaskScheduler } from './task-scheduler.js';
 import { VirtualUSB } from './virtual-usb.js';
 import { encodeSession, decodeSession } from './session.js';
 import { setupHash, isPlayable, applySetup, TapQueue } from './hp48.js';
 let audience = 'debug';
 let romHash='', operation=0, busy=false, autoSaving=false, serial=false, usb;
-const pacer=new Pacer();
+const pacer=new Pacer(), scheduler=new TaskScheduler();
 let core, model = 4, generation = 0, preset = 'strict', running = false, loaded = false;
 let timer = null, lastFrame = 0, tick = 0, events = [], eventOverflow = false, frameView = 0;
 const errors = ['ready','bad argument','full-NOR size mismatch','not a full ARM NOR image',
@@ -23,8 +24,14 @@ const taps = new TapQueue((scan, down, at) => {
   else eventOverflow = true;
 });
 function state() { return new Uint32Array(core.memory.buffer, core.snapshot(), 33).slice(); }
-function syncTick(s = state()) { tick = s[22] + s[23] * 4294967296; }
-function pause() { running = false; clearTimeout(timer); timer = null; taps.clear(tick); }
+function syncTick(s = state()) {
+  const next = s[22] + s[23] * 4294967296;
+  // Restoring an earlier checkpoint starts a new input-clock epoch.
+  if (next < tick) taps.clear(next);
+  tick = next;
+}
+function resetClock() { tick=0;taps.clear(0);pacer.reset(performance.now()); }
+function pause() { running = false; scheduler.cancel(timer); timer = null; taps.clear(tick); }
 function sendUart() {
   const n = core.uart_receive();
   if (n && (audience === 'debug' || serial)) postMessage({ type:'uart-output',generation,bytes:new Uint8Array(core.memory.buffer,core.uart_output(),n).slice() });
@@ -45,7 +52,7 @@ function snapshot() {
     aliasWrites:core.sram_alias_writes().toString(),lcdReads:core.lcd_probe68_reads().toString()});
   lastFrame = performance.now();
 }
-function schedule() { if (running && timer === null) timer = setTimeout(pump, audience==='calculator'?pacer.delay():0); }
+function schedule() { if (running && timer === null) timer = scheduler.schedule(pump, audience==='calculator'?pacer.delay():0); }
 function pump() {
   timer=null;
   if (!running) return;
@@ -70,7 +77,7 @@ function pump() {
   } catch (error) { fail(error); }
 }
 function fail(error) {
-  busy=false;autoSaving=false;running=false;clearTimeout(timer);timer=null;
+  busy=false;autoSaving=false;running=false;scheduler.cancel(timer);timer=null;
   try { taps.clear(tick); } catch { /* Original error takes precedence. */ }
   postMessage({type:'error',generation,message:error instanceof Error?error.message:String(error)});
   if (core && core.snapshot()) snapshot();
@@ -83,7 +90,7 @@ self.onmessage=({data})=>{
       if (!Number.isSafeInteger(data.generation) || !Number.isInteger(data.model) || !core.profile(data.model,0)) throw new Error('Invalid machine');
       if (data.audience !== undefined && !['debug','calculator'].includes(data.audience)) throw new Error('Invalid audience');
       generation=data.generation;model=data.model;preset=data.preset;audience=data.audience||'debug';
-      loaded=false;tick=0;events=[];eventOverflow=false;frameView=0;autoSaving=false;serial=false;
+      loaded=false;resetClock();events=[];eventOverflow=false;frameView=0;autoSaving=false;serial=false;
       pacer.setSpeed(audience==='calculator'?1:0,performance.now());
       // The HP39 debounce path needs a longer dwell: a shorter trial lost
       // multiply. Debug keeps its historical 2M/2M deterministic schedule.
@@ -106,7 +113,7 @@ self.onmessage=({data})=>{
         if(setupHash(preset) && digest!==setupHash(preset)) throw new Error('HOME research setup requires the documented model-specific full-NOR hash.');
         new Uint8Array(core.memory.buffer,core.rom_buffer(),bytes.byteLength).set(new Uint8Array(bytes));
         const status=core.load(bytes.byteLength);if(status) throw new Error(errors[status]);
-        tick=0;events=[];eventOverflow=false;applySetup(core,model,preset);loaded=true;romHash=digest;busy=false;
+        resetClock();events=[];eventOverflow=false;applySetup(core,model,preset);loaded=true;romHash=digest;busy=false;
         postMessage({type:'loaded',generation});snapshot();
       }).catch(error=>{if(token===generation&&job===operation)fail(error);});
     } else if(data.type==='checkpoint-auto') {
@@ -151,7 +158,7 @@ self.onmessage=({data})=>{
     } else if(data.type==='pause') {pause();snapshot();}
     else if(data.type==='run' && loaded && !busy) {if(!running && state()[28]===0){pacer.reset(performance.now());running=true;schedule();snapshot();}}
     else if(data.type==='step' && loaded && !busy) {pause();core.run(1);snapshot();}
-    else if(data.type==='reset' && loaded) {++operation;busy=false;autoSaving=false;pause();usb?.resetLocal();serial=false;postMessage({type:'links-reset',generation});core.reset();tick=0;events=[];eventOverflow=false;applySetup(core,model,preset);snapshot();}
+    else if(data.type==='reset' && loaded) {++operation;busy=false;autoSaving=false;pause();usb?.resetLocal();serial=false;postMessage({type:'links-reset',generation});core.reset();resetClock();events=[];eventOverflow=false;applySetup(core,model,preset);snapshot();}
     else if(data.type==='configure') {
       if(data.speed!==undefined)pacer.setSpeed(data.speed,performance.now());
       if(data.hold!==undefined||data.gap!==undefined){

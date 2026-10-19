@@ -5,7 +5,7 @@ export const SETTINGS_KEY = 'orchard:preferences:v1';
 export const AUTO_PREFIX = 'orchard:autosave:v1:';
 export const DEFAULTS = Object.freeze({ version:1, view:'immersive', zoom:100,
   pauseOnBlur:true, pauseOnHidden:true, speed:1, autosave:false, interval:30, mappings:{} });
-const CODE = /^(?:(?:Ctrl|Alt|Meta|Shift)\+)*(?:Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter)|F(?:[1-9]|1[0-2])|Enter|Escape|Backspace|Delete|Space|Period|Comma|Slash|Minus|Equal|Tab|Backquote|CapsLock|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Insert|Home|End|PageUp|PageDown|Arrow(?:Up|Down|Left|Right))$/;
+const CODE = /^(?:(?:Ctrl|Alt|Meta|Shift)\+)*(?:Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter)|F(?:[1-9]|1[0-2])|Enter|Escape|Backspace|Delete|Space|Period|Comma|Slash|Minus|Equal|Tab|Backquote|CapsLock|BracketLeft|BracketRight|Backslash|Semicolon|Quote|PrintScreen|ScrollLock|Pause|NumLock|ContextMenu|Insert|Home|End|PageUp|PageDown|Arrow(?:Up|Down|Left|Right))$/;
 export function validBinding(code, sequence) {
   return typeof code==='string' && code.length<=80 && CODE.test(code) &&
     Array.isArray(sequence) && sequence.length<=8 && sequence.every(s=>Number.isInteger(s)&&KEYS.has(s));

@@ -2,7 +2,9 @@
 import React,{memo,useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {MantineProvider,Button,Group,Modal,Select,Slider,Switch,Tabs,Text,TextInput,Textarea,Tooltip,Menu,Stack} from '@mantine/core';
 import {useMediaQuery} from '@mantine/hooks';
-import Keyboard from 'react-simple-keyboard';
+import {PCKeyboardView} from './pc-keyboard-view.js';
+import {TraditionalKeypad,MODEL_SLUGS} from './traditional-keypad.js';
+import {RecordingControl} from './RecordingControl.jsx';
 import {useTranslation} from 'react-i18next';
 import i18n,{LANG_KEY} from './i18n.js';
 import {CALCULATORS} from './catalog.js';
@@ -10,11 +12,11 @@ import {keyRows} from './hp48.js';
 import {SkinView} from './skin.js';
 import {bindLifecycle} from './lifecycle.js';
 import {bindings,keyCode,validatePreferences} from './preferences.js';
-import {PC_LAYOUT,PC_DISPLAY,bindingCode} from './pc-keyboard.js';
+import {bindingCode} from './pc-keyboard.js';
 import {capturePNG,captureName,frameRGBA} from './capture.js';
 import '@mantine/core/styles.css';
-import 'react-simple-keyboard/build/css/index.css';
 import './react.css';
+import './keyboards.css';
 export function downloadFile(data,name){const url=URL.createObjectURL(data instanceof Blob?data:new Blob([data],{type:'application/octet-stream'}));
  const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function Indicators(){return <svg className="annunciator-strip" viewBox="0 0 393 18" aria-label="LCD status">
@@ -26,7 +28,7 @@ function Indicators(){return <svg className="annunciator-strip" viewBox="0 0 393
  <g data-segment="0" transform="translate(357 9)"><path d="M-10 -4H7M3 -8l5 4-5 4M10 4H-7M-3 0l-5 4 5 4" fill="none" stroke="currentColor"/></g>
  </svg>;}
 const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,enabled}){
- const stage=useRef(null),workspace=useRef(null),host=useRef(null),view=useRef(null),prefsRef=useRef(prefs),[legend,setLegend]=useState({});
+ const stage=useRef(null),workspace=useRef(null),host=useRef(null),view=useRef(null),keypadHost=useRef(null),keypad=useRef(null),prefsRef=useRef(prefs);
  prefsRef.current=prefs;
  useEffect(()=>{
   let disposed=false,raf=0,last=null,painted=null,ink='',active=null;
@@ -52,22 +54,27 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
   }
   const unframe=controller.onFrame(d=>{last=d;if(!raf)raf=requestAnimationFrame(paint);});
   skin.show(model.id).then(async()=>{if(disposed)return;const m=await skin.manifest;if(disposed)return;
-   const slug=model.id===1?'hp39gplus':'hp48gii';setLegend(Object.fromEntries(m.models[slug].keys.map(k=>[k.scan,k])));
+   const spec=m.models[MODEL_SLUGS[model.id]];
+   keypad.current=new TraditionalKeypad(keypadHost.current,spec,scan=>{controller.tap([scan]);host.current.focus({preventScroll:true});});
+   keypad.current.setEnabled(controller.state.loaded&&controller.state.running&&!controller.state.busy&&prefsRef.current.view==='traditional');
    fit();paint();skin.setEnabled(controller.state.loaded&&controller.state.running&&!controller.state.busy&&prefsRef.current.view==='immersive');
   }).catch(e=>{if(!disposed){skin.glass.hidden=false;controller.report('skinError',e.message);}});
   const resize=new ResizeObserver(fit);resize.observe(workspace.current);window.addEventListener('resize',fit);fit();
-  return()=>{disposed=true;++skin.epoch;cancelAnimationFrame(raf);unframe();resize.disconnect();window.removeEventListener('resize',fit);};
+  return()=>{disposed=true;++skin.epoch;keypad.current?.destroy();keypad.current=null;cancelAnimationFrame(raf);unframe();resize.disconnect();window.removeEventListener('resize',fit);};
  },[controller,model.id]);
- useEffect(()=>{view.current?.setEnabled(enabled&&prefs.view==='immersive');window.dispatchEvent(new Event('resize'));},[enabled,prefs.view,prefs.zoom]);
+ useEffect(()=>{view.current?.setEnabled(enabled&&prefs.view==='immersive');keypad.current?.setEnabled(enabled&&prefs.view==='traditional');window.dispatchEvent(new Event('resize'));},[enabled,prefs.view,prefs.zoom]);
  return <main id="workspace" ref={workspace}><section id="calculator" ref={host} tabIndex={0} data-view={prefs.view}>
   <div className="calculator-stage" ref={stage} id="skin-stage"><img className="skin-image" alt={model.name} hidden/><svg className="skin-keys"/>
    <div className="glass-overlay"><Indicators/><canvas id="lcd" width="131" height="64"/></div></div>
-  {prefs.view==='traditional'&&<div className="traditional-keypad">{keyRows(model.id).map((row,i)=><div className="key-row" style={{gridTemplateColumns:`repeat(${row.length},minmax(0,1fr))`}} key={i}>
-   {row.map(([label,scan])=>{const l=legend[scan]||{};return <button className={`traditional-key ${[57,58,59].includes(scan)?'modifier':''}`} key={scan} data-scan={scan} disabled={!enabled} aria-label={[label,l.shift,l.right,l.alpha].filter(Boolean).join(' · ')} aria-pressed="false" onClick={()=>{controller.tap([scan]);host.current.focus({preventScroll:true});}}>
-    <span className="key-legends"><span className="left-legend">{l.shift}</span><span className="right-legend">{l.right}</span></span><span className="key-main">{label}</span><span className="alpha-legend">{l.alpha}</span></button>;})}
-   </div>)}</div>}
+  <div className="traditional-keypad" ref={keypadHost}/>
  </section></main>;
 });
+function KeyboardMap({selected,mods,onChoose}){
+ const host=useRef(null),view=useRef(null),choose=useRef(onChoose);choose.current=onChoose;
+ useEffect(()=>{view.current=new PCKeyboardView(host.current,token=>choose.current(token));return()=>view.current.destroy();},[]);
+ useEffect(()=>{view.current?.update(selected,mods);},[selected,mods]);
+ return <div className="pc-keyboard"><div ref={host}/></div>;
+}
 function MappingEditor({model,draft,onChange}){
  const {t}=useTranslation();const [selected,setSelected]=useState('KeyA'),[mods,setMods]=useState([]);
  const code=bindingCode(selected,mods),map=bindings(draft,model.id),sequence=map[code]||[],names=keyRows(model.id).flat().map(([label,s])=>({value:String(s),label}));
@@ -75,7 +82,7 @@ function MappingEditor({model,draft,onChange}){
  function choose(token){if(token.startsWith('{')){const mod=token.slice(1,-1);setMods(m=>m.includes(mod)?m.filter(x=>x!==mod):[...m,mod]);}else setSelected(token);}
  function capture(e){e.preventDefault();e.stopPropagation();const value=keyCode(e);if(!value)return;const parts=value.split('+');setSelected(parts.pop());setMods(parts);}
  return <Stack gap="sm"><Text size="sm" c="dimmed">{t('keyboardHint')}</Text>
-  <div className="pc-keyboard"><Keyboard layout={PC_LAYOUT} display={PC_DISPLAY} onKeyPress={choose} useButtonTag={true} preventMouseDownDefault={true} buttonTheme={[{class:'pc-selected',buttons:selected},{class:'pc-modifier',buttons:mods.map(m=>`{${m}}`).join(' ')}]}/></div>
+  <KeyboardMap selected={selected} mods={mods} onChoose={choose}/>
   <Group grow><TextInput label={t('pcKey')} value={code} readOnly onKeyDown={capture} description={t('captureKey')}/><Text size="sm">{sequence.map(s=>names.find(n=>n.value===String(s))?.label).join(' → ')||t('unassigned')}</Text></Group>
   <Text size="sm" fw={600}>{t('sequence')}</Text>
   {sequence.map((scan,i)=><Group key={i} wrap="nowrap"><Select aria-label={`${t('sequence')} ${i+1}`} data={names} value={String(scan)} onChange={v=>{if(v){const n=[...sequence];n[i]=Number(v);setSequence(n);}}} style={{flex:1}}/><Button variant="subtle" onClick={()=>setSequence(sequence.filter((_,j)=>j!==i))} aria-label={t('removeStep')}>−</Button></Group>)}
@@ -132,6 +139,7 @@ export function App({controller}){
   <div className="app-toolbar"><Group gap="xs"><Button variant="light" disabled={!state.loaded||state.busy||state.stopped} onClick={()=>controller.toggle()}>{t(state.running?'pause':'resume')}</Button><Button variant="subtle" disabled={!state.loaded||state.busy} onClick={()=>controller.restart()}>{t('restart')}</Button></Group>
    <Group gap="xs"><Button variant="default" disabled={!state.loaded||state.busy} onClick={()=>controller.save()}>{t('save')}</Button><Button variant="default" disabled={!state.loaded||state.busy} onClick={()=>{session.current.value='';session.current.click();}}>{t('restore')}</Button>
    <Menu><Menu.Target><Button variant="default" disabled={!state.loaded}>{t('capture')}</Button></Menu.Target><Menu.Dropdown><Menu.Item onClick={()=>capture(1)}>{t('screen1')}</Menu.Item><Menu.Item onClick={()=>capture(4)}>{t('screen4')}</Menu.Item></Menu.Dropdown></Menu>
+   <RecordingControl controller={controller} state={state} onDownload={downloadFile}/>
    <Button variant="subtle" disabled={!state.loaded||state.busy} onClick={()=>setConnections(true)}>{t('connections')}</Button></Group><Text size="xs" c="dimmed" role="status">{state.note?t(state.note):''}</Text></div>
   <CalculatorDisplay controller={controller} model={state.model} prefs={state.prefs} enabled={enabled}/>
   <footer><span>Orchard · <a href="LICENSE">MIT</a> · <a href="debug.html">{t('developer')}</a></span><span>{t('artwork')} <a href="https://github.com/zyf722/hp-calcs-svg">hp-calcs-svg</a> · <a href="licenses/hp-calcs-svg/NOTICE.txt">Apache-2.0 / NOTICE</a> · {t('copyright')}</span></footer>
