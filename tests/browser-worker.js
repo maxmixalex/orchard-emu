@@ -33,9 +33,9 @@ async function checkWorker(model,audience){
   try{
     await client.wait(d=>d.type==='ready');
     const created=await client.send('create',{model,preset:'strict',audience},d=>d.type==='created');
-    // ARM-only generated fixture: disable watchdog, then loop. No HP bytes.
+    // ARM-only fixture: valid reset branch, disable watchdog, then loop. No HP bytes.
     const rom=new Uint8Array(created.flash),words=new DataView(rom.buffer);
-    [0xe59f0008,0xe3a01000,0xe5801000,0xeafffffe,0x53000000].forEach((v,i)=>words.setUint32(i*4,v,true));
+    [0xea000002,0,0,0,0xe59f0008,0xe3a01000,0xe5801000,0xeafffffe,0x53000000].forEach((v,i)=>words.setUint32(i*4,v,true));
     await client.send('load',{rom:rom.buffer},d=>d.type==='loaded');
     await client.send('run',{},d=>snapshot(d)&&d.running);
     // At least two timed snapshots prove execution crossed timer fallbacks;
