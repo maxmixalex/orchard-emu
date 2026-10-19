@@ -9,6 +9,7 @@ export class TaskScheduler {
     this.jobs = new Map();
     this.nextId = 1;
     this.closed = false;
+    this.immediateTasks = 0;
     channel.port1.onmessage = ({data}) => this.run(data);
     channel.port1.start?.();
   }
@@ -19,8 +20,16 @@ export class TaskScheduler {
     const job = {callback, timer: null};
     this.jobs.set(id, job);
     try {
-      if (delay > 0) job.timer = this.setTimer(() => this.run(id), delay);
-      else this.channel.port2.postMessage(id);
+      // Some runtimes drain one MessagePort until it becomes empty. An
+      // endless self-post chain can starve the UI command port (including
+      // pause). Bound each burst and yield across task sources every 4 jobs.
+      if (delay > 0 || this.immediateTasks >= 4) {
+        this.immediateTasks = 0;
+        job.timer = this.setTimer(() => this.run(id), delay);
+      } else {
+        ++this.immediateTasks;
+        this.channel.port2.postMessage(id);
+      }
     } catch (error) { this.jobs.delete(id); throw error; }
     return id;
   }

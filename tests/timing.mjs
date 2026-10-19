@@ -24,6 +24,16 @@ s.schedule(()=>calls++);channel.port1.onmessage({data:messages.shift()});assert.
 const delayed=s.schedule(()=>calls++,8);assert.equal(timers.size,1);s.cancel(delayed);assert.equal(timers.size,0);
 s.schedule(()=>s.schedule(()=>calls++));channel.port1.onmessage({data:messages.shift()});channel.port1.onmessage({data:messages.shift()});assert.equal(calls,2);
 s.schedule(()=>calls++);s.close();channel.port1.onmessage({data:messages.shift()});assert.equal(calls,2);assert.equal(closed,2);assert.throws(()=>s.schedule(()=>{}));
+// A self-reposting port must periodically relinquish the event loop to commands.
+const fairMessages=[],fairTimers=[];let fairCalls=0;
+const fairChannel={port1:{start(){},close(){}},port2:{postMessage:id=>fairMessages.push(id),close(){}}};
+const fair=new TaskScheduler({channel:fairChannel,setTimer:fn=>{fairTimers.push(fn);return fairTimers.length;},clearTimer(){}});
+const repeat=()=>{if(++fairCalls<12)fair.schedule(repeat);};fair.schedule(repeat);
+while(fairMessages.length)fairChannel.port1.onmessage({data:fairMessages.shift()});
+assert.equal(fairCalls,4);assert.equal(fairTimers.length,1,'Continuous work must give a timer turn to other ports');
+fairTimers.shift()();while(fairMessages.length)fairChannel.port1.onmessage({data:fairMessages.shift()});
+assert.equal(fairCalls,9);assert.equal(fairTimers.length,1);fairTimers.shift()();while(fairMessages.length)fairChannel.port1.onmessage({data:fairMessages.shift()});
+assert.equal(fairCalls,12);fair.close();
 
 // Execute the actual Worker message handlers with a deterministic core double.
 // This tests clock/lifecycle integration, not firmware or hardware correctness.
