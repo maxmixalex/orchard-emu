@@ -1,0 +1,28 @@
+/* SPDX-License-Identifier: MIT */
+.pc-keyboard{overflow-x:auto;padding:8px;background:#e7ece9;border-radius:12px}
+.pc-physical{position:relative;min-width:760px;width:100%;aspect-ratio:23/6.5}
+.pc-physical-key{position:absolute;padding:2px;display:flex;align-items:center;justify-content:center;border:1px solid #c9d1cc;border-bottom:3px solid #aab8af;border-radius:5px;background:#fafcfb;color:#263a30;font:11px system-ui,sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 1px 2px #16291f12}
+.pc-physical-key:hover{background:#fff;border-color:#619b86}
+.pc-physical-key.pc-selected{background:#137b61;color:#fff;border-color:#0c6650}
+.pc-physical-key.pc-modifier{background:#c7e9da;border-color:#7db99e}
+.pc-physical-key:focus-visible{outline:2px solid #137b61;outline-offset:1px}
+#calculator[data-view=traditional]{background:#d8dcd9;border-color:#a9b5ad;padding:18px 22px;border-radius:24px}
+#calculator[data-view=traditional] .traditional-keypad{display:block;width:100%}
+#calculator[data-view=immersive] .traditional-keypad{display:none}
+.traditional-geometry{display:block;width:100%;height:auto;overflow:visible}
+.traditional-geometry .traditional-key{display:inline;min-height:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;transform:none;cursor:pointer;fill:#f7f9f8;color:inherit}
+.traditional-geometry .key-outline{fill:#3d4543;stroke:#202926;stroke-width:1.4}
+.traditional-geometry .key-face{fill:#fafbfa;font-weight:650;paint-order:stroke;stroke:none}
+.traditional-geometry .key-shift{fill:#146490;font-weight:650}
+.traditional-geometry .key-right{fill:#963a63;font-weight:650}
+.traditional-geometry .key-alpha{fill:#d9ebe2;font-weight:600}
+.traditional-geometry .traditional-key:hover[aria-disabled=false] .key-outline{fill:#505c57}
+.traditional-geometry .traditional-key[aria-pressed=true]{transform:none;background:none}
+.traditional-geometry .traditional-key[aria-pressed=true] .key-outline{fill:#206d54;stroke:#0c4a37;stroke-width:2.5}
+.traditional-geometry .traditional-key:focus-visible{outline:none}
+.traditional-geometry .traditional-key:focus-visible .key-outline{stroke:#158565;stroke-width:4}
+.traditional-geometry .traditional-key[aria-disabled=true]{cursor:default;opacity:.7}
+.traditional-geometry text{pointer-events:none;font-family:system-ui,sans-serif;user-select:none}
+.recording-clock{font-variant-numeric:tabular-nums;min-width:3.5em}
+
+.traditional-geometry .key-left-shift .key-face{fill:#8ed5ff}.traditional-geometry .key-right-shift .key-face{fill:#ffaad1}
