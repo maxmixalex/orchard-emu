@@ -2,6 +2,8 @@
 // Scan coordinates are hardware facts; provenance: docs/development/web.md.
 export const HP39_ROM = '95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67';
 export const HP48_ROM = '4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937';
+export const HP49_ROM = '6c7e4b24a372a2083792af99ec3c75c5e3a5da9139404190fe3f99d5c8df9ff3';
+export const HP50_ROM = '1d9dcfc732190c8a4bd89d724570177bf79aa2e63f582820d1ed949a641a9d52';
 export const KEY_ROWS = [
   [['F1',35],['F2',36],['F3',37],['F4',38],['F5',39],['F6',40]],
   [['APPS',41],['MODE',46],['TOOL',47],['↑',42],['←',43],['→',45]],
@@ -23,10 +25,10 @@ const shortcuts = new Map([
 ]);
 export function shortcut(key) { return shortcuts.get(key); }
 export function setupHash(preset) {
-  return preset === 'hp48-home' ? HP48_ROM : preset === 'hp39-home' ? HP39_ROM : null;
+  return preset==='hp39-home'?HP39_ROM:preset==='hp48-home'?HP48_ROM:preset==='hp49-home'?HP49_ROM:preset==='hp50-home'?HP50_ROM:null;
 }
 export function isPlayable(model, preset) {
-  return (model === 4 && preset === 'hp48-home') || (model === 1 && preset === 'hp39-home');
+  return (model===1&&preset==='hp39-home')||(model===4&&preset==='hp48-home')||(model===5&&preset==='hp49-home')||(model===6&&preset==='hp50-home');
 }
 export function keyRows(model) {
   if (model !== 1 && model !== 2 && model !== 3) return KEY_ROWS;
@@ -46,6 +48,11 @@ export function applySetup(core, model, preset) {
     ['gpio_inputs',3,0xcc7f,0], ['gpio_inputs',5,0x8e,0], ['gpio_inputs',6,1,0],
     ['gpio_bias',6,0xf800,0xf800], ['adc_input',0,1,1023], ['adc_input',7,1,512], ['lcd_probe68',1],
   ];
+  if(model===5||model===6){
+    // SD detect is released; I2C SDA/SCL have explicit passive pull-ups.
+    operations.find(op=>op[0]==='gpio_inputs'&&op[1]===5)[3]=8;
+    operations.push(['gpio_bias',4,0xc000,0xc000]);
+  }
   for (const [name,...args] of operations) if (core[name](...args)) throw new Error(`Cannot apply ${name}`);
 }
 // Tap semantics deliberately use virtual time, not how fast the browser click fires.

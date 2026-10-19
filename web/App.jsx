@@ -40,7 +40,7 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
    host.current.style.setProperty('--case-width',`${caseWidth}px`);
    const plain=Math.min(width,500)*p.zoom/100;host.current.style.setProperty('--plain-width',`${plain}px`);
    const rows=keyRows(model.id).length;
-   host.current.style.setProperty('--key-height',`${Math.max(38,Math.min(56,(height-72-(plain-40)*64/131-18-(rows-1)*7)/rows))}px`);
+   host.current.style.setProperty('--key-height',`${Math.max(38,Math.min(56,(height-72-(plain-40)*model.height/131-18-(rows-1)*7)/rows))}px`);
    host.current.style.setProperty('--lcd-width',`${Math.max(131/dpr,Math.floor((plain-40)*dpr/131)*131/dpr)}px`);
   }
   function paint(){raf=0;if(!last||disposed)return;const d=last;
@@ -143,7 +143,7 @@ export function App({controller}){
    <Button variant="subtle" disabled={!state.loaded||state.busy} onClick={()=>setConnections(true)}>{t('connections')}</Button></Group><Text size="xs" c="dimmed" role="status">{state.note?t(state.note):''}</Text></div>
   <CalculatorDisplay controller={controller} model={state.model} prefs={state.prefs} enabled={enabled}/>
   <footer><span>Orchard · <a href="LICENSE">MIT</a> · <a href="debug.html">{t('developer')}</a></span><span>{t('artwork')} <a href="https://github.com/zyf722/hp-calcs-svg">hp-calcs-svg</a> · <a href="licenses/hp-calcs-svg/NOTICE.txt">Apache-2.0 / NOTICE</a> · {t('copyright')}</span></footer>
-  <input ref={rom} id="rom" type="file" accept=".bin,.rom,.raw" hidden onChange={e=>controller.open(e.target.files[0])}/><input ref={session} id="session-file" type="file" accept=".ord,.orchard" hidden onChange={e=>controller.restore(e.target.files[0])}/>
+  <input ref={rom} id="rom" type="file" multiple accept=".bin,.rom,.raw" hidden onChange={e=>controller.open(Array.from(e.target.files))}/><input ref={session} id="session-file" type="file" accept=".ord,.orchard" hidden onChange={e=>controller.restore(e.target.files[0])}/>
   {settings&&<Settings controller={controller} state={state} onClose={()=>setSettings(false)}/>}{connections&&<Connections controller={controller} state={state} onClose={()=>setConnections(false)}/>}
   <Modal opened={Boolean(state.dialog)} onClose={()=>controller.answer(null)} title={state.dialog?t(state.dialog.title):''} zIndex={400} centered closeButtonProps={{'aria-label':t('close')}}>
    {state.dialog&&<><Text>{t(state.dialog.message,state.dialog.values)}</Text>{state.dialog.values.detail&&<details className="error-details"><summary>{t('details')}</summary><pre>{state.dialog.values.detail}</pre></details>}

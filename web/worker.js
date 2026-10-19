@@ -141,7 +141,7 @@ self.onmessage=({data})=>{
         if(token!==generation||job!==operation)return;
         if(saved.model!==model||saved.romHash!==romHash||saved.preset!==preset)
           throw new Error('This session belongs to a different ROM or calculator. Open its original ROM first.');
-        if(saved.state.length!==core.checkpoint_size())throw new Error('This session version is not supported.');
+        if(saved.state.length!==core.checkpoint_size()&&!([5,6].includes(model)&&saved.state.length+4===core.checkpoint_size()))throw new Error('This session version is not supported.');
         new Uint8Array(core.memory.buffer,core.checkpoint_buffer(),saved.state.length).set(saved.state);
         if(core.checkpoint_load(saved.state.length))throw new Error('The session is damaged or incompatible. Your current calculator was not replaced.');
         // Session files created here have no held keys. Also release all inputs

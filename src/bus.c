@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 #include "internal.h"
 
+/* Specialize canonical read widths under WASM LTO; all bus fallbacks remain. */
+#if defined(__wasm__) && !defined(ORCHARD_REFERENCE) && defined(__clang__)
+__attribute__((always_inline))
+#endif
 bool o_phys_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value) {
     if (!value || (width != 1 && width != 2 && width != 4)) return false;
     if (address < m->profile->flash_bytes && width <= m->profile->flash_bytes - address) {

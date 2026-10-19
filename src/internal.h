@@ -97,6 +97,7 @@ typedef struct {
 typedef struct {
     uint32_t srcpnd, intmod, intmsk, intpnd, subsrcpnd, intsubmsk, priority;
     uint32_t memc[13], clock[6], gpio[48], lcd[25];
+    uint32_t sdi_prescaler; /* SDIPRE, implemented for the SD-slot boards. */
     uint32_t lcd_phase, lcd_line;
     uint64_t lcd_frames;
     o_adc adc;

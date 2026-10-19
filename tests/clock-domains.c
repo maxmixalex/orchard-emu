@@ -126,13 +126,14 @@ static void exercise(void) {
         }
     }
 }
+#include "sdi-prescaler-cases.h"
 #ifdef __wasm__
 #define EXPORT(name) __attribute__((export_name(name)))
 #else
 #define EXPORT(name)
 #endif
 EXPORT("regression") unsigned regression(void) {
-    count_checks=failures=first=0; rng=0x1932410u; exercise(); return failures;
+    count_checks=failures=first=0; rng=0x1932410u; exercise(); sdi_cases(); return failures;
 }
 EXPORT("checks") unsigned checks(void) { return count_checks; }
 EXPORT("first_failure") unsigned first_failure(void) { return first; }

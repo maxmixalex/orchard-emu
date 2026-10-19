@@ -22,7 +22,7 @@ export function validatePreferences(value) {
   if(!value.mappings || typeof value.mappings!=='object'||Array.isArray(value.mappings))throw new Error('Invalid keyboard mappings.');
   p.mappings={};
   for(const [model,map] of Object.entries(value.mappings)) {
-    if(!['1','4'].includes(model)||!map||typeof map!=='object'||Array.isArray(map)||Object.keys(map).length>160)throw new Error('Invalid keyboard mappings.');
+    if(!['1','4','5','6'].includes(model)||!map||typeof map!=='object'||Array.isArray(map)||Object.keys(map).length>160)throw new Error('Invalid keyboard mappings.');
     p.mappings[model]={};
     for(const [code,sequence] of Object.entries(map)) {
       if(!validBinding(code,sequence))throw new Error('Invalid key sequence.');
@@ -79,7 +79,7 @@ export function readAuto(storage,hash) {
   if(text.length>850000)throw new Error('Local save too large.');
   const r=JSON.parse(text);
   if(r?.version!==1||r.romHash!==hash||typeof r.token!=='string'||r.token.length>100||
-    !Number.isFinite(r.savedAt)||!Number.isInteger(r.model)||!['1','4'].includes(String(r.model)))throw new Error('Damaged local save.');
+    !Number.isFinite(r.savedAt)||!Number.isInteger(r.model)||!['1','4','5','6'].includes(String(r.model)))throw new Error('Damaged local save.');
   return {...r,file:fromBase64(r.data)};
 }
 export function writeAuto(storage,hash,model,file,expectedToken,token,now=Date.now()) {

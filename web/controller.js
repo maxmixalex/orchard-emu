@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Owns one Worker. React receives only changed controls; pixels use a separate
 // subscription so LCD refresh never rerenders settings or the PC keyboard.
-import { CALCULATORS, identifyROM } from './catalog.js';
+import { CALCULATORS } from './catalog.js';
+import {readFirmware} from './firmware-install.js';
 import { MAX_SESSION_BYTES } from './session.js';
 import { AUTO_PREFIX, readPreferences, writePreferences, validatePreferences,
   readAuto, writeAuto, sessionName } from './preferences.js';
@@ -34,11 +35,10 @@ export class CalculatorController {
     this.pending=rom;this.last=null;this.linksReset();this.patch({model,loaded:false,running:false,stopped:false,busy:Boolean(rom),note:null});
     this.send('create',{model:model.id,preset:model.preset,audience:'calculator'});this.send('configure',{speed:this.state.prefs.speed});
   }
-  async open(file){if(!file||!this.state.ready||this.state.busy)return;
+  async open(file){if(!file||(Array.isArray(file)&&!file.length)||!this.state.ready||this.state.busy)return;
     if(this.state.loaded){this.send('pause');if(!await this.ask('open','replaceMemory','open','cancel'))return;}
     const token=++this.selection;this.patch({busy:true});this.send('pause');
-    try{if(!CALCULATORS.some(c=>c.bytes===file.size))throw Error('Expected a complete 1 MiB or 2 MiB NOR.');
-      const rom=await file.arrayBuffer(),model=await identifyROM(rom);
+    try{const {rom,model}=await readFirmware(file);
       if(this.dead||token!==this.selection)return;this.create(model,rom);
     }catch(e){if(!this.dead&&token===this.selection){this.patch({busy:false});this.report('romError',e.message);}}
   }
@@ -72,7 +72,7 @@ export class CalculatorController {
         if(restore===null){this.awaitingRestore=false;this.autoBlocked=true;this.patch({note:'localKept'});return;}
         if(restore){this.patch({busy:true});this.send('checkpoint-load',{file:saved.file.buffer});return;}}
       this.awaitingRestore=false;if(this.mayRun(this.state.prefs))this.send('run');this.scheduleAuto();
-    }catch(e){if(!this.dead&&token===this.generation){this.autoBlocked=true;this.awaitingRestore=false;this.report('storageError',e.message);}}
+    }catch(e){if(this.dead||token!==this.generation)return;this.autoBlocked=true;this.awaitingRestore=false;this.report('storageError',e.message);}
   }
   scheduleAuto(delay=this.state.prefs.interval*1000){clearTimeout(this.autoTimer);
     if(!this.dead&&this.state.prefs.autosave&&this.state.loaded&&!this.autoBlocked&&!this.awaitingRestore)

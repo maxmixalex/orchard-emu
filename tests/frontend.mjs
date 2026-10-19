@@ -14,3 +14,5 @@ for(const bad of [null,{...f,width:0},{...f,pixels:new Uint8Array(1)},{...f,fram
 assert.equal(captureName(4,new Date(2026,9,9,1,2,3)),'hp48gii-20261009-010203.png');
 const manifest=JSON.parse(await readFile('dist/skins/manifest.json'));const vars=manifest.models.hp39gplus.keys.find(k=>k.scan===28);assert.equal(vars.alpha,'A');assert.equal(vars.shift,'CHARS');const apps=manifest.models.hp48gii.keys.find(k=>k.scan===41);assert.equal(apps.shift,'FILES');assert.equal(apps.right,'BEGIN');
 console.log('Frontend: bilingual key parity/interpolation, physical PC layout, native-size capture pixels/names and artwork-derived Shift/Alpha legends pass.');
+
+await import('./model-support.mjs');

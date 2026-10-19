@@ -9,7 +9,7 @@ import { bindLifecycle } from '../dist/lifecycle.js';
 const defaults=()=>({...DEFAULTS,mappings:{}});
 assert.deepEqual(validatePreferences(defaults()),defaults());
 for(const update of [{version:2},{zoom:NaN},{zoom:181},{zoom:0},{view:'hidden'},{speed:Infinity},{speed:3},{interval:1},{autosave:1},
- {mappings:[]},{mappings:{'6':{KeyA:[58]}}},{mappings:{'1':{KeyA:[55]}}},{mappings:{'1':{KeyA:Array(9).fill(6)}}}])assert.throws(()=>validatePreferences({...defaults(),...update}));
+ {mappings:[]},{mappings:{'7':{KeyA:[58]}}},{mappings:{'1':{KeyA:[55]}}},{mappings:{'1':{KeyA:Array(9).fill(6)}}}])assert.throws(()=>validatePreferences({...defaults(),...update}));
 assert.deepEqual(defaultBindings(1).KeyA,[58,28]);assert.equal(defaultBindings(4).KeyA,undefined);
 assert.deepEqual(bindings({...defaults(),mappings:{'1':{KeyA:[58,28],Enter:[]}}},1).Enter,[]);
 assert.equal(keyCode({code:'KeyA',shiftKey:false}), 'KeyA');assert.equal(keyCode({code:'KeyA',ctrlKey:true,shiftKey:true}),'Ctrl+Shift+KeyA');

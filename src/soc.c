@@ -151,6 +151,7 @@ bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
     if (o_rtc_register(m, address, width, value, false)) return true;
     if (uart_register(m, address, width, value, false)) return true;
     if (width == 4 && !(address & 3u)) {
+        if (address == 0x5a000004u && m->profile->sd_slot) { *value = s->sdi_prescaler; return true; }
         if (o_watchdog_register(s, address, value, false)) return true;
         if (o_gpio_register(m, address, value, false)) return true;
         if (m->stop.status != ORCHARD_OK) return false;
@@ -189,6 +190,7 @@ bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t
     if (uart_register(m, address, width, &value, true)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
     if (width == 4 && !(address & 3u)) {
+        if (address == 0x5a000004u && m->profile->sd_slot) { s->sdi_prescaler = value & 255u; return true; }
         if (o_watchdog_register(s, address, &value, true)) return true;
         if (o_gpio_register(m, address, &value, true)) return true;
         if (m->stop.status != ORCHARD_OK) return false;

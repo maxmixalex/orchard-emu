@@ -70,7 +70,7 @@ EXPORT("regression") unsigned regression(void){
   original[256]=2;put(original+28,crc(original+32,n-32));
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
   original[256]=0;
-  size_t head=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE-31-1032-8;
+  size_t head=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE-31-1032-8-(a.profile->sd_slot?4u:0u);
   CHECK(o_read_le(original+head,4)==1020);
   put(original+head,0xffffffffu);put(original+28,crc(original+32,n-32));
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
