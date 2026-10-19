@@ -25,6 +25,12 @@ static uint32_t table_offset(const orchard_machine *m, uint32_t address) {
         return (uint32_t)offsetof(orchard_machine, boot_sram) + address - O_BOOT_SRAM_BASE;
     return 0; /* MMIO, an SRAM alias, or an unmapped span must use the bus. */
 }
+/* Keep the descriptor walk separate: inlining it into o_translate made every
+ * hit pay a large call boundary in WASM and prevented LTO from specializing
+ * fetch/load/store. This is a host code-layout choice, not a guest TLB change. */
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((noinline))
+#endif
 static bool translate_walk(orchard_machine *m, uint32_t address, bool write, bool fetch,
                            bool user, uint32_t *physical, o_translation *memo) {
     o_cpu *c = &m->cpu;
