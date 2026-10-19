@@ -28,6 +28,9 @@ class Client {
 }
 function check(condition,message){if(!condition)throw Error(message);}
 const snapshot=data=>data.type==='snapshot';
+// Replies can arrive in different task turns from WebCrypto completion. A
+// previous command's trailing snapshot must never acknowledge the next command.
+function after(marker,filter){let seen=false;return data=>{if(data.type===marker)seen=true;return seen&&filter(data);};}
 async function checkWorker(model,audience){
   const client=new Client();
   try{
@@ -54,10 +57,13 @@ async function checkWorker(model,audience){
     const step=await client.send('step',{},snapshot);
     if(audience==='debug')check(step.state[22]===paused.state[22]+1,`${model}: step must advance exactly one tick`);
     else check(!('state' in step),`${model}: CPU data leaked into calculator audience`);
-    const saved=await client.send('checkpoint-save',{},d=>d.type==='checkpoint-saved');
+    const saveSnapshot=client.wait(after('checkpoint-saved',snapshot));
+    const [saved]=await Promise.all([
+      client.send('checkpoint-save',{},d=>d.type==='checkpoint-saved'),saveSnapshot
+    ]);
     const decoded=await decodeSession(saved.file.buffer);
     check(decoded.model===model&&decoded.preset==='strict',`${model}: checkpoint identity changed`);
-    const reset=await client.send('reset',{},snapshot);
+    const reset=await client.send('reset',{},after('links-reset',snapshot));
     check(reset.pending===0&&!reset.running&&!reset.stopped,`${model}: reset did not release/pause`);
     if(audience==='debug')check(reset.state[22]===0,`${model}: reset clock is not zero`);
     await client.send('checkpoint-load',{file:saved.file.buffer},d=>d.type==='checkpoint-restored');
