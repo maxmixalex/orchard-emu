@@ -29,6 +29,7 @@ nav = [
     "development/react-ui.md",
     "development/host-mode.md",
     "development/interaction.md",
+    "development/continuation-20261019.md",
     "development/performance.md",
     "development/sessions.md",
     "development/skins-segments.md",
