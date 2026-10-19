@@ -92,6 +92,22 @@ jobs:
           npm run test:skins
           npm run test:calculator
           npm run test:pages
+      - name: Browser receiver and production Worker regression
+        run: |
+          node tests/timer-receiver.mjs
+          python3 -m venv build/browser-venv
+          build/browser-venv/bin/pip install -r tools/requirements-browser.txt
+          build/browser-venv/bin/python tests/browser-worker.py
+      - name: Preserve browser regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orchard-browser-evidence
+          path: |
+            build/browser-worker.json
+            build/browser-ui.png
+          retention-days: 7
+          if-no-files-found: warn
       - name: Test and package loopback host
         run: |
           npm run test:host

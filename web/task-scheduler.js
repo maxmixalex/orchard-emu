@@ -4,8 +4,11 @@
 export class TaskScheduler {
   constructor({channel = new MessageChannel(), setTimer = setTimeout, clearTimer = clearTimeout} = {}) {
     this.channel = channel;
-    this.setTimer = setTimer;
-    this.clearTimer = clearTimer;
+    // Web IDL timers require the Window/WorkerGlobalScope receiver. Keeping
+    // them as plain object methods makes `this` a TaskScheduler in browsers
+    // (Illegal invocation); Node's timers do not catch this integration bug.
+    this.setTimer = setTimer.bind(globalThis);
+    this.clearTimer = clearTimer.bind(globalThis);
     this.jobs = new Map();
     this.nextId = 1;
     this.closed = false;
