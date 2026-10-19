@@ -385,7 +385,7 @@ static void arm(orchard_machine *m, uint32_t op) {
     } else o_stop(m, ORCHARD_UNSUPPORTED_INSTRUCTION, c->r[15], op);
 }
 /* These classes cannot call the bus, change a register bank, or raise a
- * diagnostic stop. All other instructions keep the complete rollback image.
+ * diagnostic stop. Potentially faulting instructions are handled separately.
  * Classification is deliberately conservative; execution uses the SAME ALU
  * helper as the reference path, not a second implementation of arithmetic. */
 static bool arm_without_checkpoint(orchard_machine *m, uint32_t op) {
@@ -430,6 +430,30 @@ static void cpu_step(orchard_machine *m, bool fast) {
     }
     if (fast && width == 4 && arm_without_checkpoint(m, instruction)) {
         c->r[15] = c->next_pc;
+        ++c->instructions;
+        return;
+    }
+    /* Word/byte single transfers commit GPRs and writeback only after their
+     * last fallible bus operation. Keep just the speculative PC and fault
+     * registers, rather than copying all banks/CP15 state on every LDR/STR.
+     * The preceding path already consumed condition-failed instructions.
+     * Halfword/SWP/LDM/STM/Thumb and bank-changing instructions stay below. */
+    if (fast && width == 4 && (instruction & 0x0c000000u) == 0x04000000u) {
+        uint32_t previous_pc = c->next_pc, previous_far = c->far, previous_fsr = c->dfsr;
+        c->next_pc = pc + 4u;
+        single_transfer(m, instruction, false);
+        if (m->stop.status != ORCHARD_OK) {
+            /* A descriptor read can raise both a bus diagnostic and a fault. */
+            c->next_pc = previous_pc; c->far = previous_far; c->dfsr = previous_fsr;
+            c->data_abort = false;
+            m->stop.instruction = instruction;
+            return;
+        }
+        if (c->data_abort) {
+            c->next_pc = previous_pc;
+            c->data_abort = false;
+            o_exception(c, O_ABT, 0x10, pc + 8u);
+        } else c->r[15] = c->next_pc;
         ++c->instructions;
         return;
     }
