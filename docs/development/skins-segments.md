@@ -65,7 +65,7 @@ read bounds have separate ROM-free native/WASM tests.
 ## Deployment
 
 The existing Pages root and development URLs remain documentation. The web
-application is at **[Open emulator](https://zyf722.github.io/orchard-emu/emulator/)**.
+application is at **[Open emulator](https://maxmixalex.github.io/orchard-emu/emulator/)**.
 The successful `Build` creates both from the same commit; `Pages` only verifies and deploys that artifact. `tools/build-pages.py`
 allows only production asset types, writes the source revision and hashes,
 and places the web bundle under `site/emulator/` without replacing documents.

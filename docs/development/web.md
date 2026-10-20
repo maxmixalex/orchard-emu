@@ -1,7 +1,7 @@
 # Browser calculator
 
-[Open calculator](https://zyf722.github.io/orchard-emu/emulator/) ·
-[Developer workbench](https://zyf722.github.io/orchard-emu/emulator/debug.html)
+[Open calculator](https://maxmixalex.github.io/orchard-emu/emulator/) ·
+[Developer workbench](https://maxmixalex.github.io/orchard-emu/emulator/debug.html)
 
 The user page identifies the two supported complete ROMs automatically. It
 shows Open ROM, Pause/Resume, Restart, Save/Restore, Connections and Settings;

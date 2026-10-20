@@ -21,16 +21,19 @@ function command(executable, args) {
   return result.stdout;
 }
 await mkdir(build, { recursive: true });
-let totalAssertions = 0;
-for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb', 'nor-bus', 'memory', 'segments-nor', 'performance', 'execution', 'scheduler', 'checkpoint']) {
-  const testModule = resolve(build, `${name}.wasm`);
+function compileRegression(name, testModule, extraFlags = []) {
   command(process.env.CLANG || 'clang', [
     '--target=wasm32', '-std=c17', '-O3', '-flto', '-mbulk-memory', '-ffreestanding', '-nostdlib', '-fno-builtin',
-    '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc',
+    '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc', ...extraFlags,
     ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'checkpoint', 'scheduler', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb'].map(s => `src/${s}.c`),
     `tests/${name}.c`, '-o', testModule, '-Wl,--no-entry', '-Wl,--stack-first',
     '-Wl,-z,stack-size=524288', '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216',
   ]);
+}
+let totalAssertions = 0, physicalReadAssertions = 0;
+for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb', 'nor-bus', 'physical-read', 'memory', 'segments-nor', 'performance', 'execution', 'cpu-transactions', 'scheduler', 'checkpoint']) {
+  const testModule = resolve(build, `${name}.wasm`);
+  compileRegression(name, testModule);
   const { instance: { exports: test } } = await WebAssembly.instantiate(await readFile(testModule), {});
   const native = JSON.parse(command(resolve(build, `orchard-${name}${suffix}`), []));
   assert.equal(test.regression(), 0, `WASM regression failed at C line ${test.first_failure()}`);
@@ -38,8 +41,18 @@ for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb', 'nor-bus', 'mem
   assert.equal(native.failures, 0);
   console.log(`${name}: ${native.checks} assertions pass on native and WASM`);
   totalAssertions += native.checks;
+  if (name === 'physical-read') physicalReadAssertions = native.checks;
 }
-console.log(`Combined core regression: ${totalAssertions} assertions on each host`);
+console.log(`Combined default core regression: ${totalAssertions} assertions on each host`);
+
+// Keep the quarantined array-read experiment covered without selecting it in
+// the default application or including a second WASM run in the per-host total.
+const experimentalPhysicalReadModule = resolve(build, 'physical-read-experimental.wasm');
+compileRegression('physical-read', experimentalPhysicalReadModule, ['-DORCHARD_EXPERIMENTAL_PHYSICAL_READS=1']);
+const { instance: { exports: experimentalPhysicalRead } } = await WebAssembly.instantiate(await readFile(experimentalPhysicalReadModule), {});
+assert.equal(experimentalPhysicalRead.regression(), 0, `Experimental physical-read regression failed at C line ${experimentalPhysicalRead.first_failure()}`);
+assert.equal(experimentalPhysicalRead.checks(), physicalReadAssertions, 'The experimental WASM must execute the same physical-read assertions');
+console.log(`Experimental physical-read regression: ${physicalReadAssertions} additional WASM-only assertions pass (excluded from the default per-host total)`);
 
 // Minimal independent guest: reset -> MMIO -> ARM/Thumb/BX PC -> SWI -> WFI.
 // This fixture is generated in a temporary directory and is never packaged.

@@ -103,7 +103,7 @@ full dump. No HP40gs boot region was admitted from these alternatives.
 
 ## Reproducibility and publication
 
-[`tools/rom-inputs.mjs`](https://github.com/zyf722/orchard-emu/blob/main/tools/rom-inputs.mjs)
+[`tools/rom-inputs.mjs`](https://github.com/maxmixalex/orchard-emu/blob/main/tools/rom-inputs.mjs)
 is the shared local identity/format layer used by inspection and probing.
 Reports keep source-file size/hash separate from the constructed backing image.
 Both hosts consume the same temporary byte snapshot, preventing a source-file

@@ -1,8 +1,10 @@
 name: Build
 
-# Trusted main pushes only; fork PR code is not run on the self-hosted runner.
+# Validate pull requests on GitHub-hosted runners before merging to main.
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -39,6 +41,8 @@ jobs:
           "${privilege[@]}" apt-get -o Acquire::Retries=3 update
           "${privilege[@]}" apt-get -o Acquire::Retries=3 install -y --no-install-recommends "${missing[@]}"
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -67,7 +71,7 @@ jobs:
         run: |
           rm -rf build/analysis
           mkdir -p build/analysis
-          for file in src/*.c app/main.c tests/*.c tools/probe-gpio-window.c tools/usb-session.c tools/cpu-oracle.c tools/checkpoint-replay.c; do
+          for file in src/*.c app/main.c tests/*.c tools/probe-gpio-window.c tools/usb-session.c tools/cpu-oracle.c tools/checkpoint-replay.c tools/cpu-throughput.c; do
             report="build/analysis/${file%.c}.plist"
             mkdir -p "$(dirname "$report")"
             clang --analyze -std=c17 -Wall -Wextra -Werror -Iinclude -Isrc "$file" \
@@ -77,7 +81,7 @@ jobs:
           import pathlib, plistlib
           analysis = pathlib.Path("build/analysis")
           reports = list(analysis.rglob("*.plist"))
-          sources = list(pathlib.Path("src").glob("*.c")) + [pathlib.Path("app/main.c"), *pathlib.Path("tests").glob("*.c"), pathlib.Path("tools/probe-gpio-window.c"), pathlib.Path("tools/usb-session.c"), pathlib.Path("tools/cpu-oracle.c"), pathlib.Path("tools/checkpoint-replay.c")]
+          sources = list(pathlib.Path("src").glob("*.c")) + [pathlib.Path("app/main.c"), *pathlib.Path("tests").glob("*.c"), pathlib.Path("tools/probe-gpio-window.c"), pathlib.Path("tools/usb-session.c"), pathlib.Path("tools/cpu-oracle.c"), pathlib.Path("tools/checkpoint-replay.c"), pathlib.Path("tools/cpu-throughput.c")]
           assert {p.relative_to(analysis).as_posix() for p in reports} == {p.with_suffix(".plist").as_posix() for p in sources}, "Missing analyzer output"
           issues = {p.relative_to(analysis).as_posix(): plistlib.loads(p.read_bytes())["diagnostics"] for p in reports}
           assert not any(issues.values()), issues
@@ -88,6 +92,7 @@ jobs:
           npm run test:tools
           npm run build
           npm run test:wasm
+          npm run test:trace
           npm run test:web
           npm run test:skins
           npm run test:calculator
@@ -98,6 +103,8 @@ jobs:
           python3 -m venv build/browser-venv
           build/browser-venv/bin/pip install -r tools/requirements-browser.txt
           build/browser-venv/bin/python tests/browser-worker.py
+          build/browser-venv/bin/python tests/browser-stop-recovery.py
+          build/browser-venv/bin/python tests/browser-stop-recovery.py --diagnostic-trace
       - name: Preserve browser regression evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -106,6 +113,10 @@ jobs:
           path: |
             build/browser-worker.json
             build/browser-ui.png
+            build/browser-stop-recovery.json
+            build/browser-stop-recovery-before.png
+            build/browser-stop-trace-recovery.json
+            build/browser-stop-trace-recovery-before.png
           retention-days: 7
           if-no-files-found: warn
       - name: Test and package loopback host

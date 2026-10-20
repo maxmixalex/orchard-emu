@@ -1,9 +1,9 @@
 [project]
 site_name = "Orchard Development"
 site_description = "ARM hardware emulation for the HP Apples calculator family"
-site_url = "https://zyf722.github.io/orchard-emu/"
-repo_url = "https://github.com/zyf722/orchard-emu"
-repo_name = "zyf722/orchard-emu"
+site_url = "https://maxmixalex.github.io/orchard-emu/"
+repo_url = "https://github.com/maxmixalex/orchard-emu"
+repo_name = "maxmixalex/orchard-emu"
 docs_dir = "docs"
 site_dir = "site"
 nav = [

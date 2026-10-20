@@ -1,8 +1,10 @@
 # Development board
 
-[Issue #1](https://github.com/zyf722/orchard-emu/issues/1) records the exact
-accepted revision, Build/Pages runs and post-publication verification.
-[Roadmap](roadmap.md) defines gates; [validation](validation.md) records local evidence.
+The current [repository](https://github.com/maxmixalex/orchard-emu) and
+[Actions runs](https://github.com/maxmixalex/orchard-emu/actions) identify accepted
+source and publication results. Earlier issue/run links in historical notes
+refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
+[validation](validation.md) and [performance](performance.md) record local evidence.
 
 ## Current implementation
 
@@ -17,13 +19,15 @@ accepted revision, Build/Pages runs and post-publication verification.
 - [x] IR/IrDA assessment with primary sources, not a claimed implementation.
 - [x] Byte-table checkpoint CRC with unchanged format/full validation; independent checks on all six model capacities.
 - [x] Production Pacer + WASM RTC comparison across rates and host partitions.
-- [x] Explicit optimized sanitizer targets; all eleven suites pass locally within the original timeout limits.
+- [x] Explicit optimized sanitizer targets; all fourteen native/reference/sanitizer suites pass locally.
+- [x] Checked WASM physical reads and bounded caught-up Worker pacing, with same-input comparisons.
+- [x] Actual Chrome Window/Worker smoke coverage plus original-ROM file/restore/keyboard/result observation.
 
 ## Next
 
 - [ ] Physical PLL/PCLK/RTC domain calibration and cursor period; Normal uses the existing functional reference only.
 - [ ] Reprofile decoded instruction/block execution without losing precise exceptions or self-modifying code.
-- [ ] Actual browser-origin focus/touch/file/download/storage/zoom E2E and sustained interaction. Current local navigation is policy-blocked.
+- [ ] Broader browser focus/touch/download/storage/zoom E2E and sustained interaction; preserve and classify the observed rare HP48 Unlimited post-result stop.
 - [ ] Broader original-OS keypad/Alpha-state coverage, warm reset, power management and native ARM payload return.
 - [ ] Stock USB/serial file/object protocols, preserving the original HP50g GET_CONFIGURATION counterexample; then infrared link between applicable boards.
 - [ ] Independently establish SRAM/LCD/NOR/pad/analog assumptions. Integrate later HP39gs/HP49g+ dumps when supplied, without repeated acquisition requests.
@@ -47,5 +51,5 @@ and exact downloaded-artifact checks. Do not treat a source push as deployment.
 - [x] Keep per-frame pixels outside React subscriptions; avoid unchanged canvas uploads.
 - [x] Add bounded standalone loopback USB/IP/raw serial and generated-guest TCP tests.
 - [x] Preserve extra single-transfer reference tests, reject unproductive CPU optimization prototypes.
-- [ ] Observe current Build/Pages and downloaded-package results in issue #1.
-- [ ] Real browser-origin E2E, kernel attachment/Conn3x transfer, physical clock calibration and substantive interpreter optimization remain open.
+- [ ] Observe the accepted revision's Build/Pages and downloaded-package results in the current repository.
+- [ ] Broader browser E2E, kernel attachment/Conn3x transfer and physical clock calibration remain open.

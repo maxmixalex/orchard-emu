@@ -63,7 +63,14 @@ function pump() {
     do {
       taps.update(tick);
       const allowance=audience==='calculator'?pacer.available(performance.now(),1024):256;
-      const budget = Math.min(allowance,taps.boundary(tick)-tick);
+      const boundary=taps.boundary(tick)-tick;
+      // Match Pacer.delay's 256-tick waiting threshold. On a fast host, the
+      // bookkeeping above can continually mint a handful of wall-time ticks;
+      // executing those tiny allowances would spin for the whole 6 ms task.
+      // Keep the credit for the next task, while still reaching exact key
+      // transitions even when their remaining distance is below 256 ticks.
+      if(audience==='calculator' && allowance<Math.min(256,boundary))break;
+      const budget = Math.min(allowance,boundary);
       if(!budget)break;
       const status = core.run(budget);
       if (status) syncTick(); else tick += budget;

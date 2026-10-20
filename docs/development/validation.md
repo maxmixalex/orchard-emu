@@ -1,4 +1,88 @@
-# Current frontend and host continuation
+# Validation
+
+## Performance continuation from 83a2d38 (2026-10-20)
+
+The current [performance record](performance.md#physical-reads-and-worker-pacing-2026-10-20-from-83a2d38)
+and [sample summary](performance-2026-10-20.json) separate core throughput,
+Node Worker CPU cost and actual Chrome input latency. The retained default
+changes are a caught-up Worker pacing fix and two boot SRAM pointer corrections.
+The checked WASM physical-read fast path is now an explicit, default-off
+experiment following the stop review; its core-throughput figures are not
+default-release gains. The attempted CPU transaction optimization was withdrawn
+after inconsistent timing, while its regression comparisons remain.
+
+Historical fast-read candidate validation: local Release, reference and
+ASan/UBSan each pass 14 CTest suites. Native and
+test-WASM checks pass 1,118,080 assertions per host plus 9,902 divided-clock
+checks. Unicorn reports 17,075 cases, zero mismatches and zero skips. Static
+analysis reports no diagnostics across 38 native sources or the WASM bus path.
+The production Window/Worker browser gate passes 12 model/audience cases and
+104 physical-key checks without page errors. Source and packaged loopback
+USB/IP/UART tests also pass; OS kernel attachment and Conn3x remain separate.
+
+The two original-NOR HOME/arithmetic witnesses each pass two native and two
+WASM cold runs with identical repeated/native/WASM outputs. Real Chrome file
+selection, exact checkpoint restore and keyboard/result-pixel measurement
+have now run locally on an HTTP origin. The initial 24-trial stock-ROM browser
+sweep nevertheless contains one HP48gII Unlimited stop after a correct `56`;
+the pointer-corrected fast-read candidate's separate 24-trial sweep passes
+all 48 expressions. The
+earlier stop remains unclassified; later passing trials do not explain it.
+It prevents enabling the new physical-read path by default. The narrowed
+release restores baseline physical-read dispatch and keeps the independently
+measured Worker improvement. The detailed performance record
+preserves both sweeps and their exact build identities. Do not describe the
+initial sweep as fully passing or the existing physical clock, SRAM,
+LCD and analog hypotheses as verified hardware.
+
+The maintained failure probe now preserves the original observation before
+using the real Save/download path to recover a stopped machine. A generated
+guest browser test verifies the new Save acknowledgement, exact stopped state,
+and preservation of the observation even if screenshot capture fails. It is
+a diagnostic recovery gate, not a reproduction or resolution of the ROM stop.
+
+Current source and CI live in
+[maxmixalex/orchard-emu](https://github.com/maxmixalex/orchard-emu).
+The historical issue/run links below refer to the earlier repository owner.
+Remote acceptance requires observing the exact revision's Build and Pages
+runs and the deployed revision/assets; local checks alone do not establish it.
+The earlier full candidate is preserved as `aba2923` on
+`codex/perf-wasm-worker-20261020` in
+[PR #1](https://github.com/maxmixalex/orchard-emu/pull/1).
+That stage had no remote Build because automatic triggers accepted only main
+pushes. Commit `f95232a` adds pull-request validation on `ubuntu-24.04`, retaining
+read-only permissions and disabling persisted checkout credentials. Pages
+continues to require a successful exact-current-main push/manual Build;
+pull-request artifacts cannot deploy. The narrowed default release requires
+its own Build acceptance, separate from prior local fast-read results.
+
+The input-timeline continuation uses the same production WASM artifacts and
+unchanged `run()`/hold/gap settings. Eight sampled profiles (two models, two
+expressions, baseline and candidate) match four unsampled baseline runs in
+complete final checkpoint bytes, exact physical-key events, UART and LCD pixels.
+The fixed-phase virtual profiles are also identical between builds. This gate
+attributes guest-time intervals; it is not a browser wall-time benchmark or
+physical-clock calibration. See the [continuation evidence](performance-continuation-2026-10-20.json).
+
+The clock-observation extension passes another eight sampled profiles and four
+unsampled references. Apart from execution timestamp, profiler source identity
+and added clock fields, every field equals the preceding input report. Each
+profile records 20,001 boundaries without changing its guest execution or
+physical input schedule. Pure tool tests cover CLI rejection, copied observations
+and boundary validity without loading a WASM or ROM.
+
+Opt-in browser traces have passed four HP48gII Unlimited same-WASM replays
+(105,412 API calls, 52,240 run calls), including every call result/tick/stop,
+UART/USB payload and final complete checkpoint. Actual key arrival phases vary,
+so these records are diagnostic evidence, not comparable latency samples.
+The original failed browser stop remains unclassified. Generated-guest Chrome
+recovery and Node trace-corruption controls provide separate tool acceptance;
+the evidence record distinguishes their executed source identities from later
+validator hardening. CI runs the Node replay gate after building the WASM and
+uploads only generated browser reports/screenshots, never private traces or
+checkpoint files.
+
+## Historical frontend and host continuation
 
 The interrupted React work was not present in main `2889f90`. This continuation
 recovered hash-checked source fragments, rebuilt the missing frontend and
