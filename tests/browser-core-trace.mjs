@@ -113,26 +113,29 @@ const heldReport = await replayBrowserTrace(heldArtifact);
 assert.equal(heldReport.run_calls, 1); assert.equal(heldReport.key_transition_calls, 1);
 assert(heldReport.every_call_result_equal && heldReport.complete_checkpoint_equal);
 
-// The calculator's clocked policy must retain the same exact-call diagnostics,
+// Idle-aware and ratio-aware policies retain the same exact-call diagnostics,
 // including a stopped call that consumes fewer quanta than requested.
 const clockedRom = rom.slice(), clockedView = new DataView(clockedRom.buffer);
 for(let at=16;at<48;at+=4)clockedView.setUint32(at,0xe1a00000,true);
 clockedView.setUint32(48,0xe7f000f0,true);
-const clocked = await make({},clockedRom), clockedStopTick=Math.ceil(10/clocked.clock_slots());
-assert.equal(clocked.run_clocked(1), 0);
-assert.equal(clocked.run_clocked(16), 9);
-const clockedCapture = captured;
-assert(clockedCapture.complete && clockedCapture.reason === 'core-stop');
-assert.deepEqual(clockedCapture.calls.map(row => [row.name,row.before,row.after]),
-  [['run_clocked',0,1],['run_clocked',1,clockedStopTick]]);
-const clockedReport = await replayBrowserTrace(artifact(clockedCapture,clockedRom));
-assert.equal(clockedReport.run_calls,2);
-assert(clockedReport.complete_checkpoint_equal);
+for (const policy of ['run_idle','run_clocked']) {
+  const core = await make({},clockedRom);
+  const stopTick=Math.ceil(10/(policy==='run_clocked'?core.clock_slots():1));
+  assert.equal(core[policy](1), 0);
+  assert.equal(core[policy](16), 9);
+  const capture = captured;
+  assert(capture.complete && capture.reason === 'core-stop');
+  assert.deepEqual(capture.calls.map(row => [row.name,row.before,row.after]),
+    [[policy,0,1],[policy,1,stopTick]]);
+  const replay = await replayBrowserTrace(artifact(capture,clockedRom));
+  assert.equal(replay.run_calls,2);
+  assert(replay.complete_checkpoint_equal);
+}
 
 console.log(JSON.stringify({passed: true, generated_guest: true, original_rom_reproduced: false,
   call_results_equal: true, complete_checkpoint_equal: true, exact_key_ticks: true,
   immutable_stop_capture: true, held_key_stop_preserved: true, release_changes_checkpoint: true,
   held_key_calls: heldReport.calls, held_key_run_calls: heldReport.run_calls,
-  clocked_stop_replay: true,
+  idle_stop_replay: true, clocked_stop_replay: true,
   isolated_epochs: true, negative_checks: negativeChecks,
   wasm_sha256: hash(wasm), calls: report.calls, run_calls: report.run_calls, stop: report.stop}));

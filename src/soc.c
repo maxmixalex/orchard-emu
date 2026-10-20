@@ -202,7 +202,7 @@ bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t
                functional model enters after the writing instruction completes;
                CPU-wrapper ACK latency is not calibrated. Legacy runners retain
                their original register-only semantics. */
-            if (m->clocked_run_active && address == 0x4c00000cu && (value & 4u))
+            if (m->idle_write_enabled && address == 0x4c00000cu && (value & 4u))
                 m->cpu.sleeping = true;
             return true;
         }

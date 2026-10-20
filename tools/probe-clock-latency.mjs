@@ -9,13 +9,13 @@ import { applySetup, setupHash, TapQueue } from '../web/hp48.js';
 
 const hash = data => createHash('sha256').update(data).digest('hex');
 const args = process.argv.slice(2);
-const usage = 'Usage: node tools/probe-clock-latency.mjs WASM ROM-DIRECTORY NEW-REPORT.json [all|1|4] [run_divided|run_clocked] [continuation|cold]';
+const usage = 'Usage: node tools/probe-clock-latency.mjs WASM ROM-DIRECTORY NEW-REPORT.json [all|1|4] [run_divided|run_clocked|run_idle] [continuation|cold]';
 assert(args.length >= 3 && args.length <= 6 && args.slice(0, 3).every(
   value => typeof value === 'string' && value.trim() && !value.startsWith('--')), usage);
 const [wasmPath, romDirectory, outputPath, selection = 'all', candidatePolicy = 'run_divided',
   bootPolicy = 'continuation'] = args;
 assert(['all', '1', '4'].includes(selection), usage);
-assert(['run_divided', 'run_clocked'].includes(candidatePolicy), usage);
+assert(['run_divided', 'run_clocked', 'run_idle'].includes(candidatePolicy), usage);
 assert(['continuation', 'cold'].includes(bootPolicy), usage);
 const cachedHomePrefix = process.env.ORCHARD_CLOCK_PROBE_HOME_PREFIX;
 assert(cachedHomePrefix === undefined || cachedHomePrefix.trim(), 'HOME cache prefix must not be empty');

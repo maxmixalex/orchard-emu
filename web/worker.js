@@ -53,10 +53,10 @@ function snapshot() {
   lastFrame = performance.now();
 }
 function schedule() { if (running && timer === null) timer = scheduler.schedule(pump, audience==='calculator'?pacer.delay():0); }
-// The calculator follows the guest's CPU/peripheral clock ratio. Keep the
-// research workbench's original one-instruction-slot runner reproducible.
-function clocked() { return audience==='calculator' && isPlayable(model,preset); }
-function runBudget(budget) { return clocked()?core.run_clocked(budget):core.run(budget); }
+// Keep the calculator's one-slot functional clock while honoring guest IDLE
+// requests. The ratio-aware runner remains an explicit research API.
+function idleRunner() { return audience==='calculator' && isPlayable(model,preset); }
+function runBudget(budget) { return idleRunner()?core.run_idle(budget):core.run(budget); }
 function pump() {
   timer=null;
   if (!running) return;
@@ -66,10 +66,9 @@ function pump() {
     // Batch calls in one bounded Worker task instead of a timer per 256 ticks.
     do {
       taps.update(tick);
-      // The clocked runner can issue four CPU slots per peripheral quantum.
-      // Limit it to 256 quanta so every UART drain remains <=1024 CPU slots.
-      const cap=clocked()?256:1024;
-      const allowance=audience==='calculator'?pacer.available(performance.now(),cap):256;
+      // Both selected runners issue at most one CPU slot per quantum, keeping
+      // every UART drain within 1,024 CPU slots.
+      const allowance=audience==='calculator'?pacer.available(performance.now(),1024):256;
       const boundary=taps.boundary(tick)-tick;
       // Match Pacer.delay's 256-tick waiting threshold. On a fast host, the
       // bookkeeping above can continually mint a handful of wall-time ticks;

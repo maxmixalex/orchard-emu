@@ -38,6 +38,9 @@ EXPORT("run_divided") unsigned web_run_divided(unsigned budget) {
 EXPORT("run_clocked") unsigned web_run_clocked(unsigned budget) {
     return orchard_run_clocked(&machine, budget).status;
 }
+EXPORT("run_idle") unsigned web_run_idle(unsigned budget) {
+    return orchard_run_idle(&machine, budget).status;
+}
 EXPORT("clock_slots") unsigned web_clock_slots(void) {
     return orchard_clock_slots(&machine);
 }

@@ -61,11 +61,12 @@ bounded between core calls. Browsers can still throttle background Workers.
 The public Normal rate is a functional reference, **not a measured real-machine
 speed**. Physical clock domains and the absolute cursor period remain open.
 
-The calculator's current `run_clocked()` runner follows the guest CPU/peripheral
-ratio, including ARM920T bus mode, within that functional timebase. The tested
-HP39 HOME state issues four CPU slots per peripheral quantum and HP48 issues
-two; the legacy workbench remains one. This reduces arithmetic and Aplet view
-latency without multiplying RTC time or shortening physical key contacts.
+The calculator's current `run_idle()` runner preserves one CPU slot per
+peripheral quantum and honors guest CLKCON.IDLE requests. The CPU sleeps while
+peripherals continue and wakes on an enabled interrupt source. Physical key
+contacts and RTC pacing retain their existing timings. The separate
+`run_clocked()` research API models CPU/peripheral issue ratios; measured HP39
+browser arithmetic regressed under that policy, so it is not selected by the UI.
 See the [scene comparison](performance.md#calculator-clock-ratios-and-visible-latency-2026-10-20)
 for its evidence and the remaining physical-clock limits.
 

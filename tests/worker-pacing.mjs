@@ -20,7 +20,7 @@ function fixture(hostHz,{speed=1,hold=1500000,gap=900000,audience='calculator',p
     memory,
     snapshot:()=>{new Uint32Array(memory.buffer,128,33)[22]=clock;return 128;},
     profile:(_,field)=>[4,8,1,1][field],
-    run:n=>run('legacy',n),run_clocked:n=>run('clocked',n),
+    run:n=>run('legacy',n),run_clocked:n=>run('clocked',n),run_idle:n=>run('idle',n),
     keyboard_matrix:(col,row,down)=>{presses.push({scan:col*7+row,down,tick:clock});return 0;},
     frame_buffer:()=>512,annunciator_buffer:()=>600,timebase_hz:()=>12000000
   },{get:(o,k)=>k in o?o[k]:()=>0});
@@ -43,7 +43,7 @@ function fixture(hostHz,{speed=1,hold=1500000,gap=900000,audience='calculator',p
       jobs.delete(entry[0]);wall=Math.max(wall,entry[1].at);
       const start=wall,first=budgets.length;entry[1].fn();
       assert(!output.some(x=>x.type==='error'),JSON.stringify(output));
-      assert(budgets.every(n=>Number.isSafeInteger(n)&&n>0&&n<=(audience==='calculator'&&preset==='hp39-home'?256:1024)),'All core calls stay UART-bounded');
+      assert(budgets.every(n=>Number.isSafeInteger(n)&&n>0&&n<=1024),'All core calls stay UART-bounded');
       return {ms:wall-start,calls:budgets.length-first,ticks:clock,clockReads};
     }
   };
@@ -51,23 +51,23 @@ function fixture(hostHz,{speed=1,hold=1500000,gap=900000,audience='calculator',p
 
 for(const speed of [.5,1,2]) {
   const fast=fixture(150000000,{speed}),task=fast.pump();
-  assert(task.calls<160,`Caught-up ${speed}x pacing spent ${task.calls} core calls catching up`);
+  assert(task.calls<40,`Caught-up ${speed}x pacing spent ${task.calls} core calls catching up`);
   assert(task.ms<1,`Caught-up ${speed}x pacing must return before its 6 ms ceiling`);
   assert(fast.budgets.every(n=>n>=256),'Sub-256 work is retained until a useful batch is ready');
-  assert(fast.policies.every(name=>name==='clocked'),'Playable calculators use guest clock ratios');
+  assert(fast.policies.every(name=>name==='idle'),'Playable calculators honor IDLE with one CPU slot per quantum');
   fast.send({type:'pause'});assert.equal(fast.jobs.size,0);
 }
 
 // A slow host already has useful pending work and must retain the full task
 // budget. The new waiting threshold must not create additional idle time.
 const slow=fixture(8000000),slowTask=slow.pump();
-assert(slowTask.calls>=180&&slowTask.ticks>=46000);
+assert(slowTask.calls>=45&&slowTask.ticks>=46000);
 assert(slowTask.ms>=6&&slowTask.ms<6.2);
-assert(slow.budgets.every(n=>n===256));
+assert(slow.budgets.every(n=>n===1024));
 slow.send({type:'pause'});
 
 const unlimited=fixture(150000000,{speed:0}),unlimitedTask=unlimited.pump();
-assert(unlimitedTask.ms>=6);assert(unlimited.budgets.every(n=>n===256));
+assert(unlimitedTask.ms>=6);assert(unlimited.budgets.every(n=>n===1024));
 unlimited.send({type:'pause'});
 
 for(const options of [{audience:'debug'},{preset:'strict'}]){

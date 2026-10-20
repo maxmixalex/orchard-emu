@@ -2,14 +2,15 @@
 
 ## Visible calculator latency after PR #1 (2026-10-20)
 
-The current continuation starts at `0215f19`. The calculator uses the new
-`run_clocked()` policy, which accounts for CP15 FastBus/synchronous/asynchronous
-mode as well as CLKDIVN, including its special 1:4:4 encoding. Existing `run()`
-and `run_divided()` semantics remain available for reproducible research.
-The workbench/native host keep their legacy selection. Do not confuse this
-explicitly validated policy change with enabling the old physical-read experiment.
+The current continuation starts at `0215f19`. The calculator selects
+`run_idle()`: one CPU slot per peripheral quantum with guest CLKCON.IDLE
+requests implemented. `run_clocked()` remains a separate opt-in research API
+for CP15 bus mode and CLKDIVN ratios. It was rejected as the calculator default
+after actual HP39 browser arithmetic regressed. Existing `run()` and
+`run_divided()` semantics remain available, and workbench/native host keep
+their legacy selection. Experimental physical reads remain disabled.
 
-`run_clocked()` now also responds to guest `CLKCON.IDLE` writes with CPU sleep,
+Both new APIs respond to guest `CLKCON.IDLE` writes with CPU sleep,
 peripheral advancement and interrupt wakeup. Trigger on each aligned word write
 of bit 2, never on the retained bit's level; the bit does not clear on wake.
 The run-policy flag is host-only and reset at API boundaries. Checkpoint version
@@ -17,17 +18,18 @@ The run-policy flag is host-only and reset at API boundaries. Checkpoint version
 register-only behavior, and the wrapper acknowledgement delay remains uncalibrated.
 
 The [current scene record](performance.md#calculator-clock-ratios-and-visible-latency-2026-10-20)
-targets `1+1`, Aplet Library and Function START. Same-HOME fixed-phase HP39
-Enter-to-result improves from 576 to 170 reference ms; opening Aplet Library
-from 1,022 to 281 reference ms. These are functional-time observations until
-the corresponding browser acceptance is consulted. The first ratio-only Chrome
-comparison had mixed wall-time results, including a Function START regression,
-so that version was held back while IDLE was implemented. Use the final
-[PR #2 acceptance](https://github.com/maxmixalex/orchard-emu/pull/2), not the
-early ratio-only numbers, to assess the selected release. HP39 50/30 ms key timings
+targets `1+1`, Aplet Library and Function START. The early 576→170 and
+1,022→281 ms observations describe functional-reference time under a rejected
+ratio policy; they are not browser gains of the selected default. Ratio plus
+IDLE also regressed HP39 `1+1` in all three browser rounds (median first-key
+latency 1,251→2,244 ms). Use the final
+[PR #2 acceptance](https://github.com/maxmixalex/orchard-emu/pull/2) to assess
+the one-slot IDLE release. HP39 50/30 ms key timings
 still lose `7*8` at another phase even with the faster CPU policy, so retain
-125/75 ms. HP48 retains 50/30 ms. The production Worker limits clocked calls
-to 256 peripheral quanta, at most 1,024 CPU issue slots between I/O drains.
+125/75 ms. A new 100/60 ms trial also loses `1+1` at +12,000 quanta under
+one-slot IDLE; the retained timings pass all 16 phase cases. HP48 retains
+50/30 ms. The production Worker limits calculator calls
+to 1,024 peripheral quanta and at most 1,024 CPU slots between I/O drains.
 
 Normal still uses the provisional 12 MHz peripheral/RTC timebase. PLL and
 slow-mode absolute frequency, instruction/bus costs and the separate LCD HCLK

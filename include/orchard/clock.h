@@ -18,7 +18,17 @@ extern "C" {
 orchard_stop orchard_run_divided(orchard_machine *m, uint32_t tick_budget);
 /* Returns 0 for an invalid machine, otherwise the current 1/2/4 slot ratio. */
 unsigned orchard_clock_divisor(const orchard_machine *m);
-/* Functional CPU/peripheral clock policy used by the calculator frontend.
+/* One-slot functional execution with CLKCON.IDLE support. Budget/ticks keep
+ * the legacy peripheral quanta and at most one CPU issue slot per quantum,
+ * independently of CP15 clock mode or CLKDIVN. An aligned CLKCON word write
+ * with bit 2 set sleeps the core until an unmasked interrupt requests wakeup.
+ * The bit remains sticky; only another write requests sleep again. Peripheral
+ * time continues during sleep. This does not model the CPU/peripheral ratio
+ * or the CPU-wrapper ACK delay and is not physical clock calibration.
+ * Checkpoints retain their existing format; legacy run/run_divided are unchanged.
+ */
+orchard_stop orchard_run_idle(orchard_machine *m, uint32_t tick_budget);
+/* Opt-in functional CPU/peripheral clock-ratio research policy.
  * CLKDIVN selects the FCLK:HCLK:PCLK ratios, including its 1:4:4 encoding.
  * CP15 c1[31:30] selects HCLK for FastBus and FCLK for synchronous/asynchronous
  * CPU issue. Settings are latched at the next peripheral quantum; interrupts

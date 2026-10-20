@@ -6,7 +6,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
-const usage = 'Usage: node tools/probe-aplet-latency.mjs DIST ROM-DIRECTORY NEW-OUTPUT-DIRECTORY [--home-checkpoint FILE] [--runner run|run_divided|run_clocked] [--compare-divided|--compare-clocked]';
+const usage = 'Usage: node tools/probe-aplet-latency.mjs DIST ROM-DIRECTORY NEW-OUTPUT-DIRECTORY [--home-checkpoint FILE] [--runner run|run_divided|run_clocked|run_idle] [--compare-divided|--compare-clocked|--compare-idle]';
 const args = process.argv.slice(2);
 if (args.length < 3 || args.slice(0, 3).some(value => !value || value.startsWith('--'))) throw Error(usage);
 const [dist, romDir, out] = args;
@@ -16,11 +16,11 @@ for (let i = 3; i < args.length; ++i) {
   const flag = args[i];
   if (seen.has(flag)) throw Error(usage);
   seen.add(flag);
-  if (flag === '--compare-divided' || flag === '--compare-clocked') {
+  if (flag === '--compare-divided' || flag === '--compare-clocked' || flag === '--compare-idle') {
     if (compareRunner) throw Error(usage);
-    compareRunner = flag === '--compare-divided' ? 'run_divided' : 'run_clocked';
+    compareRunner = flag === '--compare-divided' ? 'run_divided' : flag === '--compare-clocked' ? 'run_clocked' : 'run_idle';
   }
-  else if (flag === '--runner' && ['run', 'run_divided', 'run_clocked'].includes(args[i + 1])) primaryRunner = args[++i];
+  else if (flag === '--runner' && ['run', 'run_divided', 'run_clocked', 'run_idle'].includes(args[i + 1])) primaryRunner = args[++i];
   else if (flag === '--home-checkpoint' && args[i + 1] && !args[i + 1].startsWith('--')) homeCheckpoint = args[++i];
   else throw Error(usage);
 }

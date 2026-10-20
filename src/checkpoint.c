@@ -182,7 +182,7 @@ orchard_status orchard_checkpoint_load(orchard_machine *m, const void *buffer, s
     o_copy(m->ram,in+c.pos,m->profile->ram_bytes);c.pos+=m->profile->ram_bytes;
     o_copy(m->boot_sram,in+c.pos,O_BOOT_SRAM_SIZE);
     m->quiet_left=m->deferred_ticks=0;
-    m->clocked_run_active=false;
+    m->idle_write_enabled=false;
     o_zero(m->translations,sizeof m->translations);
     return ORCHARD_OK;
 }

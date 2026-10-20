@@ -2,7 +2,7 @@
 // Opt-in diagnostic instrumentation. This module is never shipped in dist.
 // It records guest-affecting API calls, not wall-time performance samples.
 const operations = new Map([
-  ['run', 1], ['run_divided', 1], ['run_clocked', 1], ['frame', 0], ['frame_view', 1],
+  ['run', 1], ['run_divided', 1], ['run_clocked', 1], ['run_idle', 1], ['frame', 0], ['frame_view', 1],
   ['annunciators', 0], ['uart_receive', 0], ['uart_send', 1],
   ['gpio_inputs', 3], ['gpio_bias', 3], ['adc_input', 3],
   ['keyboard_attach', 1], ['keyboard_matrix', 3], ['keyboard_dedicated', 2],
@@ -100,7 +100,7 @@ export function attachCoreTrace(raw, {
         problem('API trapped: ' + name + ': ' + String(error));
         capture('api-trap'); throw error;
       }
-      if (['run','run_divided','run_clocked'].includes(name) && !result) nowTick += canonical[0];
+      if (['run','run_divided','run_clocked','run_idle'].includes(name) && !result) nowTick += canonical[0];
       else { const state = words(); nowTick = tick(state); stop = state?.[28] || 0; }
       if (!Number.isSafeInteger(nowTick)) problem('Guest tick exceeds the exact integer range');
       if (!Number.isInteger(result)) problem('Unsupported API result for ' + name);

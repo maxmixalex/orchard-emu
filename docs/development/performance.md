@@ -7,40 +7,47 @@ That release reduced caught-up Worker CPU use, but left Normal `1+1` response
 essentially unchanged. The current change targets arithmetic and HP39g+
 Aplet Library interaction latency directly.
 
-The calculator now uses `run_clocked()`. It reads the guest's `CLKDIVN` and
-ARM920T CP15 clock-mode bits to choose CPU issue slots per peripheral quantum.
-FastBus uses HCLK; synchronous/asynchronous modes use the FCLK ratio. The
-special 1:4:4 divider is included, and reserved encodings stop explicitly.
-At the tested HOME states HP39g+ uses asynchronous mode and four slots;
-HP48gII uses FastBus with HCLK=FCLK and two slots. The previous calculator
-runner always provided one slot. This relationship is documented in Samsung's
-[S3C2410A manual](https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf),
-sections 7-8 and 7-22 and the included ARM920T clock-mode chapter.
+The calculator now uses `run_idle()`: the existing one-CPU-slot functional
+timebase with the missing guest IDLE request behavior implemented. This
+selection follows actual browser scene measurements. Increasing the CPU issue
+ratio reduced functional-reference latency but increased the HP39 work needed
+to type an expression, producing a real browser regression described below.
 
 Every slot still executes the interpreter, live memory translation and
-interrupt checks. Peripheral time advances once per quantum; mode changes
-take effect at the next quantum boundary. The Worker drains UART and polls
-USB at most every 256 quanta, bounding a call to 1,024 CPU issue slots.
+interrupt checks. Peripheral time advances once per quantum. The Worker drains
+UART and polls USB at most every 1,024 quanta, bounding a call to 1,024 CPU slots.
 The 6 ms Worker task ceiling and earned-credit pacing remain active.
 `run()` and the earlier opt-in `run_divided()` preserve their existing semantics;
 the workbench and native host retain their selected legacy policy.
 
-The clocked policy also honors aligned word writes to `CLKCON.IDLE` (bit 2).
+Both `run_idle()` and the opt-in `run_clocked()` honor aligned word writes
+to `CLKCON.IDLE` (bit 2).
 The CPU sleeps after the writing instruction, while peripherals and the
 functional clock continue. An interrupt source enabled by `INTMSK` wakes the
 core; the CPU's IRQ/FIQ masks still govern exception entry. The register bit
 is sticky, so each write requests sleep, but a retained one does not put a
-woken core back to sleep. Samsung's manual describes this in sections 7-11,
-7-17 and 7-21. The CPU-wrapper acknowledgement delay is not calibrated.
+woken core back to sleep. Samsung's
+[S3C2410A manual](https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf)
+describes this in sections 7-11, 7-17 and 7-21. The CPU-wrapper acknowledgement
+delay is not calibrated.
 This uses the existing scheduler and serialized sleeping state; checkpoint
 version 1 remains compatible. The legacy runners retain register-only writes.
 
 The 12 MHz functional peripheral/RTC reference and existing Half/Normal/Double
 settings remain. PLL/slow-mode absolute frequencies, ARM instruction cycle
 costs, cache/bus waits and the separate LCD HCLK domain are still uncalibrated.
-The change corrects a functional CPU/peripheral ratio; it does not claim an
-exact real-calculator speed. Restoring an older portable session preserves its
+The default keeps one CPU slot per quantum and does not claim an exact
+real-calculator speed. Restoring an older portable session preserves its
 architectural state and then continues under the calculator's current policy.
+
+The separate research API `run_clocked()` reads guest `CLKDIVN` and ARM920T
+CP15 bus mode to select HCLK in FastBus or FCLK in synchronous/asynchronous
+mode. It includes special 1:4:4 and explicit reserved-setting stops, with mode
+changes applied at the next quantum. Tested HP39 HOME uses four slots and
+HP48 uses two. This relationship follows the manual's sections 7-8, 7-22 and
+ARM920T clock-mode chapter, but the browser evidence does not justify making
+it the default. `run_idle()` deliberately preserves the previous one-slot
+functional rate; it does not silently cap or reinterpret `run_clocked()`.
 
 ### Fixed-state scene witnesses
 
@@ -69,6 +76,12 @@ HP48 totals are 475 → 357 ms. Faster key timings were tested separately:
 phase with the divided policy. The validated HP39 125/75 ms and HP48 50/30 ms
 physical taps therefore remain in the production calculator.
 
+With the selected one-slot IDLE runner, a separate 100/60 ms HP39 experiment
+also failed: `1+1` at a +12,000-quantum start phase never reached the expected
+result in the 20M-quantum window. The guest did not stop. That sweep was
+terminated at its first failing case and is not counted as complete. The
+original 125/75 ms pair passed all 16 arithmetic phase cases under `run_idle()`.
+
 The Aplet witness has two explicit actions: from empty HP39 HOME press APLET
 (scan 49) to display Aplet Library; from that library press START (F6, scan 40)
 to open the initially selected Function symbolic view. This is a reproducible
@@ -86,6 +99,18 @@ implementing the missing IDLE behavior. Do not quote the functional-reference
 table above as a browser speedup. A separate arithmetic attempt timed out in
 the first baseline Restore action before any measurement; the checkpoint was
 actually restored and the evidence is retained as a setup failure.
+
+A second production candidate (`6ecbcc6b…`) combined the ratio model with
+IDLE. All 36 scene results in three alternating Normal-speed rounds matched
+their complete LCD reference, but HP39 `1+1` regressed in every round:
+1,333/1,218/1,251 ms baseline versus 2,904/2,244/2,175 ms candidate, measured
+from the first actual keydown to the first matching Worker frame. The cold-HOME
+instruction witness explains a material risk: typing through the first result
+took 22.61M instructions with ratio plus IDLE versus 14.11M with legacy issue.
+Much smaller idle-window instruction counts did not establish faster arithmetic.
+This candidate was also rejected as the calculator default. The selected
+`run_idle()` policy isolates sleep handling from the extra issue slots; its
+final browser and CI acceptance are attached to the PR below.
 
 `tools/probe-clock-latency.mjs` records the arithmetic policy comparison.
 `tools/probe-aplet-latency.mjs` produces private exact-checkpoint Aplet fixtures.

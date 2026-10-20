@@ -60,7 +60,7 @@ void orchard_reset(orchard_machine *m) {
     o_zero(&m->stop, sizeof(m->stop));
     m->ticks = 0;
     m->quiet_left = m->deferred_ticks = 0;
-    m->clocked_run_active = false;
+    m->idle_write_enabled = false;
     m->sram_alias_reads = m->sram_alias_writes = 0;
     m->nor_sequence = 0; m->nor_id_mode = false;
 }
@@ -103,11 +103,11 @@ unsigned orchard_clock_slots(const orchard_machine *m) {
     if (mode == 0u) return div == 4u ? 1u : 1u + (div & 1u);
     return div == 4u ? 4u : (1u + ((div >> 1) & 1u)) * (1u + (div & 1u));
 }
-enum run_policy { RUN_LEGACY, RUN_DIVIDED, RUN_CLOCKED };
+enum run_policy { RUN_LEGACY, RUN_DIVIDED, RUN_CLOCKED, RUN_IDLE };
 static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enum run_policy policy) {
     if (!m) return (orchard_stop){.status = ORCHARD_BAD_ARGUMENT};
     if (!m->loaded) return (orchard_stop){.status = ORCHARD_NO_ROM};
-    m->clocked_run_active = policy == RUN_CLOCKED;
+    m->idle_write_enabled = policy == RUN_CLOCKED || policy == RUN_IDLE;
     for (uint32_t i = 0; i < budget && m->stop.status == ORCHARD_OK; ++i) {
         unsigned slots = policy == RUN_CLOCKED ? orchard_clock_slots(m) :
                          policy == RUN_DIVIDED ? orchard_clock_divisor(m) : 1u;
@@ -154,7 +154,7 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enu
         }
     }
     o_schedule_sync(m);
-    m->clocked_run_active = false;
+    m->idle_write_enabled = false;
     return m->stop;
 }
 orchard_stop orchard_run(orchard_machine *m, uint32_t budget) {
@@ -176,6 +176,13 @@ orchard_stop orchard_run_clocked(orchard_machine *m, uint32_t budget) {
     return run(m, budget, false, RUN_CLOCKED);
 #else
     return run(m, budget, true, RUN_CLOCKED);
+#endif
+}
+orchard_stop orchard_run_idle(orchard_machine *m, uint32_t budget) {
+#ifdef ORCHARD_REFERENCE
+    return run(m, budget, false, RUN_IDLE);
+#else
+    return run(m, budget, true, RUN_IDLE);
 #endif
 }
 orchard_stop o_run_reference(orchard_machine *m, uint32_t budget) {

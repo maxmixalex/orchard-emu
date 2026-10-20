@@ -8,7 +8,7 @@ const rom = new Uint8Array(1048576).fill(255);
 const words = [0xea000000, 0xeafffffe], literals = [];
 const ldr = (reg,value) => {literals.push({index:words.length,reg,value});words.push(0);};
 // Disable watchdog, select four CPU slots per peripheral quantum, then WFI.
-// No writes to calendar/time; the legacy and clocked policies must both keep
+// No writes to calendar/time; legacy, idle and clocked policies must all keep
 // the same paced RTC seconds despite different CPU issue counts.
 ldr(0,0x53000000);words.push(0xe3a01000,0xe5801000);
 ldr(0,0x4c000014);words.push(0xe3a01003,0xe5801000);
@@ -32,7 +32,7 @@ function calendar(c, bytes) {
   assert.equal(new DataView(bytes.buffer).getUint32(8, true), 1);
   return [...bytes.slice(offset + 12, offset + 15)];
 }
-for (const policy of ['run','run_clocked']) for (const speed of [0.5, 1, 2]) {
+for (const policy of ['run','run_idle','run_clocked']) for (const speed of [0.5, 1, 2]) {
   let expected;
   for (const [cap, intervals] of [[256, [1]], [4096, [3, 7, 11, 31]]]) {
     const c = await create(), p = new Pacer(c.timebase_hz());
@@ -57,4 +57,4 @@ for (const policy of ['run','run_clocked']) for (const speed of [0.5, 1, 2]) {
     assert.equal(p.available(122000, 100000000), c.timebase_hz() * speed / 20);
   }
 }
-console.log('Paced production RTC: legacy/clocked policies at 0.5/1/2 rates produce 1/2/4 seconds, identical full state across host chunk sizes, bounded catch-up. Not physical clock calibration.');
+console.log('Paced production RTC: legacy/idle/clocked policies at 0.5/1/2 rates produce 1/2/4 seconds, identical full state across host chunk sizes, bounded catch-up. Not physical clock calibration.');

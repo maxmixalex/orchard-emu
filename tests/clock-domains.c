@@ -39,7 +39,7 @@ static void same_state(void) {
     CHECK(equal(a.ram,b.ram,a.profile->ram_bytes));
     CHECK(equal(a.boot_sram,b.boot_sram,sizeof a.boot_sram));
     CHECK(a.quiet_left==0 && a.deferred_ticks==0);
-    CHECK(!a.clocked_run_active && !b.clocked_run_active);
+    CHECK(!a.idle_write_enabled && !b.idle_write_enabled);
     CHECK(a.sram_alias_reads==b.sram_alias_reads && a.sram_alias_writes==b.sram_alias_writes);
 }
 static void reference(uint32_t n) {
@@ -67,10 +67,10 @@ static const unsigned clocked_ratio[4][8] = {
     {1,2,1,2,1,0,0,0}, {1,2,2,4,4,0,0,0},
     {0,0,0,0,0,0,0,0}, {1,2,2,4,4,0,0,0}
 };
-static void clocked_reference(uint32_t n) {
+static void policy_reference(uint32_t n, bool use_ratio) {
     for (uint32_t i=0;i<n && b.stop.status==ORCHARD_OK;++i) {
         unsigned mode=b.cpu.control>>30;
-        unsigned slots=clocked_ratio[mode][b.soc.clock[5]&7u];
+        unsigned slots=use_ratio?clocked_ratio[mode][b.soc.clock[5]&7u]:1u;
         if (!slots) {
             o_stop(&b,mode==2?ORCHARD_UNSUPPORTED_CP15:ORCHARD_UNPREDICTABLE,
                    mode==2?b.cpu.r[15]:0x4c000014u,
@@ -89,13 +89,18 @@ static void clocked_reference(uint32_t n) {
                 uint32_t pc=b.cpu.r[15];
                 o_cpu_step_reference(&b);
                 if (pc==reference_idle_pc[0] || pc==reference_idle_pc[1]) {
-                    CHECK(!b.clocked_run_active && b.stop.status==ORCHARD_OK);
+                    CHECK(!b.idle_write_enabled && b.stop.status==ORCHARD_OK);
                     CHECK(!b.cpu.data_abort && b.cpu.r[15]==pc+4);
                     b.cpu.sleeping=true;
                 }
             }
         }
     }
+}
+static void clocked_reference(uint32_t n) { policy_reference(n,true); }
+static bool idle_uses_ratio;
+static orchard_stop idle_run(uint32_t n) {
+    return idle_uses_ratio?orchard_run_clocked(&a,n):orchard_run_idle(&a,n);
 }
 static void idle_program(unsigned model, unsigned mode, unsigned div) {
     init(model,div); a.cpu.control|=mode<<30;
@@ -110,10 +115,11 @@ static void idle_program(unsigned model, unsigned mode, unsigned div) {
     reference_idle_pc[0]=0x100; reference_idle_pc[1]=0x10c;
 }
 static void idle_steps(uint32_t n) {
-    CHECK(orchard_run_clocked(&a,n).status==ORCHARD_OK);
-    clocked_reference(n); same_state();
+    CHECK(idle_run(n).status==ORCHARD_OK);
+    policy_reference(n,idle_uses_ratio); same_state();
 }
-static void exercise_idle(void) {
+static void exercise_idle(bool use_ratio) {
+    idle_uses_ratio=use_ratio;
     for (unsigned model=1;model<=6;++model) {
         /* The writing instruction completes, then all remaining issue slots
            sleep. Peripheral time keeps moving at every supported ratio. */
@@ -141,7 +147,7 @@ static void exercise_idle(void) {
         idle_program(model,3,3); a.soc.srcpnd=1u<<10;
         a.soc.intmsk=~(1u<<10); duplicate(); idle_steps(5);
         CHECK(!a.cpu.sleeping && a.cpu.r[2]==2 && a.cpu.r[3]==1);
-        CHECK(a.cpu.instructions==20 && a.cpu.exceptions==0);
+        CHECK(a.cpu.instructions==5u*(use_ratio?4u:1u) && a.cpu.exceptions==0);
         /* IRQ and FIQ both wake before the next slot and preserve CLKCON. */
         for (unsigned fiq=0;fiq<2;++fiq) {
             idle_program(model,3,3); duplicate(); idle_steps(1);
@@ -179,41 +185,72 @@ static void exercise_idle(void) {
         size_t n=orchard_checkpoint_size(&a); CHECK(n<=sizeof saved);
         CHECK(orchard_checkpoint_save(&a,saved,n)==ORCHARD_OK);
         CHECK(saved[8]==1 && saved[9]==0 && saved[10]==0 && saved[11]==0);
-        a.cpu.sleeping=false; a.soc.clock[3]=0; a.clocked_run_active=true;
+        a.cpu.sleeping=false; a.soc.clock[3]=0; a.idle_write_enabled=true;
         CHECK(orchard_checkpoint_load(&a,saved,n)==ORCHARD_OK); same_state();
         a.soc.srcpnd=b.soc.srcpnd=1u<<10;
         a.soc.intmsk=b.soc.intmsk=~(1u<<10); idle_steps(19);
         /* Pre-existing register values are never interpreted as fresh writes. */
         init(model,3); a.cpu.control|=0xc0000000u;
         CHECK(o_mmio_write(&a,0x4c00000cu,4,0x61b4)); duplicate(); idle_steps(101);
-        CHECK(!a.cpu.sleeping && a.cpu.instructions==404);
+        CHECK(!a.cpu.sleeping && a.cpu.instructions==101u*(use_ratio?4u:1u));
         /* Clearing IDLE, or writing another clock register, must not sleep. */
         for (unsigned other=0;other<2;++other) {
             idle_program(model,3,3);
             if (other) a.cpu.r[0]=0x4c000000u; else a.cpu.r[1]=0x61b0;
             reference_idle_pc[0]=reference_idle_pc[1]=UINT32_MAX;
             duplicate(); idle_steps(101);
-            CHECK(!a.cpu.sleeping && a.cpu.instructions==404 && a.cpu.r[3]==1);
+            CHECK(!a.cpu.sleeping && a.cpu.instructions==101u*(use_ratio?4u:1u) && a.cpu.r[3]==1);
         }
         /* Byte stores retain the existing explicit MMIO fault and must not
            leave the call-scoped flag active after a stop or zero-budget call. */
         idle_program(model,3,3); word(a.flash+0x100,0xe5c01000u);
         reference_idle_pc[0]=reference_idle_pc[1]=UINT32_MAX; duplicate();
-        CHECK(orchard_run_clocked(&a,101).status==ORCHARD_UNIMPLEMENTED_MMIO);
-        clocked_reference(101); same_state(); CHECK(!a.cpu.sleeping);
-        CHECK(orchard_run_clocked(&a,0).status==ORCHARD_UNIMPLEMENTED_MMIO);
-        CHECK(!a.clocked_run_active);
-        orchard_reset(&a); CHECK(!a.clocked_run_active && !a.cpu.sleeping);
+        CHECK(idle_run(101).status==ORCHARD_UNIMPLEMENTED_MMIO);
+        policy_reference(101,use_ratio); same_state(); CHECK(!a.cpu.sleeping);
+        CHECK(idle_run(0).status==ORCHARD_UNIMPLEMENTED_MMIO);
+        CHECK(!a.idle_write_enabled);
+        orchard_reset(&a); CHECK(!a.idle_write_enabled && !a.cpu.sleeping);
         /* Neither legacy runner gains new write side effects, including when
-           run_clocked was selected immediately before it with zero budget. */
+           an IDLE-aware runner was selected before it with zero budget. */
         for (unsigned divided=0;divided<2;++divided) {
             idle_program(model,3,3);
-            CHECK(orchard_run_clocked(&a,0).status==ORCHARD_OK); duplicate();
+            CHECK(idle_run(0).status==ORCHARD_OK); duplicate();
             if (divided) { CHECK(orchard_run_divided(&a,101).status==ORCHARD_OK); reference(101); }
             else { CHECK(orchard_run(&a,101).status==ORCHARD_OK); CHECK(o_run_reference(&b,101).status==ORCHARD_OK); }
             same_state(); CHECK(!a.cpu.sleeping && a.cpu.r[2]==2 && a.cpu.r[3]==1);
             CHECK(a.cpu.instructions==101u*(divided?4u:1u) && a.soc.clock[3]==0x61b4);
         }
+    }
+}
+static void exercise_one_slot(void) {
+    CHECK(orchard_run_idle(NULL,1).status==ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_init(&a,sizeof a,1)==&a);
+    CHECK(orchard_run_idle(&a,1).status==ORCHARD_NO_ROM);
+    for (unsigned model=1;model<=6;++model) {
+        /* This is a deliberately separate functional policy: no CP15/divider
+           encoding changes its one-slot budget or inherits research-mode stops. */
+        for (unsigned mode=0;mode<4;++mode) for (unsigned div=0;div<8;++div) {
+            init(model,div); a.cpu.control|=mode<<30; duplicate();
+            CHECK(orchard_run_idle(&a,101).status==ORCHARD_OK);
+            policy_reference(101,false); same_state();
+            CHECK(a.ticks==101 && a.cpu.instructions==101);
+        }
+        init(model,3); a.cpu.control|=0xc0000000u;
+        word(a.flash,0xee070f90u); duplicate();
+        CHECK(orchard_run_idle(&a,5000).status==ORCHARD_OK);
+        policy_reference(5000,false); same_state();
+        CHECK(a.cpu.instructions==1 && a.cpu.sleeping);
+        /* CP15 and divider writes still take place, without changing issue rate. */
+        init(model,3); a.cpu.r[1]=0xc0000078u;
+        word(a.flash,0xee011f10u); word(a.flash+4,0xeafffffeu); duplicate();
+        CHECK(orchard_run_idle(&a,2).status==ORCHARD_OK);
+        policy_reference(2,false); same_state();
+        CHECK(a.cpu.instructions==2 && orchard_clock_slots(&a)==4);
+        init(model,3); a.cpu.r[0]=0x4c000014u; a.cpu.r[1]=4;
+        word(a.flash,0xe5801000u); word(a.flash+4,0xeafffffeu); duplicate();
+        CHECK(orchard_run_idle(&a,2).status==ORCHARD_OK);
+        policy_reference(2,false); same_state();
+        CHECK(a.cpu.instructions==2 && a.soc.clock[5]==4);
     }
 }
 static void exercise_clocked(void) {
@@ -367,7 +404,9 @@ static void exercise(void) {
 #define EXPORT(name)
 #endif
 EXPORT("regression") unsigned regression(void) {
-    count_checks=failures=first=0; rng=0x1932410u; exercise(); exercise_clocked(); exercise_idle(); return failures;
+    count_checks=failures=first=0; rng=0x1932410u;
+    exercise(); exercise_clocked(); exercise_idle(true); exercise_idle(false); exercise_one_slot();
+    return failures;
 }
 EXPORT("checks") unsigned checks(void) { return count_checks; }
 EXPORT("first_failure") unsigned first_failure(void) { return first; }

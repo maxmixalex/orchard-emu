@@ -7,7 +7,7 @@ import { open, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { applySetup, setupHash, TapQueue } from '../web/hp48.js';
 
-const usage = 'Usage: node tools/probe-input-dwell.mjs WASM ROM-DIRECTORY NEW-REPORT.json [--runner run|run_divided|run_clocked] [--hold TICKS] [--gap TICKS] [--phases COMMA-SEPARATED-TICKS] [--home-checkpoint FILE]';
+const usage = 'Usage: node tools/probe-input-dwell.mjs WASM ROM-DIRECTORY NEW-REPORT.json [--runner run|run_divided|run_clocked|run_idle] [--hold TICKS] [--gap TICKS] [--phases COMMA-SEPARATED-TICKS] [--home-checkpoint FILE]';
 const args = process.argv.slice(2);
 if (args.length < 3 || args.slice(0, 3).some(s => !s || s.startsWith('--'))) throw Error(usage);
 const [wasmPath, romDirectory, output] = args;
@@ -23,7 +23,7 @@ for (let i = 3; i < args.length; i += 2) {
   const flag = args[i], value = args[i + 1];
   if (!value || value.startsWith('--') || seen.has(flag)) throw Error(usage);
   seen.add(flag);
-  if (flag === '--runner' && ['run', 'run_divided', 'run_clocked'].includes(value)) runner = value;
+  if (flag === '--runner' && ['run', 'run_divided', 'run_clocked', 'run_idle'].includes(value)) runner = value;
   else if (flag === '--hold') hold = ticks(value, 120000, 2400000);
   else if (flag === '--gap') gap = ticks(value, 120000, 2400000);
   else if (flag === '--home-checkpoint') homeCheckpoint = value;
