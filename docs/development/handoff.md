@@ -1,5 +1,29 @@
 # Continuation handoff
 
+## Visible calculator latency after PR #1 (2026-10-20)
+
+The current continuation starts at `0215f19`. The calculator uses the new
+`run_clocked()` policy, which accounts for CP15 FastBus/synchronous/asynchronous
+mode as well as CLKDIVN, including its special 1:4:4 encoding. Existing `run()`
+and `run_divided()` semantics remain available for reproducible research.
+The workbench/native host keep their legacy selection. Do not confuse this
+explicitly validated policy change with enabling the old physical-read experiment.
+
+The [current scene record](performance.md#calculator-clock-ratios-and-visible-latency-2026-10-20)
+targets `1+1`, Aplet Library and Function START. Same-HOME fixed-phase HP39
+Enter-to-result improves from 576 to 170 reference ms; opening Aplet Library
+from 1,022 to 281 reference ms. These are functional-time observations until
+the corresponding browser acceptance is consulted. HP39 50/30 ms key timings
+still lose `7*8` at another phase even with the faster CPU policy, so retain
+125/75 ms. HP48 retains 50/30 ms. The production Worker limits clocked calls
+to 256 peripheral quanta, at most 1,024 CPU issue slots between I/O drains.
+
+Normal still uses the provisional 12 MHz peripheral/RTC timebase. PLL and
+slow-mode absolute frequency, instruction/bus costs and the separate LCD HCLK
+domain are open. Remote acceptance belongs to the new performance PR's exact
+head, Build and Pages evidence. The earlier handoffs below describe older
+releases and must not override this continuation's measured policy decision.
+
 ## Current performance work from 83a2d38 (2026-10-20)
 
 Use [maxmixalex/orchard-emu](https://github.com/maxmixalex/orchard-emu) and its

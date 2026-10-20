@@ -18,6 +18,21 @@ extern "C" {
 orchard_stop orchard_run_divided(orchard_machine *m, uint32_t tick_budget);
 /* Returns 0 for an invalid machine, otherwise the current 1/2/4 slot ratio. */
 unsigned orchard_clock_divisor(const orchard_machine *m);
+/* Functional CPU/peripheral clock policy used by the calculator frontend.
+ * CLKDIVN selects the FCLK:HCLK:PCLK ratios, including its 1:4:4 encoding.
+ * CP15 c1[31:30] selects HCLK for FastBus and FCLK for synchronous/asynchronous
+ * CPU issue. Settings are latched at the next peripheral quantum; interrupts
+ * are checked before each issue slot. Reserved clock encodings stop explicitly.
+ * Peripheral/RTC quanta remain the existing 12 MHz functional reference.
+ * This does not model PLL/slow-mode absolute frequencies, CPI, bus/cache wait
+ * states or a separate HCLK-driven LCD timebase. It is not hardware calibration.
+ * Select one runner per session and drain I/O at least every 256 quanta.
+ * The legacy run and experimental run_divided APIs retain their old semantics.
+ */
+orchard_stop orchard_run_clocked(orchard_machine *m, uint32_t tick_budget);
+/* Current CPU issue slots per peripheral quantum; zero means invalid machine
+ * or reserved CP15 clock mode / CLKDIVN encoding. */
+unsigned orchard_clock_slots(const orchard_machine *m);
 #ifdef __cplusplus
 }
 #endif

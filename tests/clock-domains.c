@@ -56,6 +56,109 @@ static void reference(uint32_t n) {
 }
 static uint32_t rng=0x1932410u;
 static uint32_t random32(void) { rng^=rng<<13; rng^=rng>>17; rng^=rng<<5; return rng; }
+/* Independent table and unscheduled peripheral / reference-CPU stepping.
+ * Do not call orchard_clock_slots or the production run loop from this oracle. */
+static const unsigned clocked_ratio[4][8] = {
+    {1,2,1,2,1,0,0,0}, {1,2,2,4,4,0,0,0},
+    {0,0,0,0,0,0,0,0}, {1,2,2,4,4,0,0,0}
+};
+static void clocked_reference(uint32_t n) {
+    for (uint32_t i=0;i<n && b.stop.status==ORCHARD_OK;++i) {
+        unsigned mode=b.cpu.control>>30;
+        unsigned slots=clocked_ratio[mode][b.soc.clock[5]&7u];
+        if (!slots) {
+            o_stop(&b,mode==2?ORCHARD_UNSUPPORTED_CP15:ORCHARD_UNPREDICTABLE,
+                   mode==2?b.cpu.r[15]:0x4c000014u,
+                   mode==2?b.cpu.control:b.soc.clock[5]);
+            break;
+        }
+        ++b.ticks; o_soc_tick(&b);
+        if (b.stop.status!=ORCHARD_OK) break;
+        o_irq_update(&b.soc);
+        for (unsigned j=0;j<slots && b.stop.status==ORCHARD_OK;++j) {
+            uint32_t p=b.soc.srcpnd & ~b.soc.intmsk;
+            if (p) b.cpu.sleeping=false;
+            if ((p & b.soc.intmod) && !(b.cpu.cpsr&O_F)) o_exception(&b.cpu,O_FIQ,0x1c,b.cpu.r[15]+4u);
+            else if (b.soc.intpnd && !(b.cpu.cpsr&O_I)) o_exception(&b.cpu,O_IRQ,0x18,b.cpu.r[15]+4u);
+            else if (!b.cpu.sleeping) o_cpu_step_reference(&b);
+        }
+    }
+}
+static void exercise_clocked(void) {
+    CHECK(orchard_run_clocked(NULL,1).status==ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_clock_slots(NULL)==0);
+    CHECK(orchard_init(&a,sizeof a,1)==&a);
+    CHECK(orchard_run_clocked(&a,1).status==ORCHARD_NO_ROM);
+    for (unsigned model=1;model<=6;++model) {
+        for (unsigned mode=0;mode<4;++mode) for (unsigned div=0;div<8;++div) {
+            init(model,div); a.cpu.control|=mode<<30; duplicate();
+            unsigned slots=clocked_ratio[mode][div];
+            CHECK(orchard_clock_slots(&a)==slots);
+            orchard_stop stop=orchard_run_clocked(&a,101);
+            clocked_reference(101); same_state();
+            if (!slots) {
+                CHECK(stop.status!=ORCHARD_OK); CHECK(a.ticks==0); CHECK(a.cpu.instructions==0);
+                continue;
+            }
+            CHECK(stop.status==ORCHARD_OK); CHECK(a.ticks==101);
+            CHECK(a.cpu.instructions==101u*slots);
+            /* WFI quiet skipping, timer wake and partition boundaries. */
+            init(model,div); a.cpu.control|=mode<<30;
+            a.soc.tcfg0=3; a.soc.tcon=9; a.soc.tcntb[0]=a.soc.count[0]=17;
+            a.soc.intmsk=~(1u<<10); a.cpu.cpsr&=~O_I;
+            word(a.flash,0xee070f90u); word(a.flash+4,0xeafffffeu);
+            word(a.flash+0x18,0xeafffffeu); duplicate();
+            for (unsigned i=0;i<8;++i) {
+                uint32_t n=1+random32()%97u;
+                CHECK(orchard_run_clocked(&a,n).status==ORCHARD_OK);
+                clocked_reference(n); same_state();
+            }
+            CHECK(a.cpu.exceptions>0);
+            init(model,div); a.cpu.control|=mode<<30;
+            word(a.flash,0xee070f90u); duplicate();
+            CHECK(orchard_run_clocked(&a,5000).status==ORCHARD_OK);
+            clocked_reference(5000); same_state();
+            CHECK(a.cpu.instructions==1 && a.cpu.sleeping);
+            /* Fixed peripheral time remains independent of the issue ratio. */
+            init(model,div); a.cpu.control|=mode<<30; duplicate();
+            CHECK(orchard_run_clocked(&a,1001).status==ORCHARD_OK);
+            CHECK(orchard_run(&b,1001).status==ORCHARD_OK);
+            CHECK(equal(&a.soc.rtc,&b.soc.rtc,sizeof a.soc.rtc));
+            CHECK(equal(a.soc.phase,b.soc.phase,sizeof a.soc.phase));
+        }
+        /* The CP15 write changes FastBus 2 slots to asynchronous 4 slots at
+           the next quantum, not during the current two-instruction group. */
+        init(model,3); a.cpu.r[1]=0xc0000078u;
+        word(a.flash,0xee011f10u); word(a.flash+4,0xeafffffeu); duplicate();
+        CHECK(orchard_run_clocked(&a,2).status==ORCHARD_OK);
+        clocked_reference(2); same_state();
+        CHECK(a.cpu.instructions==6 && orchard_clock_slots(&a)==4);
+        /* Reverse mode transition and special 1:4:4 MMIO transition. */
+        init(model,3); a.cpu.control|=0xc0000000u; a.cpu.r[1]=0x78u;
+        word(a.flash,0xee011f10u); word(a.flash+4,0xeafffffeu); duplicate();
+        CHECK(orchard_run_clocked(&a,2).status==ORCHARD_OK);
+        clocked_reference(2); same_state(); CHECK(a.cpu.instructions==6);
+        init(model,3); a.cpu.r[0]=0x4c000014u; a.cpu.r[1]=4;
+        word(a.flash,0xe5801000u); word(a.flash+4,0xeafffffeu); duplicate();
+        CHECK(orchard_run_clocked(&a,2).status==ORCHARD_OK);
+        clocked_reference(2); same_state();
+        CHECK(a.cpu.instructions==3 && orchard_clock_slots(&a)==1);
+        /* A fault in the second of four slots terminates precisely. */
+        init(model,3); a.cpu.control|=0xc0000000u;
+        word(a.flash,0xe1a00000u); word(a.flash+4,0xee000f10u); duplicate();
+        CHECK(orchard_run_clocked(&a,100).status!=ORCHARD_OK);
+        clocked_reference(100); same_state(); CHECK(a.ticks==1);
+        /* Mode and divider already belong to the portable checkpoint. */
+        init(model,4); a.cpu.control|=0xc0000000u;
+        CHECK(orchard_run_clocked(&a,19).status==ORCHARD_OK);
+        size_t n=orchard_checkpoint_size(&a); CHECK(n<=sizeof saved);
+        CHECK(orchard_checkpoint_save(&a,saved,n)==ORCHARD_OK); duplicate();
+        a.soc.clock[5]=0; a.cpu.control=0x78u;
+        CHECK(orchard_checkpoint_load(&a,saved,n)==ORCHARD_OK);
+        CHECK(orchard_clock_slots(&a)==4); same_state();
+        CHECK(orchard_run_clocked(&a,0).status==ORCHARD_OK); same_state();
+    }
+}
 static void exercise(void) {
     CHECK(orchard_run_divided(NULL,1).status==ORCHARD_BAD_ARGUMENT);
     CHECK(orchard_clock_divisor(NULL)==0);
@@ -132,7 +235,7 @@ static void exercise(void) {
 #define EXPORT(name)
 #endif
 EXPORT("regression") unsigned regression(void) {
-    count_checks=failures=first=0; rng=0x1932410u; exercise(); return failures;
+    count_checks=failures=first=0; rng=0x1932410u; exercise(); exercise_clocked(); return failures;
 }
 EXPORT("checks") unsigned checks(void) { return count_checks; }
 EXPORT("first_failure") unsigned first_failure(void) { return first; }

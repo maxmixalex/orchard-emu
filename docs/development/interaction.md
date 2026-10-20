@@ -61,6 +61,14 @@ bounded between core calls. Browsers can still throttle background Workers.
 The public Normal rate is a functional reference, **not a measured real-machine
 speed**. Physical clock domains and the absolute cursor period remain open.
 
+The calculator's current `run_clocked()` runner follows the guest CPU/peripheral
+ratio, including ARM920T bus mode, within that functional timebase. The tested
+HP39 HOME state issues four CPU slots per peripheral quantum and HP48 issues
+two; the legacy workbench remains one. This reduces arithmetic and Aplet view
+latency without multiplying RTC time or shortening physical key contacts.
+See the [scene comparison](performance.md#calculator-clock-ratios-and-visible-latency-2026-10-20)
+for its evidence and the remaining physical-clock limits.
+
 A local HP39g+ editing probe observes most editing-frame changes about
 1.56M quanta apart, sometimes split across adjacent samples while the framebuffer
 is being redrawn. No change was seen in the empty-HOME 24M-quanta window.

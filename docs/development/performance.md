@@ -1,5 +1,84 @@
 # Performance and the two frontends
 
+## Calculator clock ratios and visible latency (2026-10-20)
+
+This continuation starts from `0215f19`, the merged default release of PR #1.
+That release reduced caught-up Worker CPU use, but left Normal `1+1` response
+essentially unchanged. The current change targets arithmetic and HP39g+
+Aplet Library interaction latency directly.
+
+The calculator now uses `run_clocked()`. It reads the guest's `CLKDIVN` and
+ARM920T CP15 clock-mode bits to choose CPU issue slots per peripheral quantum.
+FastBus uses HCLK; synchronous/asynchronous modes use the FCLK ratio. The
+special 1:4:4 divider is included, and reserved encodings stop explicitly.
+At the tested HOME states HP39g+ uses asynchronous mode and four slots;
+HP48gII uses FastBus with HCLK=FCLK and two slots. The previous calculator
+runner always provided one slot. This relationship is documented in Samsung's
+[S3C2410A manual](https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf),
+sections 7-8 and 7-22 and the included ARM920T clock-mode chapter.
+
+Every slot still executes the interpreter, live memory translation and
+interrupt checks. Peripheral time advances once per quantum; mode changes
+take effect at the next quantum boundary. The Worker drains UART and polls
+USB at most every 256 quanta, bounding a call to 1,024 CPU issue slots.
+The 6 ms Worker task ceiling and earned-credit pacing remain active.
+`run()` and the earlier opt-in `run_divided()` preserve their existing semantics;
+the workbench and native host retain their selected legacy policy.
+
+The 12 MHz functional peripheral/RTC reference and existing Half/Normal/Double
+settings remain. PLL/slow-mode absolute frequencies, ARM instruction cycle
+costs, cache/bus waits and the separate LCD HCLK domain are still uncalibrated.
+The change corrects a functional CPU/peripheral ratio; it does not claim an
+exact real-calculator speed. Restoring an older portable session preserves its
+architectural state and then continues under the calculator's current policy.
+
+### Fixed-state scene witnesses
+
+The initial policy experiment compares legacy `run()` with the pre-existing
+`run_divided()` while restoring the same original-ROM HOME checkpoint,
+preserves every physical key contact and compares complete result pixels.
+Each policy also has an unsampled execution with an identical complete final
+checkpoint. The two tested HOME clock configurations have the same issue ratios
+under `run_divided()` and the new `run_clocked()`; the latter additionally
+handles FastBus and special/reserved encodings. These observations use the
+12 MHz reference, not browser wall time:
+
+| Model / scene | Legacy response | Clock-ratio response | Measurement start |
+| --- | ---: | ---: | --- |
+| HP39g+ `1+1` | 576 ms | 170 ms | Enter contact |
+| HP39g+ `7*8` | 606 ms | 191 ms | Enter contact |
+| HP48gII `1+1` | 235 ms | 117 ms | Enter contact |
+| HP48gII `7*8` | 284 ms | 129 ms | Enter contact |
+| HP39g+ Aplet Library | 1,022 ms | 281 ms | APLET contact |
+| HP39g+ Function symbolic view | 1,347 ms | 366 ms | START contact |
+
+For HP39 arithmetic, the original queued typing interval to Enter remains
+600 ms: total `1+1` response is 1,176 → 770 ms in this fixed-phase experiment.
+HP48 totals are 475 → 357 ms. Faster key timings were tested separately:
+50 ms down / 30 ms released still loses a key in HP39 `7*8` at a shifted start
+phase with the divided policy. The validated HP39 125/75 ms and HP48 50/30 ms
+physical taps therefore remain in the production calculator.
+
+The Aplet witness has two explicit actions: from empty HP39 HOME press APLET
+(scan 49) to display Aplet Library; from that library press START (F6, scan 40)
+to open the initially selected Function symbolic view. This is a reproducible
+interpretation of the user's `39aplet` reminder; the prior exact conversation
+steps were not recoverable. It does not claim to cover every downloaded aplet.
+
+`tools/probe-clock-latency.mjs` records the arithmetic policy comparison.
+`tools/probe-aplet-latency.mjs` produces private exact-checkpoint Aplet fixtures.
+`tools/probe-browser-latency.py --fixtures FILE --models 1` consumes those
+fixtures through the real ROM chooser, Restore dialog and calculator key
+clicks. It requires the matching restore acknowledgement, exact physical scan
+transcript and every expected LCD pixel. Its endpoint is the first matching
+Worker snapshot received on the main thread, before canvas paint. ROMs,
+sessions, checkpoint bytes and raw pixel reports remain local.
+
+Cold-start acceptance, exact candidate identities, actual browser timing and
+remote CI/deployment acceptance are recorded with the performance pull request.
+The historical sections below retain their original baselines and release
+scope; the default-off physical-read experiment stays disabled.
+
 ## User interface
 
 `/emulator/` is the calculator. It contains model selection, Open ROM,

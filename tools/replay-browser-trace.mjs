@@ -88,7 +88,7 @@ export async function replayBrowserTrace({trace, rom, wasm, initial, final, comp
         'USB output differs at call ' + row.seq);
       assert.equal(c.usb_data1(), row.data1, 'USB DATA toggle differs at call ' + row.seq);
     }
-    runCalls += Number(row.name === 'run' || row.name === 'run_divided');
+    runCalls += Number(row.name === 'run' || row.name === 'run_divided' || row.name === 'run_clocked');
     inputCalls += Number(row.name === 'keyboard_matrix' || row.name === 'keyboard_dedicated');
   }
   const finalWords = state();

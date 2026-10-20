@@ -88,11 +88,14 @@ OBSERVER = r'''
   probe.events.push(item);if(probe.events.length>64)probe.events.shift();return item;
  };
  const same=(a,b)=>Boolean(a&&b&&a.length===b.length&&a.every((v,i)=>v===b[i]));
- probe.arm=({pixels,scans})=>{
+ probe.arm=({pixels,scans,inputKind='keyboard'})=>{
   if(!probe.snap?.loaded||!probe.snap.running||probe.snap.stopped||!probe.restoreSnapshot)
    throw Error('Input measurement requires an acknowledged restore and running snapshot');
+  if(!['keyboard','pointer'].includes(inputKind)||!Array.isArray(scans)||!scans.length)
+   throw Error('Invalid input observation');
   if(same(probe.snap.pixels,pixels))throw Error('Expected result is already visible before input');
   probe.watch={workerId:probe.workerId,generation:probe.generation,expected:pixels,expectedScans:scans,
+   inputKind,completionScan:inputKind==='pointer'?scans[scans.length-1]:6,
    sentScans:[],keys:[],firstKeyAt:null,enterKeyAt:null,firstSendAt:null,enterSendAt:null,
    enterCommandSeq:null,resultAt:null,resultSeq:null,resultPixels:null};
  };
@@ -163,19 +166,27 @@ OBSERVER = r'''
    if(data.type==='run'){probe.runCommand=event;probe.runSnapshot=null;probe.pauseCommand=null;probe.pauseSnapshot=null;}
    if(data.type==='pause'){probe.pauseCommand=event;probe.pauseSnapshot=null;}
    const w=probe.watch;
-   if(w&&data.type==='tap-sequence'){
+   if(w&&(data.type==='tap-sequence'||data.type==='tap')){
+    const scans=data.type==='tap'?[data.scan]:data.scans;
     if(w.firstSendAt===null)w.firstSendAt=event.at;
-    w.sentScans.push(...data.scans);
-    if(data.scans.includes(6)){w.enterSendAt=event.at;w.enterCommandSeq=event.seq;}
+    w.sentScans.push(...scans);
+    if(scans.includes(w.completionScan)){w.enterSendAt=event.at;w.enterCommandSeq=event.seq;}
    }
    return super.postMessage(data,...rest);
   }
  };
  addEventListener('keydown',event=>{
-  const w=probe.watch;if(!w||w.resultAt!==null||event.repeat||/^(Shift|Control|Alt|Meta)(Left|Right)$/.test(event.code))return;
+  const w=probe.watch;if(!w||w.inputKind!=='keyboard'||w.resultAt!==null||event.repeat||/^(Shift|Control|Alt|Meta)(Left|Right)$/.test(event.code))return;
   const at=performance.now();w.keys.push({code:event.code,at});
   if(w.firstKeyAt===null)w.firstKeyAt=at;
   if(event.code==='Enter')w.enterKeyAt=at;
+ },true);
+ addEventListener('click',event=>{
+  const w=probe.watch;if(!w||w.inputKind!=='pointer'||w.resultAt!==null)return;
+  const target=event.target?.closest?.('.traditional-key[data-scan]');if(!target)return;
+  const scan=Number(target.dataset.scan),at=performance.now();
+  w.keys.push({code:'scan:'+scan,at});if(w.firstKeyAt===null)w.firstKeyAt=at;
+  if(scan===w.completionScan)w.enterKeyAt=at;
  },true);
 })();
 '''
@@ -430,8 +441,14 @@ def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, bui
           p.snap.model===arg.model&&p.configured?.speed===arg.speed''',
                    {'model': fixture['model'], 'speed': speed})
         measurements = []
-        for index, (frame, keys) in enumerate(zip(fixture['frames'],
-                [('1', 'Shift+Equal', '1', 'Enter'), ('7', 'Shift+Digit8', '8', 'Enter')])):
+        for index, frame in enumerate(fixture['frames']):
+            input_kind = frame.get('input_kind', 'keyboard')
+            arithmetic_keys = {'1+1': ('1', 'Shift+Equal', '1', 'Enter'),
+                               '7*8': ('7', 'Shift+Digit8', '8', 'Enter')}
+            if input_kind not in ('keyboard', 'pointer'):
+                raise ValueError('Unsupported fixture input kind')
+            if input_kind == 'keyboard' and frame['expression'] not in arithmetic_keys:
+                raise ValueError('Unsupported keyboard fixture expression')
             choose_file(page, page.get_by_role('button', name='Restore', exact=True),
                         frame['session'])
             confirm = page.get_by_role('dialog').get_by_role('button', name='Restore', exact=True)
@@ -466,9 +483,13 @@ def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, bui
                 floor = page.evaluate('performance.now()')
                 wait_probe(page, 'p.snap.running&&performance.now()>=arg', floor + before_input_ms)
             page.evaluate('args=>globalThis.__orchardProbe.arm(args)',
-                          {'pixels': frame['pixels'], 'scans': frame['scans']})
-            for key in keys:
-                page.keyboard.press(key)
+                          {'pixels': frame['pixels'], 'scans': frame['scans'], 'inputKind': input_kind})
+            if input_kind == 'pointer':
+                for scan in frame['scans']:
+                    page.locator(f'.traditional-key[data-scan="{scan}"]').click()
+            else:
+                for key in arithmetic_keys[frame['expression']]:
+                    page.keyboard.press(key)
             wait_probe(page, 'p.watch.resultAt !== null')
             result = page.evaluate('''()=>{const w=globalThis.__orchardProbe.watch;return {
               first_key_to_result_ms:w.resultAt-w.firstKeyAt,
@@ -480,14 +501,22 @@ def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, bui
               key_codes:w.keys.map(k=>k.code),sent_scans:w.sentScans,
               pending_at_result:w.pendingAtResult};}''')
             assert result['sent_scans'] == frame['scans'], result
-            assert result['key_codes'] == (['Digit1', 'Equal', 'Digit1', 'Enter'] if index == 0
-                                          else ['Digit7', 'Digit8', 'Digit8', 'Enter']), result
+            expected_codes = ([f'scan:{scan}' for scan in frame['scans']] if input_kind == 'pointer' else
+                              ['Digit1', 'Equal', 'Digit1', 'Enter'] if frame['expression'] == '1+1' else
+                              ['Digit7', 'Digit8', 'Digit8', 'Enter'])
+            assert result['key_codes'] == expected_codes, result
             assert result['enter_key_to_result_ms'] >= 0 and result['enter_worker_send_to_result_ms'] >= 0, result
+            if input_kind == 'pointer':
+                result['last_click_to_result_ms'] = result.pop('enter_key_to_result_ms')
+                result['last_worker_send_to_result_ms'] = result.pop('enter_worker_send_to_result_ms')
+                result['first_click_to_result_ms'] = result.pop('first_key_to_result_ms')
+                result['last_command_seq'] = result.pop('enter_command_seq')
             if diagnostic_trace:
                 result = {key: value for key, value in result.items() if not key.endswith('_ms')}
             measurements.append({'expression': frame['expression'], 'frame_sha256': frame['sha256'],
                                  'start_tick': frame['startTick'], 'start_frame_sha256': frame['start_sha256'],
-                                 'restore_ack': restored, 'instrumented': diagnostic_trace, **result})
+                                 'restore_ack': restored, 'input_kind': input_kind,
+                                 'instrumented': diagnostic_trace, **result})
             # Complete the physical release before pausing. The next expression
             # restores its own checkpoint, avoiding a residual readyAt gap.
             wait_probe(page, 'p.snap.pending===0&&p.snap.seq>=p.watch.resultSeq')
@@ -568,6 +597,7 @@ def main():
     parser.add_argument('--repeats', type=int, default=3, choices=range(1, 8))
     parser.add_argument('--speeds', default='1,0', help='Comma-separated existing speed settings: 0,.5,1,2')
     parser.add_argument('--models', default='1,4', help='Comma-separated original-ROM models: 1,4')
+    parser.add_argument('--fixtures', type=Path, help='Private exact-checkpoint fixture JSON from probe-aplet-latency.mjs; skips repeated cold boot')
     parser.add_argument('--diagnostic-trace', action='store_true', help='Record and replay exact core calls; disables timing evidence')
     parser.add_argument('--before-input-ms', type=int, default=0, help='Diagnostic-only wait after Resume, before typing (0..2000)')
     parser.add_argument('--after-result-ms', type=int, default=0, help='Diagnostic-only dwell after the matching result (0..2000)')
@@ -629,7 +659,7 @@ def main():
               'probe_sha256': probe_sha256,
               'instrumented': args.diagnostic_trace, 'performance_sample': not args.diagnostic_trace,
               'measurement': ('Instrumented diagnostic with exact core API replay; no timing evidence.' if args.diagnostic_trace else
-                              'Actual production UI and Worker; each expression restores an exact starting checkpoint. Keydown to first matching Worker LCD snapshot received on the main thread, before canvas paint. No real-calculator calibration.'),
+                              'Actual production UI and Worker; each scene restores an exact starting checkpoint. Keydown or calculator-key click to first matching Worker LCD snapshot received on the main thread, before canvas paint. No real-calculator calibration.'),
               'diagnostic_waits_ms': {'before_input': args.before_input_ms, 'after_result': args.after_result_ms},
               'evidence_directory': str(evidence.resolve()), 'trials': [],
               'builds': {name: {asset.replace('.', '_') + '_sha256': hashlib.sha256((path / asset).read_bytes()).hexdigest()
@@ -637,10 +667,25 @@ def main():
                          for name, path in roots.items()}}
     try:
         with tempfile.TemporaryDirectory(prefix='orchard-browser-latency-') as tmp:
-            prepared = subprocess.run(['node', '--input-type=module', '-', str(roots['baseline']),
-                                       str(args.rom_directory.resolve()), tmp, ','.join(map(str, models))], input=PREPARE,
-                                      text=True, capture_output=True, check=True, timeout=300)
-            fixtures = json.loads(prepared.stdout)
+            if args.fixtures:
+                fixture_bytes = args.fixtures.read_bytes()
+                fixtures = json.loads(fixture_bytes)
+                assert fixtures['baseline_wasm_sha256'] == report['builds']['baseline']['orchard_wasm_sha256'], 'Fixture baseline WASM differs'
+                assert sorted(f['model'] for f in fixtures['models']) == sorted(models), 'Fixture model selection differs'
+                for fixture in fixtures['models']:
+                    assert hashlib.sha256((args.rom_directory / fixture['name']).read_bytes()).hexdigest() == fixture['rom_sha256'], 'Fixture ROM differs'
+                    for frame in fixture['frames']:
+                        assert len(frame['pixels']) == len(frame['start_pixels']) == 131 * 64
+                        assert hashlib.sha256(bytes(frame['pixels'])).hexdigest() == frame['sha256']
+                        assert hashlib.sha256(bytes(frame['start_pixels'])).hexdigest() == frame['start_sha256']
+                        assert frame['sha256'] != frame['start_sha256'], 'Expected result is already visible'
+                        assert Path(frame['session']).is_file(), 'Fixture session is missing'
+                report['fixture_sha256'] = hashlib.sha256(fixture_bytes).hexdigest()
+            else:
+                prepared = subprocess.run(['node', '--input-type=module', '-', str(roots['baseline']),
+                                           str(args.rom_directory.resolve()), tmp, ','.join(map(str, models))], input=PREPARE,
+                                          text=True, capture_output=True, check=True, timeout=300)
+                fixtures = json.loads(prepared.stdout)
             report['reference'] = {k: v for k, v in fixtures.items() if k != 'models'}
             report['roms'] = [{k: f[k] for k in ('model', 'rom_sha256', 'homeAt')} for f in fixtures['models']]
             report['reference_frames'] = []

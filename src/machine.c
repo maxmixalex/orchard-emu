@@ -92,10 +92,31 @@ unsigned orchard_clock_divisor(const orchard_machine *m) {
     uint32_t div = m->soc.clock[5];
     return (1u + ((div >> 1) & 1u)) * (1u + (div & 1u));
 }
-static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, bool divided) {
+unsigned orchard_clock_slots(const orchard_machine *m) {
+    if (!m || !m->profile) return 0;
+    uint32_t div = m->soc.clock[5] & 7u;
+    unsigned mode = m->cpu.control >> 30;
+    /* ARM920T c1: 00 FastBus, 01 synchronous, 11 asynchronous; 10 reserved.
+       S3C2410A HDIVN1 requires HDIVN=PDIVN=0 (the 1:4:4 setting). */
+    if (mode == 2u || div > 4u) return 0;
+    if (mode == 0u) return div == 4u ? 1u : 1u + (div & 1u);
+    return div == 4u ? 4u : (1u + ((div >> 1) & 1u)) * (1u + (div & 1u));
+}
+enum run_policy { RUN_LEGACY, RUN_DIVIDED, RUN_CLOCKED };
+static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enum run_policy policy) {
     if (!m) return (orchard_stop){.status = ORCHARD_BAD_ARGUMENT};
     if (!m->loaded) return (orchard_stop){.status = ORCHARD_NO_ROM};
     for (uint32_t i = 0; i < budget && m->stop.status == ORCHARD_OK; ++i) {
+        unsigned slots = policy == RUN_CLOCKED ? orchard_clock_slots(m) :
+                         policy == RUN_DIVIDED ? orchard_clock_divisor(m) : 1u;
+        if (!slots) {
+            /* Reject reserved settings before advancing time or issuing work. */
+            bool cp15_reserved = (m->cpu.control >> 30) == 2u;
+            o_stop(m, cp15_reserved ? ORCHARD_UNSUPPORTED_CP15 : ORCHARD_UNPREDICTABLE,
+                   cp15_reserved ? m->cpu.r[15] : 0x4c000014u,
+                   cp15_reserved ? m->cpu.control : m->soc.clock[5]);
+            break;
+        }
         /* A sleeping CPU executes no instruction. Only cross an interval
            already proven free of peripheral transitions, and never postpone
            a wake request or a latched, unmasked CPU interrupt. */
@@ -107,7 +128,6 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, boo
             i += n - 1u;
             continue;
         }
-        unsigned slots = divided ? orchard_clock_divisor(m) : 1u;
         ++m->ticks;
         if (scheduled && m->quiet_left) {
             --m->quiet_left;
@@ -119,7 +139,7 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, boo
             o_irq_update(&m->soc);
             if (scheduled) o_schedule_plan(m);
         }
-        /* Divider changes made by an instruction apply to the next quantum.
+        /* Divider/CPU-mode changes by an instruction apply to the next quantum.
            No slot advances RTC/PWM/LCD or skips the instruction interpreter. */
         for (unsigned slot = 0; slot < slots && m->stop.status == ORCHARD_OK; ++slot) {
             uint32_t pending = m->soc.srcpnd & ~m->soc.intmsk;
@@ -136,20 +156,27 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, boo
 }
 orchard_stop orchard_run(orchard_machine *m, uint32_t budget) {
 #ifdef ORCHARD_REFERENCE
-    return run(m, budget, false, false);
+    return run(m, budget, false, RUN_LEGACY);
 #else
-    return run(m, budget, true, false);
+    return run(m, budget, true, RUN_LEGACY);
 #endif
 }
 orchard_stop orchard_run_divided(orchard_machine *m, uint32_t budget) {
 #ifdef ORCHARD_REFERENCE
-    return run(m, budget, false, true);
+    return run(m, budget, false, RUN_DIVIDED);
 #else
-    return run(m, budget, true, true);
+    return run(m, budget, true, RUN_DIVIDED);
+#endif
+}
+orchard_stop orchard_run_clocked(orchard_machine *m, uint32_t budget) {
+#ifdef ORCHARD_REFERENCE
+    return run(m, budget, false, RUN_CLOCKED);
+#else
+    return run(m, budget, true, RUN_CLOCKED);
 #endif
 }
 orchard_stop o_run_reference(orchard_machine *m, uint32_t budget) {
-    return run(m, budget, false, false);
+    return run(m, budget, false, RUN_LEGACY);
 }
 void orchard_get_state(const orchard_machine *m, orchard_state *state) {
     if (!m || !state) return;
