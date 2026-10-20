@@ -40,13 +40,21 @@ Current source and CI live in
 The historical issue/run links below refer to the earlier repository owner.
 Remote acceptance requires observing the exact revision's Build and Pages
 runs and the deployed revision/assets; local checks alone do not establish it.
-This continuation is prepared locally on `codex/perf-wasm-worker-20261020` for
-a draft pull request. The GitHub write request was interrupted before a remote
-candidate branch or pull request was created. Its remote Build has not been
-dispatched: automatic builds accept
+The reviewed source tree has been published as `aba2923` on
+`codex/perf-wasm-worker-20261020` in
+[draft PR #1](https://github.com/maxmixalex/orchard-emu/pull/1).
+Its remote Build has not been dispatched: automatic builds accept
 only main pushes, the connected API has no dispatch operation, and the browser
 session is signed out. The existing workflow triggers and deployment policy
 are unchanged. Main and Pages do not yet contain this candidate.
+
+The input-timeline continuation uses the same production WASM artifacts and
+unchanged `run()`/hold/gap settings. Eight sampled profiles (two models, two
+expressions, baseline and candidate) match four unsampled baseline runs in
+complete final checkpoint bytes, exact physical-key events, UART and LCD pixels.
+The fixed-phase virtual profiles are also identical between builds. This gate
+attributes guest-time intervals; it is not a browser wall-time benchmark or
+physical-clock calibration. See the [continuation evidence](performance-continuation-2026-10-20.json).
 
 ## Historical frontend and host continuation
 

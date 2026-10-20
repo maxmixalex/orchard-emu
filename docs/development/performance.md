@@ -511,3 +511,69 @@ Use `39g+.bin` and `48gii.bin` only in the private ROM directory; the tools chec
 their documented identities and do not acquire or publish firmware. Raw ROM
 reports, saved sessions and diagnostic traces remain outside source and Pages
 packages. Synthetic timing is opt-in, with no noisy CI speed threshold.
+
+
+## Physical contact input timeline
+
+The continuation after `aba2923` adds `tools/profile-input-latency.mjs` to
+separate PC events, queued physical taps and guest result pixels. The
+[sanitized continuation record](performance-continuation-2026-10-20.json)
+contains this experiment's identities, counters and observation boundaries.
+It uses the same baseline `2e7961a6...` and candidate `87d72134...` WASM as the
+preceding final sweep; no production clock or input duration changed.
+
+All four expression keys are queued at an exact restored checkpoint. The
+first physical contact occurs at that tick, and the existing TapQueue executes
+the remaining contacts. A baseline run without LCD sampling supplies the
+complete final checkpoint and expected frame. Baseline and candidate are then
+restored to the same initial bytes and sampled every 12,000 quanta. All eight
+sampled profiles match their four unsampled references in complete checkpoint
+bytes, UART, exact contact events and final pixels. The virtual profiles are
+also identical between builds.
+
+At the unchanged 12M-quanta functional reference, these fixed-phase observations
+are:
+
+| Model / expression | First contact to Enter down | Enter down to sampled result | First contact to sampled result | Result to sampled segment 5 off |
+| --- | ---: | ---: | ---: | ---: |
+| HP39g+ / 1+1 | 600 ms | 576 ms | 1,176 ms | 55 ms |
+| HP39g+ / 7*8 | 600 ms | 606 ms | 1,206 ms | 57 ms |
+| HP48gII / 1+1 | 240 ms | 235 ms | 475 ms | 77 ms |
+| HP48gII / 7*8 | 240 ms | 284 ms | 524 ms | 62 ms |
+
+These are guest quanta converted to reference milliseconds, not measured wall
+latency or physical-calculator time. The last sampled nonmatch and first match
+are one reference millisecond apart. Earlier short-lived matches can be missed,
+and segment transitions have the same sampling resolution. Segment 5 is the
+raw sixth annunciator level; its physical mapping remains provisional. Its
+later fall must not replace the exact result-frame condition.
+
+For HP39g+ 1+1, the post-Enter interval contains 6,912,000 quanta,
+6,911,909 counted instructions and 1,151 exception entries. The corresponding
+HP48gII interval has 2,820,000 quanta, 2,819,969 instructions and 764 exception
+entries. The small difference between quanta and counted instructions does not
+support a long WFI interval dominating these samples. It does not establish
+that all counted instructions are arithmetic: software exception instructions
+and guest polling also count. Exception entries cannot simply be subtracted
+from the instruction or tick counters.
+
+The earlier Chrome reports started their Enter metric at the PC key event,
+while this tool starts it at the actual matrix contact. Their first physical
+contact guest phases were not recorded. In particular, subtracting these
+fixed-phase profiles from the earlier browser wall times would not measure
+notification overhead. The next profiling target is the post-Enter guest
+execution and its clock relationship. Current clock snapshots report divisors
+4 and 2, but this experiment and the production UI use `run()`, not the opt-in
+`run_divided()`; those ratios alone are not a physical clock calibration.
+
+Reproduce with the exact two recorded production WASM builds and private NORs;
+the output file must not already exist:
+
+```sh
+node tools/profile-input-latency.mjs ../orchard-baseline/dist/orchard.wasm dist/orchard.wasm /private/nors build/input-timeline.json
+```
+
+`--sample-ticks` changes the observation resolution and `--phase-ticks` changes
+the chosen starting phase. Such runs are separate experiments and must retain
+their own report. This measurement does not justify shortening the validated
+hold/gap timings or silently selecting the divided runner.

@@ -1931,12 +1931,14 @@
   },
   "publication": {
     "branch": "codex/perf-wasm-worker-20261020",
-    "review_state": "prepared_locally_for_draft_pull_request",
-    "remote_branch_created": false,
-    "pull_request_created": false,
-    "github_write_request": "Interrupted; subsequent branch read confirmed no remote candidate branch and main unchanged at 83a2d38146b65b8324076fc034e0770d4cc132f1.",
+    "review_state": "draft",
+    "remote_branch_created": true,
+    "pull_request_created": true,
+    "github_write_request": "Resumed successfully using individual blobs; the published source tree exactly matches the reviewed local 4959a63 snapshot.",
     "merge_blocker": "Initial HP48gII Unlimited browser core stop remains unclassified.",
     "remote_ci": "Not dispatched for this candidate. Existing automatic Build triggers accept main pushes only; the connected API lacks dispatch and the browser is signed out.",
-    "candidate_deployed": false
+    "candidate_deployed": false,
+    "pull_request": "https://github.com/maxmixalex/orchard-emu/pull/1",
+    "published_commit": "aba29231257b2b3f882b3a51410f5f1f04e0960c"
   }
 }

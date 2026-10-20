@@ -1,0 +1,250 @@
+{
+  "schema": "orchard-performance-continuation-2026-10-20-v1",
+  "baseline_commit": "83a2d38146b65b8324076fc034e0770d4cc132f1",
+  "reviewed_candidate_commit": "aba29231257b2b3f882b3a51410f5f1f04e0960c",
+  "pull_request": "https://github.com/maxmixalex/orchard-emu/pull/1",
+  "input_timeline": {
+    "passed": true,
+    "generated_at": "2026-10-20T13:56:09.634Z",
+    "node": "v24.19.0",
+    "profiler_sha256": "f4edfa6367af4aea98eb84bfdb0d1758eff28e447fd3129bb294c758dc892fdc",
+    "input_source_sha256": "7587e1c1f040d54a17b1cab376f1b0a5a4feb8ef6cfb78a280824eddc9ccfdc5",
+    "source_report_sha256": "33c3716001d55de60ac0a2f7f64e3a4d60f7c49534ac92800ea1746c67586213",
+    "baseline_wasm_sha256": "2e7961a624c9020fefc3ccb91bd36ef3d926c32fd6556f9ecb74c5313e09006d",
+    "candidate_wasm_sha256": "87d72134c7b7d564bb7dd256eab51432a343e393651c8c554cee44f2c13fc615",
+    "sample_ticks": 12000,
+    "phase_ticks": 0,
+    "window_ticks": 20000000,
+    "sampled_profiles": 8,
+    "unsampled_reference_runs": 4,
+    "boundaries": {
+      "start": "All four keys are queued together at the exact restored baseline checkpoint tick; first physical down occurs at that tick.",
+      "enter": "Actual keyboard_matrix call for calculator Enter down; no PC event or Worker delivery measurement.",
+      "result": "First sampled LCD pixel buffer exactly matching the established arithmetic result; not notification delivery or canvas paint.",
+      "sampling": "Last sampled nonmatch to first sampled match brackets an observation; short earlier matches may be missed.",
+      "time": "Guest functional quanta converted at the unchanged timebase_hz; no wall-time speedup or physical-calculator calibration.",
+      "noninstruction": "ticks minus counted instructions includes WFI and exception entry or other uncounted quanta; it is not a direct sleep-duration measurement.",
+      "pc": "PC page histogram uses guest-time samples, not a host CPU hotspot profile.",
+      "segments": "Raw six annunciator levels; physical mapping of the UI busy indicator remains provisional.",
+      "equivalence": "Sampled baseline and candidate start from the same full checkpoint and end byte-identical to an unsampled baseline run, with identical key events and UART bytes.",
+      "privacy": "ROM and complete checkpoint bytes remain local in memory; this report contains identities and aggregates only."
+    },
+    "browser_comparison_limit": "Earlier browser trials did not record the precise first physical-contact guest tick. Their wall-time samples cannot be subtracted from these fixed-phase guest-time profiles to infer notification latency.",
+    "cases": [
+      {
+        "model": 1,
+        "model_name": "hp39gplus",
+        "expression": "1+1",
+        "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+        "initial_tick": 100000000,
+        "initial_checkpoint_sha256": "50810ec0d7d654ac260da7b53017833321f4af39d5b0ccbd43f0285c9ed3a8fb",
+        "final_checkpoint_sha256": "ee15ebe9ecc73ceea3e3e0db92a25d48ac86e88ae5969f0de7068728965a6789",
+        "expected_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "hold_ticks": 1500000,
+        "gap_ticks": 900000,
+        "clock_divisor": 4,
+        "runner": "run",
+        "functional_timebase_hz": 12000000,
+        "start_to_enter_down": {
+          "ticks": 7200000,
+          "normal_reference_ms": 600,
+          "instructions": 7199804,
+          "exception_entries": 7345,
+          "quanta_without_counted_instruction": 196
+        },
+        "enter_down_to_first_observed_result": {
+          "ticks": 6912000,
+          "normal_reference_ms": 576,
+          "instructions": 6911909,
+          "exception_entries": 1151,
+          "quanta_without_counted_instruction": 91
+        },
+        "start_to_first_observed_result": {
+          "ticks": 14112000,
+          "normal_reference_ms": 1176,
+          "instructions": 14111713,
+          "exception_entries": 8496,
+          "quanta_without_counted_instruction": 287
+        },
+        "sample_bracket_relative_ticks": [
+          14100000,
+          14112000
+        ],
+        "first_later_segment5_off_relative_tick": 14772000,
+        "result_to_segment5_off_reference_ms": 55.0,
+        "variants": [
+          "baseline",
+          "candidate"
+        ],
+        "virtual_profiles_equal": true,
+        "full_checkpoints_match_unsampled_baseline": true,
+        "physical_contacts_equal": true,
+        "uart_equal": true,
+        "final_pixels_equal": true
+      },
+      {
+        "model": 1,
+        "model_name": "hp39gplus",
+        "expression": "7*8",
+        "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+        "initial_tick": 120000000,
+        "initial_checkpoint_sha256": "ee15ebe9ecc73ceea3e3e0db92a25d48ac86e88ae5969f0de7068728965a6789",
+        "final_checkpoint_sha256": "4217f71b7fbaa252969146bc9897bf6be303db3bddd12b87860d11d52ce0c8e4",
+        "expected_frame_sha256": "2086d3abf95089b25ef4ac8cf017b86e32826d5b881f46c3d97e0958c3d6e4d5",
+        "hold_ticks": 1500000,
+        "gap_ticks": 900000,
+        "clock_divisor": 4,
+        "runner": "run",
+        "functional_timebase_hz": 12000000,
+        "start_to_enter_down": {
+          "ticks": 7200000,
+          "normal_reference_ms": 600,
+          "instructions": 7199805,
+          "exception_entries": 7567,
+          "quanta_without_counted_instruction": 195
+        },
+        "enter_down_to_first_observed_result": {
+          "ticks": 7272000,
+          "normal_reference_ms": 606,
+          "instructions": 7271905,
+          "exception_entries": 1157,
+          "quanta_without_counted_instruction": 95
+        },
+        "start_to_first_observed_result": {
+          "ticks": 14472000,
+          "normal_reference_ms": 1206,
+          "instructions": 14471710,
+          "exception_entries": 8724,
+          "quanta_without_counted_instruction": 290
+        },
+        "sample_bracket_relative_ticks": [
+          14460000,
+          14472000
+        ],
+        "first_later_segment5_off_relative_tick": 15156000,
+        "result_to_segment5_off_reference_ms": 57.0,
+        "variants": [
+          "baseline",
+          "candidate"
+        ],
+        "virtual_profiles_equal": true,
+        "full_checkpoints_match_unsampled_baseline": true,
+        "physical_contacts_equal": true,
+        "uart_equal": true,
+        "final_pixels_equal": true
+      },
+      {
+        "model": 4,
+        "model_name": "hp48gii",
+        "expression": "1+1",
+        "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+        "initial_tick": 160000000,
+        "initial_checkpoint_sha256": "96e45b6d2188b2e0d8a2ed207bb430a5da36f9105a9be0f968ed0cd1c77cc69c",
+        "final_checkpoint_sha256": "13ab72672bc5a5ea4c7f6d553e51fa3a9a8bb940571cea015524ffc944879f5a",
+        "expected_frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+        "hold_ticks": 600000,
+        "gap_ticks": 360000,
+        "clock_divisor": 2,
+        "runner": "run",
+        "functional_timebase_hz": 12000000,
+        "start_to_enter_down": {
+          "ticks": 2880000,
+          "normal_reference_ms": 240,
+          "instructions": 2879968,
+          "exception_entries": 3032,
+          "quanta_without_counted_instruction": 32
+        },
+        "enter_down_to_first_observed_result": {
+          "ticks": 2820000,
+          "normal_reference_ms": 235,
+          "instructions": 2819969,
+          "exception_entries": 764,
+          "quanta_without_counted_instruction": 31
+        },
+        "start_to_first_observed_result": {
+          "ticks": 5700000,
+          "normal_reference_ms": 475,
+          "instructions": 5699937,
+          "exception_entries": 3796,
+          "quanta_without_counted_instruction": 63
+        },
+        "sample_bracket_relative_ticks": [
+          5688000,
+          5700000
+        ],
+        "first_later_segment5_off_relative_tick": 6624000,
+        "result_to_segment5_off_reference_ms": 77.0,
+        "variants": [
+          "baseline",
+          "candidate"
+        ],
+        "virtual_profiles_equal": true,
+        "full_checkpoints_match_unsampled_baseline": true,
+        "physical_contacts_equal": true,
+        "uart_equal": true,
+        "final_pixels_equal": true
+      },
+      {
+        "model": 4,
+        "model_name": "hp48gii",
+        "expression": "7*8",
+        "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+        "initial_tick": 180000000,
+        "initial_checkpoint_sha256": "13ab72672bc5a5ea4c7f6d553e51fa3a9a8bb940571cea015524ffc944879f5a",
+        "final_checkpoint_sha256": "608d6db849f1eef00c7371a9bcf9676307c28639e7f8cc74d167316a826e3921",
+        "expected_frame_sha256": "87f9df77d30bcc9cb31185a9bc8de94096e41f060ac5f3d174b63fc6865ab9f8",
+        "hold_ticks": 600000,
+        "gap_ticks": 360000,
+        "clock_divisor": 2,
+        "runner": "run",
+        "functional_timebase_hz": 12000000,
+        "start_to_enter_down": {
+          "ticks": 2880000,
+          "normal_reference_ms": 240,
+          "instructions": 2879967,
+          "exception_entries": 1696,
+          "quanta_without_counted_instruction": 33
+        },
+        "enter_down_to_first_observed_result": {
+          "ticks": 3408000,
+          "normal_reference_ms": 284,
+          "instructions": 3407964,
+          "exception_entries": 373,
+          "quanta_without_counted_instruction": 36
+        },
+        "start_to_first_observed_result": {
+          "ticks": 6288000,
+          "normal_reference_ms": 524,
+          "instructions": 6287931,
+          "exception_entries": 2069,
+          "quanta_without_counted_instruction": 69
+        },
+        "sample_bracket_relative_ticks": [
+          6276000,
+          6288000
+        ],
+        "first_later_segment5_off_relative_tick": 7032000,
+        "result_to_segment5_off_reference_ms": 62.0,
+        "variants": [
+          "baseline",
+          "candidate"
+        ],
+        "virtual_profiles_equal": true,
+        "full_checkpoints_match_unsampled_baseline": true,
+        "physical_contacts_equal": true,
+        "uart_equal": true,
+        "final_pixels_equal": true
+      }
+    ]
+  },
+  "cpu_condition_experiment": {
+    "production_change_retained": false,
+    "conclusion": "AL-inline and LUT-inline exploratory timings were not stable enough to justify a production change.",
+    "evidence_limit": "The original exploratory raw reports were lost in the execution-environment rollback; no new performance claim is based on their message summaries.",
+    "full_workload_candidate_validation": false
+  },
+  "original_browser_stop": {
+    "classified": false,
+    "merge_blocker": true
+  }
+}

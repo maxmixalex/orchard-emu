@@ -21,15 +21,29 @@ owns the exact baseline, measured artifacts, same-input results and new tools.
 core stop after a correct browser result remains explicitly recorded there;
 passing replays alone must not be substituted for explaining that failure.
 The final build passes a separate 24-trial/48-expression Chrome sweep, but the
-original stop remains a merge blocker. Work is prepared locally on
-`codex/perf-wasm-worker-20261020` for a draft pull request. The GitHub tree-write
-request was interrupted; a subsequent read confirmed that the remote candidate
-branch had not been created and main was still `83a2d38`. No pull request was
-created. Branch/PR publication and remote CI acceptance remain pending.
+original stop remains a merge blocker. The reviewed source tree is now preserved
+in remote commit `aba2923` on `codex/perf-wasm-worker-20261020` and
+[draft PR #1](https://github.com/maxmixalex/orchard-emu/pull/1).
+This remote tree exactly matches the earlier local `4959a63` snapshot, recovered
+after an interrupted write and execution-environment rollback. Main remains
+`83a2d38`; remote CI acceptance and Pages publication remain pending.
 The maintained browser probe preserves future
 stop observations and recovers a private Save checkpoint for diagnosis.
 Continue physical clock/input calibration and broader OS use from this state,
 preserving the original failed trial and keeping ROMs/checkpoints private.
+
+The new [input timeline record](performance.md#physical-contact-input-timeline)
+separates queued taps from the actual Enter contact and sampled result pixels.
+Eight sampled profiles match four unsampled baseline runs in their complete
+checkpoints, pixels, UART and physical-key events. At the unchanged functional
+timebase, the HP39g+ `1+1` witness is 600 ms to Enter and 576 ms after Enter;
+the latter contains about 6.912M counted instructions. These fixed guest phases
+are not directly interchangeable with earlier browser wall-time samples.
+Do not shorten hold/gap timings or select the divided runner based on this
+measurement alone. Profile the post-Enter guest execution and clock relationship
+next. The additional AL/condition-table prototypes were not adopted because
+their exploratory timings were unstable; their raw reports were lost during
+the rollback and are not retained as performance evidence.
 
 ## Earlier handoffs
 
