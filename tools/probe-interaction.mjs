@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Optional local original-NOR check. No firmware or initial RAM is distributed.
+// Historical fixed-timing witness: HP39 125/75 ms and HP48 50/30 ms.
+// These values do not follow the production Worker defaults. Use the explicit
+// --hold/--gap options of probe-input-dwell.mjs for release-gap candidates.
 import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';

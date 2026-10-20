@@ -1,8 +1,33 @@
 # Continuation handoff
 
+## HP39 release gap after PR #2 (2026-10-20)
+
+The continuation from merged `ac16d1d` changes only the HP39 calculator release
+gap: **125/50 ms** replaces 125/75 ms. The press remains 1,500,000 quanta, and
+the gap is now 600,000. HP48 stays at 50/30 ms; the workbench stays at 2M/2M.
+The Worker retains legacy `run()` and the existing functional clock. Neither
+research runner nor experimental physical reads is enabled by this change.
+
+The isolated 125/30 ms trial failed immediately because the ROM missed the
+second `1` in `1+1`. The selected 125/50 ms timing passed 80 arithmetic
+executions across 74 distinct expression/phase combinations, checking every
+LCD pixel and all physical contacts. Independent repeated-key `11+1` and
+ALPHA/`KeyA` checks passed another 32 executions: 16 old-gap references and
+16 new-gap cases. The final frame is checked after release and the final gap.
+See [the current gap record](performance.md#hp39-release-gap-follow-up-2026-10-20)
+and [input behavior](interaction.md#hp39-release-gap).
+
+The four-key ENTER contact moves from 600 to 525 ms in functional-reference
+time. This is a 75 ms queue reduction, not a browser wall-time result. A single
+APLET click has no earlier queued key and gains no shorter initial contact.
+`tools/probe-interaction.mjs` retains its explicit historical 125/75 ms HP39
+witness; use `probe-input-dwell.mjs --runner run --hold 1500000 --gap 600000`
+for current timing experiments. Historical records below retain their original
+numbers and must not be read as current default timing instructions.
+
 ## Visible calculator latency after PR #1 (2026-10-20)
 
-The current continuation starts at `0215f19`. The calculator retains its
+The PR #2 continuation started at `0215f19`. The calculator retains its
 previous `run()` default and single-step behavior. `run_idle()` and
 `run_clocked()` remain explicit research APIs, with their core implementation,
 independent oracle and scene tools preserved. The first implements guest
@@ -20,7 +45,7 @@ The run-policy flag is host-only and reset at API boundaries. Checkpoint version
 1 already stores the sleeping state. Legacy runners preserve their earlier
 register-only behavior, and the wrapper acknowledgement delay remains uncalibrated.
 
-The [current scene record](performance.md#calculator-clock-ratios-and-visible-latency-2026-10-20)
+The [PR #2 scene record](performance.md#calculator-clock-ratios-and-visible-latency-2026-10-20)
 targets `1+1`, Aplet Library and Function START. The early 576→170 and
 1,022→281 ms observations describe functional-reference time under a rejected
 ratio policy; they are not browser gains of the shipped default. Ratio plus
@@ -32,8 +57,8 @@ Its arithmetic guest instruction reductions are research evidence and are not
 enabled benefits of the shipped calculator. Use the
 [PR #2 acceptance](https://github.com/maxmixalex/orchard-emu/pull/2) for the exact
 retained scope, candidate identities and negative evidence. HP39 50/30 ms key timings
-still lose `7*8` at another phase even with the faster CPU policy, so retain
-125/75 ms. A new 100/60 ms trial also loses `1+1` at +12,000 quanta under
+lost `7*8` at another phase even with the faster CPU policy, so PR #2 retained
+125/75 ms. Its separate 100/60 ms trial also lost `1+1` at +12,000 quanta under
 one-slot IDLE; the retained timings pass all 16 phase cases. HP48 retains
 50/30 ms. The production Worker limits calculator calls
 to 1,024 peripheral quanta and at most 1,024 CPU slots between I/O drains.

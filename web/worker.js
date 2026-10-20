@@ -102,7 +102,7 @@ self.onmessage=({data})=>{
       // The HP39 debounce path needs a longer dwell: a shorter trial lost
       // multiply. Debug keeps its historical 2M/2M deterministic schedule.
       taps.hold=audience==='calculator'?(model===1?1500000:600000):2000000;
-      taps.gap=audience==='calculator'?(model===1?900000:360000):2000000;
+      taps.gap=audience==='calculator'?(model===1?600000:360000):2000000;
       if(core.create(model)) throw new Error('Machine initialization failed');
       applySetup(core,model,preset);frameView=isPlayable(model,preset)?1:0;
       usb=new VirtualUSB(core,core.timebase_hz(),data=>postMessage({type:'usb-status',generation,...data}));
