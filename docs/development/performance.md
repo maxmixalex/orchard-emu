@@ -1,5 +1,158 @@
 # Performance and the two frontends
 
+## Calculator clock ratios and visible latency (2026-10-20)
+
+This continuation starts from `0215f19`, the merged default release of PR #1.
+That release reduced caught-up Worker CPU use, but left Normal `1+1` response
+essentially unchanged. The current change investigates arithmetic and HP39g+
+Aplet Library interaction latency directly.
+
+The calculator retains `run()` for continuous execution and single-step.
+`run_idle()` and `run_clocked()` remain explicit research APIs. Their semantic
+checks pass, but browser scene measurements have not established acceptable
+default interaction latency. Increasing the CPU issue ratio regressed HP39
+arithmetic; the later one-slot IDLE candidate reduced guest work but retained
+unexplained slow Library samples. Both observations are preserved below.
+
+Active CPU slots still execute the interpreter, live memory translation and
+interrupt checks. Peripheral time advances once per quantum. The Worker drains
+UART and polls USB at most every 1,024 quanta, bounding a call to 1,024 CPU slots.
+The 6 ms Worker task ceiling and earned-credit pacing remain active.
+`run()` and the earlier opt-in `run_divided()` preserve their existing semantics;
+the workbench and native host retain their selected legacy policy.
+
+Both research APIs, `run_idle()` and `run_clocked()`, honor aligned word writes
+to `CLKCON.IDLE` (bit 2).
+The CPU sleeps after the writing instruction, while peripherals and the
+functional clock continue. An interrupt source enabled by `INTMSK` wakes the
+core; the CPU's IRQ/FIQ masks still govern exception entry. The register bit
+is sticky, so each write requests sleep, but a retained one does not put a
+woken core back to sleep. Samsung's
+[S3C2410A manual](https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf)
+describes this in sections 7-11, 7-17 and 7-21. The CPU-wrapper acknowledgement
+delay is not calibrated.
+This uses the existing scheduler and serialized sleeping state; checkpoint
+version 1 remains compatible. The legacy runners retain register-only writes.
+
+The 12 MHz functional peripheral/RTC reference and existing Half/Normal/Double
+settings remain. PLL/slow-mode absolute frequencies, ARM instruction cycle
+costs, cache/bus waits and the separate LCD HCLK domain are still uncalibrated.
+The default keeps one CPU slot per quantum and does not claim an exact
+real-calculator speed. Restoring an older portable session preserves its
+architectural state and continues under the unchanged legacy policy.
+
+The separate research API `run_clocked()` reads guest `CLKDIVN` and ARM920T
+CP15 bus mode to select HCLK in FastBus or FCLK in synchronous/asynchronous
+mode. It includes special 1:4:4 and explicit reserved-setting stops, with mode
+changes applied at the next quantum. Tested HP39 HOME uses four slots and
+HP48 uses two. This relationship follows the manual's sections 7-8, 7-22 and
+ARM920T clock-mode chapter, but the browser evidence does not justify making
+it the default. The research `run_idle()` preserves the previous one-slot
+functional rate; it does not silently cap or reinterpret `run_clocked()`.
+
+### Fixed-state scene witnesses
+
+The initial policy experiment compares legacy `run()` with the pre-existing
+`run_divided()` while restoring the same original-ROM HOME checkpoint,
+preserves every physical key contact and compares complete result pixels.
+Each policy also has an unsampled execution with an identical complete final
+checkpoint. The two tested HOME clock configurations have the same issue ratios
+under `run_divided()` and the new `run_clocked()`; the latter additionally
+handles FastBus and special/reserved encodings. These observations use the
+12 MHz reference, not browser wall time:
+
+| Model / scene | Legacy response | Clock-ratio response | Measurement start |
+| --- | ---: | ---: | --- |
+| HP39g+ `1+1` | 576 ms | 170 ms | Enter contact |
+| HP39g+ `7*8` | 606 ms | 191 ms | Enter contact |
+| HP48gII `1+1` | 235 ms | 117 ms | Enter contact |
+| HP48gII `7*8` | 284 ms | 129 ms | Enter contact |
+| HP39g+ Aplet Library | 1,022 ms | 281 ms | APLET contact |
+| HP39g+ Function symbolic view | 1,347 ms | 366 ms | START contact |
+
+For HP39 arithmetic, the original queued typing interval to Enter remains
+600 ms: total `1+1` response is 1,176 → 770 ms in this fixed-phase experiment.
+HP48 totals are 475 → 357 ms. Faster key timings were tested separately:
+50 ms down / 30 ms released still loses a key in HP39 `7*8` at a shifted start
+phase with the divided policy. The validated HP39 125/75 ms and HP48 50/30 ms
+physical taps therefore remain in the production calculator.
+
+With the one-slot IDLE research runner, a separate 100/60 ms HP39 experiment
+also failed: `1+1` at a +12,000-quantum start phase never reached the expected
+result in the 20M-quantum window. The guest did not stop. That sweep was
+terminated at its first failing case and is not counted as complete. The
+original 125/75 ms pair passed all 16 arithmetic phase cases under `run_idle()`.
+
+The Aplet witness has two explicit actions: from empty HP39 HOME press APLET
+(scan 49) to display Aplet Library; from that library press START (F6, scan 40)
+to open the initially selected Function symbolic view. This is a reproducible
+interpretation of the user's `39aplet` reminder; the prior exact conversation
+steps were not recoverable. It does not claim to cover every downloaded aplet.
+
+The first actual Chrome comparison of the ratio-only candidate (`beebfddc…`,
+before implementing IDLE) did **not** establish an overall latency improvement.
+All 12 Aplet results in three alternating Normal-speed rounds matched every
+LCD pixel without a guest stop or page/Worker error. Library click-to-result
+medians were 3,449 → 1,588 ms, but Function START medians regressed from
+1,903 → 3,292 ms. Individual rounds varied substantially. The ratio-only
+candidate was therefore held back while investigating actual guest work and
+implementing the missing IDLE behavior. Do not quote the functional-reference
+table above as a browser speedup. A separate arithmetic attempt timed out in
+the first baseline Restore action before any measurement; the checkpoint was
+actually restored and the evidence is retained as a setup failure.
+
+A second production candidate (`6ecbcc6b…`) combined the ratio model with
+IDLE. All 36 scene results in three alternating Normal-speed rounds matched
+their complete LCD reference, but HP39 `1+1` regressed in every round:
+1,333/1,218/1,251 ms baseline versus 2,904/2,244/2,175 ms candidate, measured
+from the first actual keydown to the first matching Worker frame. The cold-HOME
+instruction witness explains a material risk: typing through the first result
+took 22.61M instructions with ratio plus IDLE versus 14.11M with legacy issue.
+Much smaller idle-window instruction counts did not establish faster arithmetic.
+This candidate was also rejected as the calculator default.
+
+The one-slot `run_idle()` candidate (`76db5cb…` WASM, `fb284913…` Worker)
+isolates sleep handling from the extra issue slots. Its original-ROM and
+generated-program semantic checks pass. In three alternating uninstrumented
+Chrome 155 Normal rounds, all 36 scene results matched every LCD pixel with
+no guest stop or page/Worker error. First actual keydown/click to first matching
+Worker frame on the main thread, before canvas paint, produced these medians:
+
+| Scene | Baseline | One-slot IDLE candidate |
+| --- | ---: | ---: |
+| HP39g+ `1+1` | 1,228 ms | 1,212 ms |
+| HP39g+ `7*8` | 1,279 ms | 1,337 ms |
+| HP39g+ Aplet Library | 1,017 ms | 2,616 ms |
+| HP39g+ Function START | 1,354 ms | 1,361 ms |
+| HP48gII `1+1` | 475 ms | 492 ms |
+| HP48gII `7*8` | 554 ms | 561 ms |
+
+The Library candidate samples were 2,881/2,616/1,168 ms. Their host-time
+variation remains unexplained; equal guest timing and successful instrumented
+replays do not resolve those browser observations. Default activation is
+withheld, and the production Worker retains its previous `run()` policy.
+
+The same research candidate reduced first-contact-to-result guest instruction
+counts by 16.77% / 16.85% for HP39 `1+1` / `7*8`, and 18.20% / 8.48% for HP48.
+These are research-runner work reductions, not measured host CPU-time savings
+or benefits enabled in the shipped calculator. The core APIs, independent
+clock/IDLE oracle and scene tools remain available for explicit investigation.
+
+`tools/probe-clock-latency.mjs` records the arithmetic policy comparison.
+`tools/probe-aplet-latency.mjs` produces private exact-checkpoint Aplet fixtures.
+`tools/probe-browser-latency.py --fixtures FILE --models 1` consumes those
+fixtures through the real ROM chooser, Restore dialog and calculator key
+clicks. It requires the matching restore acknowledgement, exact physical scan
+transcript and every expected LCD pixel. Its endpoint is the first matching
+Worker snapshot received on the main thread, before canvas paint. ROMs,
+sessions, checkpoint bytes and raw pixel reports remain local.
+
+Cold-start acceptance, exact candidate identities, actual browser timing and
+remote CI/deployment acceptance are recorded with
+[PR #2](https://github.com/maxmixalex/orchard-emu/pull/2).
+The historical sections below retain their original baselines and release
+scope; the default-off physical-read experiment stays disabled.
+
 ## User interface
 
 `/emulator/` is the calculator. It contains model selection, Open ROM,

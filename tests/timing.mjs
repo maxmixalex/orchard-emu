@@ -44,7 +44,7 @@ async function fixture(){
  const memory={buffer:new ArrayBuffer(16384)};
  function setClock(n){clock=n;const a=new Uint32Array(memory.buffer,128,33);a[22]=n>>>0;a[23]=Math.floor(n/4294967296);}
  const core=new Proxy({memory,snapshot:()=>{setClock(clock);return 128;},profile:(_,field)=>[4,8,1,1][field],
-  run:n=>{setClock(clock+n);return 0;},reset:()=>setClock(0),create:()=>{setClock(0);return 0;},load:()=>{loads++;setClock(0);return 0;},
+  run:n=>{setClock(clock+n);return 0;},run_clocked:n=>{setClock(clock+n);return 0;},run_idle:n=>{setClock(clock+n);return 0;},reset:()=>setClock(0),create:()=>{setClock(0);return 0;},load:()=>{loads++;setClock(0);return 0;},
   keyboard_matrix:(col,row,down)=>{presses.push({scan:col*7+row,down,tick:clock});return 0;},
   keyboard_dedicated:(pin,down)=>{presses.push({pin,down,tick:clock});return 0;},
   rom_buffer:()=>1024,frame_buffer:()=>512,annunciator_buffer:()=>600,usb_snapshot:()=>768,

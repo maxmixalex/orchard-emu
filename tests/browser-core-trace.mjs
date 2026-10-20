@@ -13,21 +13,21 @@ view.setUint32(0, 0xea000002, true); // Branch to the explicit diagnostic stop.
 view.setUint32(16, 0xe7f000f0, true);
 const metadata = {generation: 7, model: 1, preset: 'strict'};
 let captured, epochs = [];
-async function make(options = {}) {
+async function make(options = {}, firmware = rom) {
   const {instance: {exports: raw}} = await WebAssembly.instantiate(wasm, {});
   const c = attachCoreTrace({...raw, unrepresented_mutation: () => 0}, {
     context: () => metadata, onCapture: trace => { captured = trace; },
     onEpoch: epoch => epochs.push(epoch), ...options,
   });
   assert.equal(c.create(1), 0);
-  new Uint8Array(c.memory.buffer, c.rom_buffer(), rom.length).set(rom);
-  assert.equal(c.load(rom.length), 0);
+  new Uint8Array(c.memory.buffer, c.rom_buffer(), firmware.length).set(firmware);
+  assert.equal(c.load(firmware.length), 0);
   return c;
 }
-function artifact(trace) {
+function artifact(trace, firmware = rom) {
   const {initial, final, ...data} = trace;
-  return {trace: {...structuredClone(data), rom_sha256: hash(rom), wasm_sha256: hash(wasm),
-    initial_sha256: hash(initial), final_sha256: hash(final)}, initial, final, wasm, rom};
+  return {trace: {...structuredClone(data), rom_sha256: hash(firmware), wasm_sha256: hash(wasm),
+    initial_sha256: hash(initial), final_sha256: hash(final)}, initial, final, wasm, rom:firmware};
 }
 const c = await make();
 assert.equal(c.keyboard_attach(1), 0);
@@ -113,9 +113,29 @@ const heldReport = await replayBrowserTrace(heldArtifact);
 assert.equal(heldReport.run_calls, 1); assert.equal(heldReport.key_transition_calls, 1);
 assert(heldReport.every_call_result_equal && heldReport.complete_checkpoint_equal);
 
+// Idle-aware and ratio-aware policies retain the same exact-call diagnostics,
+// including a stopped call that consumes fewer quanta than requested.
+const clockedRom = rom.slice(), clockedView = new DataView(clockedRom.buffer);
+for(let at=16;at<48;at+=4)clockedView.setUint32(at,0xe1a00000,true);
+clockedView.setUint32(48,0xe7f000f0,true);
+for (const policy of ['run_idle','run_clocked']) {
+  const core = await make({},clockedRom);
+  const stopTick=Math.ceil(10/(policy==='run_clocked'?core.clock_slots():1));
+  assert.equal(core[policy](1), 0);
+  assert.equal(core[policy](16), 9);
+  const capture = captured;
+  assert(capture.complete && capture.reason === 'core-stop');
+  assert.deepEqual(capture.calls.map(row => [row.name,row.before,row.after]),
+    [[policy,0,1],[policy,1,stopTick]]);
+  const replay = await replayBrowserTrace(artifact(capture,clockedRom));
+  assert.equal(replay.run_calls,2);
+  assert(replay.complete_checkpoint_equal);
+}
+
 console.log(JSON.stringify({passed: true, generated_guest: true, original_rom_reproduced: false,
   call_results_equal: true, complete_checkpoint_equal: true, exact_key_ticks: true,
   immutable_stop_capture: true, held_key_stop_preserved: true, release_changes_checkpoint: true,
   held_key_calls: heldReport.calls, held_key_run_calls: heldReport.run_calls,
+  idle_stop_replay: true, clocked_stop_replay: true,
   isolated_epochs: true, negative_checks: negativeChecks,
   wasm_sha256: hash(wasm), calls: report.calls, run_calls: report.run_calls, stop: report.stop}));

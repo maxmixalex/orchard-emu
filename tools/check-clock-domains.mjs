@@ -12,4 +12,4 @@ const native=JSON.parse(run(`${directory}/orchard-clock-domains${process.platfor
 const {instance:{exports:test}}=await WebAssembly.instantiate(await readFile(file),{});
 assert.equal(test.regression(),0,`Clock regression failed at line ${test.first_failure()}`);
 assert.equal(test.checks(),native.checks);assert.equal(native.failures,0);
-console.log(`Divided clock: ${native.checks} checks on native and WASM; six profiles, ratios, WFI/IRQ, stop precision, MMIO, checkpoint and full-state partition replay. Not physical clock calibration.`);
+console.log(`Functional clocks: ${native.checks} checks on native and WASM; six profiles, legacy/divided/clocked/one-slot-IDLE policies, CPU modes and divider ratios, WFI/CLKCON.IDLE, IRQ/FIQ and pin wake, sticky/repeated writes, stop precision, MMIO, checkpoint and full-state partition replay. Not physical clock calibration.`);

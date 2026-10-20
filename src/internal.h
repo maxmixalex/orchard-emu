@@ -129,6 +129,7 @@ typedef struct {
 struct orchard_machine {
     const orchard_profile *profile;
     uint32_t quiet_left, deferred_ticks; /* Host-only, flushed at public boundaries. */
+    bool idle_write_enabled; /* Host-only policy scope; never saved in a checkpoint. */
     o_translation translations[O_TRANSLATIONS];
     o_cpu cpu;
     o_soc soc;

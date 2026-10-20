@@ -7,13 +7,13 @@ import vm from 'node:vm';
 
 const python=readFileSync(new URL('../tools/probe-browser-latency.py',import.meta.url),'utf8');
 const observer=python.match(/OBSERVER = r'''([\s\S]*?)'''/)[1];
-let now=0;const keys=[];
+let now=0;const keys=[],clicks=[];
 class NativeWorker extends EventTarget {
   postMessage(){}
   receive(data){const event=new Event('message');event.data=data;this.dispatchEvent(event);}
 }
 const scope={Worker:NativeWorker,performance:{now:()=>++now},
-  addEventListener:(type,fn)=>{if(type==='keydown')keys.push(fn);}};
+  addEventListener:(type,fn)=>{if(type==='keydown')keys.push(fn);if(type==='click')clicks.push(fn);}};
 vm.runInNewContext(observer,scope);
 const p=scope.__orchardProbe,worker=new scope.Worker(),other=new scope.Worker();
 const send=(type,extra={})=>worker.postMessage({type,generation:1,...extra});
@@ -71,6 +71,21 @@ send('tap-sequence',{scans:[26,5,19,6]});
 snapshot({running:true,pixels:new Uint8Array([3,4])});
 assert.equal(p.watch.resultAt,null,'Wrong or missing physical scans reject coincidental result pixels');
 assert.deepEqual([...p.watch.keys.map(x=>x.code)],['Digit1','Enter'],'Modifier-only events do not start the input clock');
+
+// APLET and other non-Enter UI scenes use actual calculator click events.
+snapshot({running:true});p.arm({pixels:[3,4],scans:[49],inputKind:'pointer'});
+key('Enter');snapshot({running:true,pixels:new Uint8Array([3,4])});
+assert.equal(p.watch.firstKeyAt,null,'Keyboard events do not start a pointer scene');
+assert.equal(p.watch.resultAt,null);
+for(const fn of clicks)fn({target:{closest:()=>null}});
+assert.equal(p.watch.firstKeyAt,null,'Clicks outside the calculator do not start the scene');
+for(const fn of clicks)fn({target:{closest:()=>({dataset:{scan:'49'}})}});
+snapshot({running:true,pixels:new Uint8Array([3,4])});
+assert.equal(p.watch.resultAt,null,'A click alone does not prove Worker delivery');
+send('tap',{scan:49});snapshot({running:true,pixels:new Uint8Array([3,4])});
+assert(p.watch.resultAt>p.watch.enterSendAt);
+assert.deepEqual([...p.watch.sentScans],[49]);
+assert.deepEqual([...p.watch.keys.map(x=>x.code)],['scan:49']);
 
 send('pause');snapshot();
 assert.equal(p.pauseSnapshot.commandSeq,p.pauseCommand.seq);

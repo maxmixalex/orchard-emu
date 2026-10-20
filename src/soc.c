@@ -193,7 +193,19 @@ bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t
         if (o_gpio_register(m, address, &value, true)) return true;
         if (m->stop.status != ORCHARD_OK) return false;
         uint32_t *reg = plain_register(s, address);
-        if (reg) { *reg = value; return true; }
+        if (reg) {
+            *reg = value;
+            /* S3C2410A manual 7-11, 7-17 and 7-21: a CLKCON.IDLE write
+               requests core sleep; peripherals keep running until an interrupt
+               wakes the CPU. The bit is not automatically cleared on wake.
+               Trigger on each write, never on the sticky register level. The
+               functional model enters after the writing instruction completes;
+               CPU-wrapper ACK latency is not calibrated. Legacy runners retain
+               their original register-only semantics. */
+            if (m->idle_write_enabled && address == 0x4c00000cu && (value & 4u))
+                m->cpu.sleeping = true;
+            return true;
+        }
         if (address >= 0x51000000u && address <= 0x51000040u && timer_register(m, address, &value, true)) return true;
         switch (address) {
         case 0x4a000000: s->srcpnd &= ~value; return true;

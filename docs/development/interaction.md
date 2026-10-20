@@ -61,6 +61,16 @@ bounded between core calls. Browsers can still throttle background Workers.
 The public Normal rate is a functional reference, **not a measured real-machine
 speed**. Physical clock domains and the absolute cursor period remain open.
 
+The production Worker retains `run()` for continuous execution and single-step,
+with one CPU slot per peripheral quantum and the existing physical key and RTC
+timings. `run_idle()` and `run_clocked()` are explicit research APIs; neither is
+selected by the UI. Both implement guest CLKCON.IDLE sleep and interrupt wakeup;
+the latter also models CPU/peripheral issue ratios. Browser arithmetic regressed
+under the ratio policy, and the one-slot IDLE candidate retained unexplained
+slow Aplet Library samples despite passing its guest-state checks.
+See the [scene comparison](performance.md#calculator-clock-ratios-and-visible-latency-2026-10-20)
+for its evidence and the remaining physical-clock limits.
+
 A local HP39g+ editing probe observes most editing-frame changes about
 1.56M quanta apart, sometimes split across adjacent samples while the framebuffer
 is being redrawn. No change was seen in the empty-HOME 24M-quanta window.
