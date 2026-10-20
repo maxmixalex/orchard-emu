@@ -45,6 +45,22 @@ next. The additional AL/condition-table prototypes were not adopted because
 their exploratory timings were unstable; their raw reports were lost during
 the rollback and are not retained as performance evidence.
 
+The input attribution was subsequently preserved in commit `db2aa40`. A second
+eight-profile experiment observes clock registers at existing core-call
+boundaries and matches every earlier measurement field and final checkpoint.
+It captures CLKSLOW transitions between `0x30` and zero during input, with
+frequent CLKCON changes. Use these observations to investigate the clock and
+power model alongside post-Enter guest work; initial divider values alone do
+not calibrate physical speed. The existing production runner is unchanged.
+
+The [opt-in stop trace and replay tools](performance.md#opt-in-stop-capture-and-replay)
+capture the first stopped checkpoint before Pause releases keys. A bounded
+HP48gII Unlimited diagnostic group passed four same-WASM replays, covering
+105,412 API calls and 52,240 run calls. These instrumented traces have different
+actual browser input phases and are not A/B timing samples. Preserve the old
+failure, keep the draft PR unmerged, and use a future captured failing trace
+to establish its cause; successful new traces do not classify the old stop.
+
 ## Earlier handoffs
 
 The HOME continuation has been reconciled on top of remote `6372cbe`, not

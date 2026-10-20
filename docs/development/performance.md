@@ -577,3 +577,107 @@ node tools/profile-input-latency.mjs ../orchard-baseline/dist/orchard.wasm dist/
 the chosen starting phase. Such runs are separate experiments and must retain
 their own report. This measurement does not justify shortening the validated
 hold/gap timings or silently selecting the divided runner.
+
+### Clock observations during input
+
+The profiler also copies all six clock registers after each existing successful
+`run()` call. Its canonical reference does not sample clocks inside the run loop.
+The new eight-profile run passes the same four full-checkpoint references, and
+every pre-existing measurement field matches the preceding input report
+exactly. Each profile contains 20,001 clock snapshots, separated by 736 to
+1,024 quanta. These are boundary observations, not an MMIO write trace; a value
+changed and restored within one core call can be missed.
+
+| Model / expression | Observed CLKCON changes | Observed CLKSLOW changes | Observed CLKSLOW values |
+| --- | ---: | ---: | --- |
+| HP39g+ / 1+1 | 1,849 | 8 | `0x30`, `0x0` |
+| HP39g+ / 7*8 | 1,830 | 8 | `0x30`, `0x0` |
+| HP48gII / 1+1 | 1,548 | 2 | `0x30`, `0x0` |
+| HP48gII / 7*8 | 1,052 | 2 | `0x30`, `0x0` |
+
+Both builds have identical clock observations. No boundary sample observes a
+change to LOCKTIME, MPLLCON, UPLLCON or CLKDIVN in these windows. For HP39g+
+`1+1`, CLKSLOW is first observed at zero 57,216 quanta after Enter and back at
+`0x30` after 7,571,264 quanta. The result pixels first match after 6,912,000
+quanta. Thus an initial or final snapshot alone misses a relevant change during
+the result interval. The record includes each change's previous observation
+boundary; these ticks are not exact register-write timestamps.
+
+The [Samsung S3C2410A manual](https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf),
+sections 7-21 and 7-22, defines `0x30` as slow mode with MPLL off and notes that
+the CLKCON IDLE request bit does not clear automatically. It also describes a
+CLKDIVN bit-2 mode outside the current low-two-bit divider implementation.
+An initial PLL register value therefore does not establish the active physical
+CPU frequency, and a set IDLE bit does not establish that the CPU remains idle.
+The emulator currently stores these clock MMIO values without a complete
+PLL/slow-mode/IDLE model. These observations identify a hardware-modeling task;
+they do not justify switching the production runner or changing the 12M
+functional reference in this performance patch.
+
+## Opt-in stop capture and replay
+
+`tools/probe-browser-latency.py --diagnostic-trace` adds a test-server wrapper
+around the production Worker's core API. The default probe and shipped Worker
+remain uninstrumented. The wrapper records guest-affecting calls, their exact
+arguments, return values, before/after ticks and stop state, together with
+Worker generation and checkpoint epoch. It copies UART/USB input and output
+bytes needed for replay. Unknown operations, traps, missing payloads and
+overflow mark the trace incomplete; strict replay refuses incomplete traces.
+
+At the first core stop, the wrapper freezes the call sequence and complete
+checkpoint synchronously, before Pause can release held keys. A later Save or
+cleanup cannot replace this immediate stopped state. Successful input trials
+can also capture complete records at explicit diagnostic boundaries. Raw
+traces and both checkpoint files stay private; only identities, counts and
+acceptance results belong in public evidence.
+
+`tools/replay-browser-trace.mjs` verifies the ROM and WASM identities, restores
+the initial complete checkpoint and checks each recorded API return, tick and
+stop result, plus UART/USB bytes. It then compares all final CPU state words
+and the entire final checkpoint. This is not a claim that every intermediate
+CPU word or LCD frame was compared. A different WASM requires the explicit
+`--compare-build` option; same-build replay is the default.
+
+Both generated-guest Chrome recovery paths passed in this execution instance:
+the uninstrumented production Worker and the opt-in wrapper. The wrapped
+generated stop was captured at tick 2 and replayed successfully. The generated
+browser witness has no held key at its stop; its result establishes immediate
+capture and recovery, while held-key immutability and malformed trace handling
+also have separate Node controls.
+
+Final review tightened two diagnostic boundaries: operation names must be
+strings before API lookup, and sending a checkpoint restore immediately
+invalidates the preceding trace association until a new checkpoint-load epoch
+arrives. Fifteen negative trace controls and pending-restore observer controls
+pass. A separate three-call generated Node witness stops with a key held, then
+proves that release changes the live checkpoint while the captured checkpoint
+remains immutable and strictly replays. The final instrumented generated
+Chrome regression also passes after these changes; the earlier original-ROM
+reports retain their own execution-source hashes.
+
+A bounded HP48gII Unlimited diagnostic group completed two trials and four
+expressions with no retries. All four private traces replayed on their own
+captured WASM with identical final complete checkpoints: 105,412 API calls,
+including 52,240 core run calls. These were successful executions, not a
+reproduction of the original stopped trial. The browser's asynchronous key
+arrival also produced different physical input phases in one trial. Do not
+use this instrumented group for A/B latency or throughput claims.
+
+The [continuation evidence](performance-continuation-2026-10-20.json) keeps
+the report hashes, executed tool identities and subsequent validation changes
+separate. Opt-in trace reports have `instrumented: true` and
+`performance_sample: false`; the probe omits its usual expression latency
+fields in this mode. The original HP48gII stop remains unclassified and still
+blocks merging and Pages publication.
+
+```sh
+python3 tools/probe-browser-latency.py ../orchard-baseline/dist dist /private/nors build/new-stop-diagnostic.json --models 4 --speeds 0 --repeats 1 --diagnostic-trace --before-input-ms 175 --after-result-ms 100
+node tools/replay-browser-trace.mjs /private/trace.json /private/48gii.bin dist/orchard.wasm build/new-replay.json
+npm run test:trace
+python3 tests/browser-stop-recovery.py --diagnostic-trace --new-report build/new-generated-trace.json
+```
+
+The Node trace regression requires a built `dist/orchard.wasm`; CI runs it
+after the WASM build. Browser CI also exercises the generated instrumented
+stop and preserves only its generated report and screenshot. Original-ROM
+traces, checkpoint bytes and saved sessions are excluded from CI artifacts.

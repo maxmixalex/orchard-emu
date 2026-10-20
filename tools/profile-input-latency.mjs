@@ -10,6 +10,7 @@ import { applySetup, setupHash, TapQueue } from '../web/hp48.js';
 
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const WINDOW_TICKS = 20_000_000;
+const CLOCK_REGISTERS = ['LOCKTIME', 'MPLLCON', 'UPLLCON', 'CLKCON', 'CLKSLOW', 'CLKDIVN'];
 const EXPRESSIONS = [
   { name: '1+1', scans: [26, 5, 26, 6] },
   { name: '7*8', scans: [24, 3, 17, 6] },
@@ -82,6 +83,40 @@ function indicators(machine) {
   return Array.from(new Uint8Array(c.memory.buffer, c.annunciator_buffer(), 6));
 }
 
+// clock_snapshot returns the address of machine.soc.clock without mutating it.
+// Copying these six words does not invoke guest MMIO or advance guest time.
+export function createClockBoundaryRecorder(machine) {
+  const read = () => Array.from(new Uint32Array(machine.core.memory.buffer,
+    machine.core.clock_snapshot(), CLOCK_REGISTERS.length));
+  let previousTick = machine.tick, previous = read(), samples = 1;
+  let minimumInterval = Infinity, maximumInterval = 0;
+  const initial = { tick: previousTick, values: previous.slice() }, changes = [];
+  assert(Number.isSafeInteger(previousTick) && previousTick >= 0);
+  return {
+    observe() {
+      const tick = machine.tick;
+      assert(Number.isSafeInteger(tick) && tick > previousTick, 'Clock boundary must advance');
+      const interval = tick - previousTick;
+      minimumInterval = Math.min(minimumInterval, interval);
+      maximumInterval = Math.max(maximumInterval, interval);
+      const values = read();
+      const changed = CLOCK_REGISTERS.filter((_, index) => values[index] !== previous[index]);
+      if (changed.length) changes.push({ previous_boundary_tick: previousTick,
+        observed_at_tick: tick, relative_tick: tick - initial.tick,
+        changed_registers: changed, values });
+      previousTick = tick; previous = values; samples++;
+    },
+    finish() {
+      assert.equal(machine.tick, previousTick, 'Missing final clock boundary sample');
+      return { registers: CLOCK_REGISTERS.slice(), initial,
+        final: { tick: previousTick, values: previous.slice() },
+        boundary_samples: samples,
+        interval_ticks: samples > 1 ? { minimum: minimumInterval, maximum: maximumInterval } : null,
+        changes };
+    },
+  };
+}
+
 function restore(machine, bytes, expectedState) {
   const c = machine.core;
   assert.equal(c.checkpoint_size(), bytes.length, 'Checkpoint capacity differs');
@@ -121,13 +156,14 @@ function key(machine, scan, down) {
   assert.equal(state(machine).ticks, machine.tick, 'Physical contact changed the guest tick');
 }
 
-function runChunk(machine, budget, uart) {
+function runChunk(machine, budget, uart, clockRecorder) {
   assert(Number.isSafeInteger(budget) && budget > 0 && budget <= 1024);
   const c = machine.core;
   const status = c.run(budget);
   if (status !== 0) state(machine); // Preserve the exact stop diagnostic in the error.
   assert.equal(status, 0, 'Core run failed');
   machine.tick += budget;
+  clockRecorder?.observe();
   const size = c.uart_receive();
   if (size && uart) uart.update(new Uint8Array(c.memory.buffer, c.uart_output(), size));
 }
@@ -155,6 +191,8 @@ function delta(before, after, hz) {
 
 function execute(machine, model, expression, sampleTicks, expectedFrame) {
   const start = state(machine), end = start.ticks + WINDOW_TICKS;
+  // Keep the canonical unsampled reference free of clock-loop observation.
+  const clockRecorder = sampleTicks ? createClockBoundaryRecorder(machine) : null;
   const events = [], segmentChanges = [], pages = new Map(), uart = createHash('sha256');
   let enter = null, result = null, previousNonmatch = start.ticks;
   let previousLevels = null, sampleCount = 0, nextSample = start.ticks;
@@ -196,7 +234,7 @@ function execute(machine, model, expression, sampleTicks, expectedFrame) {
     }
     const budget = Math.min(1024, end - machine.tick, queue.boundary(machine.tick) - machine.tick,
       sampleTicks ? nextSample - machine.tick : Infinity);
-    runChunk(machine, budget, uart);
+    runChunk(machine, budget, uart, clockRecorder);
   }
   queue.update(machine.tick);
   if (sampleTicks) observe();
@@ -225,6 +263,7 @@ function execute(machine, model, expression, sampleTicks, expectedFrame) {
       enter_release_relative_tick: events.find(event => event.scan === 6 && !event.down).relative_tick,
       sample_resolution_ticks: sampleTicks, sample_resolution_normal_ms: sampleTicks * 1000 / hz,
       sample_count: sampleCount, segment_changes: segmentChanges,
+      clock_register_samples: clockRecorder.finish(),
       pc_page_samples: [...pages].sort((a, b) => b[1] - a[1]).map(([page, samples]) => ({ page, samples })),
     };
   }
@@ -258,6 +297,7 @@ export async function main(args) {
       noninstruction: 'ticks minus counted instructions includes WFI and exception entry or other uncounted quanta; it is not a direct sleep-duration measurement.',
       pc: 'PC page histogram uses guest-time samples, not a host CPU hotspot profile.',
       segments: 'Raw six annunciator levels; physical mapping of the UI busy indicator remains provisional.',
+      clocks: 'Six clock words are copied initially and after each existing successful run call in the sampled profiles. The minimum and maximum intervals between consecutive reads are recorded in guest ticks. Changed values are first observed at that run boundary; intervening writes, including changes reverted within a call, can be missed. This is not a complete MMIO write trace. The canonical reference does not sample inside its run loop.',
       equivalence: 'Sampled baseline and candidate start from the same full checkpoint and end byte-identical to an unsampled baseline run, with identical key events and UART bytes.',
       privacy: 'ROM and complete checkpoint bytes remain local in memory; this report contains identities and aggregates only.',
     }, cases: [] };

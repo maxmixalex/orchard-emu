@@ -56,6 +56,24 @@ The fixed-phase virtual profiles are also identical between builds. This gate
 attributes guest-time intervals; it is not a browser wall-time benchmark or
 physical-clock calibration. See the [continuation evidence](performance-continuation-2026-10-20.json).
 
+The clock-observation extension passes another eight sampled profiles and four
+unsampled references. Apart from execution timestamp, profiler source identity
+and added clock fields, every field equals the preceding input report. Each
+profile records 20,001 boundaries without changing its guest execution or
+physical input schedule. Pure tool tests cover CLI rejection, copied observations
+and boundary validity without loading a WASM or ROM.
+
+Opt-in browser traces have passed four HP48gII Unlimited same-WASM replays
+(105,412 API calls, 52,240 run calls), including every call result/tick/stop,
+UART/USB payload and final complete checkpoint. Actual key arrival phases vary,
+so these records are diagnostic evidence, not comparable latency samples.
+The original failed browser stop remains unclassified. Generated-guest Chrome
+recovery and Node trace-corruption controls provide separate tool acceptance;
+the evidence record distinguishes their executed source identities from later
+validator hardening. CI runs the Node replay gate after building the WASM and
+uploads only generated browser reports/screenshots, never private traces or
+checkpoint files.
+
 ## Historical frontend and host continuation
 
 The interrupted React work was not present in main `2889f90`. This continuation

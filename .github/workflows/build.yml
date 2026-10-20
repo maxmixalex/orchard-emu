@@ -88,6 +88,7 @@ jobs:
           npm run test:tools
           npm run build
           npm run test:wasm
+          npm run test:trace
           npm run test:web
           npm run test:skins
           npm run test:calculator
@@ -99,6 +100,7 @@ jobs:
           build/browser-venv/bin/pip install -r tools/requirements-browser.txt
           build/browser-venv/bin/python tests/browser-worker.py
           build/browser-venv/bin/python tests/browser-stop-recovery.py
+          build/browser-venv/bin/python tests/browser-stop-recovery.py --diagnostic-trace
       - name: Preserve browser regression evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -109,6 +111,8 @@ jobs:
             build/browser-ui.png
             build/browser-stop-recovery.json
             build/browser-stop-recovery-before.png
+            build/browser-stop-trace-recovery.json
+            build/browser-stop-trace-recovery-before.png
           retention-days: 7
           if-no-files-found: warn
       - name: Test and package loopback host

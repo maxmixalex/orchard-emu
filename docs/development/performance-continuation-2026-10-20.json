@@ -246,5 +246,925 @@
   "original_browser_stop": {
     "classified": false,
     "merge_blocker": true
+  },
+  "clock_observations": {
+    "passed": true,
+    "performance_sample": false,
+    "report_sha256": "08734b02b3ca23950fe62de821b36e509450e1cea0ec4f60a1e1cd199e1aecd2",
+    "comparison_report_sha256": "900c8118ffdf44960ad647ba053125f8b8c243b3b9a9f4767068ece33ce24aa4",
+    "profiler_sha256": "8fc4bad758764ae7175409d579a5f0fd6d0611cf5ea959163d01d15b02599136",
+    "profiler_tests_sha256": "dbb4cdc4dcf00198ffe5b98950f331b60a7a5698162112c48e231f87ea1b3efa",
+    "input_timeline_commit": "db2aa40a09552cb3c09dce081ea7802a20a7bdd9",
+    "existing_measurement_fields_equal": true,
+    "metadata_exceptions": {
+      "generated_at": "New execution timestamp",
+      "profiler_sha256": "New observer implementation identity"
+    },
+    "sampled_profiles": 8,
+    "unsampled_references": 4,
+    "register_order": [
+      "LOCKTIME",
+      "MPLLCON",
+      "UPLLCON",
+      "CLKCON",
+      "CLKSLOW",
+      "CLKDIVN"
+    ],
+    "observation_boundary": "Six clock words are copied initially and after each existing successful run call in the sampled profiles. The minimum and maximum intervals between consecutive reads are recorded in guest ticks. Changed values are first observed at that run boundary; intervening writes, including changes reverted within a call, can be missed. This is not a complete MMIO write trace. The canonical reference does not sample inside its run loop.",
+    "interpretation": "Values are sampled only at existing core call boundaries. A value changed and restored inside one call can be missed; no physical MHz, complete MMIO-write coverage or constant whole-window divider is established.",
+    "hardware_reference": {
+      "title": "Samsung S3C2410A User Manual, revision 1.0",
+      "url": "https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf",
+      "sections": [
+        "7-21",
+        "7-22"
+      ],
+      "notes": [
+        "CLKSLOW 0x30 selects slow mode with MPLL off; its zero slow divider selects the input clock.",
+        "The CLKCON IDLE request bit does not clear automatically.",
+        "CLKDIVN bit 2 has a special ratio outside the current low-two-bit implementation."
+      ]
+    },
+    "production_run_policy_changed": false,
+    "cases": [
+      {
+        "model": 1,
+        "model_name": "hp39gplus",
+        "expression": "1+1",
+        "baseline_candidate_clock_samples_equal": true,
+        "boundary_samples_per_profile": 20001,
+        "interval_ticks": {
+          "minimum": 736,
+          "maximum": 1024
+        },
+        "register_change_counts": {
+          "LOCKTIME": 0,
+          "MPLLCON": 0,
+          "UPLLCON": 0,
+          "CLKCON": 1849,
+          "CLKSLOW": 8,
+          "CLKDIVN": 0
+        },
+        "observed_values_hex": {
+          "LOCKTIME": [
+            "0x5a55a5"
+          ],
+          "MPLLCON": [
+            "0x43012"
+          ],
+          "UPLLCON": [
+            "0x78023"
+          ],
+          "CLKCON": [
+            "0x61b0",
+            "0x61b4",
+            "0xe1b0"
+          ],
+          "CLKSLOW": [
+            "0x0",
+            "0x30"
+          ],
+          "CLKDIVN": [
+            "0x3"
+          ]
+        },
+        "initial_clock_words": {
+          "tick": 100000000,
+          "values": [
+            5920165,
+            274450,
+            491555,
+            25008,
+            48,
+            3
+          ]
+        },
+        "final_clock_words": {
+          "tick": 120000000,
+          "values": [
+            5920165,
+            274450,
+            491555,
+            25012,
+            48,
+            3
+          ]
+        },
+        "initial_checkpoint_sha256": "50810ec0d7d654ac260da7b53017833321f4af39d5b0ccbd43f0285c9ed3a8fb",
+        "final_checkpoint_sha256": "ee15ebe9ecc73ceea3e3e0db92a25d48ac86e88ae5969f0de7068728965a6789",
+        "clkslow_observed_changes": [
+          {
+            "previous_boundary_relative_tick": 14048,
+            "first_observed_relative_tick": 15072,
+            "value_hex": "0x0"
+          },
+          {
+            "previous_boundary_relative_tick": 1881216,
+            "first_observed_relative_tick": 1882240,
+            "value_hex": "0x30"
+          },
+          {
+            "previous_boundary_relative_tick": 2428096,
+            "first_observed_relative_tick": 2429120,
+            "value_hex": "0x0"
+          },
+          {
+            "previous_boundary_relative_tick": 4296000,
+            "first_observed_relative_tick": 4297024,
+            "value_hex": "0x30"
+          },
+          {
+            "previous_boundary_relative_tick": 4842144,
+            "first_observed_relative_tick": 4843168,
+            "value_hex": "0x0"
+          },
+          {
+            "previous_boundary_relative_tick": 6710048,
+            "first_observed_relative_tick": 6711072,
+            "value_hex": "0x30"
+          },
+          {
+            "previous_boundary_relative_tick": 7256192,
+            "first_observed_relative_tick": 7257216,
+            "value_hex": "0x0"
+          },
+          {
+            "previous_boundary_relative_tick": 14770240,
+            "first_observed_relative_tick": 14771264,
+            "value_hex": "0x30"
+          }
+        ]
+      },
+      {
+        "model": 1,
+        "model_name": "hp39gplus",
+        "expression": "7*8",
+        "baseline_candidate_clock_samples_equal": true,
+        "boundary_samples_per_profile": 20001,
+        "interval_ticks": {
+          "minimum": 736,
+          "maximum": 1024
+        },
+        "register_change_counts": {
+          "LOCKTIME": 0,
+          "MPLLCON": 0,
+          "UPLLCON": 0,
+          "CLKCON": 1830,
+          "CLKSLOW": 8,
+          "CLKDIVN": 0
+        },
+        "observed_values_hex": {
+          "LOCKTIME": [
+            "0x5a55a5"
+          ],
+          "MPLLCON": [
+            "0x43012"
+          ],
+          "UPLLCON": [
+            "0x78023"
+          ],
+          "CLKCON": [
+            "0x61b0",
+            "0x61b4",
+            "0xe1b0"
+          ],
+          "CLKSLOW": [
+            "0x0",
+            "0x30"
+          ],
+          "CLKDIVN": [
+            "0x3"
+          ]
+        },
+        "initial_clock_words": {
+          "tick": 120000000,
+          "values": [
+            5920165,
+            274450,
+            491555,
+            25012,
+            48,
+            3
+          ]
+        },
+        "final_clock_words": {
+          "tick": 140000000,
+          "values": [
+            5920165,
+            274450,
+            491555,
+            25012,
+            48,
+            3
+          ]
+        },
+        "initial_checkpoint_sha256": "ee15ebe9ecc73ceea3e3e0db92a25d48ac86e88ae5969f0de7068728965a6789",
+        "final_checkpoint_sha256": "4217f71b7fbaa252969146bc9897bf6be303db3bddd12b87860d11d52ce0c8e4",
+        "clkslow_observed_changes": [
+          {
+            "previous_boundary_relative_tick": 20192,
+            "first_observed_relative_tick": 21216,
+            "value_hex": "0x0"
+          },
+          {
+            "previous_boundary_relative_tick": 1888096,
+            "first_observed_relative_tick": 1889120,
+            "value_hex": "0x30"
+          },
+          {
+            "previous_boundary_relative_tick": 2434240,
+            "first_observed_relative_tick": 2435264,
+            "value_hex": "0x0"
+          },
+          {
+            "previous_boundary_relative_tick": 4302144,
+            "first_observed_relative_tick": 4303168,
+            "value_hex": "0x30"
+          },
+          {
+            "previous_boundary_relative_tick": 4848000,
+            "first_observed_relative_tick": 4849024,
+            "value_hex": "0x0"
+          },
+          {
+            "previous_boundary_relative_tick": 6720000,
+            "first_observed_relative_tick": 6721024,
+            "value_hex": "0x30"
+          },
+          {
+            "previous_boundary_relative_tick": 7266144,
+            "first_observed_relative_tick": 7267168,
+            "value_hex": "0x0"
+          },
+          {
+            "previous_boundary_relative_tick": 15248192,
+            "first_observed_relative_tick": 15249216,
+            "value_hex": "0x30"
+          }
+        ]
+      },
+      {
+        "model": 4,
+        "model_name": "hp48gii",
+        "expression": "1+1",
+        "baseline_candidate_clock_samples_equal": true,
+        "boundary_samples_per_profile": 20001,
+        "interval_ticks": {
+          "minimum": 736,
+          "maximum": 1024
+        },
+        "register_change_counts": {
+          "LOCKTIME": 0,
+          "MPLLCON": 0,
+          "UPLLCON": 0,
+          "CLKCON": 1548,
+          "CLKSLOW": 2,
+          "CLKDIVN": 0
+        },
+        "observed_values_hex": {
+          "LOCKTIME": [
+            "0x5a55a5"
+          ],
+          "MPLLCON": [
+            "0x78023"
+          ],
+          "UPLLCON": [
+            "0x78023"
+          ],
+          "CLKCON": [
+            "0x61b0",
+            "0x61b4",
+            "0xe1b0"
+          ],
+          "CLKSLOW": [
+            "0x0",
+            "0x30"
+          ],
+          "CLKDIVN": [
+            "0x1"
+          ]
+        },
+        "initial_clock_words": {
+          "tick": 160000000,
+          "values": [
+            5920165,
+            491555,
+            491555,
+            25008,
+            48,
+            1
+          ]
+        },
+        "final_clock_words": {
+          "tick": 180000000,
+          "values": [
+            5920165,
+            491555,
+            491555,
+            25008,
+            48,
+            1
+          ]
+        },
+        "initial_checkpoint_sha256": "96e45b6d2188b2e0d8a2ed207bb430a5da36f9105a9be0f968ed0cd1c77cc69c",
+        "final_checkpoint_sha256": "13ab72672bc5a5ea4c7f6d553e51fa3a9a8bb940571cea015524ffc944879f5a",
+        "clkslow_observed_changes": [
+          {
+            "previous_boundary_relative_tick": 20192,
+            "first_observed_relative_tick": 21216,
+            "value_hex": "0x0"
+          },
+          {
+            "previous_boundary_relative_tick": 6633216,
+            "first_observed_relative_tick": 6634240,
+            "value_hex": "0x30"
+          }
+        ]
+      },
+      {
+        "model": 4,
+        "model_name": "hp48gii",
+        "expression": "7*8",
+        "baseline_candidate_clock_samples_equal": true,
+        "boundary_samples_per_profile": 20001,
+        "interval_ticks": {
+          "minimum": 736,
+          "maximum": 1024
+        },
+        "register_change_counts": {
+          "LOCKTIME": 0,
+          "MPLLCON": 0,
+          "UPLLCON": 0,
+          "CLKCON": 1052,
+          "CLKSLOW": 2,
+          "CLKDIVN": 0
+        },
+        "observed_values_hex": {
+          "LOCKTIME": [
+            "0x5a55a5"
+          ],
+          "MPLLCON": [
+            "0x78023"
+          ],
+          "UPLLCON": [
+            "0x78023"
+          ],
+          "CLKCON": [
+            "0x61b0",
+            "0x61b4",
+            "0xe1b0"
+          ],
+          "CLKSLOW": [
+            "0x0",
+            "0x30"
+          ],
+          "CLKDIVN": [
+            "0x1"
+          ]
+        },
+        "initial_clock_words": {
+          "tick": 180000000,
+          "values": [
+            5920165,
+            491555,
+            491555,
+            25008,
+            48,
+            1
+          ]
+        },
+        "final_clock_words": {
+          "tick": 200000000,
+          "values": [
+            5920165,
+            491555,
+            491555,
+            25008,
+            48,
+            1
+          ]
+        },
+        "initial_checkpoint_sha256": "13ab72672bc5a5ea4c7f6d553e51fa3a9a8bb940571cea015524ffc944879f5a",
+        "final_checkpoint_sha256": "608d6db849f1eef00c7371a9bcf9676307c28639e7f8cc74d167316a826e3921",
+        "clkslow_observed_changes": [
+          {
+            "previous_boundary_relative_tick": 16096,
+            "first_observed_relative_tick": 17120,
+            "value_hex": "0x0"
+          },
+          {
+            "previous_boundary_relative_tick": 7232192,
+            "first_observed_relative_tick": 7233216,
+            "value_hex": "0x30"
+          }
+        ]
+      }
+    ]
+  },
+  "stop_diagnostic": {
+    "schema": "orchard-browser-stop-diagnostic-summary-v1",
+    "passed": true,
+    "instrumented": true,
+    "performance_sample": false,
+    "historical_stop_classified": false,
+    "scope": {
+      "models": [
+        4
+      ],
+      "speeds": [
+        0
+      ],
+      "trials": 2,
+      "expressions": 4,
+      "diagnostic_waits_ms": {
+        "before_input": 175,
+        "after_result": 100
+      },
+      "retries": 0,
+      "browser": "155.0.8059.84"
+    },
+    "reports": [
+      {
+        "file": "build/evidence/stop-diagnostic-20261020-generated.json",
+        "sha256": "4736cabdcce2d77b211384fe029118edbae77de9945f919c7bb6844477c31d28",
+        "passed": true,
+        "source_stage": "executed"
+      },
+      {
+        "file": "build/evidence/stop-diagnostic-20261020-generated-trace.json",
+        "sha256": "3cfe3286369d9fefdf4d38c9c2a7f5c726eff20166aca8b77f8a6511bf81d8c7",
+        "passed": true,
+        "source_stage": "executed"
+      },
+      {
+        "file": "build/evidence/stop-diagnostic-20261020-hp48.json",
+        "sha256": "faf5234b973207b51135d86890dd46ac72b05f46829269f86b5f8ebc9b4602e9",
+        "passed": true,
+        "source_stage": "executed"
+      },
+      {
+        "file": "build/evidence/stop-diagnostic-20261020-generated-trace-final.json",
+        "sha256": "08c5615c94ff39293473ff684019b9981d234eac4256126bd323ec894d881549",
+        "passed": true,
+        "source_stage": "final"
+      }
+    ],
+    "lightweight_gate_report": {
+      "file": "build/evidence/stop-diagnostic-20261020-lightweight-final.json",
+      "sha256": "554bec456129717fb7977adb0967145aeda4cfe60db1c50fe0a4f36373344803"
+    },
+    "executed_source_sha256": {
+      "tools/browser-core-trace.mjs": "39f4cdb7b4a51cdae51436e98878acb641f96ecbcecefe0062fff063483ae997",
+      "tools/replay-browser-trace.mjs": "46dc1f2fea2471af7e83784141dec88963da64dbdfc094381586e99663567e51",
+      "tools/probe-browser-latency.py": "96a48c7b807d0aab341c30b70f8623b7dcc76bb8054f8a5e5103a4d9da01f696",
+      "tests/browser-core-trace.mjs": "19cc1d6ba908e9fe60737d325d28124aa709a0f56fdda291e945e41796590e1e",
+      "tests/browser-latency-observer.mjs": "2c2c3b852fe2bd244a01b66925192f15d2420a78d06f5dc7a3b72c54be5d927a",
+      "tests/browser-stop-recovery.py": "c8ebee11fd11f9c2af939f1cbff8c3d2bf50b28cfcdb5669183636c345a0ee3b"
+    },
+    "final_source_sha256": {
+      "tools/browser-core-trace.mjs": "39f4cdb7b4a51cdae51436e98878acb641f96ecbcecefe0062fff063483ae997",
+      "tools/replay-browser-trace.mjs": "279eb661a2ddaeb6ce80c40f8a9e0c9d4df81d16ef49bdc99ab385c37e52820d",
+      "tools/probe-browser-latency.py": "be173739701d23142da4d86aaac5347986e8bd1701a78b31e409fd71d5c3c945",
+      "tests/browser-core-trace.mjs": "5f5a0f926a23debe6658786132c6628ff69e826b643d1faac9c085a04efdb5ca",
+      "tests/browser-latency-observer.mjs": "aa1413ed2ba691175244383178024f5f73b70cb39ebaab52ad0b6baf5c69290c",
+      "tests/browser-stop-recovery.py": "c8ebee11fd11f9c2af939f1cbff8c3d2bf50b28cfcdb5669183636c345a0ee3b"
+    },
+    "builds": {
+      "baseline": {
+        "orchard_wasm_sha256": "2e7961a624c9020fefc3ccb91bd36ef3d926c32fd6556f9ecb74c5313e09006d",
+        "worker_js_sha256": "8de3d58583fdee28da7983656ff7f584d7d32331355a3fa4cf426a249d4199e8"
+      },
+      "candidate": {
+        "orchard_wasm_sha256": "87d72134c7b7d564bb7dd256eab51432a343e393651c8c554cee44f2c13fc615",
+        "worker_js_sha256": "10241765547dea5a840be5310dc8a7478e4d89ba6ed68a14fbfabfeb67c5925e"
+      }
+    },
+    "roms": [
+      {
+        "model": 4,
+        "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+        "homeAt": 160000000
+      }
+    ],
+    "cases": [
+      {
+        "build": "baseline",
+        "model": 4,
+        "speed": 0.0,
+        "repeat": 0,
+        "expression": "1+1",
+        "calls": 23961,
+        "run_calls": 11873,
+        "key_api_calls": 68,
+        "imported_key_release_calls": 60,
+        "actual_key_transition_calls": 8,
+        "start_tick": 160000000,
+        "end_tick": 172156352,
+        "first_key_down_tick": 163610624,
+        "enter_down_tick": 166490624,
+        "first_key_to_enter_ticks": 2880000,
+        "hold_ticks": [
+          600000,
+          600000,
+          600000,
+          600000
+        ],
+        "gap_ticks": [
+          360000,
+          360000,
+          360000
+        ],
+        "complete": true,
+        "same_wasm": true,
+        "every_call_result_tick_stop_equal": true,
+        "final_complete_checkpoint_equal": true,
+        "full_lcd_pixel_equality": true,
+        "stop": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "wasm_sha256": "2e7961a624c9020fefc3ccb91bd36ef3d926c32fd6556f9ecb74c5313e09006d",
+        "initial_checkpoint_sha256": "96e45b6d2188b2e0d8a2ed207bb430a5da36f9105a9be0f968ed0cd1c77cc69c",
+        "final_checkpoint_sha256": "522f11072f0b668673fc536f55b132bd5261e24df9df271253c38c9f1e0622cc",
+        "result_frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+        "private_trace_sha256": "6698aa32e651895296536c4cbb98e7bcad06bf552b7cdd397ee3980c9a12de85",
+        "replay_report_sha256": "cdfeda8abc07bd51a25a5614a938865264d66c532737f7a3343e76bf3d528fa3",
+        "errors": [],
+        "replayed_initial_and_final_cpu_words_match_capture": true
+      },
+      {
+        "build": "baseline",
+        "model": 4,
+        "speed": 0.0,
+        "repeat": 0,
+        "expression": "7*8",
+        "calls": 20491,
+        "run_calls": 10138,
+        "key_api_calls": 68,
+        "imported_key_release_calls": 60,
+        "actual_key_transition_calls": 8,
+        "start_tick": 180000000,
+        "end_tick": 190379712,
+        "first_key_down_tick": 183529728,
+        "enter_down_tick": 186409728,
+        "first_key_to_enter_ticks": 2880000,
+        "hold_ticks": [
+          600000,
+          600000,
+          600000,
+          600000
+        ],
+        "gap_ticks": [
+          360000,
+          360000,
+          360000
+        ],
+        "complete": true,
+        "same_wasm": true,
+        "every_call_result_tick_stop_equal": true,
+        "final_complete_checkpoint_equal": true,
+        "full_lcd_pixel_equality": true,
+        "stop": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "wasm_sha256": "2e7961a624c9020fefc3ccb91bd36ef3d926c32fd6556f9ecb74c5313e09006d",
+        "initial_checkpoint_sha256": "13ab72672bc5a5ea4c7f6d553e51fa3a9a8bb940571cea015524ffc944879f5a",
+        "final_checkpoint_sha256": "417be18f6d68f1ac459a3d209742d39bd990cea9de14470664ca3bbcb08fd86a",
+        "result_frame_sha256": "87f9df77d30bcc9cb31185a9bc8de94096e41f060ac5f3d174b63fc6865ab9f8",
+        "private_trace_sha256": "385ab5282f884ce71079d1c6d80bf3141904bcd14ed32467ca5fc4644166e12d",
+        "replay_report_sha256": "cac618f7a355696346b7ecad9c03eb6b04f4a082fb7b04b62281d752aa19983e",
+        "errors": [],
+        "replayed_initial_and_final_cpu_words_match_capture": true
+      },
+      {
+        "build": "candidate",
+        "model": 4,
+        "speed": 0.0,
+        "repeat": 0,
+        "expression": "1+1",
+        "calls": 34973,
+        "run_calls": 17355,
+        "key_api_calls": 68,
+        "imported_key_release_calls": 60,
+        "actual_key_transition_calls": 8,
+        "start_tick": 160000000,
+        "end_tick": 177770816,
+        "first_key_down_tick": 167590912,
+        "enter_down_tick": 170933632,
+        "first_key_to_enter_ticks": 3342720,
+        "hold_ticks": [
+          600000,
+          600000,
+          600000,
+          600000
+        ],
+        "gap_ticks": [
+          643072,
+          360000,
+          539648
+        ],
+        "complete": true,
+        "same_wasm": true,
+        "every_call_result_tick_stop_equal": true,
+        "final_complete_checkpoint_equal": true,
+        "full_lcd_pixel_equality": true,
+        "stop": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "wasm_sha256": "87d72134c7b7d564bb7dd256eab51432a343e393651c8c554cee44f2c13fc615",
+        "initial_checkpoint_sha256": "96e45b6d2188b2e0d8a2ed207bb430a5da36f9105a9be0f968ed0cd1c77cc69c",
+        "final_checkpoint_sha256": "1e23cd98c5705030787a448a5df14f7d700abed6f3e6d9191043c74ed43478ba",
+        "result_frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+        "private_trace_sha256": "3c33147542fa3b466b9a74f0ff7c5c4d14a1945af20d575b1caacbb43bd9b905",
+        "replay_report_sha256": "2c96ed7e30bb8f1858f3a87ba64fbc44a7aae8fd1a3a1feeb429ccad5719dfe0",
+        "errors": [],
+        "replayed_initial_and_final_cpu_words_match_capture": true
+      },
+      {
+        "build": "candidate",
+        "model": 4,
+        "speed": 0.0,
+        "repeat": 0,
+        "expression": "7*8",
+        "calls": 25987,
+        "run_calls": 12874,
+        "key_api_calls": 68,
+        "imported_key_release_calls": 60,
+        "actual_key_transition_calls": 8,
+        "start_tick": 180000000,
+        "end_tick": 193181376,
+        "first_key_down_tick": 184226048,
+        "enter_down_tick": 187106048,
+        "first_key_to_enter_ticks": 2880000,
+        "hold_ticks": [
+          600000,
+          600000,
+          600000,
+          600000
+        ],
+        "gap_ticks": [
+          360000,
+          360000,
+          360000
+        ],
+        "complete": true,
+        "same_wasm": true,
+        "every_call_result_tick_stop_equal": true,
+        "final_complete_checkpoint_equal": true,
+        "full_lcd_pixel_equality": true,
+        "stop": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "wasm_sha256": "87d72134c7b7d564bb7dd256eab51432a343e393651c8c554cee44f2c13fc615",
+        "initial_checkpoint_sha256": "13ab72672bc5a5ea4c7f6d553e51fa3a9a8bb940571cea015524ffc944879f5a",
+        "final_checkpoint_sha256": "8185cea235c9ac1b8f96c40e0306bf11c0f898c75a6872b26f3c55833651e586",
+        "result_frame_sha256": "87f9df77d30bcc9cb31185a9bc8de94096e41f060ac5f3d174b63fc6865ab9f8",
+        "private_trace_sha256": "d2c751449350f8734b50b8886e0d880c9affc8163f79bae96c524d9defcdc79a",
+        "replay_report_sha256": "aaafce4c86a8e004a9ad3fa64488c3ca23b96ad6de1cbb37a83016b69656cb97",
+        "errors": [],
+        "replayed_initial_and_final_cpu_words_match_capture": true
+      }
+    ],
+    "totals": {
+      "calls": 105412,
+      "run_calls": 52240,
+      "key_api_calls": 272,
+      "imported_key_release_calls": 240,
+      "actual_key_transition_calls": 32
+    },
+    "final_generated_browser": {
+      "passed": true,
+      "generated_guest": true,
+      "production_worker": false,
+      "production_worker_source": true,
+      "instrumented": true,
+      "performance_sample": false,
+      "ui": "React component fixture with the production controller and download helper",
+      "probe_sha256": "be173739701d23142da4d86aaac5347986e8bd1701a78b31e409fd71d5c3c945",
+      "original_rom_reproduced": false,
+      "browser": "155.0.8059.84",
+      "page_errors": [],
+      "worker_errors": [],
+      "save_ack": {
+        "worker": 1,
+        "generation": 2,
+        "command_seq": 18,
+        "saved_marker_seq": 19,
+        "snapshot_seq": 20
+      },
+      "screenshot_failure_preserves_observation": true,
+      "original_observation_preserved": true,
+      "unstopped_guard": true,
+      "stop": {
+        "code": 9,
+        "pc": "00000010",
+        "instruction": "e7f000f0",
+        "address": "00000010",
+        "detail": "e7f000f0"
+      },
+      "ticks": "2",
+      "session_bytes": 270532,
+      "session_sha256": "fae012523fd04f2dade53f51df407bf0b36e878deb0dcd244fdf93e9cb39d58e",
+      "checkpoint_sha256": "1fd2ebceb8a32d19794c9c0d1ee8bb23dc9564327e98b72d49db91172f077ebd",
+      "wasm_sha256": "87d72134c7b7d564bb7dd256eab51432a343e393651c8c554cee44f2c13fc615",
+      "immediate_stop_trace": {
+        "schema": "orchard-browser-core-replay-v1",
+        "passed": true,
+        "instrumented": true,
+        "performance_sample": false,
+        "model": 1,
+        "epoch": 1,
+        "generation": 2,
+        "calls": 7,
+        "run_calls": 1,
+        "key_transition_calls": 0,
+        "uart_bytes": 0,
+        "every_call_result_equal": true,
+        "complete_checkpoint_equal": true,
+        "start_tick": 0,
+        "end_tick": 2,
+        "stop": [
+          9,
+          16,
+          3891265776,
+          16,
+          3891265776
+        ],
+        "rom_sha256": "fae944b496e336c9fc627c191a6dfbbebf5e31fad9028e975c7a07abb1ac72b0",
+        "wasm_sha256": "87d72134c7b7d564bb7dd256eab51432a343e393651c8c554cee44f2c13fc615",
+        "captured_wasm_sha256": "87d72134c7b7d564bb7dd256eab51432a343e393651c8c554cee44f2c13fc615",
+        "same_wasm": true,
+        "initial_sha256": "b64046e69199db382138730df5de60597f616339363549354014bb49208bc45c",
+        "final_sha256": "1fd2ebceb8a32d19794c9c0d1ee8bb23dc9564327e98b72d49db91172f077ebd"
+      }
+    },
+    "final_generated_node": {
+      "passed": true,
+      "generated_guest": true,
+      "original_rom_reproduced": false,
+      "call_results_equal": true,
+      "complete_checkpoint_equal": true,
+      "exact_key_ticks": true,
+      "immutable_stop_capture": true,
+      "held_key_stop_preserved": true,
+      "release_changes_checkpoint": true,
+      "held_key_calls": 3,
+      "held_key_run_calls": 1,
+      "isolated_epochs": true,
+      "negative_checks": 15,
+      "wasm_sha256": "87d72134c7b7d564bb7dd256eab51432a343e393651c8c554cee44f2c13fc615",
+      "calls": 7,
+      "run_calls": 2,
+      "stop": [
+        9,
+        16,
+        3891265776,
+        16,
+        3891265776
+      ]
+    },
+    "limits": [
+      "The historical HP48gII Unlimited core stop is still unclassified and was not reproduced by this bounded group.",
+      "Instrumented samples validate each recorded sequence against its own identical WASM; they are not performance samples or a cross-trial tap-phase comparison.",
+      "Candidate 1+1 gaps are 643072, 360000, 539648 ticks; the other three cases have three 360000-tick gaps. Every hold is 600000 ticks.",
+      "Every call compares result, before/after tick and stop; complete CPU state and checkpoint comparison occurs at boundaries. UART and USB payload output is checked; framebuffer output is checked separately by the browser pixel acceptance.",
+      "The original-ROM group and first two generated browser reports used executed_source_sha256. The later name-type and pending-restore guards were checked by lightweight gates and the single final instrumented generated browser report; no original-ROM rerun was performed.",
+      "The generated browser immediate-stop case has no held key. The separate three-call Node generated case proves held-key stop capture survives the later release and strictly replays the held checkpoint.",
+      "Original ROMs, checkpoint bytes, saved sessions and raw API/input-event records remain private; the public summary contains identities, counts, stop status, selected ticks and input durations only."
+    ],
+    "source_summary_sha256": "74353725081499ac62c37928dfdac46f828647e1f33c8bc91bf37a67a82079bd",
+    "historical_stop_reproduced": false,
+    "final_hardening": [
+      "Require a string operation name before lookup; reject coercible array names.",
+      "Invalidate trace ownership immediately when a restore is sent; reject captures and unrelated epoch markers until the new checkpoint-load epoch arrives.",
+      "Verify a generated stop with a held key: later release changes the live checkpoint but preserves the immutable captured state, which strictly replays."
+    ]
+  },
+  "final_integration": {
+    "passed": true,
+    "node": "v24.19.0",
+    "package_sha256": "8230b0a438961d3038f074330240b0100d88eb94d6a0246ffb663c0d07e49907",
+    "workflow_sha256": "cac8009374292df537dc630e5f5757ef44c4fb3b3baf1e7f7de24d14c47c1e6a",
+    "wasm_sha256": "87d72134c7b7d564bb7dd256eab51432a343e393651c8c554cee44f2c13fc615",
+    "production_source_changed_since_aba2923": false,
+    "production_wasm_rebuilt_in_this_continuation": false,
+    "native_suites_rerun_in_this_continuation": false,
+    "native_gate_scope": "Earlier native/reference/sanitizer/oracle evidence remains tied to its recorded production artifacts; this follow-up only changes developer tooling, tests, CI registration and documentation.",
+    "gates": [
+      {
+        "command": [
+          "npm",
+          "run",
+          "check"
+        ],
+        "passed": true,
+        "log_sha256": "1d19d889c7162c0018034a2e1a118c852792455f449a70695dd869da3a7eab99"
+      },
+      {
+        "command": [
+          "npm",
+          "run",
+          "test:tools"
+        ],
+        "passed": true,
+        "log_sha256": "e7959d59fefd1c3363d0ae1fef8130499caf5fa9831875a6080332ab88f4b54b"
+      },
+      {
+        "command": [
+          "npm",
+          "run",
+          "test:trace"
+        ],
+        "passed": true,
+        "log_sha256": "1a97776dbbab2a819f3a47b1dff27db8c453c826bc953fd84f5bd88c506b7fe6"
+      },
+      {
+        "command": [
+          "python",
+          "-m",
+          "py_compile",
+          "tools/probe-browser-latency.py",
+          "tests/browser-stop-recovery.py"
+        ],
+        "passed": true,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "zensical",
+          "build",
+          "--strict"
+        ],
+        "passed": true,
+        "log_sha256": "7882f86f67ad45bd201b295a83db050b26c672a076208f48145d9d9a6f1801c5"
+      },
+      {
+        "command": [
+          "python",
+          "tools/check-docs.py"
+        ],
+        "passed": true,
+        "pages_checked": 31
+      }
+    ],
+    "generated_node": {
+      "passed": true,
+      "generated_guest": true,
+      "original_rom_reproduced": false,
+      "call_results_equal": true,
+      "complete_checkpoint_equal": true,
+      "exact_key_ticks": true,
+      "immutable_stop_capture": true,
+      "held_key_stop_preserved": true,
+      "release_changes_checkpoint": true,
+      "held_key_calls": 3,
+      "held_key_run_calls": 1,
+      "isolated_epochs": true,
+      "negative_checks": 15,
+      "wasm_sha256": "87d72134c7b7d564bb7dd256eab51432a343e393651c8c554cee44f2c13fc615",
+      "calls": 7,
+      "run_calls": 2,
+      "stop": [
+        9,
+        16,
+        3891265776,
+        16,
+        3891265776
+      ]
+    },
+    "ci_layout": "ROM-free tool tests run before build; test:trace runs after the WASM build. Only generated browser JSON/PNG files are added to CI artifacts.",
+    "remote_ci_dispatch_observed": false,
+    "main_or_pages_published": false,
+    "independent_reviews": [
+      {
+        "scope": "Input-timeline data, identities and publication boundaries",
+        "passed": true,
+        "static_correspondence_checks": 174
+      },
+      {
+        "scope": "Final source, clock/stop evidence, documentation and public-payload filtering",
+        "passed": true,
+        "static_correspondence_checks": 913
+      },
+      {
+        "scope": "Independent clock and final generated-browser/source-provenance review",
+        "passed": true
+      }
+    ]
   }
 }

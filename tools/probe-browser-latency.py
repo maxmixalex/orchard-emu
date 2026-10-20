@@ -12,6 +12,9 @@ This measures restored-HOME interactions, not cold boot or real hardware speed.
 On a stopped-guest failure, the original screenshot and observation report are
 preserved before the existing Save control exports a local diagnostic session.
 This recovery runs only after the measurement has already failed.
+An explicit --diagnostic-trace mode wraps the served Worker to record exact
+guest API calls and complete checkpoints for local replay. These instrumented
+runs never produce performance samples.
 """
 from __future__ import annotations
 
@@ -36,11 +39,13 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
-const [dist,romDir,out]=process.argv.slice(2),hash=b=>createHash('sha256').update(b).digest('hex');
+const [dist,romDir,out,selected='1,4']=process.argv.slice(2),hash=b=>createHash('sha256').update(b).digest('hex');
+const selectedModels=selected.split(',').map(Number);
 const {applySetup,setupHash,TapQueue}=await import(pathToFileURL(resolve(dist,'hp48.js')));
 const {encodeSession}=await import(pathToFileURL(resolve(dist,'session.js')));
 const wasm=await readFile(resolve(dist,'orchard.wasm')),reports=[];
 for(const [model,name,preset,homeAt] of [[1,'39g+.bin','hp39-home',100000000],[4,'48gii.bin','hp48-home',160000000]]){
+ if(!selectedModels.includes(model))continue;
  const rom=await readFile(resolve(romDir,name));assert.equal(hash(rom),setupHash(preset));
  const {instance:{exports:c}}=await WebAssembly.instantiate(wasm,{});assert.equal(c.create(model),0);
  new Uint8Array(c.memory.buffer,c.rom_buffer(),rom.length).set(rom);assert.equal(c.load(rom.length),0);applySetup(c,model,preset);
@@ -76,7 +81,8 @@ OBSERVER = r'''
  const probe=globalThis.__orchardProbe={seq:0,nextWorker:0,workerId:null,generation:null,
   snap:null,watch:null,errors:[],events:[],configured:null,restoreCommand:null,
   restoreMarker:null,restoreSnapshot:null,runCommand:null,runSnapshot:null,
-  pauseCommand:null,pauseSnapshot:null,loaded:null};
+  pauseCommand:null,pauseSnapshot:null,loaded:null,traceEpoch:null,traceCapture:null,
+  traceRestorePending:false,traceErrors:[]};
  const record=(direction,type,workerId,generation)=>{
   const item={seq:++probe.seq,at:performance.now(),direction,type,workerId,generation};
   probe.events.push(item);if(probe.events.length>64)probe.events.shift();return item;
@@ -100,6 +106,22 @@ OBSERVER = r'''
    if(data.type==='fatal'){probe.errors.push(data.message);return;}
    if(this.probeId!==probe.workerId||data.generation!==probe.generation)return;
    if(data.type==='error'){probe.errors.push(data.message);return;}
+   if(data.type==='diagnostic-trace-error'){probe.traceErrors.push(data.message);return;}
+   if(data.type==='diagnostic-trace-epoch'){
+    if(!Number.isSafeInteger(data.epoch)||data.epoch<=0)return;
+    if(probe.traceEpoch&&data.epoch<=probe.traceEpoch.epoch)return;
+    if(probe.traceRestorePending&&data.source!=='checkpoint-load')return;
+    probe.traceEpoch={...event,epoch:data.epoch,model:data.model,source:data.source,tick:data.tick};
+    probe.traceCapture=null;probe.traceRestorePending=false;return;
+   }
+   if(data.type==='diagnostic-trace'){
+    const t=data.trace,e=probe.traceEpoch;
+    if(probe.traceRestorePending)return;
+    if(!t||!e||t.epoch!==e.epoch||t.generation!==probe.generation||t.model!==e.model)return;
+    if(probe.traceCapture)return;
+    probe.traceCapture={...event,trace:{...t,initial:t.initial&&Array.from(t.initial),final:t.final&&Array.from(t.final)}};
+    return;
+   }
    if(data.type==='loaded')probe.loaded=event;
    if(data.type==='checkpoint-restored'&&probe.restoreCommand&&event.seq>probe.restoreCommand.seq)
     probe.restoreMarker={...event,commandSeq:probe.restoreCommand.seq};
@@ -125,15 +147,18 @@ OBSERVER = r'''
   postMessage(data,...rest){
    const event=record('send',data.type,this.probeId,data.generation);
    if(data.type==='create'){
+    globalThis.__orchardTraceWorker=this;
     probe.workerId=this.probeId;probe.generation=data.generation;probe.snap=null;probe.watch=null;
     probe.loaded=null;probe.configured=null;probe.restoreCommand=null;probe.restoreMarker=null;
     probe.restoreSnapshot=null;probe.runCommand=null;probe.runSnapshot=null;probe.pauseCommand=null;probe.pauseSnapshot=null;
+    probe.traceEpoch=null;probe.traceCapture=null;probe.traceRestorePending=false;probe.traceErrors=[];
    }
    if(this.probeId!==probe.workerId||data.generation!==probe.generation)return super.postMessage(data,...rest);
    if(data.type==='configure'&&data.speed!==undefined)probe.configured={...event,speed:data.speed};
    if(data.type==='checkpoint-load'){
     probe.restoreCommand=event;probe.restoreMarker=null;probe.restoreSnapshot=null;probe.watch=null;
     probe.runCommand=null;probe.runSnapshot=null;probe.pauseCommand=null;probe.pauseSnapshot=null;
+    probe.traceCapture=null;probe.traceRestorePending=true;
    }
    if(data.type==='run'){probe.runCommand=event;probe.runSnapshot=null;probe.pauseCommand=null;probe.pauseSnapshot=null;}
    if(data.type==='pause'){probe.pauseCommand=event;probe.pauseSnapshot=null;}
@@ -194,6 +219,33 @@ console.log(JSON.stringify({schema:'orchard-stopped-session-diagnostic-v1',
 '''
 
 
+def instrument_worker_source(source, module_url):
+    """Wrap only the probe server's response; leave all production files intact."""
+    marker = 'pacer.hz=core.timebase_hz();'
+    if source.count(marker) != 1:
+        raise ValueError('Cannot identify the Worker instrumentation boundary')
+    wrapper = r'''
+  core=attachCoreTrace(core,{
+    context:()=>({generation,model,preset,romHash,audience}),
+    onEpoch:entry=>postMessage({type:'diagnostic-trace-epoch',...entry}),
+    onCapture:trace=>postMessage({type:'diagnostic-trace',generation:trace.generation,
+      trace:{...trace,input_queue:{pending:taps.pending,active:taps.active,
+        readyAt:taps.readyAt,hold:taps.hold,gap:taps.gap}}}),
+  });
+  const traceOriginalHandler=self.onmessage;
+  self.onmessage=event=>{
+    const data=event.data;
+    if(data?.type==='diagnostic-trace-export'&&data.generation===generation){
+      if(running){postMessage({type:'diagnostic-trace-error',generation,message:'Pause before exporting a diagnostic trace'});return;}
+      core.trace_capture('requested-paused');return;
+    }
+    return traceOriginalHandler(event);
+  };
+'''
+    return ('import {attachCoreTrace} from ' + json.dumps(module_url) + ';\n' +
+            source.replace(marker, wrapper + marker))
+
+
 def chrome_path():
     requested = os.environ.get('CHROMIUM')
     if requested:
@@ -238,6 +290,10 @@ def probe_summary(page):
        restoreMarker:p.restoreMarker,restoreSnapshot:brief(p.restoreSnapshot),
        runCommand:p.runCommand,runSnapshot:p.runSnapshot,pauseCommand:p.pauseCommand,
        pauseSnapshot:p.pauseSnapshot,errors:p.errors,events:p.events,
+       traceEpoch:p.traceEpoch,traceRestorePending:p.traceRestorePending,traceErrors:p.traceErrors,
+       traceCapture:p.traceCapture&&{seq:p.traceCapture.seq,epoch:p.traceCapture.trace.epoch,
+        reason:p.traceCapture.trace.reason,complete:p.traceCapture.trace.complete,
+        call_count:p.traceCapture.trace.call_count,problems:p.traceCapture.trace.problems},
        watch:p.watch&&Object.fromEntries(Object.entries(p.watch)
         .filter(([k])=>!['expected','resultPixels'].includes(k)))};
     }''')
@@ -271,6 +327,58 @@ def capture_failure_evidence(page, evidence, name, errors):
     return capture_errors
 
 
+def export_core_trace(page, path, build_dir, rom_path, request=False):
+    """Persist an opt-in diagnostic trace and verify it against the same WASM."""
+    if request:
+        page.evaluate('''()=>{
+          const p=globalThis.__orchardProbe;
+          if(p.snap?.running)throw Error('Cannot export a running diagnostic trace');
+          if(!p.traceCapture)globalThis.__orchardTraceWorker.postMessage({type:'diagnostic-trace-export',generation:p.generation});
+        }''')
+    page.wait_for_function('''()=>{
+      const p=globalThis.__orchardProbe;
+      if(p.traceErrors.length)throw Error(p.traceErrors.join('; '));
+      const t=p.traceCapture;
+      return t&&t.workerId===p.workerId&&t.generation===p.generation&&t.trace.epoch===p.traceEpoch?.epoch;
+    }''', timeout=15000)
+    trace = page.evaluate('globalThis.__orchardProbe.traceCapture.trace')
+    for key in ('initial', 'final'):
+        data = trace.pop(key)
+        if data is None:
+            raise ValueError('Diagnostic trace has no ' + key + ' checkpoint')
+        content = bytes(data)
+        file = path.with_name(path.stem + '-' + key + '.checkpoint')
+        with file.open('xb') as out:
+            out.write(content)
+        trace[key + '_file'] = file.name
+        trace[key + '_sha256'] = hashlib.sha256(content).hexdigest()
+    trace['rom_sha256'] = hashlib.sha256(rom_path.read_bytes()).hexdigest()
+    trace['wasm_sha256'] = hashlib.sha256((build_dir / 'orchard.wasm').read_bytes()).hexdigest()
+    trace['worker_sha256'] = hashlib.sha256((build_dir / 'worker.js').read_bytes()).hexdigest()
+    trace['instrumentation_sha256'] = hashlib.sha256(Path(__file__).with_name('browser-core-trace.mjs').read_bytes()).hexdigest()
+    with path.open('x') as out:
+        json.dump(trace, out, separators=(',', ':'))
+        out.write('\n')
+    replay_path = path.with_name(path.stem + '-replay.json')
+    replay = subprocess.run(['node', str(Path(__file__).with_name('replay-browser-trace.mjs')),
+                             str(path), str(rom_path), str(build_dir / 'orchard.wasm'), str(replay_path)],
+                            text=True, capture_output=True, timeout=60)
+    result = {'trace_file': str(path.resolve()), 'instrumented': True, 'performance_sample': False,
+              'complete': trace['complete'], 'call_count': trace['call_count'],
+              'reason': trace['reason'], 'epoch': trace['epoch'],
+              'key_transitions': [{k: row[k] for k in ('seq', 'name', 'args', 'before', 'after', 'result')}
+                                  for row in trace['calls'] if row['name'] in ('keyboard_matrix', 'keyboard_dedicated')],
+              'replay_passed': replay.returncode == 0}
+    if replay.returncode:
+        error_path = path.with_name(path.stem + '-replay-error.txt')
+        error_path.write_text(replay.stderr + replay.stdout)
+        result['replay_error_file'] = str(error_path.resolve())
+    else:
+        result['replay_file'] = str(replay_path.resolve())
+        result['replay'] = json.loads(replay.stdout)
+    return result
+
+
 def export_stopped_failure(page, session_path, build_dir, rom_path):
     """Use the existing stopped UI's Save action; never alter a running trial."""
     if not page.evaluate('Boolean(globalThis.__orchardProbe?.snap?.stopped)'):
@@ -301,7 +409,8 @@ def export_stopped_failure(page, session_path, build_dir, rom_path):
     return result
 
 
-def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, build_dir=None):
+def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, build_dir=None,
+          diagnostic_trace=False, before_input_ms=0, after_result_ms=0):
     context = browser.new_context(viewport={'width': 1360, 'height': 940}, locale='en-US')
     page = context.new_page()
     errors = []
@@ -353,6 +462,9 @@ def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, bui
               p.runSnapshot.commandSeq===p.runCommand.seq&&p.runSnapshot.seq>p.runCommand.seq''')
             expect(page.get_by_role('button', name='Pause', exact=True)).to_be_enabled()
             page.locator('#calculator').focus()
+            if before_input_ms:
+                floor = page.evaluate('performance.now()')
+                wait_probe(page, 'p.snap.running&&performance.now()>=arg', floor + before_input_ms)
             page.evaluate('args=>globalThis.__orchardProbe.arm(args)',
                           {'pixels': frame['pixels'], 'scans': frame['scans']})
             for key in keys:
@@ -371,17 +483,26 @@ def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, bui
             assert result['key_codes'] == (['Digit1', 'Equal', 'Digit1', 'Enter'] if index == 0
                                           else ['Digit7', 'Digit8', 'Digit8', 'Enter']), result
             assert result['enter_key_to_result_ms'] >= 0 and result['enter_worker_send_to_result_ms'] >= 0, result
+            if diagnostic_trace:
+                result = {key: value for key, value in result.items() if not key.endswith('_ms')}
             measurements.append({'expression': frame['expression'], 'frame_sha256': frame['sha256'],
                                  'start_tick': frame['startTick'], 'start_frame_sha256': frame['start_sha256'],
-                                 'restore_ack': restored, **result})
+                                 'restore_ack': restored, 'instrumented': diagnostic_trace, **result})
             # Complete the physical release before pausing. The next expression
             # restores its own checkpoint, avoiding a residual readyAt gap.
             wait_probe(page, 'p.snap.pending===0&&p.snap.seq>=p.watch.resultSeq')
+            if after_result_ms:
+                wait_probe(page, 'p.snap.running&&performance.now()>=p.watch.resultAt+arg', after_result_ms)
             pause = page.get_by_role('button', name='Pause', exact=True)
             expect(pause).to_be_enabled()
             pause.click()
             wait_probe(page, '''p.pauseCommand&&p.pauseSnapshot&&!p.snap.running&&
               p.pauseSnapshot.commandSeq===p.pauseCommand.seq&&p.pauseSnapshot.seq>p.pauseCommand.seq''')
+            if diagnostic_trace:
+                diagnostic = export_core_trace(page, evidence / f'{name}-expression{index}-trace.json',
+                                               build_dir, rom_dir / fixture['name'], request=True)
+                measurements[-1]['diagnostic'] = diagnostic
+                assert diagnostic['complete'] and diagnostic['replay_passed'], diagnostic
             if repeat == 0 and variant == 'candidate':
                 pixels = page.evaluate('Array.from(globalThis.__orchardProbe.watch.resultPixels)')
                 write_pgm(evidence / f'{name}-result{index}.pgm', pixels)
@@ -392,10 +513,19 @@ def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, bui
         assert not errors, errors
         assert not page.evaluate('globalThis.__orchardProbe.snap.stopped')
         return {'variant': variant, 'model': fixture['model'], 'speed': speed,
+                'instrumented': diagnostic_trace, 'performance_sample': not diagnostic_trace,
                 'restored_home': True, 'exact_start_states': True, 'pixel_equality': True, 'pause': True,
                 'errors': errors, 'measurements': measurements}
     except Exception:
         capture_errors = capture_failure_evidence(page, evidence, name, errors)
+        diagnostic = None
+        if diagnostic_trace:
+            try:
+                if page.evaluate('Boolean(globalThis.__orchardProbe?.traceCapture)'):
+                    diagnostic = export_core_trace(page, evidence / f'{name}-failure-trace.json',
+                                                   build_dir, rom_dir / fixture['name'])
+            except Exception as error:
+                capture_errors.append({'artifact': 'core_trace', 'error': str(error)})
         # Keep the failed observation intact. This UI action happens only after
         # failure, and preserves the full stopped guest without modifying Worker
         # source, input timing, or the normal measurement path.
@@ -412,6 +542,10 @@ def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, bui
             if recovery is None:
                 recovery = {'exported_after_failure': False}
             recovery['capture_errors'] = capture_errors
+        if diagnostic is not None:
+            if recovery is None:
+                recovery = {'exported_after_failure': False}
+            recovery['diagnostic'] = diagnostic
         if recovery is not None:
             try:
                 with (evidence / f'{name}-failure-recovery.json').open('x') as out:
@@ -433,10 +567,21 @@ def main():
     parser.add_argument('new_report', type=Path)
     parser.add_argument('--repeats', type=int, default=3, choices=range(1, 8))
     parser.add_argument('--speeds', default='1,0', help='Comma-separated existing speed settings: 0,.5,1,2')
+    parser.add_argument('--models', default='1,4', help='Comma-separated original-ROM models: 1,4')
+    parser.add_argument('--diagnostic-trace', action='store_true', help='Record and replay exact core calls; disables timing evidence')
+    parser.add_argument('--before-input-ms', type=int, default=0, help='Diagnostic-only wait after Resume, before typing (0..2000)')
+    parser.add_argument('--after-result-ms', type=int, default=0, help='Diagnostic-only dwell after the matching result (0..2000)')
     args = parser.parse_args()
     speeds = [float(x) for x in args.speeds.split(',')]
     if not speeds or any(x not in (0, .5, 1, 2) for x in speeds):
         parser.error('Invalid speed selection')
+    models = [int(x) for x in args.models.split(',')]
+    if not models or len(models) != len(set(models)) or any(x not in (1, 4) for x in models):
+        parser.error('Invalid model selection')
+    if not 0 <= args.before_input_ms <= 2000 or not 0 <= args.after_result_ms <= 2000:
+        parser.error('Diagnostic waits must be between 0 and 2000 ms')
+    if (args.before_input_ms or args.after_result_ms) and not args.diagnostic_trace:
+        parser.error('Diagnostic waits require --diagnostic-trace')
     roots = {'baseline': args.baseline_dist.resolve(), 'candidate': args.candidate_dist.resolve()}
     if args.new_report.exists():
         parser.error('Report must be a new path')
@@ -449,6 +594,24 @@ def main():
     class Handler(SimpleHTTPRequestHandler):
         def log_message(self, *_args):
             pass
+
+        def do_GET(self):
+            parts = unquote(urlsplit(self.path).path).strip('/').split('/')
+            if args.diagnostic_trace and len(parts) == 2 and parts[0] in roots:
+                body = None
+                if parts[1] == '__orchard-trace.mjs':
+                    body = Path(__file__).with_name('browser-core-trace.mjs').read_bytes()
+                elif parts[1] == 'worker.js':
+                    source = (roots[parts[0]] / 'worker.js').read_text()
+                    body = instrument_worker_source(source, './__orchard-trace.mjs').encode()
+                if body is not None:
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'text/javascript; charset=utf-8')
+                    self.send_header('Content-Length', str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+                    return
+            super().do_GET()
 
         def translate_path(self, path):
             parts = unquote(urlsplit(path).path).strip('/').split('/')
@@ -464,7 +627,10 @@ def main():
     threading.Thread(target=server.serve_forever, daemon=True).start()
     report = {'schema': 'orchard-original-rom-browser-latency-v2', 'passed': False,
               'probe_sha256': probe_sha256,
-              'measurement': 'Actual production UI and Worker; each expression restores an exact starting checkpoint. Keydown to first matching Worker LCD snapshot received on the main thread, before canvas paint. No real-calculator calibration.',
+              'instrumented': args.diagnostic_trace, 'performance_sample': not args.diagnostic_trace,
+              'measurement': ('Instrumented diagnostic with exact core API replay; no timing evidence.' if args.diagnostic_trace else
+                              'Actual production UI and Worker; each expression restores an exact starting checkpoint. Keydown to first matching Worker LCD snapshot received on the main thread, before canvas paint. No real-calculator calibration.'),
+              'diagnostic_waits_ms': {'before_input': args.before_input_ms, 'after_result': args.after_result_ms},
               'evidence_directory': str(evidence.resolve()), 'trials': [],
               'builds': {name: {asset.replace('.', '_') + '_sha256': hashlib.sha256((path / asset).read_bytes()).hexdigest()
                                for asset in ('orchard.wasm', 'worker.js')}
@@ -472,7 +638,7 @@ def main():
     try:
         with tempfile.TemporaryDirectory(prefix='orchard-browser-latency-') as tmp:
             prepared = subprocess.run(['node', '--input-type=module', '-', str(roots['baseline']),
-                                       str(args.rom_directory.resolve()), tmp], input=PREPARE,
+                                       str(args.rom_directory.resolve()), tmp, ','.join(map(str, models))], input=PREPARE,
                                       text=True, capture_output=True, check=True, timeout=300)
             fixtures = json.loads(prepared.stdout)
             report['reference'] = {k: v for k, v in fixtures.items() if k != 'models'}
@@ -494,7 +660,8 @@ def main():
                                 for variant in (('baseline', 'candidate') if repeat % 2 == 0 else ('candidate', 'baseline')):
                                     item = trial(browser, f'http://127.0.0.1:{server.server_port}', variant,
                                                  fixture, args.rom_directory.resolve(), speed, repeat, evidence,
-                                                 roots[variant])
+                                                 roots[variant], diagnostic_trace=args.diagnostic_trace,
+                                                 before_input_ms=args.before_input_ms, after_result_ms=args.after_result_ms)
                                     item['repeat'] = repeat
                                     report['trials'].append(item)
                                     print(json.dumps(item), flush=True)

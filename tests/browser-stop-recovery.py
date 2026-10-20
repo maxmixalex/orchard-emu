@@ -19,6 +19,7 @@ import struct
 import subprocess
 import tempfile
 import threading
+from urllib.parse import urlsplit
 
 from playwright.sync_api import expect, sync_playwright
 
@@ -44,20 +45,54 @@ await build({stdin:{contents,resolveDir:resolve('tests'),sourcefile:'stop-recove
 
 
 class Handler(SimpleHTTPRequestHandler):
+    def __init__(self, *args, diagnostic_trace=False, **kwargs):
+        self.diagnostic_trace = diagnostic_trace
+        super().__init__(*args, **kwargs)
+
     def log_message(self, *_args):
         pass
+
+    def do_GET(self):
+        # Serve dedicated-Worker module requests through the same explicit
+        # test-server boundary as the original-ROM probe.
+        if self.diagnostic_trace:
+            path = urlsplit(self.path).path
+            body = None
+            if path == '/__orchard-trace.mjs':
+                body = (ROOT / 'tools/browser-core-trace.mjs').read_bytes()
+            elif path == '/worker.js':
+                body = probe.instrument_worker_source(
+                    (Path(self.directory) / 'worker.js').read_text(), './__orchard-trace.mjs').encode()
+            if body is not None:
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/javascript; charset=utf-8')
+                self.send_header('Content-Length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+        super().do_GET()
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--dist', type=Path, default=ROOT / 'dist')
+    parser.add_argument('--diagnostic-trace', action='store_true', help='Also verify opt-in immediate-stop API capture and replay')
+    parser.add_argument('--new-report', type=Path, help='Write a new report and sibling screenshot without replacing prior evidence')
     args = parser.parse_args()
     dist = args.dist.resolve()
-    server = ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Handler, directory=str(dist)))
-    threading.Thread(target=server.serve_forever, daemon=True).start()
     build = ROOT / 'build'
     build.mkdir(exist_ok=True)
-    report = {'passed': False, 'generated_guest': True, 'production_worker': True,
+    name = 'browser-stop-trace-recovery' if args.diagnostic_trace else 'browser-stop-recovery'
+    report_path = args.new_report.resolve() if args.new_report else build / f'{name}.json'
+    screenshot_path = report_path.with_name(report_path.stem + '-before.png')
+    if args.new_report and (report_path.exists() or screenshot_path.exists()):
+        parser.error('Report and sibling screenshot must be new paths')
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    server = ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(
+        Handler, directory=str(dist), diagnostic_trace=args.diagnostic_trace))
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    report = {'passed': False, 'generated_guest': True, 'production_worker': not args.diagnostic_trace,
+              'production_worker_source': True, 'instrumented': args.diagnostic_trace, 'performance_sample': False,
               'ui': 'React component fixture with the production controller and download helper',
               'probe_sha256': hashlib.sha256(Path(probe.__file__).read_bytes()).hexdigest(),
               'original_rom_reproduced': False}
@@ -111,7 +146,15 @@ def main():
                     original = tmp / 'original-failure.json'
                     original.write_text(json.dumps(probe.probe_summary(page), indent=2))
                     before = original.read_bytes()
-                    page.screenshot(path=str(build / 'browser-stop-recovery-before.png'))
+                    page.screenshot(path=str(screenshot_path))
+                    trace_report = None
+                    if args.diagnostic_trace:
+                        trace_report = probe.export_core_trace(page, tmp / 'generated-core-trace.json', dist, rom_path)
+                        assert trace_report['complete'] and trace_report['replay_passed'], trace_report
+                        assert trace_report['reason'] == 'core-stop'
+                        assert trace_report['replay']['end_tick'] == 2
+                        assert trace_report['replay']['complete_checkpoint_equal']
+                        assert trace_report['replay']['stop'] == [9, 16, 0xe7f000f0, 16, 0xe7f000f0]
                     # Losing the screenshot must not skip the original JSON or
                     # the independent LCD capture attempt.
                     class ScreenshotFailure:
@@ -171,6 +214,8 @@ def main():
                                    'session_sha256': diagnostic['session_sha256'],
                                    'checkpoint_sha256': diagnostic['checkpoint_sha256'],
                                    'wasm_sha256': diagnostic['wasm_sha256']})
+                    if trace_report is not None:
+                        report['immediate_stop_trace'] = trace_report['replay']
                 finally:
                     browser.close()
     except Exception as error:
@@ -179,7 +224,8 @@ def main():
     finally:
         server.shutdown()
         server.server_close()
-        (build / 'browser-stop-recovery.json').write_text(json.dumps(report, indent=2) + '\n')
+        with report_path.open('x' if args.new_report else 'w') as out:
+            out.write(json.dumps(report, indent=2) + '\n')
         print(json.dumps(report, indent=2), flush=True)
 
 
