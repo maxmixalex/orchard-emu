@@ -25,6 +25,16 @@ The 6 ms Worker task ceiling and earned-credit pacing remain active.
 `run()` and the earlier opt-in `run_divided()` preserve their existing semantics;
 the workbench and native host retain their selected legacy policy.
 
+The clocked policy also honors aligned word writes to `CLKCON.IDLE` (bit 2).
+The CPU sleeps after the writing instruction, while peripherals and the
+functional clock continue. An interrupt source enabled by `INTMSK` wakes the
+core; the CPU's IRQ/FIQ masks still govern exception entry. The register bit
+is sticky, so each write requests sleep, but a retained one does not put a
+woken core back to sleep. Samsung's manual describes this in sections 7-11,
+7-17 and 7-21. The CPU-wrapper acknowledgement delay is not calibrated.
+This uses the existing scheduler and serialized sleeping state; checkpoint
+version 1 remains compatible. The legacy runners retain register-only writes.
+
 The 12 MHz functional peripheral/RTC reference and existing Half/Normal/Double
 settings remain. PLL/slow-mode absolute frequencies, ARM instruction cycle
 costs, cache/bus waits and the separate LCD HCLK domain are still uncalibrated.
@@ -65,6 +75,18 @@ to open the initially selected Function symbolic view. This is a reproducible
 interpretation of the user's `39aplet` reminder; the prior exact conversation
 steps were not recoverable. It does not claim to cover every downloaded aplet.
 
+The first actual Chrome comparison of the ratio-only candidate (`beebfddc…`,
+before implementing IDLE) did **not** establish an overall latency improvement.
+All 12 Aplet results in three alternating Normal-speed rounds matched every
+LCD pixel without a guest stop or page/Worker error. Library click-to-result
+medians were 3,449 → 1,588 ms, but Function START medians regressed from
+1,903 → 3,292 ms. Individual rounds varied substantially. The ratio-only
+candidate was therefore held back while investigating actual guest work and
+implementing the missing IDLE behavior. Do not quote the functional-reference
+table above as a browser speedup. A separate arithmetic attempt timed out in
+the first baseline Restore action before any measurement; the checkpoint was
+actually restored and the evidence is retained as a setup failure.
+
 `tools/probe-clock-latency.mjs` records the arithmetic policy comparison.
 `tools/probe-aplet-latency.mjs` produces private exact-checkpoint Aplet fixtures.
 `tools/probe-browser-latency.py --fixtures FILE --models 1` consumes those
@@ -75,7 +97,8 @@ Worker snapshot received on the main thread, before canvas paint. ROMs,
 sessions, checkpoint bytes and raw pixel reports remain local.
 
 Cold-start acceptance, exact candidate identities, actual browser timing and
-remote CI/deployment acceptance are recorded with the performance pull request.
+remote CI/deployment acceptance are recorded with
+[PR #2](https://github.com/maxmixalex/orchard-emu/pull/2).
 The historical sections below retain their original baselines and release
 scope; the default-off physical-read experiment stays disabled.
 

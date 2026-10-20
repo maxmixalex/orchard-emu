@@ -9,6 +9,9 @@
 static orchard_machine a, b;
 static uint8_t saved[600000];
 static unsigned count_checks, failures, first;
+/* Only generated fixture stores listed here request IDLE in the oracle.
+   The reference machine never enables the production MMIO policy flag. */
+static uint32_t reference_idle_pc[2] = {UINT32_MAX, UINT32_MAX};
 #define CHECK(x) do { ++count_checks; if (!(x)) { ++failures; if (!first) first=__LINE__; } } while (0)
 static bool equal(const void *left, const void *right, size_t n) {
     const uint8_t *l=left, *r=right;
@@ -22,6 +25,7 @@ static void init(unsigned model, unsigned div) {
     CHECK(orchard_init(&a,sizeof a,model)==&a);
     a.loaded=true; a.soc.wtcon=0; a.soc.clock[5]=div;
     word(a.flash,0xeafffffeu); /* B self */
+    reference_idle_pc[0]=reference_idle_pc[1]=UINT32_MAX;
 }
 static void duplicate(void) { o_copy(&b,&a,sizeof a); }
 static void same_state(void) {
@@ -35,6 +39,7 @@ static void same_state(void) {
     CHECK(equal(a.ram,b.ram,a.profile->ram_bytes));
     CHECK(equal(a.boot_sram,b.boot_sram,sizeof a.boot_sram));
     CHECK(a.quiet_left==0 && a.deferred_ticks==0);
+    CHECK(!a.clocked_run_active && !b.clocked_run_active);
     CHECK(a.sram_alias_reads==b.sram_alias_reads && a.sram_alias_writes==b.sram_alias_writes);
 }
 static void reference(uint32_t n) {
@@ -80,7 +85,134 @@ static void clocked_reference(uint32_t n) {
             if (p) b.cpu.sleeping=false;
             if ((p & b.soc.intmod) && !(b.cpu.cpsr&O_F)) o_exception(&b.cpu,O_FIQ,0x1c,b.cpu.r[15]+4u);
             else if (b.soc.intpnd && !(b.cpu.cpsr&O_I)) o_exception(&b.cpu,O_IRQ,0x18,b.cpu.r[15]+4u);
-            else if (!b.cpu.sleeping) o_cpu_step_reference(&b);
+            else if (!b.cpu.sleeping) {
+                uint32_t pc=b.cpu.r[15];
+                o_cpu_step_reference(&b);
+                if (pc==reference_idle_pc[0] || pc==reference_idle_pc[1]) {
+                    CHECK(!b.clocked_run_active && b.stop.status==ORCHARD_OK);
+                    CHECK(!b.cpu.data_abort && b.cpu.r[15]==pc+4);
+                    b.cpu.sleeping=true;
+                }
+            }
+        }
+    }
+}
+static void idle_program(unsigned model, unsigned mode, unsigned div) {
+    init(model,div); a.cpu.control|=mode<<30;
+    a.cpu.r[15]=0x100; a.cpu.r[0]=0x4c00000cu; a.cpu.r[1]=0x61b4;
+    word(a.flash+0x100,0xe5801000u); /* STR r1,[r0]: first IDLE request */
+    word(a.flash+0x104,0xe2822001u); /* ADD r2,r2,#1: resume work */
+    word(a.flash+0x108,0xe2822001u); /* ADD r2,r2,#1: sticky bit is inert */
+    word(a.flash+0x10c,0xe5801000u); /* STR r1,[r0]: repeated IDLE request */
+    word(a.flash+0x110,0xe2833001u); /* ADD r3,r3,#1 */
+    word(a.flash+0x114,0xeafffffeu); /* B self */
+    word(a.flash+0x18,0xeafffffeu); word(a.flash+0x1c,0xeafffffeu);
+    reference_idle_pc[0]=0x100; reference_idle_pc[1]=0x10c;
+}
+static void idle_steps(uint32_t n) {
+    CHECK(orchard_run_clocked(&a,n).status==ORCHARD_OK);
+    clocked_reference(n); same_state();
+}
+static void exercise_idle(void) {
+    for (unsigned model=1;model<=6;++model) {
+        /* The writing instruction completes, then all remaining issue slots
+           sleep. Peripheral time keeps moving at every supported ratio. */
+        for (unsigned mode=0;mode<4;++mode) if (mode!=2)
+            for (unsigned div=0;div<=4;++div) {
+                idle_program(model,mode,div); duplicate(); idle_steps(5000);
+                CHECK(a.cpu.sleeping && a.cpu.instructions==1);
+                CHECK(a.cpu.r[15]==0x104 && a.cpu.r[2]==0 && a.cpu.r[3]==0);
+                CHECK(a.soc.clock[3]==0x61b4 && a.ticks==5000);
+            }
+        /* INTMSK prevents wake; CPSR.I alone does not. After wake the sticky
+           IDLE bit must allow both ADDs, then another write of one must sleep. */
+        idle_program(model,0,0); duplicate(); idle_steps(1);
+        a.soc.srcpnd=b.soc.srcpnd=1u<<10; idle_steps(500);
+        CHECK(a.cpu.sleeping && a.cpu.instructions==1);
+        a.soc.intmsk=b.soc.intmsk=~(1u<<10); idle_steps(1);
+        CHECK(!a.cpu.sleeping && a.cpu.r[2]==1 && a.cpu.exceptions==0);
+        a.soc.srcpnd=b.soc.srcpnd=a.soc.intpnd=b.soc.intpnd=0;
+        idle_steps(1); CHECK(!a.cpu.sleeping && a.cpu.r[2]==2);
+        idle_steps(500);
+        CHECK(a.cpu.sleeping && a.cpu.instructions==4 && a.cpu.r[3]==0);
+        CHECK(a.soc.clock[3]==0x61b4 && a.cpu.r[15]==0x110);
+        /* Existing pending requests prevent the core from getting stuck in
+           IDLE even when the ARM interrupt mask defers exception delivery. */
+        idle_program(model,3,3); a.soc.srcpnd=1u<<10;
+        a.soc.intmsk=~(1u<<10); duplicate(); idle_steps(5);
+        CHECK(!a.cpu.sleeping && a.cpu.r[2]==2 && a.cpu.r[3]==1);
+        CHECK(a.cpu.instructions==20 && a.cpu.exceptions==0);
+        /* IRQ and FIQ both wake before the next slot and preserve CLKCON. */
+        for (unsigned fiq=0;fiq<2;++fiq) {
+            idle_program(model,3,3); duplicate(); idle_steps(1);
+            a.soc.srcpnd=b.soc.srcpnd=1u<<10;
+            a.soc.intmsk=b.soc.intmsk=~(1u<<10);
+            if (fiq) {
+                a.soc.intmod=b.soc.intmod=1u<<10;
+                a.cpu.cpsr&=~O_F; b.cpu.cpsr&=~O_F;
+            } else { a.cpu.cpsr&=~O_I; b.cpu.cpsr&=~O_I; }
+            idle_steps(1);
+            CHECK(!a.cpu.sleeping && a.cpu.exceptions==1);
+            CHECK((a.cpu.cpsr&31u)==(fiq?O_FIQ:O_IRQ));
+            CHECK(a.cpu.r[15]==(fiq?0x1cu:0x18u) && a.soc.clock[3]==0x61b4);
+        }
+        /* Timer boundary is independently known: 17 decrements at 8 quanta.
+           Compare the whole state immediately before and at the first IRQ. */
+        idle_program(model,3,3); a.soc.tcfg0=3; a.soc.tcon=9;
+        a.soc.tcntb[0]=a.soc.count[0]=17; a.soc.intmsk=~(1u<<10);
+        a.cpu.cpsr&=~O_I; duplicate(); idle_steps(135);
+        CHECK(a.cpu.sleeping && a.cpu.instructions==1 && a.cpu.exceptions==0);
+        idle_steps(1); CHECK(!a.cpu.sleeping && a.cpu.exceptions==1);
+        for (unsigned i=0;i<8;++i) idle_steps(1+random32()%97u);
+        /* An actual external pin edge supplied between calls wakes IDLE at
+           the first peripheral quantum; a cached quiet interval cannot hide it. */
+        idle_program(model,3,3);
+        CHECK(orchard_keyboard_attach(&a,true)==ORCHARD_OK);
+        a.soc.gpio[0x50/4]=2; a.soc.gpio[0x88/4]=4;
+        a.soc.intmsk=~1u; a.cpu.cpsr&=~O_I; duplicate(); idle_steps(41);
+        CHECK(a.cpu.sleeping && a.cpu.exceptions==0);
+        CHECK(orchard_keyboard_dedicated(&a,0,true)==ORCHARD_OK);
+        CHECK(orchard_keyboard_dedicated(&b,0,true)==ORCHARD_OK);
+        idle_steps(1); CHECK(!a.cpu.sleeping && a.cpu.exceptions==1);
+        /* Sleeping state is already in checkpoint v1. Policy scope is not. */
+        idle_program(model,3,3); duplicate(); idle_steps(63);
+        size_t n=orchard_checkpoint_size(&a); CHECK(n<=sizeof saved);
+        CHECK(orchard_checkpoint_save(&a,saved,n)==ORCHARD_OK);
+        CHECK(saved[8]==1 && saved[9]==0 && saved[10]==0 && saved[11]==0);
+        a.cpu.sleeping=false; a.soc.clock[3]=0; a.clocked_run_active=true;
+        CHECK(orchard_checkpoint_load(&a,saved,n)==ORCHARD_OK); same_state();
+        a.soc.srcpnd=b.soc.srcpnd=1u<<10;
+        a.soc.intmsk=b.soc.intmsk=~(1u<<10); idle_steps(19);
+        /* Pre-existing register values are never interpreted as fresh writes. */
+        init(model,3); a.cpu.control|=0xc0000000u;
+        CHECK(o_mmio_write(&a,0x4c00000cu,4,0x61b4)); duplicate(); idle_steps(101);
+        CHECK(!a.cpu.sleeping && a.cpu.instructions==404);
+        /* Clearing IDLE, or writing another clock register, must not sleep. */
+        for (unsigned other=0;other<2;++other) {
+            idle_program(model,3,3);
+            if (other) a.cpu.r[0]=0x4c000000u; else a.cpu.r[1]=0x61b0;
+            reference_idle_pc[0]=reference_idle_pc[1]=UINT32_MAX;
+            duplicate(); idle_steps(101);
+            CHECK(!a.cpu.sleeping && a.cpu.instructions==404 && a.cpu.r[3]==1);
+        }
+        /* Byte stores retain the existing explicit MMIO fault and must not
+           leave the call-scoped flag active after a stop or zero-budget call. */
+        idle_program(model,3,3); word(a.flash+0x100,0xe5c01000u);
+        reference_idle_pc[0]=reference_idle_pc[1]=UINT32_MAX; duplicate();
+        CHECK(orchard_run_clocked(&a,101).status==ORCHARD_UNIMPLEMENTED_MMIO);
+        clocked_reference(101); same_state(); CHECK(!a.cpu.sleeping);
+        CHECK(orchard_run_clocked(&a,0).status==ORCHARD_UNIMPLEMENTED_MMIO);
+        CHECK(!a.clocked_run_active);
+        orchard_reset(&a); CHECK(!a.clocked_run_active && !a.cpu.sleeping);
+        /* Neither legacy runner gains new write side effects, including when
+           run_clocked was selected immediately before it with zero budget. */
+        for (unsigned divided=0;divided<2;++divided) {
+            idle_program(model,3,3);
+            CHECK(orchard_run_clocked(&a,0).status==ORCHARD_OK); duplicate();
+            if (divided) { CHECK(orchard_run_divided(&a,101).status==ORCHARD_OK); reference(101); }
+            else { CHECK(orchard_run(&a,101).status==ORCHARD_OK); CHECK(o_run_reference(&b,101).status==ORCHARD_OK); }
+            same_state(); CHECK(!a.cpu.sleeping && a.cpu.r[2]==2 && a.cpu.r[3]==1);
+            CHECK(a.cpu.instructions==101u*(divided?4u:1u) && a.soc.clock[3]==0x61b4);
         }
     }
 }
@@ -235,7 +367,7 @@ static void exercise(void) {
 #define EXPORT(name)
 #endif
 EXPORT("regression") unsigned regression(void) {
-    count_checks=failures=first=0; rng=0x1932410u; exercise(); exercise_clocked(); return failures;
+    count_checks=failures=first=0; rng=0x1932410u; exercise(); exercise_clocked(); exercise_idle(); return failures;
 }
 EXPORT("checks") unsigned checks(void) { return count_checks; }
 EXPORT("first_failure") unsigned first_failure(void) { return first; }

@@ -2,9 +2,10 @@
 """Local original-ROM input-to-result comparison in two production browser builds.
 
 Requires Node, Playwright and Chrome/Chromium. Firmware is chosen through the
-real page's file input, never served or uploaded. Each trial restores a HOME
-session produced by the baseline interpreter, types 1+1 and 7*8 through the
-actual keyboard handler, and compares every LCD pixel with the baseline replay.
+real page's file input, never served or uploaded. Each trial restores an exact
+session produced by the baseline interpreter, enters arithmetic through the
+actual keyboard handler or clicks fixture-defined calculator keys, and compares
+every LCD pixel with the baseline replay.
 Each expression restores its own exact starting checkpoint so the second trial
 does not inherit a partially elapsed release gap. The endpoint is reception of
 the first matching Worker LCD snapshot, before the page's next canvas paint.
@@ -453,7 +454,11 @@ def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, bui
                         frame['session'])
             confirm = page.get_by_role('dialog').get_by_role('button', name='Restore', exact=True)
             expect(confirm).to_be_enabled()
-            confirm.click()
+            # Restore is setup, outside the measured input interval. A loaded
+            # host can delay Playwright's click completion even after the
+            # Worker has acknowledged the restore. Keep a bounded setup wait;
+            # the exact acknowledgement and starting pixels are still required.
+            confirm.click(timeout=60000)
             # A pause snapshot sent before WebCrypto completes is insufficient.
             # Only the first snapshot following the matching restored marker
             # acknowledges this exact checkpoint-load command and generation.

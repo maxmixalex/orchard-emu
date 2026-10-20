@@ -23,6 +23,10 @@ unsigned orchard_clock_divisor(const orchard_machine *m);
  * CP15 c1[31:30] selects HCLK for FastBus and FCLK for synchronous/asynchronous
  * CPU issue. Settings are latched at the next peripheral quantum; interrupts
  * are checked before each issue slot. Reserved clock encodings stop explicitly.
+ * An aligned word write with CLKCON.IDLE set sleeps the core until an unmasked
+ * interrupt source requests wakeup. The register bit stays set; it does not
+ * repeatedly request sleep without another write. CPU-wrapper ACK delay is
+ * not calibrated. WFI and IDLE share the checkpoint's existing sleeping state.
  * Peripheral/RTC quanta remain the existing 12 MHz functional reference.
  * This does not model PLL/slow-mode absolute frequencies, CPI, bus/cache wait
  * states or a separate HCLK-driven LCD timebase. It is not hardware calibration.

@@ -9,11 +9,22 @@ and `run_divided()` semantics remain available for reproducible research.
 The workbench/native host keep their legacy selection. Do not confuse this
 explicitly validated policy change with enabling the old physical-read experiment.
 
+`run_clocked()` now also responds to guest `CLKCON.IDLE` writes with CPU sleep,
+peripheral advancement and interrupt wakeup. Trigger on each aligned word write
+of bit 2, never on the retained bit's level; the bit does not clear on wake.
+The run-policy flag is host-only and reset at API boundaries. Checkpoint version
+1 already stores the sleeping state. Legacy runners preserve their earlier
+register-only behavior, and the wrapper acknowledgement delay remains uncalibrated.
+
 The [current scene record](performance.md#calculator-clock-ratios-and-visible-latency-2026-10-20)
 targets `1+1`, Aplet Library and Function START. Same-HOME fixed-phase HP39
 Enter-to-result improves from 576 to 170 reference ms; opening Aplet Library
 from 1,022 to 281 reference ms. These are functional-time observations until
-the corresponding browser acceptance is consulted. HP39 50/30 ms key timings
+the corresponding browser acceptance is consulted. The first ratio-only Chrome
+comparison had mixed wall-time results, including a Function START regression,
+so that version was held back while IDLE was implemented. Use the final
+[PR #2 acceptance](https://github.com/maxmixalex/orchard-emu/pull/2), not the
+early ratio-only numbers, to assess the selected release. HP39 50/30 ms key timings
 still lose `7*8` at another phase even with the faster CPU policy, so retain
 125/75 ms. HP48 retains 50/30 ms. The production Worker limits clocked calls
 to 256 peripheral quanta, at most 1,024 CPU issue slots between I/O drains.

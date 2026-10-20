@@ -60,6 +60,7 @@ void orchard_reset(orchard_machine *m) {
     o_zero(&m->stop, sizeof(m->stop));
     m->ticks = 0;
     m->quiet_left = m->deferred_ticks = 0;
+    m->clocked_run_active = false;
     m->sram_alias_reads = m->sram_alias_writes = 0;
     m->nor_sequence = 0; m->nor_id_mode = false;
 }
@@ -106,6 +107,7 @@ enum run_policy { RUN_LEGACY, RUN_DIVIDED, RUN_CLOCKED };
 static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enum run_policy policy) {
     if (!m) return (orchard_stop){.status = ORCHARD_BAD_ARGUMENT};
     if (!m->loaded) return (orchard_stop){.status = ORCHARD_NO_ROM};
+    m->clocked_run_active = policy == RUN_CLOCKED;
     for (uint32_t i = 0; i < budget && m->stop.status == ORCHARD_OK; ++i) {
         unsigned slots = policy == RUN_CLOCKED ? orchard_clock_slots(m) :
                          policy == RUN_DIVIDED ? orchard_clock_divisor(m) : 1u;
@@ -152,6 +154,7 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enu
         }
     }
     o_schedule_sync(m);
+    m->clocked_run_active = false;
     return m->stop;
 }
 orchard_stop orchard_run(orchard_machine *m, uint32_t budget) {
