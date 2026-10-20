@@ -1,7 +1,8 @@
 # Orchard roadmap
 
-The [development board](board.md) owns immediate work and [issue #1](https://github.com/zyf722/orchard-emu/issues/1)
-records accepted commits and CI/Pages outcomes. This document owns milestones,
+The [development board](board.md) owns immediate work; the current repository's
+[Actions runs](https://github.com/maxmixalex/orchard-emu/actions) record CI/Pages
+outcomes for each accepted commit. This document owns milestones,
 dependency order and completion criteria. A profile, passing build or exhausted
 run budget never substitutes for a hardware/stock-boot witness.
 

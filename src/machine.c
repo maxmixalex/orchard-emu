@@ -176,7 +176,7 @@ orchard_status orchard_read_memory(const orchard_machine *m, uint32_t address,
     if (o_sram_copy(m, address, destination, length)) return ORCHARD_OK;
     if (address >= O_BOOT_SRAM_BASE && address - O_BOOT_SRAM_BASE < O_BOOT_SRAM_SIZE &&
         length <= O_BOOT_SRAM_SIZE - (address - O_BOOT_SRAM_BASE)) {
-        o_copy(destination, m->boot_sram + address - O_BOOT_SRAM_BASE, length);
+        o_copy(destination, m->boot_sram + (address - O_BOOT_SRAM_BASE), length);
         return ORCHARD_OK;
     }
     return ORCHARD_BUS_ERROR;

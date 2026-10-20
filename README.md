@@ -14,8 +14,8 @@ This is conditional functional operation, not complete six-model support.
 
 ## Browser
 
-**[Open the web emulator](https://zyf722.github.io/orchard-emu/emulator/)** ·
-[Development documentation](https://zyf722.github.io/orchard-emu/)
+**[Open the web emulator](https://maxmixalex.github.io/orchard-emu/emulator/)** ·
+[Development documentation](https://maxmixalex.github.io/orchard-emu/)
 
 
 ```sh
@@ -32,7 +32,7 @@ Do not use `file://`. No ROM is bundled or uploaded.
 The default page is a calculator: **Open ROM**, Pause/Resume, Restart and
 physical keys. It detects the two supported ROM identities and selects their
 compatibility settings automatically. CPU counters, boot setup and internal
-research controls live in the separate **[developer workbench](https://zyf722.github.io/orchard-emu/emulator/debug.html)**.
+research controls live in the separate **[developer workbench](https://maxmixalex.github.io/orchard-emu/emulator/debug.html)**.
 Both pages use the same optimized core, not different levels of emulation.
 At startup use the top-right soft key for NO/OK as prompted; wait for HOME
 before entering calculations. **Save** exports the paused machine to a timestamped
@@ -68,9 +68,9 @@ separate developer tool, never a linked dependency of the MIT runtime.
 
 ## Development
 
-[Documentation](https://zyf722.github.io/orchard-emu/) ·
+[Documentation](https://maxmixalex.github.io/orchard-emu/) ·
 [Roadmap](docs/development/roadmap.md) ·
-[Board](https://github.com/zyf722/orchard-emu/issues/1) ·
+[Board](docs/development/board.md) ·
 [Validation](docs/development/validation.md) ·
 [ROM provenance](docs/development/native-roms.md)
 

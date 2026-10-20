@@ -1,0 +1,187 @@
+# SPDX-License-Identifier: MIT
+"""Generated guest stop -> real Worker Save -> diagnostic decode regression.
+
+Uses the existing React component fixture and the production Worker/WASM.
+The generated ROM is introduced through the fixture's controller in strict
+mode; this is not original-ROM compatibility or latency acceptance.
+"""
+from __future__ import annotations
+
+import argparse
+import base64
+import functools
+import hashlib
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+import importlib.util
+import json
+from pathlib import Path
+import struct
+import subprocess
+import tempfile
+import threading
+
+from playwright.sync_api import expect, sync_playwright
+
+ROOT = Path(__file__).resolve().parent.parent
+spec = importlib.util.spec_from_file_location('latency_probe', ROOT / 'tools/probe-browser-latency.py')
+probe = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(probe)
+
+BUNDLE = r'''
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {build} from 'esbuild';
+const source=await readFile('tests/ui-fixture.jsx','utf8');
+assert(source.includes("import {Root} from '../web/App.jsx';"));
+assert(source.includes('window.__controller=c;'));
+const contents=source.replace("import {Root}","import {Root,downloadFile}")
+ .replace('window.__controller=c;','window.__controller=c;window.__downloadFile=downloadFile;');
+await build({stdin:{contents,resolveDir:resolve('tests'),sourcefile:'stop-recovery-fixture.jsx',loader:'jsx'},
+ bundle:true,format:'iife',target:'es2022',outfile:process.argv[2],
+ define:{'process.env.NODE_ENV':'"production"','import.meta.url':'"https://offline.invalid/calculator.js"'}});
+'''
+
+
+class Handler(SimpleHTTPRequestHandler):
+    def log_message(self, *_args):
+        pass
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--dist', type=Path, default=ROOT / 'dist')
+    args = parser.parse_args()
+    dist = args.dist.resolve()
+    server = ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Handler, directory=str(dist)))
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    build = ROOT / 'build'
+    build.mkdir(exist_ok=True)
+    report = {'passed': False, 'generated_guest': True, 'production_worker': True,
+              'ui': 'React component fixture with the production controller and download helper',
+              'probe_sha256': hashlib.sha256(Path(probe.__file__).read_bytes()).hexdigest(),
+              'original_rom_reproduced': False}
+    try:
+        with tempfile.TemporaryDirectory(prefix='orchard-stop-recovery-') as tmp:
+            tmp = Path(tmp)
+            bundle = tmp / 'ui.js'
+            subprocess.run(['node', '--input-type=module', '-', str(bundle)], input=BUNDLE,
+                           cwd=ROOT, text=True, check=True, timeout=60)
+            rom = bytearray(b'\xff' * 1048576)
+            struct.pack_into('<I', rom, 0, 0xea000002)  # ARM branch to 0x10.
+            struct.pack_into('<I', rom, 16, 0xe7f000f0)  # Explicit diagnostic stop.
+            rom_path = tmp / 'generated-stop.bin'
+            rom_path.write_bytes(rom)
+            with sync_playwright() as p:
+                browser = p.chromium.launch(executable_path=probe.chrome_path(), headless=True,
+                                           args=['--no-sandbox'])
+                try:
+                    page = browser.new_page(viewport={'width': 1360, 'height': 940}, locale='en-US')
+                    errors = []
+                    page.on('pageerror', lambda error: errors.append(str(error)))
+                    base = f'http://127.0.0.1:{server.server_port}'
+                    # Establish a same-origin HTTP page, then mount the isolated
+                    # component fixture instead of the calculator entry script.
+                    page.route(base + '/stop-recovery-fixture', lambda route: route.fulfill(
+                        status=200, content_type='text/html', body='<div id="root"></div>'))
+                    page.goto(base + '/stop-recovery-fixture')
+                    page.evaluate('(m)=>window.__manifest=m', json.loads((dist / 'skins/manifest.json').read_text()))
+                    page.evaluate('(m)=>window.__skins=m', {x.name: base64.b64encode(x.read_bytes()).decode()
+                                                          for x in (dist / 'skins').glob('*.svg')})
+                    page.add_style_tag(content=bundle.with_suffix('.css').read_text())
+                    page.add_script_tag(content=bundle.read_text())
+                    expect(page.get_by_role('button', name='Settings', exact=True)).to_be_visible()
+                    page.add_script_tag(content=probe.OBSERVER)
+                    page.evaluate('''url=>{
+                      const c=window.__controller;
+                      c.worker=new Worker(url,{type:'module'});
+                      c.worker.onmessage=({data})=>c.receive(data);
+                      c.worker.onerror=e=>{throw Error(e.message);};
+                      c.download=window.__downloadFile;
+                      c.patch({ready:false,prefs:{...c.state.prefs,autosave:false,speed:0,
+                        pauseOnBlur:false,pauseOnHidden:false}});
+                    }''', base + '/worker.js')
+                    page.wait_for_function('globalThis.__orchardProbe.snap&&!globalThis.__orchardProbe.snap.loaded')
+                    page.evaluate('''encoded=>{
+                      const rom=Uint8Array.from(atob(encoded),ch=>ch.charCodeAt(0));
+                      const c=window.__controller;c.create({...c.state.model,preset:'strict'},rom.buffer);
+                    }''', base64.b64encode(rom).decode())
+                    page.wait_for_function('globalThis.__orchardProbe.snap?.stopped===true')
+                    expect(page.get_by_role('dialog')).to_be_visible()
+                    original = tmp / 'original-failure.json'
+                    original.write_text(json.dumps(probe.probe_summary(page), indent=2))
+                    before = original.read_bytes()
+                    page.screenshot(path=str(build / 'browser-stop-recovery-before.png'))
+                    # Losing the screenshot must not skip the original JSON or
+                    # the independent LCD capture attempt.
+                    class ScreenshotFailure:
+                        def screenshot(self, **_kwargs):
+                            raise RuntimeError('Injected screenshot failure')
+
+                        def __getattr__(self, name):
+                            return getattr(page, name)
+
+                    capture_errors = probe.capture_failure_evidence(
+                        ScreenshotFailure(), tmp, 'screenshot-negative', errors)
+                    assert capture_errors == [{'artifact': 'screenshot', 'error': 'Injected screenshot failure'}]
+                    captured = json.loads((tmp / 'screenshot-negative-failure.json').read_text())
+                    assert captured['probe'] == json.loads(before), 'Screenshot failure skipped the original observation'
+                    assert captured['capture_errors'] == capture_errors
+                    if captured['probe']['snapshot']['frameStatus'] == 0:
+                        assert (tmp / 'screenshot-negative-failure.pgm').is_file(), 'Screenshot failure skipped the LCD artifact'
+                    save_floor = page.evaluate('''()=>{const p=globalThis.__orchardProbe;
+                      return {seq:p.seq,workerId:p.workerId,generation:p.generation};}''')
+                    recovery = probe.export_stopped_failure(page, tmp / 'generated-failure.ord', dist, rom_path)
+                    save_ack = page.wait_for_function('''floor=>{
+                      const p=globalThis.__orchardProbe;
+                      if(p.errors.length)throw Error(p.errors.join('; '));
+                      const same=e=>e.workerId===floor.workerId&&e.generation===floor.generation;
+                      const command=p.events.find(e=>e.seq>floor.seq&&same(e)&&
+                        e.direction==='send'&&e.type==='checkpoint-save');
+                      if(!command)return false;
+                      const saved=p.events.find(e=>e.seq>command.seq&&same(e)&&
+                        e.direction==='receive'&&e.type==='checkpoint-saved');
+                      const snap=p.snap;
+                      if(!saved||!snap||!same(snap)||snap.seq<=saved.seq||
+                         !snap.loaded||snap.running||!snap.stopped)return false;
+                      return {worker:floor.workerId,generation:floor.generation,
+                        command_seq:command.seq,saved_marker_seq:saved.seq,snapshot_seq:snap.seq};
+                    }''', arg=save_floor).json_value()
+                    diagnostic = json.loads(Path(recovery['diagnostic_file']).read_text())
+                    assert diagnostic['stop'] == {'code': 9, 'pc': '00000010', 'instruction': 'e7f000f0',
+                                                  'address': '00000010', 'detail': 'e7f000f0'}, diagnostic
+                    assert diagnostic['rom_sha256'] == hashlib.sha256(rom).hexdigest()
+                    assert len(diagnostic['words']) == 33
+                    assert original.read_bytes() == before, 'Recovery replaced the original failed observation'
+                    worker_errors = page.evaluate('globalThis.__orchardProbe.errors')
+                    assert not worker_errors, worker_errors
+                    # The guard must not click Save or create a file for an
+                    # unstopped observation, even if the page has loaded a ROM.
+                    page.evaluate('globalThis.__orchardProbe.snap={...globalThis.__orchardProbe.snap,stopped:false}')
+                    skipped = tmp / 'must-not-exist.ord'
+                    assert probe.export_stopped_failure(page, skipped, dist, rom_path) is None
+                    assert not skipped.exists()
+                    assert not errors, errors
+                    report.update({'passed': True, 'browser': browser.version, 'page_errors': errors,
+                                   'worker_errors': worker_errors, 'save_ack': save_ack,
+                                   'screenshot_failure_preserves_observation': True,
+                                   'original_observation_preserved': True, 'unstopped_guard': True,
+                                   'stop': diagnostic['stop'], 'ticks': diagnostic['ticks'],
+                                   'session_bytes': recovery['session_bytes'],
+                                   'session_sha256': diagnostic['session_sha256'],
+                                   'checkpoint_sha256': diagnostic['checkpoint_sha256'],
+                                   'wasm_sha256': diagnostic['wasm_sha256']})
+                finally:
+                    browser.close()
+    except Exception as error:
+        report['error'] = str(error)
+        raise
+    finally:
+        server.shutdown()
+        server.server_close()
+        (build / 'browser-stop-recovery.json').write_text(json.dumps(report, indent=2) + '\n')
+        print(json.dumps(report, indent=2), flush=True)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,5 +1,38 @@
 # Continuation handoff
 
+## Current performance work from 83a2d38 (2026-10-20)
+
+Use [maxmixalex/orchard-emu](https://github.com/maxmixalex/orchard-emu) and its
+[published calculator](https://maxmixalex.github.io/orchard-emu/emulator/).
+The earlier owner URLs and issue/run numbers in the historical entries below
+are not the current publication destination.
+
+The retained optimization specializes checked normal NOR/physical SRAM reads
+in WASM and prevents the paced Worker from spending an entire task executing
+tiny earned allowances. Live descriptor checks, exact key boundaries and the
+original functional clock remain. Do not switch the UI to the opt-in divided
+runner or shorten the validated HP39 key dwell based on throughput figures.
+The CPU halfword/block/Thumb rollback prototype was withdrawn because its
+full-workload timings were inconsistent; its comparisons and benchmark remain.
+
+[Performance](performance.md#physical-reads-and-worker-pacing-2026-10-20-from-83a2d38)
+owns the exact baseline, measured artifacts, same-input results and new tools.
+[Validation](validation.md) records the current gates. A rare HP48 Unlimited
+core stop after a correct browser result remains explicitly recorded there;
+passing replays alone must not be substituted for explaining that failure.
+The final build passes a separate 24-trial/48-expression Chrome sweep, but the
+original stop remains a merge blocker. Work is prepared locally on
+`codex/perf-wasm-worker-20261020` for a draft pull request. The GitHub tree-write
+request was interrupted; a subsequent read confirmed that the remote candidate
+branch had not been created and main was still `83a2d38`. No pull request was
+created. Branch/PR publication and remote CI acceptance remain pending.
+The maintained browser probe preserves future
+stop observations and recovers a private Save checkpoint for diagnosis.
+Continue physical clock/input calibration and broader OS use from this state,
+preserving the original failed trial and keeping ROMs/checkpoints private.
+
+## Earlier handoffs
+
 The HOME continuation has been reconciled on top of remote `6372cbe`, not
 force-applied over it. Its exact source tree was verified before merging.
 Keep the upstream x16 adapter in `src/nor.c`; there is no duplicate in the bus.

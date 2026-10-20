@@ -316,3 +316,198 @@ registers are skipped. A narrow-transfer checkpoint and a larger translation
 memo were tried but gave no reliable overall gain, so both were removed.
 No new CPU throughput increase is claimed for this release. Normal still
 uses the prior functional reference, not calibrated physical PLL/PCLK domains.
+
+## Physical reads and Worker pacing (2026-10-20, from 83a2d38)
+
+This continuation uses the exact accepted `83a2d38146b65b8324076fc034e0770d4cc132f1`
+as its baseline. Earlier tables above describe earlier releases and different
+hosts. The [machine-readable evidence summary](performance-2026-10-20.json)
+contains this round's timing samples, build hashes and measurement boundaries;
+it contains no firmware, saved machine state or complete guest trace.
+
+### Retained changes
+
+The optimized WASM physical-read entry specializes complete 1/2/4-byte reads
+from normal NOR array mode and physical SRAM. It reads the current bytes on
+every access and checks the live NOR ID mode. The original device dispatcher
+still handles NOR commands/ID, SRAM mirrors and wrapping spans, boot SRAM,
+MMIO and failed reads. Translation permissions, live descriptor validation,
+instruction decoding and device side effects are unchanged. Native and
+`ORCHARD_REFERENCE` retain the original dispatch boundary. The read optimization
+adds 599 bytes to the WASM code section; it does not introduce a decoded-instruction cache.
+
+Review also found pre-existing undefined pointer arithmetic in the boot SRAM
+slow read and public memory-copy accessor: the code formed `boot_sram + address`
+before subtracting the bank base. Both now compute the checked integer offset
+before adding it to the array pointer. This independent correction affects
+native and WASM builds. It adds 24 WASM code bytes in two functions; the other
+80 function bodies are byte-identical. There is no evidence connecting this
+correction to the browser stop described below.
+
+The calculator Worker now retains wall-time credit below 256 quanta and yields
+when the next key boundary is farther away. Previously, reading a high-resolution
+clock inside a caught-up pump could continually earn tiny allowances and keep
+the Worker busy for the entire 6 ms task. The threshold matches `Pacer.delay()`.
+A closer physical-key transition still executes at its exact tick. The existing
+12M-quanta functional rate, .5/1/2/Unlimited choices, 1024-quanta UART drain
+boundary, 6 ms task limit and per-model key holds/gaps remain in force. The
+opt-in divided-clock runner from the baseline is not selected by the UI.
+
+An extension of scalar CPU rollback to halfword/block/Thumb cases passed its
+correctness checks but had inconsistent full-ROM timing when measurement order
+was reversed. That production change was withdrawn. Its independent transaction
+comparisons and generated-guest benchmark remain available for future work.
+
+### Core throughput on identical inputs
+
+Clang 18.1.3, Node 24.19.0, Linux x64, Intel Xeon Platinum 8573C; identical
+O3/LTO/bulk-memory flags. Other compilation and performance jobs were paused
+during these measurements. Each full row is one fresh-machine pair with the
+unchanged original NOR, HOME and `1+2=3`, then `7*8=56`. Timing excludes file
+loading, WASM compilation and browser scheduling.
+
+| Model / workload | 83a2d38 | Candidate | Throughput ratio |
+| --- | ---: | ---: | ---: |
+| HP39g+ / 230M quanta | 9.606 s | 8.718 s | 1.102x |
+| HP48gII / 300M quanta | 12.593 s | 11.563 s | 1.089x |
+
+All compared registers, exposed peripheral/USB state, LCD pixels, segments,
+UART, input events and assumption counters match. Three alternating 20M-quanta
+startup pairs give median ratios of 1.093x and 1.100x respectively. Before the
+independent pointer correction, a full pair measured 10.047 -> 9.504 s and
+13.055 -> 11.957 s, or 1.057x/1.092x.
+All samples remain separately identified in the evidence summary. Host timing
+varies; these separate windows do not establish a timing effect from the pointer
+correction. The table reports the final artifact measurement, not a
+confidence interval, physical-calculator rating or Normal-mode input latency.
+
+### Worker CPU and scheduling cost
+
+`tools/benchmark-worker.mjs` runs the real Worker module in Node with native
+timers and MessageChannel. Both variants use the **same baseline WASM** to
+isolate the scheduling change. Generated ARM branch and WFI guests run at
+.5/1/2 speed, in three alternating rounds: 36 samples. Each sample follows an
+80 ms warm-up and reset, requests 650 ms of execution, and measures the actual
+elapsed time and Worker thread CPU. An independent replay at the observed
+guest tick count matches the complete serialized checkpoint in every sample.
+
+Normal-speed medians on this host:
+
+| Metric | 83a2d38 Worker | Candidate Worker |
+| --- | ---: | ---: |
+| Branch guest: Worker thread CPU / wall time | 85.31% | 21.38% |
+| Branch guest: core calls per sample | 1,365,233 | 7,740 |
+| Branch guest: mean quanta per call | 5.71 | 1,008.18 |
+| Branch guest: quanta per wall second | 11,989,636 | 11,992,206 |
+| WFI guest: Worker thread CPU / wall time | 86.85% | 5.80% |
+| WFI guest: core calls per sample | 2,220,462 | 7,736 |
+| WFI guest: quanta per wall second | 11,963,980 | 11,988,419 |
+
+These are instrumented **Node Worker** CPU measurements. Browser clock
+resolution and timer policy can change the effect; the percentages must not
+be presented as Chrome CPU measurements or original-OS power consumption.
+
+### Actual browser interaction and remaining latency
+
+`tools/probe-browser-latency.py` drives the production UI and Worker in Chrome
+155.0.8059.84. It opens private local ROMs through the real file chooser and
+restores an exact baseline-generated HOME checkpoint before each expression.
+It requires the matching restore acknowledgment, real keyboard events and
+the complete physical-scan transcript, then compares every LCD pixel. Its
+endpoint is the first matching Worker snapshot received on the main thread;
+canvas paint and physical-device timing are outside that endpoint.
+The reported `start_tick` identifies the restored checkpoint, not the first
+keydown's guest tick. Browser input reaches each variant at host-dependent
+guest ticks; these UI trials are not the fixed-input core benchmark above.
+Whole-frame equality also includes LCD refresh and presentation state, so it
+does not measure only the arithmetic operation itself.
+
+The final pointer-corrected build completed all 24 trials: three alternating
+rounds of Normal and Unlimited, both variants and models, with both `1+1` and
+`7*8` after exact restores. Median first-keydown-to-`1+1` time was:
+
+| Model / mode | Baseline | Final candidate |
+| --- | ---: | ---: |
+| HP39g+ / Normal | 1,199.5 ms | 1,198.1 ms |
+| HP39g+ / Unlimited | 557.8 ms | 528.4 ms |
+| HP48gII / Normal | 462.3 ms | 450.2 ms |
+| HP48gII / Unlimited | 233.1 ms | 241.1 ms |
+
+The prior build's Normal medians were 1,210.4 -> 1,208.3 ms on HP39g+ and
+457.3 -> 481.2 ms on HP48gII. Small browser differences vary between runs; this
+round does **not** demonstrate a material Normal input latency improvement.
+Existing key dwell and functional-clock assumptions need
+separate investigation; lowering key holds without phase coverage previously
+lost inputs.
+
+The initial 24-trial Normal/Unlimited browser sweep completed 23 trials. The
+last HP48gII candidate Unlimited trial displayed the correct `56`, then entered
+a core diagnostic stop before Pause. That failure is preserved, not counted
+as a pass. Its initial report lacks the stop code and exact guest input ticks;
+additional passing runs alone cannot establish its cause. Sixty-eight further
+diagnostic browser trials did not reproduce it. A bounded native baseline
+check across 266 different input start phases found no stop (that check did
+not assert the result pixels). A captured successful Chrome trajectory matched
+62,191 API calls and the complete checkpoint in six implementations; 41,068,575
+optimized reads also matched the old dispatcher individually. The pointer-fixed
+WASM separately matches that successful trace. These checks leave the original
+failure **unclassified and a merge blocker**, rather than proving it was fixed.
+
+The maintained browser probe now preserves the original failed observation,
+then uses the real UI's Save download to capture a stopped session and locally
+decode its stop code, PC, instruction, address/detail and full state. Recovery
+occurs after measurement failure and cannot turn a failed trial into a pass.
+It preserves the ordinary Worker's paused checkpoint; it cannot reconstruct
+the exact preceding input-tick history. A generated-guest Chrome regression
+verifies this path, including the unchanged stop and original observation.
+The diagnostic session and raw guest state are private local evidence.
+
+### Correctness coverage and reproduction
+
+`tests/physical-read.c` adds 217,824 assertions against the original dispatch,
+covering all six profiles, complete physical spans, NOR ID, SRAM alias/wrap,
+boot SRAM boundaries, invalid arguments, MMIO and deferred-phase behavior.
+A deliberately broken NOR-ID guard fails 456 assertions.
+`tests/cpu-transactions.c` adds 456,945 comparisons, including every 16-bit Thumb
+encoding from one deterministic initial state, directed ARM halfword/block
+cases and partial-memory/MMIO/fault behavior. Enumerating all encodings is not
+exhaustive coverage of all CPU states. `tests/worker-pacing.mjs` exercises the
+actual pump with a high-resolution fake clock, slow-host backlog, all rates,
+pause and a 70-quanta input boundary; the original pump fails its tiny-call
+negative control.
+
+Local Release, reference and ASan/UBSan CTest each pass 14 suites. Native and
+test-WASM checks contain 1,118,080 assertions per host, plus 9,902 divided-clock
+checks. The independent Unicorn ARMv4T subset passes 17,075 cases with zero
+mismatches or skips. Native static analysis covers 38 sources with no diagnostics;
+the WASM bus path also passes target-specific analysis. Generated-guest production
+Chrome tests cover 12 model/audience cases and 104 physical keys, with no page
+errors. Both original-NOR cold-start witnesses pass two native and two WASM
+runs per model, eight complete runs, with equal repeated/native/WASM outputs.
+These functional witnesses retain the documented SRAM/LCD/NOR/analog hypotheses.
+
+Reproduce measurements with distinct output paths and a separately built baseline:
+
+```sh
+node tools/benchmark.mjs ../baseline/dist/orchard.wasm dist/orchard.wasm ../roms build/core-full.json --full
+node tools/benchmark-worker.mjs ../baseline/web/worker.js web/worker.js ../baseline/dist/orchard.wasm build/worker.json
+python tools/probe-browser-latency.py ../baseline/dist dist ../roms build/browser-input.json --repeats 3 --speeds 1,0
+```
+
+The CPU-only tool takes two builds of `tools/cpu-throughput.c`, which exports
+its own generated workloads; it does not take the application WASM module.
+For example, compile the same helper against the two source revisions with
+identical options, then compare their outputs:
+
+```sh
+clang -std=c17 -O3 -I../baseline/include -I../baseline/src ../baseline/src/*.c tools/cpu-throughput.c -o build/cpu-before
+clang -std=c17 -O3 -Iinclude -Isrc src/*.c tools/cpu-throughput.c -o build/cpu-after
+node tools/benchmark-cpu.mjs build/cpu-before build/cpu-after build/cpu-loops.json
+```
+
+The browser tool requires Playwright and Chrome/Chromium. The Worker CPU tool
+requires a Node release with `process.threadCpuUsage()` (24.19.0 was used here).
+Use `39g+.bin` and `48gii.bin` only in the private ROM directory; the tools check
+their documented identities and do not acquire or publish firmware. Raw ROM
+reports, saved sessions and diagnostic traces remain outside source and Pages
+packages. Synthetic timing is opt-in, with no noisy CI speed threshold.

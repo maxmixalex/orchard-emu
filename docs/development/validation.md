@@ -1,4 +1,54 @@
-# Current frontend and host continuation
+# Validation
+
+## Performance continuation from 83a2d38 (2026-10-20)
+
+The current [performance record](performance.md#physical-reads-and-worker-pacing-2026-10-20-from-83a2d38)
+and [sample summary](performance-2026-10-20.json) separate core throughput,
+Node Worker CPU cost and actual Chrome input latency. The retained production
+changes are a checked WASM physical-read fast path and a caught-up Worker
+pacing fix. The attempted CPU transaction optimization was withdrawn after
+inconsistent timing, while its regression comparisons remain.
+
+Local Release, reference and ASan/UBSan each pass 14 CTest suites. Native and
+test-WASM checks pass 1,118,080 assertions per host plus 9,902 divided-clock
+checks. Unicorn reports 17,075 cases, zero mismatches and zero skips. Static
+analysis reports no diagnostics across 38 native sources or the WASM bus path.
+The production Window/Worker browser gate passes 12 model/audience cases and
+104 physical-key checks without page errors. Source and packaged loopback
+USB/IP/UART tests also pass; OS kernel attachment and Conn3x remain separate.
+
+The two original-NOR HOME/arithmetic witnesses each pass two native and two
+WASM cold runs with identical repeated/native/WASM outputs. Real Chrome file
+selection, exact checkpoint restore and keyboard/result-pixel measurement
+have now run locally on an HTTP origin. The initial 24-trial stock-ROM browser
+sweep nevertheless contains one HP48gII Unlimited stop after a correct `56`;
+the final build's separate 24-trial sweep passes all 48 expressions. The
+earlier stop remains unclassified and blocks merging this performance branch;
+later passing trials do not explain it. The detailed performance record
+preserves both sweeps and their exact build identities. Do not describe the
+initial sweep as fully passing or the existing physical clock, SRAM,
+LCD and analog hypotheses as verified hardware.
+
+The maintained failure probe now preserves the original observation before
+using the real Save/download path to recover a stopped machine. A generated
+guest browser test verifies the new Save acknowledgement, exact stopped state,
+and preservation of the observation even if screenshot capture fails. It is
+a diagnostic recovery gate, not a reproduction or resolution of the ROM stop.
+
+Current source and CI live in
+[maxmixalex/orchard-emu](https://github.com/maxmixalex/orchard-emu).
+The historical issue/run links below refer to the earlier repository owner.
+Remote acceptance requires observing the exact revision's Build and Pages
+runs and the deployed revision/assets; local checks alone do not establish it.
+This continuation is prepared locally on `codex/perf-wasm-worker-20261020` for
+a draft pull request. The GitHub write request was interrupted before a remote
+candidate branch or pull request was created. Its remote Build has not been
+dispatched: automatic builds accept
+only main pushes, the connected API has no dispatch operation, and the browser
+session is signed out. The existing workflow triggers and deployment policy
+are unchanged. Main and Pages do not yet contain this candidate.
+
+## Historical frontend and host continuation
 
 The interrupted React work was not present in main `2889f90`. This continuation
 recovered hash-checked source fragments, rebuilt the missing frontend and
