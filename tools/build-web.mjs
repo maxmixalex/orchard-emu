@@ -6,11 +6,16 @@ import { spawnSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const out = resolve(root, 'dist');
+const physicalReads = process.env.ORCHARD_EXPERIMENTAL_PHYSICAL_READS;
+if (physicalReads !== undefined && physicalReads !== '0' && physicalReads !== '1') {
+  throw new Error('ORCHARD_EXPERIMENTAL_PHYSICAL_READS must be 0 or 1 (omit it for the default dispatch).');
+}
 await mkdir(out, { recursive: true });
 const sources = ['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'checkpoint', 'scheduler', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb'].map(name => `src/${name}.c`);
 const args = [
   '--target=wasm32', '-std=c17', '-O3', '-flto', '-mbulk-memory', '-ffreestanding', '-nostdlib', '-fno-builtin',
   '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc',
+  ...(physicalReads === '1' ? ['-DORCHARD_EXPERIMENTAL_PHYSICAL_READS=1'] : []),
   ...sources, 'app/wasm.c', '-o', resolve(out, 'orchard.wasm'),
   '-Wl,--no-entry', '-Wl,--export-memory', '-Wl,--stack-first',
   '-Wl,-z,stack-size=524288', '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216',
@@ -22,7 +27,7 @@ for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js'
   await copyFile(resolve(root, 'web', file), resolve(out, file));
 }
 await copyFile(resolve(root, "LICENSE"), resolve(out, "LICENSE"));
-console.log(`Web build: ${out}`);
+console.log(`Web build: ${out} (${physicalReads === '1' ? 'experimental physical reads enabled' : 'default physical-read dispatch'})`);
 
 const server = (await readFile(resolve(root, 'tools/serve.mjs'), 'utf8'))
   .replace("new URL('../dist/', import.meta.url)", "new URL('./', import.meta.url)");

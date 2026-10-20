@@ -1940,5 +1940,10 @@
     "candidate_deployed": false,
     "pull_request": "https://github.com/maxmixalex/orchard-emu/pull/1",
     "published_commit": "aba29231257b2b3f882b3a51410f5f1f04e0960c"
+  },
+  "record_scope": {
+    "historical_full_fast_read_candidate": true,
+    "latest_release_scope_record": "performance-release-2026-10-20.json",
+    "note": "This record retains its original candidate artifacts, gates and publication status. The later release disables experimental physical reads by default and adds pull-request CI; earlier successful trajectories do not classify the original stop."
   }
 }

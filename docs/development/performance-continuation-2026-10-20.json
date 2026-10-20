@@ -1166,5 +1166,10 @@
         "passed": true
       }
     ]
+  },
+  "record_scope": {
+    "historical_full_fast_read_candidate": true,
+    "latest_release_scope_record": "performance-release-2026-10-20.json",
+    "note": "This record retains its original candidate artifacts, gates and publication status. The later release disables experimental physical reads by default and adds pull-request CI; earlier successful trajectories do not classify the original stop."
   }
 }

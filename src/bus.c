@@ -1,11 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 #include "internal.h"
 
-/* Preserve the complete device dispatch for uncommon reads and reference
- * builds. Keeping it out of the small array-read path lets WASM specialize
- * instruction fetches and loads without inlining MMIO/device dispatch.
- * Native builds retain the original function and its call boundaries. */
-#if defined(__wasm__) && !defined(ORCHARD_REFERENCE)
+/* Keep the original dispatch in published builds while the earlier HP48gII
+ * browser stop remains unclassified. The optional physical-read experiment
+ * specializes array reads without inlining MMIO/device dispatch; only an
+ * explicit value of 1 enables it. Native and reference builds always retain
+ * the original function and its call boundaries. */
+#if defined(__wasm__) && !defined(ORCHARD_REFERENCE) && \
+    defined(ORCHARD_EXPERIMENTAL_PHYSICAL_READS) && ORCHARD_EXPERIMENTAL_PHYSICAL_READS == 1
 #if defined(__GNUC__) || defined(__clang__)
 __attribute__((noinline))
 #endif
@@ -44,7 +46,8 @@ bool o_phys_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t
         return o_mmio_write(m, address, width, value);
     return false;
 }
-#if defined(__wasm__) && !defined(ORCHARD_REFERENCE)
+#if defined(__wasm__) && !defined(ORCHARD_REFERENCE) && \
+    defined(ORCHARD_EXPERIMENTAL_PHYSICAL_READS) && ORCHARD_EXPERIMENTAL_PHYSICAL_READS == 1
 /* Every read still fetches the current bytes. Only a complete, non-aliased
  * span in normal NOR array mode or physical SRAM takes this path; NOR ID,
  * mirrored/wrapping SRAM, boot SRAM, MMIO and faults keep the original path.

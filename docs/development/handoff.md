@@ -7,11 +7,15 @@ Use [maxmixalex/orchard-emu](https://github.com/maxmixalex/orchard-emu) and its
 The earlier owner URLs and issue/run numbers in the historical entries below
 are not the current publication destination.
 
-The retained optimization specializes checked normal NOR/physical SRAM reads
-in WASM and prevents the paced Worker from spending an entire task executing
-tiny earned allowances. Live descriptor checks, exact key boundaries and the
-original functional clock remain. Do not switch the UI to the opt-in divided
-runner or shorten the validated HP39 key dwell based on throughput figures.
+The release retains the paced Worker improvement, which prevents a caught-up
+pump from spending an entire task executing tiny earned allowances, and the
+two boot SRAM pointer corrections. The new normal-NOR/physical-SRAM WASM read
+specialization is now **experimental and disabled by default**. This isolates
+the core candidate involved in the unclassified stop below while preserving
+the independently measured Worker benefit. Live descriptor checks, exact key
+boundaries and the original functional clock remain. Do not switch the UI to
+the opt-in divided runner or shorten the validated HP39 key dwell based on
+throughput figures.
 The CPU halfword/block/Thumb rollback prototype was withdrawn because its
 full-workload timings were inconsistent; its comparisons and benchmark remain.
 
@@ -20,13 +24,18 @@ owns the exact baseline, measured artifacts, same-input results and new tools.
 [Validation](validation.md) records the current gates. A rare HP48 Unlimited
 core stop after a correct browser result remains explicitly recorded there;
 passing replays alone must not be substituted for explaining that failure.
-The final build passes a separate 24-trial/48-expression Chrome sweep, but the
-original stop remains a merge blocker. The reviewed source tree is now preserved
-in remote commit `aba2923` on `codex/perf-wasm-worker-20261020` and
-[draft PR #1](https://github.com/maxmixalex/orchard-emu/pull/1).
-This remote tree exactly matches the earlier local `4959a63` snapshot, recovered
-after an interrupted write and execution-environment rollback. Main remains
-`83a2d38`; remote CI acceptance and Pages publication remain pending.
+The fast-read candidate passes a separate 24-trial/48-expression Chrome sweep,
+but those passes do not classify the original stop. That core candidate must
+remain opt-in until a captured failing trace or other causal evidence resolves
+the risk. The default release instead restores baseline physical-read dispatch;
+the merge decision applies to this narrower scope. See the
+[release scope](performance.md#release-scope-after-stop-review) and
+[PR #1](https://github.com/maxmixalex/orchard-emu/pull/1) for its acceptance.
+The earlier full candidate remains preserved in `aba2923`, whose remote tree
+exactly matches the recovered local `4959a63` snapshot. Commit `f95232a` adds
+read-only pull-request CI on GitHub-hosted runners; Pages continues to require
+a successful exact-current-main build. A submitted workflow is not a passing
+run or a deployed site.
 The maintained browser probe preserves future
 stop observations and recovers a private Save checkpoint for diagnosis.
 Continue physical clock/input calibration and broader OS use from this state,
@@ -58,8 +67,11 @@ capture the first stopped checkpoint before Pause releases keys. A bounded
 HP48gII Unlimited diagnostic group passed four same-WASM replays, covering
 105,412 API calls and 52,240 run calls. These instrumented traces have different
 actual browser input phases and are not A/B timing samples. Preserve the old
-failure, keep the draft PR unmerged, and use a future captured failing trace
-to establish its cause; successful new traces do not classify the old stop.
+failure and keep the physical-read experiment disabled in normal builds. Use
+a future captured failing trace to establish its cause; successful new traces
+do not classify the old stop. The fixed-WASM Worker CPU measurements remain
+applicable to the retained scheduling change, independently of the withdrawn
+default core optimization.
 
 ## Earlier handoffs
 

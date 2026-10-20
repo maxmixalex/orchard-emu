@@ -325,7 +325,43 @@ hosts. The [machine-readable evidence summary](performance-2026-10-20.json)
 contains this round's timing samples, build hashes and measurement boundaries;
 it contains no firmware, saved machine state or complete guest trace.
 
-### Retained changes
+### Release scope after stop review
+
+The [release evidence record](performance-release-2026-10-20.json) separates
+this narrowed default build from the historical fast-read measurements.
+
+The merge scope was narrowed after independent review of the retained failure
+metadata, all core stop sites, and the early/final WASM function bodies. Normal
+builds retain the Worker pacing improvement and the two boot SRAM pointer
+corrections. The new physical-read specialization is disabled by default and
+requires the explicit `ORCHARD_EXPERIMENTAL_PHYSICAL_READS=1` build environment
+setting. Native and reference builds keep the original dispatcher even when
+that experiment is requested.
+
+This is risk isolation, not a diagnosis of the old stop. The failed run lacks
+the state required to establish its cause. The early and corrected fast-read
+WASMs differ in only the two pointer-offset functions; their other 80 function
+bodies are identical. There is no hidden CPU or stop fix. In Unlimited mode,
+the new Worker threshold cannot take its yield branch because the available
+budget is always 1024. Actual browser input phases can still vary with host
+scheduling, so this observation alone does not identify the root cause.
+
+The core throughput tables below describe the **opt-in fast-read candidate**,
+not the default release. The Worker CPU measurements remain applicable to the
+retained change: that experiment used the same baseline WASM for both Workers.
+A fresh single full A/B pair per model also passed the exposed-state and output
+comparisons, but its timing ratios varied markedly (1.337x HP39g+, 1.012x
+HP48gII). These are a separate noisy window, not a replacement for earlier
+samples or a new default-release speedup claim.
+
+The build now runs on pull requests to `main` with read-only repository
+permissions. Pages still accepts only successful current-main push/manual
+builds. The default WASM identity and its targeted acceptance are recorded in
+the [PR merge evidence](https://github.com/maxmixalex/orchard-emu/pull/1),
+separately from the historical fast-read artifacts; merging requires the
+narrowed revision's actual CI result.
+
+### Reviewed candidate changes
 
 The optimized WASM physical-read entry specializes complete 1/2/4-byte reads
 from normal NOR array mode and physical SRAM. It reads the current bytes on
@@ -451,7 +487,9 @@ not assert the result pixels). A captured successful Chrome trajectory matched
 62,191 API calls and the complete checkpoint in six implementations; 41,068,575
 optimized reads also matched the old dispatcher individually. The pointer-fixed
 WASM separately matches that successful trace. These checks leave the original
-failure **unclassified and a merge blocker**, rather than proving it was fixed.
+failure **unclassified**. It blocked the full candidate and continues to block
+enabling the new physical-read path by default. The narrower release scope
+above removes that path from normal builds; it does not claim a stop fix.
 
 The maintained browser probe now preserves the original failed observation,
 then uses the real UI's Save download to capture a stopped session and locally
@@ -667,8 +705,9 @@ The [continuation evidence](performance-continuation-2026-10-20.json) keeps
 the report hashes, executed tool identities and subsequent validation changes
 separate. Opt-in trace reports have `instrumented: true` and
 `performance_sample: false`; the probe omits its usual expression latency
-fields in this mode. The original HP48gII stop remains unclassified and still
-blocks merging and Pages publication.
+fields in this mode. The original HP48gII stop remains unclassified and keeps
+the physical-read candidate out of default builds. See the release scope above
+for the independently retained Worker change and the new default-build gates.
 
 ```sh
 python3 tools/probe-browser-latency.py ../orchard-baseline/dist dist /private/nors build/new-stop-diagnostic.json --models 4 --speeds 0 --repeats 1 --diagnostic-trace --before-input-ms 175 --after-result-ms 100

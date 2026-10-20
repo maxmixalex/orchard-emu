@@ -4,12 +4,15 @@
 
 The current [performance record](performance.md#physical-reads-and-worker-pacing-2026-10-20-from-83a2d38)
 and [sample summary](performance-2026-10-20.json) separate core throughput,
-Node Worker CPU cost and actual Chrome input latency. The retained production
-changes are a checked WASM physical-read fast path and a caught-up Worker
-pacing fix. The attempted CPU transaction optimization was withdrawn after
-inconsistent timing, while its regression comparisons remain.
+Node Worker CPU cost and actual Chrome input latency. The retained default
+changes are a caught-up Worker pacing fix and two boot SRAM pointer corrections.
+The checked WASM physical-read fast path is now an explicit, default-off
+experiment following the stop review; its core-throughput figures are not
+default-release gains. The attempted CPU transaction optimization was withdrawn
+after inconsistent timing, while its regression comparisons remain.
 
-Local Release, reference and ASan/UBSan each pass 14 CTest suites. Native and
+Historical fast-read candidate validation: local Release, reference and
+ASan/UBSan each pass 14 CTest suites. Native and
 test-WASM checks pass 1,118,080 assertions per host plus 9,902 divided-clock
 checks. Unicorn reports 17,075 cases, zero mismatches and zero skips. Static
 analysis reports no diagnostics across 38 native sources or the WASM bus path.
@@ -22,9 +25,12 @@ WASM cold runs with identical repeated/native/WASM outputs. Real Chrome file
 selection, exact checkpoint restore and keyboard/result-pixel measurement
 have now run locally on an HTTP origin. The initial 24-trial stock-ROM browser
 sweep nevertheless contains one HP48gII Unlimited stop after a correct `56`;
-the final build's separate 24-trial sweep passes all 48 expressions. The
-earlier stop remains unclassified and blocks merging this performance branch;
-later passing trials do not explain it. The detailed performance record
+the pointer-corrected fast-read candidate's separate 24-trial sweep passes
+all 48 expressions. The
+earlier stop remains unclassified; later passing trials do not explain it.
+It prevents enabling the new physical-read path by default. The narrowed
+release restores baseline physical-read dispatch and keeps the independently
+measured Worker improvement. The detailed performance record
 preserves both sweeps and their exact build identities. Do not describe the
 initial sweep as fully passing or the existing physical clock, SRAM,
 LCD and analog hypotheses as verified hardware.
@@ -40,13 +46,15 @@ Current source and CI live in
 The historical issue/run links below refer to the earlier repository owner.
 Remote acceptance requires observing the exact revision's Build and Pages
 runs and the deployed revision/assets; local checks alone do not establish it.
-The reviewed source tree has been published as `aba2923` on
+The earlier full candidate is preserved as `aba2923` on
 `codex/perf-wasm-worker-20261020` in
-[draft PR #1](https://github.com/maxmixalex/orchard-emu/pull/1).
-Its remote Build has not been dispatched: automatic builds accept
-only main pushes, the connected API has no dispatch operation, and the browser
-session is signed out. The existing workflow triggers and deployment policy
-are unchanged. Main and Pages do not yet contain this candidate.
+[PR #1](https://github.com/maxmixalex/orchard-emu/pull/1).
+That stage had no remote Build because automatic triggers accepted only main
+pushes. Commit `f95232a` adds pull-request validation on `ubuntu-24.04`, retaining
+read-only permissions and disabling persisted checkout credentials. Pages
+continues to require a successful exact-current-main push/manual Build;
+pull-request artifacts cannot deploy. The narrowed default release requires
+its own Build acceptance, separate from prior local fast-read results.
 
 The input-timeline continuation uses the same production WASM artifacts and
 unchanged `run()`/hold/gap settings. Eight sampled profiles (two models, two

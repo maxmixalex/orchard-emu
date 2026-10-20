@@ -1,0 +1,397 @@
+{
+  "schema": "orchard-performance-release-scope-v1",
+  "date_utc": "2026-10-20",
+  "baseline_commit": "83a2d38146b65b8324076fc034e0770d4cc132f1",
+  "reviewed_full_candidate_commit": "39462d1e44c7d12185db35e0f6486fd9d5f0d836",
+  "pull_request": "https://github.com/maxmixalex/orchard-emu/pull/1",
+  "release_scope": {
+    "default_physical_read_dispatch": "baseline dispatcher, with checked boot SRAM pointer offsets",
+    "retained_optimization": "paced Worker retains sub-256-quanta credit and yields, preserving closer exact physical-key boundaries",
+    "experimental_physical_reads_default_enabled": false,
+    "experimental_environment_variable": "ORCHARD_EXPERIMENTAL_PHYSICAL_READS",
+    "experimental_enable_value": "1",
+    "native_or_reference_uses_experimental_path": false,
+    "core_throughput_gain_claimed_for_default_release": false,
+    "cpu_clock_input_policy_changed": false,
+    "reason": "The earlier stop cannot be classified from retained metadata. Isolate the new core read candidate from the default release while retaining the independently measured Worker benefit.",
+    "stop_fix_claimed": false
+  },
+  "source_identities_sha256": {
+    "src/bus.c": "c6ddad9928bbdf956b2b1e4ceb2ffedc692a8913496827e2d43a65701fd868c5",
+    "src/machine.c": "746bee035d1f8172969d4ad955d3abc359989503f856a233cd0f214ac03ccfdd",
+    "web/worker.js": "10241765547dea5a840be5310dc8a7478e4d89ba6ed68a14fbfabfeb67c5925e",
+    "web/pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+    "tools/build-web.mjs": "81f21f1382c7edd4b59819a3a16b85632fc11469f99667c099089d1964351705",
+    "tools/check-wasm.mjs": "2e9bfad88f40825e734631328ab7c8d66938df72b54f4e82b216128012e343a2",
+    ".github/workflows/build.yml": "5cecf5cd1a84803384b99cbbb89df97dba4c70d9752e57fc1adfa5f863e34ed1"
+  },
+  "independent_stop_review": {
+    "schema": "orchard-release-stop-review-v1",
+    "reviewed_commit": "39462d1e44c7d12185db35e0f6486fd9d5f0d836",
+    "baseline_commit": "83a2d38146b65b8324076fc034e0770d4cc132f1",
+    "review_type": "independent static source, retained failure metadata and WASM code-section comparison; no new original-ROM execution",
+    "failure": {
+      "report_sha256": "c689195fb648095d0ad8be2fb858e507097dc820a17a1c7e2b4dc547bcfc69c9",
+      "model": 4,
+      "speed": 0,
+      "page_error_count": 0,
+      "worker_error_count": 0,
+      "last_input_sequence": 65,
+      "correct_result_sequence": 72,
+      "stopped_snapshot_sequence": 73,
+      "result_to_stop_ms": 19.799999999813735,
+      "stop_code_retained": false,
+      "exact_guest_input_ticks_retained": false,
+      "checkpoint_retained": false,
+      "classification": "unclassified; existing metadata cannot identify a root cause or establish baseline inheritance"
+    },
+    "artifacts": {
+      "early_wasm_sha256": "04356a7a24912bab1f1307c5ece8606fcecfe8d8409579806450a1d708c241cf",
+      "current_wasm_sha256": "87d72134c7b7d564bb7dd256eab51432a343e393651c8c554cee44f2c13fc615",
+      "function_count": 82,
+      "changed_function_defined_indices": [
+        8,
+        21
+      ],
+      "unchanged_function_bodies": 80,
+      "code_bytes_added": 24,
+      "meaning": "Only the independently corrected boot SRAM pointer-offset expressions differ. This is not a stop fix."
+    },
+    "worker_isolation": {
+      "unlimited_available": 1024,
+      "new_break_condition": "allowance < Math.min(256, boundary)",
+      "condition_can_hold_in_unlimited": false,
+      "guest_call_budget_change_for_equal_state_and_input_phase": false,
+      "host_scheduling_may_change_actual_input_phase": true,
+      "sources": [
+        "web/pacing.js",
+        "web/worker.js",
+        "tests/worker-pacing.mjs"
+      ]
+    },
+    "core_review": {
+      "new_stop_sites": 0,
+      "all_existing_stop_sites_unchanged": true,
+      "fast_read_nor_conditions": [
+        "valid 1/2/4-byte width and output pointer",
+        "complete flash span",
+        "live nor_id_mode is false"
+      ],
+      "fast_read_sram_conditions": [
+        "complete physical SRAM span",
+        "no mirror or wrapping span"
+      ],
+      "side_effects_preserved_by_source_inspection": [
+        "NOR ID and writes use original device paths",
+        "SRAM alias counts apply only to mirrored/wrapping reads",
+        "MMIO materializes deferred phases through original dispatcher"
+      ],
+      "sources": [
+        "src/bus.c",
+        "src/nor.c",
+        "src/sram.c",
+        "src/machine.c"
+      ]
+    },
+    "merge_recommendation": {
+      "current_default_fast_path": "do not call the unclassified stop resolved",
+      "minimal_risk_isolation": "Restore original physical-read dispatch in default WASM build, preserving the boot SRAM pointer-offset fixes, Worker pacing improvement and diagnostics. Optional experimental fast-read may remain source-only behind an explicit default-off compile macro.",
+      "macro_if_retained": "ORCHARD_EXPERIMENTAL_PHYSICAL_READS",
+      "needs_new_default_build_and_gates": true,
+      "published_core_speedup_claim_after_isolation": false,
+      "existing_worker_speedup_measurement_still_applies": "Worker benchmark used identical baseline WASM for both variants, so its isolated scheduling result does not depend on experimental physical reads."
+    },
+    "privacy": {
+      "firmware_bytes_included": false,
+      "checkpoint_or_ram_bytes_included": false,
+      "raw_api_trace_included": false
+    }
+  },
+  "fresh_opt_in_candidate_review": {
+    "schema": "orchard-performance-release-review-v1",
+    "reviewed_commit": "39462d1e44c7d12185db35e0f6486fd9d5f0d836",
+    "baseline_commit": "83a2d38146b65b8324076fc034e0770d4cc132f1",
+    "generated_at": "2026-10-20T14:49:49.722Z",
+    "production_changes_added_in_this_review": false,
+    "environment": {
+      "node": "v24.19.0",
+      "platform": "linux",
+      "architecture": "x64",
+      "cpu": "INTEL(R) XEON(R) PLATINUM 8573C"
+    },
+    "artifacts": {
+      "baseline_wasm_sha256": "2e7961a624c9020fefc3ccb91bd36ef3d926c32fd6556f9ecb74c5313e09006d",
+      "candidate_wasm_sha256": "87d72134c7b7d564bb7dd256eab51432a343e393651c8c554cee44f2c13fc615",
+      "baseline_worker_sha256": "8de3d58583fdee28da7983656ff7f584d7d32331355a3fa4cf426a249d4199e8",
+      "candidate_worker_sha256": "10241765547dea5a840be5310dc8a7478e4d89ba6ed68a14fbfabfeb67c5925e",
+      "benchmark_source_sha256": "58f43587ba399de8277e00f92874b06339761b3869bb72d4328a6a0d34ca95d5",
+      "worker_regression_sha256": "190d0af5c3fc4659f48abbecc5b8c1213af2627caca7523f49fc2df7513da0b0"
+    },
+    "fresh_core_check": {
+      "raw_report_local_path": "build/evidence/perf-release-full-20261020.json",
+      "raw_report_sha256": "9f1efc6a8efbb25a8eb50a2f2ba48376e2c623b38f7987f02f4a89b44dbed679",
+      "samples_per_variant_per_model": 1,
+      "order": "baseline then candidate; HP39g+ then HP48gII",
+      "warm_machine": false,
+      "measures": "core execution in Node/V8; excludes loading, WASM compilation and browser task scheduling; no real-calculator timing comparison",
+      "models": [
+        {
+          "model": 1,
+          "ticks": 230000000,
+          "baseline_ms": 44116.088973,
+          "candidate_ms": 33002.88186200001,
+          "throughput_ratio": 1.3367344451151066,
+          "executions": 2,
+          "stop_status": 0,
+          "compared_outputs_equal": true,
+          "exposed_state_hash": "5e9251ff97a281966c56db13600e045df32874aa78896efff2cb2c5ff5e95755",
+          "frame_sha256": "efec8205f401a7189f3cd77eeaac6947165d480b383033c9796c86e95e9f6968",
+          "input_events_applied": 18
+        },
+        {
+          "model": 4,
+          "ticks": 300000000,
+          "baseline_ms": 30034.028944000005,
+          "candidate_ms": 29664.70560799999,
+          "throughput_ratio": 1.0124499241920815,
+          "executions": 2,
+          "stop_status": 0,
+          "compared_outputs_equal": true,
+          "exposed_state_hash": "1d4d9529f37c2bc70b4d5bb1791c6bbde77e30babdcbb95c0273905396b2e2a4",
+          "frame_sha256": "53a2eda0fe1c185236eda700cfaa6328fbb14bd89c8ffbe0b5ffde097bf527e9",
+          "input_events_applied": 20
+        }
+      ],
+      "comparison_scope": [
+        "33 exposed CPU snapshot words",
+        "10 exposed peripheral snapshot words",
+        "44 exposed USB snapshot words",
+        "all 6 annunciator bytes",
+        "all 131 by 64 rendered LCD pixels",
+        "UART output stream hash",
+        "SRAM alias read/write and LCD assumption counters",
+        "input event count; identical fixed schedule"
+      ],
+      "full_checkpoint_compared": false,
+      "measurement_caveats": [
+        "One full pair per model; not a confidence interval.",
+        "Absolute timings differ markedly from earlier measurements of these exact artifacts. Model-to-model ratios also vary; this review does not replace earlier timing windows or claim a new stable speedup.",
+        "The original full NOR is private/local. No firmware, guest registers, raw event list, RAM or checkpoint is included here.",
+        "This is Node/V8 core execution, not browser input latency or a real calculator clock."
+      ]
+    },
+    "worker_regression": {
+      "command": "node tests/worker-pacing.mjs",
+      "passed": true,
+      "real_worker_pump": true,
+      "clock": "deterministic advancing high-resolution mock",
+      "coverage": [
+        ".5/1/2 speed caught-up pump yields before 1 ms and avoids sub-256 calls",
+        "slow host retains full 6 ms task and 1024-tick calls",
+        "Unlimited retains full work budget",
+        "70-tick physical-key gaps and exact hold boundaries",
+        "pause cancels queued task"
+      ],
+      "performance_measurement": false
+    },
+    "source_review": {
+      "paths": [
+        "src/bus.c",
+        "src/nor.c",
+        "src/sram.c",
+        "src/internal.h",
+        "src/machine.c",
+        "web/worker.js",
+        "web/pacing.js",
+        "web/hp48.js"
+      ],
+      "findings": [
+        "Physical-read fast path validates output pointer and width before use; checked subtraction avoids unsigned wrap admitting unrelated banks.",
+        "Normal NOR fast path checks live ID mode and loads current bytes; all ID reads and their stop side effects use the original dispatcher.",
+        "The SRAM shortcut covers only spans wholly within physical RAM, where the original accessor does not update alias counters. Mirrored or wrapped accesses continue to the original accessor.",
+        "Boot SRAM and MMIO remain in slow dispatch, preserving deferred-phase synchronization and device side effects.",
+        "Native and reference builds retain original dispatch; the two pointer corrections form a checked integer bank offset before the array pointer.",
+        "Worker keeps Pacer credit when yielding, retains exact nearer key boundaries, and preserves UART 1024-tick, 6 ms task and functional-clock policies.",
+        "For Unlimited, Pacer.available always returns 1024; the new allowance comparison is always false, so the added waiting threshold does not alter its work budget."
+      ],
+      "new_concrete_defects_found": 0
+    },
+    "merge_scope_recommendation": {
+      "new_cpu_or_clock_candidate": false,
+      "reason": "No new optimization with stronger measured benefit or a concrete defect was found; retain the bounded already-validated production scope rather than add the earlier unstable CPU prototypes.",
+      "original_browser_stop": "This performance review does not classify or resolve the earlier HP48gII Unlimited stop. Fresh successful full trajectories do not prove its cause or repair. Root and independent stop review own the release decision."
+    }
+  },
+  "build_flag_validation": {
+    "schema": "orchard-build-flag-regression-v1",
+    "tests": [
+      {
+        "env_value": null,
+        "accepted": true,
+        "compiler_called": true,
+        "passed": true
+      },
+      {
+        "env_value": "0",
+        "accepted": true,
+        "compiler_called": true,
+        "passed": true
+      },
+      {
+        "env_value": "1",
+        "accepted": true,
+        "compiler_called": true,
+        "passed": true
+      },
+      {
+        "env_value": "",
+        "accepted": false,
+        "compiler_called": false,
+        "passed": true
+      },
+      {
+        "env_value": "true",
+        "accepted": false,
+        "compiler_called": false,
+        "passed": true
+      },
+      {
+        "env_value": "01",
+        "accepted": false,
+        "compiler_called": false,
+        "passed": true
+      },
+      {
+        "env_value": "2",
+        "accepted": false,
+        "compiler_called": false,
+        "passed": true
+      },
+      {
+        "env_value": "-1",
+        "accepted": false,
+        "compiler_called": false,
+        "passed": true
+      },
+      {
+        "env_value": " 1",
+        "accepted": false,
+        "compiler_called": false,
+        "passed": true
+      },
+      {
+        "env_value": "1 ",
+        "accepted": false,
+        "compiler_called": false,
+        "passed": true
+      }
+    ],
+    "firmware_used": false,
+    "production_artifact_modified": false
+  },
+  "worker_performance_evidence": {
+    "source": "performance-2026-10-20.json",
+    "same_baseline_wasm_for_both_workers": true,
+    "baseline_wasm_sha256": "2e7961a624c9020fefc3ccb91bd36ef3d926c32fd6556f9ecb74c5313e09006d",
+    "candidate_worker_sha256": "10241765547dea5a840be5310dc8a7478e4d89ba6ed68a14fbfabfeb67c5925e",
+    "normal_branch_thread_cpu_percent": {
+      "baseline": 85.31,
+      "candidate": 21.38
+    },
+    "normal_wfi_thread_cpu_percent": {
+      "baseline": 86.85,
+      "candidate": 5.8
+    },
+    "scope": "Historical Node Worker measurements with generated branch/WFI guests; not Chrome CPU, original-ROM power, Normal input-latency gains or a physical-calculator rating."
+  },
+  "default_build_acceptance": {
+    "gate": "Rebuild the narrowed default; compare its physical-read dispatch with baseline plus the two pointer corrections; run fixed-input complete-checkpoint equivalence, a bounded original-ROM UI witness, and the exact-head PR Build before merge.",
+    "results_location": "https://github.com/maxmixalex/orchard-emu/pull/1",
+    "record_stage": "Source-scope record committed before the new default validation and exact-head CI complete. Actual outcomes and default artifact identities are recorded in the PR merge evidence, not inferred from historical candidate passes."
+  },
+  "remote_ci": {
+    "trigger_commit": "f95232a98d558563082fb3f05b3752058b8d02e2",
+    "first_pr_run": "https://github.com/maxmixalex/orchard-emu/actions/runs/39443270140",
+    "required_acceptance": "Observe a successful Build for the exact final narrowed PR head before merging.",
+    "permissions": "contents: read",
+    "pages_policy": "Only successful exact-current-main push or workflow_dispatch artifacts may deploy; pull-request artifacts cannot deploy."
+  },
+  "privacy": {
+    "firmware_included": false,
+    "ram_or_checkpoint_included": false,
+    "raw_guest_trace_included": false
+  },
+  "independent_default_dispatch_verification": {
+    "schema": "orchard-default-physical-read-independent-review-v1",
+    "compiler": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+    "baseline_commit": "83a2d38146b65b8324076fc034e0770d4cc132f1",
+    "source_sha256": "c6ddad9928bbdf956b2b1e4ceb2ffedc692a8913496827e2d43a65701fd868c5",
+    "variants": [
+      {
+        "name": "wasm_default",
+        "flags": [
+          "--target=wasm32"
+        ],
+        "experimental_path_present": false,
+        "preprocessed_sha256": "b6b1e4982ade58e1f7b45570118f48d9956407fc4980aabd607b2bce805110dc"
+      },
+      {
+        "name": "wasm_zero",
+        "flags": [
+          "--target=wasm32",
+          "-DORCHARD_EXPERIMENTAL_PHYSICAL_READS=0"
+        ],
+        "experimental_path_present": false,
+        "preprocessed_sha256": "b6b1e4982ade58e1f7b45570118f48d9956407fc4980aabd607b2bce805110dc"
+      },
+      {
+        "name": "wasm_one",
+        "flags": [
+          "--target=wasm32",
+          "-DORCHARD_EXPERIMENTAL_PHYSICAL_READS=1"
+        ],
+        "experimental_path_present": true,
+        "preprocessed_sha256": "4c8aee8b65feab2f98775d45048f39f9981dc950f3186a6aea63b5e536faf867"
+      },
+      {
+        "name": "wasm_reference_default",
+        "flags": [
+          "--target=wasm32",
+          "-DORCHARD_REFERENCE=1"
+        ],
+        "experimental_path_present": false,
+        "preprocessed_sha256": "9b9c7aba3699efe57d8fb65137814532acb0e188b37aa628977d32a68fa7075b"
+      },
+      {
+        "name": "wasm_reference_one",
+        "flags": [
+          "--target=wasm32",
+          "-DORCHARD_REFERENCE=1",
+          "-DORCHARD_EXPERIMENTAL_PHYSICAL_READS=1"
+        ],
+        "experimental_path_present": false,
+        "preprocessed_sha256": "9b9c7aba3699efe57d8fb65137814532acb0e188b37aa628977d32a68fa7075b"
+      },
+      {
+        "name": "native_default",
+        "flags": [],
+        "experimental_path_present": false,
+        "preprocessed_sha256": "a4374bbfa51becf1ce549daa032bc80e966a623bef3f3ef8a93d5f1b28075379"
+      },
+      {
+        "name": "native_one",
+        "flags": [
+          "-DORCHARD_EXPERIMENTAL_PHYSICAL_READS=1"
+        ],
+        "experimental_path_present": false,
+        "preprocessed_sha256": "a4374bbfa51becf1ce549daa032bc80e966a623bef3f3ef8a93d5f1b28075379"
+      }
+    ],
+    "default_matches_baseline_plus_checked_boot_pointer_after_preprocessing": true,
+    "default_equals_explicit_zero": true,
+    "reference_ignores_experimental_one": true,
+    "native_ignores_experimental_one": true,
+    "passed": true,
+    "firmware_used": false
+  }
+}
