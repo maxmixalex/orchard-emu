@@ -31,12 +31,49 @@ can be configured for it. No guest memory is edited to enter text.
 
 Shortening taps without testing caused a real regression: HP39g+ read `7*8`
 as `78` at 600,000 down / 360,000 released ticks. Several other short pairs
-also failed when their start phase changed. The retained user timings are
+also failed when their start phase changed. The previous default timings were
 **1,500,000 / 900,000** for HP39g+ and **600,000 / 360,000** for HP48gII.
-Both retained pairs passed the two arithmetic sequences at eight different
+Both pairs passed the two arithmetic sequences at eight different
 start phases per model. Both models reproduce the established final calculation-frame hashes
 in the cold-start short-key witness. This is not an all-key debounce survey.
 The debug page retains its historical 2M/2M schedule for old probes.
+
+### HP39 release gap
+
+The calculator keeps the HP39g+ press at **1,500,000 ticks (125 ms)**
+and reduces the released interval from 900,000 to **600,000 ticks (50 ms)**.
+HP48gII remains at 600,000 / 360,000 ticks, and the workbench remains at
+2M/2M. The core still uses legacy `run()`; this does not change the clock,
+Normal pacing or the research execution APIs.
+
+A 360,000-tick (30 ms) gap was rejected on the first `1+1` case at phase zero:
+the ROM accepted `1+`, missed the second `1`, and displayed Invalid Syntax,
+although every requested physical contact occurred. The 50 ms candidate
+passed all 16 cases in the existing eight-phase arithmetic set and all 64
+cases in a 32-phase extension. The extension samples a 200 ms start-phase window
+every 75,000 ticks (6.25 ms); the 2.4M-tick endpoint also passed in the initial
+set. Every accepted case matches the complete known LCD and all eight
+down/up events for `1+1` or `7*8`, without a guest stop. These 80 executions
+cover 74 distinct expression/phase combinations. Independent adjacent-repeat
+(`11+1`) and default ALPHA/`KeyA` macro checks also pass all 32 executions:
+16 with the old gap and 16 with the new gap, from matching pre-key states.
+They match the independently prepared old-timing LCD after all contacts have
+been delivered and the final release gap is complete. This remains a finite
+input witness.
+
+For a four-key expression, the three gaps before ENTER total 150 ms instead
+of 225 ms, placing ENTER at 525 ms rather than 600 ms in functional-reference
+time. This is **75 ms less input queue time**, not a measured browser response
+gain. An isolated APLET click has no preceding queued key, so this change
+does not shorten its initial press or establish faster Aplet Library display.
+
+The Worker regression fixture exercises the actual `create` handler and
+checks exact contacts at Half, Normal, Double and Unlimited speeds. A new tap
+must still wait for the previous release gap even when the pending count has
+already reached zero. `tools/probe-interaction.mjs` deliberately retains its
+historical HP39 125/75 ms witness; it does not read production defaults.
+Use explicit `--hold 1500000 --gap 600000 --runner run` with
+`tools/probe-input-dwell.mjs` for the current HP39 timing.
 
 ## Pace is not execution throughput
 
@@ -62,8 +99,8 @@ The public Normal rate is a functional reference, **not a measured real-machine
 speed**. Physical clock domains and the absolute cursor period remain open.
 
 The production Worker retains `run()` for continuous execution and single-step,
-with one CPU slot per peripheral quantum and the existing physical key and RTC
-timings. `run_idle()` and `run_clocked()` are explicit research APIs; neither is
+with one CPU slot per peripheral quantum and the same RTC timing. Key contacts
+use the model-specific intervals above. `run_idle()` and `run_clocked()` are explicit research APIs; neither is
 selected by the UI. Both implement guest CLKCON.IDLE sleep and interrupt wakeup;
 the latter also models CPU/peripheral issue ratios. Browser arithmetic regressed
 under the ratio policy, and the one-slot IDLE candidate retained unexplained

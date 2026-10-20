@@ -1,11 +1,40 @@
 # Performance and the two frontends
 
+## HP39 release-gap follow-up (2026-10-20)
+
+After PR #2 (`ac16d1d`), the calculator keeps the HP39g+ press at 1,500,000
+quanta (125 ms) and reduces only its released interval from 900,000 to
+600,000 quanta (75 to 50 ms). The Worker still uses legacy `run()`; HP48
+contacts, workbench contacts, the functional clock and research APIs do not
+change. See [input behavior](interaction.md#hp39-release-gap) for the defaults
+and the historical fixed-timing probe.
+
+Holding the press constant isolates this experiment from the rejected shorter
+press trials below. A 30 ms gap missed the second `1` at phase zero and produced
+`1+` with Invalid Syntax despite exact physical contacts. The 50 ms gap passed
+80 arithmetic executions across 74 distinct expression/phase combinations:
+16 cases in the existing eight-phase set plus 64 in a 32-phase extension.
+Every accepted case matched the complete known LCD and its eight contacts.
+Independent `11+1` and default `KeyA` witnesses also passed all 32 executions
+(16 old-gap and 16 new-gap cases), matching an old-timing reference after all
+contacts and the final gap completed. No guest stop occurred.
+
+Four queued keys now reach ENTER at 525 ms instead of 600 ms in the 12 MHz
+functional reference: 75 ms less input queue time. These guest-state checks
+are not host-time measurements and establish no browser response gain. An
+isolated APLET click has no earlier queued key, so its initial press and
+Library rendering path do not benefit from this gap change. No broader key
+or firmware compatibility is inferred from this finite witness.
+
+The clock-policy investigation below is the historical PR #2 record. Its
+125/75 ms timings and negative browser observations remain unchanged evidence.
+
 ## Calculator clock ratios and visible latency (2026-10-20)
 
 This continuation starts from `0215f19`, the merged default release of PR #1.
 That release reduced caught-up Worker CPU use, but left Normal `1+1` response
-essentially unchanged. The current change investigates arithmetic and HP39g+
-Aplet Library interaction latency directly.
+essentially unchanged. PR #2 investigated arithmetic and HP39g+ Aplet Library
+interaction latency directly.
 
 The calculator retains `run()` for continuous execution and single-step.
 `run_idle()` and `run_clocked()` remain explicit research APIs. Their semantic
@@ -74,8 +103,9 @@ For HP39 arithmetic, the original queued typing interval to Enter remains
 600 ms: total `1+1` response is 1,176 → 770 ms in this fixed-phase experiment.
 HP48 totals are 475 → 357 ms. Faster key timings were tested separately:
 50 ms down / 30 ms released still loses a key in HP39 `7*8` at a shifted start
-phase with the divided policy. The validated HP39 125/75 ms and HP48 50/30 ms
-physical taps therefore remain in the production calculator.
+phase with the divided policy. At the PR #2 merge, the calculator retained
+HP39 125/75 ms and HP48 50/30 ms contacts. The gap-only follow-up above later
+changes the HP39 released interval; it does not revise this older witness.
 
 With the one-slot IDLE research runner, a separate 100/60 ms HP39 experiment
 also failed: `1+1` at a +12,000-quantum start phase never reached the expected
