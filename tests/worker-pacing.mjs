@@ -54,8 +54,14 @@ for(const speed of [.5,1,2]) {
   assert(task.calls<40,`Caught-up ${speed}x pacing spent ${task.calls} core calls catching up`);
   assert(task.ms<1,`Caught-up ${speed}x pacing must return before its 6 ms ceiling`);
   assert(fast.budgets.every(n=>n>=256),'Sub-256 work is retained until a useful batch is ready');
-  assert(fast.policies.every(name=>name==='idle'),'Playable calculators honor IDLE with one CPU slot per quantum');
+  assert(fast.policies.every(name=>name==='legacy'),'Playable calculators retain the legacy runner; research APIs stay explicit');
   fast.send({type:'pause'});assert.equal(fast.jobs.size,0);
+  const beforeStep=fast.budgets.length;
+  fast.send({type:'step'});
+  assert.equal(fast.budgets.length,beforeStep+1);
+  assert.equal(fast.budgets.at(-1),1,'A paused step retains one legacy quantum');
+  assert.equal(fast.policies.at(-1),'legacy','Single-step must not select a research runner');
+  assert.equal(fast.jobs.size,0,'Single-step must not resume the Worker');
 }
 
 // A slow host already has useful pending work and must retain the full task
@@ -90,4 +96,4 @@ assert.deepEqual(keys.presses,[
 assert(keys.budgets.includes(70),'Input boundaries smaller than the pacing batch are executed exactly');
 keys.send({type:'pause'});assert.equal(keys.jobs.size,0);
 
-console.log('Worker pacing: no caught-up self-spin at 0.5/1/2x; slow/unlimited hosts retain work; exact sub-batch key events and pause cancellation pass.');
+console.log('Worker pacing: legacy run/step; no caught-up self-spin at 0.5/1/2x; slow/unlimited hosts retain work; exact sub-batch key events and pause cancellation pass.');

@@ -53,10 +53,6 @@ function snapshot() {
   lastFrame = performance.now();
 }
 function schedule() { if (running && timer === null) timer = scheduler.schedule(pump, audience==='calculator'?pacer.delay():0); }
-// Keep the calculator's one-slot functional clock while honoring guest IDLE
-// requests. The ratio-aware runner remains an explicit research API.
-function idleRunner() { return audience==='calculator' && isPlayable(model,preset); }
-function runBudget(budget) { return idleRunner()?core.run_idle(budget):core.run(budget); }
 function pump() {
   timer=null;
   if (!running) return;
@@ -66,8 +62,6 @@ function pump() {
     // Batch calls in one bounded Worker task instead of a timer per 256 ticks.
     do {
       taps.update(tick);
-      // Both selected runners issue at most one CPU slot per quantum, keeping
-      // every UART drain within 1,024 CPU slots.
       const allowance=audience==='calculator'?pacer.available(performance.now(),1024):256;
       const boundary=taps.boundary(tick)-tick;
       // Match Pacer.delay's 256-tick waiting threshold. On a fast host, the
@@ -78,7 +72,7 @@ function pump() {
       if(audience==='calculator' && allowance<Math.min(256,boundary))break;
       const budget = Math.min(allowance,boundary);
       if(!budget)break;
-      const status = runBudget(budget);
+      const status = core.run(budget);
       if (status) syncTick(); else tick += budget;
       if(audience==='calculator')pacer.consume(budget);
       usb?.poll(tick);
@@ -170,7 +164,7 @@ self.onmessage=({data})=>{
       }).catch(error=>{if(token===generation&&job===operation)fail(error);});
     } else if(data.type==='pause') {pause();snapshot();}
     else if(data.type==='run' && loaded && !busy) {if(!running && state()[28]===0){pacer.reset(performance.now());running=true;schedule();snapshot();}}
-    else if(data.type==='step' && loaded && !busy) {pause();runBudget(1);snapshot();}
+    else if(data.type==='step' && loaded && !busy) {pause();core.run(1);snapshot();}
     else if(data.type==='reset' && loaded) {++operation;busy=false;autoSaving=false;pause();usb?.resetLocal();serial=false;postMessage({type:'links-reset',generation});core.reset();resetClock();events=[];eventOverflow=false;applySetup(core,model,preset);snapshot();}
     else if(data.type==='configure') {
       if(data.speed!==undefined)pacer.setSpeed(data.speed,performance.now());

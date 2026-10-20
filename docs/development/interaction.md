@@ -61,12 +61,13 @@ bounded between core calls. Browsers can still throttle background Workers.
 The public Normal rate is a functional reference, **not a measured real-machine
 speed**. Physical clock domains and the absolute cursor period remain open.
 
-The calculator's current `run_idle()` runner preserves one CPU slot per
-peripheral quantum and honors guest CLKCON.IDLE requests. The CPU sleeps while
-peripherals continue and wakes on an enabled interrupt source. Physical key
-contacts and RTC pacing retain their existing timings. The separate
-`run_clocked()` research API models CPU/peripheral issue ratios; measured HP39
-browser arithmetic regressed under that policy, so it is not selected by the UI.
+The production Worker retains `run()` for continuous execution and single-step,
+with one CPU slot per peripheral quantum and the existing physical key and RTC
+timings. `run_idle()` and `run_clocked()` are explicit research APIs; neither is
+selected by the UI. Both implement guest CLKCON.IDLE sleep and interrupt wakeup;
+the latter also models CPU/peripheral issue ratios. Browser arithmetic regressed
+under the ratio policy, and the one-slot IDLE candidate retained unexplained
+slow Aplet Library samples despite passing its guest-state checks.
 See the [scene comparison](performance.md#calculator-clock-ratios-and-visible-latency-2026-10-20)
 for its evidence and the remaining physical-clock limits.
 

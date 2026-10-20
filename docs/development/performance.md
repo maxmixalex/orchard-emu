@@ -4,23 +4,24 @@
 
 This continuation starts from `0215f19`, the merged default release of PR #1.
 That release reduced caught-up Worker CPU use, but left Normal `1+1` response
-essentially unchanged. The current change targets arithmetic and HP39g+
+essentially unchanged. The current change investigates arithmetic and HP39g+
 Aplet Library interaction latency directly.
 
-The calculator now uses `run_idle()`: the existing one-CPU-slot functional
-timebase with the missing guest IDLE request behavior implemented. This
-selection follows actual browser scene measurements. Increasing the CPU issue
-ratio reduced functional-reference latency but increased the HP39 work needed
-to type an expression, producing a real browser regression described below.
+The calculator retains `run()` for continuous execution and single-step.
+`run_idle()` and `run_clocked()` remain explicit research APIs. Their semantic
+checks pass, but browser scene measurements have not established acceptable
+default interaction latency. Increasing the CPU issue ratio regressed HP39
+arithmetic; the later one-slot IDLE candidate reduced guest work but retained
+unexplained slow Library samples. Both observations are preserved below.
 
-Every slot still executes the interpreter, live memory translation and
+Active CPU slots still execute the interpreter, live memory translation and
 interrupt checks. Peripheral time advances once per quantum. The Worker drains
 UART and polls USB at most every 1,024 quanta, bounding a call to 1,024 CPU slots.
 The 6 ms Worker task ceiling and earned-credit pacing remain active.
 `run()` and the earlier opt-in `run_divided()` preserve their existing semantics;
 the workbench and native host retain their selected legacy policy.
 
-Both `run_idle()` and the opt-in `run_clocked()` honor aligned word writes
+Both research APIs, `run_idle()` and `run_clocked()`, honor aligned word writes
 to `CLKCON.IDLE` (bit 2).
 The CPU sleeps after the writing instruction, while peripherals and the
 functional clock continue. An interrupt source enabled by `INTMSK` wakes the
@@ -38,7 +39,7 @@ settings remain. PLL/slow-mode absolute frequencies, ARM instruction cycle
 costs, cache/bus waits and the separate LCD HCLK domain are still uncalibrated.
 The default keeps one CPU slot per quantum and does not claim an exact
 real-calculator speed. Restoring an older portable session preserves its
-architectural state and then continues under the calculator's current policy.
+architectural state and continues under the unchanged legacy policy.
 
 The separate research API `run_clocked()` reads guest `CLKDIVN` and ARM920T
 CP15 bus mode to select HCLK in FastBus or FCLK in synchronous/asynchronous
@@ -46,7 +47,7 @@ mode. It includes special 1:4:4 and explicit reserved-setting stops, with mode
 changes applied at the next quantum. Tested HP39 HOME uses four slots and
 HP48 uses two. This relationship follows the manual's sections 7-8, 7-22 and
 ARM920T clock-mode chapter, but the browser evidence does not justify making
-it the default. `run_idle()` deliberately preserves the previous one-slot
+it the default. The research `run_idle()` preserves the previous one-slot
 functional rate; it does not silently cap or reinterpret `run_clocked()`.
 
 ### Fixed-state scene witnesses
@@ -76,7 +77,7 @@ HP48 totals are 475 → 357 ms. Faster key timings were tested separately:
 phase with the divided policy. The validated HP39 125/75 ms and HP48 50/30 ms
 physical taps therefore remain in the production calculator.
 
-With the selected one-slot IDLE runner, a separate 100/60 ms HP39 experiment
+With the one-slot IDLE research runner, a separate 100/60 ms HP39 experiment
 also failed: `1+1` at a +12,000-quantum start phase never reached the expected
 result in the 20M-quantum window. The guest did not stop. That sweep was
 terminated at its first failing case and is not counted as complete. The
@@ -108,9 +109,34 @@ from the first actual keydown to the first matching Worker frame. The cold-HOME
 instruction witness explains a material risk: typing through the first result
 took 22.61M instructions with ratio plus IDLE versus 14.11M with legacy issue.
 Much smaller idle-window instruction counts did not establish faster arithmetic.
-This candidate was also rejected as the calculator default. The selected
-`run_idle()` policy isolates sleep handling from the extra issue slots; its
-final browser and CI acceptance are attached to the PR below.
+This candidate was also rejected as the calculator default.
+
+The one-slot `run_idle()` candidate (`76db5cb…` WASM, `fb284913…` Worker)
+isolates sleep handling from the extra issue slots. Its original-ROM and
+generated-program semantic checks pass. In three alternating uninstrumented
+Chrome 155 Normal rounds, all 36 scene results matched every LCD pixel with
+no guest stop or page/Worker error. First actual keydown/click to first matching
+Worker frame on the main thread, before canvas paint, produced these medians:
+
+| Scene | Baseline | One-slot IDLE candidate |
+| --- | ---: | ---: |
+| HP39g+ `1+1` | 1,228 ms | 1,212 ms |
+| HP39g+ `7*8` | 1,279 ms | 1,337 ms |
+| HP39g+ Aplet Library | 1,017 ms | 2,616 ms |
+| HP39g+ Function START | 1,354 ms | 1,361 ms |
+| HP48gII `1+1` | 475 ms | 492 ms |
+| HP48gII `7*8` | 554 ms | 561 ms |
+
+The Library candidate samples were 2,881/2,616/1,168 ms. Their host-time
+variation remains unexplained; equal guest timing and successful instrumented
+replays do not resolve those browser observations. Default activation is
+withheld, and the production Worker retains its previous `run()` policy.
+
+The same research candidate reduced first-contact-to-result guest instruction
+counts by 16.77% / 16.85% for HP39 `1+1` / `7*8`, and 18.20% / 8.48% for HP48.
+These are research-runner work reductions, not measured host CPU-time savings
+or benefits enabled in the shipped calculator. The core APIs, independent
+clock/IDLE oracle and scene tools remain available for explicit investigation.
 
 `tools/probe-clock-latency.mjs` records the arithmetic policy comparison.
 `tools/probe-aplet-latency.mjs` produces private exact-checkpoint Aplet fixtures.

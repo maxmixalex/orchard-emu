@@ -2,13 +2,16 @@
 
 ## Visible calculator latency after PR #1 (2026-10-20)
 
-The current continuation starts at `0215f19`. The calculator selects
-`run_idle()`: one CPU slot per peripheral quantum with guest CLKCON.IDLE
-requests implemented. `run_clocked()` remains a separate opt-in research API
-for CP15 bus mode and CLKDIVN ratios. It was rejected as the calculator default
-after actual HP39 browser arithmetic regressed. Existing `run()` and
-`run_divided()` semantics remain available, and workbench/native host keep
-their legacy selection. Experimental physical reads remain disabled.
+The current continuation starts at `0215f19`. The calculator retains its
+previous `run()` default and single-step behavior. `run_idle()` and
+`run_clocked()` remain explicit research APIs, with their core implementation,
+independent oracle and scene tools preserved. The first implements guest
+CLKCON.IDLE at one CPU slot per peripheral quantum; the second also models
+CP15 bus mode and CLKDIVN ratios. Both default activations were withheld after
+browser measurements exposed regressions or unexplained slow samples.
+Existing `run()` and `run_divided()` semantics remain available; the
+workbench/native host also keep their legacy selection. Experimental physical
+reads remain disabled.
 
 Both new APIs respond to guest `CLKCON.IDLE` writes with CPU sleep,
 peripheral advancement and interrupt wakeup. Trigger on each aligned word write
@@ -20,11 +23,15 @@ register-only behavior, and the wrapper acknowledgement delay remains uncalibrat
 The [current scene record](performance.md#calculator-clock-ratios-and-visible-latency-2026-10-20)
 targets `1+1`, Aplet Library and Function START. The early 576→170 and
 1,022→281 ms observations describe functional-reference time under a rejected
-ratio policy; they are not browser gains of the selected default. Ratio plus
+ratio policy; they are not browser gains of the shipped default. Ratio plus
 IDLE also regressed HP39 `1+1` in all three browser rounds (median first-key
-latency 1,251→2,244 ms). Use the final
-[PR #2 acceptance](https://github.com/maxmixalex/orchard-emu/pull/2) to assess
-the one-slot IDLE release. HP39 50/30 ms key timings
+latency 1,251→2,244 ms). The later one-slot IDLE candidate passed all 36
+browser scene outputs, but Library medians were 1,017→2,616 ms, with candidate
+samples of 2,881/2,616/1,168 ms. Those host-time observations remain unresolved.
+Its arithmetic guest instruction reductions are research evidence and are not
+enabled benefits of the shipped calculator. Use the
+[PR #2 acceptance](https://github.com/maxmixalex/orchard-emu/pull/2) for the exact
+retained scope, candidate identities and negative evidence. HP39 50/30 ms key timings
 still lose `7*8` at another phase even with the faster CPU policy, so retain
 125/75 ms. A new 100/60 ms trial also loses `1+1` at +12,000 quanta under
 one-slot IDLE; the retained timings pass all 16 phase cases. HP48 retains
