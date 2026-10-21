@@ -112,39 +112,78 @@ def check_active_diagnostic_recovery(page, tmp, dist, errors):
     assert not page.evaluate('globalThis.__orchardProbe.snap.running')
 
     class AlterPauseAcknowledgement:
-        def __init__(self, mutation):
-            self.mutation = mutation
+        def __init__(self, field):
+            self.field = field
+            self.pause_confirmed = False
 
         def get_by_role(self, role, **kwargs):
             locator = page.get_by_role(role, **kwargs)
             if role != 'button' or kwargs.get('name') != 'Pause':
                 return locator
-            mutation = self.mutation
+            field = self.field
+            isolated = self
 
             class Button:
                 def click(self, **click_kwargs):
+                    # Install before the real Pause. An ack arriving after
+                    # click() returns must remain hidden for the entire wait.
+                    page.evaluate('''field=>{
+                      const p=globalThis.__orchardProbe;
+                      const descriptor=Object.getOwnPropertyDescriptor(p,field);
+                      const hook={p,field,descriptor,latest:descriptor.value,acks:0};
+                      if(globalThis.__orchardPauseIsolation)throw Error('Pause isolation already installed');
+                      globalThis.__orchardPauseIsolation=hook;
+                      const isolated=field==='pauseSnapshot'?null:descriptor.value+1;
+                      Object.defineProperty(p,field,{configurable:true,enumerable:descriptor.enumerable,
+                        get:()=>isolated,set:value=>{hook.latest=value;if(value!==null)++hook.acks;}});
+                    }''', field)
                     locator.click(**click_kwargs)
-                    page.evaluate(mutation)
+                    # The controller independently receives the real Worker
+                    # snapshot. Prove Pause happened before testing rejection.
+                    page.wait_for_function('''()=>{
+                      const s=window.__controller.last,h=globalThis.__orchardPauseIsolation;
+                      return s?.loaded&&!s.running&&!s.stopped&&
+                        (h.field!=='pauseSnapshot'||h.acks>0);
+                    }''', timeout=5000)
+                    isolated.pause_confirmed = True
 
             return Button()
+
+        def restore(self):
+            return page.evaluate('''()=>{
+              const h=globalThis.__orchardPauseIsolation;
+              if(!h)return null;
+              Object.defineProperty(h.p,h.field,{...h.descriptor,value:h.latest});
+              delete globalThis.__orchardPauseIsolation;
+              const restored=Object.getOwnPropertyDescriptor(h.p,h.field);
+              return {field:h.field,acks:h.acks,restored:!restored.get&&!restored.set&&
+                restored.value===h.latest};
+            }''')
 
         def __getattr__(self, name):
             return getattr(page, name)
 
     # Real Pause still runs, but its acknowledgement is unavailable or belongs
     # to another generation. A merely paused-looking UI must not pass either.
-    for name, mutation, expected in [
-        ('missing-pause-ack', 'globalThis.__orchardProbe.pauseSnapshot=null', 'Timeout'),
-        ('changed-generation', 'globalThis.__orchardProbe.generation++', 'identity changed'),
+    for name, field, expected in [
+        ('missing-pause-ack', 'pauseSnapshot', 'Timeout'),
+        ('changed-generation', 'generation', 'identity changed'),
     ]:
         start()
         path = tmp / (name + '.json')
+        isolated = AlterPauseAcknowledgement(field)
         try:
-            probe.export_diagnostic_failure(AlterPauseAcknowledgement(mutation), path,
+            probe.export_diagnostic_failure(isolated, path,
                                             dist, rom_path, pause_timeout_ms=500)
             raise AssertionError(name + ' incorrectly exported a trace')
-        except Exception as error:
+        except (BrowserTimeout, ValueError) as error:
             assert expected in str(error), (name, str(error))
+        finally:
+            restored = isolated.restore()
+        assert isolated.pause_confirmed, name + ' timed out before the real Pause acknowledgement'
+        assert restored and restored['field'] == field and restored['restored'], restored
+        if field == 'pauseSnapshot':
+            assert restored['acks'] > 0, 'Negative test never intercepted a real Pause acknowledgement'
         assert not path.exists(), name + ' wrote an unconfirmed trace'
     return {'complete_checkpoint_equal': True, 'original_observation_preserved': True,
             'missing_pause_ack_rejected': True, 'changed_generation_rejected': True,
