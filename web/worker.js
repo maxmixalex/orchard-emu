@@ -58,12 +58,17 @@ function pump() {
   if (!running) return;
   try {
     const end = performance.now()+6;
+    // Commands cannot change the queue during this Worker task. Recheck it
+    // on the first iteration and at each exact contact, not every core call.
+    let nextContact = tick;
     // Keep each core call short enough to drain even a continuously transmitting UART.
     // Batch calls in one bounded Worker task instead of a timer per 256 ticks.
     do {
-      taps.update(tick);
+      const contactDue = tick >= nextContact;
+      if (contactDue) taps.update(tick);
       const allowance=audience==='calculator'?pacer.available(performance.now(),1024):256;
-      const boundary=taps.boundary(tick)-tick;
+      if (contactDue) nextContact = taps.boundary(tick);
+      const boundary=nextContact-tick;
       // Match Pacer.delay's 256-tick waiting threshold. On a fast host, the
       // bookkeeping above can continually mint a handful of wall-time ticks;
       // executing those tiny allowances would spin for the whole 6 ms task.

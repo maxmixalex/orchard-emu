@@ -12,15 +12,21 @@ import {VirtualUSB} from '../web/virtual-usb.js';
 
 const source=readFileSync(process.env.ORCHARD_WORKER_PATH||new URL('../web/worker.js',import.meta.url),'utf8')
   .replace(/^import .*;\n/gm,'').split('\ntry {\n  const response=await fetch')[0];
-function fixture(hostHz,{speed=1,model=1,audience='calculator',preset=model===1?'hp39-home':'hp48-home'}={}) {
+function fixture(hostHz,{speed=1,model=1,audience='calculator',preset=model===1?'hp39-home':'hp48-home',auditContacts=false,startTick=0}={}) {
   let clock=0,wall=0,next=0,clockReads=0;
   const jobs=new Map(),budgets=[],policies=[],presses=[],output=[];
+  let contactOracle=null,expectedBudget=null;
+  const oracleBudgets=[],oraclePresses=[];
+  const queueCalls={update:0,boundary:0};
   const memory={buffer:new ArrayBuffer(16384)};
-  const run=(policy,n)=>{policies.push(policy);budgets.push(n);wall+=0.0003+n/(hostHz/1000);clock+=n;return 0;};
+  const run=(policy,n)=>{
+    if(contactOracle){assert.equal(n,expectedBudget,'Every run budget must match the uncached contact schedule');expectedBudget=null;}
+    policies.push(policy);budgets.push(n);wall+=0.0003+n/(hostHz/1000);clock+=n;return 0;
+  };
   const core=new Proxy({
     memory,
     create:()=>{clock=0;return 0;},
-    snapshot:()=>{new Uint32Array(memory.buffer,128,33)[22]=clock;return 128;},
+    snapshot:()=>{const s=new Uint32Array(memory.buffer,128,33);s[22]=clock>>>0;s[23]=Math.floor(clock/4294967296);return 128;},
     profile:(_,field)=>[4,8,1,1][field],
     run:n=>run('legacy',n),run_clocked:n=>run('clocked',n),run_idle:n=>run('idle',n),
     keyboard_matrix:(col,row,down)=>{presses.push({scan:col*7+row,down,tick:clock});return 0;},
@@ -30,7 +36,25 @@ function fixture(hostHz,{speed=1,model=1,audience='calculator',preset=model===1?
     schedule(fn,delay=0){const id=++next;jobs.set(id,{fn,at:wall+delay});return id;}
     cancel(id){jobs.delete(id);}
   }
-  const scope={Pacer,TaskScheduler:Scheduler,TapQueue,isPlayable,setupHash,applySetup,VirtualUSB,
+  class ObservedPacer extends Pacer {
+    available(now,cap) {
+      const allowance=super.available(now,cap);
+      if(contactOracle) {
+        // Independent reference: inspect the queue every quantum, with the
+        // exact allowance seen by production. Do not copy its contact cache.
+        contactOracle.update(clock);
+        const boundary=contactOracle.boundary(clock)-clock;
+        expectedBudget=allowance<Math.min(256,boundary)?0:Math.min(allowance,boundary);
+        if(expectedBudget)oracleBudgets.push(expectedBudget);
+      }
+      return allowance;
+    }
+  }
+  class ObservedQueue extends TapQueue {
+    update(tick){++queueCalls.update;return super.update(tick);}
+    boundary(tick){++queueCalls.boundary;return super.boundary(tick);}
+  }
+  const scope={Pacer:ObservedPacer,TaskScheduler:Scheduler,TapQueue:auditContacts?ObservedQueue:TapQueue,isPlayable,setupHash,applySetup,VirtualUSB,
     Uint32Array,Uint8Array,ArrayBuffer,self:{},postMessage:d=>output.push(d),initialCore:core,
     // 250 ns for a monotonic-clock read, 300 ns fixed host cost per core call;
     // the requested hostHz supplies only the per-tick cost. Faster clock reads
@@ -38,7 +62,14 @@ function fixture(hostHz,{speed=1,model=1,audience='calculator',preset=model===1?
     performance:{now:()=>{++clockReads;return wall+=0.00025;}}};
   const context=vm.createContext(scope);
   vm.runInContext(source+'\ncore=initialCore;',context);
-  const send=data=>scope.self.onmessage({data:{generation:1,...data}});
+  const send=data=>{
+    if(contactOracle) {
+      if(data.type==='tap')contactOracle.push(data.scan);
+      if(data.type==='tap-sequence')contactOracle.pushMany(data.scans);
+      if(data.type==='pause'||data.type==='release')contactOracle.clear(clock);
+    }
+    scope.self.onmessage({data:{generation:1,...data}});
+  };
   // Exercise the actual create handler, including its model-specific timings.
   // Only ROM loading is bypassed; no configure call overwrites hold/gap.
   send({type:'create',model,preset,audience});
@@ -46,16 +77,28 @@ function fixture(hostHz,{speed=1,model=1,audience='calculator',preset=model===1?
   assert(!output.some(x=>x.type==='error'),JSON.stringify(output));
   vm.runInContext('loaded=true;',context);
   const input=vm.runInContext('()=>({tick,pending:taps.pending,active:taps.active,readyAt:taps.readyAt,hold:taps.hold,gap:taps.gap})',context);
+  if(startTick){clock=startTick;scope.initialTick=startTick;vm.runInContext('tick=initialTick;taps.clear(tick);',context);}
+  if(auditContacts) {
+    assert.equal(audience,'calculator');
+    contactOracle=new TapQueue((scan,down,tick)=>oraclePresses.push({scan,down:Number(down),tick}),input().hold,input().gap);
+    contactOracle.clear(startTick);
+  }
   // Reserved for the synthetic sub-256 boundary test below, not default tests.
-  const syntheticTiming=vm.runInContext('(hold,gap)=>{taps.hold=hold;taps.gap=gap;}',context);
+  const setTiming=vm.runInContext('(hold,gap)=>{taps.hold=hold;taps.gap=gap;}',context);
+  const syntheticTiming=(hold,gap)=>{setTiming(hold,gap);if(contactOracle){contactOracle.hold=hold;contactOracle.gap=gap;}};
   send({type:'configure',speed});send({type:'run'});
-  return {send,budgets,policies,presses,output,jobs,input,syntheticTiming,
+  return {send,budgets,policies,presses,output,jobs,input,syntheticTiming,queueCalls,
     pump(){
       const entry=jobs.entries().next().value;assert.ok(entry,'Worker must schedule its continuation');
       jobs.delete(entry[0]);wall=Math.max(wall,entry[1].at);
       const start=wall,first=budgets.length;entry[1].fn();
       assert(!output.some(x=>x.type==='error'),JSON.stringify(output));
       assert(budgets.slice(first).every(n=>Number.isSafeInteger(n)&&n>0&&n<=1024),'All core calls stay UART-bounded');
+      if(contactOracle) {
+        assert.deepEqual(budgets,oracleBudgets,'The complete budget sequence must match per-quantum queue inspection');
+        assert.deepEqual(presses,oraclePresses,'All contact ticks must match per-quantum queue inspection');
+        assert.equal(input().pending,contactOracle.pending);assert.equal(input().active,contactOracle.active);
+      }
       return {ms:wall-start,calls:budgets.length-first,ticks:clock,clockReads};
     }
   };
@@ -164,4 +207,30 @@ assert.deepEqual(keys.presses,[
 assert(keys.budgets.includes(70),'Input boundaries smaller than the pacing batch are executed exactly');
 keys.send({type:'pause'});assert.equal(keys.jobs.size,0);
 
-console.log('Worker pacing: real create defaults; exact HP39 125/50 ms contacts and late-gap taps at .5/1/2/Unlimited; unchanged HP48/workbench timing; legacy run/step and bounded pacing pass.');
+// Compare every production run budget and contact with uncached queue
+// inspection. Cross the uint32 snapshot boundary, use contacts both below
+// and above a core quantum, then enqueue after an empty-queue gap and pause.
+for(const speed of [1,0]) {
+  const f=fixture(48000000,{speed,auditContacts:true,startTick:2**32-1024});
+  f.syntheticTiming(300,70);
+  f.send({type:'tap-sequence',scans:[26,5,26,6]});
+  pumpUntil(f,()=>f.presses.length===8);
+  f.pump(); // No queued contacts: a cached Infinity must remain harmless.
+  f.syntheticTiming(1500000,600000);
+  f.send({type:'tap',scan:26});
+  pumpUntil(f,()=>f.presses.length===10);
+  assert(f.input().tick<f.input().readyAt,'The next command arrives during the empty-queue gap');
+  f.send({type:'tap',scan:5});
+  pumpUntil(f,()=>f.presses.length===11);
+  const pausedAt=f.input().tick;
+  f.send({type:'pause'});
+  assert.deepEqual(f.presses.at(-1),{scan:5,down:0,tick:pausedAt},'Pause releases the held key at the current tick');
+  assert.equal(f.jobs.size,0);assert.equal(f.input().pending,0);
+  f.send({type:'run'});f.send({type:'tap',scan:6});f.pump();
+  assert.equal(f.presses.at(-1).tick,pausedAt,'A resumed task must refresh its contact boundary');
+  f.send({type:'pause'});
+  assert.equal(f.queueCalls.update,f.queueCalls.boundary);
+  assert(f.queueCalls.update<f.budgets.length/4,'Queue inspection must not recur at every core quantum');
+}
+
+console.log('Worker pacing: real defaults, exact contacts and late-gap taps; uncached-reference run budgets across uint32 rollover, empty queues and pause/resume; legacy run/step and bounded pacing pass.');
