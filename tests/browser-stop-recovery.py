@@ -21,7 +21,7 @@ import tempfile
 import threading
 from urllib.parse import urlsplit
 
-from playwright.sync_api import expect, sync_playwright
+from playwright.sync_api import TimeoutError as BrowserTimeout, expect, sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location('latency_probe', ROOT / 'tools/probe-browser-latency.py')
@@ -60,6 +60,8 @@ class Handler(SimpleHTTPRequestHandler):
             body = None
             if path == '/__orchard-trace.mjs':
                 body = (ROOT / 'tools/browser-core-trace.mjs').read_bytes()
+            elif path == '/__orchard-runtime-trace.mjs':
+                body = (ROOT / 'tools/browser-runtime-trace.mjs').read_bytes()
             elif path == '/worker.js':
                 body = probe.instrument_worker_source(
                     (Path(self.directory) / 'worker.js').read_text(), './__orchard-trace.mjs').encode()
@@ -71,6 +73,121 @@ class Handler(SimpleHTTPRequestHandler):
                 self.wfile.write(body)
                 return
         super().do_GET()
+
+
+def check_active_diagnostic_recovery(page, tmp, dist, errors):
+    """A running timeout must preserve its observation before a verified Pause."""
+    rom = bytearray(b'\xff' * 1048576)
+    # Disable the watchdog, then run a branch loop with no expected LCD result.
+    for address, word in [(0, 0xea000002), (16, 0xe59f0008), (20, 0xe3a01000),
+                          (24, 0xe5801000), (28, 0xeafffffe), (32, 0x53000000)]:
+        struct.pack_into('<I', rom, address, word)
+    rom_path = tmp / 'generated-running.bin'
+    rom_path.write_bytes(rom)
+
+    def start():
+        page.evaluate('''encoded=>{
+          const rom=Uint8Array.from(atob(encoded),ch=>ch.charCodeAt(0));
+          const c=window.__controller;c.create({...c.state.model,preset:'strict'},rom.buffer);
+        }''', base64.b64encode(rom).decode())
+        probe.wait_probe(page, '''p.traceEpoch&&p.snap?.loaded&&p.snap.running&&
+          !p.snap.stopped&&p.traceEpoch.generation===p.generation''')
+
+    start()
+    try:
+        probe.wait_probe(page, 'false', timeout=100)
+        raise AssertionError('Generated running scene did not time out')
+    except BrowserTimeout:
+        pass
+    assert probe.capture_failure_evidence(page, tmp, 'active-timeout', errors) == []
+    original = tmp / 'active-timeout-failure.json'
+    before = original.read_bytes()
+    assert json.loads(before)['probe']['snapshot']['running']
+    result = probe.export_diagnostic_failure(page, tmp / 'active-timeout-trace.json', dist, rom_path)
+    assert result['recovery_action'] == 'pause-then-capture', result
+    assert result['complete'] and result['runtime_complete'] and result['replay_passed'], result
+    assert result['replay']['run_calls'] > 0 and result['replay']['stop'][0] == 0
+    assert result['replay']['complete_checkpoint_equal']
+    assert original.read_bytes() == before, 'Diagnostic recovery replaced the original timeout'
+    assert not page.evaluate('globalThis.__orchardProbe.snap.running')
+
+    class AlterPauseAcknowledgement:
+        def __init__(self, field):
+            self.field = field
+            self.pause_confirmed = False
+
+        def get_by_role(self, role, **kwargs):
+            locator = page.get_by_role(role, **kwargs)
+            if role != 'button' or kwargs.get('name') != 'Pause':
+                return locator
+            field = self.field
+            isolated = self
+
+            class Button:
+                def click(self, **click_kwargs):
+                    # Install before the real Pause. An ack arriving after
+                    # click() returns must remain hidden for the entire wait.
+                    page.evaluate('''field=>{
+                      const p=globalThis.__orchardProbe;
+                      const descriptor=Object.getOwnPropertyDescriptor(p,field);
+                      const hook={p,field,descriptor,latest:descriptor.value,acks:0};
+                      if(globalThis.__orchardPauseIsolation)throw Error('Pause isolation already installed');
+                      globalThis.__orchardPauseIsolation=hook;
+                      const isolated=field==='pauseSnapshot'?null:descriptor.value+1;
+                      Object.defineProperty(p,field,{configurable:true,enumerable:descriptor.enumerable,
+                        get:()=>isolated,set:value=>{hook.latest=value;if(value!==null)++hook.acks;}});
+                    }''', field)
+                    locator.click(**click_kwargs)
+                    # The controller independently receives the real Worker
+                    # snapshot. Prove Pause happened before testing rejection.
+                    page.wait_for_function('''()=>{
+                      const s=window.__controller.last,h=globalThis.__orchardPauseIsolation;
+                      return s?.loaded&&!s.running&&!s.stopped&&
+                        (h.field!=='pauseSnapshot'||h.acks>0);
+                    }''', timeout=5000)
+                    isolated.pause_confirmed = True
+
+            return Button()
+
+        def restore(self):
+            return page.evaluate('''()=>{
+              const h=globalThis.__orchardPauseIsolation;
+              if(!h)return null;
+              Object.defineProperty(h.p,h.field,{...h.descriptor,value:h.latest});
+              delete globalThis.__orchardPauseIsolation;
+              const restored=Object.getOwnPropertyDescriptor(h.p,h.field);
+              return {field:h.field,acks:h.acks,restored:!restored.get&&!restored.set&&
+                restored.value===h.latest};
+            }''')
+
+        def __getattr__(self, name):
+            return getattr(page, name)
+
+    # Real Pause still runs, but its acknowledgement is unavailable or belongs
+    # to another generation. A merely paused-looking UI must not pass either.
+    for name, field, expected in [
+        ('missing-pause-ack', 'pauseSnapshot', 'Timeout'),
+        ('changed-generation', 'generation', 'identity changed'),
+    ]:
+        start()
+        path = tmp / (name + '.json')
+        isolated = AlterPauseAcknowledgement(field)
+        try:
+            probe.export_diagnostic_failure(isolated, path,
+                                            dist, rom_path, pause_timeout_ms=500)
+            raise AssertionError(name + ' incorrectly exported a trace')
+        except (BrowserTimeout, ValueError) as error:
+            assert expected in str(error), (name, str(error))
+        finally:
+            restored = isolated.restore()
+        assert isolated.pause_confirmed, name + ' timed out before the real Pause acknowledgement'
+        assert restored and restored['field'] == field and restored['restored'], restored
+        if field == 'pauseSnapshot':
+            assert restored['acks'] > 0, 'Negative test never intercepted a real Pause acknowledgement'
+        assert not path.exists(), name + ' wrote an unconfirmed trace'
+    return {'complete_checkpoint_equal': True, 'original_observation_preserved': True,
+            'missing_pause_ack_rejected': True, 'changed_generation_rejected': True,
+            'replay': result['replay']}
 
 
 def main():
@@ -126,7 +243,8 @@ def main():
                     page.add_style_tag(content=bundle.with_suffix('.css').read_text())
                     page.add_script_tag(content=bundle.read_text())
                     expect(page.get_by_role('button', name='Settings', exact=True)).to_be_visible()
-                    page.add_script_tag(content=probe.OBSERVER)
+                    page.add_script_tag(content=(
+                        'globalThis.__orchardDiagnosticRuntime=true;\n' if args.diagnostic_trace else '') + probe.OBSERVER)
                     page.evaluate('''url=>{
                       const c=window.__controller;
                       c.worker=new Worker(url,{type:'module'});
@@ -205,7 +323,7 @@ def main():
                     assert probe.export_stopped_failure(page, skipped, dist, rom_path) is None
                     assert not skipped.exists()
                     assert not errors, errors
-                    report.update({'passed': True, 'browser': browser.version, 'page_errors': errors,
+                    report.update({'browser': browser.version, 'page_errors': errors,
                                    'worker_errors': worker_errors, 'save_ack': save_ack,
                                    'screenshot_failure_preserves_observation': True,
                                    'original_observation_preserved': True, 'unstopped_guard': True,
@@ -216,6 +334,11 @@ def main():
                                    'wasm_sha256': diagnostic['wasm_sha256']})
                     if trace_report is not None:
                         report['immediate_stop_trace'] = trace_report['replay']
+                        report['active_timeout_trace'] = check_active_diagnostic_recovery(
+                            page, tmp, dist, errors)
+                    assert not errors, errors
+                    assert not page.evaluate('globalThis.__orchardProbe.errors')
+                    report['passed'] = True
                 finally:
                     browser.close()
     except Exception as error:

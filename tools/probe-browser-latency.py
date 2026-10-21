@@ -14,8 +14,9 @@ On a stopped-guest failure, the original screenshot and observation report are
 preserved before the existing Save control exports a local diagnostic session.
 This recovery runs only after the measurement has already failed.
 An explicit --diagnostic-trace mode wraps the served Worker to record exact
-guest API calls and complete checkpoints for local replay. These instrumented
-runs never produce performance samples.
+guest API calls and complete checkpoints for local replay, plus a bounded host
+timeline linking DOM commands, Worker tasks, physical contacts and LCD delivery.
+These instrumented runs never produce performance samples.
 """
 from __future__ import annotations
 
@@ -79,6 +80,7 @@ console.log(JSON.stringify({node:process.version,baseline_wasm_sha256:hash(wasm)
 
 OBSERVER = r'''
 (() => {
+ const runtimeEnabled=globalThis.__orchardDiagnosticRuntime===true;
  const probe=globalThis.__orchardProbe={seq:0,nextWorker:0,workerId:null,generation:null,
   snap:null,watch:null,errors:[],events:[],configured:null,restoreCommand:null,
   restoreMarker:null,restoreSnapshot:null,runCommand:null,runSnapshot:null,
@@ -133,6 +135,7 @@ OBSERVER = r'''
    const snap={...event,running:data.running,loaded:data.loaded,stopped:data.stopped,
     pending:data.pending,active:data.active,model:data.model,frameStatus:data.frameStatus,
     width:data.width,height:data.height,pixels:data.pixels};
+   if(runtimeEnabled)snap.runtime=data.diagnostic_runtime||null;
    probe.snap=snap;
    if(probe.restoreMarker&&!probe.restoreSnapshot&&event.seq>probe.restoreMarker.seq)
     probe.restoreSnapshot={...snap,commandSeq:probe.restoreMarker.commandSeq,markerSeq:probe.restoreMarker.seq};
@@ -146,6 +149,7 @@ OBSERVER = r'''
       !same(w.sentScans,w.expectedScans)||!snap.running||snap.stopped||snap.frameStatus||!data.pixels)return;
    if(same(data.pixels,w.expected)){
     w.resultAt=event.at;w.resultSeq=event.seq;w.pendingAtResult=data.pending;w.resultPixels=data.pixels;
+    if(runtimeEnabled)w.resultRuntime=snap.runtime;
    }
   });}
   postMessage(data,...rest){
@@ -173,7 +177,8 @@ OBSERVER = r'''
     w.sentScans.push(...scans);
     if(scans.includes(w.completionScan)){w.enterSendAt=event.at;w.enterCommandSeq=event.seq;}
    }
-   return super.postMessage(data,...rest);
+   return super.postMessage(runtimeEnabled?{...data,diagnostic_runtime:{seq:event.seq,
+    time_origin_ms:performance.timeOrigin,at_ms:event.at}}:data,...rest);
   }
  };
  addEventListener('keydown',event=>{
@@ -231,22 +236,30 @@ console.log(JSON.stringify({schema:'orchard-stopped-session-diagnostic-v1',
 '''
 
 
-def instrument_worker_source(source, module_url):
+def instrument_worker_source(source, module_url, runtime_module_url='./__orchard-runtime-trace.mjs'):
     """Wrap only the probe server's response; leave all production files intact."""
     marker = 'pacer.hz=core.timebase_hz();'
     if source.count(marker) != 1:
         raise ValueError('Cannot identify the Worker instrumentation boundary')
     wrapper = r'''
+  const runtimeTrace=attachRuntimeTrace({scheduler,context:()=>{
+    const s=state();return {generation,model,tick:s[22]+s[23]*4294967296,
+      speed:pacer.speed,credit:pacer.credit,pending:taps.pending,active:taps.active};
+  }});
+  core=runtimeTrace.wrapCore(core);
+  const tracePostMessage=globalThis.postMessage.bind(globalThis);
+  globalThis.postMessage=(data,...rest)=>tracePostMessage(runtimeTrace.outgoing(data),...rest);
   core=attachCoreTrace(core,{
     context:()=>({generation,model,preset,romHash,audience}),
-    onEpoch:entry=>postMessage({type:'diagnostic-trace-epoch',...entry}),
+    onEpoch:entry=>{runtimeTrace.begin(entry);postMessage({type:'diagnostic-trace-epoch',...entry});},
     onCapture:trace=>postMessage({type:'diagnostic-trace',generation:trace.generation,
-      trace:{...trace,input_queue:{pending:taps.pending,active:taps.active,
+      trace:{...trace,runtime:runtimeTrace.capture(trace.reason),input_queue:{pending:taps.pending,active:taps.active,
         readyAt:taps.readyAt,hold:taps.hold,gap:taps.gap}}}),
   });
   const traceOriginalHandler=self.onmessage;
   self.onmessage=event=>{
     const data=event.data;
+    runtimeTrace.command(data);
     if(data?.type==='diagnostic-trace-export'&&data.generation===generation){
       if(running){postMessage({type:'diagnostic-trace-error',generation,message:'Pause before exporting a diagnostic trace'});return;}
       core.trace_capture('requested-paused');return;
@@ -255,6 +268,7 @@ def instrument_worker_source(source, module_url):
   };
 '''
     return ('import {attachCoreTrace} from ' + json.dumps(module_url) + ';\n' +
+            'import {attachRuntimeTrace} from ' + json.dumps(runtime_module_url) + ';\n' +
             source.replace(marker, wrapper + marker))
 
 
@@ -339,7 +353,8 @@ def capture_failure_evidence(page, evidence, name, errors):
     return capture_errors
 
 
-def export_core_trace(page, path, build_dir, rom_path, request=False):
+def export_core_trace(page, path, build_dir, rom_path, request=False, host_observation=None,
+                      expected_identity=None):
     """Persist an opt-in diagnostic trace and verify it against the same WASM."""
     if request:
         page.evaluate('''()=>{
@@ -353,7 +368,18 @@ def export_core_trace(page, path, build_dir, rom_path, request=False):
       const t=p.traceCapture;
       return t&&t.workerId===p.workerId&&t.generation===p.generation&&t.trace.epoch===p.traceEpoch?.epoch;
     }''', timeout=15000)
-    trace = page.evaluate('globalThis.__orchardProbe.traceCapture.trace')
+    # Transfer one JSON string: Playwright's recursive value protocol is very
+    # expensive for complete checkpoints and tens of thousands of API rows.
+    trace = json.loads(page.evaluate('''identity=>{
+      const p=globalThis.__orchardProbe,c=p.traceCapture;
+      if(identity&&(p.workerId!==identity.workerId||p.generation!==identity.generation||
+        p.traceEpoch?.epoch!==identity.epoch||c.workerId!==identity.workerId||
+        c.generation!==identity.generation||c.trace.epoch!==identity.epoch))
+        throw Error('Diagnostic recovery identity changed before export');
+      return JSON.stringify(c.trace);
+    }''', expected_identity))
+    if host_observation is not None:
+        trace['host_observation'] = host_observation
     for key in ('initial', 'final'):
         data = trace.pop(key)
         if data is None:
@@ -368,6 +394,7 @@ def export_core_trace(page, path, build_dir, rom_path, request=False):
     trace['wasm_sha256'] = hashlib.sha256((build_dir / 'orchard.wasm').read_bytes()).hexdigest()
     trace['worker_sha256'] = hashlib.sha256((build_dir / 'worker.js').read_bytes()).hexdigest()
     trace['instrumentation_sha256'] = hashlib.sha256(Path(__file__).with_name('browser-core-trace.mjs').read_bytes()).hexdigest()
+    trace['runtime_instrumentation_sha256'] = hashlib.sha256(Path(__file__).with_name('browser-runtime-trace.mjs').read_bytes()).hexdigest()
     with path.open('x') as out:
         json.dump(trace, out, separators=(',', ':'))
         out.write('\n')
@@ -378,6 +405,8 @@ def export_core_trace(page, path, build_dir, rom_path, request=False):
     result = {'trace_file': str(path.resolve()), 'instrumented': True, 'performance_sample': False,
               'complete': trace['complete'], 'call_count': trace['call_count'],
               'reason': trace['reason'], 'epoch': trace['epoch'],
+              'runtime_complete': trace.get('runtime', {}).get('complete', False),
+              'runtime_event_count': trace.get('runtime', {}).get('event_count', 0),
               'key_transitions': [{k: row[k] for k in ('seq', 'name', 'args', 'before', 'after', 'result')}
                                   for row in trace['calls'] if row['name'] in ('keyboard_matrix', 'keyboard_dedicated')],
               'replay_passed': replay.returncode == 0}
@@ -388,6 +417,47 @@ def export_core_trace(page, path, build_dir, rom_path, request=False):
     else:
         result['replay_file'] = str(replay_path.resolve())
         result['replay'] = json.loads(replay.stdout)
+    return result
+
+
+def export_diagnostic_failure(page, path, build_dir, rom_path, pause_timeout_ms=5000):
+    """After original failure evidence is saved, freeze an active trace via Pause.
+
+    Recovery is diagnostic-only. A paused-looking snapshot without the matching
+    command acknowledgement is insufficient, and changing Worker/epoch cannot
+    substitute a different execution for the failed one.
+    """
+    identity = page.evaluate('''()=>{
+      const p=globalThis.__orchardProbe;
+      if(!p?.traceEpoch||p.traceRestorePending||!p.snap?.loaded)return null;
+      return {workerId:p.workerId,generation:p.generation,epoch:p.traceEpoch.epoch,
+        seq:p.seq,running:p.snap.running,captured:Boolean(p.traceCapture)};
+    }''')
+    if identity is None:
+        return None
+    requested_pause = identity['running'] and not identity['captured']
+    if requested_pause:
+        page.get_by_role('button', name='Pause', exact=True).click(timeout=pause_timeout_ms)
+    acknowledgement = page.wait_for_function('''identity=>{
+      const p=globalThis.__orchardProbe;
+      if(!p||p.workerId!==identity.workerId||p.generation!==identity.generation||
+        p.traceEpoch?.epoch!==identity.epoch||p.traceRestorePending)
+        return 'identity-changed';
+      const same=e=>e&&e.workerId===identity.workerId&&e.generation===identity.generation;
+      if(p.traceCapture)return same(p.traceCapture)&&p.traceCapture.trace.epoch===identity.epoch;
+      if(!same(p.snap)||!p.snap.loaded||p.snap.running||p.snap.stopped)return false;
+      if(!identity.running)return p.snap.seq>p.traceEpoch.seq;
+      const command=p.pauseCommand,ack=p.pauseSnapshot;
+      return same(command)&&same(ack)&&command.seq>identity.seq&&
+        ack.commandSeq===command.seq&&ack.seq>command.seq&&p.snap.seq>=ack.seq;
+    }''', arg=identity, timeout=pause_timeout_ms).json_value()
+    if acknowledgement == 'identity-changed':
+        raise ValueError('Diagnostic recovery identity changed while awaiting Pause')
+    captured = page.evaluate('Boolean(globalThis.__orchardProbe.traceCapture)')
+    result = export_core_trace(page, path, build_dir, rom_path, request=not captured,
+                               expected_identity=identity)
+    result['recovery_action'] = ('pause-then-capture' if requested_pause else
+                                 'existing-capture' if captured else 'capture-already-paused')
     return result
 
 
@@ -432,7 +502,7 @@ def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, bui
                    'autosave': False, 'interval': 30, 'mappings': {}}
     page.add_init_script('localStorage.setItem("orchard:preferences:v1",' +
                          json.dumps(json.dumps(preferences)) + ');')
-    page.add_init_script(OBSERVER)
+    page.add_init_script(('globalThis.__orchardDiagnosticRuntime=true;\n' if diagnostic_trace else '') + OBSERVER)
     name = f'{variant}-model{fixture["model"]}-speed{speed:g}-repeat{repeat}'
     try:
         page.goto(base + '/' + variant + '/')
@@ -518,6 +588,13 @@ def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, bui
                 result['last_command_seq'] = result.pop('enter_command_seq')
             if diagnostic_trace:
                 result = {key: value for key, value in result.items() if not key.endswith('_ms')}
+                result['host_diagnostic'] = page.evaluate('''()=>{
+                  const p=globalThis.__orchardProbe,w=p.watch;return {
+                    instrumented:true,performance_sample:false,time_origin_ms:performance.timeOrigin,
+                    first_input_at_ms:w.firstKeyAt,last_input_at_ms:w.enterKeyAt,
+                    first_send_at_ms:w.firstSendAt,last_send_at_ms:w.enterSendAt,
+                    result_received_at_ms:w.resultAt,result_worker_event:w.resultRuntime,
+                    last_command_seq:w.enterCommandSeq,completion_scan:w.completionScan,inputs:w.keys};}''')
             measurements.append({'expression': frame['expression'], 'frame_sha256': frame['sha256'],
                                  'start_tick': frame['startTick'], 'start_frame_sha256': frame['start_sha256'],
                                  'restore_ack': restored, 'input_kind': input_kind,
@@ -534,9 +611,10 @@ def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, bui
               p.pauseSnapshot.commandSeq===p.pauseCommand.seq&&p.pauseSnapshot.seq>p.pauseCommand.seq''')
             if diagnostic_trace:
                 diagnostic = export_core_trace(page, evidence / f'{name}-expression{index}-trace.json',
-                                               build_dir, rom_dir / fixture['name'], request=True)
+                                               build_dir, rom_dir / fixture['name'], request=True,
+                                               host_observation=measurements[-1]['host_diagnostic'])
                 measurements[-1]['diagnostic'] = diagnostic
-                assert diagnostic['complete'] and diagnostic['replay_passed'], diagnostic
+                assert diagnostic['complete'] and diagnostic['runtime_complete'] and diagnostic['replay_passed'], diagnostic
             if repeat == 0 and variant == 'candidate':
                 pixels = page.evaluate('Array.from(globalThis.__orchardProbe.watch.resultPixels)')
                 write_pgm(evidence / f'{name}-result{index}.pgm', pixels)
@@ -555,9 +633,9 @@ def trial(browser, base, variant, fixture, rom_dir, speed, repeat, evidence, bui
         diagnostic = None
         if diagnostic_trace:
             try:
-                if page.evaluate('Boolean(globalThis.__orchardProbe?.traceCapture)'):
-                    diagnostic = export_core_trace(page, evidence / f'{name}-failure-trace.json',
-                                                   build_dir, rom_dir / fixture['name'])
+                diagnostic = export_diagnostic_failure(
+                    page, evidence / f'{name}-failure-trace.json', build_dir,
+                    rom_dir / fixture['name'])
             except Exception as error:
                 capture_errors.append({'artifact': 'core_trace', 'error': str(error)})
         # Keep the failed observation intact. This UI action happens only after
@@ -603,7 +681,7 @@ def main():
     parser.add_argument('--speeds', default='1,0', help='Comma-separated existing speed settings: 0,.5,1,2')
     parser.add_argument('--models', default='1,4', help='Comma-separated original-ROM models: 1,4')
     parser.add_argument('--fixtures', type=Path, help='Private exact-checkpoint fixture JSON from probe-aplet-latency.mjs; skips repeated cold boot')
-    parser.add_argument('--diagnostic-trace', action='store_true', help='Record and replay exact core calls; disables timing evidence')
+    parser.add_argument('--diagnostic-trace', action='store_true', help='Record/replay exact core calls and correlate host tasks; disables performance samples')
     parser.add_argument('--before-input-ms', type=int, default=0, help='Diagnostic-only wait after Resume, before typing (0..2000)')
     parser.add_argument('--after-result-ms', type=int, default=0, help='Diagnostic-only dwell after the matching result (0..2000)')
     args = parser.parse_args()
@@ -636,6 +714,8 @@ def main():
                 body = None
                 if parts[1] == '__orchard-trace.mjs':
                     body = Path(__file__).with_name('browser-core-trace.mjs').read_bytes()
+                elif parts[1] == '__orchard-runtime-trace.mjs':
+                    body = Path(__file__).with_name('browser-runtime-trace.mjs').read_bytes()
                 elif parts[1] == 'worker.js':
                     source = (roots[parts[0]] / 'worker.js').read_text()
                     body = instrument_worker_source(source, './__orchard-trace.mjs').encode()
@@ -663,7 +743,7 @@ def main():
     report = {'schema': 'orchard-original-rom-browser-latency-v2', 'passed': False,
               'probe_sha256': probe_sha256,
               'instrumented': args.diagnostic_trace, 'performance_sample': not args.diagnostic_trace,
-              'measurement': ('Instrumented diagnostic with exact core API replay; no timing evidence.' if args.diagnostic_trace else
+              'measurement': ('Instrumented diagnostic with exact core API replay and host task timeline; not a performance sample.' if args.diagnostic_trace else
                               'Actual production UI and Worker; each scene restores an exact starting checkpoint. Keydown or calculator-key click to first matching Worker LCD snapshot received on the main thread, before canvas paint. No real-calculator calibration.'),
               'diagnostic_waits_ms': {'before_input': args.before_input_ms, 'after_result': args.after_result_ms},
               'evidence_directory': str(evidence.resolve()), 'trials': [],
