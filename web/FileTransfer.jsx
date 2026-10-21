@@ -12,14 +12,14 @@ export function FileTransfer({controller,state,transport}){
   const available=supported&&connected&&state.ready&&state.loaded&&!state.busy&&!state.stopped&&!active;
   const progress=transfer?.total?Math.min(100,100*transfer.transferred/transfer.total):0;
   return <Stack gap="sm">
-    <Text size="sm" c="dimmed">{t(supported?'fileTransferHelp':transport==='serial'?'fileTransferSerialHelp':'fileTransfer39Help')}</Text>
+    <Text size="sm" c="dimmed">{t(!supported?'fileTransfer39Help':transport==='serial'?'fileTransferSerialHelp':'fileTransferHelp')}</Text>
     {supported&&<>
       <Group align="end"><Button variant="default" disabled={active} onClick={()=>{input.current.value='';input.current.click();}}>{t('chooseTransferFile')}</Button>
         <Text size="sm" style={{overflowWrap:'anywhere',flex:1,minWidth:100}}>{file?`${file.name} (${size(file.size)})`:t('noTransferFile')}</Text></Group>
       <input ref={input} type="file" data-testid="transfer-file" hidden onChange={e=>{const next=e.target.files[0]||null;setFile(next);setName(next?.name||'');}}/>
       <TextInput label={t('calculatorFileName')} value={name} onChange={e=>setName(e.currentTarget.value)} maxLength={64} disabled={active}/>
       <Group><Button disabled={!available||!file} onClick={()=>controller.startTransfer('send',transport,{file,name})}>{t('uploadFile')}</Button>
-        <Button variant="light" disabled={!available} onClick={()=>controller.startTransfer('receive',transport)}>{t('receiveFiles')}</Button>
+        {capabilities.receive&&<Button variant="light" disabled={!available} onClick={()=>controller.startTransfer('receive',transport)}>{t('receiveFiles')}</Button>}
         {capabilities.get&&<Button variant="light" disabled={!available||!name.trim()} onClick={()=>controller.startTransfer('get',transport,{name})}>{t('getNamedFile')}</Button>}
         {active&&<Button color="red" variant="light" onClick={()=>controller.cancelTransfer()}>{t('cancelTransfer')}</Button>}</Group>
       {(capabilities.directory||capabilities.finish)&&<Group>

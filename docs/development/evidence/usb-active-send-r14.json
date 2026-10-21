@@ -1,0 +1,121 @@
+{
+  "schema": "orchard-usb-active-send-acceptance-v1",
+  "date_utc": "2026-10-21",
+  "model": "HP48gII",
+  "model_id": 4,
+  "setup": "hp48-home",
+  "performance_sample": false,
+  "physical_board_verified": false,
+  "production_assets": {
+    "orchard.wasm": "76db5cb395cca4fffec807a76d3e969bf4cd73842662e39e81e38de4110527d0",
+    "calculator.js": "77f32d45419fca42118480c330b31449af6c50f39c11c7610b47c09672b28833",
+    "worker.js": "250e5167d16a6964854921dc2125e5f0428ae30066f7154cf06853c326631129",
+    "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+    "file-transfer.js": "1fc27d2adcf479d5b5a93ba3fdf0d44d4fdd7addf469f87502dcd21dcab96230",
+    "kermit.js": "84f831d158abcd5f87ff1a2e520902cf0444455400c3bc9c8177040e23bf1eb8"
+  },
+  "browser": {
+    "private_report_sha256": "9fdd13622f49ad30fe0b936ed0f3f634b665443c1926bc220d17b52da3ea8a65",
+    "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+    "session_sha256": "0f23e4e3c6953470edcca232a68291a26d719ede65182e980d090d5fee3fa632",
+    "upload_sha256": "0c0eb8d3aa56744ec2b72597356b190fad2b7d5e8387c79c7fccf8351028562b",
+    "upload_bytes": 45,
+    "calculator_command": "SEND('OR14R')",
+    "physical_ui_command_entry": true,
+    "real_receive_button": true,
+    "real_browser_downloads": true,
+    "operations": {
+      "send": {
+        "phase": "complete",
+        "transferred": 45
+      },
+      "get": {
+        "phase": "complete",
+        "transferred": 45
+      },
+      "directory": {
+        "phase": "complete",
+        "transferred": 98
+      },
+      "finish": {
+        "phase": "complete",
+        "transferred": 0
+      },
+      "calculator_send": {
+        "phase": "complete",
+        "transferred": 45
+      },
+      "get_after_active_send": {
+        "phase": "complete",
+        "transferred": 45
+      }
+    },
+    "active_send_download": {
+      "bytes": 45,
+      "sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+      "header": "HPHP49-B",
+      "download_name": "OR14R",
+      "file_bytes_equal": false,
+      "object_bytes_equal": true,
+      "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642",
+      "differing_offsets": [
+        7
+      ]
+    },
+    "subsequent_get_download": {
+      "bytes": 45,
+      "sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+      "header": "HPHP49-B",
+      "download_name": "OR14R",
+      "file_bytes_equal": false,
+      "object_bytes_equal": true,
+      "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642",
+      "differing_offsets": [
+        7
+      ]
+    },
+    "usb_enumerations": 1,
+    "subsequent_disconnects": 0,
+    "same_usb_connection": true,
+    "page_error_count": 0,
+    "worker_error_count": 0,
+    "final_running": true,
+    "final_stopped": false
+  },
+  "direct_core": {
+    "private_report_sha256": "99d3a0f55b814812fc642b60bce09e94fa99b675db3dbf087337dedd4f40f397",
+    "command": "SEND('OR13T')",
+    "same_usb_connection": true,
+    "receive_and_subsequent_get_complete": true,
+    "returned_files": [
+      {
+        "name": "OR13T",
+        "length": 45,
+        "sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+        "whole_equal": false,
+        "object_equal": true
+      },
+      {
+        "name": "OR13T",
+        "length": 45,
+        "sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+        "whole_equal": false,
+        "object_equal": true
+      }
+    ],
+    "guest_stop": 0,
+    "source_hashes": {
+      "kermit_sha256": "84f831d158abcd5f87ff1a2e520902cf0444455400c3bc9c8177040e23bf1eb8",
+      "file_transfer_sha256": "1fc27d2adcf479d5b5a93ba3fdf0d44d4fdd7addf469f87502dcd21dcab96230",
+      "wasm_sha256": "76db5cb395cca4fffec807a76d3e969bf4cd73842662e39e81e38de4110527d0",
+      "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+      "checkpoint_sha256": "23b7185f511b17a39408c586f86b0de0daf284c1b3bb6e89237752299e140245",
+      "payload_sha256": "0c0eb8d3aa56744ec2b72597356b190fad2b7d5e8387c79c7fccf8351028562b"
+    }
+  },
+  "evidence_limits": [
+    "Single-file calculator-initiated SEND; multiple-file SEND is not claimed.",
+    "Input is the admitted original HP48gII firmware and conditional HOME setup, not a physical board.",
+    "No ROM bytes, checkpoints, raw packet/PC/opcode traces or LCD pixels are included."
+  ]
+}

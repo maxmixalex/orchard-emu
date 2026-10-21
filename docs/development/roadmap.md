@@ -143,7 +143,7 @@ instruction loop or ROM upload. Node WASM tests do not certify page behavior.
 
 ## M6 — Virtual PC connectivity
 
-**Bounded HP48gII USB object client implemented; broader stock transfer gates open.**
+**Bounded HP48gII USB client and serial upload/GET implemented; broader transfer gates open.**
 
 M6.1 covers UART bytes, bounded queues, cancellation/replay/disconnect and an
 optional native PTY/TCP adapter. M6.2 covers USB reset, EP0 control requests,
@@ -160,9 +160,11 @@ See [USB](usb.md) and [virtual links](virtual-link.md).
 
 The [file client](file-transfer.md) adds an original bounded Kermit implementation,
 browser upload, named retrieval, explicit downloads and lifecycle cancellation.
-An unchanged HP48gII ROM completes a USB object roundtrip. The object bytes match;
-the OS changes the binary transport-header revision byte on export. Serial stock
-transfer still times out and is not enabled in the file UI. [HP39 typed-file and
+An unchanged HP48gII ROM completes USB and serial object round trips. The object
+bytes match; the OS changes the binary transport-header revision byte on export.
+Serial upload/GET follow a narrowly tested UART0 TX-empty level interrupt repair;
+its other file operations remain closed. USB calculator-initiated SEND and
+same-connection GET also have production-browser evidence. [HP39 typed-file and
 bundle validation](hp39-files.md) is groundwork for its distinct application
 protocol, with opaque payloads and hardware upload still unverified.
 
@@ -245,9 +247,9 @@ viewport sizing, per-model macro bindings, opt-in localStorage autosave and
 time governor fixes the missing wall-rate limit; it does not close M2's
 physical clock-domain calibration or certify the absolute cursor period.
 
-M6 now exposes UART bytes and guest-derived USB enumeration/individual packets
-to users. Full stock object/file transfer and an OS-level device bridge remain
-open. [Infrared](infrared.md) is assessed as useful after those protocols and
+M6 now exposes bounded HP48gII object upload/retrieval as well as UART bytes and
+guest-derived USB enumeration/individual packets. Broader model/protocol coverage
+and an OS-level device bridge remain open. [Infrared](infrared.md) is assessed as useful after those protocols and
 clock foundations; no IrDA toggle is presented as a completed virtual link.
 
 Continue CPU throughput work independently of pacing. WFI quiet-interval

@@ -69,6 +69,13 @@ void o_soc_tick(orchard_machine *m) {
         }
     }
     if (s->rx.count && (s->uart[0][1] & 3u) == 1u) s->subsrcpnd |= 1u;
+    /* S3C2410A 11-11/12/15: non-FIFO TX-empty is a level source when
+       UCON0[9]=1 and TX mode[3:2]=01. UTXH0 writes immediately leave the
+       functional transmitter; tx is a host capture queue, not the holding
+       register. SUBSRCPND latches even while INTSUBMSK masks propagation.
+       Pulse, FIFO and baud timing are outside this functional subset. */
+    if ((s->uart[0][1] & 0x20cu) == 0x204u && !(s->uart[0][2] & 1u))
+        s->subsrcpnd |= 2u;
 }
 static uint32_t *plain_register(o_soc *s, uint32_t address) {
     if (address >= 0x48000000u && address <= 0x48000030u) return &s->memc[(address & 0xffu) / 4u];

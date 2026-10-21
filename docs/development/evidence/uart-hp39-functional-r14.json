@@ -1,0 +1,166 @@
+{
+  "schema": "orchard-uart0-txempty-hp39-functional-v1",
+  "passed": true,
+  "performance_sample": false,
+  "guest_execution_repetitions_per_scene": 1,
+  "scope": "Existing admitted HP39g+ 1+1 and APLET fixed endpoints; candidate-only functional continuation, no timings or optimization acceptance decision.",
+  "candidate_wasm_sha256": "ce9f81ac640cbeeb1cd249d841d06ada633b6b36454ec29cd11cf39b2ddbc830",
+  "baseline_wasm_sha256": "76db5cb395cca4fffec807a76d3e969bf4cd73842662e39e81e38de4110527d0",
+  "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+  "fixtures_sha256": "aafc4ea8275d9635b8f83b8a475e947257123e40f0e717846e54d4b7fa41993c",
+  "endpoints_sha256": "efdf7f649877b3f1ce332cba86cbd5d175552c8b7da4bbadd72f2dd684e6f984",
+  "runner": "run",
+  "quantum": 1024,
+  "frozen_boundary_quanta": 12000,
+  "checkpoint_comparison": "Real candidate checkpoint hash is retained. An offline copy clears only SUBSRCPND bit 1 and recomputes its v1 CRC; matching the frozen baseline hash proves every other serialized byte unchanged. The copy is never imported into the guest.",
+  "harness_sha256": "a3bdb9909ec67fff12661bfe6cc7b5ea86e283f8d27775ef601086f8767ff24a",
+  "cases": [
+    {
+      "model": 1,
+      "scene": "1+1",
+      "session_sha256": "0680cb29aa7b8a7dd8b772937677122bdd3e06b9e011c19c6718bfb9bb01247c",
+      "initial_checkpoint_sha256": "50810ec0d7d654ac260da7b53017833321f4af39d5b0ccbd43f0285c9ed3a8fb",
+      "guest_quanta": 13104000,
+      "instructions": 13103802,
+      "exceptions": 10527,
+      "run_calls": 13104,
+      "guest_stop": 0,
+      "exact_contacts_equal": true,
+      "full_lcd_bytes_equal": true,
+      "final_lcd_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+      "uart_bytes": 0,
+      "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uart_observations": [
+        {
+          "boundary": "initial",
+          "ucon0": "0x705",
+          "ufcon0": "0x0",
+          "tx_empty_level_nonfifo": true,
+          "tx_subsource_latched": false,
+          "tx_subsource_masked": true,
+          "uart0_main_masked": true
+        },
+        {
+          "boundary": "first-original-run-return",
+          "ucon0": "0x705",
+          "ufcon0": "0x0",
+          "tx_empty_level_nonfifo": true,
+          "tx_subsource_latched": true,
+          "tx_subsource_masked": true,
+          "uart0_main_masked": true
+        },
+        {
+          "boundary": "frozen-final",
+          "ucon0": "0x705",
+          "ufcon0": "0x0",
+          "tx_empty_level_nonfifo": true,
+          "tx_subsource_latched": true,
+          "tx_subsource_masked": true,
+          "uart0_main_masked": true
+        }
+      ],
+      "actual_final_checkpoint_sha256": "b9e4a0fb1e87d1656c3c97fffb810bf2bd72701c947cb5537d99e11d3a412c99",
+      "frozen_baseline_final_checkpoint_sha256": "39a6056d19b4867cb25af6125f4a299688dfbda8320696e9f4273058c908265b",
+      "offline_latch_normalized_checkpoint_sha256": "39a6056d19b4867cb25af6125f4a299688dfbda8320696e9f4273058c908265b",
+      "only_checkpoint_difference": "SUBSRCPND bit 1 and dependent checkpoint CRC"
+    },
+    {
+      "model": 1,
+      "scene": "APLET library",
+      "session_sha256": "0680cb29aa7b8a7dd8b772937677122bdd3e06b9e011c19c6718bfb9bb01247c",
+      "initial_checkpoint_sha256": "50810ec0d7d654ac260da7b53017833321f4af39d5b0ccbd43f0285c9ed3a8fb",
+      "guest_quanta": 12264000,
+      "instructions": 12263844,
+      "exceptions": 1517,
+      "run_calls": 12264,
+      "guest_stop": 0,
+      "exact_contacts_equal": true,
+      "full_lcd_bytes_equal": true,
+      "final_lcd_sha256": "6f7de6bb96994c41e97f2e1cefc0f453414714e02e56a05ca84384763c7f1a60",
+      "uart_bytes": 0,
+      "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uart_observations": [
+        {
+          "boundary": "initial",
+          "ucon0": "0x705",
+          "ufcon0": "0x0",
+          "tx_empty_level_nonfifo": true,
+          "tx_subsource_latched": false,
+          "tx_subsource_masked": true,
+          "uart0_main_masked": true
+        },
+        {
+          "boundary": "first-original-run-return",
+          "ucon0": "0x705",
+          "ufcon0": "0x0",
+          "tx_empty_level_nonfifo": true,
+          "tx_subsource_latched": true,
+          "tx_subsource_masked": true,
+          "uart0_main_masked": true
+        },
+        {
+          "boundary": "frozen-final",
+          "ucon0": "0x705",
+          "ufcon0": "0x0",
+          "tx_empty_level_nonfifo": true,
+          "tx_subsource_latched": true,
+          "tx_subsource_masked": true,
+          "uart0_main_masked": true
+        }
+      ],
+      "actual_final_checkpoint_sha256": "269dfc99f8fbb3dc655e4458126cc3e7f172c0b5251ad1f8899e5e36ff59c071",
+      "frozen_baseline_final_checkpoint_sha256": "6f96ab0dc036e563de7cd19e8040971595ec2263dfcb894c7108a40f08851471",
+      "offline_latch_normalized_checkpoint_sha256": "6f96ab0dc036e563de7cd19e8040971595ec2263dfcb894c7108a40f08851471",
+      "only_checkpoint_difference": "SUBSRCPND bit 1 and dependent checkpoint CRC"
+    },
+    {
+      "model": 1,
+      "scene": "APLET Function START",
+      "session_sha256": "45e54d94df59010ce17b597125dafd310c25d085c7fa149dde0f85d0b6db9ec7",
+      "initial_checkpoint_sha256": "2dab698a27d9a1960ad96ee316c3d76211b2051a90bb03f2339a6c29a4d526b8",
+      "guest_quanta": 16164000,
+      "instructions": 16163798,
+      "exceptions": 1908,
+      "run_calls": 16164,
+      "guest_stop": 0,
+      "exact_contacts_equal": true,
+      "full_lcd_bytes_equal": true,
+      "final_lcd_sha256": "b0b7cde04193b91d9c95e6679590b8f4911a0c05a4f9082f75a1b184df6d71e0",
+      "uart_bytes": 0,
+      "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uart_observations": [
+        {
+          "boundary": "initial",
+          "ucon0": "0x705",
+          "ufcon0": "0x0",
+          "tx_empty_level_nonfifo": true,
+          "tx_subsource_latched": false,
+          "tx_subsource_masked": true,
+          "uart0_main_masked": true
+        },
+        {
+          "boundary": "first-original-run-return",
+          "ucon0": "0x705",
+          "ufcon0": "0x0",
+          "tx_empty_level_nonfifo": true,
+          "tx_subsource_latched": true,
+          "tx_subsource_masked": true,
+          "uart0_main_masked": true
+        },
+        {
+          "boundary": "frozen-final",
+          "ucon0": "0x705",
+          "ufcon0": "0x0",
+          "tx_empty_level_nonfifo": true,
+          "tx_subsource_latched": true,
+          "tx_subsource_masked": true,
+          "uart0_main_masked": true
+        }
+      ],
+      "actual_final_checkpoint_sha256": "f525139ffdd362268df8456bdaef5b8aa0db8abf337a7b77d7cd73bc876ea018",
+      "frozen_baseline_final_checkpoint_sha256": "fb1c815ce9932b80fd7d0cf52a6493ab5d29ab867865c79f93dbbb1f0d77cfe9",
+      "offline_latch_normalized_checkpoint_sha256": "fb1c815ce9932b80fd7d0cf52a6493ab5d29ab867865c79f93dbbb1f0d77cfe9",
+      "only_checkpoint_difference": "SUBSRCPND bit 1 and dependent checkpoint CRC"
+    }
+  ]
+}

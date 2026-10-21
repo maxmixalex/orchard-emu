@@ -37,12 +37,13 @@ function fixture(){
   vm.runInContext("loaded=true;romHash=HP48_ROM;",context);
   send({type:'configure',speed:0});send({type:'run'});send({type:'serial-connect',connected:true});send({type:'usb-connect',connected:true});
   const inspect=vm.runInContext('()=>({running,generation,active:transfer.active,request:transfer.request})',context);
-  return {send,output,writes,inspect,incoming,pump(){const [id,fn]=jobs.entries().next().value;assert(fn);jobs.delete(id);fn();}};
+  return {send,output,writes,inspect,incoming,uartIncoming,pump(){const [id,fn]=jobs.entries().next().value;assert(fn);jobs.delete(id);fn();}};
 }
 function start(f,request=1,extra={}){f.send({type:'file-transfer-start',request,transport:'usb',mode:'receive',...extra});}
 function final(f,request){return f.output.filter(e=>e.type==='file-transfer-status'&&e.request===request).at(-1);}
 
-for(const extra of [{mode:'send',name:'ROM',bytes:new Uint8Array(16)},{mode:'unknown'},{transport:'invalid'},{transport:'serial'}]){
+for(const extra of [{mode:'send',name:'ROM',bytes:new Uint8Array(16)},{mode:'unknown'},{transport:'invalid'},
+  ...['receive','directory','finish'].map(mode=>({transport:'serial',mode}))]){
   const f=fixture();start(f,1,extra);assert.equal(final(f,1).phase,'error');assert.equal(final(f,1).active,false);
   assert.equal(f.inspect().running,true,'Invalid transfer input must not pause the calculator');assert(!f.output.some(e=>e.type==='error'));
 }
@@ -50,13 +51,34 @@ for(const extra of [{mode:'send',name:'ROM',bytes:new Uint8Array(16)},{mode:'unk
   const f=fixture();f.send({type:'usb-connect',connected:false});start(f);assert.equal(final(f,1).phase,'error');assert(f.inspect().running);
   f.send({type:'pause'});start(f,2);assert.equal(final(f,2).phase,'error');
 }
-for(const action of ['pause','reset','create','checkpoint-load','usb-connect']){
-  const f=fixture();start(f);assert(f.inspect().active);
+for(const transport of ['usb','serial'])for(const action of ['pause','reset','create','checkpoint-load','disconnect']){
+  const f=fixture();start(f,1,{transport,mode:transport==='usb'?'receive':'get',name:'OBJECT'});assert(f.inspect().active);
   f.send(action==='create'?{type:action,generation:2,model:4,preset:'hp48-home',audience:'calculator'}:
-    action==='checkpoint-load'?{type:action,file:new ArrayBuffer(16)}:action==='usb-connect'?{type:action,connected:false}:{type:action});
+    action==='checkpoint-load'?{type:action,file:new ArrayBuffer(16)}:action==='disconnect'?{type:transport+'-connect',connected:false}:{type:action});
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(final(f,1).phase,'cancelled',action);assert.equal(final(f,1).active,false,action);assert(!f.inspect().active,action);
   assert(!f.output.some(e=>e.type==='file-transfer-received'));
+}
+{
+  const f=fixture();start(f,1,{transport:'serial',mode:'send',name:'OBJECT',bytes:text('HPHP49-Cdata')});
+  assert(f.inspect().active);f.pump();assert(f.writes.length>0,'Serial upload reaches the UART adapter');
+  const count=f.writes.length;f.send({type:'uart',bytes:text('raw')});
+  assert.equal(f.output.at(-1).accepted,0);assert.equal(f.writes.length,count);
+  f.send({type:'usb-connect',connected:false});assert(f.inspect().active,'USB disconnect must not cancel a serial file');
+  f.send({type:'file-transfer-cancel',request:2});assert(f.inspect().active);
+  f.send({type:'file-transfer-cancel',request:1});assert.equal(final(f,1).phase,'cancelled');
+}
+{
+  const f=fixture();start(f,1,{transport:'serial',mode:'get',name:'OBJECT'});f.pump();
+  for(const p of [packet(0,'Y',PARAMETERS),packet(0,'S',PARAMETERS),packet(1,'F',text('OBJECT')),
+    packet(2,'D',text('HPHP49-Cdata')),packet(3,'Z')]){
+    f.uartIncoming.push(p);f.pump();assert(!f.output.some(e=>e.type==='file-transfer-received'));
+  }
+  f.uartIncoming.push(packet(4,'B'));f.pump();
+  const files=f.output.filter(e=>e.type==='file-transfer-received');assert.equal(files.length,1);
+  assert.deepEqual(files[0].bytes,text('HPHP49-Cdata'));assert.equal(final(f,1).phase,'complete');
+  assert(!f.output.some(e=>e.type==='uart-output'),'Serial Kermit packets must not leak into the raw terminal');
+  assert(f.inspect().running);
 }
 {
   const f=fixture();f.send({type:'usb-connect',connected:true});start(f,1,{transport:'usb'});assert(f.inspect().active);

@@ -35,8 +35,11 @@ assert.deepEqual(parameters(bytes('          ')),parameters(new Uint8Array()));
 assert.equal(parameters(bytes('~* @-#N1 ')).binary,null);
 for(const name of ['', '..', '../x', 'a/b', 'a\\b', 'C:x','x\n','\u0100', 'x'.repeat(65),' name'])assert.throws(()=>validateFilename(name));
 assert.equal(validateFilename('A\xe9'), 'A\xe9');
-assert(transferCapabilities(4).send);assert(!transferCapabilities(1).send);
-assert(!transferCapabilities(4,'serial').send,'UART stock transfer is not yet admitted');
+assert.deepEqual(transferCapabilities(4),{send:true,receive:true,get:true,directory:true,finish:true});
+assert.deepEqual(transferCapabilities(4,'serial'),{send:true,receive:false,get:true,directory:false,finish:false});
+for(const model of [0,1,2,3,5,6,7])for(const transport of ['usb','serial'])
+  assert(Object.values(transferCapabilities(model,transport)).every(enabled=>!enabled));
+assert(Object.values(transferCapabilities(4,'invalid')).every(enabled=>!enabled));
 assert.throws(()=>validateUpload(4,'ROM',new Uint8Array(10)));
 assert.throws(()=>validateUpload(1,'A',bytes('HPHP49-Canything')));
 assert.deepEqual(validateUpload(4,'A',bytes('HPHP49-Canything')),bytes('HPHP49-Canything'));

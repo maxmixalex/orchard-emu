@@ -14,9 +14,10 @@ function fixture(){
 const file=(name='TEST',bytes=Uint8Array.from([...new TextEncoder().encode('HPHP49-C'),0,1,127,128,255]))=>({name,size:bytes.length,arrayBuffer:async()=>bytes.slice().buffer});
 
 // Resume after a file picker blur, then send one bounded, unchanged byte array.
-{
- const {c,sent,emit}=fixture();await c.startTransfer('send','usb',{file:file()});
+for(const transport of ['usb','serial']){
+ const {c,sent,emit}=fixture();await c.startTransfer('send',transport,{file:file()});
  assert.equal(sent.at(-2).type,'run');assert.equal(sent.at(-1).type,'file-transfer-start');
+ assert.equal(sent.at(-1).transport,transport);
  assert.deepEqual([...sent.at(-1).bytes],[...new TextEncoder().encode('HPHP49-C'),0,1,127,128,255]);
  const request=c.transferRequest;assert.equal(sent.at(-1).request,request);
  emit({type:'file-transfer-status',request,active:true,phase:'sending',transferred:3,total:5});
@@ -35,7 +36,7 @@ for(const invalidate of ['cancel','generation','dispose']){
  assert(!sent.some(m=>m.type==='file-transfer-start'),invalidate);c.dispose();
 }
 // Session IDs isolate late completions even within the same machine generation.
-for(const transport of ['usb'])for(const origin of ['user','worker']){
+for(const transport of ['usb','serial'])for(const origin of ['user','worker']){
  const {c,sent,emit}=fixture();let release;const upload=file();
  upload.arrayBuffer=()=>new Promise(r=>{release=r;});
  const waiting=c.startTransfer('send',transport,{file:upload});
@@ -93,18 +94,34 @@ for(const phase of ['error','cancelled','complete']){
  emit({type:'file-transfer-received',request:next,name:'NEW',bytes:Uint8Array.of(2)});
  c.linksReset();assert.equal(c.received.size,0);assert.deepEqual(c.state.receivedFiles,[]);assert.equal(c.state.transfer,null);c.dispose();
 }
-// Unverified transports and models reject uploads before reading local bytes.
-for(const [model,transport] of [[4,'serial'],[1,'usb']]){
+// Unverified models reject uploads before reading local bytes on either link.
+for(const [model,transport] of [[1,'serial'],[1,'usb']]){
  const {c,sent}=fixture();c.patch({model:CALCULATORS.find(m=>m.id===model)});let read=false;
  const upload={...file(),arrayBuffer:async()=>{read=true;return new ArrayBuffer(1);}};
  await c.startTransfer('send',transport,{file:upload});
  assert.equal(read,false);assert.equal(c.state.transfer.phase,'error');
  assert(!sent.some(m=>m.type==='file-transfer-start'));c.dispose();
 }
+// Serial enables only the proven server upload/GET pair. Other modes never
+// post a Worker operation, and GET retains the real request/name/transport.
+for(const mode of ['receive','directory','finish']){
+ const {c,sent}=fixture();await c.startTransfer(mode,'serial');
+ assert.equal(c.state.transfer.phase,'error');
+ assert(!sent.some(m=>m.type==='file-transfer-start'));c.dispose();
+}
+{
+ const {c,sent}=fixture();await c.startTransfer('get','serial',{name:'SERIAL'});
+ assert.equal(sent.at(-1).type,'file-transfer-start');assert.equal(sent.at(-1).mode,'get');
+ assert.equal(sent.at(-1).transport,'serial');assert.equal(sent.at(-1).name,'SERIAL');c.dispose();
+}
 // A raw serial disconnect must not cancel the independent USB transfer.
 {
  const {c,emit}=fixture();await c.startTransfer('receive','usb');
  emit({type:'serial-status',connected:false});assert(c.state.transfer.active);c.dispose();
+}
+{
+ const {c,emit}=fixture();await c.startTransfer('get','serial',{name:'SERIAL'});
+ emit({type:'usb-status',connected:false,phase:'Disconnected'});assert(c.state.transfer.active);c.dispose();
 }
 // Reject size/name/connection errors before reading or posting file data.
 for(const bad of [{...file(),size:MAX_FILE_BYTES+1},file('../TEST'),file('bad\nname'),file('中文')]){
