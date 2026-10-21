@@ -1,5 +1,38 @@
 # Performance and the two frontends
 
+## Fixed-scene execution comparison (2026-10-21)
+
+`tools/benchmark-scenes.mjs` compares two production WASM builds using private
+browser/APLET fixtures. It restores each scene's exact session, locates the
+baseline's first complete expected LCD at 12,000-quantum resolution, and
+finishes all key releases and the final gap. Both builds then execute the same
+fixed guest interval with current calculator contacts: HP39 125/50 ms and
+HP48 50/30 ms. The fixture's historical reference contact schedule is not
+silently substituted for those production contacts.
+
+Every replay must match the complete final checkpoint, UART digest, LCD,
+physical contact transcript and CPU counters. Each build executes the complete
+workload twice before alternating timed replays. Loading, explicit WASM
+compilation, restore, LCD sampling and final checkpoint hashing are outside
+the measured interval; JavaScript scheduling, UART draining and incremental
+UART hashing remain inside it. Reports retain every wall-time and process
+CPU-time sample, binary/fixture/tool identities, engine arguments and Linux
+CPU affinity. Process CPU time can include VM background work.
+
+```sh
+node tools/benchmark-scenes.mjs baseline/orchard.wasm dist/orchard.wasm /private/nors /private/fixtures.json build/new-scene-throughput.json
+node --no-liftoff tools/benchmark-scenes.mjs baseline/orchard.wasm dist/orchard.wasm /private/nors /private/fixtures.json build/new-optimized-scene-throughput.json
+```
+
+The second command requests optimizing WASM compilation up front in Node/V8.
+It is a separate steady-state execution experiment. Neither command measures
+browser input latency, painting or physical-calculator speed. A faster fixed
+guest replay need not reduce Normal-mode latency when the browser already
+keeps up with the functional clock. Use the existing uninstrumented production
+browser probe for that acceptance decision, preserve outliers, and serialize
+performance runs across workers. An identical-build A/A control helps assess
+host variability before interpreting small candidate differences.
+
 ## HP39 release-gap follow-up (2026-10-20)
 
 After PR #2 (`ac16d1d`), the calculator keeps the HP39g+ press at 1,500,000
@@ -903,3 +936,44 @@ The Node trace regression requires a built `dist/orchard.wasm`; CI runs it
 after the WASM build. Browser CI also exercises the generated instrumented
 stop and preserves only its generated report and screenshot. Original-ROM
 traces, checkpoint bytes and saved sessions are excluded from CI artifacts.
+
+### Correlating host tasks with actual input contacts
+
+The same explicit `--diagnostic-trace` mode also records a bounded Worker
+runtime timeline. Production Worker source and ordinary latency samples do
+not receive these hooks. The private core trace includes `runtime` events for
+task queue/start/end, received commands, physical keyboard contacts and LCD
+snapshot posting. Each event contains the actual core tick, pacing credit and
+pending input state. Commands retain the main-thread observation sequence;
+matching LCD results retain the Worker snapshot sequence and checkpoint epoch.
+Strict replay rejects a broken association or a completion key which did not
+reach the guest before the result snapshot.
+
+`host_observation` preserves the DOM input and result-receipt timestamps in
+the same private artifact. To correlate clocks, add each side's
+`time_origin_ms` to its `at_ms` value. This separates command delivery, queued
+input, guest progress and LCD delivery in that instrumented run. A task's
+elapsed wall time includes host descheduling and instrumentation; it is not a
+CPU-time measurement. DOM Enter remains distinct from the recorded physical
+Enter contact. A restored checkpoint tick remains distinct from the tick of
+the first physical contact.
+
+The timeline retains at most 50,000 events and marks overflow incomplete.
+Capturing a stop inside a task preserves that unfinished task explicitly;
+later release/finally handlers cannot rewrite the frozen evidence. These
+records are diagnostic only (`performance_sample: false`) and cannot establish
+a speedup, explain a different uninstrumented outlier by themselves, or replace
+the existing full-checkpoint replay. Deterministic `test:tools` regressions
+cover the clock/sequence links, key ticks, event bound, epoch isolation and
+stop capture without running a firmware benchmark.
+
+An active timeout can occur before a stop capture exists. In diagnostic mode,
+the failure handler first preserves the original observation and screenshot,
+then attempts a bounded Pause and trace export. Export requires the same
+Worker, generation and checkpoint epoch plus the matching paused snapshot;
+a missing acknowledgement or changed identity is a recovery failure, not a
+successful trace. Recovery errors are retained separately from the original
+failure. The browser regression exercises a running timeout, missing Pause
+acknowledgement and changed generation, including a complete generated-guest
+checkpoint replay. Ordinary uninstrumented failure handling does not gain
+these diagnostic operations.

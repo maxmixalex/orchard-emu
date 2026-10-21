@@ -9,7 +9,7 @@ const python=readFileSync(new URL('../tools/probe-browser-latency.py',import.met
 const observer=python.match(/OBSERVER = r'''([\s\S]*?)'''/)[1];
 let now=0;const keys=[],clicks=[];
 class NativeWorker extends EventTarget {
-  postMessage(){}
+  postMessage(data){this.lastSent=data;}
   receive(data){const event=new Event('message');event.data=data;this.dispatchEvent(event);}
 }
 const scope={Worker:NativeWorker,performance:{now:()=>++now},
@@ -23,6 +23,7 @@ const snapshot=(extra={})=>receive('snapshot',{model:1,loaded:true,running:false
 const key=code=>keys.forEach(fn=>fn({code,repeat:false}));
 
 send('create');send('configure',{speed:1});receive('loaded');snapshot();
+assert(!Object.hasOwn(worker.lastSent,'diagnostic_runtime'),'Normal observations must not alter Worker commands');
 assert.equal(p.configured.speed,1);assert(p.snap.seq>p.loaded.seq);
 assert.equal(p.restoreSnapshot,null,'An ordinary paused snapshot is not a restored checkpoint');
 send('run');snapshot({running:true});
@@ -144,4 +145,29 @@ snapshot();receive('checkpoint-restored');
 assert.equal(p.snap,null);assert.equal(p.restoreSnapshot,null);assert.equal(p.watch,null);
 assert.equal(p.traceRestorePending,false);
 assert.equal(p.errors.length,0);
+
+// The additional command/snapshot correlation exists only in explicit
+// diagnostics. Normal probe commands above retained their original envelope.
+const diagnosticClicks=[];
+const diagnosticScope={Worker:NativeWorker,__orchardDiagnosticRuntime:true,
+  performance:{timeOrigin:1000,now:()=>++now},
+  addEventListener:(type,fn)=>{if(type==='click')diagnosticClicks.push(fn);}};
+vm.runInNewContext(observer,diagnosticScope);
+const dp=diagnosticScope.__orchardProbe,dw=new diagnosticScope.Worker();
+const ds=(type,extra={})=>dw.postMessage({type,generation:1,...extra});
+const dr=(type,extra={})=>dw.receive({type,generation:1,...extra});
+const df=(extra={})=>dr('snapshot',{model:1,loaded:true,running:false,stopped:false,
+  pending:0,active:null,frameStatus:0,width:2,height:1,pixels:new Uint8Array([1,2]),...extra});
+ds('create');ds('checkpoint-load');
+dr('diagnostic-trace-epoch',{epoch:1,model:1,tick:100,source:'checkpoint-load'});
+dr('checkpoint-restored');df();ds('run');df({running:true});
+dp.arm({pixels:[3,4],scans:[49],inputKind:'pointer'});
+diagnosticClicks.forEach(fn=>fn({target:{closest:()=>({dataset:{scan:'49'}})}}));
+ds('tap',{scan:49});
+assert.equal(dw.lastSent.diagnostic_runtime.seq,dp.watch.enterCommandSeq);
+assert.equal(dw.lastSent.diagnostic_runtime.time_origin_ms,1000);
+assert.equal(dw.lastSent.diagnostic_runtime.at_ms,dp.watch.enterSendAt);
+df({running:true,pixels:new Uint8Array([3,4]),diagnostic_runtime:{epoch:1,seq:72}});
+assert.deepEqual({...dp.watch.resultRuntime},{epoch:1,seq:72});
+assert(dp.watch.resultAt>dp.watch.enterSendAt);
 console.log('Browser latency observer: stale pause/restore/run messages, compatibility-stop attribution, old generations/Workers/trace epochs, pending-restore trace isolation, exact result pixels, Enter delivery and physical-scan transcript gates pass.');

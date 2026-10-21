@@ -6,6 +6,7 @@ import {basename, dirname, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {traceOperationArguments} from './browser-core-trace.mjs';
+import {validateRuntimeTrace} from './browser-runtime-trace.mjs';
 
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const unsigned = n => Number.isInteger(n) && n >= 0 && n <= 0xffffffff;
@@ -26,6 +27,7 @@ export function validateBrowserTrace(trace) {
   assert(Array.isArray(trace.calls) && trace.calls.length <= 1000000, 'Invalid call array');
   assert.equal(trace.call_count, trace.calls.length, 'Missing or duplicated recorded calls');
   assert(words33(trace.initial_words) && words33(trace.final_words), 'Invalid CPU state words');
+  if (trace.runtime !== undefined) validateRuntimeTrace(trace.runtime, trace);
   for (const [index, row] of trace.calls.entries()) {
     assert.equal(row.seq, index + 1, 'Missing, reordered or duplicated API call');
     assert.equal(row.epoch, trace.epoch, 'Call from a different checkpoint epoch');
