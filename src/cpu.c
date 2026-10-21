@@ -167,17 +167,15 @@ static bool restore_spsr(orchard_machine *m) {
     o_set_cpsr(&m->cpu, *s);
     return true;
 }
-static void data_processing(orchard_machine *m, uint32_t op) {
+/* Shared execution after the encoding checks below or the conservative
+ * arm_without_checkpoint classification. Keep arithmetic and flags in one
+ * place; the latter has already proved these encoding checks redundant. */
+static void data_processing_valid(orchard_machine *m, uint32_t op) {
     o_cpu *c = &m->cpu;
     unsigned rd = (op >> 12) & 15u, rn = (op >> 16) & 15u;
     unsigned kind = (op >> 21) & 15u;
     bool test = kind >= 8 && kind <= 11;
     bool flags = (op & (1u << 20)) != 0;
-    if ((test && !flags) || (!(op & (1u << 25)) && (op & 16u) &&
-        ((op & 128u) || ((op >> 8) & 15u) == 15))) {
-        unpredictable(m, op);
-        return;
-    }
     bool carry = (c->cpsr & O_C) != 0;
     uint32_t b = operand2(c, op, &carry), a = o_getr(c, rn), result = 0;
     if (!(op & (1u << 25)) && (op & 16u) && rn == 15) a += 4;
@@ -206,6 +204,17 @@ static void data_processing(orchard_machine *m, uint32_t op) {
         if (rd == 15 && flags && !restore_spsr(m)) return;
         o_putr(c, rd, result);
     }
+}
+static void data_processing(orchard_machine *m, uint32_t op) {
+    unsigned kind = (op >> 21) & 15u;
+    bool test = kind >= 8 && kind <= 11;
+    bool flags = (op & (1u << 20)) != 0;
+    if ((test && !flags) || (!(op & (1u << 25)) && (op & 16u) &&
+        ((op & 128u) || ((op >> 8) & 15u) == 15))) {
+        unpredictable(m, op);
+        return;
+    }
+    data_processing_valid(m, op);
 }
 static void psr_transfer(orchard_machine *m, uint32_t op, bool read) {
     o_cpu *c = &m->cpu;
@@ -410,7 +419,7 @@ static bool arm_without_checkpoint(orchard_machine *m, uint32_t op) {
     if (!(op & (1u << 25)) && (op & 16u) &&
         ((op & 128u) || ((op >> 8) & 15u) == 15)) return false;
     c->next_pc = c->r[15] + 4u;
-    data_processing(m, op);
+    data_processing_valid(m, op);
     return true;
 }
 static void cpu_step(orchard_machine *m, bool fast) {
