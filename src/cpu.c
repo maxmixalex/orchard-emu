@@ -390,7 +390,7 @@ static void arm(orchard_machine *m, uint32_t op) {
  * helper as the reference path, not a second implementation of arithmetic. */
 static bool arm_without_checkpoint(orchard_machine *m, uint32_t op) {
     o_cpu *c = &m->cpu;
-    if (!o_condition(c, op >> 28)) {
+    if ((op >> 28) != 14u && !o_condition(c, op >> 28)) {
         c->next_pc = c->r[15] + 4u;
         return true;
     }
