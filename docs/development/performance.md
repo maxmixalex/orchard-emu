@@ -998,6 +998,14 @@ The two CPU step helpers are explicitly inlined only for non-Reference WASM.
 Inspect the built module when changing this loop: the initial source change
 caused LLVM to outline a step helper and introduce a call per instruction.
 Source-level reductions alone do not establish a throughput improvement.
+The continuation uses a final iteration index: an ineligible interval ends
+at the current quantum, while an eligible interval is bounded by the request.
+An earlier invariant Boolean exit caused the production compiler to split
+the one-shot and continuing paths before inlining, producing two static CPU
+bodies. The index bound keeps a single interpreter body in the measured build.
+Verify the emitted fetch/decode paths as well as helper names and module size;
+one source call site does not guarantee one generated interpreter body. This
+code-size finding alone does not establish the cause of browser latency noise.
 The scheduler differential matrix covers interrupt unmasking, device-backed
 fetch and descriptors, MMIO synchronization, aborts, sleep and budget edges.
 Use the fixed-checkpoint scene tool above and the uninstrumented browser probe

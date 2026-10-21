@@ -155,14 +155,15 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enu
                  * including translation-table reads, synchronizes and clears
                  * quiet_left before touching any interrupt source or mask.
                  * Exclude latched IRQs even with CPSR.I set: a guest PSR write
-                 * can unmask them without touching MMIO. Keep one CPU call site
-                 * and execute every instruction with its normal clock quantum. */
-                bool quiet = scheduled && policy == RUN_LEGACY && m->quiet_left &&
-                             !pending && !m->soc.intpnd;
+                 * can unmask them without touching MMIO. Bound an ineligible
+                 * interval to this quantum, so the CPU loop has no invariant
+                 * one-shot branch for the compiler to split before inlining. */
+                uint32_t last = scheduled && policy == RUN_LEGACY && m->quiet_left &&
+                                !pending && !m->soc.intpnd ? budget - 1u : i;
                 for (;;) {
                     o_cpu_step(m);
-                    if (!quiet || !m->quiet_left || m->cpu.sleeping ||
-                        m->stop.status != ORCHARD_OK || i + 1u >= budget) break;
+                    if (i == last || !m->quiet_left || m->cpu.sleeping ||
+                        m->stop.status != ORCHARD_OK) break;
                     ++i;
                     ++m->ticks;
                     --m->quiet_left;
