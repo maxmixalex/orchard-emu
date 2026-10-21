@@ -46,7 +46,9 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
   function paint(){raf=0;if(!last||disposed)return;const d=last;
    const changed=!painted||ink!==skin.rgb.join(',')||painted.width!==d.width||painted.height!==d.height||
     (d.pixels? !painted.pixels||painted.pixels.length!==d.pixels.length||d.pixels.some((v,i)=>v!==painted.pixels[i]):painted.pixels!==null);
-   if(changed){canvas.width=d.width;canvas.height=d.height;
+   if(changed){
+    if(canvas.width!==d.width)canvas.width=d.width;
+    if(canvas.height!==d.height)canvas.height=d.height;
     const frame=d.pixels?d:{...d,pixels:new Uint8Array(d.width*d.height),frameStatus:0};
     ctx.putImageData(new ImageData(frameRGBA(frame,skin.rgb),d.width,d.height),0,0);painted=d;ink=skin.rgb.join(',');}
    controller.screenRGB=skin.rgb;skin.update(d.active,d.annunciators,d.annunciatorStatus,model.id);
