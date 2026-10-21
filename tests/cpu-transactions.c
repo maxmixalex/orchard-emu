@@ -142,6 +142,67 @@ static void multiple_stores(void) {
     }
 }
 
+static void block_register_lists(void) {
+    static const struct { uint32_t flags; unsigned first, adjusted; } modes[] = {
+        {0x00800000u, 0x400, 0x40c}, /* IA */
+        {0x01800000u, 0x404, 0x40c}, /* IB */
+        {0x00000000u, 0x3f8, 0x3f4}, /* DA */
+        {0x01000000u, 0x3f4, 0x3f4}, /* DB */
+    };
+    uint32_t seed = 0x6c697374u;
+    /* Independent addresses and word values also check the shared decoder. */
+    for (unsigned mode = 0; mode < 4; ++mode) {
+        initialize();
+        o_cpu c = cpu_state(false, &seed);
+        c.r[3] = O_RAM_BASE + 0x400;
+        c.r[0] = 0x01020304u; c.r[7] = 0x708090a0u; c.r[14] = 0xdeadbeefu;
+        uint32_t op = 0xe8234081u | modes[mode].flags; /* STM r3!, {r0,r7,r14} */
+        execute(op, c, true);
+        CHECK(fast.stop.status == ORCHARD_OK);
+        CHECK(o_read_le(fast.ram + modes[mode].first, 4) == 0x01020304u);
+        CHECK(o_read_le(fast.ram + modes[mode].first + 4, 4) == 0x708090a0u);
+        CHECK(o_read_le(fast.ram + modes[mode].first + 8, 4) == 0xdeadbeefu);
+        CHECK(fast.ram[modes[mode].first - 1] == 0 && fast.ram[modes[mode].first + 12] == 0);
+        CHECK(fast.cpu.r[3] == O_RAM_BASE + modes[mode].adjusted);
+        c.r[0] = c.r[7] = c.r[14] = 0;
+        execute(op | (1u << 20), c, true); /* LDM r3!, {r0,r7,r14} */
+        CHECK(fast.stop.status == ORCHARD_OK);
+        CHECK(fast.cpu.r[0] == 0x01020304u && fast.cpu.r[7] == 0x708090a0u);
+        CHECK(fast.cpu.r[14] == 0xdeadbeefu && fast.cpu.r[1] == c.r[1]);
+        CHECK(fast.cpu.r[3] == O_RAM_BASE + modes[mode].adjusted);
+        CHECK(fast.cpu.r[15] == 0x104 && fast.cpu.cpsr == c.cpsr);
+    }
+    /* A high-bit-only list must still commit PC and, for LDM^, restore SPSR. */
+    for (unsigned special = 0; special < 2; ++special) {
+        initialize();
+        o_cpu c = cpu_state(false, &seed);
+        c.cpsr = O_SVC | O_I | O_F; c.spsr[2] = O_SVC | O_T | O_N;
+        c.r[3] = O_RAM_BASE + 0x600;
+        fast.ram[0x600] = reference.ram[0x600] = 0x37;
+        fast.ram[0x601] = reference.ram[0x601] = 0x12;
+        execute(0xe8b38000u | (special << 22), c, true);
+        CHECK(fast.stop.status == ORCHARD_OK && fast.cpu.r[3] == O_RAM_BASE + 0x604);
+        CHECK(fast.cpu.r[15] == (special ? 0x1236u : 0x1234u));
+        CHECK(fast.cpu.cpsr == (special ? c.spsr[2] : c.cpsr));
+    }
+    initialize();
+    o_cpu c = cpu_state(false, &seed);
+    c.r[3] = O_RAM_BASE + 0x700; c.r[14] = 0x12345678u;
+    execute(0xe8a3c008u, c, true); /* Base is first: STMIA r3!, {r3,r14,pc}. */
+    CHECK(fast.stop.status == ORCHARD_OK && fast.cpu.r[3] == O_RAM_BASE + 0x70c);
+    CHECK(o_read_le(fast.ram + 0x700, 4) == O_RAM_BASE + 0x700);
+    CHECK(o_read_le(fast.ram + 0x704, 4) == 0x12345678u);
+    CHECK(o_read_le(fast.ram + 0x708, 4) == 0x10cu);
+    /* Empty lists and a non-first writeback base stop before any bus access. */
+    const uint32_t invalid[] = {0xe8a30000u, 0xe8a30009u};
+    for (unsigned i = 0; i < 2; ++i) {
+        initialize();
+        execute(invalid[i], c, true);
+        CHECK(fast.stop.status == ORCHARD_UNPREDICTABLE && equal(&fast.cpu, &c, sizeof c));
+        CHECK(o_read_le(fast.ram + 0x700, 4) == 0 && o_read_le(fast.ram + 0x704, 4) == 0);
+    }
+}
+
 static void thumb_memory(void) {
     static const uint32_t addresses[] = {O_RAM_BASE + 0x300, O_RAM_BASE + 0x301,
         O_RAM_BASE + 0x302, O_RAM_BASE + 0x3fffc, 0x60000000u,
@@ -225,7 +286,7 @@ static void descriptor_diagnostics(void) {
 
 EXPORT("regression") unsigned run(void) {
     checks = failures = first_failure = 0;
-    exhaustive_thumb(); halfwords(); multiple_stores(); thumb_memory();
+    exhaustive_thumb(); halfwords(); multiple_stores(); block_register_lists(); thumb_memory();
     partial_effects(); descriptor_diagnostics();
     return failures;
 }
