@@ -72,7 +72,17 @@ test(() => assert.throws(() => inspectHp39Bundle(files().slice(0, 3)), /Missing/
 test(() => assert.throws(() => inspectHp39Bundle([...files(), { name: 'note0.000', bytes: note }]), /Duplicate/));
 test(() => assert.throws(() => inspectHp39Bundle([...files(), { name: 'EXTRA.000', bytes: note }]), /Unreferenced/));
 test(() => assert.throws(() => inspectHp39Bundle(files().map(f => f.name === 'PROBE0.000' ? { ...f, bytes: note } : f)), /type mismatch/));
-test(() => assert.throws(() => inspectHp39Bundle(files().map(f => f.name === 'NOTE0.000' ? { ...f, bytes: bytes('HP39AscC 3 Bad\nbody') } : f)), /title mismatch/));
+test(() => assert.throws(() => inspectHp39Bundle(files().map(f => f.name === 'NOTE0.000' ? { ...f, bytes: bytes('HP39AscC 3 Bad\nbody') } : f)), /Unsupported HP39 directory title alias/));
+// Original opaque fixture: outer formats remain valid when the directory uses
+// a display alias. The bundle's stricter host policy remains unsupported.
+const aliasDirectory = bytes('HP39AscA H 8 LIB0.0005 Alias');
+const aliasLibrary = Uint8Array.from([...bytes('HP39BinH'), 6, ...bytes('Actual'), 255]);
+test(() => assert.equal(parseHp39Directory(aliasDirectory)[0].title, 'Alias'));
+test(() => assert.equal(inspectHp39File(aliasLibrary).title, 'Actual'));
+test(() => assert.throws(() => inspectHp39Bundle([
+  { name: 'HP39DIR.CUR', bytes: cur }, { name: 'HP39DIR.000', bytes: aliasDirectory },
+  { name: 'LIB0.000', bytes: aliasLibrary }
+]), { code: 'HP39_UNSUPPORTED_TITLE_ALIAS' }));
 test(() => assert.throws(() => inspectHp39Bundle([
   { name: 'HP39DIR.CUR', bytes: cur }, { name: 'HP39DIR.000', bytes: bytes('HP39AscA A 11 HP39DIR.CUR4 Root') }
 ]), /Cycle/));

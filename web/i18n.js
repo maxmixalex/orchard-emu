@@ -23,7 +23,13 @@ export const en={
   keyStateHint:'Sequences use the calculator’s current Alpha/Shift mode; they do not force a character.',unassigned:'Unassigned',
   serial:'Serial',usb:'USB',connect:'Connect',disconnect:'Disconnect',connected:'Connected',disconnected:'Disconnected',connecting:'Connecting…',
   target:'Connection',format:'Format',text:'Text',hex:'Hexadecimal',data:'Data',send:'Send',receive:'Receive',clear:'Clear log',
-  linkNotice:'Virtual bytes and USB packets only. HP file transfer and a system-level calculator device are not yet verified.',invalidBytes:'Enter valid hex byte pairs. Serial accepts at most 1024 bytes; USB accepts one packet of at most 64 bytes.',
+  linkNotice:'Send individual bytes or USB packets for connection diagnostics.',invalidBytes:'Enter valid hex byte pairs. Serial accepts at most 1024 bytes; USB accepts one packet of at most 64 bytes.',
+  transferFiles:'Files',rawConnection:'Raw data',chooseTransferFile:'Choose file',noTransferFile:'No file selected',calculatorFileName:'Name on calculator',uploadFile:'Upload to calculator',receiveFiles:'Receive from calculator',cancelTransfer:'Cancel transfer',downloadFile:'Download',receivedFiles:'Received files',clearReceivedFiles:'Clear list',transferProgress:'File transfer progress',
+  getNamedFile:'Get named object',listCalculatorFiles:'List calculator files',finishCalculatorServer:'Exit calculator SERVER',
+  fileTransferHelp:'Start Kermit SERVER on the calculator to upload or get a named object. To receive a calculator-initiated transfer, choose Receive from calculator, then send an object with SEND. Files stay on this device.',
+  fileTransferSerialHelp:'Serial file transfer is still under development. Use USB for files on HP48gII; raw serial data remains available.',
+  fileTransfer39Help:'HP39 Aplet and variable transfer uses a different file format. This connection currently offers raw data for this model.',fileConnectFirst:'Connect the selected link before transferring files.',
+  transferPhase_idle:'Ready',transferPhase_preparing:'Reading file…',transferPhase_negotiating:'Waiting for calculator…',transferPhase_sending:'Uploading…',transferPhase_receiving:'Receiving…',transferPhase_listing:'Reading directory…',transferPhase_finishing:'Finishing…',transferPhase_complete:'Transfer complete',transferPhase_cancelled:'Transfer cancelled',transferPhase_error:'Transfer failed',
   copyright:'Unofficial. HP marks belong to their owners.',artwork:'Artwork',developer:'Developer',screen1:'Original size',screen4:'4× pixels',
 };
 export const zh={
@@ -47,7 +53,13 @@ export const zh={
   keyStateHint:'序列遵循计算器当前的 Alpha／Shift 状态，不会强制写入字符。',unassigned:'未分配',
   serial:'串口',usb:'USB',connect:'连接',disconnect:'断开',connected:'已连接',disconnected:'未连接',connecting:'正在连接…',
   target:'连接类型',format:'格式',text:'文本',hex:'十六进制',data:'数据',send:'发送',receive:'接收',clear:'清空日志',
-  linkNotice:'目前提供虚拟字节流和 USB 数据包操作；HP 文件传输及系统级虚拟计算器尚未完成验证。',invalidBytes:'请输入有效的十六进制字节对。串口最多 1024 字节，USB 每包最多 64 字节。',
+  linkNotice:'发送单个字节流或 USB 数据包，用于连接诊断。',invalidBytes:'请输入有效的十六进制字节对。串口最多 1024 字节，USB 每包最多 64 字节。',
+  transferFiles:'文件',rawConnection:'原始数据',chooseTransferFile:'选择文件',noTransferFile:'尚未选择文件',calculatorFileName:'计算器内文件名',uploadFile:'上传到计算器',receiveFiles:'接收计算器文件',cancelTransfer:'取消传输',downloadFile:'下载',receivedFiles:'已接收文件',clearReceivedFiles:'清空列表',transferProgress:'文件传输进度',
+  getNamedFile:'按名称取回对象',listCalculatorFiles:'读取计算器目录',finishCalculatorServer:'退出计算器 SERVER',
+  fileTransferHelp:'先在计算器中启动 Kermit SERVER，即可上传或按名称取回对象。由计算器主动发送时，先点击「接收计算器文件」，再用 SEND 发送对象。文件仅在本机处理。',
+  fileTransferSerialHelp:'串口文件传输仍在开发中。HP48gII 请使用 USB 传输文件；原始串口数据功能仍可使用。',
+  fileTransfer39Help:'HP39 的 Aplet 和变量采用不同文件格式，此机型目前可使用原始数据连接。',fileConnectFirst:'传输前，请先连接所选链路。',
+  transferPhase_idle:'就绪',transferPhase_preparing:'正在读取文件…',transferPhase_negotiating:'正在等待计算器…',transferPhase_sending:'正在上传…',transferPhase_receiving:'正在接收…',transferPhase_listing:'正在读取目录…',transferPhase_finishing:'正在结束传输…',transferPhase_complete:'传输完成',transferPhase_cancelled:'传输已取消',transferPhase_error:'传输失败',
   copyright:'非官方项目。HP 商标归其权利人所有。',artwork:'皮肤',developer:'开发版',screen1:'原始尺寸',screen4:'4 倍像素',
 };
 export function initialLanguage(storage,locale='en'){try{const l=storage?.getItem(LANG_KEY);if(l==='en'||l==='zh')return l;}catch{}return locale.toLowerCase().startsWith('zh')?'zh':'en';}

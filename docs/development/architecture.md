@@ -18,10 +18,11 @@ raw LCD output, physical key inputs, UART/USB host transport
 ```
 
 Raw LCD preview, a functional UART0 queue, and an opt-in electrical keyboard
-with unfiltered EINT sampling exist. Printed-key mapping, browser key controls,
-complete board wiring and stock transfers remain open. A functional USB PIO
+with unfiltered EINT sampling exist. The browser supplies physical key controls
+and printed legends; complete board wiring and all-model acceptance remain open. A functional USB PIO
 controller and explicit packet host now exchange real HP50g bootloader
-control responses; see [USB evidence](usb.md) and [electrical input](input.md).
+control responses and bounded HP48gII object transfers; see [USB evidence](usb.md),
+[file transfer](file-transfer.md) and [electrical input](input.md).
 
 A stock image begins at physical address zero with MMU/caches off and the CPU
 in supervisor mode with IRQ/FIQ masked. The guest supplies its own reset code,

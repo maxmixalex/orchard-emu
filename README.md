@@ -95,8 +95,11 @@ physical timing is still being refined. CPU research details stay in the
 developer workbench. Save exports `<model>-<yyyymmdd-hhmmss>.ord`; Restore also
 accepts earlier `.orchard` files. No ROM is stored or uploaded.
 
-Connections exposes virtual UART bytes and USB guest descriptors/individual
-packets, not a PC device or complete HP file-transfer client. See
+Connections adds a Files tab for HP48gII object upload, named retrieval and
+explicit local download over its internal USB connection. Start the calculator's
+Kermit SERVER first. The Raw data tab retains UART and individual USB packets.
+Serial file transfer and HP39 applet upload remain under development. See
+[file transfer](docs/development/file-transfer.md),
 [interaction](docs/development/interaction.md), [sessions](docs/development/sessions.md),
 and [the infrared assessment](docs/development/infrared.md).
 

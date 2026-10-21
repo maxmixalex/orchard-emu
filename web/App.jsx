@@ -5,6 +5,7 @@ import {useMediaQuery} from '@mantine/hooks';
 import {PCKeyboardView} from './pc-keyboard-view.js';
 import {TraditionalKeypad,MODEL_SLUGS} from './traditional-keypad.js';
 import {RecordingControl} from './RecordingControl.jsx';
+import {FileTransfer} from './FileTransfer.jsx';
 import {useTranslation} from 'react-i18next';
 import i18n,{LANG_KEY} from './i18n.js';
 import {CALCULATORS} from './catalog.js';
@@ -117,18 +118,22 @@ function Settings({controller,state,onClose}){
  </Modal>;
 }
 function Connections({controller,state,onClose}){
- const {t}=useTranslation();const [target,setTarget]=useState('serial'),[format,setFormat]=useState('hex'),[text,setText]=useState('');
+ const {t}=useTranslation();const [target,setTarget]=useState('usb'),[format,setFormat]=useState('hex'),[text,setText]=useState('');
+ const active=Boolean(state.transfer?.active);
  function send(){try{let bytes;if(format==='text')bytes=new TextEncoder().encode(text);else{const value=text.trim();if(!/^[a-f\d]{2}(?:\s+[a-f\d]{2})*$/i.test(value))throw Error('hex');bytes=Uint8Array.from(value.split(/\s+/).map(x=>parseInt(x,16)));}
   if(bytes.length>(target==='serial'?1024:64))throw Error('length');controller.send(target==='serial'?'uart':'usb-send',{bytes});}catch{controller.report('invalidBytes');}}
  return <Modal opened trapFocus={!state.dialog} onClose={onClose} title={t('connections')} size="lg" closeButtonProps={{'aria-label':t('close')}}><Stack>
-  <Text size="sm" c="dimmed">{t('linkNotice')}</Text>
-  <Group justify="space-between"><Text>{t('serial')} · {t(state.serial?'connected':'disconnected')}</Text><Button variant="light" onClick={()=>controller.send('serial-connect',{connected:!state.serial})}>{t(state.serial?'disconnect':'connect')}</Button></Group>
-  <Group justify="space-between"><Text>USB · {t(state.usbReady?'connected':state.usb?'connecting':'disconnected')}</Text><Button variant="light" onClick={()=>controller.send('usb-connect',{connected:!state.usb})}>{t(state.usb?'disconnect':'connect')}</Button></Group>
+  <Group justify="space-between"><Text>{t('serial')} · {t(state.serial?'connected':'disconnected')}</Text><Button variant="light" aria-label={`${t(state.serial?'disconnect':'connect')} ${t('serial')}`} onClick={()=>controller.connectLink('serial',!state.serial)}>{t(state.serial?'disconnect':'connect')}</Button></Group>
+  <Group justify="space-between"><Text>USB · {t(state.usbReady?'connected':state.usb?'connecting':'disconnected')}</Text><Button variant="light" aria-label={`${t(state.usb?'disconnect':'connect')} USB`} onClick={()=>controller.connectLink('usb',!state.usb)}>{t(state.usb?'disconnect':'connect')}</Button></Group>
   {state.usbInfo&&<Text size="sm">{state.usbInfo.manufacturer} · {state.usbInfo.name} · {state.usbInfo.vendor.toString(16).padStart(4,'0')}:{state.usbInfo.product.toString(16).padStart(4,'0')}</Text>}
-  <Group grow><Select label={t('target')} value={target} onChange={setTarget} data={['serial','usb'].map(k=>({value:k,label:t(k)}))}/><Select label={t('format')} value={format} onChange={setFormat} data={['hex','text'].map(k=>({value:k,label:t(k)}))}/></Group>
+  <Select label={t('target')} value={target} onChange={setTarget} disabled={active} data={['serial','usb'].map(k=>({value:k,label:t(k)}))}/>
+  <Tabs defaultValue="files" keepMounted><Tabs.List><Tabs.Tab value="files">{t('transferFiles')}</Tabs.Tab><Tabs.Tab value="bytes">{t('rawConnection')}</Tabs.Tab></Tabs.List>
+  <Tabs.Panel value="files" pt="md"><FileTransfer controller={controller} state={state} transport={target}/></Tabs.Panel>
+  <Tabs.Panel value="bytes" pt="md"><Stack><Text size="sm" c="dimmed">{t('linkNotice')}</Text>
+  <Select label={t('format')} value={format} onChange={setFormat} disabled={active} data={['hex','text'].map(k=>({value:k,label:t(k)}))}/>
   <Textarea label={t('data')} value={text} onChange={e=>setText(e.currentTarget.value)} maxLength={4096}/>
-  <Group><Button disabled={target==='serial'?!state.serial:!state.usbReady} onClick={send}>{t('send')}</Button><Button variant="light" disabled={!state.usbReady} onClick={()=>controller.send('usb-read')}>{t('receive')}</Button><Button variant="subtle" onClick={()=>controller.patch({log:''})}>{t('clear')}</Button></Group>
-  <pre className="link-log">{state.log||'—'}</pre></Stack></Modal>;
+  <Group><Button disabled={active||(target==='serial'?!state.serial:!state.usbReady)} onClick={send}>{t('send')}</Button><Button variant="light" disabled={active||!state.usbReady} onClick={()=>controller.send('usb-read')}>{t('receive')}</Button><Button variant="subtle" onClick={()=>controller.patch({log:''})}>{t('clear')}</Button></Group>
+  <pre className="link-log">{state.log||'—'}</pre></Stack></Tabs.Panel></Tabs></Stack></Modal>;
 }
 export function App({controller}){
  const {t}=useTranslation(),state=useSyncExternalStore(controller.subscribe,controller.getSnapshot,controller.getSnapshot),[settings,setSettings]=useState(false),[connections,setConnections]=useState(false);

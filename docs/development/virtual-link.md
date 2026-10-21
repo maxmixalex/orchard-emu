@@ -2,8 +2,12 @@
 
 ## User connection panel
 
-Connections in the user page now exposes a bounded UART0 byte stream and
-in-process USB host. UART receive bytes and actual guest transmit bytes are
+Connections has a Files tab for bounded HP48gII USB object transfers and a
+Raw data tab for a UART0 byte stream and individual USB packets. The original
+Kermit client, setup, supported operations and stock evidence are described in
+[file transfer](file-transfer.md). A transfer owns its chosen connection until
+it completes or is cancelled; raw operations cannot interleave protocol bytes.
+UART receive bytes and actual guest transmit bytes are
 shown in a capped log; partial queue acceptance reports the accepted count.
 USB connect runs bus reset, EP0 descriptor reads, SET_ADDRESS and configuration
 using guest FIFO responses. Metadata is never invented from a model selector.
@@ -21,8 +25,10 @@ The original GET_CONFIGURATION NAK counterexample is not resolved by this host,
 which does not issue that request during enumeration.
 
 The page creates no OS USB/serial device and does not invoke WebUSB/WebSerial
-to access real hardware. Conn3x interoperation and HP typed-file/object protocol
-remain open. Serial routing, FIFO timing and physical board connectors remain
+to access real hardware. Complete Conn3x replacement, serial stock transfer and
+HP39 typed-file upload remain open. The [HP39 format validator](hp39-files.md)
+checks envelopes and bundle references without certifying opaque payloads.
+Serial routing, FIFO timing and physical board connectors remain
 separate from the UART0 host queue. Restoring a session disconnects host links.
 See the [infrared assessment](infrared.md) for the next independent transport.
 
@@ -33,7 +39,7 @@ A usable link can exist at three different levels. Keep them separately named:
 | Level | Meaning | Current status |
 | --- | --- | --- |
 | Host byte stream | The emulated UART exchanges bytes with a host adapter | Functional UART0 queues and CLI files/UI hex injection exist; stock protocols unverified |
-| Internal virtual USB | Guest USB device controller talks to a modeled packet host inside Orchard | Functional PIO subset; real HP50g bootloader descriptor/control responses and synthetic bulk tests pass locally; complete control/stock transfers remain open |
+| Internal virtual USB | Guest USB device controller talks to a modeled packet host inside Orchard | Functional PIO subset; bounded HP48gII Kermit object upload/retrieval; HP50g bootloader control and synthetic bulk evidence remain separately scoped |
 | Host-OS virtual device | Windows/Linux/macOS enumerates a device that existing PC software can use | Not implemented; optional native companion work |
 
 The first level does not imply the second or third. A UART channel inside the
@@ -50,8 +56,9 @@ hex transmit output. Its display log is capped and labels truncation; it is
 not a lossless file-transfer adapter. The Worker drains transmit data every
 bounded execution slice rather than tying I/O service to LCD repaint.
 
-This is an error-free functional byte stream, not baud timing, a complete UART
-FIFO model, a PTY, an open TCP listener, Kermit, HP object transfer or Conn3x.
+This is an error-free functional byte stream. Baud timing, a complete UART
+FIFO model and stock serial file transfer remain unverified. The separate
+[native host prototype](host-mode.md) has its own loopback socket tests.
 Nothing currently creates an operating-system USB device or opens the user's
 real USB hardware.
 

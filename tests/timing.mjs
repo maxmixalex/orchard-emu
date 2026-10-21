@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {Pacer} from '../web/pacing.js';
+import {FileTransfer} from '../web/file-transfer.js';
 import {TaskScheduler} from '../web/task-scheduler.js';
 import {TapQueue, HP48_ROM, isPlayable, setupHash, applySetup} from '../web/hp48.js';
 
@@ -54,7 +55,7 @@ async function fixture(){
  class FakeScheduler{schedule(fn){return schedule(fn);}cancel(id){jobs.delete(id);}}
  class FakeUSB{poll(){}resetLocal(){}}
  const saved={model:4,romHash:HP48_ROM,preset:'hp48-home',frameView:1,state:new Uint8Array(16)};
- const scope={console,Pacer,TaskScheduler:FakeScheduler,VirtualUSB:FakeUSB,TapQueue,isPlayable,setupHash,applySetup,
+ const scope={console,Pacer,FileTransfer,TaskScheduler:FakeScheduler,VirtualUSB:FakeUSB,TapQueue,isPlayable,setupHash,applySetup,
   encodeSession:async()=>new Uint8Array(16),decodeSession:async()=>saved,Uint32Array,Uint8Array,ArrayBuffer,
   setTimeout:schedule,clearTimeout:id=>jobs.delete(id),performance:{now:()=>++wall},
   crypto:{subtle:{digest:async()=>Uint8Array.from(HP48_ROM.match(/../g),b=>parseInt(b,16)).buffer}},

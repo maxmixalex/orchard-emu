@@ -2,10 +2,11 @@
 import { Pacer } from './pacing.js';
 import { TaskScheduler } from './task-scheduler.js';
 import { VirtualUSB } from './virtual-usb.js';
+import { FileTransfer } from './file-transfer.js';
 import { encodeSession, decodeSession } from './session.js';
 import { setupHash, isPlayable, applySetup, TapQueue } from './hp48.js';
 let audience = 'debug';
-let romHash='', operation=0, busy=false, autoSaving=false, serial=false, usb;
+let romHash='', operation=0, busy=false, autoSaving=false, serial=false, usb, transfer;
 const pacer=new Pacer(), scheduler=new TaskScheduler();
 let core, model = 4, generation = 0, preset = 'strict', running = false, loaded = false;
 let timer = null, lastFrame = 0, tick = 0, events = [], eventOverflow = false, frameView = 0;
@@ -31,10 +32,12 @@ function syncTick(s = state()) {
   tick = next;
 }
 function resetClock() { tick=0;taps.clear(0);pacer.reset(performance.now()); }
-function pause() { running = false; scheduler.cancel(timer); timer = null; taps.clear(tick); }
+function pause() { transfer?.cancel(tick,'File transfer cancelled because the calculator paused.');running = false; scheduler.cancel(timer); timer = null; taps.clear(tick); }
 function sendUart() {
   const n = core.uart_receive();
-  if (n && (audience === 'debug' || serial)) postMessage({ type:'uart-output',generation,bytes:new Uint8Array(core.memory.buffer,core.uart_output(),n).slice() });
+  if(n){const bytes=new Uint8Array(core.memory.buffer,core.uart_output(),n).slice();
+    if(transfer?.receiveUart(bytes,tick))return;
+    if(audience === 'debug' || serial)postMessage({type:'uart-output',generation,bytes});}
 }
 function snapshot() {
   const s = state(); syncTick(s);
@@ -77,6 +80,7 @@ function pump() {
       if(audience==='calculator')pacer.consume(budget);
       usb?.poll(tick);
       sendUart();
+      if(transfer?.pending)transfer.poll(tick);
       if (status) {pause();break;}
     } while (performance.now()<end);
     if (!running || performance.now()-lastFrame >= (audience==='calculator'?33:50)) snapshot();
@@ -84,6 +88,7 @@ function pump() {
   } catch (error) { fail(error); }
 }
 function fail(error) {
+  transfer?.cancel(tick,'File transfer cancelled because the calculator stopped.');
   busy=false;autoSaving=false;running=false;scheduler.cancel(timer);timer=null;
   try { taps.clear(tick); } catch { /* Original error takes precedence. */ }
   postMessage({type:'error',generation,message:error instanceof Error?error.message:String(error)});
@@ -106,6 +111,7 @@ self.onmessage=({data})=>{
       if(core.create(model)) throw new Error('Machine initialization failed');
       applySetup(core,model,preset);frameView=isPlayable(model,preset)?1:0;
       usb=new VirtualUSB(core,core.timebase_hz(),data=>postMessage({type:'usb-status',generation,...data}));
+      transfer=new FileTransfer({core,usb,model,notify:data=>postMessage({generation,...data})});
       postMessage({type:'created',generation,flash:core.profile(model,0),ram:core.profile(model,1)});snapshot();return;
     }
     if(data.generation!==generation) return;
@@ -124,7 +130,7 @@ self.onmessage=({data})=>{
         postMessage({type:'loaded',generation});snapshot();
       }).catch(error=>{if(token===generation&&job===operation)fail(error);});
     } else if(data.type==='checkpoint-auto') {
-      if(!loaded || busy || autoSaving || taps.pending || usb?.job){postMessage({type:'checkpoint-skipped',generation,request:data.request});return;}
+      if(!loaded || busy || autoSaving || taps.pending || usb?.job || transfer?.active){postMessage({type:'checkpoint-skipped',generation,request:data.request});return;}
       autoSaving=true;const token=generation,job=operation,request=data.request;
       const length=core.checkpoint_size();
       if(!length||length>600000||core.checkpoint_save())throw new Error('Unable to save this calculator state.');
@@ -174,16 +180,27 @@ self.onmessage=({data})=>{
       }
     }
     else if(data.type==='tap-sequence' && loaded && running && isPlayable(model,preset)) {taps.pushMany(data.scans);snapshot();}
-    else if(data.type==='serial-connect' && loaded) {serial=Boolean(data.connected);postMessage({type:'serial-status',generation,connected:serial});}
+    else if(data.type==='file-transfer-start') {
+      if(Number.isSafeInteger(data.request)&&data.request<=transfer?.lastRequest)return;
+      try {
+        if(!loaded||busy||!running)throw new Error('Resume the calculator before starting a file transfer.');
+        if(data.transport==='serial'&&!serial)throw new Error('Connect serial before starting a file transfer.');
+        transfer.start(data,tick);
+      } catch(error) {postMessage({type:'file-transfer-status',generation,request:data.request,transport:data.transport,active:false,phase:'error',error:error.message});}
+    }
+    else if(data.type==='file-transfer-cancel') {transfer?.cancel(tick,'File transfer cancelled.',data.request);}
+    else if(data.type==='serial-connect' && loaded) {if(!data.connected&&transfer?.transport==='serial')transfer.cancel(tick,'Serial disconnected.');serial=Boolean(data.connected);postMessage({type:'serial-status',generation,connected:serial});}
     else if(data.type==='usb-connect' && loaded) {
+      transfer?.resetUsb(tick);
       if(data.connected){if(!running)throw new Error('Resume the calculator before connecting USB.');usb.start(tick);}else usb.disconnect();
     }
-    else if(data.type==='usb-send' && loaded) {postMessage({type:'usb-packet',generation,direction:'out',...usb.send(data.bytes)});}
-    else if(data.type==='usb-read' && loaded) {postMessage({type:'usb-packet',generation,direction:'in',...usb.read()});}
+    else if(data.type==='usb-send' && loaded) {postMessage({type:'usb-packet',generation,direction:'out',...(transfer?.pending&&transfer.transport==='usb'?{result:4,status:'File transfer owns USB.',accepted:0}:usb.send(data.bytes))});}
+    else if(data.type==='usb-read' && loaded) {postMessage({type:'usb-packet',generation,direction:'in',...(transfer?.pending&&transfer.transport==='usb'?{result:4,status:'File transfer owns USB.'}:usb.read())});}
     else if(data.type==='tap' && loaded && running && isPlayable(model,preset)) {taps.push(data.scan);snapshot();}
     else if(data.type==='release') {taps.clear(tick);snapshot();}
     else if(data.type==='view') {if(data.view!==0 && data.view!==1)throw new Error('Invalid frame view');frameView=data.view;snapshot();}
     else if(data.type==='uart' && loaded) {
+      if(transfer?.pending&&transfer.transport==='serial'){postMessage({type:'uart-sent',generation,accepted:0,requested:data.bytes?.length||0});return;}
       if(!(data.bytes instanceof Uint8Array) || data.bytes.length>1024)throw new Error('UART input limit is 1024 bytes');
       new Uint8Array(core.memory.buffer,core.uart_input(),data.bytes.length).set(data.bytes);
       const n=core.uart_send(data.bytes.length);

@@ -101,16 +101,53 @@ with sync_playwright() as p:
  assert canvas_pixels()['pixels']==background*(131*64)
  page.wait_for_timeout(250);assert page.locator('.traditional-key[data-scan="28"]').bounding_box()['y'] < 750;page.screenshot(path=str(ROOT/'build/ui-traditional-zh.png'))
  page.get_by_role('button',name='连接',exact=True).click();page.get_by_role('button',name='关闭',exact=True).click()
+ # The file UI uses the production controller. Packet/stock validation is a
+ # separate Worker test; this fixture only supplies explicit protocol events.
+ select_model(4);resolve_manifest(5);keys_ready('hp48gii')
+ page.evaluate("""()=>{const c=window.__controller;c.patch({loaded:true,running:false,busy:false,serial:true,usb:true,usbReady:true});}""")
+ page.get_by_role('button',name='连接',exact=True).click()
+ page.locator('[data-testid="transfer-file"]').set_input_files({'name':'TEST.hp','mimeType':'application/octet-stream','buffer':b'HPHP49-C\x00\xff\r\n'})
+ assert page.get_by_label('计算器内文件名',exact=True).input_value()=='TEST.hp'
+ page.get_by_role('button',name='上传到计算器',exact=True).click()
+ page.wait_for_function('window.__messages.some(m=>m.type==="file-transfer-start")')
+ start=page.evaluate('()=>{const m=window.__messages.filter(m=>m.type==="file-transfer-start").at(-1);return {request:m.request,mode:m.mode,bytes:Array.from(m.bytes)}}')
+ assert start['mode']=='send' and start['bytes']==list(b'HPHP49-C\x00\xff\r\n')
+ assert page.get_by_role('button',name='上传到计算器',exact=True).is_disabled()
+ page.get_by_role('tab',name='原始数据',exact=True).click()
+ assert page.get_by_role('button',name='发送',exact=True).is_disabled()
+ assert page.get_by_role('button',name='接收',exact=True).is_disabled()
+ page.get_by_role('tab',name='文件',exact=True).click()
+ page.get_by_role('button',name='取消传输',exact=True).click()
+ page.evaluate('(request)=>{const c=window.__controller;c.receive({type:"file-transfer-received",generation:c.generation,request,name:"STALE",bytes:new Uint8Array([1])})}',start['request'])
+ assert page.get_by_role('button',name='下载',exact=True).count()==0
+ page.get_by_role('button',name='接收计算器文件',exact=True).click()
+ page.evaluate('()=>{const c=window.__controller,request=c.transferRequest;c.receive({type:"file-transfer-received",generation:c.generation,request,name:"RESULT.hp",bytes:new Uint8Array([0,255,13,10])});c.receive({type:"file-transfer-status",generation:c.generation,request,active:false,phase:"complete"})}')
+ page.get_by_role('button',name='下载',exact=True).click()
+ page.wait_for_function('window.__downloadName==="RESULT.hp"')
+ assert page.evaluate('window.__downloadBytes')==[0,255,13,10]
+ page.screenshot(path=str(ROOT/'build/ui-files-zh.png'))
+ page.get_by_role('button',name='清空列表',exact=True).click()
+ assert page.get_by_role('button',name='下载',exact=True).count()==0
+ page.get_by_label('计算器内文件名',exact=True).fill('RESULT')
+ page.get_by_role('button',name='按名称取回对象',exact=True).click()
+ page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).mode==="get"')
+ assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name')=='RESULT'
+ page.get_by_role('button',name='取消传输',exact=True).click()
+ page.get_by_role('combobox',name='连接类型',exact=True).click();page.get_by_role('option',name='串口',exact=True).click()
+ assert page.get_by_role('button',name='上传到计算器',exact=True).count()==0
+ assert '串口文件传输仍在开发中' in page.get_by_role('dialog').inner_text()
+ page.get_by_role('combobox',name='连接类型',exact=True).click();page.get_by_role('option',name='USB',exact=True).click()
+ page.get_by_role('button',name='关闭',exact=True).click()
  for width in [320,390,720,1360]:
   page.set_viewport_size({'width':width,'height':900})
   page.wait_for_timeout(100)
   assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth'),width
  # Unmount also invalidates an outstanding load and removes frame/resize work.
- select_model(4);page.wait_for_function('window.__manifestRequests.length===6')
- page.evaluate('window.__unmount()');resolve_manifest(5)
+ select_model(1);page.wait_for_function('window.__manifestRequests.length===7')
+ page.evaluate('window.__unmount()');resolve_manifest(6)
  page.evaluate('window.dispatchEvent(new Event("resize"))')
  assert page.locator('.traditional-geometry').count()==0
  assert page.evaluate('window.__controller.frames.size')==0
  assert not errors,errors
- print('Offline components: lazy keypad load/view/model races, reuse, active key/segments, PC input and unmount; exact full canvas RGBA, changed and blank frames; bilingual Apply/Cancel, PC key + modifier selection, printed legends, PNG download, connections modal, four viewport widths pass. No HTTP/ROM/Worker E2E.')
+ print('Offline components: lazy keypad load/view/model races, reuse, active key/segments, PC input and unmount; exact full canvas RGBA, changed and blank frames; bilingual Apply/Cancel, PC key + modifier selection, printed legends, PNG download, file upload/cancel/stale receive/download/raw exclusion, four viewport widths pass. No HTTP/ROM/Worker E2E.')
  b.close()

@@ -153,8 +153,11 @@ export function inspectHp39Bundle(files) {
       const targetKey = entry.file.toUpperCase(), target = byName.get(targetKey);
       if (!target) throw new Error(`Missing HP39 bundle file: ${entry.file}.`);
       if (target.info.kind !== entry.kind) throw new Error(`HP39 type mismatch for ${entry.file}.`);
+      // Some historical SDKs emit a directory display alias rather than the
+      // typed object's title. This is a host subset limit, not proof of damage.
       if (entry.kind !== 'A' && target.info.title !== entry.title)
-        throw new Error(`HP39 title mismatch for ${entry.file}.`);
+        throw Object.assign(new Error(`Unsupported HP39 directory title alias for ${entry.file}; this bundle subset requires matching titles.`),
+          { code: 'HP39_UNSUPPORTED_TITLE_ALIAS' });
       visit(targetKey);
     }
     active.delete(key);

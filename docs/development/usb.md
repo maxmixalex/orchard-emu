@@ -2,6 +2,10 @@
 
 ## Scope and evidence
 
+The later [file-transfer client](file-transfer.md) adds a stock HP48gII object
+roundtrip through this packet interface. The bootloader/control evidence below
+retains its original scope and unresolved GET_CONFIGURATION counterexample.
+
 This continuation reconciles the locally validated `a9e03bd` patch onto
 remote `80a1466`; issue #1 records its resulting CI/Pages acceptance. The production C
 core and WASM now share an original S3C2410A USB device-controller subset.
