@@ -284,13 +284,16 @@ def chrome_path():
 
 
 def wait_probe(page, expression, argument=None, timeout=15000):
+    # These predicates observe Worker/probe state, not canvas paint. Animation
+    # frames may stop independently; keep retries on an explicit timer. Result
+    # timestamps still come from the message handler, before this wait returns.
     return page.wait_for_function('''arg=>{
       const p=globalThis.__orchardProbe;
       if(!p)return false;
       if(p.errors.length)throw Error(p.errors.join('; '));
       if(p.snap?.stopped)throw Error('Guest stopped during browser verification');
       return (''' + expression + ''');
-    }''', arg=argument, timeout=timeout)
+    }''', arg=argument, timeout=timeout, polling=50)
 
 
 def choose_file(page, button, path):
