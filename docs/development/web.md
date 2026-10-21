@@ -16,9 +16,12 @@ physical-key sequences and optional localStorage autosave. See
 Normal is paced to the existing functional timebase; it is not a measured
 ARM920T instruction/clock calibration. Other rates are explicit.
 
-Connections now exposes virtual UART bytes and a bounded USB host that reads
-actual guest descriptors. It is not a physical PC device or a completed HP
-file/object-transfer client; see [virtual links](virtual-link.md). IR is
+Connections provides bounded HP48gII USB object upload/retrieval, a received-file
+list with explicit local downloads, cancellation and progress. Its Raw data tab
+retains UART and individual USB packets. The USB host reads actual guest
+descriptors. See [file transfer](file-transfer.md) for setup and limits and
+[virtual links](virtual-link.md) for the host boundary. Serial file transfer,
+HP39 applet upload and complete Conn3x replacement remain open. IR is
 [evaluated separately](infrared.md), not advertised as implemented.
 
 ## Build and use

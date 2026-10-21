@@ -1,0 +1,87 @@
+{
+  "schema": "orchard-hp39-native-prerequisites-v1",
+  "research_date": "2026-10-21",
+  "target_model": "hp39gs",
+  "status": "static-research-only",
+  "runtime_probe_available": false,
+  "hardware_validated": false,
+  "source_binary_rebuilt": false,
+  "physical_flash_mapping_verified": false,
+  "third_party_files_redistributed": false,
+  "author_reported_minimum_rom": "2.22",
+  "library": {
+    "names": [
+      "LIB275L.L39",
+      "lib275.sys"
+    ],
+    "bytes": 1489,
+    "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1",
+    "header": "HP39BinH",
+    "title": "ARMToolbox39",
+    "title_bytes": 12,
+    "payload_offset": 21,
+    "payload_bytes": 1468,
+    "payload_validated": false,
+    "source_romid": 275,
+    "source_entry_command": 0,
+    "source_build_name": "ARMToolbox 39 1.0"
+  },
+  "author_release": {
+    "url": "https://github.com/Arnie97/clock-tuner/releases/tag/v1.2",
+    "file": "clock-tuner-1.2-aplet.zip",
+    "bytes": 21975,
+    "sha256": "510a4d53059bf7c1a26131fcd9a869455f02bc818526756ad4255c36f9e81438"
+  },
+  "sdk": {
+    "repository": "lobakkang/patched-hpgcc-1.1-sdk-for-hp39gs",
+    "commit": "7fa1503912338ea0fdf1d39eb584770f4d121cd2",
+    "library_git_blob": "fb75e50bcd7efa3b473385afc10e4de1c4653630",
+    "sources": [
+      {
+        "path": "sources/HP39-Aplet/LIB275/lib275.s",
+        "bytes": 2054,
+        "git_blob": "64e5be57e2d1fd7fc74f2d8a70726f9915c7ed99",
+        "sha256": "87ea762769d00b2c6002d06733e5ba11b1079f5fe141720b95a6809e7e4a71c8"
+      },
+      {
+        "path": "sources/HP39-Aplet/LIB275/SEXE.s",
+        "bytes": 8952,
+        "git_blob": "308757f4b7a69b0e1140945bba8a34069495646e",
+        "sha256": "48eefd8683599d1e01b779d0dfcb23e575f7b569b851e2e60b6ae1873a84a127"
+      },
+      {
+        "path": "sources/HP39-Aplet/LIB275/makefile.bat",
+        "bytes": 1394,
+        "git_blob": "eb9f0357c5877d28fb6b404de36d100e84cac572",
+        "sha256": "87d5c4e3ca26431a3a342342a266451a08b2d7e7945a8a445196eb43bac474ee"
+      },
+      {
+        "path": "README.TXT",
+        "bytes": 7497,
+        "git_blob": "a1198b4225f42207f3640c37d5c7096ba98d39a2",
+        "sha256": "e62bdc6bfa0ed8bc36300575dcabb9cc7465af98b8025d7a848a19045074804a"
+      },
+      {
+        "path": "sources/README.TXT",
+        "bytes": 8764,
+        "git_blob": "acdd47e76ae5cd42923555edf582eae2f1c68020",
+        "sha256": "84d43d0db28bea3d57729a81cdd4de437240b4c424694e4557589e70b54f0caf"
+      },
+      {
+        "path": "sources/HP39-Aplet/hp2aplet/hp2aplet.c",
+        "bytes": 12807,
+        "git_blob": "7011fdbeb4ebf141b6bf0f7122cb4ac56ffe7d1b",
+        "sha256": "bd2d2dce75e820045a2c6fa7c0818f33384dfdee55f8020368154b4e4b018e73"
+      }
+    ]
+  },
+  "directory_alias": {
+    "sdk_file": "LIB275L.000",
+    "author_release_file": "lib275.sys",
+    "directory_title": "LIB275L",
+    "typed_title": "ARMToolbox39",
+    "current_host_policy": "reject-as-unsupported-subset",
+    "error_code": "HP39_UNSUPPORTED_TITLE_ALIAS",
+    "stock_transfer_validated": false
+  }
+}

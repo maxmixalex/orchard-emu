@@ -23,7 +23,7 @@ const args = [
 const result = spawnSync(process.env.CLANG || 'clang', args, { cwd: root, stdio: 'inherit' });
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
-for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'session.js', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js']) {
+for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'session.js', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js', 'kermit.js', 'file-transfer.js']) {
   await copyFile(resolve(root, 'web', file), resolve(out, file));
 }
 await copyFile(resolve(root, "LICENSE"), resolve(out, "LICENSE"));
@@ -51,8 +51,11 @@ policy and speed. Normal paces the functional clock; Unlimited accelerates
 both calculations and timers. Save exports <model>-YYYYMMDD-HHMMSS.ord.
 Restore accepts .ord and older .orchard files for the same ROM. Automatic
 localStorage saves are opt-in and do not store the ROM; keep exported backups.
-Connections exposes an internal serial stream and a virtual USB host. It is
-not host-OS device enumeration or a complete calculator file-transfer client.
+Connections > Files uploads HP48gII objects over internal USB and retrieves
+named objects for explicit local download. Start Kermit SERVER on the calculator
+with USB and binary transfer selected. Raw data retains serial and USB packets.
+Serial files, HP39 applets and complete Conn3x replacement remain in development.
+The browser connection does not create a device in the desktop operating system.
 The beta supports two tested firmware versions, not all six target models.
 The developer workbench is debug.html. It retains strict hardware mode,
 research setup selectors, registers, counters, UART and diagnostics. Both

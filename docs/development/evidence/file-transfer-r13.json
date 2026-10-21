@@ -1,0 +1,160 @@
+{
+  "schema": "orchard-file-transfer-acceptance-v1",
+  "date_utc": "2026-10-21",
+  "model": "HP48gII",
+  "model_id": 4,
+  "setup": "hp48-home",
+  "physical_board_verified": false,
+  "performance_sample": false,
+  "production_assets": {
+    "orchard.wasm": "76db5cb395cca4fffec807a76d3e969bf4cd73842662e39e81e38de4110527d0",
+    "calculator.js": "77f32d45419fca42118480c330b31449af6c50f39c11c7610b47c09672b28833",
+    "worker.js": "250e5167d16a6964854921dc2125e5f0428ae30066f7154cf06853c326631129",
+    "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+    "file-transfer.js": "1fc27d2adcf479d5b5a93ba3fdf0d44d4fdd7addf469f87502dcd21dcab96230",
+    "kermit.js": "84f831d158abcd5f87ff1a2e520902cf0444455400c3bc9c8177040e23bf1eb8"
+  },
+  "browser": {
+    "private_report_sha256": "d883c4ae9dda286eb7c09b3aed33ce297756f0b9b247c8c258d6dd90c0fcb73f",
+    "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+    "session_sha256": "0f23e4e3c6953470edcca232a68291a26d719ede65182e980d090d5fee3fa632",
+    "physical_ui_server_entry": true,
+    "real_file_chooser_and_download": true,
+    "operations": {
+      "send": {
+        "phase": "complete",
+        "transferred": 45
+      },
+      "get": {
+        "phase": "complete",
+        "transferred": 45
+      },
+      "directory": {
+        "phase": "complete",
+        "transferred": 99
+      },
+      "finish": {
+        "phase": "complete",
+        "transferred": 0
+      }
+    },
+    "upload_bytes": 45,
+    "returned_bytes": 45,
+    "upload_sha256": "0c0eb8d3aa56744ec2b72597356b190fad2b7d5e8387c79c7fccf8351028562b",
+    "returned_sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+    "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642",
+    "file_bytes_equal": false,
+    "object_bytes_equal": true,
+    "differing_offsets": [
+      7
+    ],
+    "source_header": "HPHP49-C",
+    "returned_header": "HPHP49-B",
+    "directory_characters": 99,
+    "directory_contains_uploaded_name": true,
+    "page_error_count": 0,
+    "worker_error_count": 0,
+    "final_running": true,
+    "final_stopped": false,
+    "post_finish_ui_input_observed": "1+1 entered; immediate screenshot still showed input",
+    "post_finish_browser_result_verified": false
+  },
+  "stock_long_object": {
+    "schema": "orchard-stock-long-object-evidence-v1",
+    "same_connection_continuation": true,
+    "source_sha256": "bc94b817852d37deed39afa01b580fa6a93ddaa73e4ddda608ddd3c36f95fc48",
+    "returned_sha256": "96c9146fe6c15de46d6a7ca9543b90e398da8cb9a1369a2bb24db71d39ed3e1a",
+    "object_bytes": 4126,
+    "object_sha256": "0cee9ebe0baee175b4e8f16645fbed252d703397e1e58b819d443996f29c4897",
+    "object_equal": true,
+    "difference_offsets": [
+      7
+    ],
+    "body_bytes": 4121,
+    "body_contains_all_256_values": true,
+    "data_packets": 96,
+    "sequence_wrap": true,
+    "complete_64_byte_data_frames": 1,
+    "bulk_out_zero_length_packets": 0,
+    "all_operations_complete": true,
+    "source_hashes": {
+      "kermit_sha256": "c073f8fe42f7008245c6518eac5ed567282ed782ebe27f3cc755ce8cb9ec53da",
+      "file_transfer_sha256": "eef17ccefe13f2732228ab826a05a3f6710e40f8e9bf5b0b9b72ab6b6bd643cf",
+      "wasm_sha256": "76db5cb395cca4fffec807a76d3e969bf4cd73842662e39e81e38de4110527d0",
+      "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+      "checkpoint_sha256": "53a188f4f59c063146044f45d9b9bc5d743fca398040778628b5f8f2734ce934",
+      "payload_sha256": "bc94b817852d37deed39afa01b580fa6a93ddaa73e4ddda608ddd3c36f95fc48"
+    }
+  },
+  "stock_finish_recovery": {
+    "schema": "orchard-stock-finish-recovery-evidence-v1",
+    "finish_completed": true,
+    "usb_readiness_cleared": true,
+    "physical_scans": [
+      26,
+      5,
+      26,
+      6
+    ],
+    "settling_only_ticks": 8000000,
+    "additional_keys_after_checkpoint": [],
+    "lcd_visual_result": "HOME, 1+1, result 2",
+    "frame_sha256": "d44d903dcd7f2d661dce916488312f9f235be15575233ad0416e6cf39182e14f",
+    "guest_stop": 0,
+    "source_hashes": {
+      "kermit_sha256": "84f831d158abcd5f87ff1a2e520902cf0444455400c3bc9c8177040e23bf1eb8",
+      "file_transfer_sha256": "1fc27d2adcf479d5b5a93ba3fdf0d44d4fdd7addf469f87502dcd21dcab96230",
+      "wasm_sha256": "76db5cb395cca4fffec807a76d3e969bf4cd73842662e39e81e38de4110527d0",
+      "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+      "checkpoint_sha256": "a03c8fa0e9689067814aafb398ed443f8e815bef085a14fe97e1ca5b39aba2fd",
+      "payload_sha256": "bc94b817852d37deed39afa01b580fa6a93ddaa73e4ddda608ddd3c36f95fc48"
+    }
+  },
+  "stock_read_only_probe": {
+    "schema": "orchard-stock-peekarm-usb-evidence-v1",
+    "model": "HP48gII",
+    "program": "OR49P.hp uploaded as OR13T",
+    "program_sha256": "0c0eb8d3aa56744ec2b72597356b190fad2b7d5e8387c79c7fccf8351028562b",
+    "program_call": "OR13T()",
+    "result_store": "ANS(1) to OR13R via physical STO key",
+    "result_get": "Kermit GET OR13R",
+    "result_file_bytes": 45,
+    "result_transfer_header": "HPHP49-B",
+    "result_hex_characters": 32,
+    "decoded_bytes": 16,
+    "decoded_sha256": "8afad384ce6408e813c96102dd297162061d2452290c50d1408ccf2e5cf41f9a",
+    "matches_local_nor_prefix": true,
+    "opposite_nibble_order_matches": false,
+    "independent_python_decoder": true,
+    "production_package_decoder": true,
+    "guest_stop": 0,
+    "hardware_49gplus_verified": false,
+    "complete_flash_mapping_verified": false,
+    "source_hashes": {
+      "kermit_sha256": "84f831d158abcd5f87ff1a2e520902cf0444455400c3bc9c8177040e23bf1eb8",
+      "file_transfer_sha256": "1fc27d2adcf479d5b5a93ba3fdf0d44d4fdd7addf469f87502dcd21dcab96230",
+      "wasm_sha256": "76db5cb395cca4fffec807a76d3e969bf4cd73842662e39e81e38de4110527d0",
+      "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+      "checkpoint_sha256": "a7093acf23c489c2fc106ac0cc184784571d8d3502d3eb65ef1a60c0545f99db",
+      "payload_sha256": "0c0eb8d3aa56744ec2b72597356b190fad2b7d5e8387c79c7fccf8351028562b"
+    }
+  },
+  "stock_serial": {
+    "accepted": false,
+    "send_terminal": "error",
+    "get_attempted": false,
+    "send_init_packets": 5,
+    "received_kermit_packets": 0,
+    "elapsed_virtual_ticks": 300001280,
+    "single_packet_rx_bytes": 16,
+    "single_packet_all_consumed_by_tick": 8192,
+    "single_packet_tx_bytes_through_12000000_ticks": 0,
+    "details": "../stock-serial-validation.md"
+  },
+  "evidence_limits": [
+    "Long-object evidence retains its earlier protocol hashes; final listing and FINISH fixes have separate directed tests and final browser verification.",
+    "The production-browser immediate post-FINISH screenshot verifies input acceptance only; result 2 is independently observed in the final-source stock continuation.",
+    "The read-only 16-byte probe was executed on the admitted HP48gII firmware, not physical HP49g+ hardware.",
+    "No ROM bytes, checkpoints, raw packet/PC/opcode traces or LCD pixels are included."
+  ]
+}

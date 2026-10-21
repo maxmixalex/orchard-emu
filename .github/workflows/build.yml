@@ -121,6 +121,7 @@ jobs:
             build/offline-initial.png
             build/ui-keyboard-zh.png
             build/ui-traditional-zh.png
+            build/ui-files-zh.png
             build/test-capture.png
           retention-days: 7
           if-no-files-found: warn

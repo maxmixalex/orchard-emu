@@ -115,7 +115,10 @@ The staged [HP49g+ read package](flash-capture.md) now supplies two 16-byte
 probes and independent A/B capture programs. First validate the user's ROM
 version, probe encoding and ARM-to-physical mapping; a complete candidate
 image does not itself close cold-boot or board gates. HP39gs still needs a
-verified stock-OS reader. Work on the available machines continues in parallel.
+verified stock-OS reader. Its [native-entry prerequisites](hp39-native-prerequisites.md)
+now pin the 39-specific library and source identity, distinguish directory aliases,
+and define an entry/return probe before any flash-address access. Work on the
+available machines continues in parallel.
 
 ## M5 — Usable browser calculator
 
@@ -140,7 +143,7 @@ instruction loop or ROM upload. Node WASM tests do not certify page behavior.
 
 ## M6 — Virtual PC connectivity
 
-**Functional UART and USB PIO packet host exist; stock transfer gates open.**
+**Bounded HP48gII USB object client implemented; broader stock transfer gates open.**
 
 M6.1 covers UART bytes, bounded queues, cancellation/replay/disconnect and an
 optional native PTY/TCP adapter. M6.2 covers USB reset, EP0 control requests,
@@ -154,6 +157,14 @@ and completes SET_ADDRESS/SET_CONFIGURATION status. GET_CONFIGURATION remains
 an explicit NAK counterexample. Synthetic 64-byte bulk tests and the retained
 control guest pass; neither is stock object transfer or firmware installation.
 See [USB](usb.md) and [virtual links](virtual-link.md).
+
+The [file client](file-transfer.md) adds an original bounded Kermit implementation,
+browser upload, named retrieval, explicit downloads and lifecycle cancellation.
+An unchanged HP48gII ROM completes a USB object roundtrip. The object bytes match;
+the OS changes the binary transport-header revision byte on export. Serial stock
+transfer still times out and is not enabled in the file UI. [HP39 typed-file and
+bundle validation](hp39-files.md) is groundwork for its distinct application
+protocol, with opaque payloads and hardware upload still unverified.
 
 **Gate:** actual stock firmware completes both transfer directions, hashes
 match, failures/cancellation/disconnect recover, and the stock UI remains
