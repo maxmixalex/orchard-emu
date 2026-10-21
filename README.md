@@ -106,6 +106,9 @@ and [the infrared assessment](docs/development/infrared.md).
 The user frontend now uses React + Mantine, with English/Chinese settings, a
 clickable PC-keyboard editor, traditional Shift/Alpha legends and matrix PNG
 capture. Existing `.ord`/legacy sessions and opt-in autosave remain compatible.
+Live LCD drawing reuses its image and palette buffers, and the traditional
+keypad is created when that view is first selected. These reduce display
+allocation and hidden layout work; scene latency remains a separate benchmark.
 The independent loopback USB/IP/raw serial package (`npm run build:host`) is
 experimental: generated ARM/TCP tests pass, but OS attachment and Conn3x are
 not yet verified. See [frontend](docs/development/react-ui.md) and

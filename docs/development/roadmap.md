@@ -245,6 +245,9 @@ decoded-block or JIT implementation is claimed in this slice.
 
 M5 now includes a React/Mantine bilingual frontend, visual PC key mapping,
 traditional legends and PNG capture; actual browser-origin E2E remains open.
+Live display buffers are reused and traditional key geometry is constructed on
+first use. These remove repeated allocation and hidden-view layout work, without
+establishing an end-to-end arithmetic or Aplet latency improvement.
 M6 includes a standalone loopback USB/IP/raw serial prototype validated with
 generated ARM guests and real TCP, not OS-level or Conn3x acceptance.
 Next gates: kernel client attach, stock transfer-mode enumeration and full
