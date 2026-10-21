@@ -33,6 +33,156 @@ browser probe for that acceptance decision, preserve outliers, and serialize
 performance runs across workers. An identical-build A/A control helps assess
 host variability before interpreting small candidate differences.
 
+### Reproduce the default-Chrome fixed-work comparison
+
+`tools/benchmark-browser-fixed-scenes.py` runs the production WASM in a
+separate browser Worker under default Chrome/V8. It uses the same frozen
+guest endpoints as the Node tool, with exactly two complete warmups per
+variant and four alternating AB/BA pairs per scene: 24 warmups and 48 timed
+replays across the six scenes. It is a fixed-work execution experiment, not
+the production calculator Worker or an input-to-display latency probe.
+
+Run the commands from the repository root. Supply immutable production WASM
+files at `baseline/orchard.wasm` and `dist/orchard.wasm`, a local ROM directory,
+and the complete private fixture JSON from the browser/APLET probes. The
+fixture must match the baseline WASM and contain HP39 `1+1`, `7*8`, Aplet
+Library and Function START, followed by HP48 `1+1` and `7*8`, including their
+original session references and complete start/result pixels. The Node tool
+can accept subsets, but this browser tool requires all six unique scenes.
+Keep those inputs and the resulting reports local; do not commit firmware,
+sessions, checkpoint bytes or raw guest output.
+
+Install the pinned Python browser dependency and select an existing Chrome
+or Chromium executable. The following paths are placeholders for local
+inputs. `--chrome` overrides `CHROMIUM`; one is required, and the tool reports
+a missing selection before opening the report or starting its server.
+
+```sh
+python3 -m venv build/browser-tools-venv
+build/browser-tools-venv/bin/python -m pip install -r tools/requirements-browser.txt
+export CHROMIUM=/path/to/chrome
+export ORCHARD_ROM_DIR=/path/to/local-rom-directory
+export ORCHARD_FIXTURES=/path/to/complete-fixtures.json
+mkdir -p build/fixed-work
+
+# Generate a frozen endpoint report with the baseline on both sides.
+node tools/benchmark-scenes.mjs \
+  baseline/orchard.wasm baseline/orchard.wasm \
+  "$ORCHARD_ROM_DIR" "$ORCHARD_FIXTURES" \
+  build/fixed-work/new-endpoints.json --repeats 1
+
+# One identical-build A/A browser control; preserve this separate output.
+build/browser-tools-venv/bin/python tools/benchmark-browser-fixed-scenes.py \
+  baseline/orchard.wasm baseline/orchard.wasm \
+  "$ORCHARD_ROM_DIR" "$ORCHARD_FIXTURES" \
+  build/fixed-work/new-endpoints.json build/fixed-work/new-chrome-aa.json \
+  --chrome "$CHROMIUM"
+
+# A separate candidate comparison, only after reviewing the control.
+build/browser-tools-venv/bin/python tools/benchmark-browser-fixed-scenes.py \
+  baseline/orchard.wasm dist/orchard.wasm \
+  "$ORCHARD_ROM_DIR" "$ORCHARD_FIXTURES" \
+  build/fixed-work/new-endpoints.json build/fixed-work/new-chrome-candidate.json
+```
+
+Use a new report filename for every declared experiment. Both tools refuse
+to replace an existing report, including a failed one. Stop after a failed
+command; preserve its evidence rather than rerunning until it passes. Do not
+run builds, other benchmarks or other browser automation concurrently.
+Input validation or server startup can fail before a JSON report is written;
+retain the command's error output too. A browser-stage failure report may
+contain only completed scenes, so do not invent missing per-replay records.
+
+The public Node report is the browser tool's endpoint input without a
+conversion step. It supplies `passed`, the baseline/candidate WASM and
+fixture hashes, `runner: "run"`, `quantum: 1024`, `result_sample_ticks: 12000`
+and each scene's initial/final checkpoint, LCD/UART hashes, input contacts,
+first-result tick, final measured tick interval and instruction count. The
+browser checks these identities and every completed replay. Node's
+`--repeats 1` above limits that preparatory Node experiment; its timings and
+repeat count are not browser samples and do not change the browser's fixed
+two warmups and four pairs. Freeze the endpoint file and use it unchanged for
+both browser commands.
+The endpoint report's candidate hash is retained only as provenance in
+`endpoint_source_candidate_sha256`; it need not match the new candidate.
+The baseline and fixture hashes must match the frozen endpoint report.
+
+The browser timer includes guest execution, the original JavaScript input
+schedule, UART draining and byte capture. Restore, explicit compilation,
+LCD inspection, checkpoint creation and final WebCrypto hashes are outside
+the timed interval. The Node tool instead includes incremental UART hashing
+inside its timer. Do not pool the two tools' timings. The HTTP server binds
+only `127.0.0.1` and serves a fixed route list; ROM and session bytes pass
+through the local automation connection, not through those HTTP routes.
+
+### Interpreting small wall-time differences
+
+Keep every raw value, warmup, AB/BA order and tail. Report both
+`median(B) / median(A) - 1` and `median(B_i / A_i) - 1`; these estimators need
+not agree, and selecting the more favorable one after seeing results changes
+the question. A is the report's `baseline` label and B its `candidate` label;
+positive values in these two expressions mean B is slower. The JSON
+`speedup` field uses the opposite ratio, `median(A) / median(B)`.
+For an A/A control, A and B are execution labels for identical code, not
+different implementations. A few local wall-time pairs cannot by
+themselves establish a small optimization benefit or a precise false-positive
+rate. A passing replay establishes the checked guest behavior, not a speedup.
+
+The Node tool records **process** CPU time, which may include V8 background
+threads; it is not the executing Worker's **thread** CPU time. The browser
+tool records elapsed wall time only and explicitly reports that CPU time is
+unavailable. Node's [`process.threadCpuUsage()`](https://nodejs.org/download/release/v24.19.0/docs/api/process.html#processthreadcpuusagepreviousvalue)
+reports the current thread's CPU time in microseconds; a separate thread-CPU
+diagnostic still needs its own valid same-thread identity and timing boundaries.
+Microsecond units do not guarantee
+microsecond accuracy or atomic alignment with the wall clock; the two APIs
+do not promise agreement within 2 microseconds. The earlier thread-CPU
+experiment did not pass its own predeclared timing-qualification rule; that
+does not establish an API defect or make all its CPU readings invalid.
+Do not turn a failed qualification into a speedup claim by renaming the
+measurement or selecting earlier favorable observations. Node execution
+results do not replace default-Chrome or production UI measurements.
+
+Both labels are compiled in one browser Worker. The tool makes two explicit
+`WebAssembly.compile` calls and creates separate instances, but identical
+WASM bytes may share underlying compiled code, cache or tiering state in the
+engine. Separate instances do not demonstrate independent compilation.
+This limits how an identical-build control represents two different modules;
+this tool does not instrument or assert whether sharing occurred.
+
+A local Chrome 155 control on 2026-10-21, using the prototype of these tools,
+completed all 72 replays with identical code on both sides. Its six aggregate
+results illustrate the observed repeatability limit; they are not candidate
+effects or a new acceptance band:
+
+| Scene | A median ms | B median ms | Median ratio B/A - 1 | Median paired ratio - 1 | B slower pairs |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| HP39 `1+1` | 765.25 | 811.75 | +6.08% | +6.04% | 3/4 |
+| HP39 `7*8` | 1,024.90 | 1,019.95 | -0.48% | -1.59% | 2/4 |
+| HP39 Aplet Library | 1,081.25 | 924.75 | -14.47% | -11.29% | 1/4 |
+| HP39 Function START | 921.45 | 941.00 | +2.12% | +7.66% | 2/4 |
+| HP48 `1+1` | 310.40 | 337.70 | +8.80% | +8.98% | 4/4 |
+| HP48 `7*8` | 318.95 | 323.75 | +1.50% | +1.86% | 3/4 |
+
+The complete raw report SHA-256 is
+`db3a8ed041ade20bd824b4f7851f4be521d5f43a865260238a38e057d50b1036`;
+the derived full-summary SHA-256 is
+`c47895540851c39a516bb13ea67e753f08af402b9e5265398443732d90075e61`.
+All raw values, predeclared estimator choices, warmups and tails were retained.
+The largest warmup was 2,677.3 ms; the largest timed replay was 2,134.4 ms.
+The portability-only tool publication does not change that historical report
+or claim a new runtime improvement.
+
+A separate production UI A/A control completed 24 contexts and 96 correct
+observations for HP39 Normal/Unlimited with six pairs per scene. Across its
+eight groups, median label differences ranged from -23.61% to +38.75%.
+Its raw report SHA-256 is
+`465dc0c71f2bf05bc81589f4a1f40f975eb5fae42305c8e72d7dd06f050c86a7`.
+That UI result is separate evidence, not fixed-work calibration. Neither
+control identifies a cause, estimates an exact error rate, changes an old
+candidate decision, or justifies subtracting a control difference from a
+candidate result.
+
 ## HP39 release-gap follow-up (2026-10-20)
 
 After PR #2 (`ac16d1d`), the calculator keeps the HP39g+ press at 1,500,000
