@@ -75,6 +75,59 @@ class Handler(SimpleHTTPRequestHandler):
         super().do_GET()
 
 
+def check_probe_interval_wait(browser):
+    """Worker state must remain observable when animation frames do not run."""
+    context = browser.new_context()
+    try:
+        page = context.new_page()
+        # Install before navigation so Playwright also captures the suppressed
+        # rAF. This isolated context is discarded before the production tests.
+        page.add_init_script('''globalThis.__probeRaf={calls:0,started:false,ready:false};
+          globalThis.requestAnimationFrame=()=>++globalThis.__probeRaf.calls;''')
+        page.goto('data:text/html,<title>ROM-free probe polling regression</title>')
+        try:
+            page.wait_for_function('''()=>{
+              const r=globalThis.__probeRaf;
+              if(!r.started){r.started=true;queueMicrotask(()=>r.ready=true);}
+              return r.ready;
+            }''', polling='raf', timeout=1000)
+            raise AssertionError('Suppressed animation-frame control unexpectedly resolved')
+        except BrowserTimeout:
+            pass
+        raf_calls = page.evaluate('globalThis.__probeRaf.calls')
+        assert raf_calls > 0 and page.evaluate('globalThis.__probeRaf.ready')
+        page.evaluate('''()=>{
+          const p=globalThis.__orchardProbe={errors:[],snap:null,ready:false,started:false,checks:0};
+          const url=URL.createObjectURL(new Blob(["onmessage=()=>postMessage('ready');"],
+            {type:'text/javascript'}));
+          const worker=globalThis.__probeWaitWorker=new Worker(url);
+          worker.onmessage=()=>{p.ready=true;};
+          worker.onerror=e=>p.errors.push(e.message||'Probe fixture Worker failed');
+        }''')
+        # Request the asynchronous update inside the first evaluation: the
+        # first result is necessarily false, even on a fast or loaded host.
+        probe.wait_probe(page, '''(++p.checks,
+          p.started||(p.started=true,globalThis.__probeWaitWorker.postMessage('ready')),
+          p.ready)''')
+        checks = page.evaluate('globalThis.__orchardProbe.checks')
+        assert checks >= 2, 'The readiness test did not exercise polling'
+        assert page.evaluate('globalThis.__probeRaf.calls') == raf_calls
+        page.evaluate('globalThis.__orchardProbe.ready=false')
+        try:
+            probe.wait_probe(page, 'p.ready', timeout=250)
+            raise AssertionError('An unready probe incorrectly resolved')
+        except BrowserTimeout as error:
+            assert '250ms' in str(error), 'The requested timeout was not preserved'
+        assert not page.evaluate('globalThis.__orchardProbe.ready')
+        assert not page.evaluate('globalThis.__orchardProbe.errors')
+        return {'firmware_used': False, 'suppressed_raf_control_timed_out': True,
+                'async_worker_ready': True, 'readiness_checks': checks,
+                'unready_timeout_ms': 250}
+    finally:
+        # Closing the context also terminates its Worker and drops the rAF hook.
+        context.close()
+
+
 def check_active_diagnostic_recovery(page, tmp, dist, errors):
     """A running timeout must preserve its observation before a verified Pause."""
     rom = bytearray(b'\xff' * 1048576)
@@ -228,6 +281,7 @@ def main():
                 browser = p.chromium.launch(executable_path=probe.chrome_path(), headless=True,
                                            args=['--no-sandbox'])
                 try:
+                    report['probe_interval_wait'] = check_probe_interval_wait(browser)
                     page = browser.new_page(viewport={'width': 1360, 'height': 940}, locale='en-US')
                     errors = []
                     page.on('pageerror', lambda error: errors.append(str(error)))

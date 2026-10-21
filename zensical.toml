@@ -31,6 +31,7 @@ nav = [
     "development/interaction.md",
     "development/continuation-20261019.md",
     "development/performance.md",
+    "development/clock-ratios.md",
     "development/sessions.md",
     "development/skins-segments.md",
     "development/hp39-startup.md",
