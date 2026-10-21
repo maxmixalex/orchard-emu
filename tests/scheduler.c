@@ -81,14 +81,14 @@ static void boot_mapping_boundaries(void) {
         /* A different 1 KiB page avoids colliding with the code-fetch memo. */
         boot_program();a->cpu.r[3]=0x30000700;
         put(a->boot_sram+0xc00,O_BOOT_SRAM_BASE|1u);
-        put(a->boot_sram+4,O_RAM_BASE|2u);
+        put(a->boot_sram,O_RAM_BASE|2u);
         put(a->ram+0x700,0x12345678);put(a->flash+0x700,0x9abcdef0);
         put(a->ram,0xe5932000);put(a->ram+4,0xe5932000);put(a->ram+12,0xe5932000);
-        a->cpu.r[0]=changed==1?0x20000c00:0x20000004;
+        a->cpu.r[0]=changed==1?0x20000c00:0x20000000;
         a->cpu.r[1]=changed==1?0:2;
         if(changed>=2) {
             put(a->boot_sram+0xc00,(O_RAM_BASE+0x2000)|1u);
-            put(a->ram+0x2004,O_RAM_BASE|2u);a->cpu.r[0]=0x10002004;
+            put(a->ram+0x2000,O_RAM_BASE|2u);a->cpu.r[0]=0x10002000;
             if(changed==3) {
                 CHECK(orchard_sram_select(a,ORCHARD_SRAM_BANK1_MIRROR)==ORCHARD_OK);
                 a->cpu.r[0]+=a->profile->ram_bytes;
