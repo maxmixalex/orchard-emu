@@ -107,6 +107,9 @@ enum run_policy { RUN_LEGACY, RUN_DIVIDED, RUN_CLOCKED, RUN_IDLE };
 static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enum run_policy policy) {
     if (!m) return (orchard_stop){.status = ORCHARD_BAD_ARGUMENT};
     if (!m->loaded) return (orchard_stop){.status = ORCHARD_NO_ROM};
+    /* Local to this synchronous call: host edits, checkpoint restore, policy
+     * changes and standalone steps can never inherit a prior run's proof. */
+    o_fetch_reuse fetch = {0};
     m->idle_write_enabled = policy == RUN_CLOCKED || policy == RUN_IDLE;
     for (uint32_t i = 0; i < budget && m->stop.status == ORCHARD_OK; ++i) {
         unsigned slots = policy == RUN_CLOCKED ? orchard_clock_slots(m) :
@@ -125,6 +128,7 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enu
         if (scheduled && m->quiet_left && m->cpu.sleeping &&
             !(m->soc.srcpnd & ~m->soc.intmsk) &&
             (!m->soc.intpnd || (m->cpu.cpsr & O_I))) {
+            fetch.valid = false;
             uint32_t n = m->quiet_left < budget - i ? m->quiet_left : budget - i;
             m->quiet_left -= n; m->deferred_ticks += n; m->ticks += n;
             i += n - 1u;
@@ -135,6 +139,7 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enu
             --m->quiet_left;
             ++m->deferred_ticks;
         } else {
+            fetch.valid = false;
             o_schedule_sync(m);
             o_soc_tick(m);
             if (m->stop.status != ORCHARD_OK) break;
@@ -146,11 +151,13 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enu
         for (unsigned slot = 0; slot < slots && m->stop.status == ORCHARD_OK; ++slot) {
             uint32_t pending = m->soc.srcpnd & ~m->soc.intmsk;
             if (pending) m->cpu.sleeping = false;
-            if ((pending & m->soc.intmod) && !(m->cpu.cpsr & O_F))
+            if ((pending & m->soc.intmod) && !(m->cpu.cpsr & O_F)) {
+                fetch.valid = false;
                 o_exception(&m->cpu, O_FIQ, 0x1c, m->cpu.r[15] + 4u);
-            else if (m->soc.intpnd && !(m->cpu.cpsr & O_I))
+            } else if (m->soc.intpnd && !(m->cpu.cpsr & O_I)) {
+                fetch.valid = false;
                 o_exception(&m->cpu, O_IRQ, 0x18, m->cpu.r[15] + 4u);
-            else if (!m->cpu.sleeping) o_cpu_step(m);
+            } else if (!m->cpu.sleeping) o_cpu_step_reuse(m, scheduled ? &fetch : NULL);
         }
     }
     o_schedule_sync(m);

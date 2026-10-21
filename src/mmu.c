@@ -132,6 +132,50 @@ bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
     return translate_walk(m, address, write, fetch, user, physical, memo);
 #endif
 }
+/* The caller owns this short-lived proof. A successful ordinary translation
+ * has checked the full live context and descriptors. While it is retained,
+ * the only intervening instructions are arm_without_checkpoint: they cannot
+ * touch the bus, change privilege/CP15 or switch banks. The runner invalidates
+ * before peripheral work and IRQ/FIQ acceptance; every other instruction
+ * invalidates before execution. Thus no translation dependency can change.
+ * A 1 KiB key retains ARM920T's smallest AP granularity, including FCSE.
+ * This skips repeated validation, never the current instruction-byte read. */
+#if defined(__wasm__) && !defined(ORCHARD_REFERENCE) && (defined(__GNUC__) || defined(__clang__))
+__attribute__((always_inline))
+#endif
+bool o_translate_fetch_reuse(orchard_machine *m, uint32_t address,
+                             uint32_t *physical, o_fetch_reuse *fetch) {
+#ifndef ORCHARD_REFERENCE
+    if (fetch->valid && fetch->virtual_page == (address & ~1023u)) {
+        *physical = fetch->physical_page | (address & 1023u);
+        return true;
+    }
+#endif
+    fetch->valid = false;
+    bool user = (m->cpu.cpsr & 31u) == O_USR;
+    if (!o_translate(m, address, false, true, user, physical)) return false;
+#ifndef ORCHARD_REFERENCE
+    if (!(m->cpu.control & 1u) || m->nor_id_mode) return true;
+    uint32_t va = address;
+    if (va < 0x02000000u) va |= m->cpu.pid & 0xfe000000u;
+    unsigned access = (unsigned)user << 1;
+    const o_translation *memo = &m->translations[
+        ((va >> 10) ^ (va >> 20) ^ (access * 21u)) & (O_TRANSLATIONS - 1u)];
+    /* o_translate just selected this slot. On success it either validated a
+     * matching entry, or the walker populated it with these exact inputs.
+     * first_offset==0 rejects side-effecting/aliased descriptor storage. */
+    if (!memo->first_offset) return true;
+    uint32_t page = *physical & ~1023u;
+    uint32_t first = table_offset(m, page);
+    /* Admit only a full normal NOR/SRAM/boot-SRAM page. In particular an
+     * instruction fetch from MMIO or a counted SRAM alias cannot seed reuse. */
+    if (!first || table_offset(m, page + 1020u) != first + 1020u) return true;
+    fetch->virtual_page = address & ~1023u;
+    fetch->physical_page = page;
+    fetch->valid = true;
+#endif
+    return true;
+}
 static bool aligned(orchard_machine *m, uint32_t address, unsigned width) {
     if (!(address & (width - 1u))) return true;
     if (m->cpu.control & 2u) {

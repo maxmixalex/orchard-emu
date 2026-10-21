@@ -977,3 +977,40 @@ failure. The browser regression exercises a running timeout, missing Pause
 acknowledgement and changed generation, including a complete generated-guest
 checkpoint replay. Ordinary uninstrumented failure handling does not gain
 these diagnostic operations.
+
+### Run-local fetch translation candidate
+
+The [instruction-class evidence](fetch-reuse-opportunity-2026-10-21.json)
+records an existing HP39g+ profile for `1+1`, APLET Library and Function START.
+Condition-failed ARM instructions, B/BL and the existing safe data-processing
+path account for 74.15–75.20% of fetched instructions in those complete
+20-million-quantum windows. These instructions cannot access the bus, change
+register banks or modify translation controls. The counts identify potential
+predecessors for mapping reuse; they are neither measured reuse rates nor
+latency results. Each window includes input waiting and work after the result.
+
+The candidate retains a virtual-to-physical instruction-page mapping only
+inside one synchronous public run call. Its first translation uses the full
+live-context and live-descriptor checks. Only a successful mapping through
+ordinary, nonaliased descriptor storage into a complete normal NOR, SRAM or
+boot-SRAM page can establish the proof. MMU-disabled and NOR software-ID
+contexts stay on the original path. The raw virtual key covers 1 KiB, retaining
+the smallest ARM920T subpage permission boundary, including FCSE mappings.
+
+The proof survives only those existing safe ARM classes. Every other opcode
+invalidates it before execution, covering stores, MMIO, CP15, PSR changes,
+exception returns, SWI and Thumb. The runner also invalidates it before
+peripheral work and accepted IRQ/FIQ. Standalone steps and the unscheduled
+reference runner never use it. The state is local to the host stack, so no
+mapping survives an API return, host edit or checkpoint restore, and the
+machine arena/checkpoint format does not change.
+
+Every instruction still reads its current bytes through the original physical
+bus. No decoded instruction, guest instruction, timer transition or peripheral
+boundary is skipped. The physical-read experiment remains disabled. The new
+scheduler cases exercise the public runner against the per-fetch reference
+path, with independent expectations for page-table/self-modifying writes,
+control and permission changes, subpage and address wrap boundaries, NOR ID,
+alias counters, descriptor MMIO, interrupts, faults and public-call partitions.
+This candidate requires functional and real-ROM performance validation before
+selection; the opportunity report makes no claim that either gate has passed.

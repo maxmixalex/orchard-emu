@@ -1,0 +1,23 @@
+{
+  "schema": "orchard-fetch-reuse-opportunity-v1",
+  "performance_sample": false,
+  "candidate_base": "b167c36",
+  "source_report": "opcode-summary.json",
+  "source_report_sha256": "7e4054e233a5ffe0bcb9c2dc90d551fc1c79dd683f6646c1d2ccacf2b61f6729",
+  "source_schema": "orchard-cpu-path-profile-v1",
+  "baseline_wasm_sha256": "76db5cb395cca4fffec807a76d3e969bf4cd73842662e39e81e38de4110527d0",
+  "instrumented_wasm_sha256": "052b70bdad567e5d07e397697a1c3a73adb3917babda17332cc5a14ec4c30230",
+  "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+  "home_checkpoint_sha256": "50810ec0d7d654ac260da7b53017833321f4af39d5b0ccbd43f0285c9ed3a8fb",
+  "window_ticks": 20000000,
+  "hold_ticks": 1500000,
+  "gap_ticks": 600000,
+  "scope": "Existing instruction-class counts over each complete fixed 20M-quanta scene, including input waiting and work after the result. Not isolated Enter-to-result work. The source instrumented runs matched the baseline full checkpoint, UART digest, LCD pixels and annunciators.",
+  "safe_predecessor_classes": ["ARM condition failed", "ARM B/BL", "ARM fast DP"],
+  "interpretation": "These are instructions that may preserve a run-local mapping proof, not observed cache hits or measured savings. MMU state, page changes, peripheral/interrupt boundaries and excluded descriptor/source storage reduce the actual opportunity. No candidate speedup or candidate correctness result is recorded here.",
+  "scenes": [
+    {"name": "1+1", "fetched": 19999334, "ARM": 19996002, "condition_failed": 633724, "branch": 3661619, "fast_dp": 10536475, "safe_predecessors": 14831818},
+    {"name": "APLET Library", "fetched": 19999297, "ARM": 19996077, "condition_failed": 593122, "branch": 3430404, "fast_dp": 10805158, "safe_predecessors": 14828684},
+    {"name": "APLET Function START", "fetched": 19999536, "ARM": 19995392, "condition_failed": 591405, "branch": 3057513, "fast_dp": 11389902, "safe_predecessors": 15038820}
+  ]
+}

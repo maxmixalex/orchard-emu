@@ -126,6 +126,15 @@ typedef struct {
 } o_translation;
 #define O_TRANSLATIONS 64u
 
+/* A run-local proof that an instruction mapping is still unchanged. This is
+ * never machine/checkpoint state. Only the no-bus, no-bank ARM path may carry
+ * it to another instruction; the runner discards it at every peripheral or
+ * accepted interrupt boundary. Standalone steps do not use it. */
+typedef struct {
+    uint32_t virtual_page, physical_page;
+    bool valid;
+} o_fetch_reuse;
+
 struct orchard_machine {
     const orchard_profile *profile;
     uint32_t quiet_left, deferred_ticks; /* Host-only, flushed at public boundaries. */
@@ -156,6 +165,7 @@ void o_set_cpsr(o_cpu *c, uint32_t value);
 uint32_t *o_spsr(o_cpu *c);
 void o_exception(o_cpu *c, unsigned mode, uint32_t vector, uint32_t link);
 void o_cpu_step(orchard_machine *m);
+void o_cpu_step_reuse(orchard_machine *m, o_fetch_reuse *fetch);
 /* Full-checkpoint dispatcher retained for test/reference comparison. */
 void o_cpu_step_reference(orchard_machine *m);
 uint32_t o_getr(const o_cpu *c, unsigned r);
@@ -181,6 +191,8 @@ bool o_translate_reference(orchard_machine *m, uint32_t address, bool write, boo
                            bool user, uint32_t *physical);
 bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
                  bool user, uint32_t *physical);
+bool o_translate_fetch_reuse(orchard_machine *m, uint32_t address,
+                             uint32_t *physical, o_fetch_reuse *fetch);
 bool o_load(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t *value);
 bool o_store(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t value);
 void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool fetch);
