@@ -304,6 +304,68 @@ static void queues_and_profiles(void) {
         CHECK(machine.ticks == 0 && machine.loaded && machine.soc.rx.count == 0);
     }
 }
+static void uart_tx_level(void) {
+    const uint32_t tx = 2u, uart = 1u << 28;
+    uint32_t value;
+    uint8_t output[3];
+    orchard_reset(&machine);
+    machine.soc.wtcon = 0;
+    CHECK(read_reg(0x50000010, &value) && value == 6u);
+    ticks(1); CHECK(machine.soc.subsrcpnd == 0);
+    CHECK(write_reg(0x50000004, 0x204)); /* TX polling/IRQ, level, non-FIFO. */
+    ticks(1); o_irq_update(&machine.soc);
+    CHECK(machine.soc.subsrcpnd == tx); /* Child latches under both masks. */
+    CHECK(machine.soc.srcpnd == 0 && machine.soc.intpnd == 0);
+    CHECK(write_reg(0x4a00001c, 0x7fdu));
+    ticks(1); o_irq_update(&machine.soc);
+    CHECK(machine.soc.srcpnd == uart && machine.soc.intpnd == 0);
+    CHECK(write_reg(0x4a000008, ~uart));
+    ticks(1); o_irq_update(&machine.soc);
+    CHECK(machine.soc.intpnd == uart);
+    /* Acknowledge every latch, with the empty level still asserted. */
+    CHECK(write_reg(0x4a000018, tx));
+    CHECK(write_reg(0x4a000000, uart));
+    CHECK(write_reg(0x4a000010, uart));
+    CHECK(machine.soc.subsrcpnd == 0 && machine.soc.srcpnd == 0 && machine.soc.intpnd == 0);
+    ticks(1); o_irq_update(&machine.soc);
+    CHECK(machine.soc.subsrcpnd == tx && machine.soc.srcpnd == uart && machine.soc.intpnd == uart);
+    /* The host capture queue contains bytes that already left UTXH0. A host
+       that has not drained them cannot make the hardware holding register full. */
+    CHECK(o_phys_write(&machine, 0x50000020, 1, 0x00));
+    CHECK(o_phys_write(&machine, 0x50000020, 1, 0xff));
+    CHECK(o_phys_write(&machine, 0x50000020, 1, 0x41));
+    CHECK(machine.soc.tx.count == 3);
+    CHECK(read_reg(0x50000010, &value) && value == 6u);
+    CHECK(write_reg(0x4a000018, tx));
+    ticks(1); CHECK(machine.soc.subsrcpnd == tx && machine.soc.tx.count == 3);
+    CHECK(orchard_uart_receive(&machine, output, sizeof output) == 3);
+    CHECK(output[0] == 0 && output[1] == 0xff && output[2] == 0x41);
+    CHECK(machine.soc.tx.count == 0 && machine.soc.subsrcpnd == tx);
+    /* Disabling the source does not erase an interrupt that was latched. */
+    CHECK(write_reg(0x50000004, 0));
+    ticks(1); CHECK(machine.soc.subsrcpnd == tx);
+    CHECK(write_reg(0x4a000018, tx));
+    ticks(1); CHECK(machine.soc.subsrcpnd == 0);
+    /* Disabled / RX-only / DMA / pulse modes do not synthesize an empty level;
+       FIFO and other UART channels are outside this UART0 non-FIFO subset. */
+    const uint32_t modes[] = {0, 1, 0x200, 0x201, 0x208, 0x20c, 4, 5};
+    for (unsigned i = 0; i < sizeof modes / sizeof modes[0]; ++i) {
+        CHECK(write_reg(0x50000004, modes[i]));
+        CHECK(write_reg(0x4a000018, tx));
+        ticks(3); CHECK(machine.soc.subsrcpnd == 0);
+    }
+    CHECK(write_reg(0x50000004, 0x705));
+    CHECK(write_reg(0x50000008, 1));
+    ticks(1); CHECK(machine.soc.subsrcpnd == 0);
+    CHECK(write_reg(0x50000008, 0));
+    ticks(1); CHECK(machine.soc.subsrcpnd == tx);
+    CHECK(write_reg(0x50000004, 0));
+    CHECK(write_reg(0x50004004, 0x204));
+    CHECK(write_reg(0x50008004, 0x204));
+    CHECK(write_reg(0x4a000018, 0x7ff));
+    ticks(1); CHECK(machine.soc.subsrcpnd == 0);
+    orchard_reset(&machine);
+}
 static void boot_sram_and_lcd(void) {
     orchard_reset(&machine);
     uint32_t value;
@@ -726,7 +788,7 @@ EXPORT("regression") unsigned orchard_regression(void) {
     checks = failures = first_failure = 0; seed = 0x09202410;
     if (!orchard_init(&machine, sizeof(machine), 6)) return 1;
     arithmetic(); shifter(); conditions(); decoded_arithmetic(); instruction_edges();
-    banking_and_exception(); mmu_and_bus(); watchdog(); queues_and_profiles();
+    banking_and_exception(); mmu_and_bus(); watchdog(); queues_and_profiles(); uart_tx_level();
     boot_sram_and_lcd(); gpio_and_reset(); gpio_stimuli(); interrupt_arbitration(); rtc_calendar(); keyboard_and_eint(); nor_identification();
     return failures;
 }

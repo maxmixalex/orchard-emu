@@ -134,9 +134,24 @@ with sync_playwright() as p:
  assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name')=='RESULT'
  page.get_by_role('button',name='取消传输',exact=True).click()
  page.get_by_role('combobox',name='连接类型',exact=True).click();page.get_by_role('option',name='串口',exact=True).click()
- assert page.get_by_role('button',name='上传到计算器',exact=True).count()==0
- assert '串口文件传输仍在开发中' in page.get_by_role('dialog').inner_text()
+ assert page.get_by_role('button',name='上传到计算器',exact=True).is_enabled()
+ assert page.get_by_role('button',name='按名称取回对象',exact=True).is_enabled()
+ for name in ['接收计算器文件','读取计算器目录','退出计算器 SERVER']:
+  assert page.get_by_role('button',name=name,exact=True).count()==0
+ assert '串口支持上传和按名称取回对象' in page.get_by_role('dialog').inner_text()
+ assert 'SF(-78)' in page.get_by_role('dialog').inner_text()
+ page.locator('[data-testid="transfer-file"]').set_input_files({'name':'SERIAL.hp','mimeType':'application/octet-stream','buffer':b'HPHP49-C\x00\xff\r\n'})
+ page.get_by_label('计算器内文件名',exact=True).fill('SERIAL')
+ page.get_by_role('button',name='上传到计算器',exact=True).click()
+ page.wait_for_function('()=>{const m=window.__messages.filter(m=>m.type==="file-transfer-start").at(-1);return m.mode==="send"&&m.transport==="serial"}')
+ assert page.evaluate('Array.from(window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).bytes)')==list(b'HPHP49-C\x00\xff\r\n')
+ page.get_by_role('button',name='取消传输',exact=True).click()
+ page.get_by_role('button',name='按名称取回对象',exact=True).click()
+ page.wait_for_function('()=>{const m=window.__messages.filter(m=>m.type==="file-transfer-start").at(-1);return m.mode==="get"&&m.transport==="serial"&&m.name==="SERIAL"}')
+ page.get_by_role('button',name='取消传输',exact=True).click()
  page.get_by_role('combobox',name='连接类型',exact=True).click();page.get_by_role('option',name='USB',exact=True).click()
+ for name in ['接收计算器文件','读取计算器目录','退出计算器 SERVER']:
+  assert page.get_by_role('button',name=name,exact=True).count()==1
  page.get_by_role('button',name='关闭',exact=True).click()
  for width in [320,390,720,1360]:
   page.set_viewport_size({'width':width,'height':900})

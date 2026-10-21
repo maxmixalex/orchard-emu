@@ -16,12 +16,13 @@ physical-key sequences and optional localStorage autosave. See
 Normal is paced to the existing functional timebase; it is not a measured
 ARM920T instruction/clock calibration. Other rates are explicit.
 
-Connections provides bounded HP48gII USB object upload/retrieval, a received-file
+Connections provides bounded HP48gII USB and serial object upload/retrieval, a received-file
 list with explicit local downloads, cancellation and progress. Its Raw data tab
 retains UART and individual USB packets. The USB host reads actual guest
 descriptors. See [file transfer](file-transfer.md) for setup and limits and
-[virtual links](virtual-link.md) for the host boundary. Serial file transfer,
-HP39 applet upload and complete Conn3x replacement remain open. IR is
+[virtual links](virtual-link.md) for the host boundary. Serial currently exposes
+upload and GET; its other file operations, HP39 applet upload and complete Conn3x
+replacement remain open. IR is
 [evaluated separately](infrared.md), not advertised as implemented.
 
 ## Build and use

@@ -51,10 +51,12 @@ policy and speed. Normal paces the functional clock; Unlimited accelerates
 both calculations and timers. Save exports <model>-YYYYMMDD-HHMMSS.ord.
 Restore accepts .ord and older .orchard files for the same ROM. Automatic
 localStorage saves are opt-in and do not store the ROM; keep exported backups.
-Connections > Files uploads HP48gII objects over internal USB and retrieves
+Connections > Files uploads HP48gII objects over internal USB or serial and retrieves
 named objects for explicit local download. Start Kermit SERVER on the calculator
-with USB and binary transfer selected. Raw data retains serial and USB packets.
-Serial files, HP39 applets and complete Conn3x replacement remain in development.
+with the matching connection and binary transfer selected. USB also supports
+Receive, directory and FINISH; serial currently exposes upload and GET.
+Raw data retains serial and USB packets. HP39 applets and complete Conn3x
+replacement remain in development.
 The browser connection does not create a device in the desktop operating system.
 The beta supports two tested firmware versions, not all six target models.
 The developer workbench is debug.html. It retains strict hardware mode,

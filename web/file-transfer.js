@@ -4,8 +4,10 @@ export { MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES
 export function transferCapabilities(model,transport='usb') {
   // HP39 typed catalog/client mode has a different application protocol. A
   // generic Kermit ACK must not imply that an HP48 object can be sent to it.
-  const available=model===4&&transport==='usb';
-  return Object.freeze({send:available,receive:available,get:available,directory:available,finish:available});
+  const usb=model===4&&transport==='usb',serial=model===4&&transport==='serial';
+  // The repaired UART0 has a stock upload/GET witness. Passive SEND reception
+  // and remote commands still need their own serial acceptance evidence.
+  return Object.freeze({send:usb||serial,receive:usb,get:usb||serial,directory:usb,finish:usb});
 }
 export function validateUpload(model, name, bytes) {
   validateFilename(name);

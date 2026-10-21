@@ -16,7 +16,7 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [x] Normal wall-time pacing distinct from raw execution throughput; explicit faster modes.
 - [x] Opt-in bounded localStorage autosave, modal restore/confirm and quota/conflict handling.
 - [x] User UART stream and bounded USB host; original bootloader descriptors observed.
-- [x] Bounded HP48gII USB Kermit object client and file UI; stock SEND/GET object bytes agree. Broader transfer gates remain open.
+- [x] Bounded HP48gII USB Kermit object client and serial upload/GET; stock object bytes agree. USB active SEND and connection reuse have browser evidence.
 - [x] HP39 typed-file and applet-bundle validation, with opaque payload and hardware-upload limits explicit.
 - [x] IR/IrDA assessment with primary sources, not a claimed implementation.
 - [x] Byte-table checkpoint CRC with unchanged format/full validation; independent checks on all six model capacities.
@@ -31,7 +31,7 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [ ] Reprofile decoded instruction/block execution without losing precise exceptions or self-modifying code.
 - [ ] Broader browser focus/touch/download/storage/zoom E2E and sustained interaction; preserve and classify the observed rare HP48 Unlimited post-result stop.
 - [ ] Broader original-OS keypad/Alpha-state coverage, warm reset, power management and native ARM payload return.
-- [ ] Broader stock USB transfers, serial protocol completion and HP39 applet upload; preserve the original HP50g GET_CONFIGURATION counterexample, then implement applicable infrared links.
+- [ ] Multiple-file USB SEND, serial Receive/directory/FINISH and HP39 applet upload; preserve the original HP50g GET_CONFIGURATION counterexample, then implement applicable infrared links.
 - [x] Provide an original staged HP49g+ read package, strict A/B assembler and known-boot model-mismatch rejection; physical address mapping and hardware capture remain unverified.
 - [ ] Independently establish SRAM/LCD/NOR/pad/analog assumptions. Validate the HP49g+ short probes and stock mapping, then integrate a complete capture; develop a verified HP39gs stock-OS reader.
 

@@ -8,13 +8,18 @@ the existing hardware input/output APIs and the calculator's own protocol
 implementation. It does not inject an object into calculator memory or install
 a replacement calculator-side server.
 
-The current application boundary is the HP48/49 object family over virtual USB
-on the admitted HP48gII model and HOME setup. Upload, receive, GET, directory
-listing and FINISH are exposed for that USB connection.
-The UART adapter is retained for development, but `transferCapabilities(model,
-transport)` returns no file operations for serial: an independent stock UART
-trial exhausted the normal Send-Init retries without an incoming protocol packet.
-Raw serial diagnostics remain separate. HP39 typed files, catalogs and client/server
+The current application boundary is the HP48/49 object family on the admitted
+HP48gII model and HOME setup. Capabilities are checked per transport and operation:
+
+| Connection | Upload | GET | Receive | Directory | FINISH |
+| --- | --- | --- | --- | --- | --- |
+| Internal USB | Yes | Yes | Yes | Yes | Yes |
+| Internal UART0 serial | Yes | Yes | Not exposed | Not exposed | Not exposed |
+
+The [serial validation record](stock-serial-validation.md) retains the original
+zero-reply counterexample and the successful round trip after the UART0 TX-empty
+level interrupt was implemented. Raw serial diagnostics remain separate.
+HP39 typed files, catalogs and client/server
 workflow are a separate application protocol. A Kermit ACK alone does not prove
 HP39 object compatibility. Physical USB, host OS enumeration, Conn3x/Conn4x
 interoperability, XMODEM, flash installation and complete remote file management
@@ -82,16 +87,17 @@ recovery window; callers should start a new operation only after completion.
 ## Using the calculator's original server
 
 Keep the calculator running while transferring. On the HP48gII, select the
-wired USB path and binary files before entering the server:
+wired path, the intended transport and binary files before entering the server:
 
 | Setting | RPN input | ALG input |
 | --- | --- | --- |
 | Wired connection | `-33 CF` | `CF(-33)` |
-| USB | `-78 CF` | `CF(-78)` |
+| USB connection | `-78 CF` | `CF(-78)` |
+| Serial connection | `-78 SF` | `SF(-78)` |
 | Binary objects | `-35 SF` | `SF(-35)` |
 
 Then execute `SERVER` on the calculator, open the browser's file-transfer panel
-and connect USB. Wait for the connected status. Initial protocol negotiation can
+and connect the matching transport. Wait for the connected status. Initial USB negotiation can
 wait for the calculator's first server response; an enumerated USB endpoint
 alone does not establish that the original server is ready for an upload.
 
@@ -101,17 +107,19 @@ alone does not establish that the original server is ready for an upload.
   means the calculator acknowledged the whole Kermit transaction.
 - **Get:** enter the exact variable name that exists on the calculator. The
   complete received file becomes available for an explicit browser download.
-- **Directory:** ask the running server for its current directory. This helps
+- **Directory (USB):** ask the running server for its current directory. This helps
   locate a variable after an upload, including a name chosen by the calculator
   to avoid overwriting an existing variable. Directory navigation and deletion
   are not implemented by this client.
-- **Receive:** the browser can receive a file transaction initiated with the
+- **Receive (USB):** the browser can receive a file transaction initiated with the
   calculator's `SEND` command. With an established USB connection, end SERVER,
   select Receive in the browser, then send a named variable on the calculator
-  (for example `'OR49P' SEND` in RPN). This passive receive path has protocol
-  tests; the recorded stock end-to-end receive evidence below uses GET. A separate
-  manual SEND scenario is not claimed as completed evidence.
-- **Finish:** ask the calculator to leave SERVER. Readiness is cleared so a
+  (for example `'OR49P' SEND` in RPN). In ALG, prepare `SEND('OR49P')` before
+  selecting Receive, then press ENTER on the calculator. This avoids spending
+  the initial receiver deadline typing the command. An independent original-OS
+  [active SEND witness](#calculator-initiated-send-and-same-connection-reuse)
+  now covers the Receive button, real download and subsequent GET.
+- **Finish (USB):** ask the calculator to leave SERVER. Readiness is cleared so a
   later upload cannot immediately write into the calculator's ordinary HOME
   input path. Enter `SERVER` again before starting another server operation.
 
@@ -263,8 +271,33 @@ ARM-to-physical mapping still require the user's separate probe results.
 Reproduce the browser witness with local private inputs using
 `tools/probe-file-transfer-browser.py --start-server --server-commands` and its
 required ROM/session/upload/output arguments. Output directories are new-only;
-earlier failures and successes remain intact. The [serial counterexample](stock-serial-validation.md)
-records why serial file operations remain closed.
+earlier failures and successes remain intact. The [serial validation](stock-serial-validation.md)
+separately records its original counterexample and UART0 interrupt repair.
+
+## Calculator-initiated SEND and same-connection reuse
+
+A second production-browser witness uses the same six production assets recorded
+above, including the unchanged `76db…` WASM, `84f8…` Kermit and `1fc2…` adapter.
+The [active SEND acceptance report](evidence/usb-active-send-r14.json) preserves
+their full identities and the private report hash. It starts from the same prepared
+HOME session, uploads the original 45-byte object as `OR14R`, completes GET,
+directory and FINISH, then enters `SEND('OR14R')` with ordinary physical UI keys.
+The browser Receive button is selected before the command's final ENTER.
+
+Receive completes and its actual browser download contains all 37 unchanged object
+bytes. The physical keyboard then re-enters SERVER, and another GET and actual
+download complete on the same USB connection. Both returned files are 45 bytes;
+only the documented binary-header C-to-B revision differs from the original.
+There is one successful USB enumeration and no later disconnect or reconnect,
+no raw USB action, no page/Worker error and no diagnostic stop. No production
+source or guest state was patched for this witness. The preceding direct-core
+diagnostic independently completed the same single-file SEND/Receive/GET path.
+
+This establishes single-file calculator-initiated SEND and connection reuse.
+Multiple-file SEND remains a separate end-to-end case. Run the browser probe with
+`--start-server --server-commands --active-send` and a short uppercase alphanumeric
+`--name` to reproduce it with private inputs. This is a functional check, not a
+throughput or latency result.
 
 ## Verification
 

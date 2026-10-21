@@ -79,6 +79,37 @@ EXPORT("regression") unsigned regression(void) {
     guest_mmio(0x4a000000,1u<<25,true);put(a->ram+8,0xeafffffe);
     a->soc.usb.ep_pending=1;a->soc.usb.ep_enable=1;
     *b=*a;compare(35);CHECK((a->soc.srcpnd&(1u<<25))!=0);
+    /* UART0 level changes and W1C inside an RTC-only quiet interval must take
+       effect on the next tick. The independent per-tick runner checks all
+       architectural and peripheral state, including budget partitions. */
+    const uint32_t uart_addr[]={0x50000004,0x50000004,0x50000008,0x50000008,
+        0x4a000018,0x4a00001c,0x4a000008,0x4a000000,0x4a000010,0x50000020};
+    const uint32_t uart_value[]={0x204,0,1,0,2,0x7fd,~(1u<<28),1u<<28,1u<<28,0x81};
+    for(unsigned split=0;split<2;split++) for(unsigned i=0;i<sizeof(uart_addr)/sizeof(uart_addr[0]);i++) {
+        guest_mmio(uart_addr[i],uart_value[i],true); put(a->ram+8,0xeafffffe);
+        a->soc.uart[0][1]=i==0?0:0x204;
+        a->soc.uart[0][2]=i==3?1:0;
+        a->soc.intsubmsk=i==5?0x7ff:0x7fd;
+        a->soc.intmsk=i==6?UINT32_MAX:~(1u<<28);
+        *b=*a;
+        if(split){compare(1);compare(1);compare(1);}else compare(3);
+        compare(35); compare(400);
+        if(i!=1 && i!=2) CHECK((a->soc.subsrcpnd&2u)!=0);
+        if(i==9) CHECK(a->soc.tx.count==1 && a->soc.tx.data[0]==0x81);
+        o_schedule_plan(a);CHECK(a->quiet_left>0);o_schedule_sync(a);same();
+    }
+    /* A pending empty level can wake a sleeping CPU when unmasked, including
+       IRQ-masked wake and FIQ selection. Masked children leave it asleep. */
+    for(unsigned mode=0;mode<4;mode++) {
+        init(); a->cpu.sleeping=true; a->soc.uart[0][1]=0x204;
+        a->soc.intsubmsk=mode==3?0x7ff:0x7fd;
+        a->soc.intmsk=~(1u<<28);
+        if(mode==0)a->cpu.cpsr&=~O_I;
+        if(mode==1){a->soc.intmod=1u<<28;a->cpu.cpsr&=~O_F;}
+        *b=*a;compare(1);compare(37);compare(400);
+        CHECK(a->cpu.sleeping==(mode==3));
+        CHECK((a->soc.subsrcpnd&2u)!=0);
+    }
     /* Changing a timer to manual load/start inside an existing quiet window. */
     guest_mmio(0x51000008,3,true);put(a->ram+8,0xeafffffe);
     a->soc.tcntb[0]=7;

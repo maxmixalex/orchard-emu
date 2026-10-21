@@ -1,0 +1,173 @@
+{
+  "schema": "orchard-serial-file-transfer-acceptance-v1",
+  "date_utc": "2026-10-21",
+  "model": "HP48gII",
+  "model_id": 4,
+  "setup": "hp48-home",
+  "physical_board_verified": false,
+  "performance_sample": false,
+  "baseline_wasm_sha256": "76db5cb395cca4fffec807a76d3e969bf4cd73842662e39e81e38de4110527d0",
+  "stock_protocol_witness": {
+    "private_report_sha256": "efc179fcd4ed296e2d33a0a4bd6cc671b8f47a4ad659adc430b1710c0b3e5d4a",
+    "private_harness_sha256": "f64e120d2271bf5ed5bdaad775295f3b0fc8140bb63c3eb47e3b857a3361f654",
+    "wasm_sha256": "ce9f81ac640cbeeb1cd249d841d06ada633b6b36454ec29cd11cf39b2ddbc830",
+    "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+    "checkpoint_sha256": "558b07e6f902fa09a44b725898ffec4750ab2b43f1d0e9c0b4b87de04853185b",
+    "payload_sha256": "0c0eb8d3aa56744ec2b72597356b190fad2b7d5e8387c79c7fccf8351028562b",
+    "kermit_sha256": "84f831d158abcd5f87ff1a2e520902cf0444455400c3bc9c8177040e23bf1eb8",
+    "initial_tick": 216160000,
+    "final_tick": 232105728,
+    "uart_tx_bytes": 189,
+    "first_tx_after_ticks": 833536,
+    "operations": [
+      {
+        "operation": "send",
+        "tick": 223723264,
+        "active": false,
+        "phase": "complete",
+        "direction": "send",
+        "name": "OR14S",
+        "transferred": 45,
+        "total": 45
+      },
+      {
+        "operation": "get",
+        "tick": 232105728,
+        "active": false,
+        "phase": "complete",
+        "direction": "receive",
+        "name": "OR14S",
+        "transferred": 45
+      }
+    ],
+    "received": [
+      {
+        "name": "OR14S",
+        "bytes": 45,
+        "sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+        "object_bytes": 37,
+        "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642",
+        "object_equal": true,
+        "header": "HPHP49-B",
+        "differing_offsets": [
+          7
+        ]
+      }
+    ],
+    "passed": true,
+    "guest_stop": 0,
+    "core_source_unchanged": true,
+    "checkpoint_origin": "Original HOME, physical CF(-33), SF(-78), SF(-35), SERVER; checkpoint_save at tick 216160000. No guest state field patch.",
+    "transport": "Direct KermitSession with existing UART input/output APIs; no production capability override."
+  },
+  "capabilities": {
+    "serial": {
+      "send": true,
+      "get": true,
+      "receive": false,
+      "directory": false,
+      "finish": false
+    },
+    "physical_usb_bridge": false
+  },
+  "browser": {
+    "private_report_sha256": "217eb444fa74984cd6a858fff850889c36e3f8f3420407bd92729ae4c3dafe3e",
+    "transport": "serial",
+    "physical_ui_server_entry": true,
+    "physical_ui_serial_selection": true,
+    "real_file_chooser_and_download": true,
+    "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+    "session_sha256": "0f23e4e3c6953470edcca232a68291a26d719ede65182e980d090d5fee3fa632",
+    "operations": {
+      "send": {
+        "phase": "complete",
+        "transferred": 45,
+        "transport": "serial"
+      },
+      "get": {
+        "phase": "complete",
+        "transferred": 45,
+        "transport": "serial"
+      }
+    },
+    "upload_bytes": 45,
+    "returned_bytes": 45,
+    "upload_sha256": "0c0eb8d3aa56744ec2b72597356b190fad2b7d5e8387c79c7fccf8351028562b",
+    "returned_sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+    "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642",
+    "object_bytes_equal": true,
+    "file_bytes_equal": false,
+    "differing_offsets": [
+      7
+    ],
+    "source_header": "HPHP49-C",
+    "returned_header": "HPHP49-B",
+    "page_error_count": 0,
+    "worker_error_count": 0,
+    "final_running": true,
+    "final_stopped": false,
+    "serial_connected_events": 1,
+    "usb_connected_events": 0
+  },
+  "evidence_limits": [
+    "The direct protocol witness and final production-browser witness are separately identified. The latter includes the FileTransfer adapter, Worker, real serial controls and actual browser download.",
+    "Only UART0 non-FIFO TX-empty level interrupts are added; pulse, FIFO triggers, other UART channels and physical baud timing are outside this change.",
+    "Original baseline failure and its input identities remain unchanged.",
+    "No ROM bytes, checkpoints, raw packet or instruction traces, or LCD pixels are included.",
+    "The initial serial-browser startup failure remains recorded and unclassified. A separate attempt with identical production assets and inputs passed after the diagnostic helper was corrected to preserve primary errors; production code was not changed between those attempts."
+  ],
+  "core_fix_local_commit": "07e887827f401daad14f21ffd1b2a59d3e46098e",
+  "core_source_sha256": "940b88228129d4639093e9fc30b71bd4ae2efbbc94771d584b2c2d90b6def49a",
+  "production_assets": {
+    "orchard.wasm": "ce9f81ac640cbeeb1cd249d841d06ada633b6b36454ec29cd11cf39b2ddbc830",
+    "calculator.js": "aa8853ebae52c3aeb6aa999e4b0656ff032945412abb88c945a655d7b4eec2b8",
+    "worker.js": "250e5167d16a6964854921dc2125e5f0428ae30066f7154cf06853c326631129",
+    "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+    "file-transfer.js": "e25457f1dd7164791adcd352be8a677398a8ff169e70ca369bfaeb7a7c31b7f1",
+    "kermit.js": "84f831d158abcd5f87ff1a2e520902cf0444455400c3bc9c8177040e23bf1eb8"
+  },
+  "usb_regression": {
+    "private_report_sha256": "624927e1cb72669c3c37f2236cbf737fa06a8d3597a5abd585eb658160213d82",
+    "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+    "session_sha256": "0f23e4e3c6953470edcca232a68291a26d719ede65182e980d090d5fee3fa632",
+    "operations": {
+      "send": {
+        "phase": "complete",
+        "transferred": 45
+      },
+      "get": {
+        "phase": "complete",
+        "transferred": 45
+      },
+      "directory": {
+        "phase": "complete",
+        "transferred": 98
+      },
+      "finish": {
+        "phase": "complete",
+        "transferred": 0
+      }
+    },
+    "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642",
+    "object_bytes_equal": true,
+    "file_bytes_equal": false,
+    "differing_offsets": [
+      7
+    ],
+    "directory_contains_uploaded_name": true,
+    "page_error_count": 0,
+    "worker_error_count": 0,
+    "final_running": true,
+    "final_stopped": false,
+    "post_finish_arithmetic_result_verified": false
+  },
+  "initial_browser_attempt": {
+    "private_report_sha256": "eff23e75f47bfa6f90f5b4981a0a13069cdadb8ddeadcd8dbe6ce8022c48b3d7",
+    "passed": false,
+    "worker_snapshots": 0,
+    "transfer_operations_observed": 0,
+    "reported_failure": "Failure screenshot timed out; the earlier UI error was not preserved by the original diagnostic helper.",
+    "classification": "Unclassified browser startup failure; no successful transfer claimed.",
+    "source_assets_equal_to_final_usb_witness": true
+  }
+}
