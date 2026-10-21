@@ -7,7 +7,7 @@ revision**, not every product carrying that name.
 
 | ID | Slug | Model | NOR | SRAM | Visible LCD | SD slot in target hardware | Orchard stock boot |
 | ---: | --- | --- | ---: | ---: | --- | --- | --- |
-| 1 | `hp39gplus` | HP 39g+ | 1 MiB | 256 KiB | 131 × 64 | No | Unverified |
+| 1 | `hp39gplus` | HP 39g+ | 1 MiB | 256 KiB | 131 × 64 | No | Conditional HOME; hardware gate open |
 | 2 | `hp39gs` | HP 39gs | 1 MiB | 256 KiB | 131 × 64 | No | Unverified |
 | 3 | `hp40gs` | HP 40gs | 2 MiB | 256 KiB | 131 × 64 | No | Unverified |
 | 4 | `hp48gii` | HP 48gII, USB revision | 2 MiB | 256 KiB | 131 × 64 | No | Conditional HOME; hardware gate open |
@@ -49,7 +49,24 @@ source, not a model-specific patch to the ARM instruction interpreter.
 The HP48gII full image now reaches stock HOME and performs two calculations
 with the explicit conditions in [startup](startup.md). Canonical hardware
 acceptance remains open; its physical SRAM capacity is still 256 KiB. HP39g+
-keeps its separate startup blockers. See [boot research](boot-research.md).
+now also reaches HOME and performs calculations under its separately declared
+[startup conditions](hp39-startup.md), retaining its physical 256 KiB SRAM
+decode. See [boot research](boot-research.md).
 HP40gs NOR capacity is corrected to 2 MiB using HP's 2007 specification sheet,
 not inherited from the HP39gs sibling. All other stock/UI promotion gates
 remain open; supplied update packages are not full physical dumps.
+
+## HP49g+ acquisition and model identity
+
+The [HP49g+ flash capture package](flash-capture.md) provides original executable
+RPL probes and two independent, fixed-address full reads to SD. Its initial
+hardware gate is a 16-byte memory probe plus a 16-byte SD-format probe; no new
+HP49g+ full NOR or cold-boot witness is claimed before those captures arrive.
+HP39gs still needs a verified read-only path on the original operating system;
+the Saturn ROMUPL39 program does not acquire the native ARM boot region.
+
+The local ROM inspector now recognizes a hash-pinned HP49g+ or HP50g boot
+prefix inside a full-size image and rejects a clearly mismatched model during
+research preparation. The remainder remains unidentified unless the whole
+image matches a known fixture. A matching boot region, A/B read agreement,
+or 2 MiB file length does not admit a user-facing preset.

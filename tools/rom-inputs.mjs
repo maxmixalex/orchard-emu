@@ -26,15 +26,26 @@ export function inspectInput(bytes) {
   const reset = ((word & 0xff000000) >>> 0) === 0xea000000 || ((word & 0xff7ff000) >>> 0) === 0xe51ff000;
   const marker = data.subarray(0, 16).toString('latin1');
   const update = ['KINPOHP39G+IMAGE', 'KINPOHP40G+IMAGE', 'KINPOUPDATEIMAGE'].includes(marker);
+  const bootHash = data.length >= 0x4000 ? sha256(data.subarray(0, 0x4000)) : null;
+  const boot = fixtures.find(f => f[1] === 'arm-boot-region' && f[0] === bootHash);
   return { bytes: data.length, sha256: hash, kind: found?.[1] ?? (update ? 'firmware-update' : 'unidentified'),
     models: found ? found[2].map(id => models[id - 1]) : [], identified_fixture: found?.[4] ?? null,
     plausible_arm_vector: reset, first_word: word.toString(16).padStart(8, '0'),
-    update_marker: update ? marker : null, boot_verified: false };
+    update_marker: update ? marker : null, boot_verified: false,
+    // A known prefix does not authenticate the rest of a full-size image.
+    native_boot_region: boot ? { bytes: 0x4000, sha256: bootHash,
+      models: boot[2].map(id => models[id - 1]), identified_fixture: boot[4] } : null };
+}
+// Consumed only with inspectInput's freshly computed result, never a user JSON.
+export function assertModelIdentity(id, source) {
+  if (!Number.isInteger(id) || id < 1 || id > 6) throw new Error('Unknown model');
+  if (source.models.length && !source.models.includes(models[id - 1])) throw new Error('Known firmware belongs to another model');
+  if (source.native_boot_region && !source.native_boot_region.models.includes(models[id - 1]))
+    throw new Error('Known native boot region belongs to another model');
 }
 export function prepareInput(id, bytes, kind) {
-  if (!Number.isInteger(id) || id < 1 || id > 6) throw new Error('Unknown model');
   const source = inspectInput(bytes);
-  if (source.models.length && !source.models.includes(models[id - 1])) throw new Error('Known firmware belongs to another model');
+  assertModelIdentity(id, source);
   if (kind === 'bootloader') {
     if (source.kind !== 'arm-boot-region' || bytes.length !== 0x4000)
       throw new Error('Boot-only probing requires a hash-pinned, matching native boot region');

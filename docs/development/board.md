@@ -30,7 +30,8 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [ ] Broader browser focus/touch/download/storage/zoom E2E and sustained interaction; preserve and classify the observed rare HP48 Unlimited post-result stop.
 - [ ] Broader original-OS keypad/Alpha-state coverage, warm reset, power management and native ARM payload return.
 - [ ] Stock USB/serial file/object protocols, preserving the original HP50g GET_CONFIGURATION counterexample; then infrared link between applicable boards.
-- [ ] Independently establish SRAM/LCD/NOR/pad/analog assumptions. Integrate later HP39gs/HP49g+ dumps when supplied, without repeated acquisition requests.
+- [x] Provide an original staged HP49g+ read package, strict A/B assembler and known-boot model-mismatch rejection; physical address mapping and hardware capture remain unverified.
+- [ ] Independently establish SRAM/LCD/NOR/pad/analog assumptions. Validate the HP49g+ short probes and stock mapping, then integrate a complete capture; develop a verified HP39gs stock-OS reader.
 
 Do not infer all-model or canonical physical-board support from skins, arithmetic,
 packet enumeration, synthetic tests or public asset availability. M0 remains
