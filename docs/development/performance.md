@@ -859,14 +859,16 @@ boundary; these ticks are not exact register-write timestamps.
 
 The [Samsung S3C2410A manual](https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf),
 sections 7-21 and 7-22, defines `0x30` as slow mode with MPLL off and notes that
-the CLKCON IDLE request bit does not clear automatically. It also describes a
-CLKDIVN bit-2 mode outside the current low-two-bit divider implementation.
+the CLKCON IDLE request bit does not clear automatically. The research
+`run_clocked()` policy now supports CLKDIVN's special bit-2 1:4:4 encoding and
+write-triggered IDLE; PLL/slow-mode source timing remains unmodeled.
 An initial PLL register value therefore does not establish the active physical
 CPU frequency, and a set IDLE bit does not establish that the CPU remains idle.
-The emulator currently stores these clock MMIO values without a complete
-PLL/slow-mode/IDLE model. These observations identify a hardware-modeling task;
-they do not justify switching the production runner or changing the 12M
-functional reference in this performance patch.
+The profiler and clock-policy probe add [conditional ratios to Fin](clock-ratios.md)
+alongside raw snapshots, explicitly requiring settled selections and, when
+applicable, a configured and locked MPLL. They do not observe those conditions.
+These observations identify a hardware-modeling task; they do not justify
+switching the production runner or changing the 12M functional reference.
 
 ## Opt-in stop capture and replay
 

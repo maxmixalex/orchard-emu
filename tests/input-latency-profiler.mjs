@@ -40,8 +40,12 @@ const result = recorder.finish();
 assert.equal(reads, 5);
 assert.equal(result.boundary_samples, reads);
 assert.deepEqual(result.interval_ticks, { minimum: 5, maximum: 17 });
-assert.deepEqual(result.initial, { tick: 100, values: [1, 2, 3, 4, 5, 6] });
-assert.deepEqual(result.final, { tick: 147, values: [1, 2, 3, 4, 5, 0xffffffff] });
+assert.equal(result.initial.tick, 100);
+assert.deepEqual(result.initial.values, [1, 2, 3, 4, 5, 6]);
+assert.equal(result.final.tick, 147);
+assert.deepEqual(result.final.values, [1, 2, 3, 4, 5, 0xffffffff]);
+assert.equal(result.initial.clock_ratios_if_settled.reason, 'reserved-clkdivn');
+assert.equal(result.final.clock_ratios_if_settled.ratios_to_fin, null);
 assert.deepEqual(result.changes.map(change => [change.previous_boundary_tick, change.observed_at_tick,
   change.relative_tick, change.changed_registers]),
 [[110, 125, 25, ['CLKCON', 'CLKDIVN']], [125, 130, 30, ['CLKCON']]]);
@@ -62,5 +66,21 @@ assert.deepEqual(stableResult.interval_ticks, { minimum: 2, maximum: 2 });
 assert.deepEqual(stableResult.initial.values, stableResult.final.values);
 machine.tick = -1;
 assert.throws(() => createClockBoundaryRecorder(machine));
+
+// Diagnostic decoding uses only the copied words, without an extra core read.
+machine.tick = 200;
+words.set([0x5a55a5, 0x43012, 0x78023, 0x61b0, 0x30, 3]);
+const startReads = reads, clockModes = createClockBoundaryRecorder(machine);
+words[4] = 0; machine.tick = 210; clockModes.observe();
+const modes = clockModes.finish();
+assert.equal(reads - startReads, 2);
+assert.deepEqual(modes.initial.clock_ratios_if_settled.ratios_to_fin,
+  { fclk: { numerator: 1, denominator: 1 }, hclk: { numerator: 1, denominator: 2 },
+    pclk: { numerator: 1, denominator: 4 } });
+assert.deepEqual(modes.changes[0].clock_ratios_if_settled.ratios_to_fin,
+  { fclk: { numerator: 25, denominator: 4 }, hclk: { numerator: 25, denominator: 8 },
+    pclk: { numerator: 25, denominator: 16 } });
+assert.deepEqual(modes.final.clock_ratios_if_settled.conditional_on,
+  ['source-and-dividers-settled', 'mpll-configured-and-locked']);
 
 console.log('Input profiler CLI and read-only clock boundary checks passed (no ROM or guest execution).');
