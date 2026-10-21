@@ -37,6 +37,78 @@ static void guest_mmio(uint32_t address, uint32_t value, bool write) {
     put(a->ram+4,write?0xe5801000:0xe5901000);
     put(a->ram+8,0xeafffffc);
 }
+static void quiet_boundaries(void) {
+    const unsigned budgets[] = {0,1,2,3,4,17,366,367,368};
+    for (unsigned event=0;event<12;event++)
+    for (unsigned part=0;part<sizeof(budgets)/sizeof(*budgets);part++) {
+        init();
+        for (unsigned vector=0;vector<32;vector+=4) put(a->flash+vector,0xeafffffeu);
+        put(a->flash,0xe1a00000u); put(a->flash+4,0xe1a00000u);
+        switch (event) {
+        case 1: /* A latched IRQ survives with no unmasked source; MSR exposes it. */
+            a->soc.intpnd=1u<<9; a->cpu.r[0]=O_SVC|O_F;
+            put(a->flash+4,0xe121f000u); break; /* MSR CPSR_c,r0 */
+        case 2: /* Pending FIQ is also excluded while its CPU mask is set. */
+            a->soc.srcpnd=1u<<9; a->soc.intmod=1u<<9; a->soc.intmsk=~(1u<<9);
+            a->cpu.r[0]=O_SVC|O_I; put(a->flash+4,0xe121f000u); break;
+        case 3: /* A guest hardware-mask write invalidates the quiet interval. */
+            a->soc.srcpnd=1u<<9; a->cpu.cpsr&=~O_I;
+            a->cpu.r[0]=0x4a000008u; a->cpu.r[1]=~(1u<<9);
+            put(a->flash+4,0xe5801000u); break; /* STR r1,[r0] */
+        case 4: put(a->flash+4,0xee070f90u); break; /* CP15 wait for interrupt */
+        case 5: put(a->flash+4,0xef000000u); break; /* SWI */
+        case 6: /* A data abort retires its instruction, then enters the vector. */
+            a->cpu.r[0]=0x60000000u; put(a->flash+4,0xe5901000u); break;
+        case 7: /* A branch retires, but its following prefetch abort does not. */
+            a->cpu.r[0]=0x60000000u; put(a->flash+4,0xe12fff10u); break;
+        case 8: /* A diagnostic bus stop must not consume another quiet quantum. */
+            a->cpu.r[0]=0x59000000u; put(a->flash+4,0xe5901000u); break;
+        case 9: /* First-level descriptors in MMIO synchronize before a fault. */
+            a->cpu.control|=1u; a->cpu.ttb=0x4a000000u;
+            a->cpu.domain=UINT32_MAX; break;
+        case 10: /* A second-level UART descriptor consumes the live RX byte. */
+            a->cpu.control|=1u; a->cpu.ttb=0; a->cpu.domain=UINT32_MAX;
+            a->cpu.r[15]=0x2400u; put(a->flash,0x50000001u);
+            CHECK(o_q_push(&a->soc.rx,0x5c)); break;
+        case 11: /* Instruction fetch itself can read a side-effectful device. */
+            a->cpu.r[15]=0x50000024u; CHECK(o_q_push(&a->soc.rx,0x51)); break;
+        default: break;
+        }
+        *b=*a; compare(budgets[part]);
+        if (budgets[part]==3) {
+            if (event>=1 && event<=3) {
+                CHECK(a->cpu.exceptions==1 && a->cpu.instructions==2);
+                CHECK((a->cpu.cpsr&31u)==(event==2?O_FIQ:O_IRQ));
+            }
+            if (event==4) CHECK(a->cpu.sleeping && a->cpu.instructions==2);
+            if (event==5 || event==6) CHECK(a->cpu.exceptions==1 && a->cpu.instructions==3);
+            if (event==7) CHECK(a->cpu.exceptions==1 && a->cpu.instructions==2);
+            if (event==8) CHECK(a->ticks==2 && a->cpu.instructions==1 &&
+                                a->stop.status==ORCHARD_UNIMPLEMENTED_MMIO);
+        }
+    }
+    /* Read/swap/block-transfer/Thumb paths all share MMIO synchronization.
+     * Start without a latched IRQ so the quiet continuation is eligible. */
+    const uint32_t addresses[] = {0x50000024u,0x56000064u,0x52000158u,
+                                  0x4d000068u,0x5800000cu,0x57000040u};
+    const uint32_t operations[] = {0xe5902000u,0xe8900006u,0xe1002091u,0x6801u};
+    const unsigned spans[] = {2,3,17,368};
+    for (unsigned address=0;address<sizeof(addresses)/sizeof(*addresses);address++)
+    for (unsigned operation=0;operation<sizeof(operations)/sizeof(*operations);operation++)
+    for (unsigned span=0;span<sizeof(spans)/sizeof(*spans);span++) {
+        init(); a->cpu.r[0]=addresses[address]; a->cpu.r[1]=0;
+        a->soc.lcd_probe68_idle_zero=true; CHECK(o_q_push(&a->soc.rx,0x51));
+        if (operation==3) {
+            a->cpu.cpsr|=O_T;
+            put(a->flash,0x46c0u|(operations[operation]<<16));
+            put(a->flash+4,0xe7feu); /* Thumb NOP; LDR r1,[r0]; B . */
+        } else {
+            put(a->flash,0xe1a00000u); put(a->flash+4,operations[operation]);
+            put(a->flash+8,0xeafffffeu);
+        }
+        *b=*a; compare(spans[span]);
+    }
+}
 EXPORT("regression") unsigned regression(void) {
     checks=failures=first=0; seed=0x2410920u;
     for(unsigned trial=0;trial<1600;trial++) {
@@ -102,6 +174,7 @@ EXPORT("regression") unsigned regression(void) {
         *b=*a;
         for(unsigned part=1;part<=16;part++)compare(part);
     }
+    quiet_boundaries();
     return failures;
 }
 EXPORT("checks") unsigned get_checks(void){return checks;}
