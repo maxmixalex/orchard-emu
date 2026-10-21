@@ -107,6 +107,12 @@ enum run_policy { RUN_LEGACY, RUN_DIVIDED, RUN_CLOCKED, RUN_IDLE };
 static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enum run_policy policy) {
     if (!m) return (orchard_stop){.status = ORCHARD_BAD_ARGUMENT};
     if (!m->loaded) return (orchard_stop){.status = ORCHARD_NO_ROM};
+    /* Only public state/checkpoint readers observe these diagnostic totals.
+     * No guest operation, peripheral phase or stop depends on them. Keep the
+     * reference runner's immediate accounting and publish production totals
+     * before returning, including every early-stop path below. */
+    uint32_t elapsed = 0;
+    uint64_t retired = 0; /* Clocked policies can retire four per quantum. */
     m->idle_write_enabled = policy == RUN_CLOCKED || policy == RUN_IDLE;
     for (uint32_t i = 0; i < budget && m->stop.status == ORCHARD_OK; ++i) {
         unsigned slots = policy == RUN_CLOCKED ? orchard_clock_slots(m) :
@@ -126,11 +132,12 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enu
             !(m->soc.srcpnd & ~m->soc.intmsk) &&
             (!m->soc.intpnd || (m->cpu.cpsr & O_I))) {
             uint32_t n = m->quiet_left < budget - i ? m->quiet_left : budget - i;
-            m->quiet_left -= n; m->deferred_ticks += n; m->ticks += n;
+            m->quiet_left -= n; m->deferred_ticks += n; elapsed += n;
             i += n - 1u;
             continue;
         }
-        ++m->ticks;
+        if (scheduled) ++elapsed;
+        else ++m->ticks;
         if (scheduled && m->quiet_left) {
             --m->quiet_left;
             ++m->deferred_ticks;
@@ -150,8 +157,15 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enu
                 o_exception(&m->cpu, O_FIQ, 0x1c, m->cpu.r[15] + 4u);
             else if (m->soc.intpnd && !(m->cpu.cpsr & O_I))
                 o_exception(&m->cpu, O_IRQ, 0x18, m->cpu.r[15] + 4u);
-            else if (!m->cpu.sleeping) o_cpu_step(m);
+            else if (!m->cpu.sleeping) {
+                if (scheduled) retired += o_cpu_step_retired(m);
+                else o_cpu_step(m);
+            }
         }
+    }
+    if (scheduled) {
+        m->ticks += elapsed;
+        m->cpu.instructions += retired;
     }
     o_schedule_sync(m);
     m->idle_write_enabled = false;

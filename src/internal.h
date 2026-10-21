@@ -156,6 +156,8 @@ void o_set_cpsr(o_cpu *c, uint32_t value);
 uint32_t *o_spsr(o_cpu *c);
 void o_exception(o_cpu *c, unsigned mode, uint32_t vector, uint32_t link);
 void o_cpu_step(orchard_machine *m);
+/* Execute without publishing the instruction count; caller must add the result. */
+bool o_cpu_step_retired(orchard_machine *m);
 /* Full-checkpoint dispatcher retained for test/reference comparison. */
 void o_cpu_step_reference(orchard_machine *m);
 uint32_t o_getr(const o_cpu *c, unsigned r);
