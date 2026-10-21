@@ -7,11 +7,14 @@ updaters and the archived Emu48+ image using exact hashes.
 
 ## Updated acquisition priority
 
-The user will later provide full HP39gs and HP49g+ NOR dumps from their own
-hardware. These remain **pending**, not acquired or verified. Work continues
-with the existing HP39g+/HP48gII full inputs and HP49g+/HP50g native boot regions;
-no new original firmware was admitted in this continuation. Do not spend the
-current work cycle repeating the blocked HP39gs attachment retrieval.
+The user has offered their HP39gs and HP49g+ hardware for complete flash
+acquisition, after receiving suitable calculator programs. The new
+[HP49g+ read package and Chinese guide](flash-capture.md) use the documented
+stock-ROM `PEEKARM` command, starting with short memory and SD-format probes.
+It has not yet been validated on HP49g+ hardware. HP39gs still lacks a verified
+complete native read path on its original OS; ROMUPL39's Saturn bank dump is
+not a substitute. Both complete acquisitions remain **pending**, not acquired
+or verified. Existing HP39g+/HP48gII full inputs need not be supplied again.
 
 ## Six-model inventory
 
@@ -61,6 +64,10 @@ node tools/probe-rom.mjs --model hp50g --bootloader /private/boot-50g.bin
 The core's raw NOR loader remains unchanged; preparation is explicit and local
 to the probe. Wrong-model boot regions, arbitrary 16 KiB files and updaters are
 rejected. No mixed-model bootloader or firmware header patch is performed.
+The inspector additionally identifies these exact 16 KiB prefixes within a
+full-size input. A recognized prefix for the wrong model is rejected by
+`prepareInput`; a matching prefix alone leaves the remaining bytes and the
+whole image unverified. This also protects local assembly of new captures.
 
 ## HP39gs: original contribution located, attachment unavailable
 
@@ -77,6 +84,9 @@ No text list was decoded and no binary hash is available. Finding the indexed
 post does not mean the bytes have been recovered. A future recovered copy must
 validate word count/order, little-endian reconstruction, vectors and provenance
 before admission. Do not substitute the already acquired HP50g bootloader.
+The surrounding thread discusses a replacement-system environment; its
+instructions are not a verified stock-39gs extraction program. No OS replacement
+is requested to obtain this dump.
 
 ## Rejected lookalikes
 

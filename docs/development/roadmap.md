@@ -111,8 +111,11 @@ revision, not every calculator sold under that name.
 
 **Gate:** six independent cold-boot, interaction and ARM-return witnesses.
 An updater combined with different boot code cannot close a full-dump gate.
-The user's later HP39gs/HP49g+ full dumps are deferred inputs, not a reason to
-stop work on the available machines or repeat the acquisition request.
+The staged [HP49g+ read package](flash-capture.md) now supplies two 16-byte
+probes and independent A/B capture programs. First validate the user's ROM
+version, probe encoding and ARM-to-physical mapping; a complete candidate
+image does not itself close cold-boot or board gates. HP39gs still needs a
+verified stock-OS reader. Work on the available machines continues in parallel.
 
 ## M5 — Usable browser calculator
 
