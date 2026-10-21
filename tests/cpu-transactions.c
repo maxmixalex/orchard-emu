@@ -142,6 +142,105 @@ static void multiple_stores(void) {
     }
 }
 
+static void store_banks_and_conditions(void) {
+    static const unsigned modes[] = {O_USR, O_SYS, O_FIQ, O_IRQ, O_SVC, O_ABT, O_UND};
+    static const unsigned registers[] = {8, 9, 12, 13, 14, 15};
+    /* DA, IA, DB, IB: the lowest addressed word for six selected registers. */
+    static const uint32_t starts[] = {O_RAM_BASE + 0x7ec, O_RAM_BASE + 0x800,
+                                     O_RAM_BASE + 0x7e8, O_RAM_BASE + 0x804};
+    uint32_t seed = 0x62616e6bu;
+    for (unsigned mode = 0; mode < sizeof modes / sizeof *modes; ++mode)
+    for (unsigned flags = 0; flags < 16; ++flags) {
+        initialize();
+        o_cpu c = cpu_state(false, &seed);
+        c.cpsr = (c.cpsr & ~31u) | modes[mode];
+        c.r[4] = O_RAM_BASE + 0x800;
+        bool user = (flags & 2u) != 0;
+        execute(0xe804f300u | (flags << 21), c, true);
+        if (user && (modes[mode] == O_USR || modes[mode] == O_SYS)) {
+            CHECK(fast.stop.status == ORCHARD_UNPREDICTABLE);
+            CHECK(equal(&fast.cpu, &c, sizeof c));
+            continue;
+        }
+        CHECK(fast.stop.status == ORCHARD_OK);
+        for (unsigned slot = 0; slot < sizeof registers / sizeof *registers; ++slot) {
+            unsigned r = registers[slot];
+            uint32_t expected = r == 15 ? c.r[15] + 12u : c.r[r];
+            if (user && r < 15 && (r >= 13 || modes[mode] == O_FIQ))
+                expected = c.usr[r - 8];
+            CHECK(o_read_le(fast.ram + (starts[flags >> 2] - O_RAM_BASE + slot * 4u), 4) == expected);
+        }
+        CHECK(fast.cpu.r[4] == (flags & 1u ?
+              (flags & 4u ? c.r[4] + 24u : c.r[4] - 24u) : c.r[4]));
+        CHECK(fast.cpu.r[15] == c.r[15] + 4u);
+        CHECK(fast.cpu.instructions == c.instructions + 1u);
+    }
+    /* EQ with Z clear, NE with Z set, and NV must consume an instruction
+     * without performing any store or writeback. */
+    static const uint32_t skipped[] = {0x08a10003u, 0x18a10003u, 0xf8a10003u};
+    for (unsigned condition = 0; condition < sizeof skipped / sizeof *skipped; ++condition) {
+        initialize();
+        o_cpu c = cpu_state(false, &seed);
+        c.cpsr = (c.cpsr & ~O_Z) | (condition == 1 ? O_Z : 0);
+        c.r[1] = O_RAM_BASE + 0x400;
+        execute(skipped[condition], c, true);
+        c.next_pc = c.r[15] + 4u; c.r[15] = c.next_pc; ++c.instructions;
+        CHECK(equal(&fast.cpu, &c, sizeof c));
+        CHECK(fast.stop.status == ORCHARD_OK);
+        CHECK(o_read_le(fast.ram + 0x400, 4) == 0 && o_read_le(fast.ram + 0x404, 4) == 0);
+    }
+}
+
+static void store_idle_effects(void) {
+    uint32_t seed = 0x69646c65u;
+    for (unsigned policy = 0; policy < 2; ++policy)
+    for (unsigned sleeping = 0; sleeping < 2; ++sleeping)
+    for (unsigned stop = 0; stop < 2; ++stop) {
+        initialize();
+        fast.idle_write_enabled = reference.idle_write_enabled = policy != 0;
+        fast.quiet_left = reference.quiet_left = 16;
+        fast.deferred_ticks = reference.deferred_ticks = 3;
+        o_cpu c = cpu_state(false, &seed);
+        c.sleeping = sleeping != 0;
+        c.r[0] = 4; c.r[1] = 0x4c00000cu; c.r[2] = 0x55; c.r[3] = 3; c.r[4] = 0x66;
+        /* The fourth store is unsupported. The first three clock writes,
+         * including sticky CLKCON.IDLE, must survive a CPU rollback. */
+        execute(stop ? 0xe8a1001du : 0xe8a1000du, c, true);
+        CHECK(fast.soc.clock[3] == 4 && fast.soc.clock[4] == 0x55 && fast.soc.clock[5] == 3);
+        CHECK(fast.soc.rtc.phase == 3u * 32768u);
+        if (stop) {
+            CHECK(fast.stop.status == ORCHARD_UNIMPLEMENTED_MMIO);
+            CHECK(fast.stop.address == 0x4c000018u);
+            CHECK(equal(&fast.cpu, &c, sizeof c));
+        } else {
+            CHECK(fast.stop.status == ORCHARD_OK);
+            CHECK(fast.cpu.sleeping == (policy != 0 || sleeping != 0));
+            CHECK(fast.cpu.r[1] == c.r[1] + 12u && fast.cpu.r[15] == c.r[15] + 4u);
+            CHECK(fast.cpu.instructions == c.instructions + 1u);
+        }
+    }
+    for (unsigned sleeping = 0; sleeping < 2; ++sleeping) {
+        initialize();
+        fast.idle_write_enabled = reference.idle_write_enabled = true;
+        o_cpu c = cpu_state(false, &seed);
+        c.sleeping = sleeping != 0;
+        c.control |= 1u; c.ttb = 0x4c000000u; c.domain = UINT32_MAX;
+        c.r[0] = 4; c.r[1] = 0x0030000cu;
+        /* Real MMIO descriptors: LOCKTIME maps the fetch to NOR; CLKCON maps
+         * the first data store to itself. That write requests IDLE and turns
+         * the live descriptor into a fault before the second store. */
+        fast.soc.clock[0] = reference.soc.clock[0] = 2;
+        fast.soc.clock[3] = reference.soc.clock[3] = 0x4c000002u;
+        execute(0xe8a10005u, c, true);
+        CHECK(fast.stop.status == ORCHARD_OK);
+        CHECK(fast.soc.clock[3] == 4 && !fast.cpu.sleeping);
+        CHECK((fast.cpu.cpsr & 31u) == O_ABT && fast.cpu.r[15] == 0x10);
+        CHECK(fast.cpu.far == 0x00300010u && fast.cpu.dfsr == 5 && !fast.cpu.data_abort);
+        CHECK(fast.cpu.r[1] == c.r[1] && fast.cpu.next_pc == c.next_pc);
+        CHECK(fast.cpu.instructions == c.instructions + 1u && fast.cpu.exceptions == c.exceptions + 1u);
+    }
+}
+
 static void thumb_memory(void) {
     static const uint32_t addresses[] = {O_RAM_BASE + 0x300, O_RAM_BASE + 0x301,
         O_RAM_BASE + 0x302, O_RAM_BASE + 0x3fffc, 0x60000000u,
@@ -226,6 +325,7 @@ static void descriptor_diagnostics(void) {
 EXPORT("regression") unsigned run(void) {
     checks = failures = first_failure = 0;
     exhaustive_thumb(); halfwords(); multiple_stores(); thumb_memory();
+    store_banks_and_conditions(); store_idle_effects();
     partial_effects(); descriptor_diagnostics();
     return failures;
 }

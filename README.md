@@ -65,6 +65,9 @@ npm run test:calculator
 experimental conditions. A successful run budget is not a boot certificate.
 The optional [Unicorn differential](docs/development/cpu-oracle.md) is a
 separate developer tool, never a linked dependency of the MIT runtime.
+ARM store-multiple dispatch uses a small CPU checkpoint while preserving the
+original bus order and abort/diagnostic rollback. The full-checkpoint reference
+remains covered by regressions; scene performance requires separate validation.
 
 ## Development
 

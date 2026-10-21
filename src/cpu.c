@@ -437,7 +437,7 @@ static void cpu_step(orchard_machine *m, bool fast) {
      * last fallible bus operation. Keep just the speculative PC and fault
      * registers, rather than copying all banks/CP15 state on every LDR/STR.
      * The preceding path already consumed condition-failed instructions.
-     * Halfword/SWP/LDM/STM/Thumb and bank-changing instructions stay below. */
+     * Halfword/SWP/LDM/Thumb and bank-changing instructions stay below. */
     if (fast && width == 4 && (instruction & 0x0c000000u) == 0x04000000u) {
         uint32_t previous_pc = c->next_pc, previous_far = c->far, previous_fsr = c->dfsr;
         c->next_pc = pc + 4u;
@@ -451,6 +451,31 @@ static void cpu_step(orchard_machine *m, bool fast) {
         }
         if (c->data_abort) {
             c->next_pc = previous_pc;
+            c->data_abort = false;
+            o_exception(c, O_ABT, 0x10, pc + 8u);
+        } else c->r[15] = c->next_pc;
+        ++c->instructions;
+        return;
+    }
+    /* ARM STM reads GPRs/banks and commits writeback only after every store
+     * succeeds. Preserve its original bus order and helper, but checkpoint
+     * only the speculative PC/fault state and CLKCON.IDLE's sleep side effect.
+     * Earlier memory/MMIO writes remain visible on a later fault or stop. */
+    if (fast && width == 4 && (instruction & 0x0e100000u) == 0x08000000u) {
+        uint32_t previous_pc = c->next_pc, previous_far = c->far, previous_fsr = c->dfsr;
+        bool previous_sleeping = c->sleeping;
+        c->next_pc = pc + 4u;
+        block_transfer(m, instruction);
+        if (m->stop.status != ORCHARD_OK) {
+            c->next_pc = previous_pc; c->far = previous_far; c->dfsr = previous_fsr;
+            c->sleeping = previous_sleeping;
+            c->data_abort = false;
+            m->stop.instruction = instruction;
+            return;
+        }
+        if (c->data_abort) {
+            c->next_pc = previous_pc;
+            c->sleeping = previous_sleeping;
             c->data_abort = false;
             o_exception(c, O_ABT, 0x10, pc + 8u);
         } else c->r[15] = c->next_pc;

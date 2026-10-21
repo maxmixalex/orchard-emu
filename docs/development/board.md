@@ -11,6 +11,7 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [x] Two unchanged original NORs reach conditional HOME and basic arithmetic.
 - [x] User/debug frontends; seven separately licensed skins and guest segments.
 - [x] Scheduler/CPU/memory optimizations with retained reference paths.
+- [x] Small ARM STM rollback checkpoints preserve existing exceptions and bus order; scene performance validation remains open.
 - [x] Portable manual sessions, with .ord names and legacy .orchard import.
 - [x] Settings: exclusive immersive/traditional view, viewport/scale, editable physical key sequences, independent blur/hidden policies.
 - [x] Normal wall-time pacing distinct from raw execution throughput; explicit faster modes.
