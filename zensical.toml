@@ -17,6 +17,7 @@ nav = [
     "development/roms.md",
     "development/native-roms.md",
     "development/flash-capture.md",
+    "development/hp39-files.md",
     "development/boot-research.md",
     "development/startup-memory.md",
     "development/startup.md",
