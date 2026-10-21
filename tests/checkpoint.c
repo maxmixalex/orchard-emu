@@ -48,6 +48,7 @@ EXPORT("regression") unsigned regression(void){
   b=a;CHECK(orchard_run(&a,1000).status==ORCHARD_OK);export_to(expected,n);
   a=b;CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_OK);
   CHECK(a.translations[0].virtual_page==0);CHECK(!a.soc.eint_cache.valid);
+  CHECK(!a.boot_memo_epoch && !a.boot_memo_active && !a.boot_memo_pages);
   CHECK(orchard_run(&a,1000).status==ORCHARD_OK);export_to(actual,n);CHECK(equal(expected,actual,n));
   CHECK(orchard_checkpoint_load(&b,original,n)==ORCHARD_OK);
   CHECK(o_run_reference(&b,1000).status==ORCHARD_OK);

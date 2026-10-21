@@ -38,6 +38,10 @@ bool o_phys_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t
     if (o_sram_write(m, address, width, value)) return true;
     if (address >= O_BOOT_SRAM_BASE && address - O_BOOT_SRAM_BASE < O_BOOT_SRAM_SIZE &&
         width <= O_BOOT_SRAM_SIZE - (address - O_BOOT_SRAM_BASE)) {
+        uint32_t offset = address - O_BOOT_SRAM_BASE;
+        /* Bus writes may be unaligned and straddle two watched 1 KiB pages. */
+        uint32_t pages = (1u << (offset >> 10)) | (1u << ((offset + width - 1u) >> 10));
+        if (m->boot_memo_pages & pages) o_boot_memo_advance(m);
         for (unsigned i = 0; i < width; ++i)
             m->boot_sram[address - O_BOOT_SRAM_BASE + i] = (uint8_t)(value >> (i * 8u));
         return true;

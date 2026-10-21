@@ -184,5 +184,6 @@ orchard_status orchard_checkpoint_load(orchard_machine *m, const void *buffer, s
     m->quiet_left=m->deferred_ticks=0;
     m->idle_write_enabled=false;
     o_zero(m->translations,sizeof m->translations);
+    m->boot_memo_epoch=m->boot_memo_active=m->boot_memo_pages=0;
     return ORCHARD_OK;
 }

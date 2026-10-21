@@ -53,6 +53,7 @@ orchard_machine *orchard_init(void *arena, size_t bytes, unsigned model_id) {
 void orchard_reset(orchard_machine *m) {
     if (!m) return;
     o_zero(m->translations, sizeof(m->translations));
+    m->boot_memo_epoch = m->boot_memo_active = m->boot_memo_pages = 0;
     o_cpu_reset(&m->cpu);
     o_soc_reset(&m->soc);
     o_zero(m->ram, m->profile->ram_bytes);
@@ -107,6 +108,10 @@ enum run_policy { RUN_LEGACY, RUN_DIVIDED, RUN_CLOCKED, RUN_IDLE };
 static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enum run_policy policy) {
     if (!m) return (orchard_stop){.status = ORCHARD_BAD_ARGUMENT};
     if (!m->loaded) return (orchard_stop){.status = ORCHARD_NO_ROM};
+    /* A host can replace bytes/context between calls. Reference/standalone
+       execution always keeps the original live-descriptor validation. */
+    if (scheduled) o_boot_memo_advance(m);
+    else m->boot_memo_active = m->boot_memo_pages = 0;
     m->idle_write_enabled = policy == RUN_CLOCKED || policy == RUN_IDLE;
     for (uint32_t i = 0; i < budget && m->stop.status == ORCHARD_OK; ++i) {
         unsigned slots = policy == RUN_CLOCKED ? orchard_clock_slots(m) :
@@ -153,6 +158,7 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enu
             else if (!m->cpu.sleeping) o_cpu_step(m);
         }
     }
+    m->boot_memo_active = m->boot_memo_pages = 0;
     o_schedule_sync(m);
     m->idle_write_enabled = false;
     return m->stop;

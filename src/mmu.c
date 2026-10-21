@@ -3,6 +3,29 @@
  * Guest cache/TLB timing and lockdown are not simulated. */
 #include "internal.h"
 
+/* Called on run entry and watched mutations. Between-call host edits are
+ * rechecked on the next entry; this is not guest TLB maintenance. */
+void o_boot_memo_advance(orchard_machine *m) {
+    if (++m->boot_memo_epoch == 0) {
+        /* Never let an old entry become current after unsigned wrap. */
+        for (unsigned i = 0; i < O_TRANSLATIONS; ++i) m->translations[i].boot_epoch = 0;
+        m->boot_memo_epoch = 1;
+    }
+    m->boot_memo_active = m->boot_memo_epoch;
+    m->boot_memo_pages = 0;
+}
+static void watch_boot_tables(orchard_machine *m, o_translation *memo) {
+    memo->boot_epoch = 0;
+    if (!m->boot_memo_active) return;
+    uint32_t first = memo->first_offset - (uint32_t)offsetof(orchard_machine, boot_sram);
+    uint32_t second = memo->second_offset - (uint32_t)offsetof(orchard_machine, boot_sram);
+    if (first > O_BOOT_SRAM_SIZE - 4u ||
+        (memo->second_offset && second > O_BOOT_SRAM_SIZE - 4u)) return;
+    m->boot_memo_pages |= 1u << (first >> 10);
+    if (memo->second_offset) m->boot_memo_pages |= 1u << (second >> 10);
+    memo->boot_epoch = m->boot_memo_active;
+}
+
 void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool fetch) {
     uint32_t fsr = (status & 15u) | ((domain & 15u) << 4);
     if (fetch) { c->ifsr = fsr; c->prefetch_abort = true; }
@@ -85,6 +108,7 @@ static bool translate_walk(orchard_machine *m, uint32_t address, bool write, boo
         uint32_t first = table_offset(m, l1addr);
         uint32_t second = section ? 0 : table_offset(m, l2addr);
         memo->first_offset = 0;
+        memo->boot_epoch = 0;
         if (first && (section || second)) {
             memo->virtual_page = va & ~1023u;
             memo->physical_page = *physical & ~1023u;
@@ -96,6 +120,7 @@ static bool translate_walk(orchard_machine *m, uint32_t address, bool write, boo
             memo->second_offset = second;
             memo->second_word = l2;
             memo->first_offset = first;
+            watch_boot_tables(m, memo);
         }
     }
     return true;
@@ -122,12 +147,18 @@ bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
     o_translation *memo = &m->translations[((va >> 10) ^ (va >> 20) ^ (access * 21u)) & (O_TRANSLATIONS - 1u)];
     const uint8_t *bytes = (const uint8_t *)m;
     if (memo->first_offset && memo->virtual_page == (va & ~1023u) &&
-        memo->control == c->control && memo->ttb == c->ttb &&
-        memo->domain == c->domain && memo->access == access && !m->nor_id_mode &&
-        o_read_le(bytes + memo->first_offset, 4) == memo->first_word &&
-        (!memo->second_offset || o_read_le(bytes + memo->second_offset, 4) == memo->second_word)) {
-        *physical = memo->physical_page | (va & 1023u);
-        return true;
+        memo->access == access && !m->nor_id_mode) {
+        if (memo->boot_epoch && memo->boot_epoch == m->boot_memo_active) {
+            *physical = memo->physical_page | (va & 1023u);
+            return true;
+        }
+        if (memo->control == c->control && memo->ttb == c->ttb && memo->domain == c->domain &&
+            o_read_le(bytes + memo->first_offset, 4) == memo->first_word &&
+            (!memo->second_offset || o_read_le(bytes + memo->second_offset, 4) == memo->second_word)) {
+            watch_boot_tables(m, memo);
+            *physical = memo->physical_page | (va & 1023u);
+            return true;
+        }
     }
     return translate_walk(m, address, write, fetch, user, physical, memo);
 #endif
@@ -192,6 +223,9 @@ bool o_cp15(orchard_machine *m, uint32_t op) {
         return true;
     }
     if (rd == 15) return false;
+    if (m->boot_memo_active && crm == 0 && op2 == 0 &&
+        (crn == 1 || crn == 2 || crn == 3 || crn == 13))
+        o_boot_memo_advance(m);
     if (crn == 1 && crm == 0 && op2 == 0) {
         if (value & 128u) {
             o_stop(m, ORCHARD_UNSUPPORTED_ENDIAN, c->r[15], value);
@@ -210,8 +244,8 @@ bool o_cp15(orchard_machine *m, uint32_t op) {
              (crm == 14 && (op2 == 1 || op2 == 2)))) {
         /* Coherent functional memory: maintenance has no dirty data to flush. */
     } else if (crn == 8 && (crm == 5 || crm == 6 || crm == 7) && op2 <= 1) {
-        /* Host memo hits re-read their descriptors and context. No guest TLB
-           is modeled; changed guest tables are visible even without maintenance. */
+        /* Host memos use live words/context or watched boot-SRAM writes.
+           Changed guest tables are visible even without TLB maintenance. */
     } else return false;
     return true;
 }

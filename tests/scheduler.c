@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "internal.h"
+#include "orchard/clock.h"
 #ifndef __wasm__
 #include <stdio.h>
 #define EXPORT(n)
@@ -27,8 +28,11 @@ static void same(void) {
     CHECK(!different(&x,&y,sizeof(x)));
     CHECK(!different(&a->stop,&b->stop,sizeof(a->stop)));
     CHECK(!different(a->ram,b->ram,sizeof(a->ram)));
+    CHECK(!different(a->boot_sram,b->boot_sram,sizeof(a->boot_sram)));
+    CHECK(a->sram_alias_reads==b->sram_alias_reads && a->sram_alias_writes==b->sram_alias_writes);
     CHECK(a->ticks==b->ticks);
     CHECK(a->quiet_left==0 && a->deferred_ticks==0);
+    CHECK(a->boot_memo_active==0 && a->boot_memo_pages==0);
 }
 static void compare(unsigned budget) { (void)orchard_run(a,budget); (void)o_run_reference(b,budget); same(); }
 static void guest_mmio(uint32_t address, uint32_t value, bool write) {
@@ -36,6 +40,131 @@ static void guest_mmio(uint32_t address, uint32_t value, bool write) {
     put(a->ram,0xe1a00000); /* NOP first creates a nonempty quiet window. */
     put(a->ram+4,write?0xe5801000:0xe5901000);
     put(a->ram+8,0xeafffffc);
+}
+static void boot_program(void) {
+    init();
+    a->cpu.control=0x79;a->cpu.ttb=O_BOOT_SRAM_BASE;a->cpu.domain=UINT32_MAX;
+    a->cpu.r[15]=0x10000000;a->cpu.r[0]=0x20000400;a->cpu.r[1]=2;
+    a->cpu.r[2]=0xfeed;a->soc.clock[5]=0;
+    put(a->boot_sram+0x400,O_RAM_BASE|2u); /* Code: VA 0x10000000 -> RAM. */
+    put(a->boot_sram+0x800,O_BOOT_SRAM_BASE|2u); /* A guest table-write mapping. */
+    put(a->ram,0xe1a00000);put(a->ram+4,0xe1a00000); /* Warm fetch before event. */
+    put(a->ram+8,0xe5801000); /* STR r1,[r0]: remap the next fetch to NOR. */
+    put(a->ram+12,0xe3a02011);put(a->flash+12,0xe3a02077);
+}
+static void boot_mapping_boundaries(void) {
+    orchard_stop (*const runners[])(orchard_machine *,uint32_t)={
+        orchard_run,orchard_run_divided,orchard_run_clocked,orchard_run_idle};
+    /* Each policy must notice a descriptor write within this same call,
+       without a guest TLB operation. Byte/halfword updates change its base. */
+    for(unsigned policy=0;policy<4;policy++) for(unsigned width=0;width<3;width++) {
+        boot_program();
+        if(width==0){put(a->ram+8,0xe5c01000);a->cpu.r[0]+=3;a->cpu.r[1]=0;}
+        if(width==1){put(a->ram+8,0xe1c010b0);a->cpu.r[0]+=2;a->cpu.r[1]=0;}
+        *b=*a;(void)runners[policy](a,4);(void)o_run_reference(b,4);same();
+        CHECK(a->cpu.r[2]==0x77 && a->cpu.instructions==4 && a->ticks==4);
+    }
+    /* The four slots of one divided/clocked quantum share the same rule. */
+    for(unsigned policy=1;policy<=2;policy++) {
+        boot_program();a->soc.clock[5]=3;a->cpu.control|=1u<<30;
+        (void)runners[policy](a,1);
+        CHECK(a->cpu.r[2]==0x77 && a->cpu.instructions==4 && a->ticks==1);
+        CHECK(!a->boot_memo_active && !a->boot_memo_pages);
+    }
+    /* Zeroing an already hot L1 entry faults the very next fetch. */
+    boot_program();a->cpu.r[1]=0;*b=*a;compare(4);
+    CHECK(a->cpu.instructions==3 && a->cpu.exceptions==1 && a->cpu.ifsr==5);
+    CHECK(a->cpu.r[15]==0x0c && a->cpu.r[2]==0xfeed);
+    /* A hot two-level mapping watches both boot pages, but a RAM L2 table
+       must stay live even when written through the selected SRAM alias. */
+    for(unsigned changed=0;changed<4;changed++) {
+        /* A different 1 KiB page avoids colliding with the code-fetch memo. */
+        boot_program();a->cpu.r[3]=0x30000700;
+        put(a->boot_sram+0xc00,O_BOOT_SRAM_BASE|1u);
+        put(a->boot_sram+4,O_RAM_BASE|2u);
+        put(a->ram+0x700,0x12345678);put(a->flash+0x700,0x9abcdef0);
+        put(a->ram,0xe5932000);put(a->ram+4,0xe5932000);put(a->ram+12,0xe5932000);
+        a->cpu.r[0]=changed==1?0x20000c00:0x20000004;
+        a->cpu.r[1]=changed==1?0:2;
+        if(changed>=2) {
+            put(a->boot_sram+0xc00,(O_RAM_BASE+0x2000)|1u);
+            put(a->ram+0x2004,O_RAM_BASE|2u);a->cpu.r[0]=0x10002004;
+            if(changed==3) {
+                CHECK(orchard_sram_select(a,ORCHARD_SRAM_BANK1_MIRROR)==ORCHARD_OK);
+                a->cpu.r[0]+=a->profile->ram_bytes;
+            }
+        }
+        *b=*a;compare(4);
+        if(changed==1) {
+            CHECK(a->cpu.instructions==4 && a->cpu.exceptions==1 && a->cpu.dfsr==5);
+            CHECK(a->cpu.far==0x30000700 && a->cpu.r[2]==0x12345678);
+        } else CHECK(a->cpu.r[2]==0x9abcdef0 && a->cpu.exceptions==0);
+    }
+    /* A legal last-word L2 descriptor is watched; a table beyond the boot
+       bank still takes the bus and raises the original external-walk fault. */
+    for(unsigned outside=0;outside<2;outside++) {
+        boot_program();a->cpu.r[3]=0x300ffc00;
+        put(a->boot_sram+0xc00,(O_BOOT_SRAM_BASE+0xc00)|1u);
+        put(a->boot_sram+0xffc,O_RAM_BASE|2u);
+        put(a->ram,0xe5932000);put(a->ram+4,0xe5932000);put(a->ram+12,0xe5932000);
+        a->cpu.r[0]=outside?0x20000c00:0x20000ffc;
+        a->cpu.r[1]=outside?(O_BOOT_SRAM_BASE+O_BOOT_SRAM_SIZE)|1u:2;
+        put(a->flash+0xc00,0x76543210);
+        *b=*a;compare(4);
+        if(outside) CHECK(a->cpu.exceptions==1 && a->cpu.dfsr==14 && a->cpu.far==0x300ffc00);
+        else CHECK(a->cpu.r[2]==0x76543210 && a->cpu.exceptions==0);
+    }
+    /* CP15 context writes follow hot code fetches in one public call. */
+    for(unsigned context=0;context<4;context++) {
+        boot_program();
+        if(context==0) { /* AP=0 privileged reads depend on c1 S/R. */
+            a->cpu.control=0x179;a->cpu.domain=1;a->cpu.r[0]=0x79;
+            put(a->ram+8,0xee010f10); /* MCR p15,0,r0,c1,c0,0 */
+        } else if(context==1) {
+            a->cpu.r[0]=O_RAM_BASE+0x4000;put(a->ram+0x4400,2);
+            put(a->ram+8,0xee020f10); /* MCR ... c2: new table maps code to NOR. */
+        } else if(context==2) {
+            a->cpu.r[0]=0;put(a->ram+8,0xee030f10); /* MCR ... c3: no domain access. */
+        } else {
+            a->cpu.r[15]=0;a->cpu.r[0]=0x02000000;
+            put(a->boot_sram,O_RAM_BASE|2u);put(a->boot_sram+0x80,2);
+            put(a->ram+8,0xee0d0f10); /* MCR ... c13: FCSE changes effective VA. */
+        }
+        *b=*a;compare(4);
+        if(context==0 || context==2) {
+            CHECK(a->cpu.instructions==3 && a->cpu.exceptions==1);
+            CHECK(a->cpu.ifsr==(context==0?13u:9u) && a->cpu.r[2]==0xfeed);
+        } else CHECK(a->cpu.r[2]==0x77 && a->cpu.instructions==4 && !a->cpu.exceptions);
+    }
+    /* Privilege changes use a different access key, even in the same scope. */
+    boot_program();a->cpu.domain=1;a->cpu.r[0]=O_USR|O_I|O_F;
+    put(a->boot_sram+0x400,O_RAM_BASE|0x402u);
+    put(a->ram+8,0xe121f000); /* MSR CPSR_c,r0 */
+    *b=*a;compare(4);CHECK(a->cpu.ifsr==13 && a->cpu.instructions==3 && a->cpu.exceptions==1);
+    /* Public returns must admit direct host edits, including a zero budget
+       between the old and new mappings. Standalone translation stays live. */
+    boot_program();*b=*a;compare(2);compare(0);
+    put(a->boot_sram+0x400,2);put(b->boot_sram+0x400,2);
+    put(a->flash+8,0xe3a02077);put(b->flash+8,0xe3a02077);
+    compare(1);CHECK(a->cpu.r[2]==0x77);
+    put(a->boot_sram+0x400,O_RAM_BASE|2u);
+    uint32_t physical=0;
+    CHECK(o_translate(a,0x10000000,false,true,false,&physical) && physical==O_RAM_BASE);
+    /* Reusing generation 1 after wrap must not revive the original mapping. */
+    boot_program();*b=*a;compare(1);
+    a->boot_memo_epoch=UINT32_MAX;b->boot_memo_epoch=UINT32_MAX;
+    put(a->boot_sram+0x400,2);put(b->boot_sram+0x400,2);
+    put(a->flash+4,0xe3a02077);put(b->flash+4,0xe3a02077);
+    compare(1);CHECK(a->cpu.r[2]==0x77);
+    /* Unlike ARM stores, the internal physical bus accepts unaligned spans.
+       Open a scope explicitly here to test a write entering a watched page. */
+    boot_program();o_boot_memo_advance(a);
+    CHECK(o_translate(a,0x10000000,false,true,false,&physical) && physical==O_RAM_BASE);
+    CHECK(o_translate(a,0x10000000,false,true,false,&physical) && physical==O_RAM_BASE);
+    CHECK(o_phys_write(a,O_BOOT_SRAM_BASE+0x3ff,2,0));
+    CHECK(!o_translate(a,0x10000000,false,true,false,&physical) && a->cpu.ifsr==5);
+    CHECK(!o_phys_write(a,O_BOOT_SRAM_BASE+O_BOOT_SRAM_SIZE-1u,2,0));
+    (void)orchard_run(a,0);CHECK(!a->boot_memo_active && !a->boot_memo_pages);
 }
 EXPORT("regression") unsigned regression(void) {
     checks=failures=first=0; seed=0x2410920u;
@@ -102,6 +231,7 @@ EXPORT("regression") unsigned regression(void) {
         *b=*a;
         for(unsigned part=1;part<=16;part++)compare(part);
     }
+    boot_mapping_boundaries();
     return failures;
 }
 EXPORT("checks") unsigned get_checks(void){return checks;}
