@@ -49,6 +49,7 @@ and exact downloaded-artifact checks. Do not treat a source push as deployment.
 - [x] Separate React/Mantine user frontend with English/Chinese i18n and PC keyboard editor.
 - [x] Printed modifier/Alpha legends; native/4x matrix PNG capture.
 - [x] Keep per-frame pixels outside React subscriptions; avoid unchanged canvas uploads.
+- [x] Reuse live LCD image/palette buffers and defer traditional keypad construction until requested; keep captures independent.
 - [x] Add bounded standalone loopback USB/IP/raw serial and generated-guest TCP tests.
 - [x] Preserve extra single-transfer reference tests, reject unproductive CPU optimization prototypes.
 - [ ] Observe the accepted revision's Build/Pages and downloaded-package results in the current repository.

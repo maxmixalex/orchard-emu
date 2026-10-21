@@ -102,6 +102,7 @@ jobs:
           node tests/timer-receiver.mjs
           python3 -m venv build/browser-venv
           build/browser-venv/bin/pip install -r tools/requirements-browser.txt
+          build/browser-venv/bin/python tests/browser-components.py
           build/browser-venv/bin/python tests/browser-worker.py
           build/browser-venv/bin/python tests/browser-stop-recovery.py
           build/browser-venv/bin/python tests/browser-stop-recovery.py --diagnostic-trace
@@ -117,6 +118,10 @@ jobs:
             build/browser-stop-recovery-before.png
             build/browser-stop-trace-recovery.json
             build/browser-stop-trace-recovery-before.png
+            build/offline-initial.png
+            build/ui-keyboard-zh.png
+            build/ui-traditional-zh.png
+            build/test-capture.png
           retention-days: 7
           if-no-files-found: warn
       - name: Test and package loopback host

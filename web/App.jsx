@@ -13,7 +13,7 @@ import {SkinView} from './skin.js';
 import {bindLifecycle} from './lifecycle.js';
 import {bindings,keyCode,validatePreferences} from './preferences.js';
 import {bindingCode} from './pc-keyboard.js';
-import {capturePNG,captureName,frameRGBA} from './capture.js';
+import {capturePNG,captureName,createLCDRenderer} from './capture.js';
 import '@mantine/core/styles.css';
 import './react.css';
 import './keyboards.css';
@@ -28,12 +28,23 @@ function Indicators(){return <svg className="annunciator-strip" viewBox="0 0 393
  <g data-segment="0" transform="translate(357 9)"><path d="M-10 -4H7M3 -8l5 4-5 4M10 4H-7M-3 0l-5 4 5 4" fill="none" stroke="currentColor"/></g>
  </svg>;}
 const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,enabled}){
- const stage=useRef(null),workspace=useRef(null),host=useRef(null),view=useRef(null),keypadHost=useRef(null),keypad=useRef(null),prefsRef=useRef(prefs);
+ const stage=useRef(null),workspace=useRef(null),host=useRef(null),view=useRef(null),keypadHost=useRef(null),keypad=useRef(null),ensureKeypadRef=useRef(null),prefsRef=useRef(prefs);
  prefsRef.current=prefs;
  useEffect(()=>{
-  let disposed=false,raf=0,last=null,painted=null,ink='',active=null;
+  let disposed=false,raf=0,last=null,painted=null,ink='',active=null,keypadSpec=null;
   const skin=new SkinView(stage.current,scan=>controller.tap([scan]));view.current=skin;
-  const canvas=stage.current.querySelector('canvas'),ctx=canvas.getContext('2d',{alpha:false});
+  const canvas=stage.current.querySelector('canvas'),paintLCD=createLCDRenderer(canvas.getContext('2d',{alpha:false}));
+  function skinError(e){if(!disposed){skin.glass.hidden=false;controller.report('skinError',e.message);}}
+  // SVG text/shape measurements are needed only when this view is requested.
+  function ensureKeypad(){
+   if(disposed||keypad.current||!keypadSpec||prefsRef.current.view!=='traditional')return;
+   try{
+    keypad.current=new TraditionalKeypad(keypadHost.current,keypadSpec,scan=>{controller.tap([scan]);host.current.focus({preventScroll:true});});
+    keypad.current.setEnabled(controller.state.loaded&&controller.state.running&&!controller.state.busy);
+    keypad.current.update(last?.active??null);
+   }catch(e){skinError(e);}
+  }
+  ensureKeypadRef.current=ensureKeypad;
   function fit(){if(disposed)return;const p=prefsRef.current,box=workspace.current,[w,h]=skin.stage.style.aspectRatio.split('/').map(Number);
    const width=Math.max(180,box.clientWidth-32),height=Math.max(240,box.clientHeight-24),dpr=window.devicePixelRatio||1;
    const caseWidth=Math.round(Math.min(width,height*(w/h||.497))*p.zoom/100*dpr)/dpr;
@@ -50,21 +61,19 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
     if(canvas.width!==d.width)canvas.width=d.width;
     if(canvas.height!==d.height)canvas.height=d.height;
     const frame=d.pixels?d:{...d,pixels:new Uint8Array(d.width*d.height),frameStatus:0};
-    ctx.putImageData(new ImageData(frameRGBA(frame,skin.rgb),d.width,d.height),0,0);painted=d;ink=skin.rgb.join(',');}
+    paintLCD(frame,skin.rgb);painted=d;ink=skin.rgb.join(',');}
    controller.screenRGB=skin.rgb;skin.update(d.active,d.annunciators,d.annunciatorStatus,model.id);
    if(active!==d.active){for(const button of host.current.querySelectorAll('.traditional-key'))button.setAttribute('aria-pressed',String(Number(button.dataset.scan)===d.active));active=d.active;}
   }
   const unframe=controller.onFrame(d=>{last=d;if(!raf)raf=requestAnimationFrame(paint);});
   skin.show(model.id).then(async()=>{if(disposed)return;const m=await skin.manifest;if(disposed)return;
-   const spec=m.models[MODEL_SLUGS[model.id]];
-   keypad.current=new TraditionalKeypad(keypadHost.current,spec,scan=>{controller.tap([scan]);host.current.focus({preventScroll:true});});
-   keypad.current.setEnabled(controller.state.loaded&&controller.state.running&&!controller.state.busy&&prefsRef.current.view==='traditional');
+   keypadSpec=m.models[MODEL_SLUGS[model.id]];ensureKeypad();
    fit();paint();skin.setEnabled(controller.state.loaded&&controller.state.running&&!controller.state.busy&&prefsRef.current.view==='immersive');
-  }).catch(e=>{if(!disposed){skin.glass.hidden=false;controller.report('skinError',e.message);}});
+  }).catch(skinError);
   const resize=new ResizeObserver(fit);resize.observe(workspace.current);window.addEventListener('resize',fit);fit();
-  return()=>{disposed=true;++skin.epoch;keypad.current?.destroy();keypad.current=null;cancelAnimationFrame(raf);unframe();resize.disconnect();window.removeEventListener('resize',fit);};
+  return()=>{disposed=true;++skin.epoch;if(ensureKeypadRef.current===ensureKeypad)ensureKeypadRef.current=null;keypad.current?.destroy();keypad.current=null;cancelAnimationFrame(raf);unframe();resize.disconnect();window.removeEventListener('resize',fit);};
  },[controller,model.id]);
- useEffect(()=>{view.current?.setEnabled(enabled&&prefs.view==='immersive');keypad.current?.setEnabled(enabled&&prefs.view==='traditional');window.dispatchEvent(new Event('resize'));},[enabled,prefs.view,prefs.zoom]);
+ useEffect(()=>{ensureKeypadRef.current?.();view.current?.setEnabled(enabled&&prefs.view==='immersive');keypad.current?.setEnabled(enabled&&prefs.view==='traditional');window.dispatchEvent(new Event('resize'));},[enabled,prefs.view,prefs.zoom]);
  return <main id="workspace" ref={workspace}><section id="calculator" ref={host} tabIndex={0} data-view={prefs.view}>
   <div className="calculator-stage" ref={stage} id="skin-stage"><img className="skin-image" alt={model.name} hidden/><svg className="skin-keys"/>
    <div className="glass-overlay"><Indicators/><canvas id="lcd" width="131" height="64"/></div></div>
