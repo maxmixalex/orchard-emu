@@ -101,6 +101,7 @@ void o_nz(o_cpu *c, uint32_t value) {
     c->cpsr = (c->cpsr & ~(O_N | O_Z)) | (value & O_N) | (value ? 0 : O_Z);
 }
 uint32_t o_add(o_cpu *c, uint32_t a, uint32_t b, unsigned carry, bool flags) {
+    if (!flags) return a + b + carry;
     uint64_t result = (uint64_t)a + b + carry;
     uint32_t value = (uint32_t)result;
     if (flags) {
