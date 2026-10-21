@@ -57,12 +57,17 @@ function pump() {
   timer=null;
   if (!running) return;
   try {
-    const end = performance.now()+6;
+    let now = performance.now();
+    const end = now+6;
+    const calculator = audience==='calculator', paced = calculator && pacer.speed!==0;
+    const cap = calculator?1024:256;
     // Keep each core call short enough to drain even a continuously transmitting UART.
     // Batch calls in one bounded Worker task instead of a timer per 256 ticks.
+    // Reuse the deadline sample for pacing instead of reading the clock twice.
+    // Unlimited has no pacing credit; speed changes reset the pacer between tasks.
     do {
       taps.update(tick);
-      const allowance=audience==='calculator'?pacer.available(performance.now(),1024):256;
+      const allowance=paced?pacer.available(now,cap):cap;
       const boundary=taps.boundary(tick)-tick;
       // Match Pacer.delay's 256-tick waiting threshold. On a fast host, the
       // bookkeeping above can continually mint a handful of wall-time ticks;
@@ -74,11 +79,12 @@ function pump() {
       if(!budget)break;
       const status = core.run(budget);
       if (status) syncTick(); else tick += budget;
-      if(audience==='calculator')pacer.consume(budget);
+      if(paced)pacer.consume(budget);
       usb?.poll(tick);
       sendUart();
       if (status) {pause();break;}
-    } while (performance.now()<end);
+      now=performance.now();
+    } while (now<end);
     if (!running || performance.now()-lastFrame >= (audience==='calculator'?33:50)) snapshot();
     schedule();
   } catch (error) { fail(error); }
