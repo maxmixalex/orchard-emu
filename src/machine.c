@@ -104,6 +104,13 @@ unsigned orchard_clock_slots(const orchard_machine *m) {
     return div == 4u ? 4u : (1u + ((div >> 1) & 1u)) * (1u + (div & 1u));
 }
 enum run_policy { RUN_LEGACY, RUN_DIVIDED, RUN_CLOCKED, RUN_IDLE };
+/* Each public runner selects a constant policy. Specialize the WASM loop at
+ * that call site so ordinary run() does not dispatch a policy or count CPU
+ * issue slots every quantum. Keep one source for peripheral/interrupt order
+ * and preserve native/reference compiler boundaries. */
+#if defined(__wasm__) && !defined(ORCHARD_REFERENCE) && (defined(__GNUC__) || defined(__clang__))
+__attribute__((always_inline))
+#endif
 static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enum run_policy policy) {
     if (!m) return (orchard_stop){.status = ORCHARD_BAD_ARGUMENT};
     if (!m->loaded) return (orchard_stop){.status = ORCHARD_NO_ROM};
