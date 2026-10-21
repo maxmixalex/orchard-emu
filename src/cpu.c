@@ -77,6 +77,7 @@ uint32_t o_ror(uint32_t n, unsigned amount) {
 }
 bool o_condition(const o_cpu *c, unsigned condition) {
 #ifndef ORCHARD_REFERENCE
+    if (condition == 14) return true; /* AL does not depend on NZCV. */
     /* Bit n gives the result for NZCV == n. Keep this hot decision to one
      * lookup and bit test; NV remains false in the ARMv4T model. */
     static const uint16_t pass[16] = {
