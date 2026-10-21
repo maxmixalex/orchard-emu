@@ -6,6 +6,7 @@ import { readFile, open, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { applySetup, setupHash, TapQueue } from '../web/hp48.js';
+import { CLOCK_RATIO_SCOPE, decodeClockRatiosIfSettled } from './clock-ratios.mjs';
 
 const hash = data => createHash('sha256').update(data).digest('hex');
 const args = process.argv.slice(2);
@@ -40,6 +41,8 @@ const report = { schema: 'orchard-clock-policy-latency-v1', passed: false,
   generated_at: new Date().toISOString(), wasm_sha256: hash(bytes),
   probe_sha256: hash(await readFile(new URL(import.meta.url))),
   input_source_sha256: hash(await readFile(new URL('../web/hp48.js', import.meta.url))),
+  clock_ratio_decoder_sha256: hash(await readFile(new URL('./clock-ratios.mjs', import.meta.url))),
+  clock_ratio_scope: CLOCK_RATIO_SCOPE,
   quantum: QUANTUM, sample_ticks: SAMPLE, window_ticks: WINDOW,
   timebase_hz: 12_000_000, candidate_policy: candidatePolicy, boot_policy: bootPolicy,
   legacy_home_origin: cachedHomePrefix ? 'verified canonical checkpoint cache' : 'fresh legacy boot',
@@ -118,7 +121,9 @@ function execute(m, model, expression, expected, sampled) {
     const old = clockModes.get(mode);
     if (old) old.samples++;
     else clockModes.set(mode, { cp15_control: s.cp15_control, mpll: clock[1],
-      clkslow: clock[4], clkdivn: clock[5], first_relative_tick: s.ticks - start.ticks, samples: 1 });
+      clkslow: clock[4], clkdivn: clock[5], first_relative_tick: s.ticks - start.ticks, samples: 1,
+      clock_ratios_if_settled: decodeClockRatiosIfSettled({
+        mpllcon: clock[1], clkslow: clock[4], clkdivn: clock[5] }) });
     if (!firstResult) {
       if (hash(pixels(m)) === expected) { assert(enter); firstResult = s; }
       else lastNonmatch = s.ticks;

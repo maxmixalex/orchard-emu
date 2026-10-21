@@ -7,10 +7,13 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { applySetup, setupHash, TapQueue } from '../web/hp48.js';
+import { CLOCK_RATIO_SCOPE, decodeClockRatiosIfSettled } from './clock-ratios.mjs';
 
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const WINDOW_TICKS = 20_000_000;
 const CLOCK_REGISTERS = ['LOCKTIME', 'MPLLCON', 'UPLLCON', 'CLKCON', 'CLKSLOW', 'CLKDIVN'];
+const clockRatios = values => decodeClockRatiosIfSettled({
+  mpllcon: values[1], clkslow: values[4], clkdivn: values[5] });
 const EXPRESSIONS = [
   { name: '1+1', scans: [26, 5, 26, 6] },
   { name: '7*8', scans: [24, 3, 17, 6] },
@@ -90,7 +93,8 @@ export function createClockBoundaryRecorder(machine) {
     machine.core.clock_snapshot(), CLOCK_REGISTERS.length));
   let previousTick = machine.tick, previous = read(), samples = 1;
   let minimumInterval = Infinity, maximumInterval = 0;
-  const initial = { tick: previousTick, values: previous.slice() }, changes = [];
+  const initial = { tick: previousTick, values: previous.slice(),
+    clock_ratios_if_settled: clockRatios(previous) }, changes = [];
   assert(Number.isSafeInteger(previousTick) && previousTick >= 0);
   return {
     observe() {
@@ -103,13 +107,14 @@ export function createClockBoundaryRecorder(machine) {
       const changed = CLOCK_REGISTERS.filter((_, index) => values[index] !== previous[index]);
       if (changed.length) changes.push({ previous_boundary_tick: previousTick,
         observed_at_tick: tick, relative_tick: tick - initial.tick,
-        changed_registers: changed, values });
+        changed_registers: changed, values, clock_ratios_if_settled: clockRatios(values) });
       previousTick = tick; previous = values; samples++;
     },
     finish() {
       assert.equal(machine.tick, previousTick, 'Missing final clock boundary sample');
       return { registers: CLOCK_REGISTERS.slice(), initial,
-        final: { tick: previousTick, values: previous.slice() },
+        final: { tick: previousTick, values: previous.slice(),
+          clock_ratios_if_settled: clockRatios(previous) },
         boundary_samples: samples,
         interval_ticks: samples > 1 ? { minimum: minimumInterval, maximum: maximumInterval } : null,
         changes };
@@ -274,9 +279,10 @@ function execute(machine, model, expression, sampleTicks, expectedFrame) {
 export async function main(args) {
   const options = parseArguments(args);
   const models = MODELS.filter(model => options.model === 'all' || Number(options.model) === model.id);
-  const [baselineBytes, candidateBytes, source, inputSource, ...roms] = await Promise.all([
+  const [baselineBytes, candidateBytes, source, inputSource, clockSource, ...roms] = await Promise.all([
     readFile(options.baseline), readFile(options.candidate), readFile(fileURLToPath(import.meta.url)),
     readFile(new URL('../web/hp48.js', import.meta.url)),
+    readFile(new URL('./clock-ratios.mjs', import.meta.url)),
     ...models.map(model => readFile(resolve(options.directory, model.rom))),
   ]);
   roms.forEach((rom, index) => assert.equal(hash(rom), setupHash(models[index].preset), 'Original ROM identity differs'));
@@ -287,6 +293,7 @@ export async function main(args) {
     generated_at: new Date().toISOString(), node: process.version,
     baseline_wasm_sha256: hash(baselineBytes), candidate_wasm_sha256: hash(candidateBytes),
     profiler_sha256: hash(source), input_source_sha256: hash(inputSource),
+    clock_ratio_decoder_sha256: hash(clockSource),
     sample_ticks: options.sampleTicks, phase_ticks: options.phaseTicks, window_ticks: WINDOW_TICKS,
     boundaries: {
       start: 'All four keys are queued together at the exact restored baseline checkpoint tick; first physical down occurs at that tick.',
@@ -298,6 +305,7 @@ export async function main(args) {
       pc: 'PC page histogram uses guest-time samples, not a host CPU hotspot profile.',
       segments: 'Raw six annunciator levels; physical mapping of the UI busy indicator remains provisional.',
       clocks: 'Six clock words are copied initially and after each existing successful run call in the sampled profiles. The minimum and maximum intervals between consecutive reads are recorded in guest ticks. Changed values are first observed at that run boundary; intervening writes, including changes reverted within a call, can be missed. This is not a complete MMIO write trace. The canonical reference does not sample inside its run loop.',
+      clock_ratios: CLOCK_RATIO_SCOPE,
       equivalence: 'Sampled baseline and candidate start from the same full checkpoint and end byte-identical to an unsampled baseline run, with identical key events and UART bytes.',
       privacy: 'ROM and complete checkpoint bytes remain local in memory; this report contains identities and aggregates only.',
     }, cases: [] };
@@ -319,6 +327,7 @@ export async function main(args) {
           initial_state: initialState, initial_checkpoint_sha256: hash(initialCheckpoint),
           initial_frame_sha256: hash(initialFrame), hold_ticks: model.hold, gap_ticks: model.gap,
           initial_clock_registers: clock, clock_divisor: canonical.core.clock_divisor(),
+          initial_clock_ratios_if_settled: clockRatios(clock),
           runner: 'run', functional_timebase_hz: canonical.core.timebase_hz(),
           expected_frame_sha256: model.expected[expressionIndex], samples: [] };
         report.cases.push(row);
