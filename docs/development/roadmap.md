@@ -48,6 +48,10 @@ M1.2 covers CP15, FCSE, table walks, AP/S/R/domain permissions, aborts and vecto
 relocation. M1.3 covers precise partial transfer/writeback, legal undefined
 instructions versus unimplemented operations, and cache/TLB/lockdown behavior.
 
+ARM STM dispatch uses a small rollback checkpoint with the existing exception
+behavior and ordered bus effects. Regressions retain the full-checkpoint
+dispatcher for comparison; scene performance acceptance remains separate.
+
 **Gate:** independently derived edge cases and bounded instruction differentials
 pass on the native and WASM core. Failures reduce to explicit input/state
 witnesses. Sanitizers pass; unsupported or implementation-defined cases are
