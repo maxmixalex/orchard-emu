@@ -97,12 +97,23 @@ accepts earlier `.orchard` files. No ROM is stored or uploaded.
 
 Connections adds a Files tab for HP48gII object upload, named retrieval and
 explicit local download over internal USB or serial. Start Kermit SERVER with
-the matching connection selected. USB also supports Receive, directory and
-FINISH; serial currently exposes upload and GET. Raw data retains UART and USB
-packets. HP39 applet upload remains under development. See
+the matching connection selected. Both connections also support Receive,
+directory and FINISH. The file chooser accepts up to 16 objects per batch
+(8 MiB total), validates them all before sending and shows each result. Serial
+and USB two-object batches, active SEND and connection reuse have original-ROM
+browser witnesses. Raw data retains UART and USB packets. HP39 applet upload
+remains under development. See
 [file transfer](docs/development/file-transfer.md),
 [interaction](docs/development/interaction.md), [sessions](docs/development/sessions.md),
 and [the infrared assessment](docs/development/infrared.md).
+
+The [HP39gs ARM return probe](docs/development/hp39-return-probe.md) provides a
+ready-to-transfer aplet and its separately licensed, byte-for-byte rebuilt
+39-specific launcher. It only enters ARM and returns; installation and return
+on physical HP39gs hardware still need validation before a flash reader is
+implemented. The [HP49g+ capture package](docs/development/flash-capture.md)
+already provides staged short reads and independent A/B programs. Neither
+package establishes a new supported emulator model.
 
 
 ## React user interface and host prototype

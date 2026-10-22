@@ -1,0 +1,366 @@
+{
+  "schema": "orchard-file-workflows-acceptance-v1",
+  "date": "2026-10-22",
+  "base_revision": "640a22975427724c7d62614979109cc43ca7b034",
+  "scope": "Original HP48gII firmware, internal virtual USB/UART, production browser UI and Worker; no host-OS attachment or physical-calculator claim.",
+  "performance_sample": false,
+  "assets": {
+    "orchard.wasm": "ce9f81ac640cbeeb1cd249d841d06ada633b6b36454ec29cd11cf39b2ddbc830",
+    "calculator.js": "452adf3127fb404c8263ecd5823971567c736505d6955af16a05028454bafbe0",
+    "worker.js": "250e5167d16a6964854921dc2125e5f0428ae30066f7154cf06853c326631129",
+    "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+    "file-transfer.js": "534e6ed02cd073800af02d571ba88106f841502f614a42a03d0a9eae55395790",
+    "kermit.js": "84f831d158abcd5f87ff1a2e520902cf0444455400c3bc9c8177040e23bf1eb8"
+  },
+  "fixtures": {
+    "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+    "session_sha256": "629c0fdfecccc1f0e9f7ff2634639c63133593e8a77fd45f720a2f15ce294c8b",
+    "upload_sha256": "0c0eb8d3aa56744ec2b72597356b190fad2b7d5e8387c79c7fccf8351028562b",
+    "upload_bytes": 45,
+    "source_header": "HPHP49-C"
+  },
+  "serial_all_operations": {
+    "report_sha256": "78bc053ea3cd1cfe4a07dfa2d9f02abe08f42007a0ca3c2dddab5c3986b0562e",
+    "browser_version": "156.0.8078.47",
+    "browser_version_source": "The same explicit CHROMIUM executable was used for all three runs. Both batch reports record this version; the original serial report has no version field.",
+    "start_server_with_physical_ui": true,
+    "operations": {
+      "send": {
+        "request": 4,
+        "transport": "serial",
+        "phase": "complete",
+        "direction": "send",
+        "name": "OR15S",
+        "transferred": 45
+      },
+      "get": {
+        "request": 5,
+        "transport": "serial",
+        "phase": "complete",
+        "direction": "receive",
+        "name": "OR15S",
+        "transferred": 45
+      },
+      "directory": {
+        "request": 6,
+        "transport": "serial",
+        "phase": "complete",
+        "direction": "receive",
+        "name": "",
+        "transferred": 99
+      },
+      "finish": {
+        "request": 7,
+        "transport": "serial",
+        "phase": "complete",
+        "direction": "receive",
+        "name": "",
+        "transferred": 0
+      },
+      "calculator_send": {
+        "request": 8,
+        "transport": "serial",
+        "phase": "complete",
+        "direction": "receive",
+        "name": "OR15S",
+        "transferred": 45
+      },
+      "get_after_active_send": {
+        "request": 9,
+        "transport": "serial",
+        "phase": "complete",
+        "direction": "receive",
+        "name": "OR15S",
+        "transferred": 45
+      }
+    },
+    "get_download": {
+      "bytes": 45,
+      "sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+      "header": "HPHP49-B",
+      "object_bytes_equal": true,
+      "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642",
+      "differing_offsets": [
+        7
+      ]
+    },
+    "calculator_send_download": {
+      "bytes": 45,
+      "sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+      "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642",
+      "header": "HPHP49-B",
+      "object_bytes_equal": true,
+      "differing_offsets": [
+        7
+      ]
+    },
+    "subsequent_get_download": {
+      "bytes": 45,
+      "sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+      "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642",
+      "header": "HPHP49-B",
+      "object_bytes_equal": true,
+      "differing_offsets": [
+        7
+      ]
+    },
+    "directory_contains_uploaded_name": true,
+    "directory_characters": 99,
+    "same_serial_connection": true,
+    "usb_connected": false,
+    "health": {
+      "page_errors": 0,
+      "worker_errors": 0,
+      "final_running": true,
+      "diagnostic_stop": false
+    }
+  },
+  "upload_batches": [
+    {
+      "report_sha256": "29755b3d7096d10f862f86715015c1fbcec46708b6af3c689f62a77b0b6a4e8d",
+      "transport": "usb",
+      "browser_version": "156.0.8078.47",
+      "tools": {
+        "probe-file-batch-browser.py": "3df5233282b8fb338b16d2f899ab8ef3fbe3430be14f9ce468b8ffb6d0e91d0f",
+        "probe-file-transfer-browser.py": "9a16bf57dd029434cccb9adfd7ac7f2a34f8b1b95035a37a9fd02583383cb8a0"
+      },
+      "inputs": [
+        {
+          "target_name": "OR22A",
+          "bytes": 45,
+          "sha256": "0c0eb8d3aa56744ec2b72597356b190fad2b7d5e8387c79c7fccf8351028562b",
+          "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642"
+        },
+        {
+          "target_name": "OR22B",
+          "bytes": 45,
+          "sha256": "0c0eb8d3aa56744ec2b72597356b190fad2b7d5e8387c79c7fccf8351028562b",
+          "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642"
+        }
+      ],
+      "uploads": [
+        {
+          "request": 4,
+          "transport": "usb",
+          "phase": "complete",
+          "direction": "send",
+          "name": "OR22A",
+          "transferred": 45
+        },
+        {
+          "request": 5,
+          "transport": "usb",
+          "phase": "complete",
+          "direction": "send",
+          "name": "OR22B",
+          "transferred": 45
+        }
+      ],
+      "downloads": [
+        {
+          "name": "OR22A",
+          "get": {
+            "request": 6,
+            "transport": "usb",
+            "phase": "complete",
+            "direction": "receive",
+            "name": "OR22A",
+            "transferred": 45
+          },
+          "bytes": 45,
+          "sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+          "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642",
+          "header": "HPHP49-B",
+          "object_bytes_equal": true,
+          "differing_offsets": [
+            7
+          ]
+        },
+        {
+          "name": "OR22B",
+          "get": {
+            "request": 7,
+            "transport": "usb",
+            "phase": "complete",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 45
+          },
+          "bytes": 45,
+          "sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+          "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642",
+          "header": "HPHP49-B",
+          "object_bytes_equal": true,
+          "differing_offsets": [
+            7
+          ]
+        }
+      ],
+      "directory": {
+        "request": 8,
+        "transport": "usb",
+        "phase": "complete",
+        "direction": "receive",
+        "name": "",
+        "transferred": 124
+      },
+      "directory_contains_both_objects": true,
+      "directory_characters": 124,
+      "finish": {
+        "request": 9,
+        "transport": "usb",
+        "phase": "complete",
+        "direction": "receive",
+        "name": "",
+        "transferred": 0
+      },
+      "same_connection": true,
+      "usb_connected": true,
+      "health": {
+        "page_errors": 0,
+        "worker_errors": 0,
+        "final_running": true,
+        "diagnostic_stop": false
+      }
+    },
+    {
+      "report_sha256": "0ee54a3492a7608e494bfd8b6c5b30e7e815f72c5cf9b9ed820318b50ca26ef1",
+      "transport": "serial",
+      "browser_version": "156.0.8078.47",
+      "tools": {
+        "probe-file-batch-browser.py": "3df5233282b8fb338b16d2f899ab8ef3fbe3430be14f9ce468b8ffb6d0e91d0f",
+        "probe-file-transfer-browser.py": "9a16bf57dd029434cccb9adfd7ac7f2a34f8b1b95035a37a9fd02583383cb8a0"
+      },
+      "inputs": [
+        {
+          "target_name": "OR22A",
+          "bytes": 45,
+          "sha256": "0c0eb8d3aa56744ec2b72597356b190fad2b7d5e8387c79c7fccf8351028562b",
+          "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642"
+        },
+        {
+          "target_name": "OR22B",
+          "bytes": 45,
+          "sha256": "0c0eb8d3aa56744ec2b72597356b190fad2b7d5e8387c79c7fccf8351028562b",
+          "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642"
+        }
+      ],
+      "uploads": [
+        {
+          "request": 4,
+          "transport": "serial",
+          "phase": "complete",
+          "direction": "send",
+          "name": "OR22A",
+          "transferred": 45
+        },
+        {
+          "request": 5,
+          "transport": "serial",
+          "phase": "complete",
+          "direction": "send",
+          "name": "OR22B",
+          "transferred": 45
+        }
+      ],
+      "downloads": [
+        {
+          "name": "OR22A",
+          "get": {
+            "request": 6,
+            "transport": "serial",
+            "phase": "complete",
+            "direction": "receive",
+            "name": "OR22A",
+            "transferred": 45
+          },
+          "bytes": 45,
+          "sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+          "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642",
+          "header": "HPHP49-B",
+          "object_bytes_equal": true,
+          "differing_offsets": [
+            7
+          ]
+        },
+        {
+          "name": "OR22B",
+          "get": {
+            "request": 7,
+            "transport": "serial",
+            "phase": "complete",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 45
+          },
+          "bytes": 45,
+          "sha256": "abc9ff805e99b417f6f50116c212a8ec6ac592b9cff355408a7e0d63989d5389",
+          "object_sha256": "0d389dbe9dfc2acd65a429a68090dc267e0d5700508407200170f4d8e8d05642",
+          "header": "HPHP49-B",
+          "object_bytes_equal": true,
+          "differing_offsets": [
+            7
+          ]
+        }
+      ],
+      "directory": {
+        "request": 8,
+        "transport": "serial",
+        "phase": "complete",
+        "direction": "receive",
+        "name": "",
+        "transferred": 125
+      },
+      "directory_contains_both_objects": true,
+      "directory_characters": 125,
+      "finish": {
+        "request": 9,
+        "transport": "serial",
+        "phase": "complete",
+        "direction": "receive",
+        "name": "",
+        "transferred": 0
+      },
+      "same_connection": true,
+      "usb_connected": false,
+      "health": {
+        "page_errors": 0,
+        "worker_errors": 0,
+        "final_running": true,
+        "diagnostic_stop": false
+      }
+    }
+  ],
+  "retained_ui_counterexample": {
+    "report_sha256": "71622fbba39b5f525c0c9dbda2137b572bfcf1bc432b51522654c884f2102363",
+    "passed": false,
+    "stage": "calculator-send",
+    "assets": {
+      "orchard.wasm": "ce9f81ac640cbeeb1cd249d841d06ada633b6b36454ec29cd11cf39b2ddbc830",
+      "calculator.js": "05a65ed3bfda0da3abdb91900d7439160350513e4eac19f26f49aef2ff0b2c40",
+      "worker.js": "250e5167d16a6964854921dc2125e5f0428ae30066f7154cf06853c326631129",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "file-transfer.js": "534e6ed02cd073800af02d571ba88106f841502f614a42a03d0a9eae55395790",
+      "kermit.js": "84f831d158abcd5f87ff1a2e520902cf0444455400c3bc9c8177040e23bf1eb8"
+    },
+    "complete_operations": [
+      "send",
+      "get",
+      "directory",
+      "finish"
+    ],
+    "cause": "Connections modal unmount reset transport selection to USB; reopening it left Receive disabled despite the active serial link.",
+    "fix": "Keep transport selection in App state across modal close/reopen; component regression and the subsequent complete serial witness cover it."
+  },
+  "limits": {
+    "single_file_bytes": 2097152,
+    "upload_files": 16,
+    "upload_bytes": 8388608,
+    "stock_batch_size_tested": 2,
+    "maximum_capacity_stock_tested": false,
+    "hardware_tested": false,
+    "hp39_protocol_tested": false,
+    "calculator_initiated_multi_file_send_tested": false
+  },
+  "privacy": "No firmware, checkpoints, screenshots, directory bodies, downloaded object content or raw traces are included. Full private reports remain local."
+}

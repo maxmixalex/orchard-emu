@@ -137,8 +137,8 @@ with sync_playwright() as p:
  assert page.get_by_role('button',name='上传到计算器',exact=True).is_enabled()
  assert page.get_by_role('button',name='按名称取回对象',exact=True).is_enabled()
  for name in ['接收计算器文件','读取计算器目录','退出计算器 SERVER']:
-  assert page.get_by_role('button',name=name,exact=True).count()==0
- assert '串口支持上传和按名称取回对象' in page.get_by_role('dialog').inner_text()
+  assert page.get_by_role('button',name=name,exact=True).count()==1
+ assert '选择有线串口和二进制文件' in page.get_by_role('dialog').inner_text()
  assert 'SF(-78)' in page.get_by_role('dialog').inner_text()
  page.locator('[data-testid="transfer-file"]').set_input_files({'name':'SERIAL.hp','mimeType':'application/octet-stream','buffer':b'HPHP49-C\x00\xff\r\n'})
  page.get_by_label('计算器内文件名',exact=True).fill('SERIAL')
@@ -149,9 +149,46 @@ with sync_playwright() as p:
  page.get_by_role('button',name='按名称取回对象',exact=True).click()
  page.wait_for_function('()=>{const m=window.__messages.filter(m=>m.type==="file-transfer-start").at(-1);return m.mode==="get"&&m.transport==="serial"&&m.name==="SERIAL"}')
  page.get_by_role('button',name='取消传输',exact=True).click()
+ page.get_by_role('button',name='关闭',exact=True).click()
+ page.get_by_role('button',name='连接',exact=True).click()
+ assert page.get_by_role('combobox',name='连接类型',exact=True).input_value()=='串口'
+ assert page.get_by_role('button',name='接收计算器文件',exact=True).is_enabled()
  page.get_by_role('combobox',name='连接类型',exact=True).click();page.get_by_role('option',name='USB',exact=True).click()
  for name in ['接收计算器文件','读取计算器目录','退出计算器 SERVER']:
   assert page.get_by_role('button',name=name,exact=True).count()==1
+ # Multiple selections keep independently editable calculator names and send
+ # the next file only after a final completion from the production controller.
+ before=page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").length')
+ page.locator('[data-testid="transfer-file"]').set_input_files([
+  {'name':name+'.hp','mimeType':'application/octet-stream','buffer':b'HPHP49-C'+bytes([index,0,255])}
+  for index,name in enumerate(['FIRST','SECOND','THIRD'])])
+ for name in ['FIRST','SECOND','THIRD']:
+  page.get_by_label('计算器内文件名 · '+name+'.hp',exact=True).fill(name)
+ page.get_by_label('计算器内文件名 · FIRST.hp',exact=True).fill('RENAMED')
+ page.get_by_role('button',name='上传到计算器',exact=True).click()
+ page.wait_for_function('(count)=>window.__messages.filter(m=>m.type==="file-transfer-start").length===count',arg=before+1)
+ assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name')=='RENAMED'
+ assert page.get_by_label('计算器内文件名 · SECOND.hp',exact=True).is_disabled()
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"complete",name:"RENAMED.1"})}')
+ page.wait_for_function('(count)=>window.__messages.filter(m=>m.type==="file-transfer-start").length===count',arg=before+2)
+ assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name')=='SECOND'
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"error",error:"Calculator full"})}')
+ batch=page.locator('[data-testid="upload-batch"]')
+ assert batch.get_by_text('已上传 1 / 3 个文件',exact=True).count()==1
+ for text in ['RENAMED.1','已上传','失败','未发送']:
+  assert batch.get_by_text(text,exact=True).count()==1,text
+ assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").length')==before+2
+ page.screenshot(path=str(ROOT/'build/ui-upload-batch-zh.png'))
+ # A bad later object fails complete-batch validation before any first upload.
+ page.locator('[data-testid="transfer-file"]').set_input_files([
+  {'name':'GOOD.hp','mimeType':'application/octet-stream','buffer':b'HPHP49-C\x00'},
+  {'name':'BAD.hp','mimeType':'application/octet-stream','buffer':b'not a calculator object'}])
+ page.get_by_role('button',name='上传到计算器',exact=True).click()
+ page.wait_for_function('window.__controller.state.transfer.phase==="error"&&window.__controller.state.uploadBatch?.items.every(i=>i.phase==="not-sent")')
+ assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").length')==before+2
+ assert page.get_by_label('计算器内文件名 · BAD.hp',exact=True).is_enabled()
+ page.get_by_role('button',name='移除 BAD.hp',exact=True).click()
+ assert page.get_by_label('计算器内文件名',exact=True).input_value()=='GOOD.hp'
  page.get_by_role('button',name='关闭',exact=True).click()
  for width in [320,390,720,1360]:
   page.set_viewport_size({'width':width,'height':900})
@@ -164,5 +201,5 @@ with sync_playwright() as p:
  assert page.locator('.traditional-geometry').count()==0
  assert page.evaluate('window.__controller.frames.size')==0
  assert not errors,errors
- print('Offline components: lazy keypad load/view/model races, reuse, active key/segments, PC input and unmount; exact full canvas RGBA, changed and blank frames; bilingual Apply/Cancel, PC key + modifier selection, printed legends, PNG download, file upload/cancel/stale receive/download/raw exclusion, four viewport widths pass. No HTTP/ROM/Worker E2E.')
+ print('Offline components: lazy keypad load/view/model races, reuse, active key/segments, PC input and unmount; exact full canvas RGBA, changed and blank frames; bilingual Apply/Cancel, PC key + modifier selection, printed legends, PNG download, file upload/cancel/stale receive/download/raw exclusion, upload batch names/sequencing/partial error/full preflight, four viewport widths pass. No HTTP/ROM/Worker E2E.')
  b.close()

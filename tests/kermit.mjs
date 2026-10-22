@@ -36,7 +36,7 @@ assert.equal(parameters(bytes('~* @-#N1 ')).binary,null);
 for(const name of ['', '..', '../x', 'a/b', 'a\\b', 'C:x','x\n','\u0100', 'x'.repeat(65),' name'])assert.throws(()=>validateFilename(name));
 assert.equal(validateFilename('A\xe9'), 'A\xe9');
 assert.deepEqual(transferCapabilities(4),{send:true,receive:true,get:true,directory:true,finish:true});
-assert.deepEqual(transferCapabilities(4,'serial'),{send:true,receive:false,get:true,directory:false,finish:false});
+assert.deepEqual(transferCapabilities(4,'serial'),{send:true,receive:true,get:true,directory:true,finish:true});
 for(const model of [0,1,2,3,5,6,7])for(const transport of ['usb','serial'])
   assert(Object.values(transferCapabilities(model,transport)).every(enabled=>!enabled));
 assert(Object.values(transferCapabilities(4,'invalid')).every(enabled=>!enabled));
@@ -155,7 +155,7 @@ for(const ending of ['cancel','error','early-break','discard']){
 {
   const {transfer:f,events}=usbFixture();
   assert.throws(()=>f.start({request:1,transport:'usb',mode:'send',name:'bad',bytes:bytes('ROM')},0));
-  assert.throws(()=>f.start({request:1,transport:'serial',mode:'receive'},0));
+  assert.throws(()=>f.start({request:1,transport:'serial',mode:'unknown'},0));
   f.start({request:2,transport:'usb',mode:'receive'},0);assert(f.active);
   f.cancel(1,'cancel',1);assert(f.active,'stale cancel must not cancel newer transfer');
   f.cancel(1,'cancel',2);assert(!f.active);assert.equal(events.at(-1).phase,'cancelled');

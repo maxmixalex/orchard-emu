@@ -2,7 +2,17 @@
 
 ## 当前范围与新增证据
 
-UART0 非 FIFO 发送空缓冲区的 **level 中断**补齐后，原版 HP48gII 已完成串口对象上传和 GET。文件 UI 仅为该机型开放串口这两项操作；串口 Receive、目录和 FINISH 仍未开放。USB 的五项能力保持独立。这里验证的是内部功能 UART，不是物理计算器连线或真实波特率。
+UART0 非 FIFO 发送空缓冲区的 **level 中断**补齐后，原版 HP48gII 先完成串口对象上传和 GET；2026-10-22 的后续生产浏览器验证补齐了 **Receive、目录、FINISH 和同一连接复用**。文件 UI 现在为该机型开放 USB 与串口的这五项操作。这里验证的是内部功能 UART，不是物理计算器连线或真实波特率。
+
+### 2026-10-22：五项操作及批量上传
+
+[本轮汇总证据](evidence/file-workflows-r16.json) 固定六个生产资源、ROM、HOME 会话、上传对象及完整私有报告的 SHA-256。生产 WASM 仍为 `ce9f81ac…`，没有改变 CPU、UART 或按键时序。浏览器从 HOME 经物理按键进入串口 SERVER，顺序完成上传、GET、目录、FINISH；随后通过计算器原始 `SEND` 命令主动发送，再次进入 SERVER 并 GET。六个终态均是 `serial` / `complete`，三份实际浏览器下载的 37 字节对象正文均与原件相同，45 字节完整文件仅有头部 offset 7 的 C→B 差异。全程只有一次串口连接，无 USB 连接、页面/Worker 错误或 diagnostic stop。
+
+第一次完整流程在上传、GET、目录和 FINISH 后暴露了界面问题：关闭后重开 Connections 会把目标重置为 USB，因此仍连接的串口 Receive 按钮不可用。原失败报告保留。连接选择现保存在 App 层，关闭窗口后仍保留；组件回归和上述完整生产浏览器重跑均通过。
+
+另一条独立串口运行通过真实多文件选择器选中两份对象，分别上传为 `OR22A` / `OR22B`，逐个 GET 并实际下载，目录同时包含两项，FINISH 成功。同样的 USB 批次也通过，四份下载正文一致。每批 16 个文件/8 MiB 的上限由确定性测试覆盖，本次原版固件实测批次为两个文件。逐文件完成、失败、取消和未发送状态、完整批次预校验及复现命令见[文件传输](file-transfer.md#uploading-several-files)。
+
+### 先前的 UART0 修复
 
 根因对应一个具体硬件缺口：原版系统消费初始化包后启用了 TXD0 子中断，但旧核心从未产生该源。Samsung 手册规定 `UCON0[9]=1`、发送模式 `01`、非 FIFO 时，发送缓冲区为空应持续请求；屏蔽不阻止 pending 锁存，W1C 后条件仍在则重新触发。现有功能发送器立即把字节交给宿主队列，因此宿主尚未读取的字节不代表硬件发送缓冲区仍占用。实现与边界见[虚拟连接](virtual-link.md#current-functional-uart0)。
 
@@ -89,6 +99,6 @@ node tools/probe-stock-serial.mjs \
 
 最后一个路径应与同目录的 `kermit.js` 配套。要复现这里的精确失败，需使用上表相同的冻结协议文件；未提供时使用当前仓库版本。这个历史脚本固定要求旧基线 WASM，不会自动替换为修复后的核心。它不是自动化测试套件的一部分，也不用于墙钟性能比较。
 
-修复后的浏览器路径使用 `tools/probe-file-transfer-browser.py --transport serial --expected-wasm SHA256 --start-server`，并提供本地 ROM、HOME 会话、原创上传对象和新的输出目录。探针通过物理按键选择串口，再通过真实文件选择器、串口连接、上传、GET 和浏览器下载验收；所有终态必须报告 `transport: serial`，且没有 USB 连接。显式 WASM 哈希不符时先拒绝，不会把新核心改标为旧基线。
+修复后的完整浏览器路径使用 `tools/probe-file-transfer-browser.py --transport serial --expected-wasm SHA256 --start-server --server-commands --active-send`，并提供本地 ROM、HOME 会话、原创上传对象和新的输出目录。探针通过物理按键选择串口，再通过真实文件选择器、上传、GET、目录、FINISH、计算器主动 SEND 和再次 GET 验收；所有终态必须报告 `transport: serial`，且没有 USB 连接。显式 WASM 哈希不符时先拒绝，不会把新核心改标为旧基线。
 
-下一步分别验证串口 Receive、目录和 FINISH，再考虑扩大能力表。Pulse 发送中断、FIFO 触发、UART1/2、物理线路和波特率时序仍不在本次补缺范围内。上传成功也不意味着所有程序载荷均可执行，HP49 的头版本正规化不能掩盖正文差异。
+Pulse 发送中断、FIFO 触发、UART1/2、物理线路和波特率时序仍不在本次补缺范围内。更大对象、计算器主动多文件 SEND、容量耗尽和线路故障恢复需各自的原版固件案例。上传成功也不意味着所有程序载荷均可执行，HP49 的头版本正规化不能掩盖正文差异。

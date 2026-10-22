@@ -15,7 +15,7 @@ bytes or LCD pixels.
 core input, and inserts an observer into a generated copy of `src/cpu.c`
 immediately after the original successful instruction fetch. The original
 fetch, interpreter, scheduler, checkpoint, MMU and bus implementations remain
-unchanged. The four diagnostic exports are absent from the production build.
+unchanged. The five diagnostic exports are absent from the production build.
 Duplicate/missing source anchors and changed source files fail the build.
 
 ```sh
@@ -187,3 +187,66 @@ execution sandbox (`EPERM`), before compilation or guest execution; its failed
 manifest is retained locally. The permitted build and the three-scene replay
 then each ran once. Native collector ASan/UBSan checks passed; LeakSanitizer
 was disabled because this host cannot provide its ptrace support.
+
+## Operand pairs: concrete specialization scope (2026-10-22)
+
+The v2 collector separates overlapping neighbors from disjoint pairs:
+positions (1,2), (3,4), and so on, restarting at every existing bounded-block
+boundary. Pairing happens **before** filtering by opcode family; this is a
+fixed alignment, not the maximum possible nonoverlapping match for a selected
+family. Every eligible instruction belongs to one disjoint pair or one odd
+block tail, and the summary verifies that conservation rule.
+
+Each structural signature contains the two ALU kinds, twelve operand forms,
+GPR RAW/WAR/WAW dependencies, conditional execution, flag writes, and flag
+dependencies through conditions or carry inputs. Ignored MOV/MVN Rn and test
+instruction Rd fields do not create false dependencies. RRX consumes carry
+without S; logical S instructions preserve carry for unshifted operands and
+register shifts whose observed low eight Rs bits are zero. Preserving a flag
+is not classified as consuming or writing it. The diagnostic exposes no
+opcode, PC, register number, immediate value or guest byte. Its 65,536-entry
+exact signature table fails on overflow.
+
+The complete compact [aggregate](evidence/arm-operand-pairs-r16.json) retains
+all 450 / 443 / 442 observed signatures. MOV→MOV, ADD→CMP and MOV→AND were
+preselected from v1's counts, before running the v2 diagnostic.
+
+### Original-ROM result
+
+Production core `640a229` supplied a fresh 100M-quanta HOME checkpoint. The
+original HP39g+ ROM, three existing expected LCD hashes, 1,500,000/600,000-quanta
+contacts and 12,000-quanta sampling produced the same workload endpoints and
+instruction counts as v1. Each frozen workload then ran once on production
+WASM and once on diagnostic WASM. Complete checkpoints, LCD bytes, UART hashes,
+input contacts and instruction counts all matched. No host time was measured.
+
+| HP39g+ scene | All disjoint pure-DP pairs | Paired instructions / all fetches | Simple independent MOV→MOV pairs¹ | Their instructions / all fetches |
+| --- | ---: | ---: | ---: | ---: |
+| `1+1` | 2,272,944 | 34.69% | 275,350 | 4.20% |
+| APLET library | 2,218,484 | 36.18% | 307,596 | 5.02% |
+| APLET Function START | 2,931,334 | 36.27% | 416,284 | 5.15% |
+
+¹ Both instructions are unconditional, do not write flags, use an unrotated
+immediate or unshifted register, and have no GPR RAW/WAR/WAW dependency.
+These percentages count both instructions in each pair, with all successful
+fetches as the denominator. They are neither CPU-time shares nor speedups.
+
+The largest `1+1` signature is **ADD immediate → CMP immediate** with a GPR RAW
+dependency: **484,027 disjoint pairs**, covering 7.39% of its fetched
+instructions. Two independent unshifted-register MOVs account for **231,632 /
+280,345 / 375,867** pairs across the three scenes. A separate LSR-immediate
+MOV → LSL-immediate MOV form contributes **173,429 / 214,893 / 296,572** pairs.
+
+The next concrete cost study is an independent MOV pair and the ADD→CMP
+forwarding form, assessed separately. Generated code must demonstrate a
+specific register access or decode saving after paying recognition guards.
+The first instruction's architectural result must still be visible to an
+interrupt or a fault fetching the second instruction. Reusing a mapping alone
+would repeat the held fetch-reuse candidate; these observations do not supply
+a new cost justification for that mechanism.
+
+The collector passed native Release assertions, ASan/UBSan, JS signature and
+counter validation, and the three original-ROM comparisons. Tests cover all
+condition masks, ignored operand fields, RRX, zero/256-valued register shifts,
+run/event/discontinuity boundaries, zero signatures, overflow and reset.
+Production CPU execution remains unchanged.

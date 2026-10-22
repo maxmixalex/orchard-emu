@@ -53,8 +53,9 @@ Restore accepts .ord and older .orchard files for the same ROM. Automatic
 localStorage saves are opt-in and do not store the ROM; keep exported backups.
 Connections > Files uploads HP48gII objects over internal USB or serial and retrieves
 named objects for explicit local download. Start Kermit SERVER on the calculator
-with the matching connection and binary transfer selected. USB also supports
-Receive, directory and FINISH; serial currently exposes upload and GET.
+with the matching connection and binary transfer selected. Both connections support
+Receive, directory and FINISH. Select up to 16 objects (8 MiB total) for a batch;
+all files are checked before sending and each result is shown separately.
 Raw data retains serial and USB packets. HP39 applets and complete Conn3x
 replacement remain in development.
 The browser connection does not create a device in the desktop operating system.

@@ -42,8 +42,7 @@ function fixture(){
 function start(f,request=1,extra={}){f.send({type:'file-transfer-start',request,transport:'usb',mode:'receive',...extra});}
 function final(f,request){return f.output.filter(e=>e.type==='file-transfer-status'&&e.request===request).at(-1);}
 
-for(const extra of [{mode:'send',name:'ROM',bytes:new Uint8Array(16)},{mode:'unknown'},{transport:'invalid'},
-  ...['receive','directory','finish'].map(mode=>({transport:'serial',mode}))]){
+for(const extra of [{mode:'send',name:'ROM',bytes:new Uint8Array(16)},{mode:'unknown'},{transport:'invalid'}]){
   const f=fixture();start(f,1,extra);assert.equal(final(f,1).phase,'error');assert.equal(final(f,1).active,false);
   assert.equal(f.inspect().running,true,'Invalid transfer input must not pause the calculator');assert(!f.output.some(e=>e.type==='error'));
 }
@@ -79,6 +78,30 @@ for(const transport of ['usb','serial'])for(const action of ['pause','reset','cr
   assert.deepEqual(files[0].bytes,text('HPHP49-Cdata'));assert.equal(final(f,1).phase,'complete');
   assert(!f.output.some(e=>e.type==='uart-output'),'Serial Kermit packets must not leak into the raw terminal');
   assert(f.inspect().running);
+}
+// Serial receive and remote commands own the UART through their final ACK;
+// they must not need a USB host or publish partial output.
+for(const mode of ['receive','directory','finish']){
+  const f=fixture();f.send({type:'usb-connect',connected:false});
+  start(f,1,{transport:'serial',mode});f.pump();assert(f.inspect().active);
+  const incoming=p=>{f.uartIncoming.push(p);f.pump();};
+  if(mode!=='receive')incoming(packet(0,'Y',PARAMETERS));
+  if(mode==='finish')incoming(packet(0,'Y'));
+  else {
+    incoming(packet(0,'S',PARAMETERS));
+    incoming(packet(1,mode==='directory'?'X':'F',text(mode==='directory'?'Directory':'OBJECT')));
+    incoming(packet(2,'D',text(mode==='directory'?'OBJECT 45':'HPHP49-Cdata')));
+    incoming(packet(3,'Z'));
+    assert(!f.output.some(e=>['file-transfer-received','file-transfer-listing'].includes(e.type)));
+    incoming(packet(4,'B'));
+  }
+  assert.equal(final(f,1).phase,'complete',mode);assert.equal(final(f,1).transport,'serial');
+  assert(f.inspect().running);assert(!f.output.some(e=>e.type==='uart-output'));
+  const files=f.output.filter(e=>e.type==='file-transfer-received');
+  const listings=f.output.filter(e=>e.type==='file-transfer-listing');
+  assert.equal(files.length,mode==='receive'?1:0);assert.equal(listings.length,mode==='directory'?1:0);
+  if(files.length)assert.deepEqual(files[0].bytes,text('HPHP49-Cdata'));
+  if(listings.length)assert.equal(listings[0].text,'OBJECT 45');
 }
 {
   const f=fixture();f.send({type:'usb-connect',connected:true});start(f,1,{transport:'usb'});assert(f.inspect().active);

@@ -14,11 +14,12 @@ HP48gII model and HOME setup. Capabilities are checked per transport and operati
 | Connection | Upload | GET | Receive | Directory | FINISH |
 | --- | --- | --- | --- | --- | --- |
 | Internal USB | Yes | Yes | Yes | Yes | Yes |
-| Internal UART0 serial | Yes | Yes | Not exposed | Not exposed | Not exposed |
+| Internal UART0 serial | Yes | Yes | Yes | Yes | Yes |
 
 The [serial validation record](stock-serial-validation.md) retains the original
-zero-reply counterexample and the successful round trip after the UART0 TX-empty
-level interrupt was implemented. Raw serial diagnostics remain separate.
+zero-reply counterexample, the successful round trip after the UART0 TX-empty
+level interrupt repair, and the subsequent production-browser witness for all
+five operations and same-connection reuse. Raw serial diagnostics remain separate.
 HP39 typed files, catalogs and client/server
 workflow are a separate application protocol. A Kermit ACK alone does not prove
 HP39 object compatibility. Physical USB, host OS enumeration, Conn3x/Conn4x
@@ -49,11 +50,12 @@ on the same connection retain readiness. Cancellation, failure and reconnection
 clear it. This does not add a timer, change the core execution budget, or impose
 an arbitrary fixed delay on every packet.
 
-Limits are shared by the UI, controller and Worker:
+Transfer and upload-batch limits are:
 
 | Boundary | Limit |
 | --- | --- |
 | One upload or received file | 2 MiB |
+| One selected upload batch | 16 files / 8 MiB total |
 | Received files in one transaction | 16 |
 | Aggregate received content | 8 MiB |
 | Filename | 1–64 single-byte characters |
@@ -76,6 +78,56 @@ Uploads must begin with an HP48/49 binary-object header or an HP text-file
 `%%HP:` header. This is a family/container check, not a complete parser or a
 guarantee that the calculator can execute every uploaded program. ROMs, ZIP
 archives and HP39 typed files are not accepted as HP48/49 uploads.
+
+### Uploading several files
+
+The file chooser accepts multiple local objects. Each selected object has its
+own editable calculator name; duplicate target names are rejected before
+starting. The controller checks every name, declared size, total size, actual
+byte length and file header before sending the first object. An invalid later
+file therefore cannot leave an earlier file uploaded during preflight.
+
+The batch reuses the existing single-file Kermit transaction for each object,
+on either admitted transport. It waits for the preceding transaction's final
+ACK before starting the next request. It does not add a multi-file wire protocol
+or assume that enumeration means the original server is ready. Every object
+gets a distinct request identifier, and late replies cannot advance a later
+object. The UI retains per-file completion, failure, cancellation and not-sent
+states, including the receiver's chosen replacement name when available.
+
+If an object fails or the user cancels, the queue stops. Previously acknowledged
+objects remain on the calculator; no automatic retry or rollback is attempted.
+Later objects are marked not sent. Pause, a disconnect of the selected transport,
+Worker failure and machine/session replacement invalidate pending work, including
+local file reads still in progress. A different transport disconnect does not
+cancel the active batch. ROM replacement clears its old result list.
+
+Controller regressions cover both transports, complete-batch rejection,
+16-file/8-MiB bounds, final-ACK ordering, stale requests, partial completion and
+these cancellation boundaries. The offline browser component test exercises
+multiple selection, editable names, acknowledgement-driven advancement and a
+failed second object with a not-sent third. Those tests are not a stock-firmware
+batch or physical-cable interoperability witness.
+
+Separate original-HP48gII production-browser runs now cover both transports.
+Each run uses the real multiple-file chooser to select two independently named
+copies of the original 45-byte probe, edits their targets to `OR22A` and `OR22B`,
+waits for both complete transactions, and obtains both objects through GET and
+actual browser downloads. All four downloads contain the same 37 object bytes;
+the only whole-file difference is the documented `HPHP49-C` to `HPHP49-B` header
+revision. Each directory contains both target names, FINISH succeeds, and the
+same connection is retained. The serial run never connects USB. Both runs have
+no page/Worker error or diagnostic stop, and their six production asset hashes
+agree. The [workflow evidence](evidence/file-workflows-r16.json) records report
+and asset hashes, terminal operations and downloaded-object comparisons.
+This establishes a two-object batch on the admitted firmware, not a
+maximum-capacity or physical Conn3x acceptance claim.
+
+The reusable `tools/probe-file-batch-browser.py` requires local private ROM,
+session and object files, an explicit production WASM SHA-256 and a new output
+directory. It also accepts a different second object via `--second-upload`.
+Raw downloaded objects, sessions, screenshots and full reports remain local;
+neither run changes instruction budgets or supplies a fabricated protocol ACK.
 
 Receive results are withheld until every file has a valid EOF and the final
 transaction packet has been acknowledged through the transport. An incomplete,
@@ -294,7 +346,8 @@ source or guest state was patched for this witness. The preceding direct-core
 diagnostic independently completed the same single-file SEND/Receive/GET path.
 
 This establishes single-file calculator-initiated SEND and connection reuse.
-Multiple-file SEND remains a separate end-to-end case. Run the browser probe with
+The later two-object host upload batch is covered above; calculator-initiated
+multi-file SEND remains a separate end-to-end case. Run the browser probe with
 `--start-server --server-commands --active-send` and a short uppercase alphanumeric
 `--name` to reproduce it with private inputs. This is a functional check, not a
 throughput or latency result.

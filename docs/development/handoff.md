@@ -1,5 +1,52 @@
 # Continuation handoff
 
+## Current continuation from 640a229 (2026-10-22)
+
+The user's latest instruction resumes three parallel lanes: measured `1+1` /
+APLET performance work, browser file transfer toward Conn3x replacement, and
+unsupported-model research with the user's HP39gs / HP49g+ machines available
+for capture. This supersedes the older request below to defer those captures.
+
+The production CPU and clock/input policies are unchanged in this continuation.
+The isolated [ARM operand-pair profiler](arm-block-profile.md) now distinguishes
+operand forms, GPR and NZCV dependencies, and fixed disjoint pairs. All three
+HP39g+ scenes preserve full architectural checkpoints, LCD, UART, instruction
+counts and key contacts. Simple independent MOV pairs cover only 4.20% / 5.02% /
+5.15% of all fetches; ADD-immediate to CMP-immediate is a distinct `1+1`
+candidate. No host timing was sampled and no speedup is claimed. Preserve the
+prior HOLD candidates until a materially different implementation passes the
+same functional and browser timing gates.
+
+HP48gII [file workflows](file-transfer.md) now expose upload, GET, Receive,
+directory and FINISH over both internal USB and UART0. A complete serial
+production-browser witness covers active calculator SEND and another GET on
+the same connection without USB. Both transports also complete two-object
+upload batches and actual downloads with unchanged 37-byte object bodies.
+The only full-file difference is the original system's binary-header C-to-B
+revision. The UI keeps the selected connection across modal reopen. A complete
+batch is validated before its first send; each subsequent request waits for
+the preceding final ACK, and failure/cancel/lifecycle transitions stop the queue.
+The 16-file/8-MiB bounds are deterministic-test coverage, not stock maximum-
+capacity evidence. [Published summary](evidence/file-workflows-r16.json) pins
+the tested assets and retains the earlier modal-reopen failure identity.
+
+The [HP39gs return probe](hp39-return-probe.md) is a ready-to-transfer minimal
+aplet, with the 39-specific L275 rebuilt byte-for-byte from source and distributed
+with its corresponding source/license. Its single ARM instruction is `bx lr`;
+it does not read Flash. Hardware installation, visible return and responsive
+HOME still require the user's observation before implementing a bounded read
+probe. The [HP49g+ staged read package](flash-capture.md) remains the other
+capture path, with version, short samples and address mapping to verify first.
+Neither package admits a new emulator model. HP39 uploads, complete remote
+management, physical/host-OS connection, and all-model cold boots remain open.
+
+Local validation covers native/reference/sanitizer regressions, the production
+WASM and independent CPU oracle, controller/Worker/lifecycle cases and real
+browser behavior. Keep GitHub Build, Pages deployment and published asset/revision
+checks separate from these local results. ROMs, raw captures, sessions and full
+browser/profiler reports stay in ignored local directories. The sections below
+retain the previous sequence of work and its narrower historical scope.
+
 ## HP39 release gap after PR #2 (2026-10-20)
 
 The continuation from merged `ac16d1d` changes only the HP39 calculator release

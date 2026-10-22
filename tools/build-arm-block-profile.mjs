@@ -39,7 +39,7 @@ export async function buildProfile(directory) {
     '-Iinclude', '-Isrc', '-Itools', ...names.map(n => n === 'cpu' ? cpuPath : `src/${n}.c`),
     'app/wasm.c', '-o', wasmPath, '-Wl,--no-entry', '-Wl,--export-memory', '-Wl,--stack-first',
     '-Wl,-z,stack-size=524288', '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216'];
-  const manifest = { schema: 'orchard-arm-block-profile-build-v1', passed: false,
+  const manifest = { schema: 'orchard-arm-block-profile-build-v2', passed: false,
     compiler, arguments: args, source_sha256: hashes, generated_cpu_sha256: hash(cpu),
     purpose: 'Diagnostic counts only; instrumented elapsed time is not a performance measurement.' };
   try {
@@ -55,7 +55,7 @@ export async function buildProfile(directory) {
     manifest.wasm_sha256 = hash(await readFile(wasmPath));
     const module = await WebAssembly.compile(await readFile(wasmPath));
     assert.equal(WebAssembly.Module.imports(module).length, 0);
-    for (const name of ['reset', 'run_boundary', 'finish', 'count'])
+    for (const name of ['reset', 'run_boundary', 'finish', 'count', 'pair'])
       assert(WebAssembly.Module.exports(module).some(e => e.name === `arm_block_profile_${name}`));
     for (const name of inputs)
       assert.equal(hash(await readFile(resolve(root, name))), hashes[name], `Source changed during build: ${name}`);

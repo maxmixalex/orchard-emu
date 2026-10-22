@@ -125,13 +125,11 @@ def main():
     parser.add_argument('--server-commands', action='store_true',
                         help='Also verify directory and FINISH through the UI, then capture a physical 1+1 calculation for visual review')
     parser.add_argument('--active-send', action='store_true',
-                        help='After FINISH, verify physical calculator SEND, a real Receive download, then GET again on the same USB connection')
+                        help='After FINISH, verify physical calculator SEND, a real Receive download, then GET again on the selected connection')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     if args.active_send and not args.server_commands:
         parser.error('--active-send requires --server-commands')
-    if args.transport == 'serial' and (args.server_commands or args.active_send):
-        parser.error('Serial validation only covers upload and GET; server commands and active SEND are separate gates')
     if args.transport == 'serial' and not args.expected_wasm:
         parser.error('--transport serial requires an explicit --expected-wasm SHA-256')
     expected_wasm = args.expected_wasm or BASELINE_WASM
@@ -249,7 +247,7 @@ def main():
                     stage('server-commands')
                     before = page.evaluate('window.__transferProbe.events.length')
                     page.get_by_role('button', name='List calculator files', exact=True).click()
-                    report['directory'] = terminal(page, 'receive', before)
+                    report['directory'] = terminal(page, 'receive', before, args.transport)
                     listings = page.evaluate('window.__transferProbe.events')[before:]
                     listing = [e['text'] for e in listings if e['type'] == 'file-transfer-listing']
                     assert len(listing) == 1 and args.name in listing[0], listing
@@ -257,7 +255,7 @@ def main():
                     report['directory_characters'] = len(listing[0])
                     before = page.evaluate('window.__transferProbe.events.length')
                     page.get_by_role('button', name='Exit calculator SERVER', exact=True).click()
-                    report['finish'] = terminal(page, 'receive', before)
+                    report['finish'] = terminal(page, 'receive', before, args.transport)
                     page.get_by_role('button', name='Close', exact=True).click()
                     if args.active_send:
                         stage('calculator-send')
@@ -271,7 +269,7 @@ def main():
                         page.get_by_role('button', name='Receive from calculator', exact=True).click()
                         page.get_by_role('button', name='Close', exact=True).click()
                         physical_keys(page, (6,))
-                        report['calculator_send'] = terminal(page, 'receive', before)
+                        report['calculator_send'] = terminal(page, 'receive', before, args.transport)
                         page.get_by_role('button', name='Connections', exact=True).click()
                         report['active_send_download'] = download_object(page, source, args.output/'active-send.hp')
                         page.get_by_role('button', name='Clear list', exact=True).click()
@@ -282,14 +280,15 @@ def main():
                         page.get_by_label('Name on calculator', exact=True).fill(args.name)
                         before = page.evaluate('window.__transferProbe.events.length')
                         page.get_by_role('button', name='Get named object', exact=True).click()
-                        report['get_after_active_send'] = terminal(page, 'receive', before)
+                        report['get_after_active_send'] = terminal(page, 'receive', before, args.transport)
                         report['subsequent_get_download'] = download_object(page, source, args.output/'after-active-send.hp')
                         report['active_send_physical_keys'] = send_scans + [6]
-                        usb_events = [e for e in page.evaluate('window.__transferProbe.events')
-                                      if e['type'] == 'usb-status']
-                        connected = [i for i, e in enumerate(usb_events) if e['phase'] == 'Connected']
-                        assert len(connected) == 1 and all(e['connected'] for e in usb_events[connected[0]:]), usb_events
-                        report['same_usb_connection'] = True
+                        link_events = [e for e in page.evaluate('window.__transferProbe.events')
+                                       if e['type'] == args.transport + '-status']
+                        connected = [i for i, e in enumerate(link_events) if e.get('connected')
+                                     and (args.transport == 'serial' or e['phase'] == 'Connected')]
+                        assert len(connected) == 1 and all(e['connected'] for e in link_events[connected[0]:]), link_events
+                        report['same_' + args.transport + '_connection'] = True
                     else:
                         physical_keys(page, (26,5,26,6))
                         page.screenshot(path=str(args.output/'after-finish-calculation.png'))

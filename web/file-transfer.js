@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 import { KermitSession, MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename } from './kermit.js';
 export { MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename };
+export const MAX_UPLOAD_FILES = 16;
+export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 export function transferCapabilities(model,transport='usb') {
   // HP39 typed catalog/client mode has a different application protocol. A
   // generic Kermit ACK must not imply that an HP48 object can be sent to it.
   const usb=model===4&&transport==='usb',serial=model===4&&transport==='serial';
-  // The repaired UART0 has a stock upload/GET witness. Passive SEND reception
-  // and remote commands still need their own serial acceptance evidence.
-  return Object.freeze({send:usb||serial,receive:usb,get:usb||serial,directory:usb,finish:usb});
+  // Both HP48gII paths use the same bounded Kermit application protocol.
+  // Admission is scoped to this model; other families need their own witness.
+  const supported=usb||serial;
+  return Object.freeze({send:supported,receive:supported,get:supported,directory:supported,finish:supported});
 }
 export function validateUpload(model, name, bytes) {
   validateFilename(name);

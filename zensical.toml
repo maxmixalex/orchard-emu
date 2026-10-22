@@ -19,6 +19,7 @@ nav = [
     "development/flash-capture.md",
     "development/hp39-files.md",
     "development/hp39-native-prerequisites.md",
+    "development/hp39-return-probe.md",
     "development/boot-research.md",
     "development/startup-memory.md",
     "development/startup.md",
