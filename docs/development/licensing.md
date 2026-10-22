@@ -44,8 +44,8 @@ provenance without assuming possession grants redistribution rights.
 ## Build-time dependencies
 
 C compiler/linker, CMake, Node and optional Zensical are external build tools,
-not vendored project source. The current browser uses platform fonts and no
-npm libraries. The freestanding WASM core has no linked third-party emulator
+not vendored project source. The browser uses platform fonts and the locked
+frontend packages described below. The freestanding WASM core has no linked third-party emulator
 or libc implementation. Native builds use the host standard C library.
 
 Native-region follow-up also inspects original HP firmware bytes and published
@@ -82,3 +82,21 @@ actual input graph and places the complete notices of included packages in
 for react-remove-scroll-bar 2.3.8 because its package lacks that text. Original
 UI and host adapters remain MIT; hp-calcs-svg remains separately Apache-2.0.
 No Linux driver or external emulator implementation is copied or distributed.
+
+## Separate HP39gs calculator probe package
+
+The downloadable [HP39gs return probe](hp39-return-probe.md) is a separate
+calculator-side package. Its compiled aplet and 39-specific launcher are
+distributed under GPLv2 or later, with all corresponding source/header inputs,
+build scripts, GPL text and upstream notices. Original probe and packaging
+source files retain their MIT notices; those notices do not relicense the
+combined compiled calculator objects or HP-GCC sources. No non-profit-use
+exception is used to justify this distribution.
+
+The archive includes the exact HP-GCC inputs needed to rebuild both objects.
+Rebuilding the launcher reproduces the author's published bytes, and rebuilding
+from the unpacked archive reproduces the entire package. HPTools remains an
+external compiler; no compiler binary, calculator firmware or bootloader is
+included. The GPL calculator code is not linked, copied or translated into
+Orchard's native/WASM core, browser bundle or standalone host. See the package's
+`licenses/hpgcc39/NOTICE.md` and `manifest.json` for identities and licensing.

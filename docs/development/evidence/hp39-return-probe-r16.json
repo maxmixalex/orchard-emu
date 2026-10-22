@@ -1,0 +1,64 @@
+{
+  "schema": "orchard-hp39-return-evidence-v1",
+  "scope": "Reproducible HP39gs ARM entry/return probe; no Flash read",
+  "package": {
+    "path": "docs/downloads/hp39gs-arm-return-v1.zip",
+    "bytes": 543243,
+    "sha256": "c019ae16463b6e4c898f9cde4b158e8eeed8bd46fa0ed6b59fb7c84bb3511ba5",
+    "compiled_calculator_objects_license": "GPL-2.0-or-later",
+    "corresponding_source_and_build_scripts_included": true,
+    "firmware_included": false
+  },
+  "launcher": {
+    "bytes": 1489,
+    "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1",
+    "source_repository": "https://github.com/lobakkang/patched-hpgcc-1.1-sdk-for-hp39gs",
+    "source_commit": "7fa1503912338ea0fdf1d39eb584770f4d121cd2",
+    "source_subdirectory": "sources/HP39-Aplet/LIB275",
+    "rebuilt_byte_equal_to_original_distribution": true
+  },
+  "aplet": {
+    "bytes": 815,
+    "sha256": "08c17dbc0a0ce376bf1c2b55aece5a861b4c1dc24a0ed7ff7e9f64257e32c18c",
+    "directory_fields": 40,
+    "code_entries": 4,
+    "launcher_call": "XLIB 275,0",
+    "arm_instruction_word": "e12fff1e",
+    "arm_instruction": "bx lr",
+    "arm_bytes": 4,
+    "requested_extra_ram": 0,
+    "mmu_reconfiguration": false
+  },
+  "external_build_dependency": {
+    "toolchain": "HPTools 3.0.8, local author 64-bit patch",
+    "source_url": "https://www.hpcalc.org/hp48/pc/programming/hptools-src-3.0.8.tar.gz",
+    "source_sha256": "21e2c2196d0567c281c3046e6e24198bbf3f8ae28c6a0574f00ede365d0ce608",
+    "patch_url": "https://pdo.github.io/hptools/hptools-pdo-20190426.patch",
+    "patch_sha256": "179d7c245869e02b7373c7fd4dacf191d8f4ce174515675cfbecc57b1b99dba9",
+    "compiler_redistributed": false
+  },
+  "validation": {
+    "extracted_package_rebuild_byte_equal": true,
+    "independent_reviewer_rebuild_byte_equal": true,
+    "regression_command": "python3 tests/hp39-return-package.py",
+    "regression_groups_passed": 4,
+    "object_structure_mutation_controls_passed": 10,
+    "independent_arm_assembly": "clang-18 --target=arm-none-eabi -mcpu=arm920t; llvm-objdump-18; bytes 1e ff 2f e1",
+    "independent_reviewer_arm_execution": {
+      "engine": "Unicorn 2.1.4",
+      "cases_passed": 6,
+      "inputs": "NZCV 0, A, F; LR 0x2000 or 0x2001",
+      "observed": "PC = LR & ~1; CPSR Thumb bit follows LR bit 0; R0-R14 unchanged; no data reads/writes",
+      "scope": "One ARM instruction extracted from the final object; does not execute SysRPL or the launcher"
+    }
+  },
+  "stock_os_installation_or_execution_verified": false,
+  "hardware_validated": false,
+  "full_flash_reader": false,
+  "remaining": [
+    "Target HP39gs VERSION and existing Library 275 identity",
+    "Transfer and install with the target stock OS",
+    "ARM entry/return display, HOME calculation, repeated entry, ordinary transfer and removal on target",
+    "Later fixed-address sample, physical mapping and complete boot-region-inclusive Flash capture"
+  ]
+}

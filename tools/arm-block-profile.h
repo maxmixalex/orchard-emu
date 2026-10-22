@@ -18,6 +18,8 @@ enum {
     OP_NATURAL_BLOCKS, OP_NATURAL_MAX, OP_BOUNDED_BLOCKS, OP_BOUNDED_MAX,
     OP_EVENT_CUTS, OP_RUN_CUTS, OP_NONCONTIGUOUS_CUTS, OP_OTHER_CUTS,
     OP_UNIQUE, OP_OVERFLOW, OP_PAIRS, OP_RUNS, OP_RUN_UNIQUE_SUM, OP_RUN_UNIQUE_MAX,
+    OP_BOUNDED_PAIRS, OP_DISJOINT_PAIRS, OP_ODD_BLOCKS, OP_PAIR_SIGNATURES,
+    OP_PAIR_OVERFLOW,
     OP_KINDS = 32, OP_FORMS = 48, OP_NATURAL_HIST = 64,
     OP_BOUNDED_HIST = 128, OP_KIND_PAIRS = 192,
     OP_CACHE_HITS = 448, OP_CACHE_MISSES = 452,
@@ -26,10 +28,18 @@ enum {
 };
 typedef struct { uint32_t opcode, used, run; } o_profile_opcode;
 typedef struct { uint32_t opcode, epoch; } o_profile_cache;
+typedef struct { uint32_t key, used; uint64_t adjacent, disjoint; } o_profile_pair;
+typedef struct {
+    uint32_t reads, writes, flags_written, condition_flags;
+    unsigned kind, form;
+    bool carry_input;
+} o_profile_operand;
 static struct {
     uint64_t counts[OP_COUNT];
     o_profile_opcode opcodes[65536];
     o_profile_cache caches[2][4][4096];
+    o_profile_pair pairs[65536];
+    o_profile_operand previous_operand;
     uint64_t previous_tick, previous_exceptions;
     uint32_t previous_pc, previous_mode, previous_quiet, previous_kind;
     uint32_t natural, bounded, run, run_unique;
@@ -45,6 +55,7 @@ static void arm_block_profile_flush(bool natural) {
     ++o_profile.counts[total];
     if (*length > o_profile.counts[maximum]) o_profile.counts[maximum] = *length;
     ++o_profile.counts[histogram + (*length >= 64u ? 63u : *length - 1u)];
+    if (!natural && (*length & 1u)) ++o_profile.counts[OP_ODD_BLOCKS];
     *length = 0;
 }
 static void arm_block_profile_run_finish(void) {
@@ -86,6 +97,101 @@ void arm_block_profile_finish(void) {
 O_PROFILE_EXPORT("arm_block_profile_count")
 uint64_t arm_block_profile_count(unsigned index) {
     return index < OP_COUNT ? o_profile.counts[index] : 0;
+}
+/* Only structural tags and frequencies leave this private diagnostic table.
+ * Zero denotes an unused slot; a stored tag is returned plus one, so tag zero
+ * remains representable. No opcode, PC, register number or value is exposed.
+ */
+O_PROFILE_EXPORT("arm_block_profile_pair")
+uint64_t arm_block_profile_pair(unsigned slot, unsigned field) {
+    if (slot >= 65536u || !o_profile.pairs[slot].used) return 0;
+    const o_profile_pair *entry = &o_profile.pairs[slot];
+    return field == 0u ? (uint64_t)entry->key + 1u :
+           field == 1u ? entry->adjacent : field == 2u ? entry->disjoint : 0;
+}
+static uint32_t arm_block_profile_condition_flags(unsigned condition) {
+    switch (condition) {
+    case 0: case 1: return O_Z;
+    case 2: case 3: return O_C;
+    case 4: case 5: return O_N;
+    case 6: case 7: return O_V;
+    case 8: case 9: return O_C | O_Z;
+    case 10: case 11: return O_N | O_V;
+    case 12: case 13: return O_N | O_Z | O_V;
+    default: return 0;
+    }
+}
+static o_profile_operand arm_block_profile_operand(const o_cpu *c, uint32_t op) {
+    o_profile_operand out = {0};
+    out.kind = (op >> 21) & 15u;
+    bool test = out.kind >= 8u && out.kind <= 11u;
+    bool arithmetic = (out.kind >= 2u && out.kind <= 7u) ||
+                      out.kind == 10u || out.kind == 11u;
+    if (out.kind != 13u && out.kind != 15u) out.reads |= 1u << ((op >> 16) & 15u);
+    if (!test) out.writes = 1u << ((op >> 12) & 15u);
+    bool shifter_writes_carry = false;
+    if (op & (1u << 25)) {
+        out.form = (op & 0xf00u) ? 1u : 0u;
+        shifter_writes_carry = out.form == 1u;
+    } else {
+        out.reads |= 1u << (op & 15u);
+        unsigned shift = (op >> 5) & 3u, amount = (op >> 7) & 31u;
+        if (op & 16u) {
+            unsigned rs = (op >> 8) & 15u;
+            out.reads |= 1u << rs; out.form = 8u + shift;
+            shifter_writes_carry = (c->r[rs] & 255u) != 0;
+        } else {
+            out.form = shift == 0u && !amount ? 2u :
+                       shift == 3u && !amount ? 7u : 3u + shift;
+            shifter_writes_carry = out.form != 2u;
+            out.carry_input = out.form == 7u; /* RRX consumes C even without S. */
+        }
+    }
+    out.carry_input = out.carry_input || (out.kind >= 5u && out.kind <= 7u);
+    if (op & (1u << 20)) {
+        out.flags_written = O_N | O_Z;
+        if (arithmetic) out.flags_written |= O_C | O_V;
+        else if (shifter_writes_carry) out.flags_written |= O_C;
+    }
+    out.condition_flags = arm_block_profile_condition_flags(op >> 28);
+    return out;
+}
+static uint32_t arm_block_profile_pair_key(o_profile_operand a, o_profile_operand b) {
+    uint32_t key = a.kind | (b.kind << 4) | (a.form << 8) | (b.form << 12);
+    if (a.writes & b.reads) key |= 1u << 16;  /* RAW */
+    if (a.reads & b.writes) key |= 1u << 17;  /* WAR */
+    if (a.writes & b.writes) key |= 1u << 18; /* WAW */
+    if (a.flags_written & b.condition_flags) key |= 1u << 19;
+    if ((a.flags_written & O_C) && b.carry_input) key |= 1u << 20;
+    if ((a.condition_flags | (a.carry_input ? O_C : 0)) & b.flags_written)
+        key |= 1u << 21;
+    if (a.flags_written & b.flags_written) key |= 1u << 22;
+    if (a.flags_written) key |= 1u << 23;
+    if (b.flags_written) key |= 1u << 24;
+    if (a.condition_flags) key |= 1u << 25;
+    if (b.condition_flags) key |= 1u << 26;
+    return key;
+}
+static void arm_block_profile_pair_record(o_profile_operand current) {
+    uint32_t key = arm_block_profile_pair_key(o_profile.previous_operand, current);
+    unsigned slot = (key * UINT32_C(0x9e3779b9)) >> 16;
+    bool disjoint = (o_profile.bounded & 1u) != 0;
+    ++o_profile.counts[OP_BOUNDED_PAIRS];
+    if (disjoint) ++o_profile.counts[OP_DISJOINT_PAIRS];
+    for (unsigned attempt = 0; attempt < 65536u; ++attempt) {
+        o_profile_pair *entry = &o_profile.pairs[slot];
+        if (!entry->used || entry->key == key) {
+            if (!entry->used) {
+                entry->used = 1; entry->key = key;
+                ++o_profile.counts[OP_PAIR_SIGNATURES];
+            }
+            ++entry->adjacent;
+            if (disjoint) ++entry->disjoint;
+            return;
+        }
+        slot = (slot + 1u) & 65535u;
+    }
+    ++o_profile.counts[OP_PAIR_OVERFLOW];
 }
 static void arm_block_profile_opcode(uint32_t opcode) {
     uint32_t h = opcode * UINT32_C(0x9e3779b9);
@@ -167,6 +273,7 @@ static void arm_block_profile_fetch(const orchard_machine *m, uint32_t op,
     ++o_profile.counts[OP_KINDS + kind];
     unsigned form = op & (1u << 25) ? 0u : (op & 16u) ? 3u : (op & 0xff0u) ? 2u : 1u;
     ++o_profile.counts[OP_FORMS + form];
+    o_profile_operand operand = arm_block_profile_operand(c, op);
     arm_block_profile_opcode(op);
     bool contiguous = o_profile.natural && c->r[15] == o_profile.previous_pc + 4u &&
         m->ticks == o_profile.previous_tick + 1u &&
@@ -188,7 +295,9 @@ static void arm_block_profile_fetch(const orchard_machine *m, uint32_t op,
             ++o_profile.counts[OP_EVENT_CUTS]; arm_block_profile_flush(false);
         }
     }
+    if (o_profile.bounded) arm_block_profile_pair_record(operand);
     ++o_profile.natural; ++o_profile.bounded;
+    o_profile.previous_operand = operand;
     o_profile.previous_pc = c->r[15]; o_profile.previous_tick = m->ticks;
     o_profile.previous_exceptions = c->exceptions;
     o_profile.previous_mode = c->cpsr & 255u;

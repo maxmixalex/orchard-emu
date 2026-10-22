@@ -114,10 +114,15 @@ An updater combined with different boot code cannot close a full-dump gate.
 The staged [HP49g+ read package](flash-capture.md) now supplies two 16-byte
 probes and independent A/B capture programs. First validate the user's ROM
 version, probe encoding and ARM-to-physical mapping; a complete candidate
-image does not itself close cold-boot or board gates. HP39gs still needs a
-verified stock-OS reader. Its [native-entry prerequisites](hp39-native-prerequisites.md)
-now pin the 39-specific library and source identity, distinguish directory aliases,
-and define an entry/return probe before any flash-address access. Work on the
+image does not itself close cold-boot or board gates. The ready-to-transfer
+[HP39gs ARM return probe](hp39-return-probe.md) now includes the 39-specific
+launcher rebuilt byte-for-byte from its pinned source, corresponding source and
+license, and an original aplet whose only ARM instruction is `bx lr`. Its
+structure and return instruction have independent checks; stock installation,
+visible return and responsive HOME still require the user's hardware witness.
+Only after that check should a bounded read probe establish mapping before a
+complete HP39gs capture. [Native-entry prerequisites](hp39-native-prerequisites.md)
+retain the model/library/version and directory-alias boundaries. Work on the
 available machines continues in parallel.
 
 ## M5 — Usable browser calculator
@@ -143,7 +148,7 @@ instruction loop or ROM upload. Node WASM tests do not certify page behavior.
 
 ## M6 — Virtual PC connectivity
 
-**Bounded HP48gII USB client and serial upload/GET implemented; broader transfer gates open.**
+**Bounded HP48gII USB/serial object workflows and upload batches implemented; broader transfer gates open.**
 
 M6.1 covers UART bytes, bounded queues, cancellation/replay/disconnect and an
 optional native PTY/TCP adapter. M6.2 covers USB reset, EP0 control requests,
@@ -162,9 +167,13 @@ The [file client](file-transfer.md) adds an original bounded Kermit implementati
 browser upload, named retrieval, explicit downloads and lifecycle cancellation.
 An unchanged HP48gII ROM completes USB and serial object round trips. The object
 bytes match; the OS changes the binary transport-header revision byte on export.
-Serial upload/GET follow a narrowly tested UART0 TX-empty level interrupt repair;
-its other file operations remain closed. USB calculator-initiated SEND and
-same-connection GET also have production-browser evidence. [HP39 typed-file and
+Serial support follows a narrowly tested UART0 TX-empty level interrupt repair.
+Both transports now expose upload, GET, Receive, directory and FINISH, with
+calculator-initiated SEND and same-connection GET production-browser evidence.
+The complete-batch preflight and sequential uploader accept at most 16 objects
+and 8 MiB; two independently named objects were uploaded and downloaded on each
+transport with identical object bytes. The maximum bounds have deterministic
+tests, not stock maximum-capacity witnesses. [HP39 typed-file and
 bundle validation](hp39-files.md) is groundwork for its distinct application
 protocol, with opaque payloads and hardware upload still unverified.
 
@@ -212,6 +221,17 @@ and an emulator subdirectory in the same Pages site. Actual browser-origin
 E2E, automatic persistence and sustained full-key compatibility remain open.
 
 ## Performance continuation
+
+The latest [operand-pair profile](arm-block-profile.md) uses an isolated diagnostic
+build against the unchanged production core. HP39g+ `1+1`, APLET Library and
+Function START preserve full checkpoints, LCD, UART, instruction counts and key
+contacts. Fixed disjoint pure-DP pairs cover 34.69% / 36.18% / 36.27% of all
+fetched instructions, but the simple independent MOV-pair subset covers only
+4.20% / 5.02% / 5.15%. The `1+1` ADD-immediate to CMP-immediate dependency is a
+separate candidate. These are structural counts, not measured CPU-time shares
+or speedups; no new optimized execution path is enabled by this continuation.
+Prior HOLD candidates remain excluded until exact-state and browser timing
+comparisons justify a distinct implementation.
 
 [Measured optimization](performance.md) removes repeated keyboard circuit
 resolution, empty IRQ arbitration and debugger snapshot churn, with optimized

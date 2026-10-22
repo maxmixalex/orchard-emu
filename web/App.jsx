@@ -117,16 +117,16 @@ function Settings({controller,state,onClose}){
   </Tabs><Group justify="flex-end" mt="lg"><Button variant="default" onClick={onClose}>{t('cancel')}</Button><Button onClick={()=>{controller.setPreferences(draft);void i18n.changeLanguage(language);try{controller.storage?.setItem(LANG_KEY,language);}catch{}onClose();}}>{t('apply')}</Button></Group>
  </Modal>;
 }
-function Connections({controller,state,onClose}){
- const {t}=useTranslation();const [target,setTarget]=useState('usb'),[format,setFormat]=useState('hex'),[text,setText]=useState('');
- const active=Boolean(state.transfer?.active);
+function Connections({controller,state,target,onTargetChange,onClose}){
+ const {t}=useTranslation();const [format,setFormat]=useState('hex'),[text,setText]=useState('');
+ const active=Boolean(state.transfer?.active||state.uploadBatch?.active);
  function send(){try{let bytes;if(format==='text')bytes=new TextEncoder().encode(text);else{const value=text.trim();if(!/^[a-f\d]{2}(?:\s+[a-f\d]{2})*$/i.test(value))throw Error('hex');bytes=Uint8Array.from(value.split(/\s+/).map(x=>parseInt(x,16)));}
   if(bytes.length>(target==='serial'?1024:64))throw Error('length');controller.send(target==='serial'?'uart':'usb-send',{bytes});}catch{controller.report('invalidBytes');}}
  return <Modal opened trapFocus={!state.dialog} onClose={onClose} title={t('connections')} size="lg" closeButtonProps={{'aria-label':t('close')}}><Stack>
   <Group justify="space-between"><Text>{t('serial')} · {t(state.serial?'connected':'disconnected')}</Text><Button variant="light" aria-label={`${t(state.serial?'disconnect':'connect')} ${t('serial')}`} onClick={()=>controller.connectLink('serial',!state.serial)}>{t(state.serial?'disconnect':'connect')}</Button></Group>
   <Group justify="space-between"><Text>USB · {t(state.usbReady?'connected':state.usb?'connecting':'disconnected')}</Text><Button variant="light" aria-label={`${t(state.usb?'disconnect':'connect')} USB`} onClick={()=>controller.connectLink('usb',!state.usb)}>{t(state.usb?'disconnect':'connect')}</Button></Group>
   {state.usbInfo&&<Text size="sm">{state.usbInfo.manufacturer} · {state.usbInfo.name} · {state.usbInfo.vendor.toString(16).padStart(4,'0')}:{state.usbInfo.product.toString(16).padStart(4,'0')}</Text>}
-  <Select label={t('target')} value={target} onChange={setTarget} disabled={active} data={['serial','usb'].map(k=>({value:k,label:t(k)}))}/>
+  <Select label={t('target')} value={target} onChange={value=>{if(value)onTargetChange(value);}} disabled={active} data={['serial','usb'].map(k=>({value:k,label:t(k)}))}/>
   <Tabs defaultValue="files" keepMounted><Tabs.List><Tabs.Tab value="files">{t('transferFiles')}</Tabs.Tab><Tabs.Tab value="bytes">{t('rawConnection')}</Tabs.Tab></Tabs.List>
   <Tabs.Panel value="files" pt="md"><FileTransfer controller={controller} state={state} transport={target}/></Tabs.Panel>
   <Tabs.Panel value="bytes" pt="md"><Stack><Text size="sm" c="dimmed">{t('linkNotice')}</Text>
@@ -136,7 +136,7 @@ function Connections({controller,state,onClose}){
   <pre className="link-log">{state.log||'—'}</pre></Stack></Tabs.Panel></Tabs></Stack></Modal>;
 }
 export function App({controller}){
- const {t}=useTranslation(),state=useSyncExternalStore(controller.subscribe,controller.getSnapshot,controller.getSnapshot),[settings,setSettings]=useState(false),[connections,setConnections]=useState(false);
+ const {t}=useTranslation(),state=useSyncExternalStore(controller.subscribe,controller.getSnapshot,controller.getSnapshot),[settings,setSettings]=useState(false),[connections,setConnections]=useState(false),[connectionTarget,setConnectionTarget]=useState('usb');
  const rom=useRef(null),session=useRef(null),modalOpen=settings||connections||Boolean(state.dialog),modalRef=useRef(modalOpen);modalRef.current=modalOpen;
  useEffect(()=>{const unbind=bindLifecycle(window,document,()=>controller.pause(),{preferences:()=>controller.state.prefs,release:()=>controller.release(),save:()=>controller.requestAuto()});
   const key=e=>{if(e.repeat||e.isComposing||modalRef.current||e.target.closest('input,textarea,select,[contenteditable="true"]')||e.target.closest('button,[role="button"]')&&(e.key==='Enter'||e.key===' '))return;
@@ -160,7 +160,7 @@ export function App({controller}){
   <CalculatorDisplay controller={controller} model={state.model} prefs={state.prefs} enabled={enabled}/>
   <footer><span>Orchard · <a href="LICENSE">MIT</a> · <a href="debug.html">{t('developer')}</a></span><span>{t('artwork')} <a href="https://github.com/zyf722/hp-calcs-svg">hp-calcs-svg</a> · <a href="licenses/hp-calcs-svg/NOTICE.txt">Apache-2.0 / NOTICE</a> · {t('copyright')}</span></footer>
   <input ref={rom} id="rom" type="file" accept=".bin,.rom,.raw" hidden onChange={e=>controller.open(e.target.files[0])}/><input ref={session} id="session-file" type="file" accept=".ord,.orchard" hidden onChange={e=>controller.restore(e.target.files[0])}/>
-  {settings&&<Settings controller={controller} state={state} onClose={()=>setSettings(false)}/>}{connections&&<Connections controller={controller} state={state} onClose={()=>setConnections(false)}/>}
+  {settings&&<Settings controller={controller} state={state} onClose={()=>setSettings(false)}/>}{connections&&<Connections controller={controller} state={state} target={connectionTarget} onTargetChange={setConnectionTarget} onClose={()=>setConnections(false)}/>}
   <Modal opened={Boolean(state.dialog)} onClose={()=>controller.answer(null)} title={state.dialog?t(state.dialog.title):''} zIndex={400} centered closeButtonProps={{'aria-label':t('close')}}>
    {state.dialog&&<><Text>{t(state.dialog.message,state.dialog.values)}</Text>{state.dialog.values.detail&&<details className="error-details"><summary>{t('details')}</summary><pre>{state.dialog.values.detail}</pre></details>}
     <Group justify="flex-end" mt="lg">{state.dialog.cancel&&<Button variant="default" onClick={()=>controller.answer(false)}>{t(state.dialog.cancel)}</Button>}<Button onClick={()=>controller.answer(true)}>{t(state.dialog.ok)}</Button></Group></>}

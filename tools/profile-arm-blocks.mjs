@@ -12,6 +12,11 @@ import { decodeSession } from '../web/session.js';
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const names = ['AND', 'EOR', 'SUB', 'RSB', 'ADD', 'ADC', 'SBC', 'RSC',
   'TST', 'TEQ', 'CMP', 'CMN', 'ORR', 'MOV', 'BIC', 'MVN'];
+const operandForms = ['immediate_unrotated', 'immediate_rotated', 'register_unshifted',
+  'LSL_immediate', 'LSR_immediate', 'ASR_immediate', 'ROR_immediate', 'RRX',
+  'LSL_register', 'LSR_register', 'ASR_register', 'ROR_register'];
+const dependencies = ['register_RAW', 'register_WAR', 'register_WAW',
+  'flags_to_condition', 'flags_to_carry_input', 'flags_WAR', 'flags_WAW'];
 const total = xs => xs.reduce((a, b) => a + b, 0);
 export function parseArguments(args) {
   assert(args.length === 6 && args.every(a => a && !a.startsWith('--')),
@@ -19,7 +24,17 @@ export function parseArguments(args) {
   return { baseline: args[0], profile: args[1], roms: args[2], fixtures: args[3],
     endpoints: args[4], output: args[5] };
 }
-export function summarizeCounters(raw) {
+export function readPairRecords(core) {
+  assert.equal(typeof core.arm_block_profile_pair, 'function', 'A v2 operand-pair collector is required');
+  const rows = [];
+  for (let slot = 0; slot < 65536; ++slot) {
+    const tag = Number(core.arm_block_profile_pair(slot, 0));
+    if (tag) rows.push([tag - 1, Number(core.arm_block_profile_pair(slot, 1)),
+      Number(core.arm_block_profile_pair(slot, 2))]);
+  }
+  return rows;
+}
+export function summarizeCounters(raw, pairRecords = []) {
   assert.equal(raw.length, 480);
   assert(raw.every(n => Number.isSafeInteger(n) && n >= 0));
   const c = raw;
@@ -27,10 +42,14 @@ export function summarizeCounters(raw) {
   assert.equal(c[1], c[3] + c[4] + c[5] + c[6] + c[7] + c[8]);
   assert.equal(c[9], c[7] + c[8]);
   assert.equal(c[19], 0, 'Exact opcode set overflowed; no partial profile is accepted');
+  assert.equal(c[28], 0, 'Exact pair-signature set overflowed; no partial profile is accepted');
   const kinds = c.slice(32, 48), forms = c.slice(48, 52), pairs = c.slice(192, 448);
   assert.equal(total(kinds), c[7]); assert.equal(total(forms), c[7]);
   assert.equal(total(pairs), c[20]);
   assert.equal(c[20], c[7] - c[10]);
+  assert.equal(c[24], c[7] - c[12], 'Every bounded neighbor must have one pair signature');
+  assert.equal(c[25] * 2 + c[26], c[7], 'Disjoint pairs plus odd block tails must cover every eligible instruction');
+  assert(c[26] <= c[12] && c[25] <= c[24] && c[24] <= c[20]);
   assert.equal(total(c.slice(464, 476)), c[21]);
   const blocks = (offset, count, maximum) => {
     const histogram = c.slice(offset, offset + 64);
@@ -50,6 +69,47 @@ export function summarizeCounters(raw) {
       persistent: { hits: c[448 + i], misses: c[452 + i], hit_fraction: c[7] ? c[448 + i] / c[7] : null },
       cleared_each_run: { hits: c[456 + i], misses: c[460 + i], hit_fraction: c[7] ? c[456 + i] / c[7] : null } };
   });
+  assert.equal(pairRecords.length, c[27]);
+  assert.equal(new Set(pairRecords.map(row => row[0])).size, pairRecords.length);
+  for (const row of pairRecords) {
+    assert(Array.isArray(row) && row.length === 3);
+    assert(row.every(n => Number.isSafeInteger(n) && n >= 0));
+    const [key, adjacent, disjoint] = row;
+    assert(key < 2 ** 27 && ((key >>> 8) & 15) < 12 && ((key >>> 12) & 15) < 12);
+    assert(adjacent > 0 && disjoint <= adjacent);
+  }
+  assert.equal(total(pairRecords.map(row => row[1])), c[24]);
+  assert.equal(total(pairRecords.map(row => row[2])), c[25]);
+  const pairedKinds = Array(16).fill(0), pairedForms = Array(4).fill(0);
+  for (const [key, , disjoint] of pairRecords) {
+    for (const shift of [0, 4]) pairedKinds[(key >>> shift) & 15] += disjoint;
+    for (const shift of [8, 12]) {
+      const form = (key >>> shift) & 15;
+      pairedForms[form < 2 ? 0 : form === 2 ? 1 : form < 8 ? 2 : 3] += disjoint;
+    }
+  }
+  assert(pairedKinds.every((n, i) => n <= kinds[i]), 'Disjoint kind counts exceed all eligible instructions');
+  assert(pairedForms.every((n, i) => n <= forms[i]), 'Disjoint form counts exceed all eligible instructions');
+  const signatures = pairRecords.map(([key, adjacent, disjoint]) => ({
+    first: names[key & 15], second: names[(key >>> 4) & 15],
+    first_form: operandForms[(key >>> 8) & 15], second_form: operandForms[(key >>> 12) & 15],
+    dependencies: Object.fromEntries(dependencies.map((name, i) => [name, Boolean(key & (1 << (16 + i)))])),
+    first_writes_flags: Boolean(key & (1 << 23)), second_writes_flags: Boolean(key & (1 << 24)),
+    first_conditional: Boolean(key & (1 << 25)), second_conditional: Boolean(key & (1 << 26)),
+    adjacent, disjoint, signature: key,
+  })).sort((a, b) => b.disjoint - a.disjoint || b.adjacent - a.adjacent || a.signature - b.signature);
+  // Fixed families from the original v1 kind counts; do not choose a family
+  // after observing this run. Full signatures remain available for audit.
+  const families = [[13, 13], [4, 10], [13, 0]].map(([a, b]) => {
+    const selected = pairRecords.filter(([key]) => (key & 255) === (a | (b << 4)));
+    const plain = selected.filter(([key]) => !(key & 0x7800000) &&
+      [0, 2].includes((key >>> 8) & 15) && [0, 2].includes((key >>> 12) & 15));
+    return { first: names[a], second: names[b], adjacent: total(selected.map(row => row[1])),
+      disjoint: total(selected.map(row => row[2])),
+      unconditional_no_flags_simple_operands_disjoint: total(plain.map(row => row[2])),
+      unconditional_no_flags_simple_operands_no_register_hazards_disjoint:
+        total(plain.filter(([key]) => !(key & 0x70000)).map(row => row[2])) };
+  });
   return { fetched: c[0], arm: c[1], thumb: c[2], condition_failed: c[3],
     branches: c[4], word_byte_or_block_transfers: c[5], other: c[6],
     pure_dp: c[7], fast_dp_excluded_pc: c[8], fast_dp: c[9],
@@ -63,6 +123,12 @@ export function summarizeCounters(raw) {
     kinds: Object.fromEntries(names.map((n, i) => [n, kinds[i]])),
     forms: Object.fromEntries(['immediate', 'unshifted_register', 'immediate_shift', 'register_shift'].map((n, i) => [n, forms[i]])),
     adjacent_kind_order: names, adjacent_kind_matrix: names.map((_, i) => pairs.slice(i * 16, i * 16 + 16)),
+    bounded_operand_pairs: { adjacent_count: c[24], disjoint_count: c[25],
+      unpaired_tail_instructions: c[26], signature_capacity: 65536,
+      disjoint_instruction_fraction_of_all_fetches: c[0] ? 2 * c[25] / c[0] : null,
+      grouping: 'Adjacent pairs overlap. Disjoint pairs are positions (1,2),(3,4),... within each original bounded block; they are counted before filtering by family.',
+      flag_dependencies: 'Only flags consumed by conditions or carry-valued operands count as reads; flags merely preserved are not reads/writes. Register-shift carry writes use the observed low eight bits of Rs.',
+      preselected_families: families, signatures },
     opcode_cache_simulation: { hash: '(opcode * 0x9e3779b9 mod 2^32) high log2(entries) bits',
       policy: 'direct mapped, complete opcode tag, only eligible pure DP references; no timing or production lookup-cost model',
       capacities: caches } };
@@ -126,14 +192,14 @@ function replay(module, model, frame, rom, saved, endpoint, instrumented) {
   const uartHash = uart.digest('hex'); assert.equal(uartHash, endpoint.uart_sha256);
   let profile;
   if (instrumented) {
-    profile = summarizeCounters(Array.from({ length: 480 }, (_, i) => Number(c.arm_block_profile_count(i))));
+    profile = summarizeCounters(Array.from({ length: 480 }, (_, i) => Number(c.arm_block_profile_count(i))), readPairRecords(c));
     assert.equal(profile.runs, calls);
     assert.equal(profile.fetched, final.instructions - initial.instructions);
   }
   return { final, finalCheckpoint, finalPixels, uartHash, events, calls, profile };
 }
 export async function profileScenes(args) {
-  const report = { schema: 'orchard-arm-block-profile-v1', passed: false,
+  const report = { schema: 'orchard-arm-block-profile-v2', passed: false,
     generated_at: new Date().toISOString(), node: process.version, exec_argv: process.execArgv,
     scope: 'Three existing HP39g+ complete-result workloads. Diagnostic counts only; no elapsed times, benchmark gate or hardware speed claim.',
     eligibility: 'Condition-passed ARM data-processing accepted by the current conservative fast path, excluding all PC inputs/outputs; no memory, branch, PSR, Thumb or condition-failed instructions.',

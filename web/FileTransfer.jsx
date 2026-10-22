@@ -6,8 +6,9 @@ import {transferCapabilities} from './file-transfer.js';
 
 const size=n=>new Intl.NumberFormat(undefined,{maximumFractionDigits:1}).format(n/1024)+' KiB';
 export function FileTransfer({controller,state,transport}){
-  const {t}=useTranslation(),input=useRef(null),[file,setFile]=useState(null),[name,setName]=useState('');
-  const transfer=state.transfer,active=Boolean(transfer?.active),connected=transport==='usb'?state.usbReady:state.serial;
+  const {t}=useTranslation(),input=useRef(null),[files,setFiles]=useState([]),[name,setName]=useState('');
+  const file=files[0]?.file,multiple=files.length>1,batch=state.uploadBatch;
+  const transfer=state.transfer,active=Boolean(transfer?.active||batch?.active),connected=transport==='usb'?state.usbReady:state.serial;
   const capabilities=transferCapabilities(state.model.id,transport),supported=capabilities.send;
   const available=supported&&connected&&state.ready&&state.loaded&&!state.busy&&!state.stopped&&!active;
   const progress=transfer?.total?Math.min(100,100*transfer.transferred/transfer.total):0;
@@ -15,10 +16,16 @@ export function FileTransfer({controller,state,transport}){
     <Text size="sm" c="dimmed">{t(!supported?'fileTransfer39Help':transport==='serial'?'fileTransferSerialHelp':'fileTransferHelp')}</Text>
     {supported&&<>
       <Group align="end"><Button variant="default" disabled={active} onClick={()=>{input.current.value='';input.current.click();}}>{t('chooseTransferFile')}</Button>
-        <Text size="sm" style={{overflowWrap:'anywhere',flex:1,minWidth:100}}>{file?`${file.name} (${size(file.size)})`:t('noTransferFile')}</Text></Group>
-      <input ref={input} type="file" data-testid="transfer-file" hidden onChange={e=>{const next=e.target.files[0]||null;setFile(next);setName(next?.name||'');}}/>
-      <TextInput label={t('calculatorFileName')} value={name} onChange={e=>setName(e.currentTarget.value)} maxLength={64} disabled={active}/>
-      <Group><Button disabled={!available||!file} onClick={()=>controller.startTransfer('send',transport,{file,name})}>{t('uploadFile')}</Button>
+        <Text size="sm" style={{overflowWrap:'anywhere',flex:1,minWidth:100}}>{multiple?t('selectedTransferFiles',{count:files.length}):file?`${file.name} (${size(file.size)})`:t('noTransferFile')}</Text></Group>
+      <input ref={input} type="file" multiple data-testid="transfer-file" hidden onChange={e=>{const next=Array.from(e.target.files||[],file=>({file,name:file.name}));setFiles(next);setName(next.length===1?next[0].name:'');}}/>
+      {multiple&&<Stack gap="xs" style={{maxHeight:260,overflowY:'auto'}}>{files.map((entry,index)=><Group key={index} align="end" wrap="nowrap">
+        <TextInput label={`${t('calculatorFileName')} · ${entry.file.name}`} value={entry.name} maxLength={64} disabled={active} style={{flex:1,minWidth:0}}
+          onChange={e=>{const next=e.currentTarget.value;setFiles(current=>current.map((item,i)=>i===index?{...item,name:next}:item));}}/>
+        <Button variant="subtle" size="compact-sm" disabled={active} aria-label={t('removeTransferFile',{name:entry.file.name})}
+          onClick={()=>{const remaining=files.filter((_,i)=>i!==index);setFiles(remaining);if(remaining.length===1)setName(remaining[0].name);}}>{t('removeUploadFile')}</Button>
+      </Group>)}</Stack>}
+      <TextInput label={t(multiple?'retrieveObjectName':'calculatorFileName')} value={name} onChange={e=>setName(e.currentTarget.value)} maxLength={64} disabled={active}/>
+      <Group><Button disabled={!available||!file} onClick={()=>multiple?controller.startUploadBatch(transport,files):controller.startTransfer('send',transport,{file,name})}>{t('uploadFile')}</Button>
         {capabilities.receive&&<Button variant="light" disabled={!available} onClick={()=>controller.startTransfer('receive',transport)}>{t('receiveFiles')}</Button>}
         {capabilities.get&&<Button variant="light" disabled={!available||!name.trim()} onClick={()=>controller.startTransfer('get',transport,{name})}>{t('getNamedFile')}</Button>}
         {active&&<Button color="red" variant="light" onClick={()=>controller.cancelTransfer()}>{t('cancelTransfer')}</Button>}</Group>
@@ -29,9 +36,17 @@ export function FileTransfer({controller,state,transport}){
       {!connected&&<Text size="xs" c="dimmed">{t('fileConnectFirst')}</Text>}
     </>}
     {transfer&&<Stack gap={4} role="status" aria-live="polite">
-      <Text size="sm">{t('transferPhase_'+transfer.phase)}{transfer.name?` · ${transfer.name}`:''}</Text>
-      {transfer.total>0&&<><Progress value={progress} aria-label={t('transferProgress')}/><Text size="xs" c="dimmed">{size(transfer.transferred||0)} / {size(transfer.total)}</Text></>}
+      <Text size="sm">{t('transferPhase_'+transfer.phase)}{!batch&&transfer.name?` · ${transfer.name}`:''}</Text>
+      {!batch&&transfer.total>0&&<><Progress value={progress} aria-label={t('transferProgress')}/><Text size="xs" c="dimmed">{size(transfer.transferred||0)} / {size(transfer.total)}</Text></>}
       {transfer.error&&<Text size="sm" c="red" style={{overflowWrap:'anywhere'}}>{transfer.error}</Text>}
+    </Stack>}
+    {batch&&<Stack gap="xs" data-testid="upload-batch">
+      <Text size="sm">{t('uploadBatchProgress',{completed:batch.completed,count:batch.items.length})}</Text>
+      <Progress value={batch.total?100*batch.transferred/batch.total:0} aria-label={t('transferProgress')}/>
+      <Stack gap="xs" style={{maxHeight:220,overflowY:'auto'}}>{batch.items.map((entry,index)=><Group key={index} justify="space-between" wrap="nowrap">
+        <Text size="sm" style={{overflowWrap:'anywhere',minWidth:0}}>{entry.storedName||entry.name}</Text>
+        <Text size="xs" c={entry.phase==='error'?'red':entry.phase==='complete'?'green':'dimmed'} style={{flexShrink:0}}>{t('uploadPhase_'+entry.phase)}</Text>
+      </Group>)}</Stack>
     </Stack>}
     {state.receivedFiles.length>0&&<Stack gap="xs"><Group justify="space-between"><Text size="sm" fw={600}>{t('receivedFiles')}</Text>
       <Button variant="subtle" size="compact-xs" disabled={active} onClick={()=>controller.clearTransferredFiles()}>{t('clearReceivedFiles')}</Button></Group>

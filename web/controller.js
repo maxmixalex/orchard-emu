@@ -5,7 +5,7 @@ import { CALCULATORS, identifyROM } from './catalog.js';
 import { MAX_SESSION_BYTES } from './session.js';
 import { AUTO_PREFIX, readPreferences, writePreferences, validatePreferences,
   readAuto, writeAuto, sessionName } from './preferences.js';
-import { MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename, validateUpload, transferCapabilities } from './file-transfer.js';
+import { MAX_FILE_BYTES, MAX_UPLOAD_FILES, MAX_UPLOAD_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename, validateUpload, transferCapabilities } from './file-transfer.js';
 export class CalculatorController {
   constructor({worker, storage=null, locks=null, mayRun=()=>true, download=()=>{}, now=()=>new Date()}={}) {
     this.worker=worker; this.storage=storage; this.locks=locks; this.mayRun=mayRun;
@@ -13,10 +13,10 @@ export class CalculatorController {
     this.generation=0; this.selection=0; this.dead=false; this.pending=null; this.last=null;
     this.autoRequest=0; this.autoPending=null; this.autoBlocked=false; this.autoToken=null;
     this.writer=crypto.randomUUID(); this.dialogs=[]; this.dialogId=0;
-    this.transferRequest=0;this.received=new Map();this.receivedId=0;
+    this.transferRequest=0;this.received=new Map();this.receivedId=0;this.uploadQueue=null;
     this.state={model:CALCULATORS[0],prefs:readPreferences(storage),ready:false,loaded:false,running:false,
       busy:false,stopped:false,note:null,dialog:null,serial:false,usb:false,usbReady:false,usbInfo:null,usbPhase:'Disconnected',log:'',
-      transfer:null,receivedFiles:[],transferListing:''};
+      transfer:null,uploadBatch:null,receivedFiles:[],transferListing:''};
     worker.onmessage=({data})=>this.receive(data);
     worker.onerror=()=>{this.endTransfer('error','The calculator worker stopped.');this.patch({ready:false,running:false,busy:false});this.report('workerFailure');};
   }
@@ -31,7 +31,7 @@ export class CalculatorController {
   nextDialog(){if(!this.state.dialog&&this.dialogs.length)this.patch({dialog:this.dialogs.shift()});}
   answer(value){const d=this.state.dialog;if(!d)return;this.patch({dialog:null});d.resolve(value);this.nextDialog();}
   report(message='operationFailed',detail=''){return this.ask('error',message,'ok',null,{detail:String(detail)});}
-  linksReset(){++this.transferRequest;this.received.clear();this.patch({serial:false,usb:false,usbReady:false,usbInfo:null,usbPhase:'Disconnected',log:'',transfer:null,receivedFiles:[],transferListing:''});}
+  linksReset(){++this.transferRequest;this.uploadQueue=null;this.received.clear();this.patch({serial:false,usb:false,usbReady:false,usbInfo:null,usbPhase:'Disconnected',log:'',transfer:null,uploadBatch:null,receivedFiles:[],transferListing:''});}
   create(model=this.state.model,rom=null){
     ++this.generation;clearTimeout(this.autoTimer);this.autoPending=null;this.autoBlocked=false;this.autoToken=null;this.awaitingRestore=false;
     this.pending=rom;this.last=null;this.linksReset();this.patch({model,loaded:false,running:false,stopped:false,busy:Boolean(rom),note:null});
@@ -102,7 +102,7 @@ export class CalculatorController {
     this.send(transport==='usb'?'usb-connect':'serial-connect',{connected});
   }
   async startTransfer(mode,transport,{file=null,name=''}={}){
-    const s=this.state;if(this.dead||!s.ready||!s.loaded||s.busy||s.stopped||s.transfer?.active)return;
+    const s=this.state;if(this.dead||!s.ready||!s.loaded||s.busy||s.stopped||s.transfer?.active||s.uploadBatch?.active)return;
     const token=this.generation,request=++this.transferRequest;
     try{
       if(!['send','receive','get','directory','finish'].includes(mode)||!['serial','usb'].includes(transport))throw Error('Invalid file transfer.');
@@ -112,7 +112,7 @@ export class CalculatorController {
         if(!file||!Number.isSafeInteger(file.size)||file.size<1||file.size>MAX_FILE_BYTES)throw Error(`Choose a file of 1–${MAX_FILE_BYTES} bytes.`);
         name=validateFilename(name||file.name);
       }else if(mode==='get')name=validateFilename(name);
-      this.patch({transfer:{request,active:true,phase:'preparing',transport,direction:mode,name,transferred:0,total:file?.size??0,error:null},transferListing:''});
+      this.patch({transfer:{request,active:true,phase:'preparing',transport,direction:mode,name,transferred:0,total:file?.size??0,error:null},uploadBatch:null,transferListing:''});
       const bytes=mode==='send'?new Uint8Array(await file.arrayBuffer()):undefined;
       if(this.dead||token!==this.generation||request!==this.transferRequest)return;
       if(bytes&&bytes.length!==file.size)throw Error('The file changed while being read.');
@@ -128,18 +128,109 @@ export class CalculatorController {
       this.patch({transfer:{request,active:false,phase:'error',transport,direction:mode,name,transferred:0,total:0,error:String(error.message||error)}});
     }
   }
-  cancelTransfer(){const current=this.state.transfer;if(!current?.active)return;
-    this.send('file-transfer-cancel',{request:current.request});
+  async startUploadBatch(transport,files){
+    const s=this.state;if(this.dead||!s.ready||!s.loaded||s.busy||s.stopped||s.transfer?.active||s.uploadBatch?.active)return;
+    const generation=this.generation,request=++this.transferRequest;let queue=null;
+    try{
+      if(!['serial','usb'].includes(transport)||!transferCapabilities(s.model.id,transport).send)throw Error('This file operation is not available for the selected calculator and connection.');
+      if(transport==='usb'?!s.usbReady:!s.serial)throw Error('Connect the selected link first.');
+      if(!Array.isArray(files)||files.length<1||files.length>MAX_UPLOAD_FILES)throw Error(`Choose 1–${MAX_UPLOAD_FILES} files.`);
+      const names=new Set();let total=0;
+      const entries=files.map(entry=>{
+        const file=entry?.file,name=validateFilename(entry?.name||file?.name);
+        if(!file||typeof file.arrayBuffer!=='function'||!Number.isSafeInteger(file.size)||file.size<1||file.size>MAX_FILE_BYTES)throw Error(`Each file must contain 1–${MAX_FILE_BYTES} bytes.`);
+        if(names.has(name))throw Error('Choose a different calculator name for each file.');
+        names.add(name);total+=file.size;
+        if(total>MAX_UPLOAD_BYTES)throw Error('The selected files exceed the 8 MiB upload limit.');
+        return {file,name,size:file.size};
+      });
+      queue={generation,request,transport,entries,index:-1,completedBytes:0};this.uploadQueue=queue;
+      this.patch({transfer:{request,active:true,phase:'preparing',transport,direction:'send',name:'',transferred:0,total,error:null},
+        uploadBatch:{active:true,completed:0,total,transferred:0,items:entries.map(e=>({name:e.name,size:e.size,phase:'queued',transferred:0}))},transferListing:''});
+      // Validate every complete file before the first calculator transaction.
+      // Reading sequentially also lets cancellation stop unstarted local reads.
+      for(let i=0;i<entries.length;i++){
+        if(this.dead||this.uploadQueue!==queue||generation!==this.generation||request!==this.transferRequest)return;
+        const entry=entries[i];this.updateUploadItem(i,{phase:'preparing'});
+        if(this.dead||this.uploadQueue!==queue||generation!==this.generation||request!==this.transferRequest)return;
+        try{
+          const bytes=new Uint8Array(await entry.file.arrayBuffer());
+          if(this.dead||this.uploadQueue!==queue||generation!==this.generation||request!==this.transferRequest)return;
+          if(bytes.length!==entry.size)throw Error('A file changed while being read.');
+          validateUpload(s.model.id,entry.name,bytes);entry.bytes=bytes;delete entry.file;
+        }catch(error){throw Error(`${entry.name}: ${String(error.message||error)}`);}
+        this.updateUploadItem(i,{phase:'queued'});
+      }
+      queue.index=0;this.sendNextUpload(queue);
+    }catch(error){
+      if(this.dead||generation!==this.generation||request!==this.transferRequest||queue&&this.uploadQueue!==queue)return;
+      const message=String(error.message||error);
+      if(queue)this.endTransfer('error',message);
+      else this.patch({uploadBatch:null,transfer:{request,active:false,phase:'error',transport,direction:'send',name:'',transferred:0,total:0,error:message}});
+    }
+  }
+  updateUploadItem(index,update){
+    const batch=this.state.uploadBatch;if(!batch?.active)return;
+    this.patch({uploadBatch:{...batch,items:batch.items.map((item,i)=>i===index?{...item,...update}:item)}});
+  }
+  sendNextUpload(queue){
+    if(this.dead||this.uploadQueue!==queue||queue.generation!==this.generation)return;
+    const s=this.state;
+    if(!s.ready||!s.loaded||s.busy||s.stopped||(queue.transport==='usb'?!s.usbReady:!s.serial)){
+      this.endTransfer('error','The calculator connection is not ready for the next file.');return;
+    }
+    if(queue.index>0)queue.request=++this.transferRequest;
+    const entry=queue.entries[queue.index],bytes=entry.bytes;
+    this.patch({transfer:{request:queue.request,active:true,phase:'negotiating',transport:queue.transport,direction:'send',name:entry.name,transferred:0,total:entry.size,error:null},
+      uploadBatch:{...s.uploadBatch,items:s.uploadBatch.items.map((item,i)=>i===queue.index?{...item,phase:'sending',transferred:0}:item)}});
+    // Subscribers may cancel or replace the machine while the state is posted.
+    if(this.dead||this.uploadQueue!==queue||queue.generation!==this.generation)return;
+    if(!this.state.running)this.send('run');
+    this.send('file-transfer-start',{request:queue.request,mode:'send',transport:queue.transport,name:entry.name,bytes});
+    // The Worker owns a structured clone; pending files stay bounded locally.
+    delete entry.bytes;
+  }
+  stopUploadBatch(phase,error){
+    const queue=this.uploadQueue,batch=this.state.uploadBatch;if(!queue||!batch?.active)return;
+    this.uploadQueue=null;
+    this.patch({uploadBatch:{...batch,active:false,items:batch.items.map((item,i)=>{
+      if(item.phase==='complete')return item;
+      const started=i===queue.index&&item.phase==='sending';
+      return {...item,phase:started?phase:'not-sent',...(started&&error?{error}:{})};
+    })}});
+  }
+  cancelTransfer(){const current=this.state.transfer;if(!current?.active&&!this.uploadQueue)return;
+    if(current?.active)this.send('file-transfer-cancel',{request:current.request});
     this.endTransfer('cancelled');
   }
-  endTransfer(phase,error=null){const current=this.state.transfer;if(!current?.active)return;
+  endTransfer(phase,error=null){const current=this.state.transfer;if(!current?.active&&!this.uploadQueue)return;
     // Invalidate a pending File.arrayBuffer() and any late messages immediately.
-    ++this.transferRequest;this.patch({transfer:{...current,active:false,phase,error}});
+    ++this.transferRequest;this.stopUploadBatch(phase,error);this.patch({transfer:{...current,active:false,phase,error}});
   }
   transferStatus(data){
     if(data.request!==this.transferRequest||this.state.transfer?.request!==data.request||!this.state.transfer.active)return;
-    const {type,generation,...status}=data;
-    this.patch({transfer:{...this.state.transfer,...status}});
+    const {type,generation,...status}=data,transfer={...this.state.transfer,...status};
+    const queue=this.uploadQueue,batch=this.state.uploadBatch;
+    if(!queue||queue.request!==data.request||!batch?.active){this.patch({transfer});return;}
+    const index=queue.index,item=batch.items[index];if(!item){this.patch({transfer});return;}
+    const transferred=Number.isFinite(data.transferred)?Math.max(0,Math.min(item.size,data.transferred)):item.transferred;
+    const update={transferred,...(data.name?{storedName:data.name}:{})};
+    if(data.active){
+      this.patch({transfer,uploadBatch:{...batch,transferred:queue.completedBytes+transferred,
+        items:batch.items.map((entry,i)=>i===index?{...entry,...update,phase:'sending'}:entry)}});return;
+    }
+    if(data.phase!=='complete'){
+      this.uploadQueue=null;
+      this.patch({transfer,uploadBatch:{...batch,active:false,transferred:queue.completedBytes+transferred,items:batch.items.map((entry,i)=>{
+        if(i<index)return entry;
+        return i===index?{...entry,...update,phase:data.phase==='cancelled'?'cancelled':'error',error:data.error}:{...entry,phase:'not-sent'};
+      })}});return;
+    }
+    queue.completedBytes+=item.size;queue.index++;
+    const active=queue.index<queue.entries.length;if(!active)this.uploadQueue=null;
+    this.patch({transfer,uploadBatch:{...batch,active,completed:queue.index,transferred:queue.completedBytes,
+      items:batch.items.map((entry,i)=>i===index?{...entry,...update,phase:'complete',transferred:item.size}:entry)}});
+    if(active)this.sendNextUpload(queue);
   }
   acceptTransferredFile(data){
     if(data.request!==this.transferRequest||this.state.transfer?.request!==data.request||!this.state.transfer.active)return;
@@ -197,5 +288,5 @@ export class CalculatorController {
   }
   dispose(){if(this.dead)return;this.dead=true;++this.selection;clearTimeout(this.autoTimer);this.autoPending=null;
     this.state.dialog?.resolve(null);for(const d of this.dialogs)d.resolve(null);this.dialogs=[];
-    ++this.transferRequest;this.received.clear();this.worker.terminate();this.listeners.clear();this.frames.clear();}
+    ++this.transferRequest;this.uploadQueue=null;this.received.clear();this.worker.terminate();this.listeners.clear();this.frames.clear();}
 }
