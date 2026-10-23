@@ -162,11 +162,12 @@ static void exercise_idle(bool use_ratio) {
             CHECK((a.cpu.cpsr&31u)==(fiq?O_FIQ:O_IRQ));
             CHECK(a.cpu.r[15]==(fiq?0x1cu:0x18u) && a.soc.clock[3]==0x61b4);
         }
-        /* Timer boundary is independently known: 17 decrements at 8 quanta.
+        /* Before MPLL setup CLKDIVN=3 makes PCLK=Fin/4: 17 decrements at
+           8 PCLK edges are exactly 544 reference quanta.
            Compare the whole state immediately before and at the first IRQ. */
         idle_program(model,3,3); a.soc.tcfg0=3; a.soc.tcon=9;
         a.soc.tcntb[0]=a.soc.count[0]=17; a.soc.intmsk=~(1u<<10);
-        a.cpu.cpsr&=~O_I; duplicate(); idle_steps(135);
+        a.cpu.cpsr&=~O_I; duplicate(); idle_steps(543);
         CHECK(a.cpu.sleeping && a.cpu.instructions==1 && a.cpu.exceptions==0);
         idle_steps(1); CHECK(!a.cpu.sleeping && a.cpu.exceptions==1);
         for (unsigned i=0;i<8;++i) idle_steps(1+random32()%97u);
@@ -184,7 +185,7 @@ static void exercise_idle(bool use_ratio) {
         idle_program(model,3,3); duplicate(); idle_steps(63);
         size_t n=orchard_checkpoint_size(&a); CHECK(n<=sizeof saved);
         CHECK(orchard_checkpoint_save(&a,saved,n)==ORCHARD_OK);
-        CHECK(saved[8]==3 && saved[9]==0 && saved[10]==0 && saved[11]==0);
+        CHECK(saved[8]==4 && saved[9]==0 && saved[10]==0 && saved[11]==0);
         a.cpu.sleeping=false; a.soc.clock[3]=0; a.idle_write_enabled=true;
         CHECK(orchard_checkpoint_load(&a,saved,n)==ORCHARD_OK); same_state();
         a.soc.srcpnd=b.soc.srcpnd=1u<<10;
@@ -227,13 +228,13 @@ static void exercise_one_slot(void) {
     CHECK(orchard_init(&a,sizeof a,1)==&a);
     CHECK(orchard_run_idle(&a,1).status==ORCHARD_NO_ROM);
     for (unsigned model=1;model<=6;++model) {
-        /* This is a deliberately separate functional policy: no CP15/divider
-           encoding changes its one-slot budget or inherits research-mode stops. */
+        /* CP15 mode does not change this policy's one-slot budget. Reserved
+           clock-source encodings still cannot drive the shared PCLK domain. */
         for (unsigned mode=0;mode<4;++mode) for (unsigned div=0;div<8;++div) {
             init(model,div); a.cpu.control|=mode<<30; duplicate();
-            CHECK(orchard_run_idle(&a,101).status==ORCHARD_OK);
+            CHECK(orchard_run_idle(&a,101).status==(div>4?ORCHARD_UNIMPLEMENTED_MMIO:ORCHARD_OK));
             policy_reference(101,false); same_state();
-            CHECK(a.ticks==101 && a.cpu.instructions==101);
+            CHECK(a.ticks==(div>4?1u:101u) && a.cpu.instructions==(div>4?0u:101u));
         }
         init(model,3); a.cpu.control|=0xc0000000u;
         word(a.flash,0xee070f90u); duplicate();
@@ -282,6 +283,8 @@ static void exercise_clocked(void) {
                 CHECK(orchard_run_clocked(&a,n).status==ORCHARD_OK);
                 clocked_reference(n); same_state();
             }
+            CHECK(orchard_run_clocked(&a,544).status==ORCHARD_OK);
+            clocked_reference(544); same_state();
             CHECK(a.cpu.exceptions>0);
             init(model,div); a.cpu.control|=mode<<30;
             word(a.flash,0xee070f90u); duplicate();

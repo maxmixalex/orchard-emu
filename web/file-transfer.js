@@ -2,6 +2,7 @@
 import {Hp39FileServer,prepareHp39Files} from './hp39-transfer.js';
 import {Hp39WireSender,validateHp39WireFile} from './hp39-wire.js';
 import {inspectHp39File,validateHp39Filename} from './hp39-files.js';
+import {transferError} from './transfer-errors.js';
 import { KermitSession, MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename, validateReceiveBudget } from './kermit.js';
 export { MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename };
 export const MAX_UPLOAD_FILES = 16;
@@ -14,12 +15,12 @@ export function transferCapabilities(model,transport='usb') {
 }
 export function validateUpload(model, name, bytes) {
   validateFilename(name);
-  if (!(bytes instanceof Uint8Array) || bytes.length < 1 || bytes.length > MAX_FILE_BYTES) throw new Error('Choose a calculator file of 1 byte to 2 MiB.');
-  if (!transferCapabilities(model).send) throw new Error('File transfer for this calculator family is not available yet.');
+  if (!(bytes instanceof Uint8Array) || bytes.length < 1 || bytes.length > MAX_FILE_BYTES) throw transferError('fileSize','Choose a calculator file of 1 byte to 2 MiB.');
+  if (!transferCapabilities(model).send) throw transferError('unsupportedCalculator','File transfer for this calculator family is not available yet.');
   if(isHp39(model)){validateHp39Filename(name);inspectHp39File(bytes);return bytes;}
   const prefix=Array.from(bytes.subarray(0,8),b=>String.fromCharCode(b)).join('');
   if (!/^HPHP(?:48|49)-[\x20-\x7e]$/.test(prefix) && !prefix.startsWith('%%HP:'))
-    throw new Error('Choose an HP48/49 binary object or an HP text file beginning with %%HP:. HP39 typed files, ROMs and ZIP files use different formats.');
+    throw transferError('hp48FileType','Choose an HP48/49 binary object or an HP text file beginning with %%HP:. HP39 typed files, ROMs and ZIP files use different formats.');
   return bytes;
 }
 export class FileTransfer {
@@ -33,7 +34,7 @@ export class FileTransfer {
     if (this.active) throw new Error('A file transfer is already running.');
     if (!Number.isSafeInteger(data.request)||data.request<=this.lastRequest) throw new Error('Stale file-transfer request.');
     if (!['serial','usb'].includes(data.transport)) throw new Error('Select a file-transfer connection.');
-    if (!transferCapabilities(this.model,data.transport)[data.mode]) throw new Error('This file operation is not available for the selected calculator and connection.');
+    if (!transferCapabilities(this.model,data.transport)[data.mode]) throw transferError('unsupportedOperation','This file operation is not available for the selected calculator and connection.');
     if(data.protocol!==undefined&&data.protocol!=='hp39-wire')throw Error('Invalid file-transfer protocol.');
     const wire=data.protocol==='hp39-wire';
     if(wire&&(!isHp39(this.model)||data.mode!=='send'))throw Error('Wire upload requires an HP39/40 calculator.');
@@ -92,7 +93,7 @@ export class FileTransfer {
     if (!this.pending)return;
     try {
       if (this.currentTransport==='usb') {
-        if(this.active&&!this.wire&&!this.usbReady&&tick>=this.readyDeadline)throw new Error(isHp39(this.model)?'Choose Disk drive in the calculator Send/Receive menu, then reconnect USB.':'The calculator did not enter USB file-transfer mode. Start SERVER or SEND on the calculator and reconnect.');
+        if(this.active&&!this.wire&&!this.usbReady&&tick>=this.readyDeadline)throw transferError(isHp39(this.model)?'hp39UsbMode':'hp48UsbMode',isHp39(this.model)?'Choose Disk drive in the calculator Send/Receive menu, then reconnect USB.':'The calculator did not enter USB file-transfer mode. Start SERVER or SEND on the calculator and reconnect.');
         // One IN transaction per original Worker slice, independent of the
         // display. NAK is ordinary backpressure, never a successful file read.
         const incoming=this.usb.read();
@@ -106,9 +107,9 @@ export class FileTransfer {
         else if (incoming.result!==1)throw new Error('USB file transfer: '+incoming.status);
       }
       this.session.poll(tick);
-    } catch(error) {this.session.fail(error.message);}
+    } catch(error) {this.session.fail(error);}
   }
-  cancel(tick,message='File transfer cancelled.',request=null) {
+  cancel(tick,message=transferError('transferCancelled','File transfer cancelled.'),request=null) {
     if (!this.session||request!==null&&request!==this.request)return;
     this.session.cancel(message);
     // Best effort one packet notification before disconnect/pause. Discard
@@ -116,7 +117,7 @@ export class FileTransfer {
     this.session.poll(tick);this.session.queue=[];this.session.lingerUntil=0;
   }
   resetUsb(tick) {
-    if(this.currentTransport==='usb')this.cancel(tick,'USB connection changed.');
+    if(this.currentTransport==='usb')this.cancel(tick,transferError('linkDisconnected','USB connection changed.'));
     this.usbReady=false;this.writeAfter=Infinity;
   }
 }

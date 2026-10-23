@@ -21,15 +21,15 @@ Firmware and private calculator data remain outside source, releases and Pages.
 
 | Area | Implemented and observed | Remaining boundary |
 | --- | --- | --- |
-| HP39g+ D1.55 | Unchanged cold boot, HOME/arithmetic, browser controls, USB Disk drive and direct Wire installation, reverse SEND; native ROMstream reads complete 1 MiB and returns to responsive HOME | Explicit board/LCD assumptions; reverse SEND remains slow; wider native-program and sustained-use coverage |
-| HP48gII USB revision | Unchanged cold boot, arithmetic, sessions, USB and UART0 Kermit workflows, two-file browser batches and no-card FILES navigation | Explicit SRAM mirror/LCD assumptions; no physical SD slot; broad keypad/power/long-run checks |
-| HP49g+ | User's full 2 MiB capture, unchanged cold boot, 131×80 display, arithmetic, CAS, graphing, sessions, USB/native ARM workflows, FILES navigation and SD image read/write | Explicit SRAM mirror/LCD conditions; infrared/UART2, SD DMA/SDHC, NOR programming and physical-board calibration remain open |
-| HP39gs | User's complete 1 MiB capture and its own bootloader, unchanged cold boot, HOME arithmetic, APLET, browser sessions, Disk installation and native ROMstream dump/return/USB reuse | Explicit exact-SRAM/GPIO/ADC/LCD conditions; broader transfer, sound, native-program and sustained-use coverage |
+| HP39g+ D1.55 | Unchanged cold boot, HOME/arithmetic, browser controls, Disk drive and direct Wire installation including Notes, reverse SEND; full native ROMstream dump/return; inactivity shutdown and ON resume | Explicit board/LCD assumptions; broader reverse-SEND throughput/recovery, native-program and sustained-use coverage |
+| HP48gII USB revision | Unchanged cold boot, arithmetic, sessions, USB and UART0 Kermit workflows, two-file browser batches, no-card FILES navigation, inactivity shutdown and ON resume | Explicit SRAM mirror/LCD assumptions; no physical SD slot; broader keypad, power-mode and long-run checks |
+| HP49g+ | User's full 2 MiB capture, unchanged cold boot, 131×80 display, arithmetic, CAS, graphing, sessions, USB/native ARM workflows, FILES and SD image read/write, shared-PCLK BEEP, inactivity shutdown and ON resume | Explicit SRAM mirror/LCD conditions; infrared/UART2, SD DMA/SDHC, NOR programming and physical-board calibration remain open |
+| HP39gs | User's complete 1 MiB capture and its own bootloader, HOME arithmetic, APLET, browser sessions, Disk/Wire installation including Notes, native ROMstream dump/return/USB reuse, inactivity shutdown and ON resume | Explicit exact-SRAM/GPIO/ADC/LCD conditions; broader transfer, sound, native-program and sustained-use coverage |
 | HP40gs / HP50g | Model profiles and scoped boot-region/updater research | Complete original NORs and independent stock acceptance |
 
 Details: [HP39g+ startup](hp39-startup.md), [HP39gs startup](hp39gs-startup.md), [HP48 startup](startup.md),
 [HP49 startup](hp49-startup.md), [SD cards](sd-cards.md), [file transfer](file-transfer.md),
-[full HP39gs reader](hp39gs-rom-dump.md).
+[full HP39gs reader](hp39gs-rom-dump.md), [power management](power-management.md).
 
 ## M0 — Repository, contracts and reproducibility
 
@@ -68,16 +68,22 @@ RTC/watchdog, LCD frame interrupts, normal ADC, USB PIO/packet transactions and
 a bounded SDI controller with SDSC media cover observed paths. Selected SST39VF1601 /
 SST39VF800A devices provide array/software-ID behavior, not flash programming.
 
+PWM, watchdog, ADC and SDI share the functional PCLK derived from guest clock
+register writes, with fractional phase, peripheral gates and buffered PWM
+reloads. RTC time stays independent. The [Power_OFF model](power-management.md)
+executes the original reset-vector wake path while retaining external SRAM,
+RTC and SD media; four admitted original ROMs pass inactivity/ON continuation.
 The SDI subset models command duration, absent-card timeout, status/IRQ, clock
 gating, a PIO FIFO and reads/writes of an actual host-owned card image. It does
 not implement DMA or SDHC. The original
 HP39 reader uses both documented 2410X/2410A MAXP addresses; their functional
 compatibility is recorded without asserting a silicon alias.
 
-Remaining work includes physical PLL/PCLK/RTC/reset domains, verified component
-identities and pad bias, LCD/annunciator routing, flash commands, DMA, larger SD media,
-power management and traced peripheral modes. Watchdog reset propagation and
-digital input filters remain explicit gaps.
+Remaining work includes measured board input clocks, PLL lock duration,
+physical reset and power-rail behavior, shared-prescaler startup phase, verified
+component identities and pad bias, LCD/annunciator routing, flash commands,
+DMA, larger SD media and further peripheral modes. Watchdog reset propagation
+and digital input filters remain explicit gaps.
 
 **Gate:** one model's dependencies follow independently supported register/pin
 behavior with unchanged firmware and no unverified readback shortcuts. Current
@@ -137,17 +143,20 @@ witnesses with accurate model-specific hardware limits.
 The bilingual UI automatically identifies four supported images, offers normal
 calculator controls, seven separately licensed skins, traditional keys, editable
 physical PC macros, captures, recording, settings and optional local autosave.
-[Immersive landscape](landscape.md) cuts the unchanged skin at the display
-cover and places the screen beside the keyboard. [Firmware sound](buzzer.md)
-observes GPB2/Timer2 edges with gesture-gated Web Audio, mute and volume; the
-original HP49g+ BEEP path is witnessed, with physical pitch/duration still open.
+[Immersive landscape](landscape.md) cuts the unchanged skin below the six
+function keys, placing those keys with the screen to the left of the remaining
+keyboard. [Firmware sound](buzzer.md) observes GPB2/Timer2 edges with
+gesture-gated Web Audio, mute and volume. Shared PCLK and buffered PWM now
+produce the original HP49g+ BEEP's register-derived period; physical board
+clock and speaker measurements remain open.
 The separate workbench retains research controls and diagnostics. The 49g+ LCD
 uses its full 131×80 dimensions in both views and capture export.
 
 One Worker owns execution. Bounded slices, explicit pacing, input queues,
-operation/generation isolation and cancellation remain invariant. Version-3
-sessions include complete SD media and in-flight controller state; exact
-version-1/2 files remain importable with the new fields reset. Binary IndexedDB
+operation/generation isolation and cancellation remain invariant. Version-4
+sessions include complete SD media, in-flight controller state, fractional PCLK
+and PWM latches. Version-1/2/3 files remain importable with an explicit first-cycle
+clock/PWM migration; see [sessions](sessions.md). Binary IndexedDB
 autosaves retain the card and migrate the former small localStorage records.
 Original-ROM and native/WASM continuation are independently checked. Actual
 Chrome file-picker/download/session and Worker tests supplement synthetic tests.
@@ -184,14 +193,23 @@ protocol, validates a whole package first, and uploads its library before the
 aplet. Each object needs a fresh stock RECV selection. This is a faster upload
 path; reverse SEND remains the separate Kermit workflow. The original complete
 HP39gs now has its own Disk installation and native-reader return witness;
-HP40gs still needs its complete NOR. Content recognition replaces filename
+HP40gs still needs its complete NOR. ASCII Notes are converted to the binary
+Saturn string format accepted by Wire; original 39g+ and 39gs install, EDIT and
+export the same content through the NOTEPAD catalog. This does not compile
+ASCII programs or aplets. HP39 receive sessions also retry a fully emitted ACK
+when the next packet does not arrive, within existing retry/deadline bounds;
+exact-object and real sequence-wrap checks cover the recovery. Content recognition replaces filename
 extension filtering. Recoverable batch failures expose Retry/Skip without
 resending completed items. Optional transfer-only Unlimited applies during
 active protocol work and restores the user's selected pace at every terminal
-or user-wait state. Init-Info ACK retries are bounded and do not alter guest time.
+or user-wait state. Its switch is in Settings → Transfer, with the same
+Apply/Cancel behavior as other settings. Stable transfer error codes preserve
+translated messages through the Worker and per-file queue. Initial Info ACK
+and receive ACK retries do not add guest ticks or wall-clock sleeps.
 
-SD preparation now browses/extracts FAT16 files, creates directories and adds
-files transactionally in an unmounted image. The original HP49g+ reads these
+SD preparation browses/extracts FAT16 files, creates directories, adds files,
+renames files or directories and deletes files or empty directories
+transactionally in an unmounted image. The original HP49g+ reads prepared
 files and can add its own objects through FILES; the independent filesystem
 checks and remaining 8.3/PIO/media limits are in [SD cards](sd-cards.md).
 

@@ -1,0 +1,175 @@
+{
+  "schema": "orchard-transfer-independent-review-r21",
+  "scope": "Independent source review and ROM-free regression of Note packing, Wire queue recovery, HP39 receiver ACK repetition and translated error metadata",
+  "passed": true,
+  "production_changes_by_reviewer": false,
+  "findings": [],
+  "source_sha256": {
+    "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+    "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+    "web/hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+    "web/kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+    "web/controller.js": "8dec1d50e49c70f273a0337c8e97f67322236d84342cbe62f0c6aae61e33e018",
+    "web/worker.js": "d6b13921796159a2304125227fc6315b746c29d4cf9bec9342c7cb1df717e4c4",
+    "web/file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+    "web/transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+    "web/FileTransfer.jsx": "0823e4bbe6b10d32db883619edfc26362e2adb01036896abafc693ad2d8dbe6e",
+    "web/i18n.js": "34a725ecf3bbba06bb94ad71fe037d85703a25c3c7c1157cd889ef8bcb46cec4"
+  },
+  "tests": [
+    {
+      "test": "tests/hp39-files.mjs",
+      "exit_code": 0,
+      "log_sha256": "232c06723527218e55d69886b45cb7211fc313458a789842244639cd8c7b448c",
+      "test_sha256": "65bdce34f3d729b2bc5084511be490fcaa2c3590872e761eede41144c6aca295"
+    },
+    {
+      "test": "tests/hp39-wire.mjs",
+      "exit_code": 0,
+      "log_sha256": "4ad6bbb0f7218beeb9b150e553da6a4182db379406532217106ab14605fa1d4d",
+      "test_sha256": "74f32913de4fda80163aa2bb17384487313c4277a68b27719f9a08b4f01d1232"
+    },
+    {
+      "test": "tests/hp39-transfer.mjs",
+      "exit_code": 0,
+      "log_sha256": "1e4b1ff265774add647aae9cd7b6c74bb3db0a2c92c96095ba7c84285b71e96d",
+      "test_sha256": "b693885bb1c4f2767d7141a4fc3a5b8973e13edc1bd7960b98fb7f582fff3ec0"
+    },
+    {
+      "test": "tests/kermit.mjs",
+      "exit_code": 0,
+      "log_sha256": "ff7c84f751f7b438510beda4c1bb9e377ccb332d9007069ff1a8ec3965b5206f",
+      "test_sha256": "2ce875f8669158f4749acf2fa1f1b93503c3e7e607b2af4d1d4d294fe5726c00"
+    },
+    {
+      "test": "tests/file-transfer-controller.mjs",
+      "exit_code": 0,
+      "log_sha256": "55fd0fe84d354447428342d767decedb7d30130557de1aaf119cfc38de7c780b",
+      "test_sha256": "8580c1e29916e5d6012e38bd5bb2806261c79908751e8299d70aa0408174e4f3"
+    },
+    {
+      "test": "tests/file-transfer-worker.mjs",
+      "exit_code": 0,
+      "log_sha256": "6e185ad29b6d4281aa72d8f52608ea5cc0cf90ea2a680c207729b7c12a13fe9e",
+      "test_sha256": "634769403c48e14b1fc2b07cd80e97a65c2acb292d7d9f118bbb4519509d1d72"
+    },
+    {
+      "test": "tests/worker-pacing.mjs",
+      "exit_code": 0,
+      "log_sha256": "a6bbfc777d162d968bd7c13e3fac8b5c2f5869603e7067c593f6dcb3f6071000",
+      "test_sha256": "7eb18a1a5129714bb7c26c1c69dbf42882fe715e4e96b347dd0cd6cb596d586e"
+    },
+    {
+      "test": "tests/timing.mjs",
+      "exit_code": 0,
+      "log_sha256": "8bc12237c5330efa68d3b56b348b691d2a691c7f8842295c9d1f421bb2e474dd",
+      "test_sha256": "554ae62f5d249da5451afd6a07ab929a7a75aeb6f25dc2323c289bb484ac5230"
+    },
+    {
+      "test": "tests/hp39-archive.mjs",
+      "exit_code": 0,
+      "log_sha256": "f95b319675538c89c1b79f7be6e9674d0454a3d272cc79f1500433981f6b5d95",
+      "test_sha256": "52efa3c38468395bacc8d1220071416da0ede97c0cee371ce0d63634c00109bd"
+    }
+  ],
+  "node_version": "v24.19.0",
+  "reviewed_invariants": {
+    "note": [
+      "ASCII Note escapes are decoded once into raw calculator bytes; binary input is returned unchanged.",
+      "Saturn string size includes its own five nibbles and is bounded to 0xfffff; source input is unchanged.",
+      "Leading whitespace and CRLF handling remain the deliberately witnessed stock semantics, with lone CR/LFCR and unknown escapes preserved.",
+      "Controller stores converted bytes and their actual length; a protocol retry reuses them, while a failed file read is retried and total size is checked again."
+    ],
+    "ack": [
+      "HP39 alone opts into receiver ACK repetition; the generic HP48/49 default is unchanged.",
+      "The receiver retry deadline starts only after the whole ACK has been accepted by the transport.",
+      "Unsent obsolete ACKs are removed; partially transmitted frames finish before following frames so packets are not interleaved.",
+      "Duplicate data is acknowledged without appending it twice; completed files are committed once after the final ACK is sent.",
+      "Final ACK retries keep the existing grace expiry and bounded retries; a new command clears a pending unsent final ACK.",
+      "Cancellation, total virtual-time limits and request/generation isolation remain effective."
+    ],
+    "localization": [
+      "Error code and interpolation values survive protocol, Worker, controller and per-file queue transitions.",
+      "Retry, skip, new-file and unknown-error transitions clear an earlier translated error code.",
+      "Known failures have bilingual primary text; unknown technical diagnostics use the localized fallback and collapsed original details."
+    ]
+  },
+  "localization": {
+    "static_error_codes": [
+      "calculatorNotReady",
+      "connectFirst",
+      "duplicateFilename",
+      "fileChanged",
+      "fileSize",
+      "filename",
+      "hp39ArchiveSelection",
+      "hp39ChooseFiles",
+      "hp39FileSize",
+      "hp39FileType",
+      "hp39Filename",
+      "hp39InitTimeout",
+      "hp39NoteSize",
+      "hp39ObjectLimit",
+      "hp39ServerDuration",
+      "hp39UploadLimit",
+      "hp39WireType",
+      "hp48FileType",
+      "linkDisconnected",
+      "receiveCapacity",
+      "transferCancelled",
+      "transferDuration",
+      "transferPaused",
+      "transferTimeout",
+      "unsupportedCalculator",
+      "unsupportedOperation",
+      "uploadCount",
+      "uploadIncomplete",
+      "uploadLimit",
+      "wireCancelled",
+      "wireCancelledByCalculator",
+      "wireChooseReceiver",
+      "wireDuration",
+      "wireRetryTimeout",
+      "wireRunning"
+    ],
+    "static_count": 35,
+    "dynamic_codes": [
+      "hp39UsbMode",
+      "hp48UsbMode"
+    ],
+    "fallback_code": "unknown",
+    "total_bilingual_error_keys_verified": 38,
+    "english_chinese_interpolation_equal": true
+  },
+  "primary_protocol_reference": {
+    "url": "https://www.kermitproject.org/kproto.pdf",
+    "title": "Kermit Protocol Manual, Sixth Edition",
+    "author": "Frank da Cruz",
+    "page": 37,
+    "checked": "Receiver timeout actions permit repeating acknowledgements; no protocol implementation was copied."
+  },
+  "stock_evidence_linkage": {
+    "path": "docs/development/evidence/hp39-note-wire-r21.json",
+    "sha256": "01b38673678272b04c0fd82ea6276c718ec7ebd2c0dfaa774982f105d702ead3",
+    "runs": [
+      {
+        "model": 1,
+        "wasm_sha256": "e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6",
+        "source_hashes_match_reviewed_tree": true,
+        "raw_report_sha256": "5042a7c6882ad24ef0a7c1248b6a6f0fe99650e1ddbed147641bdf74ef21ca55"
+      },
+      {
+        "model": 2,
+        "wasm_sha256": "e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6",
+        "source_hashes_match_reviewed_tree": true,
+        "raw_report_sha256": "542dd3922139c542abc970f6d20107afbf88b32d8316196ba566fe7728254746"
+      }
+    ],
+    "original_rom_rerun_by_reviewer": false
+  },
+  "boundaries": [
+    "This review does not independently repeat the original-ROM runs or certify hardware interoperability.",
+    "Final production-bundle, browser and release verification are separate root-agent gates.",
+    "No ROM, checkpoint, card image, original-OS LCD bytes or private file contents are included."
+  ]
+}

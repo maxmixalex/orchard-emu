@@ -4,7 +4,8 @@
 import {prepareHp39Files,MAX_HP39_HOST_FILES} from './hp39-transfer.js';
 import {readHp39Archive,writeHp39Archive,isHp39Archive,MAX_HP39_ARCHIVE_BYTES} from './hp39-archive.js';
 import {inspectHp39File,validateHp39Filename} from './hp39-files.js';
-import {validateHp39WireFile} from './hp39-wire.js';
+import {prepareHp39WireFile} from './hp39-wire.js';
+import {transferError,transferErrorDetails} from './transfer-errors.js';
 import { CALCULATORS, identifyROM } from './catalog.js';
 import { MAX_SESSION_BYTES } from './session.js';
 import { createSDImage, validateSDSize, sdImageName } from './sd-card.js';
@@ -153,26 +154,26 @@ export class CalculatorController {
     this.uploadQueue=null;this.patch({uploadBatch:null});
     try{
       if(!['send','receive','get','directory','finish'].includes(mode)||!['serial','usb'].includes(transport))throw Error('Invalid file transfer.');
-      if(!transferCapabilities(s.model.id,transport)[mode])throw Error('This file operation is not available for the selected calculator and connection.');
-      if(transport==='usb'?!s.usbReady:!s.serial)throw Error('Connect the selected link first.');
+      if(!transferCapabilities(s.model.id,transport)[mode])throw transferError('unsupportedOperation','This file operation is not available for the selected calculator and connection.');
+      if(transport==='usb'?!s.usbReady:!s.serial)throw transferError('connectFirst','Connect the selected link first.');
       if(mode==='send'){
-        if(!file||!Number.isSafeInteger(file.size)||file.size<1||file.size>MAX_FILE_BYTES)throw Error(`Choose a file of 1–${MAX_FILE_BYTES} bytes.`);
+        if(!file||!Number.isSafeInteger(file.size)||file.size<1||file.size>MAX_FILE_BYTES)throw transferError('fileSize',`Choose a file of 1–${MAX_FILE_BYTES} bytes.`);
         name=validateFilename(name||file.name);
       }else if(mode==='get')name=validateFilename(name);
-      this.patch({transfer:{request,active:true,phase:'preparing',transport,direction:mode,name,transferred:0,total:file?.size??0,error:null},uploadBatch:null,transferListing:''});
+      this.patch({transfer:{request,active:true,phase:'preparing',transport,direction:mode,name,transferred:0,total:file?.size??0,error:null,errorCode:null,errorValues:null},uploadBatch:null,transferListing:''});
       const bytes=mode==='send'?new Uint8Array(await file.arrayBuffer()):undefined;
       if(this.dead||token!==this.generation||request!==this.transferRequest)return;
-      if(bytes&&bytes.length!==file.size)throw Error('The file changed while being read.');
+      if(bytes&&bytes.length!==file.size)throw transferError('fileChanged','The file changed while being read.');
       if(bytes)validateUpload(this.state.model.id,name,bytes);
-      if(!this.state.ready||!this.state.loaded||this.state.busy||this.state.stopped)throw Error('The calculator is not ready for transfer.');
-      if(transport==='usb'?!this.state.usbReady:!this.state.serial)throw Error('The selected link disconnected while preparing the transfer.');
+      if(!this.state.ready||!this.state.loaded||this.state.busy||this.state.stopped)throw transferError('calculatorNotReady','The calculator is not ready for transfer.');
+      if(transport==='usb'?!this.state.usbReady:!this.state.serial)throw transferError('linkDisconnected','The selected link disconnected while preparing the transfer.');
       // Choosing a local file can blur the page and pause the calculator.
       // An explicit transfer action resumes it before starting the protocol.
       if(!this.state.running)this.send('run');
       this.send('file-transfer-start',{request,mode,transport,name,receiveBudget:this.remainingReceiveBudget(),...(bytes?{bytes}:{})});
     }catch(error){
       if(this.dead||token!==this.generation||request!==this.transferRequest)return;
-      this.patch({transfer:{request,active:false,phase:'error',transport,direction:mode,name,transferred:0,total:0,error:String(error.message||error)}});
+      this.patch({transfer:{request,active:false,phase:'error',transport,direction:mode,name,transferred:0,total:0,...transferErrorDetails(error)}});
     }
   }
   async startHp39Server(transport,files=[],{protocol='disk'}={}){
@@ -181,21 +182,21 @@ export class CalculatorController {
     this.uploadQueue=null;this.patch({uploadBatch:null});
     try{
       if(!['disk','wire'].includes(protocol))throw Error('Choose a valid HP39 transfer mode.');
-      if(!transferCapabilities(s.model.id,transport).serve)throw Error('HP39 file serving is unavailable on this connection.');
-      if(transport==='usb'?!s.usbReady:!s.serial)throw Error('Connect the selected link first.');
-      if(!Array.isArray(files)||files.length>MAX_HP39_HOST_FILES+2)throw Error('Choose at most 16 HP39 objects and their two directory files, or one ZIP package.');
+      if(!transferCapabilities(s.model.id,transport).serve)throw transferError('unsupportedOperation','HP39 file serving is unavailable on this connection.');
+      if(transport==='usb'?!s.usbReady:!s.serial)throw transferError('connectFirst','Connect the selected link first.');
+      if(!Array.isArray(files)||files.length>MAX_HP39_HOST_FILES+2)throw transferError('hp39ObjectLimit','Choose at most 16 HP39 objects and their two directory files, or one ZIP package.');
       let total=0;
       const selected=files.map(entry=>{
         const file=entry?.file,name=String(entry?.name||file?.name||'Unnamed file'),item={file,name,size:0};
         try{
           if(!file||typeof file.arrayBuffer!=='function'||!Number.isSafeInteger(file.size)||file.size<8||file.size>(files.length===1?MAX_HP39_ARCHIVE_BYTES:MAX_FILE_BYTES))
-            throw Error('Choose an HP39 typed file of 8 bytes to 2 MiB, or one ZIP package of at most 32 MiB.');
+            throw transferError('hp39ChooseFiles','Choose an HP39 typed file of 8 bytes to 2 MiB, or one ZIP package of at most 32 MiB.');
           item.size=file.size;total+=file.size;
-        }catch(error){if(protocol!=='wire')throw Error(`${name}: ${error.message}`);item.error=String(error.message||error);}
+        }catch(error){if(protocol!=='wire')throw {...transferErrorDetails(error),error:`${name}: ${error.message}`};Object.assign(item,transferErrorDetails(error));}
         return item;
       });
-      if(files.length!==1&&total>MAX_UPLOAD_BYTES)throw Error('The selected HP39 files exceed 8 MiB.');
-      this.patch({uploadBatch:null,transferListing:'',transfer:{request,active:true,phase:'preparing',transport,direction:'serve',name:'',transferred:0,total,error:null}});
+      if(files.length!==1&&total>MAX_UPLOAD_BYTES)throw transferError('hp39UploadLimit','The selected HP39 files exceed 8 MiB.');
+      this.patch({uploadBatch:null,transferListing:'',transfer:{request,active:true,phase:'preparing',transport,direction:'serve',name:'',transferred:0,total,error:null,errorCode:null,errorValues:null}});
       const loaded=[];
       for(const entry of selected){
         if(this.dead||generation!==this.generation||request!==this.transferRequest)return;
@@ -203,16 +204,16 @@ export class CalculatorController {
           if(entry.error){loaded.push(entry);continue;}
           const bytes=new Uint8Array(await entry.file.arrayBuffer());
           if(this.dead||generation!==this.generation||request!==this.transferRequest)return;
-          if(bytes.length!==entry.file.size)throw Error('The file changed while being read.');
+          if(bytes.length!==entry.file.size)throw transferError('fileChanged','The file changed while being read.');
           loaded.push({...entry,bytes});
         }catch(error){
           if(this.dead||generation!==this.generation||request!==this.transferRequest)return;
-          if(protocol!=='wire')throw Error(`${entry.name}: ${error.message}`);
-          loaded.push({...entry,error:String(error.message||error)});
+          if(protocol!=='wire')throw {...transferErrorDetails(error),error:`${entry.name}: ${error.message}`};
+          loaded.push({...entry,...transferErrorDetails(error)});
         }
       }
       const archives=loaded.filter(entry=>isHp39Archive(entry.bytes));
-      if(archives.length&&loaded.length!==1)throw Error('Select one HP39 ZIP package, or select its extracted calculator files together.');
+      if(archives.length&&loaded.length!==1)throw transferError('hp39ArchiveSelection','Select one HP39 ZIP package, or select its extracted calculator files together.');
       const hasDirectory=loaded.some(entry=>entry.bytes?.[7]===65&&String.fromCharCode(...entry.bytes.subarray(0,4))==='HP39');
       // Explicit catalogs and ZIP dependencies still receive complete structural
       // validation. Loose Wire files retain individual format/read errors so a
@@ -220,27 +221,30 @@ export class CalculatorController {
       const prepared=archives.length?await readHp39Archive(archives[0].bytes,{cancelled:()=>this.dead||generation!==this.generation||request!==this.transferRequest}):
         protocol==='wire'&&!hasDirectory?loaded:prepareHp39Files(loaded);
       if(this.dead||generation!==this.generation||request!==this.transferRequest)return;
-      if(!this.state.ready||!this.state.loaded||this.state.busy||this.state.stopped||(transport==='usb'?!this.state.usbReady:!this.state.serial))throw Error('The selected calculator connection is no longer ready.');
+      if(!this.state.ready||!this.state.loaded||this.state.busy||this.state.stopped||(transport==='usb'?!this.state.usbReady:!this.state.serial))throw transferError('calculatorNotReady','The selected calculator connection is no longer ready.');
       if(protocol==='wire'){
         const seen=new Set(),entries=[];
         for(const entry of prepared){
           if(!entry.error&&entry.bytes?.[7]===65&&String.fromCharCode(...entry.bytes.subarray(0,4))==='HP39'&&inspectHp39File(entry.bytes).kind==='A')continue;
           const item={...entry,size:entry.size??entry.bytes?.length??0,library:false};
           try{
-            if(item.error)throw Error(item.error);
+            if(item.error)throw item;
             validateHp39Filename(item.name);
             const key=item.name.toUpperCase();
-            if(item.name.length>64||seen.has(key))throw Error('Use unique HP39 filenames of at most 64 bytes.');
+            if(item.name.length>64||seen.has(key))throw transferError('hp39Filename','Use unique HP39 filenames of at most 64 bytes.');
             seen.add(key);
-            const info=validateHp39WireFile(item.name,item.bytes);item.library=info.kind==='H';
-          }catch(error){item.error=String(error.message||error);}
+            const prepared=prepareHp39WireFile(item.name,item.bytes);
+            item.sourceSize=item.size;item.bytes=prepared.bytes;item.size=prepared.bytes.length;
+            item.library=prepared.info.kind==='H';item.objectKind=prepared.info.kind;
+            item.noteConverted=prepared.noteConverted;item.sourceBytes=prepared.sourceBytes;
+          }catch(error){Object.assign(item,transferErrorDetails(error));}
           entries.push(item);
         }
         entries.sort((a,b)=>Number(b.library)-Number(a.library));
-        if(!entries.length)throw Error('Choose at least one binary HP39 object for Wire upload.');
-        if(entries.length>MAX_HP39_HOST_FILES)throw Error('Choose at most 16 HP39 objects.');
+        if(!entries.length)throw transferError('hp39ChooseFiles','Choose at least one HP39 object for Wire upload.');
+        if(entries.length>MAX_HP39_HOST_FILES)throw transferError('hp39ObjectLimit','Choose at most 16 HP39 objects.');
         const total=entries.reduce((sum,entry)=>sum+entry.size,0);
-        if(total>MAX_UPLOAD_BYTES)throw Error('The selected HP39 files exceed 8 MiB.');
+        if(total>MAX_UPLOAD_BYTES)throw transferError('hp39UploadLimit','The selected HP39 files exceed 8 MiB.');
         const invalid=entries.findIndex(entry=>entry.error);
         const queue={generation,request,transport,protocol:'hp39-wire',entries,index:invalid<0?0:invalid,completedBytes:0,preflight:invalid>=0};
         this.uploadQueue=queue;
@@ -252,8 +256,8 @@ export class CalculatorController {
       this.send('file-transfer-start',{request,mode:'serve',transport,files:prepared,receiveBudget:this.remainingReceiveBudget()});
     }catch(error){
       if(this.dead||generation!==this.generation||request!==this.transferRequest)return;
-      this.stopUploadBatch('error',String(error.message||error));this.uploadQueue=null;
-      this.patch({transfer:{request,active:false,phase:'error',transport,direction:'serve',name:'',transferred:0,total:0,error:String(error.message||error)}});
+      this.stopUploadBatch('error',error);this.uploadQueue=null;
+      this.patch({transfer:{request,active:false,phase:'error',transport,direction:'serve',name:'',transferred:0,total:0,...transferErrorDetails(error)}});
     }
   }
   async startUploadBatch(transport,files){
@@ -262,20 +266,20 @@ export class CalculatorController {
     const generation=this.generation,request=++this.transferRequest;let queue=null;
     this.uploadQueue=null;this.patch({uploadBatch:null});
     try{
-      if(!['serial','usb'].includes(transport)||!transferCapabilities(s.model.id,transport).send)throw Error('This file operation is not available for the selected calculator and connection.');
-      if(transport==='usb'?!s.usbReady:!s.serial)throw Error('Connect the selected link first.');
-      if(!Array.isArray(files)||files.length<1||files.length>MAX_UPLOAD_FILES)throw Error(`Choose 1–${MAX_UPLOAD_FILES} files.`);
+      if(!['serial','usb'].includes(transport)||!transferCapabilities(s.model.id,transport).send)throw transferError('unsupportedOperation','This file operation is not available for the selected calculator and connection.');
+      if(transport==='usb'?!s.usbReady:!s.serial)throw transferError('connectFirst','Connect the selected link first.');
+      if(!Array.isArray(files)||files.length<1||files.length>MAX_UPLOAD_FILES)throw transferError('uploadCount',`Choose 1–${MAX_UPLOAD_FILES} files.`,{count:MAX_UPLOAD_FILES});
       const names=new Set();let total=0;
       const entries=files.map(entry=>{
         const file=entry?.file,name=validateFilename(entry?.name||file?.name);
-        if(!file||typeof file.arrayBuffer!=='function'||!Number.isSafeInteger(file.size)||file.size<1||file.size>MAX_FILE_BYTES)throw Error(`Each file must contain 1–${MAX_FILE_BYTES} bytes.`);
-        if(names.has(name))throw Error('Choose a different calculator name for each file.');
+        if(!file||typeof file.arrayBuffer!=='function'||!Number.isSafeInteger(file.size)||file.size<1||file.size>MAX_FILE_BYTES)throw transferError('fileSize','Each file must contain 1 byte to 2 MiB.');
+        if(names.has(name))throw transferError('duplicateFilename','Choose a different calculator name for each file.');
         names.add(name);total+=file.size;
-        if(total>MAX_UPLOAD_BYTES)throw Error('The selected files exceed the 8 MiB upload limit.');
+        if(total>MAX_UPLOAD_BYTES)throw transferError('uploadLimit','The selected files exceed the 8 MiB upload limit.');
         return {file,name,size:file.size};
       });
       queue={generation,request,transport,entries,index:-1,completedBytes:0};this.uploadQueue=queue;
-      this.patch({transfer:{request,active:true,phase:'preparing',transport,direction:'send',name:'',transferred:0,total,error:null},
+      this.patch({transfer:{request,active:true,phase:'preparing',transport,direction:'send',name:'',transferred:0,total,error:null,errorCode:null,errorValues:null},
         uploadBatch:{active:true,completed:0,total,transferred:0,items:entries.map(e=>({name:e.name,size:e.size,phase:'queued',transferred:0}))},transferListing:''});
       // Validate every complete file before the first calculator transaction.
       // Reading sequentially also lets cancellation stop unstarted local reads.
@@ -286,17 +290,16 @@ export class CalculatorController {
         try{
           const bytes=new Uint8Array(await entry.file.arrayBuffer());
           if(this.dead||this.uploadQueue!==queue||generation!==this.generation||request!==this.transferRequest)return;
-          if(bytes.length!==entry.size)throw Error('A file changed while being read.');
+          if(bytes.length!==entry.size)throw transferError('fileChanged','A file changed while being read.');
           validateUpload(s.model.id,entry.name,bytes);entry.bytes=bytes;delete entry.file;
-        }catch(error){throw Error(`${entry.name}: ${String(error.message||error)}`);}
+        }catch(error){throw {...transferErrorDetails(error),error:`${entry.name}: ${transferErrorDetails(error).error}`};}
         this.updateUploadItem(i,{phase:'queued'});
       }
       queue.index=0;this.sendNextUpload(queue);
     }catch(error){
       if(this.dead||generation!==this.generation||request!==this.transferRequest||queue&&this.uploadQueue!==queue)return;
-      const message=String(error.message||error);
-      if(queue)this.endTransfer('error',message);
-      else this.patch({uploadBatch:null,transfer:{request,active:false,phase:'error',transport,direction:'send',name:'',transferred:0,total:0,error:message}});
+      if(queue)this.endTransfer('error',error);
+      else this.patch({uploadBatch:null,transfer:{request,active:false,phase:'error',transport,direction:'send',name:'',transferred:0,total:0,...transferErrorDetails(error)}});
     }
   }
   updateUploadItem(index,update){
@@ -307,13 +310,14 @@ export class CalculatorController {
     if(this.dead||this.uploadQueue!==queue||queue.generation!==this.generation)return;
     const s=this.state;
     if(!s.ready||!s.loaded||s.busy||s.stopped||(queue.transport==='usb'?!s.usbReady:!s.serial)){
-      this.endTransfer('error','The calculator connection is not ready for the next file.');return;
+      this.endTransfer('error',transferError('calculatorNotReady','The calculator connection is not ready for the next file.'));return;
     }
     if(queue.index>0||queue.protocol==='hp39-wire')queue.request=++this.transferRequest;
     const entry=queue.entries[queue.index],bytes=entry.bytes;
-    if(entry.error){this.pauseUploadFile(queue,entry.error);return;}
-    this.patch({transfer:{request:queue.request,active:true,phase:'negotiating',transport:queue.transport,protocol:queue.protocol,direction:'send',name:entry.name,transferred:0,total:entry.size,error:null},
-      uploadBatch:{...s.uploadBatch,active:true,recoverable:false,items:s.uploadBatch.items.map((item,i)=>i===queue.index?{...item,phase:'sending',transferred:0,error:null}:item)}});
+    if(entry.error){this.pauseUploadFile(queue,entry);return;}
+    this.patch({transfer:{request:queue.request,active:true,phase:'negotiating',transport:queue.transport,protocol:queue.protocol,direction:'send',name:entry.name,objectKind:entry.objectKind,
+      noteConverted:entry.noteConverted,sourceBytes:entry.sourceBytes,transferred:0,total:entry.size,error:null,errorCode:null,errorValues:null},
+      uploadBatch:{...s.uploadBatch,active:true,recoverable:false,items:s.uploadBatch.items.map((item,i)=>i===queue.index?{...item,phase:'sending',transferred:0,error:null,errorCode:null,errorValues:null}:item)}});
     // Subscribers may cancel or replace the machine while the state is posted.
     if(this.dead||this.uploadQueue!==queue||queue.generation!==this.generation)return;
     try{
@@ -324,8 +328,8 @@ export class CalculatorController {
       // The caller may still hold the preceding request's number, so finish
       // this queue transition here and retain Wire's retryable bytes.
       if(this.uploadQueue===queue&&queue.generation===this.generation){
-        if(queue.protocol==='hp39-wire')this.pauseUploadFile(queue,String(error.message||error));
-        else this.endTransfer('error',String(error.message||error));
+        if(queue.protocol==='hp39-wire')this.pauseUploadFile(queue,error);
+        else this.endTransfer('error',error);
       }
       return;
     }
@@ -343,33 +347,39 @@ export class CalculatorController {
     const batch=this.state.uploadBatch,entry=queue.entries[queue.index];
     queue.request=++this.transferRequest;
     this.patch({effectiveSpeed:this.state.prefs.speed,transferBoosted:false,transfer:{...this.state.transfer,request:queue.request,active:false,phase:'error',transport:queue.transport,
-      protocol:queue.protocol,direction:'send',name:entry.name,total:entry.size,transferred,error:String(error)},
+      protocol:queue.protocol,direction:'send',name:entry.name,objectKind:entry.objectKind,noteConverted:entry.noteConverted,sourceBytes:entry.sourceBytes,total:entry.size,transferred,...transferErrorDetails(error)},
       uploadBatch:{...batch,active:false,recoverable:true,index:queue.index,transferred:queue.completedBytes+transferred,
-        items:batch.items.map((item,i)=>i===queue.index?{...item,phase:'error',transferred,error:String(error)}:item)}});
+        items:batch.items.map((item,i)=>i===queue.index?{...item,phase:'error',transferred,...transferErrorDetails(error)}:item)}});
   }
   async retryUploadFile(){
     const queue=this.uploadQueue,batch=this.state.uploadBatch;
     if(this.dead||!queue||queue.protocol!=='hp39-wire'||queue.generation!==this.generation||!batch?.recoverable||batch.active)return;
     const entry=queue.entries[queue.index],request=++this.transferRequest;queue.request=request;
-    this.patch({uploadBatch:{...batch,active:true,recoverable:false,items:batch.items.map((item,i)=>i===queue.index?{...item,phase:'preparing',error:null}:item)},
-      transfer:{...this.state.transfer,request,active:true,phase:'preparing',error:null}});
+    this.patch({uploadBatch:{...batch,active:true,recoverable:false,items:batch.items.map((item,i)=>i===queue.index?{...item,phase:'preparing',error:null,errorCode:null,errorValues:null}:item)},
+      transfer:{...this.state.transfer,request,active:true,phase:'preparing',error:null,errorCode:null,errorValues:null}});
     try{
       // Read errors and unsupported local files can be retried without losing
       // the valid selections. A protocol error reuses the exact original bytes.
       if(entry.error){
-        if(!entry.file||!Number.isSafeInteger(entry.file.size)||entry.file.size<8||entry.file.size>MAX_FILE_BYTES)throw Error('Choose HP39 typed files of 8 bytes to 2 MiB.');
+        if(!entry.file||!Number.isSafeInteger(entry.file.size)||entry.file.size<8||entry.file.size>MAX_FILE_BYTES)throw transferError('hp39ChooseFiles','Choose HP39 typed files of 8 bytes to 2 MiB.');
         const bytes=new Uint8Array(await entry.file.arrayBuffer());
         if(this.dead||this.uploadQueue!==queue||queue.generation!==this.generation||request!==this.transferRequest)return;
-        if(bytes.length!==entry.size)throw Error('The file changed while being read.');
-        const info=validateHp39WireFile(entry.name,bytes);
-        if(entry.name.length>64||queue.entries.some((other,i)=>i!==queue.index&&batch.items[i].phase!=='skipped'&&other.name.toUpperCase()===entry.name.toUpperCase()))throw Error('Use unique HP39 filenames of at most 64 bytes.');
-        entry.bytes=bytes;entry.library=info.kind==='H';entry.error=null;
+        if(bytes.length!==(entry.sourceSize??entry.size))throw transferError('fileChanged','The file changed while being read.');
+        const prepared=prepareHp39WireFile(entry.name,bytes);
+        if(this.state.uploadBatch.total+prepared.bytes.length-entry.size>MAX_UPLOAD_BYTES)throw transferError('hp39UploadLimit','The selected HP39 files exceed 8 MiB.');
+        if(entry.name.length>64||queue.entries.some((other,i)=>i!==queue.index&&batch.items[i].phase!=='skipped'&&other.name.toUpperCase()===entry.name.toUpperCase()))throw transferError('hp39Filename','Use unique HP39 filenames of at most 64 bytes.');
+        const oldSize=entry.size;
+        entry.sourceSize=bytes.length;entry.bytes=prepared.bytes;entry.size=prepared.bytes.length;
+        entry.library=prepared.info.kind==='H';entry.objectKind=prepared.info.kind;
+        entry.noteConverted=prepared.noteConverted;entry.sourceBytes=prepared.sourceBytes;
+        entry.error=null;entry.errorCode=null;entry.errorValues=null;
+        this.patch({uploadBatch:{...this.state.uploadBatch,total:this.state.uploadBatch.total+entry.size-oldSize}});
       }
       if(this.dead||this.uploadQueue!==queue||queue.generation!==this.generation||request!==this.transferRequest)return;
-      this.updateUploadItem(queue.index,{phase:'queued',transferred:0,error:null});
+      this.updateUploadItem(queue.index,{phase:'queued',size:entry.size,transferred:0,error:null,errorCode:null,errorValues:null});
       if(queue.preflight)queue.index=this.nextWireUpload(queue);
       this.sendNextUpload(queue);
-    }catch(error){if(!this.dead&&this.uploadQueue===queue&&queue.generation===this.generation&&request===this.transferRequest)this.pauseUploadFile(queue,error.message||error);}
+    }catch(error){if(!this.dead&&this.uploadQueue===queue&&queue.generation===this.generation&&request===this.transferRequest)this.pauseUploadFile(queue,error);}
   }
   skipUploadFile(){
     const queue=this.uploadQueue,batch=this.state.uploadBatch;
@@ -379,7 +389,7 @@ export class CalculatorController {
     queue.index=this.nextWireUpload(queue,items);
     const active=queue.index>=0;if(!active)this.uploadQueue=null;
     this.patch({uploadBatch:{...batch,active,recoverable:false,transferred:queue.completedBytes,items},
-      ...(!active?{transfer:{...this.state.transfer,active:false,phase:'complete',name:'',error:null,total:queue.completedBytes,transferred:queue.completedBytes}}:{})});
+      ...(!active?{transfer:{...this.state.transfer,active:false,phase:'complete',name:'',error:null,errorCode:null,errorValues:null,total:queue.completedBytes,transferred:queue.completedBytes}}:{})});
     if(active)this.sendNextUpload(queue);
   }
   stopUploadBatch(phase,error){
@@ -388,7 +398,7 @@ export class CalculatorController {
     this.patch({uploadBatch:{...batch,active:false,recoverable:false,items:batch.items.map((item,i)=>{
       if(['complete','skipped','error'].includes(item.phase))return item;
       const started=i===queue.index&&item.phase==='sending';
-      return {...item,phase:started?phase:'not-sent',...(started&&error?{error}:{})};
+      return {...item,phase:started?phase:'not-sent',...(started&&error?transferErrorDetails(error):{})};
     })}});
   }
   cancelTransfer(){const current=this.state.transfer;if(!current?.active&&!this.uploadQueue)return;
@@ -397,13 +407,13 @@ export class CalculatorController {
   }
   endTransfer(phase,error=null){const current=this.state.transfer;if(!current?.active&&!this.uploadQueue)return;
     // Invalidate a pending File.arrayBuffer() and any late messages immediately.
-    ++this.transferRequest;this.stopUploadBatch(phase,error);this.patch({effectiveSpeed:this.state.prefs.speed,transferBoosted:false,transfer:{...current,active:false,phase,error}});
+    ++this.transferRequest;this.stopUploadBatch(phase,error);this.patch({effectiveSpeed:this.state.prefs.speed,transferBoosted:false,transfer:{...current,active:false,phase,...transferErrorDetails(error)}});
   }
   transferStatus(data){
     if(data.request!==this.transferRequest||this.state.transfer?.request!==data.request||!this.state.transfer.active)return;
     const previous=this.state.transfer,{type,generation,...status}=data,now=Number(this.now());
     const changed=previous.phase!==status.phase||previous.name!==status.name||previous.transferred!==status.transferred;
-    const transfer={...previous,...status,startedAt:previous.startedAt??now,
+    const transfer={...previous,...status,...transferErrorDetails(status.error||status.errorCode?status:null),startedAt:previous.startedAt??now,
       fileStartedAt:previous.name!==status.name||previous.phase==='serving'?now:previous.fileStartedAt??now,
       progressAt:changed?now:previous.progressAt??now};
     const publish=update=>this.patch({...update,...(data.effectiveSpeed!==undefined?{effectiveSpeed:data.effectiveSpeed,transferBoosted:Boolean(data.transferBoosted)}:{})});
@@ -418,12 +428,12 @@ export class CalculatorController {
     }
     if(data.phase!=='complete'){
       if(queue.protocol==='hp39-wire'&&data.phase!=='cancelled'){
-        this.pauseUploadFile(queue,data.error||'The Wire upload did not complete.',transferred);return;
+        this.pauseUploadFile(queue,data.error?data:transferError('uploadIncomplete','The Wire upload did not complete.'),transferred);return;
       }
       this.uploadQueue=null;
       publish({transfer,uploadBatch:{...batch,active:false,recoverable:false,transferred:queue.completedBytes+transferred,items:batch.items.map((entry,i)=>{
         if(i<index)return entry;
-        return i===index?{...entry,...update,phase:data.phase==='cancelled'?'cancelled':'error',error:data.error}:{...entry,phase:'not-sent'};
+        return i===index?{...entry,...update,phase:data.phase==='cancelled'?'cancelled':'error',...transferErrorDetails(data)}:{...entry,phase:'not-sent'};
       })}});return;
     }
     queue.completedBytes+=item.size;delete queue.entries[index].bytes;delete queue.entries[index].file;
@@ -438,13 +448,13 @@ export class CalculatorController {
     try{
       if(!(data.bytes instanceof Uint8Array)||data.bytes.length>MAX_FILE_BYTES||typeof data.name!=='string')throw Error('Invalid received file.');
       const bytes=[...this.received.values()].reduce((n,f)=>n+f.bytes.length,0);
-      if(this.received.size>=MAX_RECEIVE_FILES||bytes+data.bytes.length>MAX_RECEIVE_BYTES)throw Error('Download and clear received files before receiving more.');
+      if(this.received.size>=MAX_RECEIVE_FILES||bytes+data.bytes.length>MAX_RECEIVE_BYTES)throw transferError('receiveCapacity','Download and clear received files before receiving more.');
       // A calculator name is a label, never a host filesystem path.
       const name=data.name.replace(/[\\/\x00-\x1f\x7f]/g,'_').replace(/^\.+$/,'_').slice(0,128)||'calculator-file';
       const id=++this.receivedId;this.received.set(id,{name,bytes:data.bytes.slice()});
       this.patch({receivedFiles:[...this.state.receivedFiles,{id,name,size:data.bytes.length}]});
     }catch(error){this.send('file-transfer-cancel',{request:data.request});++this.transferRequest;
-      this.patch({transfer:{...this.state.transfer,active:false,phase:'error',error:String(error.message||error)}});}
+      this.patch({transfer:{...this.state.transfer,active:false,phase:'error',...transferErrorDetails(error)}});}
   }
   downloadTransferredFile(id){const f=this.received.get(id);if(!f)return;
     Promise.resolve().then(()=>this.download(f.bytes,f.name)).catch(e=>this.report('saveError',e.message));

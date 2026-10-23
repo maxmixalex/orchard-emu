@@ -24,6 +24,39 @@ static void check(bool ok, unsigned line) {
 static void put_word(uint8_t *p, uint32_t value) {
     for (unsigned i = 0; i < 4; ++i) p[i] = (uint8_t)(value >> (8u * i));
 }
+static void gpio_internal_pullups(void) {
+    const unsigned widths[8] = {0,11,16,16,16,8,16,11};
+    for (unsigned port = 1; port <= 7; ++port) {
+        orchard_reset(&machine);
+        uint32_t mask=(1u<<widths[port])-1u, addr=0x56000000u+16u*port;
+        uint32_t value, known, levels, conflicts;
+        CHECK(o_phys_write(&machine,addr,4,0));
+        CHECK(o_phys_write(&machine,addr+8u,4,0));
+        CHECK(o_phys_read(&machine,addr+4u,4,&value) && value==mask);
+        CHECK(orchard_gpio_inputs(&machine,(orchard_gpio_port)port,1,0)==ORCHARD_OK);
+        CHECK(o_phys_read(&machine,addr+4u,4,&value) && value==(mask&~1u));
+        CHECK(orchard_gpio_inputs(&machine,(orchard_gpio_port)port,0,0)==ORCHARD_OK);
+        CHECK(orchard_gpio_bias(&machine,(orchard_gpio_port)port,1,0)==ORCHARD_OK);
+        o_gpio_sample(&machine,port,&known,&levels,&conflicts);
+        CHECK(known==(mask&~1u) && levels==(mask&~1u) && !conflicts);
+        CHECK(o_phys_write(&machine,addr+8u,4,1));
+        CHECK(o_phys_read(&machine,addr+4u,4,&value) && value==(mask&~1u));
+        CHECK(orchard_gpio_bias(&machine,(orchard_gpio_port)port,0,0)==ORCHARD_OK);
+        CHECK(!o_phys_read(&machine,addr+4u,4,&value));
+        CHECK(machine.stop.status==ORCHARD_UNIMPLEMENTED_MMIO && machine.stop.detail==1);
+    }
+    /* Reduced original-OS suspend witness: E14/E15 input, pulls enabled,
+       all other E pins outputs. Execute the actual LDR access, not a host
+       substitution for its value. No external preset supplies these pins. */
+    orchard_reset(&machine);
+    CHECK(o_phys_write(&machine,0x56000040,4,0x05555555));
+    CHECK(o_phys_write(&machine,0x56000048,4,0x3fff));
+    machine.cpu.r[4]=0x56000000;
+    put_word(machine.flash,0xe5940044);
+    o_cpu_step(&machine);
+    CHECK(machine.stop.status==ORCHARD_OK && machine.cpu.r[0]==0xc000 && machine.cpu.r[15]==4);
+    orchard_reset(&machine);
+}
 static void gpio_bias_and_lcd_probe(void) {
     orchard_reset(&machine);
     uint32_t k, v, conflicts;
@@ -31,6 +64,7 @@ static void gpio_bias_and_lcd_probe(void) {
     CHECK(orchard_gpio_bias(&machine, (orchard_gpio_port)0, 1, 0) == ORCHARD_BAD_ARGUMENT);
     CHECK(orchard_gpio_bias(&machine, ORCHARD_GPIO_F, 0x100, 0) == ORCHARD_BAD_ARGUMENT);
     CHECK(orchard_gpio_bias(&machine, ORCHARD_GPIO_G, 1, 2) == ORCHARD_BAD_ARGUMENT);
+    CHECK(o_phys_write(&machine, 0x56000038, 4, 0xffff)); /* Isolate external bias. */
     CHECK(orchard_gpio_bias(&machine, ORCHARD_GPIO_D, 3, 1) == ORCHARD_OK);
     o_gpio_sample(&machine, ORCHARD_GPIO_D, &k, &v, &conflicts);
     CHECK(k == 3 && v == 1 && conflicts == 0);
@@ -42,7 +76,7 @@ static void gpio_bias_and_lcd_probe(void) {
     CHECK(k == 3 && v == 2);
     orchard_reset(&machine);
     o_gpio_sample(&machine, ORCHARD_GPIO_D, &k, &v, &conflicts);
-    CHECK(k == 0 && v == 0);
+    CHECK(k == 0x0fff && v == 0x0fff); /* GP D12..15 reset with pull-ups disabled. */
 
     CHECK(orchard_keyboard_attach(&machine, true) == ORCHARD_OK);
     CHECK(orchard_gpio_inputs(&machine, ORCHARD_GPIO_G, 1, 0) == ORCHARD_OK);
@@ -173,7 +207,7 @@ static void lcd_views_and_absolute_lanes(void) {
 EXPORT("regression") unsigned orchard_lcd_input_regression(void) {
     checks = failures = first_failure = 0;
     if (!orchard_init(&machine, sizeof(machine), 6)) return 1;
-    gpio_bias_and_lcd_probe(); lcd_views_and_absolute_lanes();
+    gpio_internal_pullups(); gpio_bias_and_lcd_probe(); lcd_views_and_absolute_lanes();
     return failures;
 }
 EXPORT("checks") unsigned orchard_lcd_input_checks(void) { return checks; }

@@ -1,0 +1,686 @@
+{
+  "schema": "orchard-sd-files-r21",
+  "scope": "FAT16 draft rename/delete, namespace validation, independent filesystem review and final-production original HP49g+/HP48gII workflows",
+  "passed": true,
+  "original_rom_acceptance_in_this_record": true,
+  "source_sha256": {
+    "web/sd-filesystem.js": "cd30d88aa7c29dd480acb9d8c1fe7bb260a6f2ae01914c27dabc0cdfb4b7f856",
+    "web/SDCardFiles.jsx": "cb57648e0f615e47b3bb2d0814df441a533fc1608c296e1c976124bd08e4367a",
+    "tests/sd-filesystem.mjs": "9936a9abaa9fd17f62139ecf150a824c958f041cb29960b34a7254388a90825f",
+    "tests/sd-files-controller.mjs": "c75990daa0289abd5a6313981c2963b0636137b3896581ed5019122f28a37d70",
+    "tests/browser-sd-files.py": "99eb527d5b34fae30d2baa27b61db438ab459a3329f2f3452365374a8d46171f"
+  },
+  "checks": {
+    "filesystem": 220,
+    "controller": 27
+  },
+  "browser": {
+    "checks": [
+      "all SD chooser inputs accept arbitrary suffixes",
+      "editable short names validate without truncation; arbitrary and empty file bytes round-trip",
+      "duplicate in later batch member keeps complete draft byte-exact",
+      "new directory and nested file survive navigation and full-image download",
+      "renames preserve payload/directory contents; collision rolls back exact image",
+      "delete confirmation/cancel works; nonempty folders rejected; files and empty folders deleted",
+      "malformed image and file-read failure visibly preserve current draft",
+      "download failure is visible; reopening an arbitrary-suffix image preserves nested contents",
+      "390px viewport and both language controls render without horizontal overflow",
+      "failed File read and Worker rejection retain exact draft and support retry",
+      "production insertion sends exact image/read-only state; mounted card has no host file editor",
+      "closing during pending file read cannot mutate a new draft; no uncaught page errors"
+    ],
+    "browser": "156.0.8078.47",
+    "card_sha256": "6148457422c9004e8e1b7a6780440e0ef84c566681dcc6ad710efed09f516fd0",
+    "file_sha256": "691c6525cd62d4b73ac4126403ba5edc5fa887f1f26883dea4f01a3006bad12d",
+    "errors": []
+  },
+  "browser_fixture": "Actual Chrome, production React/controller and real File/download APIs, with synthetic insertion acknowledgement; no ROM",
+  "independent_review": {
+    "schema": "orchard-sd-independent-review-r21",
+    "scope": "ROM-free FAT16 draft editor and independent filesystem checks; stock firmware acceptance is separate",
+    "passed": true,
+    "source_sha256": {
+      "web/sd-filesystem.js": "cd30d88aa7c29dd480acb9d8c1fe7bb260a6f2ae01914c27dabc0cdfb4b7f856",
+      "web/SDCardFiles.jsx": "cb57648e0f615e47b3bb2d0814df441a533fc1608c296e1c976124bd08e4367a",
+      "tests/sd-filesystem.mjs": "9936a9abaa9fd17f62139ecf150a824c958f041cb29960b34a7254388a90825f",
+      "tests/browser-sd-files.py": "99eb527d5b34fae30d2baa27b61db438ab459a3329f2f3452365374a8d46171f",
+      "docs/development/sd-cards.md": "0829777c1708e8afa82accd0ce3d498e6572040bcaf60a88c94546a8738d3f1a"
+    },
+    "checks": {
+      "filesystem": 220,
+      "controller": 27,
+      "independent_fat_images": 4,
+      "independent_extractions_byte_equal": 2
+    },
+    "fixed": [
+      "Imported short aliases and long names are checked as one namespace before edits.",
+      "Unicode uppercase keys do not expand sharp-s or normalize Unicode spelling.",
+      "LFN NUL/0xffff padding and 1–255 UTF-16 code-unit length are validated."
+    ],
+    "tools": {
+      "mtools": {
+        "version": "4.0.43",
+        "ubuntu_package": "4.0.43-1build1",
+        "deb_sha256": "deb50411c17b001c2400dd8a0146f39d12070a2fe5e92d734b1c6d0e73119262"
+      },
+      "dosfstools": {
+        "version": "4.2",
+        "ubuntu_package": "4.2-1.1build1",
+        "deb_sha256": "ace1ecc42b4d842f8e7a931933824a626dcdb7d4916470833f330ccad82afd63"
+      },
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/"
+    },
+    "images": [
+      {
+        "name": "foreign",
+        "sha256": "b2d7a9352d5cdf869460f630d33f034dbb4ee2156ea3665fc663a49f93fb6dbb",
+        "fsck_exit": 0,
+        "fsck_log_sha256": "32ce27c827750e6b30588d96539742432e0ca28547404b40d69344c4b510fe1a"
+      },
+      {
+        "name": "renamed",
+        "sha256": "250c1a282216476ff84de94127f6aab8bcbed07bd99bf57259d0467acaf22fad",
+        "fsck_exit": 0,
+        "fsck_log_sha256": "7faac19274e03df09de863f6a6747833b91d863138271d774178e002a813d6dd"
+      },
+      {
+        "name": "deleted",
+        "sha256": "3e359f5a805897b3f50a38a507c6088e557d9aa1a68d74f0d5219b2480a255e5",
+        "fsck_exit": 0,
+        "fsck_log_sha256": "b80e622a4c3bfca798184b37ab0496cd7ec50814b6763f5023950a7bcb5db288"
+      },
+      {
+        "name": "reused",
+        "sha256": "708c85e754dfc25ba0fa3f6dcb13579b515923beca2dbd229276fa49976188e6",
+        "fsck_exit": 0,
+        "fsck_log_sha256": "d3ee0be004991c28520748b2920f545f7cd90ff75f0237c34796d2487ec50798"
+      }
+    ],
+    "prepared_for_stock": {
+      "file": "prepared-after-management.img",
+      "sha256": "ff5bb06b7188d24159c191e04f404c61e54d0a44628d87d68f9a0d2eb5294a7d",
+      "entries": [
+        {
+          "name": "ANSWER",
+          "path": "/ANSWER",
+          "type": "file",
+          "size": 15,
+          "readOnly": false,
+          "hasLongName": false
+        },
+        {
+          "name": "PROGRAMS",
+          "path": "/PROGRAMS",
+          "type": "directory",
+          "size": 0,
+          "readOnly": false,
+          "hasLongName": false
+        }
+      ],
+      "requires_original_firmware_test": true
+    },
+    "readonly_original_image_unchanged": true,
+    "boundaries": [
+      "Explicit ASCII 8.3 target names; no long-name creation.",
+      "Delete files or empty directories only.",
+      "Unmounted draft only; source files and mounted Worker media are unchanged.",
+      "Independent host tools do not establish stock-ROM acceptance."
+    ]
+  },
+  "original_input_unchanged": true,
+  "mutations": [
+    "Rename files and nonempty directories with explicit ASCII 8.3 destination names",
+    "Delete files and empty directories with confirmation",
+    "Preserve file payloads, cluster links, timestamps and attributes on rename",
+    "Retire associated long-name records on explicit rename or delete",
+    "Release deleted chains in both FAT copies and reuse space",
+    "Validate one combined namespace for imported aliases and long names"
+  ],
+  "boundaries": [
+    "Unmounted draft only; mounted media remains Worker-owned",
+    "No long-name creation; imported long names retained until their entry is explicitly renamed or deleted",
+    "No nonempty-directory deletion or automatic overwrite",
+    "FAT16 only within supported SDSC image capacities; no SDHC, SDXC or DMA",
+    "ROMs, card bytes, checkpoints and original-OS pixels are not included"
+  ],
+  "final_production": {
+    "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+    "tool_sha256": "19e83e5cac9c138898179f2e51ce2cef494beb40703e00975f0ddd6ddd1faf4f",
+    "native_sha256": "f93e04bf9ca9aad4956f3961ae7c6f162a70350101786b0ce99705a00ced25f3",
+    "roms": {
+      "hp49gplus": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "hp48gii": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937"
+    },
+    "physical_input_only": true,
+    "guest_memory_patched": false,
+    "card_image_bytes": 16777216,
+    "sram_decode": "explicit nGCS1 low-address mirror; physical capacity unchanged",
+    "canonical_hardware_boot": false,
+    "passed": true,
+    "prepared_image": {
+      "sha256": "ff5bb06b7188d24159c191e04f404c61e54d0a44628d87d68f9a0d2eb5294a7d",
+      "bytes": 16777216,
+      "expected_root_file": "ANSWER",
+      "expected_directory": "PROGRAMS",
+      "expected_nested_file": "NESTED",
+      "root_recalled": true,
+      "nested_recalled": true,
+      "guest_created_test": true,
+      "prepared_root_preserved": true
+    },
+    "strict_boundary_probe": {
+      "tick": 184994413,
+      "pc": 260116,
+      "opcode": 3851620356,
+      "dfsr": 8,
+      "far": 134742016,
+      "physical_ram_bytes": 524288
+    },
+    "continuation": {
+      "checkpoint_bytes": 17310495,
+      "version": 4,
+      "partial_sector_bytes": 72,
+      "delta_ticks": 100000,
+      "before_sha256": "5b1667c2add19f14d8297f97d338cc717c1fcfd0a548ed269f976384941ee1c0",
+      "after_sha256": "72861ca37f827da32dc1eacbfe81b1719cc4bb0a2b7115258bf4c351e89c7b24",
+      "native_wasm_equal": true,
+      "full_card_included": true
+    },
+    "exported": {
+      "image_sha256": "3342da8af8db9cfe75a4a683e520f783b33b323dc33c71bf450dc09b97077050",
+      "file": "TEST",
+      "file_bytes": 15,
+      "file_sha256": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42",
+      "filesystem": "FAT16",
+      "fat_copies_equal": true,
+      "writes_before_copy": 0,
+      "writes_after_copy": 7
+    },
+    "fresh_card_reimport": true,
+    "hp48": {
+      "cold_boot": true,
+      "files_navigation": true,
+      "returned_home": true,
+      "sd_slot": false,
+      "card_rejected": true
+    },
+    "report_sha256": "6363372065e34b8369192942140860293350a6e2bdb2208203a53d228e384b8b",
+    "stage_metadata": [
+      {
+        "name": "hp49-home",
+        "machine": "hp49",
+        "tick": 160000000,
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 0,
+          "present": false,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 0,
+          "lastCommand": 0,
+          "commands": 0,
+          "readBlocks": 0,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "0",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-files-no-card",
+        "machine": "hp49",
+        "tick": 184800000,
+        "frame_sha256": "bdcc263a4a0d43f220fff1a48a8b366a5f6919edeb3b7503c09b0037bdb94ba6",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 0,
+          "present": false,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 0,
+          "lastCommand": 0,
+          "commands": 0,
+          "readBlocks": 0,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "0",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-files-no-card-up",
+        "machine": "hp49",
+        "tick": 192200000,
+        "frame_sha256": "31cf57c318cbfb06a581d75873c34022d61b634d36578fe4657087cafad090fd",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 0,
+          "present": false,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 0,
+          "lastCommand": 0,
+          "commands": 0,
+          "readBlocks": 0,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "1",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-files-no-card-return",
+        "machine": "hp49",
+        "tick": 199600000,
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 0,
+          "present": false,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 0,
+          "lastCommand": 0,
+          "commands": 0,
+          "readBlocks": 0,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "3",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-files-with-card",
+        "machine": "hp49",
+        "tick": 224400000,
+        "frame_sha256": "6373bb6cf844b5b8328325512cf935b70edbbf1ae79d124131063768cd4f182d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 298,
+          "readBlocks": 66,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "3",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-created-test-42",
+        "machine": "hp49",
+        "tick": 270600000,
+        "frame_sha256": "a1a514e8d87df70a4be85073d28061d0fdd13b435f46ffe1af67cc8ff4ab2d5b",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 298,
+          "readBlocks": 66,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "5",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-home-test-selected",
+        "machine": "hp49",
+        "tick": 297800000,
+        "frame_sha256": "8a343bd812857475a0e31fae2dd96bd2fb21316be4ffdce08a031ba9e58f7014",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 373,
+          "readBlocks": 66,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "8",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-copy-destination-sd",
+        "machine": "hp49",
+        "tick": 312600000,
+        "frame_sha256": "9f042632239686a8f0bea845ae871bfecd04463148b0472095ada0fdcb00d52d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 448,
+          "readBlocks": 66,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "9",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-copy-complete",
+        "machine": "hp49",
+        "tick": 330000000,
+        "frame_sha256": "cd3dc82364b582abd7b2dc78c892014049f20d31e985bdae276b63ca114ce246",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 967,
+          "readBlocks": 232,
+          "writtenBlocks": 7
+        },
+        "sram_alias_reads": "12",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-sd-answer-selected",
+        "machine": "hp49",
+        "tick": 371600000,
+        "frame_sha256": "0301d9120f8a135682d24157d01af05c2b71d9fea4c9472441d74e98a5da15df",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 1285,
+          "readBlocks": 309,
+          "writtenBlocks": 11
+        },
+        "sram_alias_reads": "14",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-sd-recalled-42",
+        "machine": "hp49",
+        "tick": 391400000,
+        "frame_sha256": "a6264d8850d44be94b23205730d647fe353d2f349188f6c4c0b4fabdb391d416",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 1324,
+          "readBlocks": 320,
+          "writtenBlocks": 13
+        },
+        "sram_alias_reads": "14",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-fresh-home",
+        "machine": "hp49-fresh",
+        "tick": 160000000,
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 0,
+          "present": false,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 0,
+          "lastCommand": 0,
+          "commands": 0,
+          "readBlocks": 0,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "0",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-fresh-sd-answer",
+        "machine": "hp49-fresh",
+        "tick": 207000000,
+        "frame_sha256": "27b339dfd51f6605cfdb79fe27eabe9159a34867f5327a9babaa18ba441bf7d3",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 541,
+          "readBlocks": 143,
+          "writtenBlocks": 4
+        },
+        "sram_alias_reads": "2",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-fresh-recalled-42",
+        "machine": "hp49-fresh",
+        "tick": 226800000,
+        "frame_sha256": "e01013055e51a5d9a50820786b7ba3eb821eb74dfc614949dda98a4d22dc5b97",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 580,
+          "readBlocks": 154,
+          "writtenBlocks": 6
+        },
+        "sram_alias_reads": "2",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-nested-home",
+        "machine": "hp49-nested",
+        "tick": 160000000,
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 0,
+          "present": false,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 0,
+          "lastCommand": 0,
+          "commands": 0,
+          "readBlocks": 0,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "0",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-prepared-nested-directory",
+        "machine": "hp49-nested",
+        "tick": 222000000,
+        "frame_sha256": "2ae128468e6483864db8aeb5124dcbe4e3289eee4bbbcc482d7224af0ef712c2",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 601,
+          "readBlocks": 161,
+          "writtenBlocks": 6
+        },
+        "sram_alias_reads": "2",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-prepared-nested-recalled-42",
+        "machine": "hp49-nested",
+        "tick": 241800000,
+        "frame_sha256": "e01013055e51a5d9a50820786b7ba3eb821eb74dfc614949dda98a4d22dc5b97",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 649,
+          "readBlocks": 175,
+          "writtenBlocks": 8
+        },
+        "sram_alias_reads": "2",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp48-home",
+        "machine": "hp48",
+        "tick": 160000000,
+        "frame_sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": null,
+        "sram_alias_reads": "1",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp48-files",
+        "machine": "hp48",
+        "tick": 184800000,
+        "frame_sha256": "913cf167763953fb952d182d075ab89df5ebfa0c0dafdc5a33d0456ced3835a3",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": null,
+        "sram_alias_reads": "1",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp48-files-up",
+        "machine": "hp48",
+        "tick": 192200000,
+        "frame_sha256": "3f623da8b6c4d0326194be9974eef39b48e9cd81a478b8f1e60a8318167268b2",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": null,
+        "sram_alias_reads": "3",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp48-files-return",
+        "machine": "hp48",
+        "tick": 199600000,
+        "frame_sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": null,
+        "sram_alias_reads": "7",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp48-after-files-one-plus-one",
+        "machine": "hp48",
+        "tick": 214200000,
+        "frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": null,
+        "sram_alias_reads": "7",
+        "sram_alias_writes": "0"
+      }
+    ],
+    "external_filesystem_check": {
+      "passed": true,
+      "exported_image_sha256": "3342da8af8db9cfe75a4a683e520f783b33b323dc33c71bf450dc09b97077050",
+      "partition_start_sector": 1,
+      "partition_sectors": 32767,
+      "checks": [
+        {
+          "check": "fsck",
+          "exit_code": 0,
+          "log_sha256": "8988ce89299eb9cf621b2d45f902529a6e5abef2a1fcd0acd9c6c53b7694e194"
+        },
+        {
+          "check": "extract-ANSWER",
+          "exit_code": 0,
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "check": "extract-NESTED",
+          "exit_code": 0,
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "check": "extract-TEST",
+          "exit_code": 0,
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "three_objects_equal": true,
+      "object_bytes": 15,
+      "object_sha256": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42"
+    },
+    "external_report_sha256": "c0a345b875e04648462620495f440af2daf9d2a2d7528b947fbbe0b43ae47e9b",
+    "visual_review": {
+      "reviewed": true,
+      "checks": [
+        "HP49g+ FILES shows port 3:SD",
+        "Prepared root and nested objects both recall as 42",
+        "HP48gII returns from FILES and calculates 1+1=2"
+      ],
+      "original_pixels_published": false
+    }
+  }
+}

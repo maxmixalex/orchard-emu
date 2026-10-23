@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT
  * Samsung S3C2410A manual (2004), chapter 18. Functional countdown model:
- * one scheduler tick supplies one provisional PCLK quantum, not elapsed time.
- * Clock-tree timing and reset propagation are deliberately not approximated
+ * Each call consumes one edge of the shared functional PCLK domain.
+ * Reset propagation remains explicit/unsupported rather than approximated
  * by a fabricated full-machine cold reset.
  */
 #include "internal.h"

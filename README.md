@@ -13,6 +13,9 @@ user's own complete capture, including its native bootloader.
 also runs original-OS symbolic algebra, graphing, menus and
 [native ARM programs that return to HOME](docs/development/hp49-native.md).
 Its original FILES manager can read and write an [emulated SD card](docs/development/sd-cards.md).
+All four admitted original systems also complete their normal inactivity
+shutdown and [ON wakeup](docs/development/power-management.md), retaining their
+previous calculation and accepting new input after wake.
 HP39g+ uses a separately selected
 1 MiB NOR and exact SRAM, not the HP48gII mirroring hypothesis. LCD `+0x68`,
 component identification, panel interpretation and pad/ADC conditions remain
@@ -51,7 +54,8 @@ then offers to restore its saved state. See [saved sessions](docs/development/se
 On HP49g+, **SD card** creates a 16 MiB FAT16 card or imports a 1–32 MiB
 raw image; the original calculator accesses it as port 3. **Prepare files**
 opens an unmounted FAT16 image for directory browsing, file extraction, folder
-creation and transactional file addition. Review the explicit 8.3 destination
+creation, file addition, file/folder rename, and deletion of files or empty
+folders. Changes are transactional. Review the explicit 8.3 destination
 names, then insert the prepared image. File selection has no extension filter.
 Export the image
 for a separate card backup. Manual and automatic sessions include the whole
@@ -112,11 +116,13 @@ fixed functional time rate instead of running clocks at maximum host speed;
 physical timing is still being refined. CPU research details stay in the
 developer workbench. Save exports `<model>-<yyyymmdd-hhmmss>.ord`; Restore also
 accepts earlier `.orchard` files. No ROM is stored or uploaded.
-Landscape splits the unchanged skin at the bottom of the screen cover, with
-the screen on the left and keyboard on the right. [Firmware sound](docs/development/buzzer.md)
+Landscape splits the unchanged skin below the six FN keys, keeping those
+soft keys with the screen on the left and the remaining keyboard on the right.
+[Firmware sound](docs/development/buzzer.md)
 plays observed GPB2/Timer2 output through Web Audio, with mute and volume controls.
-The original HP49g+ `BEEP` path is verified; physical pitch/duration calibration
-remains open.
+The original HP49g+ `BEEP` path now uses the shared register-derived peripheral
+clock and buffered PWM counters. Physical board clock and speaker calibration
+remain open.
 
 Connections adds a Files tab for HP48gII USB/serial and HP49g+ USB object
 upload, named retrieval and explicit local download. Start Kermit SERVER with
@@ -133,17 +139,23 @@ the selected files, preserving their original names and aliases. Calculator
 HP39 ZIP directly, or download received objects as a reusable ZIP. The fixed
 catalog entry point is restored when the stock SEND omits it, while original
 directory aliases and object bytes are preserved. Raw data retains
-UART and USB packets. **Wire** provides a faster HP39g+ upload route: choose
-**RECV → HP39/40 (Wire)** for each object, sending required libraries before
-the aplet. Reverse downloads still use **SEND → Disk drive**. Original-ROM HP39
+UART and USB packets. **Wire** provides a faster upload route: choose
+**RECV → HP39/40 (Wire)** on HP39g+, or **RECV → HP39/40 (USB)** on HP39gs,
+for each object, sending required libraries before the aplet. `HP39AscC` ASCII Notes are
+converted to the binary string format accepted by Wire. For a Note, first open
+**SHIFT → 0 (NOTEPAD)** and use that catalog's RECV menu. Both original ROMs
+pass installation, EDIT and exact content round trips. Reverse downloads still
+use **SEND → Disk drive**. Original-ROM HP39
 file-transfer and ZIP round-trip verification uses the complete HP39g+ NOR.
 HP39gs has its own original-ROM Disk installation and native-reader return
 witness; HP40gs still needs its complete original NOR. File choosers accept
 arbitrary filename extensions and identify the actual typed/ZIP content.
-The optional **Unlimited during transfers** switch accelerates active protocol
+The optional **Settings → Transfer → Unlimited during transfers** switch accelerates active protocol
 work, then restores the selected speed. Waiting for the calculator's next RECV
 selection retains the selected speed. A Wire failure leaves the failed item
 available for Retry or Skip; return the calculator to RECV before retrying.
+Transfer errors and recovery instructions follow the selected UI language;
+unknown technical details remain available in a collapsed diagnostic section.
 Browser connections are internal to the emulator and do not create desktop
 USB or serial devices. See
 [file transfer](docs/development/file-transfer.md),

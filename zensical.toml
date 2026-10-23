@@ -43,6 +43,7 @@ nav = [
     "development/performance.md",
     "development/arm-block-profile.md",
     "development/clock-ratios.md",
+    "development/power-management.md",
     "development/sessions.md",
     "development/skins-segments.md",
     "development/hp39-startup.md",

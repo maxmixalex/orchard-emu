@@ -38,10 +38,10 @@ host-side Saturn shortcut is planned. See the ARM/Samsung manuals in
 | CPU | `src/cpu.c`, `src/thumb.c` | Original ARM/Thumb dispatch, flags, register banks and exception entry/return |
 | MMU | `src/mmu.c` | CP15 subset, guest table walks, access permission and alignment checks |
 | Physical bus | `src/bus.c`, `src/sram.c` | NOR, external SRAM and 4 KiB internal SRAM bounds, MMIO routing; inspection in `src/lcd.c` |
-| SoC | `src/soc.c`, `src/watchdog.c`, `src/gpio.c`, `src/interrupt.c`, `src/rtc.c` | Functional timers/UART/watchdog, two-level IRQ arbitration, GPIO latches and RTC subset |
+| SoC | `src/soc.c`, `src/watchdog.c`, `src/gpio.c`, `src/interrupt.c`, `src/rtc.c` | Shared PCLK and buffered PWM, functional UART/watchdog, two-level IRQ arbitration, GPIO latches and retained RTC subset |
 | Input / NOR | `src/keyboard.c`, `src/nor.c` | Opt-in switch network, unfiltered EINT and explicit read/software-ID NOR subset |
 | USB | `src/usb.c` | Functional EP0 / 64-byte bulk PIO, explicit packet host API, USB reset and IRQ25; no descriptor shortcuts |
-| Machine | `src/machine.c` | Reset, loader, profiles and deterministic scheduler |
+| Machine | `src/machine.c` | Cold reset, retained Power_OFF wake reset, loader, profiles and deterministic scheduler |
 | Native host | `app/main.c` | Full-NOR loading, bounded CLI run, JSON/PGM/UART files |
 | Web host | `app/wasm.c`, `web/` | Freestanding WASM adapter, Worker and diagnostic workbench |
 
@@ -75,7 +75,9 @@ NOR is at `0x00000000`; external SRAM is at `0x08000000`, with exact per-profile
 capacity. Exact-range decoding is the default; explicit `bank1-mirror` maps
 high addresses within nGCS1 to the same cells, without increasing RAM. Guest
 alias transactions are counted; debug reads are pure. See [startup](startup.md). Internal boot SRAM occupies exactly `0x40000000..0x40000fff`; there is
-no NAND controller or NAND image behind it. HP40gs uses 2 MiB NOR.
+no NAND image behind it. The bounded NAND register subset accepts an aligned
+word read of disabled `NFCONF=0` and a word write of zero; enabled configurations
+and NAND command/data transactions remain unsupported. HP40gs uses 2 MiB NOR.
 Flash does not silently mirror or pad. An explicitly selected SST39VF1601 (2 MiB) or SST39VF800A (1 MiB)
 implements array read and software identification; program/erase/CFI/security
 remain diagnostic stops. The default unspecified part only accepts read-array
@@ -85,25 +87,35 @@ sequences leave the array unchanged, while unsupported program/erase still
 stops. Part identity is not inferred from a ROM hash or profile size.
 
 One virtual tick is counted before advancing the current functional peripherals;
-a peripheral diagnostic stop therefore includes its triggering tick. A tick advances the peripherals and either takes
-an interrupt, dispatches an instruction, or stays in WFI. It is **not** a CPU
-clock cycle, oscillator tick or real millisecond. Guest time does not depend
+a peripheral diagnostic stop therefore includes its triggering tick. A tick
+advances the relevant time domains and either takes an interrupt, dispatches
+an instruction, or leaves the CPU sleeping. The 12M reference rate also serves
+as the clock model's functional input `Fin`; it is **not** a measured board
+oscillator, CPU clock cycle or real millisecond. Guest time does not depend
 on browser animation timestamps. The native host and browser may run different
 batch sizes but must preserve the same virtual ordering.
 
 INTC implements two-level selection/rotation and a latched awarded IRQ.
-Timers implement functional countdown, not real PLL/PCLK timing. Clock and
-memory-controller registers largely retain values rather than change timing.
-GPIO configuration, pull-up and output-latch state exists; DAT reads with
-unresolved input pins stop. With the keyboard attached, its switch network
+PWM, watchdog, ADC and SDI consume one shared fractional PCLK stream derived
+from MPLLCON write history, CLKSLOW and CLKDIVN. PWM implements active compares,
+terminal-count capture and next-edge reload, with real counter/phase gating.
+PLL settling remains immediate, and physical board frequencies, shared-prescaler
+startup phase and full FCLK/HCLK timing remain open. Memory-controller timing
+registers still largely retain values. See [runtime clocks](clock-ratios.md).
+GPIO configuration, output latches and register-controlled B–H weak pull-ups
+participate in input resolution; DAT reads whose input pins remain unresolved
+stop. Strong external drives take precedence over weak bias. With the keyboard
+attached, its switch network
 supplies pad levels and unfiltered EINT detection. Other alternate-function
 producers and digital filters are not silently treated as implemented. UART is an error-free byte stream, not full FIFO/baud timing.
 
 RTC uses a deterministic cold-fixture epoch and a provisional 12-million-quanta
 timebase, not the host clock. Normal calendar carry and tick/alarm interrupts
-are implemented; test modes, round reset, retained battery state and power-off
-wakeup are not. See [boot research](boot-research.md) for the RTC word-access
-compatibility observation and the exact remaining hardware stops.
+are implemented. The RTC continues during Power_OFF, and a calendar alarm can
+wake the machine through its reset vector. Test modes, round reset, analog
+battery behavior and persistence across a host cold reset remain open. See
+[power management](power-management.md) for retained state and wake sources,
+and [boot research](boot-research.md) for the earlier RTC word-access observation.
 
 ## Stop and mutation rules
 
@@ -112,9 +124,14 @@ value/width. It does not return arbitrary zero and pretend that a real device
 answered. CPU registers are restored on a diagnostic stop. Earlier memory or
 peripheral effects in a multiple-transfer instruction are not transactionally
 rolled back: exact abort/partial-completion semantics require further work.
-Reset clears CPU, SRAM and peripheral state, keeps loaded NOR and starts again
-at the reset vector. This is a cold-machine reset, not a modeled calculator
-warmstart or power-key event. No battery-backed state is persisted yet.
+The host reset API clears CPU, SRAM and peripheral state, keeps loaded NOR and
+external SD media, and starts again at the reset vector. Firmware Power_OFF
+has a separate wake reset: EINT0–15 or a calendar alarm preserves external SRAM,
+RTC, GSTATUS3/4, board inputs, held physical keys, USB cable state and SD media
+while resetting CPU and on-chip controllers. Four original ROMs execute their
+own ON-resume code and recover the previous calculation. Analog rails, PLL
+stabilization and physical battery-backed persistence are not modeled by this
+functional reset path.
 
 ## Display and input
 
@@ -139,8 +156,9 @@ artwork.
 `src/watchdog.c` models WTCON/WTDAT/WTCNT, their reset values, the prescaler
 and four divider settings, countdown/reload and interrupt 9. WTDAT writes do
 not silently initialize WTCNT. Illegal register widths/offsets remain visible.
-Clock input is a provisional functional quantum; full PLL/PCLK timing remains
-open. A watchdog reset request produces `ORCHARD_UNIMPLEMENTED_RESET`, not a
+The watchdog consumes the shared PCLK stream, while physical PLL settling and
+board clock calibration remain open. A watchdog reset request produces
+`ORCHARD_UNIMPLEMENTED_RESET`, not a
 fake cold reset that erases external SRAM. Directed tests cover the supported
 register/countdown behavior. See [validation](validation.md).
 
@@ -149,8 +167,10 @@ register/countdown behavior. See [validation](validation.md).
 `orchard_gpio_inputs(machine, port, known_mask, levels)` replaces one port's
 external input stimulus. It is serialized by the same machine owner as CPU
 execution. Only input-configured pins use these levels; output pins retain
-latch readback. Undefined input bits remain diagnostic stops. Cold reset clears
-stimuli; probes reapply them for identical replay. The static API alone implies no EINT or board wiring. Explicit keyboard
+latch readback. Pins unresolved after external drives, weak bias and internal
+pull-ups remain diagnostic stops. Cold reset clears stimuli; Power_OFF wake
+preserves them. Probes reapply cold-reset conditions for identical replay.
+The static API alone implies no EINT or board wiring. Explicit keyboard
 attachment adds switch/pull-up resolution and unfiltered EINT sampling. Static
 known levels are strong drives, not weak bias resistors.
 
@@ -179,8 +199,10 @@ five divided ADC clocks and raising subsource 10 on completion. No AIN has an
 implicit board/battery value. See [LCD](lcd.md) and [ADC](adc.md) for exact
 clock, startup, unsupported-mode and analog/panel limitations.
 
-The scheduler supplies one provisional HCLK/PCLK quantum to these devices
-before guest execution. This does not implement the real clock tree. The pure
+LCD timing retains its functional reference quantum. ADC now receives shared
+PCLK edges and freezes while its CLKCON gate is closed. The scheduler combines
+their separate deadlines before guest execution; this is a bounded domain
+model, not the complete physical clock tree. The pure
 `orchard_get_peripheral_state`/`peripheral_snapshot` interface separates
 observation from MMIO reads that can start ADC conversion. The latter exports
 ten 32-bit words: LCD control/source/pending/mask, frame count low/high, ADC

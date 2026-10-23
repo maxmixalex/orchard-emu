@@ -1,0 +1,160 @@
+{
+  "schema": "orchard-native-continuation-r21-v1",
+  "validated_on": "2026-10-23",
+  "scope": "Final shared-PCLK production WASM: one successful original HP39gs ROMstream V2 stock installation, full double capture, native return, HOME arithmetic and stock USB re-enumeration.",
+  "passed": true,
+  "final_wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+  "fixture": {
+    "model": "hp39gs",
+    "kind": "user-original-full-39gs-nor",
+    "bytes": 1048576,
+    "sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+    "derived_rom": false,
+    "rom_modified": false,
+    "guest_memory_patched": false
+  },
+  "package": {
+    "file": "docs/downloads/hp39gs-rom-dump-v2.zip",
+    "sha256": "94d41700fb8f6db8feb9448c3cedad994a78681dc5b06bbc7c34d79e74444ca2",
+    "calculator_reader_revision": 2,
+    "inputs": [
+      {
+        "name": "HP39DIR.CUR",
+        "bytes": 31,
+        "sha256": "542dda3d8ae6257461c7836962e390dfa7898f6c20759b650d927f73b9718d41"
+      },
+      {
+        "name": "HP39DIR.000",
+        "bytes": 66,
+        "sha256": "beb1906b4946b4b1b454bf9833416885bf7b9cae46d3e527d23824d9d173532a"
+      },
+      {
+        "name": "HPGCC000.000",
+        "bytes": 10344,
+        "sha256": "298732caeba57a240acf135f1260c6f1cf1899e024fb734f3b4d2c4f92cadcc1"
+      },
+      {
+        "name": "LIB275L.000",
+        "bytes": 1489,
+        "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+      }
+    ]
+  },
+  "stages": {
+    "cold_boot_stock_disk_install": {
+      "passed": true,
+      "preset": "hp39gs-home",
+      "cold_boot": true,
+      "normal_os_usb_install": true,
+      "payload_files_completed": 2,
+      "payload_bytes_completed": 11833,
+      "final_tick": 1075503040,
+      "ready_checkpoint_sha256": "ec76f1119ce55f4409555b289d2a97e7ab914e4e458dd4c4d55214d2003be7c1",
+      "private_report_sha256": "52ae5ed86c38f9bad65413dd3391dfe64740a639333044f6ce5fae8caf9320a3",
+      "private_log_sha256": "5bbff51f0dfe6f5c53196ef88aea57a91ec0002980be947067cebe26b2cbb354"
+    },
+    "native_arm_launch": {
+      "passed": true,
+      "physical_key_launch": true,
+      "usb_hid_identity": {
+        "vendor": 1008,
+        "product": 289,
+        "manufacturer": "hpclang",
+        "name": "HP39 ROM Stream V2",
+        "endpoints": [
+          {
+            "address": 129,
+            "type": 3,
+            "maxPacket": 64
+          },
+          {
+            "address": 2,
+            "type": 3,
+            "maxPacket": 64
+          }
+        ]
+      }
+    },
+    "one_mib_double_capture": {
+      "passed": true,
+      "test": "TestStockOSFullCapture",
+      "bytes": 1048576,
+      "blocks": 64,
+      "block_bytes": 16384,
+      "read_passes_per_block": 2,
+      "independent_block_reads_equal": true,
+      "entire_image_byte_equal_to_original": true,
+      "image_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "transport_retries": 0,
+      "read_reports": 37634,
+      "write_reports": 131,
+      "private_capture_manifest_sha256": "3084303cd6882cd6573faeef897bcd3d66e7edf4e4750fc389e8266731f67ced"
+    },
+    "visible_progress": {
+      "passed": true,
+      "independently_viewed": true,
+      "observed": [
+        "H39 ROM V2: PLUG USB",
+        "START RECEIVER",
+        "READING BLOCK 32/64 P1",
+        "SAVED UNPLUG BLOCK 64/64 P2"
+      ],
+      "waiting_lcd_sha256": "59704edb9722237e560d80224c6d1e68f7dc68d527a44329e92be2a952994fef",
+      "host_ready_lcd_sha256": "e677c2e8f0aa5a8bd1565a13151625aad1f70362f373d66ad38ccbfdbc8eeb0e",
+      "saved_lcd_sha256": "9b17f444222c9be3501a75278d80c48e9a17681d9b3ef9002a91dbc1dc6d990b"
+    },
+    "finish_unplug_and_stock_return": {
+      "passed": true,
+      "returned_to_stock_os": true,
+      "after_return_lcd_sha256": "cbfb1472d296cd0c16a90ce8162dd49ace1faba2a9b7a8a76e6ac18a6c5a0338"
+    },
+    "home_arithmetic": {
+      "passed": true,
+      "physical_key_expression": "1+1",
+      "observed_result": "2",
+      "existing_whole_lcd_hash_matched": true,
+      "independently_viewed": true,
+      "lcd_sha256": "abf32ffc5e2fdcfc17172a5351eb6aac13d44a1b432d683f5a1f0c8e2a26844c"
+    },
+    "stock_usb_reuse": {
+      "passed": true,
+      "operation": "Re-enter stock APLET Receive/Disk and enumerate USB after the native application releases USB ownership.",
+      "identity": {
+        "vendor": 1008,
+        "product": 289,
+        "manufacturer": "HP Company",
+        "name": "HPx9G+ Device",
+        "endpoints": [
+          {
+            "address": 129,
+            "type": 2,
+            "maxPacket": 64
+          },
+          {
+            "address": 3,
+            "type": 2,
+            "maxPacket": 64
+          }
+        ]
+      }
+    }
+  },
+  "final_cpu_stop": 0,
+  "final_tick": 1595944544,
+  "private_execution_report_sha256": "3562c517f580d8d0a2530e0bc330a65d195cc0dea7fd03ee3dc6ff6a2c555bb9",
+  "private_test_log_sha256": "6a8da0c6bf3a9015d6cd77cbe768f68e5a7febe0f549bb700dd7e8aa87655780",
+  "test_seconds": 27.52,
+  "tools": {
+    "tools/prepare-hp39gs-romstream.mjs": "27f4b28e9917feeadbf2ff34c7aa269e889569e22e7931a82990876db2ce4179",
+    "tools/test-hp39-romstream-stock.mjs": "31efd39af6a7e02a5528b177c80906eeacacc77e2484633799f29be9ea6f17bb",
+    "tools/hp39-romstream/receiver/stock_test.go": "1a59ed27099320fab2c7ccd7d6b38d6c4f60682e29afd61d2c488d8f1af3d06e"
+  },
+  "boundaries": {
+    "physical_hardware_execution_verified": false,
+    "native_windows_hid_runtime_verified": false,
+    "failure_exit_matrix_repeated": false,
+    "hp49_native_execution_repeated": false,
+    "firmware_or_checkpoint_or_lcd_pixels_published": false,
+    "production_source_or_dist_changed_for_test": false
+  }
+}

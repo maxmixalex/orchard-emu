@@ -1,6 +1,78 @@
 # Continuation handoff
 
-## Current r20 continuation from f24ed9b (2026-10-23)
+## Current r21 continuation from 6b1a15e (2026-10-23)
+
+The user requested a dedicated Transfer settings tab, more buzzer work, the
+landscape cut below FN, a fix for compatibility termination after inactivity,
+Note upload over Wire, and localized warnings. Work was split across core
+power, peripheral clocks/PWM, original-ROM workflows, Note formats/protocol,
+React/layout, SD management, browser validation, independent core review,
+transfer review and documentation agents.
+
+All requested areas have implementation and final local acceptance. The
+transfer Unlimited setting is under **Settings → Transfer** and uses normal
+Apply/Cancel semantics. FN keys remain with the display in immersive landscape;
+the source artwork is unchanged. Note upload converts stock HP39AscC to its
+binary string representation, preserving calculator charset and HP escapes.
+The correct receive catalog is **SHIFT → 0 / NOTEPAD → RECV**, then Wire on
+39g+ or HP39/40 (USB) on 39gs. Programs and aplets still require their supported
+object format. Wire remains one stock RECV per object. Error identities are
+localized through the whole queue/Worker/controller path; technical details are
+available separately. Retry and Skip preserve other batch items.
+
+Natural Power_OFF is now modeled, including GPIO pull-ups, the disabled NAND
+probe, retained state and reset-vector wake. Four original ROMs all enter
+natural OFF after about five functional minutes, remain off, round-trip their
+v4 state, wake on ON and continue arithmetic. A genuine r20 v3 session imports
+and survives OFF/ON as well. Earlier failed sessions already stopped at an
+unsupported instruction should be restarted or restored from a healthy save;
+loading a newer core does not rewrite their recorded stop state.
+
+PCLK now derives from the guest's clock registers and feeds PWM, watchdog, ADC
+and SDI. The original 49g+ `440 .2 BEEP` is observed at approximately 434.028 Hz
+and 0.201567 seconds between first/last edges in the 12 MHz functional model.
+This corrects the former approximately 282.486 Hz / 0.30972 s path. Browser
+AudioContext playback is verified. PLL settle/switch-phase and physical
+clock calibration remain bounded, as detailed in the clock and buzzer docs.
+Checkpoint v4 adds clock/PWM latches and phase, keeps v1–v3 import, and documents
+which old unrecorded timing history cannot be recovered exactly.
+
+SD drafts can rename files and populated folders, delete files and empty
+folders, and reuse released space. Imported long names share one validated
+namespace with short aliases; explicit rename/delete retires the associated
+long-name records. Creation still requires an explicit 8.3 name. Final original
+49g+ runs accept a host-edited image, read root/nested objects, write TEST, and
+resume an in-flight full-card checkpoint identically on native and WASM.
+Independent FAT tools validate the export. HP48gII FILES still works and has no
+SD slot; no original HP50g acceptance is claimed.
+
+Final production WASM: **133,810 bytes**, SHA-256
+`36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108`.
+The [validation page](validation.md) and [r21 release record](evidence/release-validation-r21.json)
+pin source/assets and distinguish final production results from earlier
+idle-only/PCLK preview observations. Native/reference/sanitizer each pass
+19/19 suites; native and WASM each have 1,193,788 counted assertions; 45 C
+analyzer files are clean; Unicorn passes 17,075 cases. Final original39gs
+browser arithmetic, session, landscape and production Worker checks pass.
+Fresh stock installation of the unchanged ROMstream V2 also completes the
+whole double-read capture, visible progress, normal exit and USB reuse on the
+final core. Public packages remain byte-identical to r20.
+
+The release PR records the exact remote Build, merge, Pages and live-site
+acceptance. Do not treat local source validation as evidence that a different
+revision is deployed. Keep original NORs, immutable capture sidecars, card
+images, checkpoints and stock LCD pixels private. No guest patch or synthetic
+ROM admission is allowed, and no new artwork should be generated without the
+user requesting it.
+
+Continue with physical PCLK/PWM and power-retention evidence, remaining native
+application scenarios and protocol corner cases, UART2/IrDA, and later SDHC/DMA
+or FAT long-name creation when supported by explicit hardware/protocol facts.
+HP40gs/HP50g require complete original captures before stock-ROM admission.
+The older derived39gs fixture remains historical only: updater OS + generic
+bootloader + constructed tail, not a complete physical capture.
+
+## Historical r20 continuation from f24ed9b (2026-10-23)
 
 The user requested optional unlimited-speed transfers, actual firmware sound,
 an immersive landscape split at the bottom of the screen cover, further SD

@@ -1,0 +1,178 @@
+{
+  "schema": "orchard-buzzer-r21",
+  "date": "2026-10-23",
+  "passed": true,
+  "source_sha256": {
+    "src/soc.c": "323199c847b3510241169281f8db8b200384d7df9cb6e59e2df0fa8732b828a4",
+    "src/scheduler.c": "89423d237f60e5020c9044d52c58cd4b88321d12f98d28d98d37919f265228a8",
+    "src/buzzer.c": "d790463f66dece464bf1f7fe89e64abd52b7b6b56c5aeb1df0047435bf9da327",
+    "src/checkpoint.c": "a1cc469712c47912cb57f384b6421dced86ab10303df4e853ac8988cba8713bd",
+    "src/internal.h": "bb811f6ea99b4dbf9419dd361a0123b4ba37acaa7da0a8c2b0183c032184ab1d",
+    "app/wasm.c": "4f95add4f49ff0c3736008ebd6284a7d095baab6802588a0b4ce18776d89bbed",
+    "tests/pwm-clock.c": "06486d9eee97dbb6d3ac79f2828d8ceb14d90c335d50bdd37deb696732227948",
+    "tests/buzzer.c": "e7688410de531bbb8f15265e75554419e95ee5ff5d58ab06493b82d26190e1d4",
+    "tests/checkpoint.c": "db1ddeaa8695183f002e4c8faf0caafd0efa9c69f88f0f81cb2f35aaef680efa",
+    "tools/verify-buzzer-stock.mjs": "da03258da1d4d9706c42ce3bf4caff1766d425d2969db88afdb46ef44faa0cde"
+  },
+  "implementation": {
+    "reference_fin_hz": 12000000,
+    "fin_evidence": "fixed functional reference; pinned hpclang convention, not measured board crystal/straps",
+    "pclk_source": "tracked MPLLCON setup, CLKSLOW and CLKDIVN register writes; reduced rational phase",
+    "shared_consumers": [
+      "PWM0",
+      "PWM1",
+      "PWM2",
+      "PWM3",
+      "PWM4",
+      "watchdog",
+      "ADC",
+      "SDI"
+    ],
+    "rtc_independent": true,
+    "cpu_issue_and_lcd_model": "existing functional models retained",
+    "clock_gating": "actual PWM/ADC/SDI count and prescaler freeze; global PCLK fraction continues",
+    "pwm_period": "N+1 timer input edges for positive N, zero capture followed by next-edge reload",
+    "buffer_latches": "guest state captured at terminal count, before ISR buffer writes",
+    "audio_multiplier": false,
+    "observer_changes_guest_state": false,
+    "checkpoint_version": 4,
+    "checkpoint_extension_bytes": 64,
+    "checkpoint_legacy_versions": [
+      1,
+      2,
+      3
+    ],
+    "host_audio_queue_serialized": false
+  },
+  "regression": {
+    "native_ctest": "19/19 passed",
+    "native_buzzer_assertions": 4263,
+    "native_checkpoint_assertions": 1323,
+    "native_and_wasm_pwm_clock_assertions_per_host": 2452,
+    "independent_constants": [
+      "25/16 PCLK ratio: per-reference edges 1,2,1,2,1,2 and phases9,2,11,4,13,6",
+      "263/2 ratio supplies131 and132 edges, all shared consumers advance",
+      "N=59 compare29 prescale45 divider16 gives27648-reference-tick period and13824 half-period"
+    ],
+    "covered": [
+      "all six generated model profiles",
+      "all five PWM channels",
+      "clock gate and frequency transition",
+      "shared watchdog/ADC/SDI deadlines and independent RTC",
+      "terminal ISR edits and disabling autoreload after capture",
+      "phase/pending/gate v4 checkpoints and repaired-CRC rejection",
+      "whole/chunked/reference execution equality",
+      "muted observer checkpoint equality"
+    ],
+    "native_and_wasm_buzzer_assertions_per_host": 4263,
+    "native_and_wasm_checkpoint_assertions_per_host": 1323,
+    "native_and_wasm_default_core_assertions_per_host": 1159939,
+    "experimental_physical_read_additional_wasm_assertions": 217824,
+    "core_wasm_log_sha256": "e339086ed6085da97299720b7486dad673c404f2e9855606fe4f1b7f1c16fcf7",
+    "scope": "All 17 core C suites compiled from current source and compared native/WASM; later synthetic production ABI/protocol checks belong to final integration gate"
+  },
+  "original_hp49gplus_beep": {
+    "schema": "orchard-stock-buzzer-v2",
+    "model": 5,
+    "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+    "wasm_sha256": "e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6",
+    "tool_sha256": "da03258da1d4d9706c42ce3bf4caff1766d425d2969db88afdb46ef44faa0cde",
+    "physical_input_only": true,
+    "command": "440 .2 BEEP",
+    "clock": "12 MHz functional reference input; shared register-derived PCLK with immediate PLL settle, not a measured physical board clock",
+    "passed": true,
+    "empty_stack_before": "43122043fe41b3bfbe8e0e7381010a0f05fa611ae788f99e601c9fe3f5a9ee07",
+    "empty_stack_after": "43122043fe41b3bfbe8e0e7381010a0f05fa611ae788f99e601c9fe3f5a9ee07",
+    "observed": {
+      "cycles": 88,
+      "edges": 176,
+      "period_ticks": 27648,
+      "functional_hz": 434.02777777777777,
+      "first_edge": 236997665,
+      "last_edge": 239416467,
+      "functional_edge_span_seconds": 0.20156683333333333
+    },
+    "final_tick": 250400000,
+    "final_stop": 0
+  },
+  "original_report": {
+    "sha256": "ddff74fc619d478fba3317138e9412b789a7aedbb9d420c260b9e431104186b8",
+    "rom_or_ram_bytes_exported": false
+  },
+  "boundaries": [
+    "Fixed12MHz reference input is a documented software model, not board calibration",
+    "PLL lock duration is immediate in functional model; analog startup/LOCKTIME duration not measured",
+    "Frequency/source transition fraction is quantized to the new denominator; less than one new phase unit can be lost",
+    "PWM still uses per-channel phase, not full shared-prescaler inter-channel startup calibration",
+    "N=0 is a bounded functional policy without a silicon witness",
+    "Historical v1-v3 snapshots cannot preserve unknown active compare, pending reload or MPLL same-value first-write history; migration is explicit",
+    "No transducer/amplifier/loudness or microphone measurement model",
+    "Other original model ROMs require separate stock sound witnesses"
+  ],
+  "sources": [
+    {
+      "url": "https://pdfstore-manualsonline.prod.a.ki/pdfres_02/af/4c/af4c636f-a045-4652-865a-9643aaa6c16d.pdf",
+      "sha256": "4e3dd756e27d80d7116282a6ae062458237fc1c5b34f1b1d40529c92b2c18794",
+      "pages": [
+        "7-4..7-22",
+        "9-7",
+        "10-5..10-8"
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/maxmixalex/hpclang/261dba7cc5b208828f7a907c2071d24c3b0d94ea/runtime/core/time.c",
+      "sha256": "90868908cdf7cc3f838994dd6bb03dde23954a967b090d87a12f714283673651"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/maxmixalex/hpclang/261dba7cc5b208828f7a907c2071d24c3b0d94ea/runtime/core/sound-engine.c",
+      "sha256": "fa9f6cba5a9148fbe4beb7d480b53f1e65ecb279ba04d65b30e7605527cb7191"
+    }
+  ],
+  "publication_excludes": [
+    "ROMs",
+    "raw LCD data",
+    "private checkpoints",
+    "raw audio waveform"
+  ],
+  "source_sha256_scope": "Historical e41ae110 shared-PCLK preview; final production source identity is recorded separately below",
+  "final_production": {
+    "scope": "Frozen production WASM after explicit nonzero PCLK ratio contract review; same unchanged original HP49g+ ROM and physical keys",
+    "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+    "source_sha256": {
+      "src/soc.c": "1600aff2a4df0e3afb597d8df53d1d3a22d4c61fc3e1d165f4215d6942ecebfa",
+      "src/scheduler.c": "89423d237f60e5020c9044d52c58cd4b88321d12f98d28d98d37919f265228a8",
+      "src/buzzer.c": "d790463f66dece464bf1f7fe89e64abd52b7b6b56c5aeb1df0047435bf9da327",
+      "src/checkpoint.c": "a1cc469712c47912cb57f384b6421dced86ab10303df4e853ac8988cba8713bd",
+      "src/internal.h": "bb811f6ea99b4dbf9419dd361a0123b4ba37acaa7da0a8c2b0183c032184ab1d",
+      "app/wasm.c": "4f95add4f49ff0c3736008ebd6284a7d095baab6802588a0b4ce18776d89bbed",
+      "tests/pwm-clock.c": "06486d9eee97dbb6d3ac79f2828d8ceb14d90c335d50bdd37deb696732227948",
+      "tests/buzzer.c": "e7688410de531bbb8f15265e75554419e95ee5ff5d58ab06493b82d26190e1d4",
+      "tests/checkpoint.c": "db1ddeaa8695183f002e4c8faf0caafd0efa9c69f88f0f81cb2f35aaef680efa",
+      "tools/verify-buzzer-stock.mjs": "da03258da1d4d9706c42ce3bf4caff1766d425d2969db88afdb46ef44faa0cde"
+    },
+    "private_report_sha256": "fed6133d4a211df814d77f41c6c035db0f2d5cf3d651fdff613196a1e2d12cc1",
+    "tool_sha256": "da03258da1d4d9706c42ce3bf4caff1766d425d2969db88afdb46ef44faa0cde",
+    "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+    "passed": true,
+    "command": "440 .2 BEEP",
+    "observed": {
+      "cycles": 88,
+      "edges": 176,
+      "period_ticks": 27648,
+      "functional_hz": 434.02777777777777,
+      "first_edge": 236997665,
+      "last_edge": 239416467,
+      "functional_edge_span_seconds": 0.20156683333333333
+    },
+    "empty_stack_before": "43122043fe41b3bfbe8e0e7381010a0f05fa611ae788f99e601c9fe3f5a9ee07",
+    "empty_stack_after": "43122043fe41b3bfbe8e0e7381010a0f05fa611ae788f99e601c9fe3f5a9ee07",
+    "final_tick": 250400000,
+    "final_stop": 0,
+    "matches_e41_preview": {
+      "observed_summary": true,
+      "all_edge_packets_registers_and_clocks": true
+    },
+    "physical_input_only": true,
+    "rom_or_ram_bytes_exported": false
+  }
+}

@@ -2,6 +2,7 @@
 // Original bounded, stop-and-wait implementation of the Kermit protocol.
 // References: kermitproject.org/kproto.pdf and kermitproject.org/kpackets.html.
 // This module owns no clock, transport, filesystem, or calculator memory.
+import {transferError,transferErrorDetails} from './transfer-errors.js';
 export const MAX_FILE_BYTES = 2 * 1024 * 1024;
 export const MAX_RECEIVE_FILES = 16;
 export const MAX_RECEIVE_BYTES = 8 * 1024 * 1024;
@@ -20,7 +21,7 @@ export function validateFilename(name) {
   if (typeof name !== 'string' || name.length < 1 || name.length > 64 ||
       /[\x00-\x1f\x7f/\\:]/.test(name) || /[^\x20-\xff]/.test(name) ||
       name === '.' || name === '..' || name.trim() !== name)
-    throw new Error('Use a file name of 1–64 single-byte characters without a path or control characters.');
+    throw transferError('filename','Use a file name of 1–64 single-byte characters without a path or control characters.');
   return name;
 }
 export function checksum(bytes) {
@@ -128,11 +129,12 @@ export function decodeData(bytes, config = LOCAL, maximum = MAX_FILE_BYTES) {
 export class KermitSession {
   constructor({write, notify = () => {}, file = () => {}, listing = () => {}, hz = 12000000,
     timeout = 5, retries = 4, duration = 300, end=null, onPacket=()=>{}, validateFile=()=>{}, receiveBudget,
-    adaptiveSendTimeout=false} = {}) {
+    adaptiveSendTimeout=false,repeatReceiveAck=false} = {}) {
     if (typeof write !== 'function' || !Number.isFinite(hz) || hz <= 0) throw new Error('Invalid Kermit transport.');
     this.write = write; this.notify = notify; this.file = file; this.listing = listing; this.hz = hz;
     this.timeout = timeout * hz; this.retryLimit = retries; this.duration = duration * hz;
     this.adaptiveSendTimeout=adaptiveSendTimeout;
+    this.repeatReceiveAck=repeatReceiveAck;
     this.receiveBudget=validateReceiveBudget(receiveBudget);
     this.reader = new PacketReader({end});this.onPacket=onPacket;this.validateFile=validateFile;this.active = false; this.queue = []; this.lingerUntil = 0;
   }
@@ -141,7 +143,7 @@ export class KermitSession {
     this.phase = phase;
     this.notify({active:this.active, phase, direction:this.mode === 'send' ? 'send':'receive',
       name:this.name || '', transferred:this.transferred, total:this.mode === 'send' ? this.total : undefined,
-      ...(error ? {error} : {})});
+      ...(error ? transferErrorDetails(error) : {})});
   }
   start({mode, name, bytes, passive = false}, now) {
     if (this.active) throw new Error('A file transfer is already running.');
@@ -152,6 +154,7 @@ export class KermitSession {
     this.bytes=bytes || EMPTY; this.total=this.bytes.length; this.transferred=0; this.sequence=0; this.expected=0; this.retries=0;
     this.peer=parameters(PARAMETERS); this.rx={...LOCAL}; this.tx={...LOCAL}; this.queue=[]; this.reader.reset();
     this.adaptive=this.adaptiveSendTimeout&&mode==='send';this.sentAt=null;this.rtt=null;this.rttVariation=0;
+    this.repeatAck=this.repeatReceiveAck&&mode==='receive';this.ackTimeout=Math.min(this.hz,this.timeout);
     this.retryCeiling=this.peer.timeout*this.hz;this.baseTimeout=this.adaptive?this.hz:this.timeout;
     this.last=null; this.ack=null; this.receiving=false; this.current=null; this.files=[]; this.receivedBytes=0;this.listingBytes=0; this.lingerUntil=0;this.initialProbe=null;
     this.status('negotiating');
@@ -187,8 +190,19 @@ export class KermitSession {
     this.rx={ctl:this.peer.ctl,binary:this.peer.binary,repeat:this.peer.repeat};
   }
   acknowledge(p, data = EMPTY) {
+    // Once the next packet arrives, an unsent retry of the preceding ACK is
+    // obsolete. A partially written frame must finish before the next ACK.
+    if(this.repeatAck&&this.ack)this.queue=this.queue.filter(q=>q.bytes!==this.ack.bytes||q.offset>0);
     this.ack={sequence:p.sequence, bytes:this.frame(p.sequence,'Y',data)};
-    this.enqueue(this.ack.bytes); this.deadline=this.now+this.timeout; this.retries=0;
+    this.retries=0;this.ackTimeout=Math.min(this.hz,this.timeout);this.queueAck();
+  }
+  queueAck(){
+    const ack=this.ack;
+    if(this.repeatAck){
+      if(this.queue.some(q=>q.bytes===ack.bytes))return;
+      this.deadline=Infinity;
+      this.enqueue(ack.bytes,()=>{if(this.ack===ack)this.deadline=this.now+this.ackTimeout;});
+    }else{this.enqueue(ack.bytes);this.deadline=this.now+this.timeout;}
   }
   nextSend() {
     this.sequence=(this.sequence+1)&63;
@@ -199,8 +213,15 @@ export class KermitSession {
     } else this.send('Z',EMPTY,'send-eof');
   }
   retry() {
-    if (++this.retries>this.retryLimit) throw new Error('File transfer timed out. Check the calculator transfer mode and try again.');
+    if (++this.retries>this.retryLimit) throw transferError('transferTimeout','File transfer timed out. Check the calculator transfer mode and try again.');
     if (this.queue.length) throw new Error('The link did not accept the queued packet.');
+    if(this.repeatAck&&this.receiving&&this.ack){
+      // Stock HP39 SEND sometimes misses an already emitted ACK, then waits
+      // about eight guest seconds before repeating S or D. Kermit's receive
+      // state table permits resending the preceding ACK on timeout. Retain
+      // its exact sequence/parameters, back off, and never duplicate data.
+      this.ackTimeout=Math.min(this.timeout,this.ackTimeout*2);this.queueAck();return;
+    }
     // HP39's advertised ten-second timeout makes an occasional lost packet
     // look like a frozen calculator. Use measured, bounded sender timeouts:
     // start at one guest second, back off after loss, and never time an ACK
@@ -230,7 +251,7 @@ export class KermitSession {
         if (p.type==='E') throw new Error('Calculator: '+byteText(decodeData(p.data,this.rx,4096)));
         this.accept(p);
       }
-    } catch (error) { this.fail(error.message); }
+    } catch (error) { this.fail(error); }
   }
   accept(p) {
     if (p.type==='I' && this.mode==='receive' && !this.receiving) {
@@ -283,7 +304,7 @@ export class KermitSession {
   acceptFile(p) {
     if (p.sequence!==this.expected) {
       if (p.sequence===((this.expected+63)&63) && this.ack?.sequence===p.sequence) {
-        this.enqueue(this.ack.bytes);this.deadline=this.now+this.timeout;this.retries=0;
+        this.retries=0;this.ackTimeout=Math.min(this.hz,this.timeout);this.queueAck();
       }
       else if (p.type!=='Y'&&p.type!=='N') this.enqueue(this.frame(this.expected,'N'));
       return;
@@ -332,7 +353,7 @@ export class KermitSession {
   poll(now) {
     this.now=now;
     try {
-      if (this.active && now>=this.end) throw new Error('File transfer exceeded its virtual-time limit.');
+      if (this.active && now>=this.end) throw transferError('transferDuration','File transfer exceeded its virtual-time limit.');
       if (this.active && now>=this.deadline) this.retry();
       // At most one bounded write per poll; the transport may accept a prefix.
       const q=this.queue[0];
@@ -342,7 +363,7 @@ export class KermitSession {
         q.offset+=n;
         if (q.offset===q.bytes.length) {this.queue.shift();q.sent?.();}
       }
-    } catch (error) {this.fail(error.message);}
+    } catch (error) {this.fail(error);}
   }
   complete() {this.active=false;this.last=null;this.bytes=EMPTY;this.status('complete');}
   cancel(message = 'File transfer cancelled.') {

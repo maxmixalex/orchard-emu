@@ -31,6 +31,28 @@ function pathKey(path){
   return '/'+parts.map(fold).join('/');
 }
 function checksum(bytes){let sum=0;for(const byte of bytes)sum=(((sum&1)<<7)+(sum>>>1)+byte)&255;return sum;}
+function longNameKey(name){
+  // FAT compares one uppercase character per character; do not expand sharp-s
+  // to "SS" or normalize the Unicode spelling stored in someone else's image.
+  return Array.from(name.replace(/^ +|[ .]+$/g,''),c=>{
+    const upper=c.toUpperCase();return Array.from(upper).length===1?upper:c;
+  }).join('');
+}
+function longText(parts){
+  const units=[];let ended=false;
+  for(let i=parts.length-1;i>=0;i--)for(const offset of [1,3,5,7,9,14,16,18,20,22,24,28,30]){
+    const unit=parts[i][offset]|parts[i][offset+1]<<8;
+    if(ended)need(unit===0xffff,'Invalid long-name padding.');
+    else if(unit===0)ended=true;
+    else{need(unit!==0xffff,'Long name contains padding before its terminator.');units.push(unit);}
+  }
+  need(units.length>0&&units.length<=255,'Long name must contain 1–255 characters.');
+  const name=String.fromCharCode(...units);
+  need(!/[\x00-\x1f"*/:<>?\\|]/.test(name)&&longNameKey(name).length>0,'Invalid long file name.');
+  return name;
+}
+const entryNames=entry=>[fold(entry.name),...(entry.longName?[longNameKey(entry.longName)]:[])];
+function writable(node){if(node.readOnly)fail('readOnly','This file or folder is read only.');}
 
 class Volume {
   constructor(image){
@@ -117,10 +139,12 @@ class Volume {
         long.push(e);need(long.length<=20,'Long name exceeds its bounded entry chain.');continue;
       }
       need(!(attr&0xc0),'Reserved directory attribute bits are set.');
-      const hadLong=long.length>0;
+      const hadLong=long.length>0,longOffsets=long.map(part=>part.byteOffset-this.image.byteOffset);
+      let longName=null;
       if(hadLong){
         const sum=checksum(e.subarray(0,11));
         need(long.every((part,i)=>part[0]===(long.length-i|(i===0?64:0))&&part[13]===sum),'Long-name sequence/checksum disagrees with its short alias.');
+        longName=longText(long);
         long.length=0;
       }
       need(this.view.getUint16(offset+20,true)===0,'FAT16 entry contains a high cluster number.');
@@ -138,13 +162,17 @@ class Volume {
       need(base.length>0&&![...base,...ext].some(c=>c.charCodeAt(0)<32||c.charCodeAt(0)===127||'"*+,./:;<=>?[\\]|'.includes(c)), 'Invalid short directory name.');
       if(e[12]&8)base=base.toLowerCase();if(e[12]&16)ext=ext.toLowerCase();
       const name=base+(ext?'.'+ext:''),key=fold(name);
-      need(!seen.has(key),'Duplicate short file name.');seen.add(key);
+      // Short aliases and long names share one namespace. Validate the input
+      // too, so rename/delete cannot choose an ambiguous imported entry.
+      for(const candidate of new Set(entryNames({name,longName}))){
+        need(!seen.has(candidate),'Duplicate short or long file name.');seen.add(candidate);
+      }
       const path=(node.path==='/'?'':node.path)+'/'+key,type=attr&16?'directory':'file';
       let chain=[];
       if(cluster)chain=this.chain(cluster);
       if(type==='directory')need(cluster>=2&&size===0,'Invalid directory storage.');
       else need(size===0?!cluster:cluster>=2&&chain.length===Math.ceil(size/this.clusterBytes),'File length disagrees with its cluster chain.');
-      const item={name,path,type,size,cluster,chain,offset,readOnly:Boolean(attr&1),hasLongName:hadLong,parent:node.cluster};
+      const item={name,path,type,size,cluster,chain,offset,readOnly:Boolean(attr&1),hasLongName:hadLong,longName,longOffsets,parent:node.cluster};
       this.nodes.set(path,item);items.push(item);
     }
     need(!long.length,'Unfinished long-name entry.');
@@ -206,7 +234,8 @@ export function addSDFiles(image,path,files){
   });
   // Uint8Array subclasses (notably Node Buffer) may have a sharing slice().
   const copy=new Uint8Array(image),volume=new Volume(copy),directory=volume.get(path,'directory');
-  const names=new Set(directory.children.map(entry=>fold(entry.name)));
+  writable(directory);
+  const names=new Set(directory.children.flatMap(entryNames));
   for(const {name} of prepared){if(names.has(name))fail('duplicate','A file or folder with that name already exists.',{name});names.add(name);}
   for(const {name,bytes} of prepared){
     const slot=volume.freeSlot(directory),chain=volume.allocate(Math.ceil(bytes.length/volume.clusterBytes));
@@ -218,9 +247,41 @@ export function addSDFiles(image,path,files){
 export function createSDDirectory(image,path,name){
   byteArray(image);name=validateSDName(name);
   const copy=new Uint8Array(image),volume=new Volume(copy),parent=volume.get(path,'directory');
-  if(parent.children.some(entry=>fold(entry.name)===name))fail('duplicate','A file or folder with that name already exists.',{name});
+  writable(parent);
+  if(parent.children.some(entry=>entryNames(entry).includes(name)))fail('duplicate','A file or folder with that name already exists.',{name});
   const slot=volume.freeSlot(parent),[cluster]=volume.allocate(1),offset=volume.offset(cluster);
   volume.entry(offset,'.',16,cluster,0);volume.entry(offset+32,'..',16,parent.cluster,0);
   volume.entry(slot,name,16,cluster,0);
+  new Volume(copy);return copy;
+}
+function editableEntry(volume,path){
+  const key=pathKey(path);
+  if(key==='/')fail('root','The card root cannot be renamed or deleted.');
+  const entry=volume.nodes.get(key);
+  if(!entry)fail('path','No such file or folder on the card.');
+  const parent=volume.get(key.slice(0,key.lastIndexOf('/'))||'/','directory');
+  writable(entry);writable(parent);
+  return {entry,parent};
+}
+export function renameSDEntry(image,path,name){
+  byteArray(image);name=validateSDName(name);
+  const copy=new Uint8Array(image),volume=new Volume(copy),{entry,parent}=editableEntry(volume,path);
+  if(name===fold(entry.name))return copy;
+  if(parent.children.some(other=>other!==entry&&entryNames(other).includes(name)))
+    fail('duplicate','A file or folder with that name already exists.',{name});
+  // Rename to the explicitly chosen short name. Retiring every associated LFN
+  // entry avoids a stale name/checksum attaching itself to a later allocation.
+  for(const offset of entry.longOffsets)copy[offset]=0xe5;
+  copy.set(rawName(name),entry.offset);copy[entry.offset+12]&=~0x18;
+  // Cluster chains, file bytes, attributes and dates are otherwise unchanged.
+  new Volume(copy);return copy;
+}
+export function deleteSDEntry(image,path){
+  byteArray(image);
+  const copy=new Uint8Array(image),volume=new Volume(copy),{entry}=editableEntry(volume,path);
+  if(entry.type==='directory'&&entry.children.length)fail('notEmpty','The folder is not empty.');
+  for(const cluster of entry.chain)volume.setFat(cluster,0);
+  for(const offset of [...entry.longOffsets,entry.offset])copy[offset]=0xe5;
+  // FAT deletion releases storage; it does not claim to securely erase bytes.
   new Volume(copy);return copy;
 }

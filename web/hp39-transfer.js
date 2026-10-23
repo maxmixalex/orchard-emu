@@ -3,24 +3,25 @@
 // are visible to the calculator. Protocol roles: docs/development/hp39-files.md.
 import {KermitSession,PacketReader,PARAMETERS,parameters,packet,decodeData,byteText,MAX_RECEIVE_BYTES,validateReceiveBudget} from './kermit.js';
 import {inspectHp39File,inspectHp39Bundle,createHp39Directory,validateHp39Filename} from './hp39-files.js';
+import {transferError,transferErrorDetails} from './transfer-errors.js';
 const EMPTY=new Uint8Array();
 const ascii=text=>Uint8Array.from(text,c=>c.charCodeAt(0));
 export const MAX_HP39_HOST_FILES=16;
 
 /** Preserve explicit directory aliases. Generate a disk catalog for loose typed files. */
 export function prepareHp39Files(files) {
-  if(!Array.isArray(files)||files.length>MAX_HP39_HOST_FILES+2)throw Error('An HP39 catalog supports at most 16 objects and two directory files.');
+  if(!Array.isArray(files)||files.length>MAX_HP39_HOST_FILES+2)throw transferError('hp39ObjectLimit','An HP39 catalog supports at most 16 objects and two directory files.');
   const prepared=[],names=new Set();let total=0;
   for(const f of files){
     const name=validateHp39Filename(f?.name),key=name.toUpperCase();
-    if(name.length>64)throw Error('Use HP39 host filenames of at most 64 bytes.');
-    if(names.has(key))throw Error('Duplicate HP39 file name (case insensitive).');
+    if(name.length>64)throw transferError('hp39Filename','Use HP39 host filenames of at most 64 bytes.');
+    if(names.has(key))throw transferError('duplicateFilename','Duplicate HP39 file name (case insensitive).');
     const info=inspectHp39File(f.bytes);names.add(key);total+=f.bytes.length;
-    if(total>MAX_RECEIVE_BYTES)throw Error('The selected HP39 files exceed 8 MiB.');
+    if(total>MAX_RECEIVE_BYTES)throw transferError('hp39UploadLimit','The selected HP39 files exceed 8 MiB.');
     prepared.push({name,bytes:f.bytes.slice(),info});
   }
   const directories=prepared.filter(f=>f.info.kind==='A');
-  if(prepared.length-directories.length>MAX_HP39_HOST_FILES)throw Error('Choose at most 16 HP39 objects.');
+  if(prepared.length-directories.length>MAX_HP39_HOST_FILES)throw transferError('hp39ObjectLimit','Choose at most 16 HP39 objects.');
   if(directories.length){
     // Stock SEND returns HP39DIR.000 and its objects, but not HP39DIR.CUR.
     // Recreate only this fixed entry point; preserve all original aliases and
@@ -33,8 +34,8 @@ export function prepareHp39Files(files) {
     prepared.push({name:'HP39DIR.CUR',bytes:createHp39Directory([{kind:'A',file:'HP39DIR.000',title:'Orchard'}])},
       {name:'HP39DIR.000',bytes:createHp39Directory(entries)});
   }
-  if(prepared.length>MAX_HP39_HOST_FILES+2)throw Error('An HP39 catalog supports at most 16 objects and two directory files.');
-  if(prepared.reduce((n,f)=>n+f.bytes.length,0)>MAX_RECEIVE_BYTES)throw Error('The HP39 catalog and files exceed 8 MiB.');
+  if(prepared.length>MAX_HP39_HOST_FILES+2)throw transferError('hp39ObjectLimit','An HP39 catalog supports at most 16 objects and two directory files.');
+  if(prepared.reduce((n,f)=>n+f.bytes.length,0)>MAX_RECEIVE_BYTES)throw transferError('hp39UploadLimit','The HP39 catalog and files exceed 8 MiB.');
   return prepared.map(({name,bytes})=>({name,bytes}));
 }
 
@@ -48,14 +49,14 @@ export class Hp39FileServer {
   }
   get pending(){return this.active||this.queue.length>0||Boolean(this.child?.pending)||this.lingerUntil>this.now;}
   progress(transferred=0){return {hostedTransferred:(this.transferred||0)+transferred,hostedTotal:this.total,filesCompleted:this.served?.size||0,filesTotal:this.objectCount};}
-  status(phase,error){this.phase=phase;this.notify({active:this.active,phase,direction:'serve',name:this.name||'',transferred:this.transferred,total:this.total,...this.progress(),...(error?{error}:{})});}
+  status(phase,error){this.phase=phase;this.notify({active:this.active,phase,direction:'serve',name:this.name||'',transferred:this.transferred,total:this.total,...this.progress(),...(error?transferErrorDetails(error):{})});}
   start({files=[]},now){
     if(this.active)throw Error('An HP39 file server is already running.');
     const prepared=prepareHp39Files(files);
     this.files=new Map(prepared.map(f=>[f.name.toUpperCase(),f]));
     this.total=prepared.filter(f=>inspectHp39File(f.bytes).kind!=='A').reduce((n,f)=>n+f.bytes.length,0);
     this.objectCount=prepared.filter(f=>inspectHp39File(f.bytes).kind!=='A').length;
-    this.transferred=0;this.served=new Set();this.received=0;this.receivedBytes=0;this.child=null;this.lastAck=null;this.infoAck=null;this.queue=[];this.reader.reset();
+    this.transferred=0;this.served=new Set();this.received=0;this.receivedBytes=0;this.child=null;this.lastAck=null;this.infoAck=null;this.finalAckRetry=null;this.queue=[];this.reader.reset();
     this.peer=parameters(PARAMETERS);this.now=now;this.end=now+900*this.hz;this.active=true;this.mode='serve';this.lingerUntil=0;
     this.publishListing();this.status('serving');
   }
@@ -72,21 +73,33 @@ export class Hp39FileServer {
     ack.deadline=Infinity;
     this.enqueue(ack.bytes,()=>{if(this.infoAck===ack)ack.deadline=this.now+ack.timeout;});
   }
+  clearFinalAck(){
+    const ack=this.lastAck;this.finalAckRetry=null;this.lastAck=null;this.lingerUntil=0;
+    if(ack)this.queue=this.queue.filter(q=>q.bytes!==ack.bytes||q.offset>0);
+  }
+  sendFinalAck(){
+    const retry=this.finalAckRetry;if(!retry)return;
+    const ack=retry.ack;if(this.queue.some(q=>q.bytes===ack.bytes))return;
+    retry.deadline=Infinity;
+    this.enqueue(ack.bytes,()=>{if(this.finalAckRetry===retry)retry.deadline=this.now+retry.timeout;});
+  }
   publishListing(){this.listing([...this.files.values()].filter(f=>inspectHp39File(f.bytes).kind!=='A').map(f=>`${f.name} · ${inspectHp39File(f.bytes).title} · ${f.bytes.length} bytes`).join('\n'));}
   makeChild(mode,name='',bytes){
     // Stock HP39 SEND can make steady progress for more than five guest minutes.
     // Share this server's existing total deadline instead of imposing the
     // generic Kermit client's shorter default on each child transaction.
     const child=new KermitSession({write:bytes=>this.queue.length?0:this.write(bytes),hz:this.hz,
-      duration:Math.max(0,(this.end-this.now)/this.hz),adaptiveSendTimeout:true,
+      duration:Math.max(0,(this.end-this.now)/this.hz),adaptiveSendTimeout:true,repeatReceiveAck:true,
       validateFile:file=>this.validateStore([...child.files.filter(f=>!f.screen),file]),notify:state=>{
       if(state.phase==='complete'){
         if(mode==='send'){
           const item=this.files.get(name.toUpperCase());
           if(item&&inspectHp39File(item.bytes).kind!=='A'&&!this.served.has(name.toUpperCase())){this.served.add(name.toUpperCase());this.transferred+=item.bytes.length;}
         }
-        this.lastAck=child.ack?{...child.ack,type:'B'}:null;this.lingerUntil=child.lingerUntil;this.child=null;this.name=name;this.status('serving');
-      }else if(state.phase==='error'||state.phase==='cancelled')this.fail(state.error||'The HP39 transfer ended unexpectedly.');
+        this.lastAck=child.ack?{...child.ack,type:'B'}:null;this.lingerUntil=child.lingerUntil;
+        this.finalAckRetry=mode==='receive'&&this.lastAck?{ack:this.lastAck,retries:0,timeout:Math.min(this.hz,child.timeout),ceiling:child.timeout,deadline:this.now+Math.min(this.hz,child.timeout)}:null;
+        this.child=null;this.name=name;this.status('serving');
+      }else if(state.phase==='error'||state.phase==='cancelled')this.fail(state.error?state:transferError('uploadIncomplete','The HP39 transfer ended unexpectedly.'));
       else{
         this.name=state.name||name;
         const item=mode==='send'?this.files.get(name.toUpperCase()):null;
@@ -101,7 +114,7 @@ export class Hp39FileServer {
   validateStore(files){
     // Include earlier files in the same still-uncommitted transaction. Reject
     // before EOF ACK so a full host disk cannot acknowledge a lost file.
-    if(this.received+files.length>this.receiveBudget.files||this.receivedBytes+files.reduce((n,f)=>n+f.bytes.length,0)>this.receiveBudget.bytes)throw Error('Download and clear received files before receiving more.');
+    if(this.received+files.length>this.receiveBudget.files||this.receivedBytes+files.reduce((n,f)=>n+f.bytes.length,0)>this.receiveBudget.bytes)throw transferError('receiveCapacity','Download and clear received files before receiving more.');
     const sizes=new Map([...this.files].map(([key,f])=>[key,f.bytes.length]));
     for(const {name,bytes} of files){validateHp39Filename(name);inspectHp39File(bytes);sizes.set(name.toUpperCase(),bytes.length);}
     if(sizes.size>MAX_HP39_HOST_FILES+2||[...sizes.values()].reduce((n,size)=>n+size,0)>MAX_RECEIVE_BYTES)throw Error('HP39 disk catalog is full.');
@@ -114,7 +127,7 @@ export class Hp39FileServer {
     const ack=this.lastAck;
     if(!ack||now>=this.lingerUntil||p.type!==ack.type||p.sequence!==ack.sequence)return false;
     if(p.type==='G'&&(p.data.length!==ack.data.length||p.data.some((b,i)=>b!==ack.data[i])))return false;
-    this.enqueue(ack.bytes);return true;
+    if(this.finalAckRetry)this.sendFinalAck();else this.enqueue(ack.bytes);return true;
   }
   receive(bytes,now){
     this.now=now;
@@ -125,6 +138,7 @@ export class Hp39FileServer {
       if(p.type==='E')throw Error('Calculator: '+byteText(decodeData(p.data,{ctl:this.peer.ctl,binary:this.peer.binary,repeat:this.peer.repeat},4096)));
       if(this.child?.active){this.child.now=now;this.child.accept(p);continue;}
       if(this.repeatFinal(p,now))continue;
+      if(['I','R','S','G'].includes(p.type))this.clearFinalAck();
       if(p.type==='I'){
         this.peer=parameters(p.data);
         let ack=this.infoAck;
@@ -156,12 +170,12 @@ export class Hp39FileServer {
         }
         else this.enqueue(this.frame(p.sequence,'E',ascii('Unsupported command')));
       }
-    }}catch(error){this.fail(error.message);}
+    }}catch(error){this.fail(error);}
   }
   poll(now){
     this.now=now;
     try{
-      if(this.active&&now>=this.end)throw Error('The HP39 file server reached its 15-minute virtual-time limit.');
+      if(this.active&&now>=this.end)throw transferError('hp39ServerDuration','The HP39 file server reached its 15-minute virtual-time limit.');
       // The original HP39gs can consume a USB reply before its command client
       // has enabled receive notifications. Init-Info has no child sender yet:
       // retain its ACK until the following command, with the same bounded
@@ -169,19 +183,30 @@ export class Hp39FileServer {
       // inserted and successful exchanges incur no packet delay.
       const ack=this.infoAck;
       if(this.active&&ack&&now>=ack.deadline){
-        if(++ack.retries>4)throw Error('HP39 initialization timed out. Reopen the calculator Disk drive receiver and reconnect.');
+        if(++ack.retries>4)throw transferError('hp39InitTimeout','HP39 initialization timed out. Reopen the calculator Disk drive receiver and reconnect.');
         ack.timeout=Math.min(this.peer.timeout*this.hz,ack.timeout*2);
         this.sendInfoAck(ack);
+      }
+      // The completed child may have emitted its B ACK just before the stock
+      // sender enabled reception too. Retain it only within the existing final
+      // ACK grace period; a new command immediately supersedes an unsent retry.
+      const final=this.finalAckRetry;
+      if(final&&now>=this.lingerUntil){
+        this.finalAckRetry=null;
+        this.queue=this.queue.filter(q=>q.bytes!==final.ack.bytes||q.offset>0);
+      }else if(final&&now>=final.deadline){
+        if(final.retries>=4)this.finalAckRetry=null;
+        else{final.retries++;final.timeout=Math.min(final.ceiling,final.timeout*2);this.sendFinalAck();}
       }
       const q=this.queue[0];
       if(q){const left=q.bytes.subarray(q.offset),n=this.write(left);if(!Number.isInteger(n)||n<0||n>left.length)throw Error('Invalid HP39 transport acceptance.');q.offset+=n;if(q.offset===q.bytes.length){this.queue.shift();q.sent?.();}}
       else if(this.child?.pending)this.child.poll(now);
-    }catch(error){this.fail(error.message);}
+    }catch(error){this.fail(error);}
   }
   cancel(message='HP39 file server stopped.'){
-    const child=this.child;this.child=null;this.infoAck=null;this.queue=[];this.lingerUntil=0;
+    const child=this.child;this.child=null;this.infoAck=null;this.finalAckRetry=null;this.queue=[];this.lingerUntil=0;
     if(child?.active){child.notify=()=>{};child.cancel(message);for(const q of child.queue)this.queue.push(q);}
     this.active=false;this.status('cancelled',message);
   }
-  fail(message){this.active=false;this.child=null;this.infoAck=null;this.queue=[];this.lingerUntil=0;this.status('error',message);}
+  fail(message){this.active=false;this.child=null;this.infoAck=null;this.finalAckRetry=null;this.queue=[];this.lingerUntil=0;this.status('error',message);}
 }

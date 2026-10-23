@@ -84,7 +84,7 @@ EXPORT("buzzer_snapshot") uintptr_t web_buzzer_snapshot(void) {
     const o_soc *s = &machine.soc;
     const uint32_t values[] = {s->gpio[4], s->gpio[5], s->tcfg0, s->tcfg1, s->tcon,
         s->tcntb[2], s->tcmpb[2], s->count[2], s->phase[2], s->clock[3],
-        machine.buzzer.compare, machine.buzzer.pwm_level};
+        s->active_compare[2], s->count[2]<=s->active_compare[2]};
     o_copy(buzzer_registers, values, sizeof(values));
     return (uintptr_t)buzzer_registers;
 }

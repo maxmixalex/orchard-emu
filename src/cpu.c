@@ -229,7 +229,11 @@ static void psr_transfer(orchard_machine *m, uint32_t op, bool read) {
     bool carry = false;
     uint32_t value = (op & (1u << 25)) ? operand2(c, op, &carry) : o_getr(c, op & 15u);
     value = (*target & ~mask) | (value & mask);
-    if (!o_mode_valid(value)) { unpredictable(m, op); return; }
+    /* SPSR stores a saved bit pattern, not the current execution mode.
+       Suspend code may restore an unused bank's reset/unknown mode bits.
+       Validate them only when an exception return actually copies the SPSR
+       to CPSR; a direct CPSR mode change still requires a valid mode. */
+    if (!saved && !o_mode_valid(value)) { unpredictable(m, op); return; }
     if (saved) *target = value;
     else o_set_cpsr(c, value);
 }

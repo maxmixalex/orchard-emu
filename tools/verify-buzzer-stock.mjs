@@ -21,18 +21,19 @@ const {instance:{exports:core}}=await WebAssembly.instantiate(wasm,{});
 assert.equal(core.create(5),0);new Uint8Array(core.memory.buffer,core.rom_buffer(),rom.length).set(rom);
 assert.equal(core.load(rom.length),0);applySetup(core,5,'hp49-home');
 const stream=new BuzzerStream(core);
-const report={schema:'orchard-stock-buzzer-v1',model:5,rom_sha256:HP49_ROM,wasm_sha256:sha256(wasm),
+const report={schema:'orchard-stock-buzzer-v2',model:5,rom_sha256:HP49_ROM,wasm_sha256:sha256(wasm),
   tool_sha256:sha256(await readFile(new URL(import.meta.url))),physical_input_only:true,
-  command:'440 .2 BEEP',clock:'existing 12 MHz functional ticks, not calibrated physical PCLK',
+  command:'440 .2 BEEP',clock:'12 MHz functional reference input; shared register-derived PCLK with immediate PLL settle, not a measured physical board clock',
   keys:[],buzzer_packets:[],passed:false};
 let tick=0,previous=-1;
 const state=()=>Array.from(new Uint32Array(core.memory.buffer,core.snapshot(),33));
 const registers=()=>Array.from(new Uint32Array(core.memory.buffer,core.buzzer_snapshot(),12));
+const clocks=()=>Array.from(new Uint32Array(core.memory.buffer,core.clock_snapshot(),6));
 function run(n){while(n){
   const budget=Math.min(n,16384);assert.equal(core.run(budget),0,JSON.stringify(state()));tick+=budget;n-=budget;
   assert.equal(core.uart_receive(),0,'No unrelated transfer traffic is expected');
   const packet=stream.packet();
-  if(packet?.edges.length)report.buzzer_packets.push({tick:packet.tick,epoch:packet.epoch,overflow:packet.overflow,edges:[...packet.edges],registers:registers()});
+  if(packet?.edges.length)report.buzzer_packets.push({tick:packet.tick,epoch:packet.epoch,overflow:packet.overflow,edges:[...packet.edges],registers:registers(),clocks:clocks()});
 }}
 function key(scan,down){assert.equal(scan<56?core.keyboard_matrix(Math.floor(scan/7),scan%7,+down):core.keyboard_dedicated([0,4,5,6][scan-56],+down),0);report.keys.push({tick,scan,down});}
 function tap(scan){if(scan===previous)run(2000000);previous=scan;key(scan,true);run(1200000);key(scan,false);run(1200000);}
@@ -50,9 +51,12 @@ try{
   const edges=report.buzzer_packets.flatMap(p=>Array.from({length:p.edges.length/2},(_,i)=>[p.edges[i*2],p.edges[i*2+1]]));
   const active=edges.slice(1);assert.equal(edges[0][1],0);assert.equal(active.length,176,'440 Hz × 0.2 seconds requests 88 complete cycles');
   const high=active.filter(([,level])=>level===1).map(([at])=>at);
-  const periods=high.slice(1).map((at,i)=>at-high[i]);assert(periods.every(value=>value===42480));
+  // Independent manual/firmware constants: (59+1)*45*16 PCLK edges,
+  // PCLK/Fin=25/16 from MPLLCON=0x43012 and CLKDIVN=3: 27,648 Fin ticks.
+  const periods=high.slice(1).map((at,i)=>at-high[i]);assert(periods.every(value=>value===27648));
   assert(report.buzzer_packets.some(p=>((p.registers[0]>>4)&3)===2&&p.registers[5]===59&&p.registers[6]===29),'Actual firmware must select GPB2/TOUT2 with Timer2 count/compare');
   assert(report.buzzer_packets.every(p=>p.overflow===0));
+  assert(report.buzzer_packets.some(p=>p.clocks[1]===0x43012&&p.clocks[4]===0&&p.clocks[5]===3));
   report.observed={cycles:high.length,edges:active.length,period_ticks:periods[0],functional_hz:12000000/periods[0],
     first_edge:active[0][0],last_edge:active.at(-1)[0],functional_edge_span_seconds:(active.at(-1)[0]-active[0][0])/12000000};
   report.passed=true;

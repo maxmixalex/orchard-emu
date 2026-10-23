@@ -33,7 +33,8 @@ MODELS = {
         {'id': 5, 'name': 'hp49gplus', 'width': 131, 'height': 80},
 }
 ASSETS = ('orchard.wasm', 'calculator.js', 'worker.js', 'virtual-usb.js',
-          'file-transfer.js', 'kermit.js', 'hp39-files.js', 'hp39-transfer.js')
+          'file-transfer.js', 'kermit.js', 'hp39-files.js', 'hp39-transfer.js',
+          'hp39-wire.js', 'transfer-errors.js')
 
 
 def model_identity(path):

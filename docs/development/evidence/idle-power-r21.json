@@ -1,0 +1,640 @@
+{
+  "schema": "orchard-idle-power-r21-v1",
+  "scope": "unmodified original ROMs, existing admitted board stimuli, physical keys; functional 12MHz reference time",
+  "baseline_core": "6b1a15e7fbf6f9a7d20e1e037ac69b00368197fe",
+  "rom_or_ram_patch": false,
+  "baseline": [
+    {
+      "model": 1,
+      "private_report_sha256": "8394ea19b56cf46d773eb23e8ff2b1e6bf9f114e4b483d066338ebb05f8a6ae3",
+      "ticks": 958633453,
+      "functional_seconds": 79.88612108333334,
+      "stop": {
+        "code": 7,
+        "reason": "unimplemented MMIO",
+        "pc": "00006640",
+        "instruction": "e5940044",
+        "address": "56000044",
+        "detail": "0000c000"
+      }
+    },
+    {
+      "model": 2,
+      "private_report_sha256": "59b70a7807c7610d6ccff054e2dc737177a2151fe6a5437ef1d5d3aef7b9b7f6",
+      "ticks": 3624042428,
+      "functional_seconds": 302.00353566666666,
+      "stop": {
+        "code": 7,
+        "reason": "unimplemented MMIO",
+        "pc": "0001746c",
+        "instruction": "e5901000",
+        "address": "56000044",
+        "detail": "0000c000"
+      }
+    },
+    {
+      "model": 4,
+      "private_report_sha256": "1c3336057945d96335f8b60661e510c2cc29f56ed0657f15aabea34350aee685",
+      "ticks": 3716009852,
+      "functional_seconds": 309.66748766666666,
+      "stop": {
+        "code": 7,
+        "reason": "unimplemented MMIO",
+        "pc": "0000a35c",
+        "instruction": "e5940044",
+        "address": "56000044",
+        "detail": "0000c000"
+      }
+    },
+    {
+      "model": 5,
+      "private_report_sha256": "f114a558a351bb0ea50c2e4460f4152fae8ddf3525ec293c57385fb111ca32a4",
+      "ticks": 3694280355,
+      "functional_seconds": 307.85669625,
+      "stop": {
+        "code": 7,
+        "reason": "unimplemented MMIO",
+        "pc": "00007f90",
+        "instruction": "e5808000",
+        "address": "4e000000",
+        "detail": "00000000"
+      }
+    }
+  ],
+  "pre_stop_gpio": {
+    "model": 1,
+    "pc": "0x00006640",
+    "GPECON": "0x05555555",
+    "GPEUP": "0x00003fff",
+    "unresolved": "0x0000c000",
+    "private_report_sha256": "edb04e38e4682c717e1c973e6a3b3d2a7938ee84ccb3aa48a31d9fd284858c3d"
+  },
+  "fixes": [
+    "Generic GPxUP weak pull-ups resolved on B through H ports, respecting strong input and explicit weak-bias conflicts",
+    "Bounded disabled NAND NFCONF read/write-zero, no NAND transactions",
+    "CLKCON Power_OFF halts CPU/non-retained peripherals and wakes by reset vector with retained SRAM/RTC/GSTATUS/host board and SD media",
+    "MSR SPSR stores saved mode patterns; active CPSR and exception-return mode validation remains"
+  ],
+  "post_wake_spsr_failure_before_fix": [
+    {
+      "model": 1,
+      "pc": "0x000271a0",
+      "instruction": "0xe16ff003",
+      "r3": 0
+    },
+    {
+      "model": 5,
+      "pc": "0x0003fb84",
+      "instruction": "0xe16ff003",
+      "r3": 0
+    }
+  ],
+  "fixed_original_roms": [
+    {
+      "model": 1,
+      "name": "HP 39g+",
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "wasm_sha256": "9121607afc0517f6c170c8e2c7f606a88461f0f7a3b2ad5729812f271bf08108",
+      "witness_tool_sha256": "031678e043cd011893ec9d73e4b4300ce23168b20ab81271c0a8d7db3f5b4e80",
+      "private_report_sha256": "ea9b980d8c9740f22371fbd08982ff7943e7f6d0baa6661a44d114bbcaac9eae",
+      "passed": true,
+      "natural_power_off": {
+        "observed_at_tick": 1052000000,
+        "poll_bound_ticks": 12000000,
+        "after_last_operation_seconds": 75
+      },
+      "off_sleeping": true,
+      "blank_off_lcd": true,
+      "instructions_frozen_for_10_seconds": true,
+      "off_checkpoint": {
+        "bytes": 271071,
+        "version": 3,
+        "sha256": "df70fb82ccfe537ebae5b9118f91fc39f4f91264973ae6487e7cd118c635e81f",
+        "roundtrip_equal": true
+      },
+      "before_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+      "after_on_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+      "new_calculation_frame_sha256": "2086d3abf95089b25ef4ac8cf017b86e32826d5b881f46c3d97e0958c3d6e4d5",
+      "visual_review": {
+        "before": "1+1 = 2",
+        "after_on": "same 1+1 = 2 and history",
+        "after_calculation": "7*8 = 56; previous history retained"
+      },
+      "final_stop": 0
+    },
+    {
+      "model": 2,
+      "name": "HP 39gs",
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "wasm_sha256": "9121607afc0517f6c170c8e2c7f606a88461f0f7a3b2ad5729812f271bf08108",
+      "witness_tool_sha256": "031678e043cd011893ec9d73e4b4300ce23168b20ab81271c0a8d7db3f5b4e80",
+      "private_report_sha256": "72fe94606e66bdc6d2b46b775b850568b312610db9e6742925a9daef1c433512",
+      "passed": true,
+      "natural_power_off": {
+        "observed_at_tick": 3716000000,
+        "poll_bound_ticks": 12000000,
+        "after_last_operation_seconds": 297
+      },
+      "off_sleeping": true,
+      "blank_off_lcd": true,
+      "instructions_frozen_for_10_seconds": true,
+      "off_checkpoint": {
+        "bytes": 271071,
+        "version": 3,
+        "sha256": "40fe0326d2e06a91dae12c13813bbb3a92b472938984fbf42abc8ed7da9e62f6",
+        "roundtrip_equal": true
+      },
+      "before_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+      "after_on_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+      "new_calculation_frame_sha256": "2086d3abf95089b25ef4ac8cf017b86e32826d5b881f46c3d97e0958c3d6e4d5",
+      "visual_review": {
+        "before": "1+1 = 2",
+        "after_on": "same 1+1 = 2 and history",
+        "after_calculation": "7*8 = 56; previous history retained"
+      },
+      "final_stop": 0
+    },
+    {
+      "model": 4,
+      "name": "HP 48gII (USB revision)",
+      "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+      "wasm_sha256": "9121607afc0517f6c170c8e2c7f606a88461f0f7a3b2ad5729812f271bf08108",
+      "witness_tool_sha256": "031678e043cd011893ec9d73e4b4300ce23168b20ab81271c0a8d7db3f5b4e80",
+      "private_report_sha256": "8c4330fc782c2345d4cec3f638e6be077870fc186651c5357ca478b6d3fa1edf",
+      "passed": true,
+      "natural_power_off": {
+        "observed_at_tick": 3788000000,
+        "poll_bound_ticks": 12000000,
+        "after_last_operation_seconds": 298
+      },
+      "off_sleeping": true,
+      "blank_off_lcd": true,
+      "instructions_frozen_for_10_seconds": true,
+      "off_checkpoint": {
+        "bytes": 271071,
+        "version": 3,
+        "sha256": "18fa2a7ed074d1499a3edf9c6df203d54c819f5e56c25dac58d02d4e8f4508f7",
+        "roundtrip_equal": true
+      },
+      "before_frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+      "after_on_frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+      "new_calculation_frame_sha256": "87f9df77d30bcc9cb31185a9bc8de94096e41f060ac5f3d174b63fc6865ab9f8",
+      "visual_review": {
+        "before": "1+1 = 2",
+        "after_on": "same 1+1 = 2 and history",
+        "after_calculation": "7*8 = 56; previous history retained"
+      },
+      "final_stop": 0
+    },
+    {
+      "model": 5,
+      "name": "HP 49g+",
+      "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "wasm_sha256": "9121607afc0517f6c170c8e2c7f606a88461f0f7a3b2ad5729812f271bf08108",
+      "witness_tool_sha256": "031678e043cd011893ec9d73e4b4300ce23168b20ab81271c0a8d7db3f5b4e80",
+      "private_report_sha256": "811ef5b97baaf2a97e13d3c8a0ba948c78bdaa5027237dc683ddd80d9c3a2f57",
+      "passed": true,
+      "natural_power_off": {
+        "observed_at_tick": 3776000000,
+        "poll_bound_ticks": 12000000,
+        "after_last_operation_seconds": 297
+      },
+      "off_sleeping": true,
+      "blank_off_lcd": true,
+      "instructions_frozen_for_10_seconds": true,
+      "off_checkpoint": {
+        "bytes": 533215,
+        "version": 3,
+        "sha256": "7f5ebe33bcdb1d8055e7104e7fba557e76fedcb8fa1ae5589cf7537ed1c87ca5",
+        "roundtrip_equal": true
+      },
+      "before_frame_sha256": "83265891bdf304a3ee57a9d506c7b3a396c3cd42d5e4432910104bb3186bb9b8",
+      "after_on_frame_sha256": "83265891bdf304a3ee57a9d506c7b3a396c3cd42d5e4432910104bb3186bb9b8",
+      "new_calculation_frame_sha256": "3ee5aa0f535f8eeb84a9959d245eddf7656180c4c935446aa4fcd3eeb4f08e57",
+      "visual_review": {
+        "before": "1+1 = 2",
+        "after_on": "same 1+1 = 2 and history",
+        "after_calculation": "7*8 = 56; previous history retained"
+      },
+      "final_stop": 0
+    }
+  ],
+  "historical_v3": {
+    "model": 2,
+    "old_checkpoint": {
+      "sha256": "2f22c1d9a835cf2b3e3108a6714e9523f2e1cbc471c7d03ca7c6d1627e75f178",
+      "bytes": 271071,
+      "version": 3,
+      "state": {
+        "tick": 318376256,
+        "instructions": 318365290,
+        "pc": 73860,
+        "cpsr": 2147483667,
+        "control": 3221229695,
+        "sleeping": false,
+        "stop": {
+          "status": 0,
+          "pc": 0,
+          "instruction": 0,
+          "address": 0,
+          "detail": 0
+        },
+        "clock": [
+          5920165,
+          274450,
+          491555,
+          25012,
+          0,
+          3
+        ]
+      }
+    },
+    "origin": "r20 original 39gs NOTE catalog after rejected ASCII Wire transfer; physical F6 then HOME",
+    "origin_wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+    "private_report_sha256": "053b47e26ce1d6fef8007fb93af255b6261adaf102813f0ba28edf783bea20d2",
+    "passed": true,
+    "trigger": "physical SHIFT/ON",
+    "off_checkpoint": {
+      "bytes": 271071,
+      "version": 3,
+      "sha256": "249b8bd9db8438660752e49a3d1f47c0520a31d8bab1becb09b410ceb9c7d8fe",
+      "roundtrip_equal": true
+    },
+    "frame_restored_exactly": true,
+    "visual_review": "1+1=2 retained after physical SHIFT/ON, off checkpoint restore and ON; then 7*8=56"
+  },
+  "generated_regression": {
+    "native_ctest": "18/18 passed",
+    "power_assertions": 836,
+    "power_profiles": 6,
+    "sd_media_bytes_checked_per_case": 1048576,
+    "sd_cases": "HP49g+/HP50g × writable/read-only; full content, readonly/dirty flag, controller reset, USB/GPIO retention",
+    "saved_spsr_patterns": 160,
+    "separate_spsr_engine": "Unicorn 2.1.4 TI925T, all 160 passed",
+    "full_cpu_oracle": "root independently ran 17075 generated cases, native/WASM/Unicorn equal, 0 mismatch/skip"
+  },
+  "checkpoint_scope": "Idle/power changes preserve v3 layout; later PWM v4 is a separate model change",
+  "limitations": [
+    "No calibrated ARM instruction-cycle or physical timeout claim",
+    "Reset assertion interval, analog rails, nBATT_FLT blocking and PLL lock not modeled",
+    "No real HP40gs/HP50g poweroff witness",
+    "NAND controller only disabled zero configuration"
+  ],
+  "sources": [
+    {
+      "url": "https://pdfstore-manualsonline.prod.a.ki/pdfres_02/af/4c/af4c636f-a045-4652-865a-9643aaa6c16d.pdf",
+      "sha256": "4e3dd756e27d80d7116282a6ae062458237fc1c5b34f1b1d40529c92b2c18794",
+      "pages": [
+        "3-18",
+        "6-6",
+        "7-14..7-20",
+        "9-14..9-15",
+        "9-28"
+      ]
+    }
+  ],
+  "pclk_v4_followup": {
+    "scope": "Same unchanged original ROMs after shared PCLK and PWM v4 implementation",
+    "native_ctest": "19/19 passed",
+    "original_roms": [
+      {
+        "model": 1,
+        "name": "HP 39g+",
+        "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+        "wasm_sha256": "e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6",
+        "private_report_sha256": "0fcfbc34a8493cc5f31d65f3c58a0de514365ef4b98f13f5fec9614f20c0fd49",
+        "passed": true,
+        "natural_power_off": {
+          "observed_at_tick": 3764000000,
+          "poll_bound_ticks": 12000000,
+          "after_last_operation_seconds": 301
+        },
+        "off_sleeping": true,
+        "blank_off_lcd": true,
+        "instructions_frozen_for_10_seconds": true,
+        "off_checkpoint": {
+          "bytes": 271135,
+          "version": 4,
+          "sha256": "e3f52fb92542a4de8944cfff9236c51536fd83d459c0edc712e420ded43a8a16",
+          "roundtrip_equal": true
+        },
+        "before_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "after_on_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "new_calculation_frame_sha256": "2086d3abf95089b25ef4ac8cf017b86e32826d5b881f46c3d97e0958c3d6e4d5",
+        "visual_review": "1+1=2 retained after ON, then7*8=56 with history; inspected private montage",
+        "final_stop": 0
+      },
+      {
+        "model": 2,
+        "name": "HP 39gs",
+        "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+        "wasm_sha256": "e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6",
+        "private_report_sha256": "7fa2c0623e1205e4fd1c20eca12b91c0e331ee278b7a0d3e467e0289f3497e48",
+        "passed": true,
+        "natural_power_off": {
+          "observed_at_tick": 3764000000,
+          "poll_bound_ticks": 12000000,
+          "after_last_operation_seconds": 301
+        },
+        "off_sleeping": true,
+        "blank_off_lcd": true,
+        "instructions_frozen_for_10_seconds": true,
+        "off_checkpoint": {
+          "bytes": 271135,
+          "version": 4,
+          "sha256": "41486c7e6f0c61ae65772e5520e84f0df23aac8fc816e1ce607ab1f354ef3498",
+          "roundtrip_equal": true
+        },
+        "before_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "after_on_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "new_calculation_frame_sha256": "2086d3abf95089b25ef4ac8cf017b86e32826d5b881f46c3d97e0958c3d6e4d5",
+        "visual_review": "1+1=2 retained after ON, then7*8=56 with history; inspected private montage",
+        "final_stop": 0
+      },
+      {
+        "model": 4,
+        "name": "HP 48gII (USB revision)",
+        "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+        "wasm_sha256": "e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6",
+        "private_report_sha256": "8df19890350dfcf9d9a8ef922d739a2227cd7576521b0333cc41c754747b3cd2",
+        "passed": true,
+        "natural_power_off": {
+          "observed_at_tick": 3812000000,
+          "poll_bound_ticks": 12000000,
+          "after_last_operation_seconds": 300
+        },
+        "off_sleeping": true,
+        "blank_off_lcd": true,
+        "instructions_frozen_for_10_seconds": true,
+        "off_checkpoint": {
+          "bytes": 271135,
+          "version": 4,
+          "sha256": "5473405fd3345064e1b75195dd45b2a1c5e6afdc812af53e541a4bb99629af92",
+          "roundtrip_equal": true
+        },
+        "before_frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+        "after_on_frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+        "new_calculation_frame_sha256": "87f9df77d30bcc9cb31185a9bc8de94096e41f060ac5f3d174b63fc6865ab9f8",
+        "visual_review": "1+1=2 retained after ON, then7*8=56 with history; inspected private montage",
+        "final_stop": 0
+      },
+      {
+        "model": 5,
+        "name": "HP 49g+",
+        "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+        "wasm_sha256": "e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6",
+        "private_report_sha256": "afeeedd67596ee49f2487b29bb55893a09f38e99e2b1a5aa0a827dca1bc52dfe",
+        "passed": true,
+        "natural_power_off": {
+          "observed_at_tick": 3824000000,
+          "poll_bound_ticks": 12000000,
+          "after_last_operation_seconds": 301
+        },
+        "off_sleeping": true,
+        "blank_off_lcd": true,
+        "instructions_frozen_for_10_seconds": true,
+        "off_checkpoint": {
+          "bytes": 533279,
+          "version": 4,
+          "sha256": "68fa86cbbcbd32e2ac76adb1a3dca2cac3e45ed7b3457e7c7ae72d27fed56922",
+          "roundtrip_equal": true
+        },
+        "before_frame_sha256": "83265891bdf304a3ee57a9d506c7b3a396c3cd42d5e4432910104bb3186bb9b8",
+        "after_on_frame_sha256": "83265891bdf304a3ee57a9d506c7b3a396c3cd42d5e4432910104bb3186bb9b8",
+        "new_calculation_frame_sha256": "3ee5aa0f535f8eeb84a9959d245eddf7656180c4c935446aa4fcd3eeb4f08e57",
+        "visual_review": "1+1=2 retained after ON, then7*8=56 with history; inspected private montage",
+        "final_stop": 0
+      }
+    ],
+    "historical_r20_v3_to_v4": {
+      "private_report_sha256": "ec7743932e6c69362537595f4215a2e6cb431b4666090db7d11f5311fa538f22",
+      "source_checkpoint": {
+        "sha256": "2f22c1d9a835cf2b3e3108a6714e9523f2e1cbc471c7d03ca7c6d1627e75f178",
+        "bytes": 271071,
+        "version": 3,
+        "state": {
+          "tick": 318376256,
+          "instructions": 318365290,
+          "pc": 73860,
+          "cpsr": 2147483667,
+          "control": 3221229695,
+          "sleeping": false,
+          "stop": {
+            "status": 0,
+            "pc": 0,
+            "instruction": 0,
+            "address": 0,
+            "detail": 0
+          },
+          "clock": [
+            5920165,
+            274450,
+            491555,
+            25012,
+            0,
+            3
+          ]
+        }
+      },
+      "off_checkpoint": {
+        "bytes": 271135,
+        "version": 4,
+        "sha256": "aaa104c6b12a5fbdeffe005949f1e0beb3089b65bff16dc1dc59b755dca6e35b",
+        "roundtrip_equal": true
+      },
+      "passed": true,
+      "frame_restored_exactly": true,
+      "visual_review": "2 retained after SHIFT/ON, off checkpoint restore and ON; then56"
+    },
+    "interpretation": "Original39g+75s timeout belonged to former one-PCLK-per-reference approximation; sharedPCLK now places all four observed inactivity boundaries at300-301s after pre-idle operation, still a functional-time result",
+    "native_and_wasm_default_core_assertions_per_host": 1159939,
+    "core_wasm_log_sha256": "e339086ed6085da97299720b7486dad673c404f2e9855606fe4f1b7f1c16fcf7"
+  },
+  "final_production": {
+    "scope": "Frozen final production WASM; unchanged privately held original ROMs and physical key input only",
+    "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+    "passed": true,
+    "original_roms": [
+      {
+        "model": 1,
+        "name": "HP 39g+",
+        "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+        "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+        "witness_tool_sha256": "93cf4db1218ef5fffe880e74a80dd055637ceafddf1527efa56d7d58f320b5ad",
+        "private_report_sha256": "82de4e6c741aae7d83ab8313a57a8a5bf33c1867ba4aabdaa3e2fbef2467b60e",
+        "passed": true,
+        "natural_power_off": {
+          "observed_at_tick": 3764000000,
+          "poll_bound_ticks": 12000000,
+          "after_last_operation_seconds": 301
+        },
+        "off_sleeping": true,
+        "blank_off_lcd": true,
+        "instructions_frozen_for_10_seconds": true,
+        "off_checkpoint": {
+          "bytes": 271135,
+          "version": 4,
+          "sha256": "e3f52fb92542a4de8944cfff9236c51536fd83d459c0edc712e420ded43a8a16",
+          "roundtrip_equal": true
+        },
+        "before_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "after_on_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "new_calculation_frame_sha256": "2086d3abf95089b25ef4ac8cf017b86e32826d5b881f46c3d97e0958c3d6e4d5",
+        "visual_review": "Blank while off; retained 1+1 = 2 after ON; new 7*8 = 56 with previous history; private final montage inspected",
+        "matches_e41_preview": {
+          "all_stage_cpu_clock_and_frame_metadata": true,
+          "off_checkpoint_bytes": true,
+          "final_state": true
+        },
+        "final_stop": 0
+      },
+      {
+        "model": 2,
+        "name": "HP 39gs",
+        "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+        "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+        "witness_tool_sha256": "93cf4db1218ef5fffe880e74a80dd055637ceafddf1527efa56d7d58f320b5ad",
+        "private_report_sha256": "b6a45878159223456d6013b190cc3a227adc69c85a68e76913c2115867342f3c",
+        "passed": true,
+        "natural_power_off": {
+          "observed_at_tick": 3764000000,
+          "poll_bound_ticks": 12000000,
+          "after_last_operation_seconds": 301
+        },
+        "off_sleeping": true,
+        "blank_off_lcd": true,
+        "instructions_frozen_for_10_seconds": true,
+        "off_checkpoint": {
+          "bytes": 271135,
+          "version": 4,
+          "sha256": "41486c7e6f0c61ae65772e5520e84f0df23aac8fc816e1ce607ab1f354ef3498",
+          "roundtrip_equal": true
+        },
+        "before_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "after_on_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "new_calculation_frame_sha256": "2086d3abf95089b25ef4ac8cf017b86e32826d5b881f46c3d97e0958c3d6e4d5",
+        "visual_review": "Blank while off; retained 1+1 = 2 after ON; new 7*8 = 56 with previous history; private final montage inspected",
+        "matches_e41_preview": {
+          "all_stage_cpu_clock_and_frame_metadata": true,
+          "off_checkpoint_bytes": true,
+          "final_state": true
+        },
+        "final_stop": 0
+      },
+      {
+        "model": 4,
+        "name": "HP 48gII (USB revision)",
+        "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+        "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+        "witness_tool_sha256": "93cf4db1218ef5fffe880e74a80dd055637ceafddf1527efa56d7d58f320b5ad",
+        "private_report_sha256": "664b22aabba3558d0251f58dffa74aaafea148a7d9faae9672becf6247fb16fa",
+        "passed": true,
+        "natural_power_off": {
+          "observed_at_tick": 3812000000,
+          "poll_bound_ticks": 12000000,
+          "after_last_operation_seconds": 300
+        },
+        "off_sleeping": true,
+        "blank_off_lcd": true,
+        "instructions_frozen_for_10_seconds": true,
+        "off_checkpoint": {
+          "bytes": 271135,
+          "version": 4,
+          "sha256": "5473405fd3345064e1b75195dd45b2a1c5e6afdc812af53e541a4bb99629af92",
+          "roundtrip_equal": true
+        },
+        "before_frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+        "after_on_frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+        "new_calculation_frame_sha256": "87f9df77d30bcc9cb31185a9bc8de94096e41f060ac5f3d174b63fc6865ab9f8",
+        "visual_review": "Blank while off; retained 1+1 = 2 after ON; new 7*8 = 56 with previous history; private final montage inspected",
+        "matches_e41_preview": {
+          "all_stage_cpu_clock_and_frame_metadata": true,
+          "off_checkpoint_bytes": true,
+          "final_state": true
+        },
+        "final_stop": 0
+      },
+      {
+        "model": 5,
+        "name": "HP 49g+",
+        "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+        "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+        "witness_tool_sha256": "93cf4db1218ef5fffe880e74a80dd055637ceafddf1527efa56d7d58f320b5ad",
+        "private_report_sha256": "27a89ec8ace0108c86270f34728654c5629ea7817cc9b6ddee33a275d2c6364d",
+        "passed": true,
+        "natural_power_off": {
+          "observed_at_tick": 3824000000,
+          "poll_bound_ticks": 12000000,
+          "after_last_operation_seconds": 301
+        },
+        "off_sleeping": true,
+        "blank_off_lcd": true,
+        "instructions_frozen_for_10_seconds": true,
+        "off_checkpoint": {
+          "bytes": 533279,
+          "version": 4,
+          "sha256": "68fa86cbbcbd32e2ac76adb1a3dca2cac3e45ed7b3457e7c7ae72d27fed56922",
+          "roundtrip_equal": true
+        },
+        "before_frame_sha256": "83265891bdf304a3ee57a9d506c7b3a396c3cd42d5e4432910104bb3186bb9b8",
+        "after_on_frame_sha256": "83265891bdf304a3ee57a9d506c7b3a396c3cd42d5e4432910104bb3186bb9b8",
+        "new_calculation_frame_sha256": "3ee5aa0f535f8eeb84a9959d245eddf7656180c4c935446aa4fcd3eeb4f08e57",
+        "visual_review": "Blank while off; retained 1+1 = 2 after ON; new 7*8 = 56 with previous history; private final montage inspected",
+        "matches_e41_preview": {
+          "all_stage_cpu_clock_and_frame_metadata": true,
+          "off_checkpoint_bytes": true,
+          "final_state": true
+        },
+        "final_stop": 0
+      }
+    ],
+    "historical_r20_v3_to_v4": {
+      "private_report_sha256": "1101bfb12a84dfada6a9722948de42feaa82aeccbc4a0b538f6585fadb2f042e",
+      "source_checkpoint": {
+        "sha256": "2f22c1d9a835cf2b3e3108a6714e9523f2e1cbc471c7d03ca7c6d1627e75f178",
+        "bytes": 271071,
+        "version": 3,
+        "state": {
+          "tick": 318376256,
+          "instructions": 318365290,
+          "pc": 73860,
+          "cpsr": 2147483667,
+          "control": 3221229695,
+          "sleeping": false,
+          "stop": {
+            "status": 0,
+            "pc": 0,
+            "instruction": 0,
+            "address": 0,
+            "detail": 0
+          },
+          "clock": [
+            5920165,
+            274450,
+            491555,
+            25012,
+            0,
+            3
+          ]
+        }
+      },
+      "origin_wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+      "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+      "off_checkpoint": {
+        "bytes": 271135,
+        "version": 4,
+        "sha256": "aaa104c6b12a5fbdeffe005949f1e0beb3089b65bff16dc1dc59b755dca6e35b",
+        "roundtrip_equal": true
+      },
+      "passed": true,
+      "frame_restored_exactly": true,
+      "visual_review": "Retained 1+1 = 2 after SHIFT/ON, powered-off session restore and ON; new 7*8 = 56; private final montage inspected",
+      "matches_e41_preview": {
+        "all_stage_cpu_clock_and_frame_metadata": true,
+        "off_checkpoint_bytes": true
+      }
+    },
+    "rom_or_ram_patch": false,
+    "time_scope": "12 MHz functional reference; once-per-second power-off observations, not calibrated physical hardware timing"
+  }
+}

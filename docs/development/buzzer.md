@@ -1,7 +1,9 @@
 # Firmware buzzer
 
-The [r20 validation record](evidence/buzzer-r20.json) pins the production core,
-original-ROM BEEP witness, browser playback and independent noninterference checks.
+The [r21 validation record](evidence/buzzer-r21.json) records the shared PCLK,
+PWM buffering and original-ROM BEEP checks. The
+[r20 record](evidence/buzzer-r20.json) preserves the earlier playback milestone
+and its known clock error; it is not evidence of calibrated pitch.
 
 The calculator interface can play the **actual GPB2 output** driven by the
 emulated firmware. Sound starts only after a browser user gesture. Settings
@@ -42,10 +44,19 @@ The browser playback behavior follows the
 
 `orchard_buzzer_enable` opts into observation; it is off by default in the
 allocator-free C API. The observer follows writes to GPBCON and GPBDAT and
-Timer2 counter transitions. A Timer2 manual update or automatic reload latches
-the audio compare value. Writing TCMPB2 alone does not cut the current pulse
-short. Inversion and stopped output level are retained. A disabled PWM clock
-holds the observed PWM output; direct GPIO remains separate.
+Timer2 counter transitions. Active compare, pending reload and counter state
+belong to the guest SoC, independently of observation. Manual update copies the
+count/compare buffers. Reaching zero raises the interrupt and captures the next
+count/compare; the following timer edge loads those captured values without
+also decrementing them. An ISR changing the buffers after the interrupt affects
+the following cycle. Clearing auto-reload at that point does not cancel the
+reload already captured by the zero transition.
+
+Writing TCMPB2 alone cannot cut the current pulse short. Inversion and stopped
+output level are retained. CLKCON's PWM gate freezes the actual counters,
+prescaler phases and pending reloads for all five timers. Global PCLK continues
+running while that gate is closed, so reopening it receives the next shared
+PCLK edge. Direct GPIO remains separate.
 
 The queue contains at most 4,096 `(uint64 tick, level)` edges. Draining is
 read-only with respect to the guest. It cannot acknowledge interrupts, advance
@@ -55,9 +66,14 @@ with the current level. The host must discard audio from the previous epoch.
 
 Reset, explicit queue clear and successful checkpoint restore start a new
 epoch. Reset and restore retain the host's enabled policy. Failed checkpoint
-validation leaves both guest state and queued host audio unchanged. Sound data
-is not serialized: checkpoint version 3 and the existing guest-state bytes are
-unchanged. The public state getter exposes ticks, epoch, queue depth, overflow
+validation leaves both guest state and queued host audio unchanged. Host sound
+queues are not serialized. Checkpoint **version 4** adds the guest PCLK fraction,
+MPLL setup history and PWM latches so a new session preserves a staged next
+compare, pending zero/reload interval and gate state exactly. Muting or enabling
+observation mid-cycle no longer reconstructs the active compare from TCMPB2.
+Historical v1/v2/v3 imports remain supported with an explicit first-cycle
+migration, described in [clock ratios and runtime PCLK](clock-ratios.md).
+The public state getter exposes ticks, epoch, queue depth, overflow
 count, current observed level and functional timebase. The WASM interface uses
 an explicit word layout rather than depending on C structure padding:
 
@@ -69,33 +85,52 @@ an explicit word layout rather than depending on C structure padding:
 `buzzer_snapshot` is a read-only diagnostic of GPBCON/GPBDAT and Timer2
 registers for private firmware witnesses. It does not execute a tone.
 
-## Functional time, rather than calibrated physical sound
+## Shared peripheral time and the original BEEP command
 
-Audio follows Orchard's **existing 12 MHz functional tick timebase**. It does
-not introduce a new CPU/PCLK model. In particular, the current timer reloads
-when its counter reaches zero in the same functional transition; it does not
-model the manual's separate zero/reload interval. The resulting functional
-period is `TCNTB2 × prescaler × divider` for the tested nondegenerate case.
-Zero compare and zero-count corner cases inherit that existing timer model.
+The reference timebase remains **12,000,000 ticks per second**. The functional
+clock model treats this as its input `Fin`, then derives PCLK from the actual
+MPLLCON, CLKSLOW and CLKDIVN writes. All five PWM timers, watchdog, ADC and SDI
+consume the same PCLK edge stream. RTC oscillator time remains independent.
+This changes the guest counters and interrupt deadlines, not an audio playback
+multiplier. CPU instruction slots and LCD timing retain their existing
+functional models; this is not a calibrated full-system clock tree.
 
-Consequently, selecting 440 Hz for 0.2 seconds in the original OS does **not**
-yet guarantee a measured 440 Hz, 0.2-second browser tone. In the verified
-HP49g+ run, the firmware produced 88 complete PWM cycles, with a period of
-42,480 functional ticks: approximately **282.486 Hz**, with a first-to-last
-edge span of **0.30972 seconds**. This is recorded as a known clock calibration
-limit, not claimed as accurate physical pitch or elapsed duration. Fixing it
-requires an independently validated peripheral-clock model shared by the
-other timers and devices.
+The fixed input is supported as a software convention by the pinned
+[hpclang time implementation](https://github.com/maxmixalex/hpclang/blob/261dba7cc5b208828f7a907c2071d24c3b0d94ea/runtime/core/time.c).
+It is not a measurement of each supported calculator's crystal or clock straps.
+PLL settling is immediate in the functional model; lock-duration and analog
+startup measurements remain open. Frequency changes retain fractional edge
+progress to the new denominator's resolution, and retain the peripheral
+prescaler/counter phase. The two physical shared PWM prescalers' inter-channel
+startup phase is not yet modeled: the existing per-channel phase remains.
 
-There are two further phase limits. The audio-only active compare is rebuilt
-from the saved TCMPB2 on restore or on enabling observation halfway through a
-cycle. If firmware had staged a different next compare, the first resumed
-audio cycle can differ. Also, the existing guest timer continues to advance
-while its clock gate is clear; the observer holds its output during that
-interval, then follows the existing counter on subsequent enabled transitions.
-Neither approximation changes guest counter or interrupt behavior. The core
-does not claim an electrical transducer, amplifier response or measured
-speaker loudness model.
+For positive programmed counts, the steady timer period is now
+`(TCNTBn + 1) × prescaler × divider` PCLK edges. The original HP49g+ `440 .2 BEEP`
+uses count 59, compare 29, prescaler 45 and divider 16. Its configured
+`MPLLCON=0x43012`, `CLKSLOW=0`, `CLKDIVN=3` selects `PCLK/Fin=25/16`. Therefore
+the independently derived steady period is exactly **27,648 reference ticks**:
+
+| Original-ROM witness | r20 | r21 |
+| --- | ---: | ---: |
+| Observed complete PWM cycles | 88 | 88 |
+| Steady period in reference ticks | 42,480 | 27,648 |
+| Frequency under the 12M reference model | 282.485876 Hz | 434.027778 Hz |
+| First-to-last observed edge span | 0.30972 s | 0.201566833 s |
+
+The requested 440 Hz is quantized by the firmware's integer timer values.
+Eighty-eight ideal complete steady periods at the new rate occupy 202.752 ms;
+the recorded first-to-last edge interval has different endpoints and should
+not be confused with that complete-cycle duration. The stock command consumes
+its operands and returns to the same empty RPN stack. These observations
+demonstrate the corrected register-derived model, not microphone measurements
+or a claim of exact physical 440 Hz playback.
+
+`TCNTBn=0` is a bounded functional extension: each timer edge can generate at
+most one terminal event, and reloading zero does not cause an infinite or
+zero-time loop. Non-inverted output remains high. The manual's worked examples
+and the pinned hpclang implementation do not establish this zero-count corner
+on physical silicon, so a hardware witness remains open. The core also does
+not model the transducer, amplifier response or measured speaker loudness.
 
 ## Browser playback and lifecycle
 
@@ -122,12 +157,17 @@ fast execution. The playback policy does not slow the CPU or alter transfers.
 
 ## Validation and reproduction
 
-The native and WASM buzzer suite executes **4,261 assertions on each host**:
+The native and WASM buzzer suite executes **4,263 assertions on each host**:
 direct GPIO and pin direction, PWM compare buffering, manual update, reload,
 inversion, stopped output, clock gate, prescaler/divider, queue overflow,
 64-bit timestamps, successful/failed restore and guest checkpoint equality
-with observation disabled. Release CTest passes **17/17** including the prior
-emulator tests. JavaScript coverage includes electrical frequency, identical
+with observation disabled. The separate `pwm-clock` suite checks independently
+derived clock ratios, multiple PCLK edges per reference quantum, gating,
+frequency transitions, ISR buffering, zero/reload intervals, shared peripheral
+deadlines, observer independence and exact v4 continuation with **2,452 assertions
+on each host**. The default 17-suite C native/WASM comparison passes **1,159,939
+assertions per host**, and native CTest passes **19/19** including the separate
+execution-policy tests. JavaScript coverage includes electrical frequency, identical
 PCM across irregular packet boundaries, DC decay, bounded accelerated output,
 gesture unlock, mute/volume, stale packets and the production controller's
 lifecycle hooks.
@@ -142,8 +182,17 @@ count 19 / compare 9. These observations establish the original-firmware
 audio path on HP49g+; other model ROMs need their own sound witnesses before
 claiming equivalent stock-command coverage.
 
+The stock `440 .2 BEEP` workflow was repeated against the frozen production
+WASM SHA-256
+`36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108`.
+It passed with the same 88 cycles, 176 edges and 27,648-tick period. Every
+recorded edge packet, Timer2 register snapshot and clock snapshot matched the
+earlier `e41ae110…` PCLK preview exactly. The final metadata report has SHA-256
+`fed6133d4a211df814d77f41c6c035db0f2d5cf3d651fdff613196a1e2d12cc1`;
+the validation record retains both build identities.
+
 ```sh
-ORCHARD_WASM=build-r20/audio.wasm node tools/verify-buzzer-stock.mjs \
+ORCHARD_WASM=/private/orchard.wasm node tools/verify-buzzer-stock.mjs \
   /private/hp49gplus-full.bin /private/new-buzzer-evidence
 ORCHARD_BUZZER_TRACE=/private/new-buzzer-evidence/report.json \
   python3 tests/buzzer-browser.py

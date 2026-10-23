@@ -430,6 +430,8 @@ static void gpio_and_reset(void) {
     CHECK(write_reg(0x56000034, 0x1234ffff));
     CHECK(read_reg(0x56000034, &value) && value == 0xffff);
     CHECK(write_reg(0x56000030, 0x55555554)); /* GPD0 now externally driven. */
+    CHECK(read_reg(0x56000034, &value) && value == 0xffff); /* Internal pull-up. */
+    CHECK(write_reg(0x56000038, 0xf001)); /* Explicitly release that pull-up. */
     CHECK(!o_phys_read(&machine, 0x56000034, 4, &value));
     CHECK(machine.stop.address == 0x56000034 && machine.stop.detail == 1);
     orchard_reset(&machine);
@@ -442,6 +444,48 @@ static void gpio_and_reset(void) {
     orchard_reset(&machine);
     CHECK(!o_phys_read(&machine, 0x56000094, 4, &value)); /* Reserved, not EINTFLT0. */
     CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_MMIO);
+}
+static void saved_status_patterns(void) {
+    const unsigned modes[]={O_FIQ,O_IRQ,O_SVC,O_ABT,O_UND};
+    for(unsigned mode=0;mode<5;mode++) for(unsigned low=0;low<32;low++) {
+        orchard_reset(&machine);
+        instruction(0xe16ff003,false,0); /* MSR SPSR_fsxc,r3 */
+        o_set_cpsr(&machine.cpu,modes[mode]|O_I|O_F);
+        machine.cpu.r[3]=0xa00000e0u|low;
+        o_cpu_step(&machine);
+        CHECK(machine.stop.status==ORCHARD_OK && *o_spsr(&machine.cpu)==(0xa00000e0u|low));
+        CHECK(machine.cpu.cpsr==(modes[mode]|O_I|O_F));
+        put_word(machine.ram+4,0xe14f4000); /* MRS r4,SPSR */
+        o_cpu_step(&machine);CHECK(machine.cpu.r[4]==(0xa00000e0u|low));
+    }
+    orchard_reset(&machine);instruction(0xe121f003,false,0); /* CPSR_c still rejects mode zero. */
+    machine.cpu.r[3]=0;o_cpu_step(&machine);
+    CHECK(machine.stop.status==ORCHARD_UNPREDICTABLE && (machine.cpu.cpsr&31u)==O_SVC);
+    orchard_reset(&machine);instruction(0xe16ff003,false,0);
+    machine.cpu.r[3]=0;o_cpu_step(&machine);CHECK(machine.stop.status==ORCHARD_OK);
+    put_word(machine.ram+4,0xe1b0f00e); /* MOVS PC,LR validates the saved mode on use. */
+    o_cpu_step(&machine);CHECK(machine.stop.status==ORCHARD_UNPREDICTABLE);
+    orchard_reset(&machine);
+}
+static void unused_nand_controller(void) {
+    orchard_reset(&machine);
+    uint32_t value=1;
+    CHECK(read_reg(0x4e000000,&value) && value==0);
+    CHECK(write_reg(0x4e000000,0));
+    CHECK(read_reg(0x4e000000,&value) && value==0);
+    CHECK(machine.stop.status==ORCHARD_OK);
+    CHECK(!o_phys_write(&machine,0x4e000000,4,0x8000));
+    CHECK(machine.stop.status==ORCHARD_UNIMPLEMENTED_MMIO);
+    orchard_reset(&machine);
+    CHECK(!o_phys_write(&machine,0x4e000004,4,0x90));
+    CHECK(machine.stop.status==ORCHARD_UNIMPLEMENTED_MMIO);
+    orchard_reset(&machine);
+    CHECK(!o_phys_read(&machine,0x4e00000c,4,&value));
+    CHECK(machine.stop.status==ORCHARD_UNIMPLEMENTED_MMIO);
+    orchard_reset(&machine);
+    CHECK(!o_phys_write(&machine,0x4e000000,1,0));
+    CHECK(machine.stop.status==ORCHARD_UNIMPLEMENTED_MMIO);
+    orchard_reset(&machine);
 }
 static unsigned interrupt_number(unsigned group, unsigned request) {
     static const int bases[6] = {-1,4,10,16,22,27};
@@ -469,6 +513,7 @@ static void gpio_stimuli(void) {
         CHECK(orchard_gpio_inputs(&machine, (orchard_gpio_port)port, mask, mask + 1u) == ORCHARD_BAD_ARGUMENT);
         CHECK(machine.soc.gpio_input_levels[port] == (mask & 0x5555u));
         CHECK(o_phys_write(&machine, addr, 4, 0));
+        CHECK(o_phys_write(&machine, addr + 8u, 4, mask)); /* Truly floating without a drive. */
         CHECK(orchard_gpio_inputs(&machine, (orchard_gpio_port)port, mask & ~1u, 0) == ORCHARD_OK);
         CHECK(!o_phys_read(&machine, addr + 4u, 4, &value));
         CHECK(machine.stop.detail == 1 && machine.stop.address == addr + 4u);
@@ -503,7 +548,7 @@ static void gpio_stimuli(void) {
     orchard_reset(&machine);
     CHECK(machine.soc.gpio_input_known[3] == 0 && machine.soc.gpio_input_levels[3] == 0);
     CHECK(!o_phys_read(&machine, 0x56000034, 4, &value));
-    CHECK(machine.stop.detail == 0xffff);
+    CHECK(machine.stop.detail == 0xf000); /* Reset disables only GPD12..15 pulls. */
 }
 static void interrupt_arbitration(void) {
     uint32_t value;
@@ -625,9 +670,9 @@ static void keyboard_and_eint(void) {
     CHECK(orchard_keyboard_matrix(&machine, 0, 7, true) == ORCHARD_BAD_ARGUMENT);
     CHECK(orchard_keyboard_dedicated(&machine, 7, true) == ORCHARD_BAD_ARGUMENT);
     uint32_t value;
-    /* Initial floating GPG11..15 and unrelated GPG0 are not guessed. */
+    /* GPG11..15 reset with pulls disabled; GPG0 has its internal pull-up. */
     CHECK(!o_phys_read(&machine, 0x56000064, 4, &value));
-    CHECK(machine.stop.detail == 0xf801);
+    CHECK(machine.stop.detail == 0xf800);
     orchard_reset(&machine);
     CHECK(orchard_keyboard_attach(&machine, true) == ORCHARD_OK);
     CHECK(orchard_gpio_inputs(&machine, ORCHARD_GPIO_G, 1, 0) == ORCHARD_OK);
@@ -789,7 +834,7 @@ EXPORT("regression") unsigned orchard_regression(void) {
     if (!orchard_init(&machine, sizeof(machine), 6)) return 1;
     arithmetic(); shifter(); conditions(); decoded_arithmetic(); instruction_edges();
     banking_and_exception(); mmu_and_bus(); watchdog(); queues_and_profiles(); uart_tx_level();
-    boot_sram_and_lcd(); gpio_and_reset(); gpio_stimuli(); interrupt_arbitration(); rtc_calendar(); keyboard_and_eint(); nor_identification();
+    boot_sram_and_lcd(); gpio_and_reset(); saved_status_patterns(); unused_nand_controller(); gpio_stimuli(); interrupt_arbitration(); rtc_calendar(); keyboard_and_eint(); nor_identification();
     return failures;
 }
 EXPORT("checks") unsigned orchard_regression_checks(void) { return checks; }

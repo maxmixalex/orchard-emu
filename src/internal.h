@@ -128,6 +128,10 @@ typedef struct {
     uint32_t uart[3][11];
     uint32_t tcfg0, tcfg1, tcon, tcntb[5], tcmpb[4], count[5];
     uint32_t phase[5];
+    /* Functional clock-domain state; reference Fin is the 12M timebase.
+       PWM buffering is guest state, even without an audio observer. */
+    uint32_t pclk_phase, mpll_configured;
+    uint32_t active_compare[4], pending_count[5], pending_compare[4], reload_pending;
     uint32_t wtcon, wtdat, wtcnt, wtphase;
     o_queue rx, tx;
     o_rtc rtc;
@@ -142,18 +146,18 @@ typedef struct {
 } o_translation;
 #define O_TRANSLATIONS 64u
 
-/* Optional host presentation only. The active PWM compare is reconstructed
- * from TCMPB2 after restore; it cannot affect the guest counter or interrupts. */
+/* Optional host presentation only. PWM counter/compare state lives in o_soc. */
 typedef struct {
     orchard_buzzer_edge edges[ORCHARD_BUZZER_CAPACITY];
-    uint32_t head, count, epoch, overflows, compare;
-    bool enabled, level, pwm_level;
+    uint32_t head, count, epoch, overflows;
+    bool enabled, level;
 } o_buzzer;
 
 struct orchard_machine {
     const orchard_profile *profile;
     uint32_t quiet_left, deferred_ticks; /* Host-only, flushed at public boundaries. */
     bool idle_write_enabled; /* Host-only policy scope; never saved in a checkpoint. */
+    uint32_t power_wake; /* Transient wake requests; consumed within one SoC tick. */
     o_translation translations[O_TRANSLATIONS];
     o_buzzer buzzer;
     o_cpu cpu;
@@ -215,10 +219,11 @@ bool o_store(orchard_machine *m, uint32_t address, unsigned width, bool user, ui
 void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool fetch);
 void o_soc_reset(o_soc *s);
 void o_soc_tick(orchard_machine *m);
+bool o_pclk_ratio(const o_soc *s, uint32_t *num, uint32_t *den);
+uint32_t o_pclk_advance(o_soc *s, uint32_t reference_ticks);
+void o_power_wake(orchard_machine *m, uint32_t sources);
 void o_buzzer_reset(orchard_machine *m);
 void o_buzzer_observe(orchard_machine *m);
-void o_buzzer_timer_write(orchard_machine *m);
-void o_buzzer_timer_tick(orchard_machine *m, bool reload);
 void o_schedule_plan(orchard_machine *m);
 void o_schedule_sync(orchard_machine *m);
 orchard_stop o_run_reference(orchard_machine *m, uint32_t budget);

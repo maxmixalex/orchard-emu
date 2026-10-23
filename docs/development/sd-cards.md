@@ -1,7 +1,11 @@
 # SD cards and FILES
 
-The [r20 SD file record](evidence/sd-files-r20.json) covers the draft editor,
-independent FAT tools and original-system root/nested-file workflows.
+The [r21 SD file record](evidence/sd-files-r21.json) covers draft rename/delete,
+namespace validation, independent FAT tools and final-production original-ROM
+workflows. HP49g+ reads the edited root and nested objects, writes its own object,
+and resumes an in-flight v4 card checkpoint identically on native and WASM.
+The [r20 record](evidence/sd-files-r20.json) retains its earlier, separately
+identified original-system observations.
 
 The calculator page provides an emulated SD card for HP49g+. The original
 firmware handles the filesystem through the modeled S3C2410 SDI controller.
@@ -41,7 +45,8 @@ never changed. The ordinary **Import card image** remains available for users
 who already have an image ready for the calculator.
 
 The draft browser lists folders and files, opens folders, downloads individual
-files, creates folders, and adds a batch of up to 128 selected files. Every
+files, creates folders, renames entries, deletes files and empty folders, and
+adds a batch of up to 128 selected files. Every
 selected file has an editable target name. File choosers accept any extension,
 and the filesystem writer preserves contents exactly, including empty files.
 The editor does not decide whether those bytes are a calculator object; the
@@ -52,8 +57,19 @@ New names use FAT's short 8.3 format: 1–8 ASCII characters plus an optional
 visible for review and must be given a valid target name; it is never silently
 truncated. Existing long-name records are retained, while the browser displays
 their short aliases. Duplicate names, including case-only differences, reject
-the whole operation. Existing files are not overwritten. This first editor does
-not rename, delete, or create long file names.
+the whole operation. Short aliases and existing long names share a namespace;
+a new target cannot shadow either spelling of another entry. Existing files
+are not overwritten, and the editor does not create long file names.
+
+**Rename** changes an entry to the explicitly entered short name. A folder may
+contain files: its contents and parent cluster links remain intact. When an
+entry has a long filename, the rename panel explains that the chosen short
+name replaces it; the old long-name records are retired together. Keeping the
+same short name leaves that entry unchanged. **Delete** asks for confirmation
+inside the draft and accepts files or empty folders. A nonempty folder must be
+emptied first. Deletion releases its complete cluster chain in both FAT copies
+and retires all its name records. Read-only entries or a read-only parent folder
+reject writes, and the volume root cannot be renamed or deleted.
 
 **Download draft image** exports the entire prepared card. **Insert prepared
 card** passes it through the normal controller insertion path, including the
@@ -90,7 +106,8 @@ outside this editor's scope; ordinary complete-image import remains independent
 of this filesystem browser.
 
 Validation checks partition and BPB bounds, FAT capacity and mirror agreement,
-directory entry layout, long-name alias checksums, directory parent links,
+directory entry layout, long-name alias checksums, NUL/`0xffff` padding and the
+255-character bound, the shared short/long-name namespace, directory parent links,
 file length and cluster-chain length. Cycles, cross-linked files/directories,
 out-of-range targets, truncated chains and unreferenced allocated clusters are
 rejected. Traversal stops beyond 32 folder levels or 16,384 live directory
@@ -114,14 +131,22 @@ geometry, cycles, cross-links, long-name preservation, the directory-depth bound
 and byte-exact rollback after a later file exhausts capacity. Its second raw
 parser computes offsets independently to extract the written files. It also
 checks Buffer-backed input, where `Buffer.slice()` would otherwise share and
-mutate the source image.
+mutate the source image. Rename/delete coverage includes nonempty-folder rename,
+empty-file and empty-folder deletion, fragmented-chain release, reuse of a full
+root slot, read-only rejection, and long-name records spanning directory clusters.
+Imported short/long-name collisions are rejected before any edit. Collision keys
+use non-expanding uppercase Unicode characters for long names, without Unicode
+normalization or rewriting preserved name bytes; the tests distinguish dotless
+`ı` matching `I` from `ß` remaining distinct from `SS`.
 
 `python3 tests/browser-sd-files.py` runs a real Chromium file chooser and download
 flow with the production React components and controller. The fixture uses no
 ROM and explicitly acknowledges insertion in place of a Worker. It checks
 arbitrary extensions, target-name review, exact single-file and whole-image
 downloads, duplicate-batch rollback, corrupt-image and local-read failures,
-opening a prepared image, failed-insertion retry, read-only insertion parameters, unmounting during a
+file/folder rename with exact collision rollback, delete confirmation/cancel,
+nonempty-folder rejection, opening a prepared image, failed-insertion retry,
+read-only insertion parameters, unmounting during a
 pending read, both languages and a 390-pixel viewport. Original-system SD
 acceptance remains a separate test.
 
@@ -140,6 +165,15 @@ logs stay in the ignored `build-r20/sd-files` directory. A second image written
 by mtools, including a three-record long filename and another subdirectory, was
 opened and extended by the editor without changing the input image or existing
 long name; `fsck.fat -n` also returned 0 for that result.
+
+The r21 independent review repeats the checks with mtools-created files: a
+three-record long filename in the root and another long filename in a
+subdirectory. Orchard renames the root file and directory, deletes both files
+and the emptied directory, then adds a new file into the released space. All
+four images pass dosfstools 4.2 `fsck.fat -n` without repair requests; mtools
+4.0.43 extracts the renamed root and preserved nested files byte for byte.
+The original image remains unchanged. The tools are Ubuntu's pinned packages,
+locally extracted; private images and logs are under `build-r21/sd-review`.
 
 ## Which models have a slot?
 

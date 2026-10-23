@@ -20,6 +20,9 @@ retains upstream ancestor transforms, including the 48/49/50 artwork scale.
 The LCD has an inset inside the actual glass; its square pixel corners do not
 extend into the rounded glass. A separate segment strip sits above the matrix.
 A skin and a mapped switch are not evidence that a model's OS is supported.
+The [landscape view](landscape.md) clips these unchanged vectors below the six
+FN keys. Those keys stay with the LCD on the left; the remaining 45 key regions
+stay in the right piece. There is one interactive region per key and one LCD.
 
 The webemu48 `web-port` page was used as a UX reference: skin-first calculator,
 separate status strip, compact setup and secondary diagnostics. Neither its
@@ -56,9 +59,12 @@ the observed persistence after release and the HP48 Alpha lock cycle are guest
 behavior rather than host UI state. See `tools/probe-annunciators.mjs`.
 
 An earlier Shift/ON probe entered an unimplemented power-related MMIO path;
-it is not a successful suspend/resume witness. The published segment study
-uses repeated modifier taps, not ON, to leave each mode. Power management is
-still open. The 39gs/40gs segment mapping is not claimed verified. The six
+that historical run remains an unsuccessful suspend/resume witness. The
+published segment study uses repeated modifier taps, not ON, to leave each
+mode. Separate r21 [power checks](power-management.md) now verify original
+39g+, 39gs, 48gII and 49g+ inactivity shutdown and ON resume after the GPIO,
+Power_OFF and saved-status fixes. They do not retroactively change the old
+segment study or establish the 40gs mapping. The six
 synthetic sample levels, lookup palette, disabled LCD, unsupported formats and
 read bounds have separate ROM-free native/WASM tests.
 
@@ -81,8 +87,12 @@ or analytics service.
 
 Production Worker logic is tested through the existing Node adapter, and the
 skin geometry/assets are independently checked in `npm run test:skins`.
-Chromium navigation to the local HTTP origin remains blocked by administrative
-policy in the development environment; that policy was not changed. Offline
-HTML/CSS rendering checked desktop/mobile bounds and visual alignment, but is
-**not browser-origin E2E**, file-picker, focus or background-tab acceptance.
+The early development environment blocked Chromium navigation to the local
+HTTP origin; its administrative policy was not changed. The corresponding
+offline HTML/CSS renders checked desktop/mobile bounds and alignment, and
+remain **offline layout evidence**. Later production-origin Chrome checks
+exercise real file pickers, downloads, original-ROM arithmetic and sessions;
+current landscape component tests check key geometry, focus and input across
+four admitted model layouts. See [browser verification](web.md#publication-and-verification)
+for their separate scopes and remaining touch/background/multi-browser limits.
 A successful Pages asset verification likewise is not proof of guest interaction.

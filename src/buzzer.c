@@ -8,7 +8,7 @@
 static bool level(const orchard_machine *m) {
     unsigned mode = (m->soc.gpio[4] >> 4) & 3u;
     if (mode == 1) return (m->soc.gpio[5] & 4u) != 0;
-    if (mode == 2) return m->buzzer.pwm_level != ((m->soc.tcon & 0x4000u) != 0);
+    if (mode == 2) return (m->soc.count[2] <= m->soc.active_compare[2]) != ((m->soc.tcon & 0x4000u) != 0);
     return false; /* Input/reserved functions do not drive the speaker. */
 }
 static void edge(orchard_machine *m, bool value) {
@@ -29,8 +29,6 @@ void o_buzzer_reset(orchard_machine *m) {
     uint32_t epoch = b->epoch + 1u;
     o_zero(b, sizeof(*b));
     b->enabled = enabled; b->epoch = epoch;
-    b->compare = m->soc.tcmpb[2];
-    b->pwm_level = m->soc.count[2] <= b->compare;
     b->level = level(m);
     if (enabled) edge(m, b->level);
 }
@@ -39,22 +37,6 @@ void o_buzzer_observe(orchard_machine *m) {
         bool next = level(m);
         if (next != m->buzzer.level) edge(m, next);
     }
-}
-void o_buzzer_timer_write(orchard_machine *m) {
-    if (!m->buzzer.enabled) return;
-    /* TCMPB2 is double buffered: only manual update and reload latch it.
-     * Inversion takes effect immediately, including while stopped. */
-    if (m->soc.tcon & 0x2000u) {
-        m->buzzer.compare = m->soc.tcmpb[2];
-        m->buzzer.pwm_level = m->soc.count[2] <= m->buzzer.compare;
-    }
-    o_buzzer_observe(m);
-}
-void o_buzzer_timer_tick(orchard_machine *m, bool reload) {
-    if (!m->buzzer.enabled || !(m->soc.clock[3] & 0x100u)) return;
-    if (reload) m->buzzer.compare = m->soc.tcmpb[2];
-    m->buzzer.pwm_level = m->soc.count[2] <= m->buzzer.compare;
-    o_buzzer_observe(m);
 }
 orchard_status orchard_buzzer_enable(orchard_machine *m, bool enabled) {
     if (!m || !m->profile) return ORCHARD_BAD_ARGUMENT;

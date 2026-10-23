@@ -84,6 +84,43 @@ with sync_playwright() as p:
     assert len(complete)==16*1024*1024 and complete!=baseline
     passed('new directory and nested file survive navigation and full-image download')
 
+    # Use actual controls for transactional rename, collision, and deletion.
+    button('Rename RAW.XYZ').click()
+    page.get_by_label('New card name',exact=True).fill('RENAMED.ANY')
+    button('Apply name').click();button('Download RENAMED.ANY').wait_for()
+    with page.expect_download() as pending:button('Download RENAMED.ANY').click()
+    pending.value.save_as(OUT/'browser-renamed.any')
+    assert (OUT/'browser-renamed.any').read_bytes()==payload
+    renamed=save_card('browser-renamed.img')
+    button('Rename RENAMED.ANY').click()
+    page.get_by_label('New card name',exact=True).fill('NOEXT')
+    button('Apply name').click()
+    assert 'already exists' in page.get_by_role('alert').inner_text()
+    assert save_card('browser-rename-collision.img')==renamed
+    page.get_by_label('New card name',exact=True).fill('RAW.XYZ');button('Apply name').click()
+    button('Rename PROGRAMS').click()
+    page.get_by_label('New card name',exact=True).fill('TOOLS');button('Apply name').click()
+    button('Open folder TOOLS').click();button('Download NESTED').wait_for();button('Parent folder').click()
+    button('Rename TOOLS').click()
+    page.get_by_label('New card name',exact=True).fill('PROGRAMS');button('Apply name').click()
+    assert save_card('browser-renamed-back.img')==complete
+    passed('renames preserve payload/directory contents; collision rolls back exact image')
+
+    button('Delete PROGRAMS').click();button('Delete').click()
+    assert 'not empty' in page.get_by_role('alert').inner_text()
+    assert save_card('browser-nonempty-rejected.img')==complete
+    button('Cancel').click()
+    button('Delete NOEXT').click();button('Cancel').click()
+    assert save_card('browser-delete-cancelled.img')==complete
+    button('Delete NOEXT').click();button('Delete').click()
+    assert button('Download NOEXT').count()==0
+    page.get_by_label('New folder name',exact=True).fill('REMOVE');button('Create folder').click()
+    button('Delete REMOVE').click();button('Delete').click()
+    assert button('Open folder REMOVE').count()==0
+    button('Open folder PROGRAMS').click();button('Download NESTED').wait_for();button('Parent folder').click()
+    complete=save_card('browser-managed.img')
+    passed('delete confirmation/cancel works; nonempty folders rejected; files and empty folders deleted')
+
     page.locator('#sd-draft-image').set_input_files({'name':'BROKEN.custom','mimeType':'application/octet-stream','buffer':bytes(len(complete))})
     page.get_by_role('alert').wait_for()
     button('Open folder PROGRAMS').wait_for()
@@ -119,6 +156,9 @@ with sync_playwright() as p:
     assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
     page.evaluate("window.__i18n.changeLanguage('zh')")
     page.get_by_role('button',name='插入准备好的卡',exact=True).wait_for()
+    page.get_by_role('button',name='重命名 RAW.XYZ',exact=True).click()
+    page.get_by_label('新的卡内名称',exact=True).wait_for()
+    page.get_by_role('button',name='取消',exact=True).click()
     page.get_by_role('dialog').evaluate('(element)=>{element.scrollTop=0}')
     page.screenshot(path=str(OUT/'browser-mobile-zh.png'),full_page=True)
     page.evaluate("window.__i18n.changeLanguage('en')")

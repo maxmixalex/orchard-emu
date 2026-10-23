@@ -5,7 +5,7 @@
  */
 #include "internal.h"
 #define HEADER 32u
-#define VERSION 3u
+#define VERSION 4u
 static const uint8_t magic[8] = {'O','R','C','H','S','T','0','1'};
 typedef struct {
     o_cpu cpu;
@@ -91,6 +91,20 @@ static void fields(codec *c, saved *s, unsigned version) {
         BOOL(sd->response_valid); BOOL(sd->app_command); BOOL(sd->multi_block);
         bytes(c,sd->fifo,64); bytes(c,sd->write_block,512);
         U32(s->sd_bytes); BOOL(s->sd_write_protected); BOOL(s->sd_dirty);
+    }
+    if(version>=4u) {
+        /* Append-only extension: bytes 4831..4894; v1-v3 offsets unchanged. */
+        U32(d->pclk_phase); U32(d->mpll_configured);
+        A32(d->active_compare,4); A32(d->pending_count,5);
+        A32(d->pending_compare,4); U32(d->reload_pending);
+    } else if(c->in) {
+        /* Legacy snapshots did not record PLL write history or the active
+           compare. Preserve all original registers/counters and use an
+           explicit deterministic first-cycle migration, not guessed ROM data. */
+        d->pclk_phase=0;d->mpll_configured=d->clock[1]!=0x5c080u;
+        o_copy(d->active_compare,d->tcmpb,sizeof d->active_compare);
+        o_zero(d->pending_count,sizeof d->pending_count);
+        o_zero(d->pending_compare,sizeof d->pending_compare);d->reload_pending=0;
     }
 }
 static size_t scalar_size(unsigned version) { saved s; o_zero(&s,sizeof s); codec c={0}; fields(&c,&s,version); return c.pos; }
@@ -180,6 +194,14 @@ static bool valid(const saved *s, const orchard_machine *m) {
         d->usb.index>4||d->usb.active_address>127||d->usb.frame>2047||
         d->keyboard_switches>>56||d->keyboard_direct&~0x71u)return false;
     for(unsigned i=0;i<8;i++)if(d->adc.inputs[i]>1023)return false;
+    if(d->mpll_configured>1u||d->reload_pending&~31u)return false;
+    uint32_t num,den;
+    if(o_pclk_ratio(d,&num,&den)?d->pclk_phase>=den:d->pclk_phase!=0)return false;
+    for(unsigned ch=0;ch<5;ch++) {
+        if(d->tcntb[ch]>65535u||d->count[ch]>65535u||d->pending_count[ch]>65535u||d->phase[ch]>=4096u)return false;
+        if((d->reload_pending&(1u<<ch))&&d->count[ch])return false;
+        if(ch<4&&(d->tcmpb[ch]>65535u||d->active_compare[ch]>65535u||d->pending_compare[ch]>65535u))return false;
+    }
     for(unsigned i=0;i<5;i++) {
         const o_usb_ep *e=&d->usb.ep[i];
         if(e->tx_count>64||e->rx_count>64||e->rx_pos>e->rx_count||e->tx_toggle>1||e->rx_toggle>1)return false;
@@ -252,6 +274,7 @@ orchard_status orchard_checkpoint_load(orchard_machine *m, const void *buffer, s
     m->sd_bytes=s.sd_bytes; m->sd_write_protected=s.sd_write_protected; m->sd_dirty=s.sd_dirty;
     m->quiet_left=m->deferred_ticks=0;
     m->idle_write_enabled=false;
+    m->power_wake=0;
     o_zero(m->translations,sizeof m->translations);
     o_buzzer_reset(m);
     return ORCHARD_OK;

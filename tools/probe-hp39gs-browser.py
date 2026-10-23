@@ -14,10 +14,12 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import struct
 import threading
 from http.server import ThreadingHTTPServer
+from urllib.parse import urljoin,urlsplit
 
 from PIL import Image
 from playwright.sync_api import sync_playwright
@@ -71,7 +73,17 @@ def main():
     parser.add_argument('--rom', type=Path, required=True)
     parser.add_argument('--expected-wasm', required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--url', help='Use this published HTTPS emulator URL instead of the local dist server')
+    parser.add_argument('--expected-revision', help='Required with --url: exact published source commit')
     args = parser.parse_args()
+    if args.url:
+        parts=urlsplit(args.url)
+        if parts.scheme!='https' or not parts.hostname or parts.username or parts.password or parts.query or parts.fragment:
+            parser.error('--url must be a plain HTTPS emulator URL')
+        if not re.fullmatch(r'[a-f0-9]{40}',args.expected_revision or ''):
+            parser.error('--url requires an exact --expected-revision')
+    elif args.expected_revision:
+        parser.error('--expected-revision requires --url')
     rom = args.rom.read_bytes()
     if len(rom) != 1048576 or helper.sha(rom) != 'a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff':
         parser.error('--rom must be the admitted complete HP39gs image')
@@ -85,10 +97,17 @@ def main():
               'model': model, 'assets': assets, 'physical_startup_keys': [40],
               'tools': {Path(__file__).name: helper.sha(Path(__file__).read_bytes()),
                         'probe-file-transfer-browser.py': helper.sha((ROOT/'tools/probe-file-transfer-browser.py').read_bytes())}}
-    errors = []
-    server = ThreadingHTTPServer(('127.0.0.1', 0),
-                                functools.partial(helper.Handler, directory=str(ROOT/'dist')))
-    threading.Thread(target=server.serve_forever, daemon=True).start()
+    errors,requests,responses = [],[],[]
+    server = None
+    if args.url:
+        base=args.url.rstrip('/')+'/'
+        report['published_url']=base
+        report['published_revision']=args.expected_revision
+    else:
+        server = ThreadingHTTPServer(('127.0.0.1', 0),
+                                    functools.partial(helper.Handler, directory=str(ROOT/'dist')))
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base=f'http://127.0.0.1:{server.server_port}/'
     page = None
 
     def stage(name):
@@ -106,8 +125,15 @@ def main():
                 page = browser.new_page(viewport={'width':1360, 'height':940}, locale='en-US')
                 page.set_default_timeout(30000)
                 page.on('pageerror', lambda e: errors.append(str(e)))
+                page.context.on('request',lambda request:requests.append({'method':request.method,'url':request.url}))
+                page.context.on('response',lambda response:responses.append(response))
                 page.add_init_script(helper.OBSERVE)
-                page.goto(f'http://127.0.0.1:{server.server_port}/')
+                page.goto(base)
+                if args.url:
+                    manifest=page.evaluate('url=>fetch(url).then(r=>{if(!r.ok)throw Error("Manifest HTTP "+r.status);return r.json()})',urljoin(base,'asset-manifest.json'))
+                    assert manifest['revision']==args.expected_revision,'Published source revision changed'
+                    for name,digest in assets.items():
+                        assert manifest['assets'][name]==digest,'Published asset differs from the tested build: '+name
                 stage('cold-boot-from-picker')
                 with page.expect_file_chooser() as picker:
                     page.get_by_role('button', name='Open ROM', exact=True).click()
@@ -144,7 +170,7 @@ def main():
                 saved = args.output/'saved.ord'
                 pending.value.save_as(saved)
                 report['save'] = session_metadata(saved)
-                assert report['save']['model'] == 2 and report['save']['preset'] == 'hp39gs-home' and report['save']['checkpoint_version'] == 3
+                assert report['save']['model'] == 2 and report['save']['preset'] == 'hp39gs-home' and report['save']['checkpoint_version'] == 4
                 page.wait_for_function('window.__transferProbe.snapshot?.running===false')
                 saved_frame = frame(page)
                 page.get_by_role('button', name='Resume', exact=True).click()
@@ -207,6 +233,16 @@ def main():
                 assert not errors and not report['worker_observation']['errors']
                 assert not report['worker_observation']['snapshot']['stopped']
                 assert {n:helper.sha((ROOT/'dist'/n).read_bytes()) for n in assets} == assets
+                received={}
+                for response in responses:
+                    name=response.url.removeprefix(base).split('?',1)[0]
+                    if response.url.startswith(base) and name in assets:
+                        assert response.ok,{'url':response.url,'status':response.status}
+                        received[name]=helper.sha(response.body())
+                assert received==assets,{'expected':assets,'received':received}
+                assert all(request['method']=='GET' for request in requests),requests
+                report['browser_assets']=received
+                report['network']={'requests':requests,'uploads':0,'tls_verification_disabled':False}
                 assert helper.sha(args.rom.read_bytes()) == model['rom_sha256']
                 report['passed'] = True
                 stage('complete')
@@ -219,8 +255,9 @@ def main():
             finally:
                 browser.close()
     finally:
-        server.shutdown()
-        server.server_close()
+        if server:
+            server.shutdown()
+            server.server_close()
         (args.output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
         print(json.dumps({k:report.get(k) for k in ('passed','stage','error')},indent=2))
 

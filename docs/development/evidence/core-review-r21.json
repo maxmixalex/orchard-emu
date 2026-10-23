@@ -1,0 +1,631 @@
+{
+  "schema": "orchard-core-review-r21",
+  "scope": "Independent final C implementation review and exact maintained native/static-analysis gates; no firmware inputs",
+  "passed": true,
+  "source_sha256": {
+    ".github/workflows/build.yml": "851208e63144b433a9722714477d67c432e5c5646a8bba0a510399f79b8a45b1",
+    "CMakeLists.txt": "3d334d9f219f5503496b0a53dd6f71c30c2515313d2ff4b898f247c858cc9f52",
+    "app/main.c": "6719b1e5dae8ee0a3644ecbd608f94587c43b278f4b97e27d5700c6c061d9141",
+    "app/wasm.c": "4f95add4f49ff0c3736008ebd6284a7d095baab6802588a0b4ce18776d89bbed",
+    "include/orchard/clock.h": "d59d3a23fa6100ce021197754e614abff838b8e6d48fb9c9799e76705ad09749",
+    "include/orchard/orchard.h": "11ebbf18af4c484495f6301856f9ea1047bb2b5aef3afce7f34bbb06ea54376d",
+    "src/adc.c": "b4cb58ea20c2ba31546187d7bc8734eafc47332778bef79e3a4395ad6c447579",
+    "src/bus.c": "c6ddad9928bbdf956b2b1e4ceb2ffedc692a8913496827e2d43a65701fd868c5",
+    "src/buzzer.c": "d790463f66dece464bf1f7fe89e64abd52b7b6b56c5aeb1df0047435bf9da327",
+    "src/checkpoint.c": "a1cc469712c47912cb57f384b6421dced86ab10303df4e853ac8988cba8713bd",
+    "src/cpu.c": "938d2b1c89d4f9e07d16b6bd75f0807ea639b7007b8257447300bdcf91a8aed7",
+    "src/gpio.c": "d7927050c48f9768a1bf239ab5d906b8f6a765b03b0ea02a38e837dc313340b8",
+    "src/internal.h": "bb811f6ea99b4dbf9419dd361a0123b4ba37acaa7da0a8c2b0183c032184ab1d",
+    "src/interrupt.c": "afd5a1f7e5b33c9e0e81ed3280b298a87befc596f428294aaebe26c83a6ad732",
+    "src/keyboard.c": "776d753c692a06a38630c6228b35d38c88eba13b163e1d9be0e50dc14d8b92f0",
+    "src/lcd.c": "5381691535feff023a83ada867b1eeb85c1eded3347cf9c8a8787cdf598da0eb",
+    "src/machine.c": "ea1343e17a0cd17b7302ea2d9187d1be093d85bf53d27f982295ac5fac3ecfc8",
+    "src/mmu.c": "a0f79da446162b996e212d10a144edd5243b61266f1dbb2ef810e5a5640184aa",
+    "src/nor.c": "082080cc3e2476a4cb38dc3051a972b4085a89f259070097006c05eff523ac62",
+    "src/rtc.c": "18c195c06cb4b7dd7bae5646e0cbf81fc68905209cab4962fe094181bbb46a59",
+    "src/scheduler.c": "89423d237f60e5020c9044d52c58cd4b88321d12f98d28d98d37919f265228a8",
+    "src/sdi.c": "42f8d4d09eb1e4b4c73ee6161153211323daa6882a2560eea0066cdfe704f9c9",
+    "src/soc.c": "1600aff2a4df0e3afb597d8df53d1d3a22d4c61fc3e1d165f4215d6942ecebfa",
+    "src/sram.c": "a5c7f61524389155f93053f7a398c93333dd79ef07dcbc5773a0a6169ec2f582",
+    "src/thumb.c": "a61494ca691c83a83e0453bfb683feae1a897bcd67f3cf5484c5a79269a4cbcc",
+    "src/usb.c": "b792a08459cb9274ae88269a0155bf29bbd6b41266aa6a3139f419b51cd76dd3",
+    "src/watchdog.c": "a53e560491afc4d9f7cd2b601698588dcb94d961d38232a44b3a2feafa2e933f",
+    "tests/arm-block-profile.c": "4f8e061eddd76394f76dad2ed690e771cb8596c5f3a57f4a6ca975867a973ab8",
+    "tests/arm-block-profile.cmake": "4893fdaf06b45def77c45177fda87370e6ebce7f1f88509249074548005f867b",
+    "tests/buzzer.c": "e7688410de531bbb8f15265e75554419e95ee5ff5d58ab06493b82d26190e1d4",
+    "tests/checkpoint.c": "db1ddeaa8695183f002e4c8faf0caafd0efa9c69f88f0f81cb2f35aaef680efa",
+    "tests/clock-domains.c": "3e84ecdb1fb66cf90edd3b850bb2b0500112bca3af471411928916c8dcc6ad13",
+    "tests/clock-domains.cmake": "545198a209ad66972fc22b7eb514af6bc8bd21678339dfa6c3b36393bb273fe9",
+    "tests/cpu-transactions.c": "db4af2d04f6347eec93c4257f30948ed3484803653bf5d9617082a6105b321d5",
+    "tests/execution.c": "df71572ebf119bfbbc0d539f1b757b00c1aee618aa0e1770ed4db6969309e54b",
+    "tests/lcd-adc.c": "a4dfa28101a1765aa2aad14d25a56638f468782dbd2bf9457606ffbfa7d7163a",
+    "tests/lcd-input.c": "7f9e9fa368df222a3fcb874c7c271f0f30e32db58b53e9fdabada104f23421d4",
+    "tests/memory.c": "687286d00d77504542674784e22bbc40a812a5f3f1b0fad5bca39b1bfb768c8f",
+    "tests/nor-bus.c": "3d7b5f3c55cd099c304ff2c8fc98af41661254b43e2d29b58a8a6ec33a65ef5d",
+    "tests/performance.c": "35c12c9b13c8e0faaa5ba3a91a4e75dfca59fa1cb6db86349f6e318e2e194ce3",
+    "tests/physical-read.c": "f5e4eea28b6ee1fb653873e54fa6f630e9855eee4a9637b52d095606d25c41ee",
+    "tests/power.c": "a4fe3889d5232671e348ad4e86daa9eed46086994877bb128e15f371c8a32e21",
+    "tests/pwm-clock.c": "06486d9eee97dbb6d3ac79f2828d8ceb14d90c335d50bdd37deb696732227948",
+    "tests/regression.c": "1aae1942af8ecf2b3ce488aa243169ab2f3960038ff65e80c917c66fe41fec5f",
+    "tests/scheduler.c": "002c4fd4630fe21f154e13c8bae7758ca53644ffe15b68c1133232b6e58d56d8",
+    "tests/sdi.c": "41baa226335197f7b95126c67291c421f8c5ba32db7078528c54c6921defac04",
+    "tests/segments-nor.c": "8aab8e7ee745eb83ea63e92868fe84f2f57087c26445d6bac2fbd3ec3f82f01a",
+    "tests/usb.c": "41cf74d9e115ec69ffad09759511b220c08af3a53367a8596bd73407f7a4c09f",
+    "tools/checkpoint-replay.c": "04681c234c082b30d0c90884425658c77d1c09ad89b6087bf253d38e4f0a31ff",
+    "tools/cpu-oracle.c": "bd340791dc9ddcc3cc31d360fe403731de1db4873b07c0adf0101d987c41c6ba",
+    "tools/cpu-throughput.c": "f9c99dc8ce493cb5b98d4f1b4ac1fe1a587b2ed3a97aef8383f4c263e5bc9899",
+    "tools/probe-gpio-window.c": "fbb6eb997cac72e80109d3264230dcfd62ded175fc6e0b55c1f735a7fd58a040",
+    "tools/usb-session.c": "7f322526d15d3257966cd651a72f6d844c48310957faa0f7abb1a14a6e92d782"
+  },
+  "native": {
+    "release": {
+      "passed": true,
+      "suites": 19,
+      "assertions_reported": 1193788,
+      "tests": [
+        {
+          "name": "pwm-clock-regression",
+          "passed": true,
+          "assertions": 2452
+        },
+        {
+          "name": "power-regression",
+          "passed": true,
+          "assertions": 836
+        },
+        {
+          "name": "buzzer-regression",
+          "passed": true,
+          "assertions": 4263
+        },
+        {
+          "name": "checkpoint-regression",
+          "passed": true,
+          "assertions": 1323
+        },
+        {
+          "name": "scheduler-regression",
+          "passed": true,
+          "assertions": 48561
+        },
+        {
+          "name": "execution-regression",
+          "passed": true,
+          "assertions": 91277
+        },
+        {
+          "name": "cpu-transactions-regression",
+          "passed": true,
+          "assertions": 456945
+        },
+        {
+          "name": "performance-regression",
+          "passed": true,
+          "assertions": 121078
+        },
+        {
+          "name": "core-regression",
+          "passed": true,
+          "assertions": 103135
+        },
+        {
+          "name": "lcd-input-regression",
+          "passed": true,
+          "assertions": 13112
+        },
+        {
+          "name": "lcd-adc-regression",
+          "passed": true,
+          "assertions": 4571
+        },
+        {
+          "name": "sdi-regression",
+          "passed": true,
+          "assertions": 12566
+        },
+        {
+          "name": "usb-regression",
+          "passed": true,
+          "assertions": 54065
+        },
+        {
+          "name": "nor-bus-regression",
+          "passed": true,
+          "assertions": 1974
+        },
+        {
+          "name": "physical-read-regression",
+          "passed": true,
+          "assertions": 217824
+        },
+        {
+          "name": "memory-regression",
+          "passed": true,
+          "assertions": 24699
+        },
+        {
+          "name": "segments-nor-regression",
+          "passed": true,
+          "assertions": 1258
+        },
+        {
+          "name": "clock-domain-regression",
+          "passed": true,
+          "assertions": 33849
+        },
+        {
+          "name": "arm-block-profile-regression",
+          "passed": true
+        }
+      ],
+      "ctest_log_sha256": "0f1359825a6ba7a3e25358214f68837ba4f6d93846e571a24e37ed0869aa38ba",
+      "build_log_sha256": "c7063be6d3e0985fa91e63dd567d117a4702dd5947f0f13c250478756fd09f10",
+      "cmake_cache_sha256": "3c59fa4c3999036f82fb5cac2f975e7c51e07d508a0edc24600260b3677c8cb6",
+      "compiler": "Ubuntu clang 18.1.3",
+      "flags": [
+        "Release"
+      ]
+    },
+    "reference": {
+      "passed": true,
+      "suites": 19,
+      "assertions_reported": 1193788,
+      "tests": [
+        {
+          "name": "pwm-clock-regression",
+          "passed": true,
+          "assertions": 2452
+        },
+        {
+          "name": "power-regression",
+          "passed": true,
+          "assertions": 836
+        },
+        {
+          "name": "buzzer-regression",
+          "passed": true,
+          "assertions": 4263
+        },
+        {
+          "name": "checkpoint-regression",
+          "passed": true,
+          "assertions": 1323
+        },
+        {
+          "name": "scheduler-regression",
+          "passed": true,
+          "assertions": 48561
+        },
+        {
+          "name": "execution-regression",
+          "passed": true,
+          "assertions": 91277
+        },
+        {
+          "name": "cpu-transactions-regression",
+          "passed": true,
+          "assertions": 456945
+        },
+        {
+          "name": "performance-regression",
+          "passed": true,
+          "assertions": 121078
+        },
+        {
+          "name": "core-regression",
+          "passed": true,
+          "assertions": 103135
+        },
+        {
+          "name": "lcd-input-regression",
+          "passed": true,
+          "assertions": 13112
+        },
+        {
+          "name": "lcd-adc-regression",
+          "passed": true,
+          "assertions": 4571
+        },
+        {
+          "name": "sdi-regression",
+          "passed": true,
+          "assertions": 12566
+        },
+        {
+          "name": "usb-regression",
+          "passed": true,
+          "assertions": 54065
+        },
+        {
+          "name": "nor-bus-regression",
+          "passed": true,
+          "assertions": 1974
+        },
+        {
+          "name": "physical-read-regression",
+          "passed": true,
+          "assertions": 217824
+        },
+        {
+          "name": "memory-regression",
+          "passed": true,
+          "assertions": 24699
+        },
+        {
+          "name": "segments-nor-regression",
+          "passed": true,
+          "assertions": 1258
+        },
+        {
+          "name": "clock-domain-regression",
+          "passed": true,
+          "assertions": 33849
+        },
+        {
+          "name": "arm-block-profile-regression",
+          "passed": true
+        }
+      ],
+      "ctest_log_sha256": "734710d4d1a6ee76452c3a142e6b54ea097a23a76d6ea103e0e1403361cfaf7c",
+      "build_log_sha256": "c19e1ee6e9d0046a71d7ae62ea62cfe4518d151b81a25acc63f245d49d5a0b6e",
+      "cmake_cache_sha256": "88f29455fb47f7053e9480abb21fa67f5a34dcc397bf49559d108139e9fb9830",
+      "compiler": "Ubuntu clang 18.1.3",
+      "flags": [
+        "Release",
+        "ORCHARD_REFERENCE=ON"
+      ]
+    },
+    "sanitize": {
+      "passed": true,
+      "suites": 19,
+      "assertions_reported": 1193788,
+      "tests": [
+        {
+          "name": "pwm-clock-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "e4033aca1c828e12f7b3fa1d2bc1b663d1de565b585f7ab51dbe05cb6ff02ac7",
+          "returncode": 0,
+          "ctest_log_sha256": "70527460c26dfd877f2e0cb4e8ba4662d9900307b6d0f5bba20d44347c0b52cd",
+          "passed": true,
+          "assertions": 2452
+        },
+        {
+          "name": "power-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "ce0ba334c34ef6b0709c41b18da14e52c177738da023bf66ff9f553a7604729d",
+          "returncode": 0,
+          "ctest_log_sha256": "d65813e0c451f72fcb44566482dbc616e4acb25dc33c1e36f54046145a8d9f6a",
+          "passed": true,
+          "assertions": 836
+        },
+        {
+          "name": "buzzer-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "ecc3dc33f8d3b3ddc40dba532454fe77420a45dcdc91313e76b7ec45330758b2",
+          "returncode": 0,
+          "ctest_log_sha256": "a589cd448a78f5806c66255cfff4f0a904b3b80aedb61d9eddf4e35fdebb7223",
+          "passed": true,
+          "assertions": 4263
+        },
+        {
+          "name": "checkpoint-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "00b773c21e3b765a67ee3bd883abb1657b3b9e23bc02fe81da1ac378761f8632",
+          "returncode": 0,
+          "ctest_log_sha256": "3f4cd6994a79ad36dab6588dfbf6f36f1cbf51179bb763dafbecae298a9de6a4",
+          "passed": true,
+          "assertions": 1323
+        },
+        {
+          "name": "scheduler-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "54c1cede69af019bed8d8babe6e2a5ff47f73b7e3b859f9dbd2e1f9cd5b7b940",
+          "returncode": 0,
+          "ctest_log_sha256": "798e8c772b755b9f1a6d1e47d1c1c99b131393d1540565a7ff7b54e1376d71ac",
+          "passed": true,
+          "assertions": 48561
+        },
+        {
+          "name": "execution-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "3b567afdeb23f139bea94be1678e031073355ca6ad24d056ade48d87756e75fd",
+          "returncode": 0,
+          "ctest_log_sha256": "a84e85f30f2d83f7daa38da6527dcead1c979aff06c2d837c712165bfc19662b",
+          "passed": true,
+          "assertions": 91277
+        },
+        {
+          "name": "cpu-transactions-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "fa0e1db6d582ca79399eeaeec621d3436164fa95589c4b4de7bdbbe13b30accf",
+          "returncode": 0,
+          "ctest_log_sha256": "ff840eb0851159cf653eead2998c13185d70959b073fcb70cf0122a8bdb9c1ca",
+          "passed": true,
+          "assertions": 456945
+        },
+        {
+          "name": "performance-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "e4b4762aa89030892f8cae8e41dcd6787c34707c8172d9263f48cde17cfbee40",
+          "returncode": 0,
+          "ctest_log_sha256": "e11136866e8889e5b7321e7ee3c498205a62eeb3d72b9fa1a3cd5165d9082d95",
+          "passed": true,
+          "assertions": 121078
+        },
+        {
+          "name": "core-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "322a9be3f69a6ee7e425c363cc629e5987ffd4e0614140bc8d535cd3b3a813f1",
+          "returncode": 0,
+          "ctest_log_sha256": "7bfeb7fd0a0667d5bbf2dacd4537befaa5787d48f5a7a7cc992a3af6b0b3fea8",
+          "passed": true,
+          "assertions": 103135
+        },
+        {
+          "name": "lcd-input-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "60679c77f0a062103c64841714b9b4885b95bc825ab0b85222961f7b199f46a1",
+          "returncode": 0,
+          "ctest_log_sha256": "b0f9b75845342fb7f502e62c039ffcaed14aebabb6c999b7b6dee98291e34b30",
+          "passed": true,
+          "assertions": 13112
+        },
+        {
+          "name": "lcd-adc-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "ebc4e2ddc95467d2a581d8727864284aa226db647500cc0b012e8f161152688b",
+          "returncode": 0,
+          "ctest_log_sha256": "f4c00399fc324b62b0348d3cdbe2cd49996e9403a767b6d92c87291c646d8176",
+          "passed": true,
+          "assertions": 4571
+        },
+        {
+          "name": "sdi-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "2a430802156536c706483eaae39c102902d0162a6457db0c97ca4aa72a8603c6",
+          "returncode": 0,
+          "ctest_log_sha256": "19bbd8ccb9f721e30b8f3e1c325bcb2dabd3688586ef53ce0ea8cc1a1e8e98dc",
+          "passed": true,
+          "assertions": 12566
+        },
+        {
+          "name": "usb-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "509743b5b7573f2e1cd13b6070032760ef6982c0eb5ac4b3d211a662e7704cd3",
+          "returncode": 0,
+          "ctest_log_sha256": "518396692d813ee9253ba6c5aff3a34453f03922472eae2a8eb97a79bce7f6b5",
+          "passed": true,
+          "assertions": 54065
+        },
+        {
+          "name": "nor-bus-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "c84d80b474a67e4e9a3b81c31e9703782653f7a3899015403d488840d6fa2f5f",
+          "returncode": 0,
+          "ctest_log_sha256": "2274580ec5bc5bb5504514ac025239c4c0f7120aec4238d81912ac4e79979de9",
+          "passed": true,
+          "assertions": 1974
+        },
+        {
+          "name": "physical-read-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "e9795128d39698af6fc09859143410a165aa129bcb9ccf5a3efa5ec02358d411",
+          "returncode": 0,
+          "ctest_log_sha256": "40f246f8b13be2468df227ac7fcdfe276aac59bc75b2f69cdecba48bec6c7624",
+          "passed": true,
+          "assertions": 217824
+        },
+        {
+          "name": "memory-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "aab825879b0d73dbadba4a5a14572121f9c6dd7dc476e6ba81aa8a2a65f3a2b9",
+          "returncode": 0,
+          "ctest_log_sha256": "ebf6cb8f827a9b63149aa5d629265c88bcd6ff5b04fd4c180e7bebfed01a06fc",
+          "passed": true,
+          "assertions": 24699
+        },
+        {
+          "name": "segments-nor-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "2bb23416a71b11c78892c9b37e6356307a679d44881356b567b9fd16b74ecc0e",
+          "returncode": 0,
+          "ctest_log_sha256": "701b3f921d85123d61f0efd3566e245a62de1801f5dfaa448e89d1d4eec11ea8",
+          "passed": true,
+          "assertions": 1258
+        },
+        {
+          "name": "clock-domain-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "ec38e49e73a091a495306dc5be8cc934fa2f6e7ed7c03b562ec5d7633d917da3",
+          "returncode": 0,
+          "ctest_log_sha256": "7b1702372e7e5ccb7d7abb055c3acc2add80587c25a39391527cda18362c53f7",
+          "passed": true,
+          "assertions": 33849
+        },
+        {
+          "name": "arm-block-profile-regression",
+          "executable_mode_before_start": "0o755",
+          "executable_sha256": "f4614a49ebcdf7bc3faf6ff0410b42597ff712626d7db2844441097c31fb82cc",
+          "returncode": 0,
+          "ctest_log_sha256": "0c68d5ce4a267d35117143b010f78c5d29dc19518110c2042f3b6d0af1e7ba77",
+          "passed": true
+        }
+      ],
+      "ctest_log_sha256": "0b15a5c9843f39080baa511b103a2e52afcd00c2899467220ce04fcc45158fbd",
+      "build_log_sha256": "d8d816b066511bf1cedb80f64e996d698196b781166f8359dfdf772103de345f",
+      "cmake_cache_sha256": "ea7ae3a4ac6ef9f4f431abdf64bed1b5eb12ac63716b9669ff43d237bbbe6e3c",
+      "compiler": "Ubuntu clang 18.1.3",
+      "flags": [
+        "Debug",
+        "ORCHARD_SANITIZE=ON",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer"
+      ],
+      "ctest_stdout_sha256": "523acd4150c33251c5efc38b5b1532cc62e6f28954ee1c47a7834799c8372a5a",
+      "runtime_environment": {
+        "ASAN_OPTIONS": null,
+        "UBSAN_OPTIONS": null,
+        "LSAN_OPTIONS": null
+      },
+      "sanitizer_findings": 0,
+      "isolated_temporary_build": true,
+      "ctest_invocation": "Each of the unchanged 19 CTest definitions run once via exact-name -R, after execute-mode check; original per-test timeouts retained.",
+      "chmod_or_access_control_modification": false
+    }
+  },
+  "static_analysis": {
+    "passed": true,
+    "files": 45,
+    "diagnostics": 0,
+    "exact_ci_source_set": true,
+    "sources": [
+      "app/main.c",
+      "src/adc.c",
+      "src/bus.c",
+      "src/buzzer.c",
+      "src/checkpoint.c",
+      "src/cpu.c",
+      "src/gpio.c",
+      "src/interrupt.c",
+      "src/keyboard.c",
+      "src/lcd.c",
+      "src/machine.c",
+      "src/mmu.c",
+      "src/nor.c",
+      "src/rtc.c",
+      "src/scheduler.c",
+      "src/sdi.c",
+      "src/soc.c",
+      "src/sram.c",
+      "src/thumb.c",
+      "src/usb.c",
+      "src/watchdog.c",
+      "tests/arm-block-profile.c",
+      "tests/buzzer.c",
+      "tests/checkpoint.c",
+      "tests/clock-domains.c",
+      "tests/cpu-transactions.c",
+      "tests/execution.c",
+      "tests/lcd-adc.c",
+      "tests/lcd-input.c",
+      "tests/memory.c",
+      "tests/nor-bus.c",
+      "tests/performance.c",
+      "tests/physical-read.c",
+      "tests/power.c",
+      "tests/pwm-clock.c",
+      "tests/regression.c",
+      "tests/scheduler.c",
+      "tests/sdi.c",
+      "tests/segments-nor.c",
+      "tests/usb.c",
+      "tools/checkpoint-replay.c",
+      "tools/cpu-oracle.c",
+      "tools/cpu-throughput.c",
+      "tools/probe-gpio-window.c",
+      "tools/usb-session.c"
+    ],
+    "command": [
+      "clang-18",
+      "--analyze",
+      "-std=c17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-Iinclude",
+      "-Isrc"
+    ],
+    "log_sha256": "6c30902ada9771c07458f82355fa5609fccad00e3aa448b86a816bb1f0ede964"
+  },
+  "reviewed_invariants": [
+    "All successful settled PCLK fractions have a positive numerator and denominator; source fields bound the unreduced numerator to 1..263 and denominator to 1..2080.",
+    "Shared PWM, watchdog, ADC and SDI receive every modeled PCLK edge, including multiple edges in one reference quantum; RTC is independent.",
+    "Scheduler converts PCLK deadlines to reference quanta and materializes state before MMIO or runner boundaries; clock gates freeze only their peripheral state.",
+    "Pending timer reload and compare latches are guest state; observer enable/mute cannot alter them.",
+    "Power_OFF suppresses CPU and non-retained peripherals; wake resets CPU/SoC while preserving external SRAM, RTC, board inputs, cable and external SD bytes/flags.",
+    "Checkpoint v4 appends 64 explicit bytes; valid-CRC malformed added fields reject atomically, and v1/v2/v3 migration has a documented deterministic first-cycle policy."
+  ],
+  "review_changes": [
+    {
+      "path": "src/soc.c",
+      "kind": "explicit successful-ratio contract",
+      "description": "The final boolean result now explicitly requires reduced numerator and denominator to be nonzero. Positive bounded input formulas already guarantee this, so defined behavior is unchanged; the explicit contract closes a Clang analyzer range-inference gap at clock-phase rescaling.",
+      "initial_diagnostic": "core.DivideZero in o_mmio_write",
+      "initial_diagnostic_sha256": "d6b07a1d61a7cf84614e973b6af177b6d9014452d65154b0b9c450ed60a6c137",
+      "final_analysis_diagnostics": 0
+    },
+    {
+      "path": "include/orchard/clock.h",
+      "kind": "comments only",
+      "description": "Distinguish shared PCLK behavior from CPU issue-policy approximations and retained reference-time RTC/LCD behavior.",
+      "preprocessed_machine_c_check": {
+        "preprocessed_machine_c_unchanged": true,
+        "preprocessed_sha256": "6d921dfcc399fd844132e418079261de1680fde7732f5dfd4edabc7662501ea6",
+        "header_sha256": "d59d3a23fa6100ce021197754e614abff838b8e6d48fb9c9799e76705ad09749"
+      }
+    }
+  ],
+  "environment_trials": [
+    {
+      "stage": "initial sanitizer run",
+      "finding": "Generated orchard-power lacked execute bits (0644); CTest could not start it, without executing test code or emitting a sanitizer diagnostic.",
+      "resolution": "Preserved the initial generated file and normally relinked the missing CMake target; no chmod or access-control modification.",
+      "evidence": {
+        "mode": "0o644",
+        "bytes": 2925248,
+        "sha256": "c752281c5c8b896879ac1039f15459a61030ff3815b65643e36bf4715e314b40",
+        "direct_execution": "PermissionError: [Errno 13] Permission denied",
+        "executable_permissions_changed_by_review": false
+      },
+      "log_sha256": "2f998709c8a21e43ca7761ad031b01fd47de266b3192b537ec6bc47dcd7681d7"
+    },
+    {
+      "stage": "second sanitizer run",
+      "finding": "Power passed all 836 assertions; another generated target, orchard-sdi, was 0644 and CTest marked it BAD_COMMAND/permission denied before execution.",
+      "action": "Preserved that generated file and normally relinked the target; no chmod or access-control modification.",
+      "log_sha256": "60301a5959afa8ea50cdddf45d8fc844105152fb73f9d5e226a98b4e260d3560"
+    },
+    {
+      "stage": "third sanitizer run",
+      "finding": "All 19 generated test executables were 0755 immediately after linking, but orchard-sdi was again non-executable at the next tool invocation. CTest could not start it; the other 18 tests passed. The cause of the generated-file mode change was not established.",
+      "pre_run_target_modes": {
+        "orchard-pwm-clock": "0o755",
+        "orchard-power": "0o755",
+        "orchard-buzzer": "0o755",
+        "orchard-checkpoint": "0o755",
+        "orchard-scheduler": "0o755",
+        "orchard-execution": "0o755",
+        "orchard-cpu-transactions": "0o755",
+        "orchard-performance": "0o755",
+        "orchard-regression": "0o755",
+        "orchard-lcd-input": "0o755",
+        "orchard-lcd-adc": "0o755",
+        "orchard-sdi": "0o755",
+        "orchard-usb": "0o755",
+        "orchard-nor-bus": "0o755",
+        "orchard-physical-read": "0o755",
+        "orchard-memory": "0o755",
+        "orchard-segments-nor": "0o755",
+        "orchard-clock-domains": "0o755",
+        "orchard-arm-block-profile": "0o755"
+      },
+      "log_sha256": "cbc70c2e25d021aa674d48b175b30a0be2a7f6de782f46a92d7d294331a44d9c"
+    },
+    {
+      "stage": "final sanitizer run",
+      "resolution": "A fresh standard CMake build under /tmp and every CTest launch were performed within one script invocation. All 19 unchanged test definitions passed, with each executable observed as 0755 immediately before its test started and the original per-test timeout retained. No source, CMake, permissions or access-control modifications were made for this environment workaround.",
+      "script_sha256": "0566ce9e8bd87523718c0363e48f1f01e32aa8456d4950174c78137097579028",
+      "build_log_sha256": "d8d816b066511bf1cedb80f64e996d698196b781166f8359dfdf772103de345f",
+      "ctest_stdout_sha256": "523acd4150c33251c5efc38b5b1532cc62e6f28954ee1c47a7834799c8372a5a",
+      "ctest_log_sha256": "0b15a5c9843f39080baa511b103a2e52afcd00c2899467220ce04fcc45158fbd"
+    }
+  ],
+  "firmware_used": false,
+  "boundaries": [
+    "This review does not independently repeat the parent-owned original-ROM or production-browser workflows, or claim physical hardware calibration.",
+    "PLL settling time, clock-switch sub-edge phase, per-channel prescaler approximation, reference-clock LCD and watchdog reset propagation retain the documented limitations.",
+    "The full independent Unicorn corpus and native/WASM paired gates are separate records; they are not counted as checks performed by this reviewer."
+  ]
+}

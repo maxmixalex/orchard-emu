@@ -1,12 +1,19 @@
 // SPDX-License-Identifier: MIT
 import React,{useEffect,useRef,useState} from 'react';
-import {Button,Group,NativeSelect,Progress,Stack,Switch,Text,TextInput} from '@mantine/core';
+import {Button,Group,NativeSelect,Progress,Stack,Text,TextInput} from '@mantine/core';
 import {useTranslation} from 'react-i18next';
 import {transferCapabilities} from './file-transfer.js';
 
 const size=n=>new Intl.NumberFormat(undefined,{maximumFractionDigits:1}).format(n/1024)+' KiB';
 const number=n=>new Intl.NumberFormat().format(Math.max(0,Math.floor(n||0)));
 const wireMenu=(model,transport)=>`HP39/40 (${model===2?(transport==='serial'?'Ser':'USB'):'Wire'})`;
+function TransferError({error,errorCode,errorValues,small=false}){
+  const {t}=useTranslation();if(!error&&!errorCode)return null;
+  const message=t('fileTransferError_'+(errorCode||'unknown'),{...errorValues,defaultValue:t('fileTransferError_unknown')});
+  return <div><Text size={small?'xs':'sm'} c="red" style={{overflowWrap:'anywhere'}}>{message}</Text>
+    {error&&error!==message&&<details className="transfer-error-details"><summary>{t('details')}</summary><pre>{error}</pre></details>}
+  </div>;
+}
 export function TransferStatus({state,compact=false,onOpen}){
   const {t}=useTranslation(),transfer=state.transfer,batch=state.uploadBatch;
   const [wall,setWall]=useState(Date.now);
@@ -26,7 +33,7 @@ export function TransferStatus({state,compact=false,onOpen}){
     style={compact?{padding:'6px 20px',background:'#eef7f3',flexShrink:0}:undefined}>
     <Group justify="space-between" gap="xs" wrap="nowrap">
       <Text size="sm" c={complete?'teal':undefined} style={{overflowWrap:'anywhere',minWidth:0}}>
-        {t(complete?'fileTransfer39Uploaded':transfer.protocol==='hp39-wire'&&transfer.phase==='negotiating'?'fileTransferWireNext':'transferPhase_'+transfer.phase,{menu:wireMenu(state.model.id,transfer.transport)})}{transfer.name&&transfer.phase!=='serving'?` · ${transfer.name}`:''}
+        {t(complete?'fileTransfer39Uploaded':transfer.protocol==='hp39-wire'&&transfer.phase==='negotiating'?(transfer.objectKind==='C'?'fileTransferWireNoteNext':'fileTransferWireNext'):'transferPhase_'+transfer.phase,{menu:wireMenu(state.model.id,transfer.transport)})}{transfer.name&&transfer.phase!=='serving'?` · ${transfer.name}`:''}
       </Text>
       {compact&&<Button variant="subtle" size="compact-xs" onClick={onOpen} style={{flexShrink:0}}>{t('fileTransferDetails')}</Button>}
     </Group>
@@ -40,7 +47,8 @@ export function TransferStatus({state,compact=false,onOpen}){
     {moving&&<Text size="xs" c="dimmed" aria-live="off">{t('fileTransferElapsed',{seconds:elapsed})}
       {idle>=5?' · '+t('fileTransferWaiting',{seconds:idle}):''}</Text>}
     {active&&state.transferBoosted&&<Text size="xs" c="teal">{t('fileTransferBoosted')}</Text>}
-    {transfer.error&&<Text size="sm" c="red" style={{overflowWrap:'anywhere'}}>{transfer.error}</Text>}
+    {transfer.noteConverted&&<Text size="xs" c="dimmed">{t('fileTransferNoteConverted')}</Text>}
+    <TransferError error={transfer.error} errorCode={transfer.errorCode} errorValues={transfer.errorValues}/>
     {batch?.recoverable&&<Text size="xs">{t('fileTransferQueueRecovery')}</Text>}
     {wireRecovery&&<Text size="xs">{t(batch?.recoverable?'fileTransferWireRetry':'fileTransferWireRecovery',{menu:wireMenu(state.model.id,transfer.transport)})}</Text>}
   </Stack>;
@@ -60,8 +68,6 @@ export function FileTransfer({controller,state,transport}){
       data={[{value:'disk',label:t('fileTransferDisk')},{value:'wire',label:t('fileTransferWire',{menu:wireMenu(state.model.id,transport)})}]}/>}
     <Text size="sm" c="dimmed">{t(wire?'fileTransferWireHelp':hp39?'fileTransfer39Help':!supported?'fileTransferUnavailable':transport==='serial'?'fileTransferSerialHelp':'fileTransferHelp',{menu:wireMenu(state.model.id,transport)})}</Text>
     {supported&&<>
-      <Switch label={t('fileTransferUnlimited')} description={t('fileTransferUnlimitedHelp')}
-        checked={Boolean(state.prefs.transferUnlimited)} onChange={e=>controller.setPreferences({...state.prefs,transferUnlimited:e.currentTarget.checked})}/>
       <Group align="end"><Button variant="default" disabled={active} onClick={()=>{input.current.value='';input.current.click();}}>{t('chooseTransferFile')}</Button>
         <Text size="sm" style={{overflowWrap:'anywhere',flex:1,minWidth:100}}>{multiple?t('selectedTransferFiles',{count:files.length}):file?`${file.name} (${size(file.size)})`:t('noTransferFile')}</Text></Group>
       <input ref={input} type="file" multiple data-testid="transfer-file" hidden onChange={e=>{const next=Array.from(e.target.files||[],file=>({file,name:file.name}));setFiles(next);setName(next.length===1?next[0].name:'');}}/>
@@ -93,7 +99,7 @@ export function FileTransfer({controller,state,transport}){
       <Progress value={batch.total?100*batch.transferred/batch.total:0} aria-label={t('transferProgress')}/>
       <Stack gap="xs" style={{maxHeight:220,overflowY:'auto'}}>{batch.items.map((entry,index)=><Group key={index} justify="space-between" wrap="nowrap">
         <Stack gap={2} style={{minWidth:0}}><Text size="sm" style={{overflowWrap:'anywhere'}}>{entry.storedName||entry.name}</Text>
-          {entry.error&&<Text size="xs" c="red" style={{overflowWrap:'anywhere'}}>{entry.error}</Text>}</Stack>
+          <TransferError error={entry.error} errorCode={entry.errorCode} errorValues={entry.errorValues} small/></Stack>
         <Text size="xs" c={entry.phase==='error'?'red':entry.phase==='complete'?'green':'dimmed'} style={{flexShrink:0}}>{t('uploadPhase_'+entry.phase)}</Text>
       </Group>)}</Stack>
       {batch.recoverable&&<Group>

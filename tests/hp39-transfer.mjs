@@ -78,6 +78,48 @@ function fixture(hostFiles=files){
 }
 // A lost Init-Info ACK recovers before the client's ordinary five-second
 // timeout. The complete transaction still returns exactly one original file.
+// Stock SEND can likewise miss the receiver's S/D ACK. Retry the exact ACK,
+// including S's negotiation data, without waiting for the sender to resend.
+{
+ let now=0;const ab=[],ba=[],received=[],dropped=new Set(),fromClient=[],hostPackets=[];
+ const server=new Hp39FileServer({hz:1000,write:b=>{const p=new PacketReader().feed(b)[0];hostPackets.push({now,...p});
+   if(p?.type==='Y'&&[0,2].includes(p.sequence)&&!dropped.has(p.sequence))dropped.add(p.sequence);else ba.push(b.slice());return b.length;},file:f=>received.push(f)});
+ const client=new KermitSession({hz:1000,write:b=>{fromClient.push(...new PacketReader().feed(b));ab.push(b.slice());return b.length;}});
+ server.start({files:[]},0);client.start({mode:'send',name:'NOTE.000',bytes:program},0);
+ for(;now<5000&&client.active;now++){
+   while(ab.length)server.receive(ab.shift(),now);while(ba.length)client.receive(ba.shift(),now);server.poll(now);client.poll(now);
+ }
+ assert.equal(client.phase,'complete');assert.deepEqual([...dropped],[0,2]);assert(now>=2000&&now<5000);
+ for(const type of ['S','F','D','Z','B'])assert.equal(fromClient.filter(p=>p.type===type).length,1,'ACK recovery must precede sender retransmission');
+ assert.equal(received.length,1);assert.deepEqual(received[0].bytes,program);
+ const initial=hostPackets.filter(p=>p.type==='Y'&&p.sequence===0);assert.equal(initial.length,2);
+ assert.deepEqual(initial[0].data,PARAMETERS);assert.deepEqual(initial[1].data,PARAMETERS);
+ assert.equal(initial[1].now-initial[0].now,1000);
+}
+// Backpressure cannot consume the ACK retry timer before the complete frame
+// is written. A newly received packet supersedes an unsent preceding retry.
+{
+ let allowance=0;const wire=[],server=new Hp39FileServer({hz:1000,write:b=>{const n=Math.min(allowance,b.length);wire.push(...b.subarray(0,n));return n;}});
+ server.start({files:[]},0);server.receive(packet(0,'S',PARAMETERS),0);server.poll(10000);
+ assert.equal(server.child.deadline,Infinity);assert.equal(server.child.retries,0);
+ allowance=1;server.poll(10001);assert.equal(server.child.deadline,Infinity);
+ allowance=128;server.poll(10002);assert.equal(server.child.deadline,11002);
+ const before=wire.length;allowance=0;server.poll(11002);assert.equal(server.child.retries,1);
+ server.receive(packet(1,'F',text('NOTE.000')),11003);assert.equal(server.child.queue.length,1);
+ allowance=128;server.poll(11004);
+ const next=new PacketReader().feed(Uint8Array.from(wire.slice(before)));assert.equal(next.length,1);assert.equal(next[0].sequence,1);
+ const limit=wire.length;server.cancel();server.poll(12000);
+ assert(!new PacketReader().feed(Uint8Array.from(wire.slice(limit))).some(p=>p.type==='Y'),'Cancellation must discard old ACK timers');
+}
+// A silent peer remains bounded by the retry count; a fresh server cannot
+// inherit a retained acknowledgement or publish an incomplete receive.
+{
+ const wire=[],received=[],server=new Hp39FileServer({hz:1000,write:b=>{wire.push(...new PacketReader().feed(b));return b.length;},file:f=>received.push(f)});
+ server.start({files:[]},0);server.receive(packet(0,'S',PARAMETERS),0);server.poll(0);
+ while(server.active)server.poll(server.child.deadline);
+ assert.equal(server.phase,'error');assert.equal(wire.length,5);assert(wire.every(p=>p.type==='Y'&&p.sequence===0));assert.equal(received.length,0);
+ server.start({files:[]},30000);server.poll(40000);assert.equal(wire.length,5);assert.equal(server.child,null);
+}
 {
  let now=0,dropped=false;const ab=[],ba=[],received=[];
  const server=new Hp39FileServer({hz:1000,write:b=>{const p=new PacketReader().feed(b)[0];
@@ -144,10 +186,38 @@ function fixture(hostFiles=files){
  for(;now<30000&&client.active;now++){
   while(ab.length)server.receive(ab.shift(),now);while(ba.length)client.receive(ba.shift(),now);server.poll(now);client.poll(now);
  }
- assert(dropped&&now>5000);assert.equal(client.phase,'complete');assert.equal(server.phase,'serving');
+ assert(dropped&&now>=1000&&now<5000);assert.equal(client.phase,'complete');assert.equal(server.phase,'serving');
  assert.equal(received.length,1);assert.deepEqual(received[0].bytes,program);
  const expiry=server.lingerUntil,count=ba.length;server.receive(packet(4,'B'),expiry);server.poll(expiry);
  assert.equal(ba.length,count);assert.equal(received.length,1);server.cancel();assert.equal(server.pending,false);
+}
+// A new stock SEND cancels an unsent final-B retry from the previous file.
+// Reusing sequence zero must neither leak that old ACK nor publish a file twice.
+{
+ let allowance=128;const wire=[],received=[],server=new Hp39FileServer({hz:1000,write:b=>{
+   const n=Math.min(allowance,b.length);wire.push(...b.subarray(0,n));return n;},file:f=>received.push(f)});
+ server.start({files:[]},0);
+ for(const [sequence,type,data] of [[0,'S',PARAMETERS],[1,'F',text('FIRST.000')],[2,'D',encodeData(program).data],[3,'Z'],[4,'B']]){
+   server.receive(packet(sequence,type,data),sequence);server.poll(sequence);
+ }
+ assert.equal(received.length,1);const deadline=server.finalAckRetry.deadline,before=wire.length;
+ allowance=0;server.poll(deadline);assert.equal(server.queue.length,1);
+ server.receive(packet(0,'S',PARAMETERS),deadline+1);assert.equal(server.finalAckRetry,null);assert.equal(server.queue.length,0);
+ allowance=128;server.poll(deadline+2);
+ const sent=new PacketReader().feed(Uint8Array.from(wire.slice(before)));assert.equal(sent.length,1);assert.equal(sent[0].sequence,0);
+ assert.equal(received.length,1);server.cancel();
+}
+// A final-ACK retry still blocked by the transport at grace expiry is dropped;
+// later writable transport must not emit an obsolete confirmation.
+{
+ let writable=true;const wire=[],server=new Hp39FileServer({hz:1000,write:b=>{if(!writable)return 0;wire.push(b.slice());return b.length;}});
+ server.start({files:[]},0);
+ for(const [sequence,type,data] of [[0,'S',PARAMETERS],[1,'F',text('FIRST.000')],[2,'D',encodeData(program).data],[3,'Z'],[4,'B']]){
+   server.receive(packet(sequence,type,data),sequence);server.poll(sequence);
+ }
+ const before=wire.length;writable=false;server.poll(server.finalAckRetry.deadline);assert.equal(server.queue.length,1);
+ server.poll(server.lingerUntil);assert.equal(server.finalAckRetry,null);assert.equal(server.queue.length,0);
+ writable=true;server.poll(server.lingerUntil+1);assert.equal(wire.length,before);server.cancel();
 }
 {
  const f=fixture();f.send(packet(0,'I',PARAMETERS));f.server.poll(1);f.send(packet(0,'R',text('../escape')));assert.equal(f.server.phase,'error');

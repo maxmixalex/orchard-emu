@@ -3,6 +3,7 @@ import { Pacer } from './pacing.js';
 import { TaskScheduler } from './task-scheduler.js';
 import { VirtualUSB } from './virtual-usb.js';
 import { FileTransfer } from './file-transfer.js';
+import {transferError,transferErrorDetails} from './transfer-errors.js';
 import { BuzzerStream } from './buzzer-worker.js';
 import { encodeSession, decodeSession, MAX_STATE } from './session.js';
 import { readSDState, validateSDSize } from './sd-card.js';
@@ -53,7 +54,7 @@ function transferMessage(data) {
   }
   postMessage({generation,...data});
 }
-function pause() { transfer?.cancel(tick,'File transfer cancelled because the calculator paused.');buzzer?.clear();running = false; scheduler.cancel(timer); timer = null; taps.clear(tick); }
+function pause() { transfer?.cancel(tick,transferError('transferPaused','File transfer cancelled because the calculator paused.'));buzzer?.clear();running = false; scheduler.cancel(timer); timer = null; taps.clear(tick); }
 function sendUart() {
   const n = core.uart_receive();
   if(n){const bytes=new Uint8Array(core.memory.buffer,core.uart_output(),n).slice();
@@ -237,13 +238,13 @@ self.onmessage=({data})=>{
     else if(data.type==='file-transfer-start') {
       if(Number.isSafeInteger(data.request)&&data.request<=transfer?.lastRequest)return;
       try {
-        if(!loaded||busy||!running)throw new Error('Resume the calculator before starting a file transfer.');
-        if(data.transport==='serial'&&!serial)throw new Error('Connect serial before starting a file transfer.');
+        if(!loaded||busy||!running)throw transferError('calculatorNotReady','Resume the calculator before starting a file transfer.');
+        if(data.transport==='serial'&&!serial)throw transferError('connectFirst','Connect serial before starting a file transfer.');
         transfer.start(data,tick);
-      } catch(error) {transferMessage({type:'file-transfer-status',request:data.request,transport:data.transport,active:false,phase:'error',error:error.message});}
+      } catch(error) {transferMessage({type:'file-transfer-status',request:data.request,transport:data.transport,active:false,phase:'error',...transferErrorDetails(error)});}
     }
-    else if(data.type==='file-transfer-cancel') {transfer?.cancel(tick,'File transfer cancelled.',data.request);}
-    else if(data.type==='serial-connect' && loaded) {if(!data.connected&&transfer?.transport==='serial')transfer.cancel(tick,'Serial disconnected.');serial=Boolean(data.connected);postMessage({type:'serial-status',generation,connected:serial});}
+    else if(data.type==='file-transfer-cancel') {transfer?.cancel(tick,transferError('transferCancelled','File transfer cancelled.'),data.request);}
+    else if(data.type==='serial-connect' && loaded) {if(!data.connected&&transfer?.transport==='serial')transfer.cancel(tick,transferError('linkDisconnected','Serial disconnected.'));serial=Boolean(data.connected);postMessage({type:'serial-status',generation,connected:serial});}
     else if(data.type==='usb-connect' && loaded) {
       transfer?.resetUsb(tick);
       if(data.connected){if(!running)throw new Error('Resume the calculator before connecting USB.');usb.start(tick);}else usb.disconnect();
