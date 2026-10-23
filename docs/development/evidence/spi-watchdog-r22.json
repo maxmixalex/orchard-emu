@@ -1,0 +1,327 @@
+{
+  "schema": 1,
+  "date_utc": "2026-10-23",
+  "base_commit": "2ae6512e1cdb8efc3dd0633b8d5914ced3f11342",
+  "scope": "Functional SPI and watchdog reset; unchanged original-ROM factory-version entry, exit and new arithmetic. Not an all-factory-tests PASS claim.",
+  "source_sha256": {
+    "src/internal.h": "0ffb4855f57646088be2c256a6de8ecc86782bba83f7c3b71d1476e1cb54f2ce",
+    "include/orchard/orchard.h": "88c19b44c1fe38d715ce224544686abeea9c4ff8742b3bf9eaabec32cc9efcf3",
+    "src/spi.c": "ac354d0131b903f1017cc7551f025a466aafb5989537c68186112087b03bf76e",
+    "src/watchdog.c": "00b4111a70f50dca5cdae27eaf7c10c0f687ddbaccd46bfb62b4f5997189e53c",
+    "src/machine.c": "255919b1578c83a4c3acd2636e36632282d8fe469da6720244494a47cdb18e91",
+    "src/soc.c": "eec13c65e36aae0d711c5d363bc118f4cd59cccb7341e6a7a8f17cf947e2ed9b",
+    "src/scheduler.c": "fd30a47391c57e216dd1c1985e00bede24c21c6e4a2fd0fbc6ee30ffbb04692b",
+    "src/keyboard.c": "0c0b3c6ac3183fe66b3ab581ad8dccf538c6552ce4a9970f1e710f34ad3d116f",
+    "src/checkpoint.c": "8d815012cf7c949df813bf5448f833defe9ababcfd13687c3635ac64fc7f000e",
+    "tests/spi.c": "b6f931321a954e415701837e90b4424616bda06e0ca7f2cd835f31018f729b7d",
+    "tests/watchdog-reset.c": "a3d63f080a2e5bea805370ca94a468a30f94583388a35fedb69e9c607cee0093",
+    "tests/checkpoint.c": "133c803528a60eddb0ce55d4cb41985e997d5f56be736809c3ba93a94f1cf52f",
+    "tools/checkpoint-equivalence.mjs": "222a31caf259a8c944c915ba9750faeeb948382d35a5472a5b78311ded302770"
+  },
+  "witness_wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+  "private_probe_sha256": "dc2e9e6d7dc151cf2aa2aeb043813289260896e9ba35b2d043704a41a5224f5f",
+  "checkpoint": {
+    "export_version": 5,
+    "legacy_import_versions": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "append_bytes": 76,
+    "spi_channels_bytes": 72,
+    "watchdog_hold_bytes": 4,
+    "ram_offset": 4971,
+    "without_card_bytes_256k": 271211,
+    "without_card_bytes_512k": 533355,
+    "legacy_status14_preserved": true
+  },
+  "directed_tests": {
+    "spi_native_assertions": 5069,
+    "spi_wasm_assertions": 5069,
+    "watchdog_reset_native_assertions": 640,
+    "watchdog_reset_wasm_assertions": 640,
+    "checkpoint_comparator_assertions": 199,
+    "legacy_v4_nonzero_pwm_preserved": true,
+    "repaired_crc_rejections_are_atomic": true,
+    "partial_spi_and_reset_resume_match_reference": true
+  },
+  "original_roms": [
+    {
+      "model": 1,
+      "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "frames": [
+        {
+          "label": "home",
+          "sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+          "pc": 24,
+          "ticks": 120000000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        },
+        {
+          "label": "held",
+          "sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+          "pc": 126036,
+          "ticks": 123000000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        },
+        {
+          "label": "selftest",
+          "sha256": "977a7fd004f15e1a4129373cb2b5729cd510f0aea39aa9d405d949667a16c613",
+          "pc": 18156,
+          "ticks": 147600000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        },
+        {
+          "label": "exit",
+          "sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+          "pc": 158772,
+          "ticks": 211200000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        },
+        {
+          "label": "arithmetic",
+          "sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+          "pc": 17608,
+          "ticks": 243200000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        }
+      ],
+      "completed": true,
+      "model_name": "HP 39g+",
+      "observed_version": "03.54",
+      "observed_build": "0033",
+      "visual_review": {
+        "factory_version_page": true,
+        "returned_home": true,
+        "new_arithmetic": "1+1=2"
+      },
+      "watchdog_exit": false
+    },
+    {
+      "model": 2,
+      "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "frames": [
+        {
+          "label": "home",
+          "sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+          "pc": 24,
+          "ticks": 120000000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        },
+        {
+          "label": "held",
+          "sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+          "pc": 212160,
+          "ticks": 123000000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        },
+        {
+          "label": "selftest",
+          "sha256": "a8d84c375af8e800abb6996af89b38df7cb068624cd9152ed50b7d591904686f",
+          "pc": 107168,
+          "ticks": 147600000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        },
+        {
+          "label": "exit",
+          "sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+          "pc": 73292,
+          "ticks": 211200000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 5,
+          "reset_hold": 0
+        },
+        {
+          "label": "arithmetic",
+          "sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+          "pc": 73856,
+          "ticks": 243200000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 5,
+          "reset_hold": 0
+        }
+      ],
+      "completed": true,
+      "model_name": "HP 39gs",
+      "observed_version": "04.02",
+      "observed_build": "0110",
+      "visual_review": {
+        "factory_version_page": true,
+        "returned_home": true,
+        "new_arithmetic": "1+1=2"
+      },
+      "watchdog_exit": true
+    },
+    {
+      "model": 4,
+      "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+      "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+      "frames": [
+        {
+          "label": "home",
+          "sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+          "pc": 24,
+          "ticks": 180000000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        },
+        {
+          "label": "held",
+          "sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+          "pc": 126912,
+          "ticks": 183000000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        },
+        {
+          "label": "selftest",
+          "sha256": "dd0654044716876e5d86836c409418fd43a6fe699096b7682e38517f3379465f",
+          "pc": 33264,
+          "ticks": 207600000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        },
+        {
+          "label": "exit",
+          "sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+          "pc": 178504,
+          "ticks": 271200000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 5,
+          "reset_hold": 0
+        },
+        {
+          "label": "arithmetic",
+          "sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+          "pc": 178524,
+          "ticks": 303200000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 5,
+          "reset_hold": 0
+        }
+      ],
+      "completed": true,
+      "model_name": "HP 48gII",
+      "observed_version": "04.01",
+      "observed_build": "0081",
+      "visual_review": {
+        "factory_version_page": true,
+        "returned_home": true,
+        "new_arithmetic": "1+1=2"
+      },
+      "watchdog_exit": true
+    },
+    {
+      "model": 5,
+      "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+      "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "frames": [
+        {
+          "label": "home",
+          "sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+          "pc": 24,
+          "ticks": 180000000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        },
+        {
+          "label": "held",
+          "sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+          "pc": 166040,
+          "ticks": 183000000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        },
+        {
+          "label": "selftest",
+          "sha256": "3d7da741dd10e85644425a40521047838ed9da898b6339b5baad89f2d1cdb44b",
+          "pc": 34456,
+          "ticks": 207600000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 1,
+          "reset_hold": 0
+        },
+        {
+          "label": "exit",
+          "sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+          "pc": 30556,
+          "ticks": 271200000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 5,
+          "reset_hold": 0
+        },
+        {
+          "label": "arithmetic",
+          "sha256": "83265891bdf304a3ee57a9d506c7b3a396c3cd42d5e4432910104bb3186bb9b8",
+          "pc": 33840,
+          "ticks": 303200000,
+          "status": 0,
+          "checkpoint_version": 5,
+          "gstatus2": 5,
+          "reset_hold": 0
+        }
+      ],
+      "completed": true,
+      "model_name": "HP 49g+",
+      "observed_version": "04.02",
+      "observed_build": "0106",
+      "visual_review": {
+        "factory_version_page": true,
+        "returned_home": true,
+        "new_arithmetic": "1+1=2"
+      },
+      "watchdog_exit": true
+    }
+  ],
+  "limitations": [
+    "SPI has no attached external device, no synthesized reply or loopback, and no fake factory-test result.",
+    "External MOSI/SCK waveform, externally clocked slave, multi-master and DMA remain outside the implemented SPI subset.",
+    "128-edge WDT hold uses the reset-domain functional Fin/PCLK source; analog reset rails, physical PLL settling and sub-quantum timing are not calibrated.",
+    "RTC calendar/oscillator retention and reset interface configuration are the explicitly stated functional reset-domain model.",
+    "Host USB connection remains physically present while endpoint/controller state resets; external host sessions need enumeration recovery.",
+    "ROMs, framebuffer pixels and checkpoints were kept private; this file contains metadata only."
+  ]
+}

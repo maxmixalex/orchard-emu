@@ -13,8 +13,11 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [x] Scheduler/CPU/memory optimizations with retained reference paths.
 - [x] Portable manual sessions, with .ord names and legacy .orchard import.
 - [x] Settings: immersive, immersive landscape and traditional view, viewport/scale, editable physical key sequences, independent blur/hidden policies; landscape keeps all six FN keys with the LCD.
+- [x] Wider per-model keyboard editor with assigned-key highlights, calculator-side binding badges and target selection; OS-resolved character defaults, layout-map labels and captured-key fallback. See [keyboard settings](keyboard-settings.md).
+- [x] Persistent Connections/SD sidebar keeps selections and drafts while the calculator remains usable; narrow layouts stack the panel below it.
+- [x] Per-model local ROM recall with read-only original-file handles or labelled browser-local copies, explicit permission continuation and Forget, identity validation and cancellation of stale automatic reads. See [ROM storage](rom-storage.md).
 - [x] Firmware-driven GPIO/Timer2 buzzer observation and browser sound with mute/volume/lifecycle cleanup; shared PCLK and buffered PWM correct the original HP49g+ BEEP period, while physical board/speaker calibration remains open.
-- [x] Functional shared PCLK for all five PWM timers, watchdog, ADC and SDI, with fractional phase and peripheral gates; RTC remains independent.
+- [x] Functional shared PCLK for all five PWM timers, watchdog, ADC, SDI and SPI, with fractional phase and peripheral gates; RTC remains independent.
 - [x] GPIO pull-ups, bounded disabled NAND configuration, Power_OFF and retained reset-vector ON wakeup; all four original ROMs pass inactivity shutdown, exact off-state restore and continued arithmetic.
 - [x] Normal wall-time pacing distinct from raw execution throughput; explicit faster modes.
 - [x] Opt-in binary IndexedDB autosave with legacy localStorage migration, transactional writer-token checks, modal restore and quota/conflict handling.
@@ -31,13 +34,15 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [x] HP49g+ full capture admission, fixed 512 KiB SRAM with explicit bank-1 mirror, 131×80 UI, arithmetic, CAS, graphing, menus, sessions and USB object workflows.
 - [x] HP49g+ FILES recovery and bounded SD image read/write, FAT16 create/import/export/eject and write protection; HP48gII no-card FILES navigation.
 - [x] Offline FAT16 file preparation: browse/extract files, create folders, add/rename files and folders, and delete files or empty folders transactionally before insertion; explicit 8.3 names, shared alias/long-name collision checks and no extension filter.
+- [x] Recursive local-directory import into 16/32 MiB FAT16 with deterministic 8.3 mapping preview, native-directory and file-input paths, atomic mounted-card handoff, and explicit additive write-back that preserves conflicts. Associations are page-session only; this is not an OS virtual-drive mount. See [directory SD](directory-sd.md).
 - [x] HP49g+ SDK native ARM example installed over stock USB, run through ARMToolbox, returned to HOME and followed by arithmetic and USB reconnect.
-- [x] Checkpoint v4 retains complete SD/in-flight state and adds PCLK/PWM latches; v1/v2/v3 imports remain supported on all six model capacities with documented first-cycle clock migration.
+- [x] Checkpoint v5 retains complete SD/in-flight state and PCLK/PWM latches, adding both SPI channels and the watchdog reset pulse; v1–v4 imports remain supported with documented migration boundaries.
+- [x] Held ON/F4 factory-test entry and ON/F3 exit controls; bounded [SPI](spi.md) register/transfer behavior and [watchdog reset propagation](watchdog-reset.md) retain external SRAM, media and RTC. Factory-test entry does not claim every diagnostic passes.
 - [x] Revised HP39gs ROMstream v2: visible progress, repaired mapping/cable/USB exit paths, one-launch double reads and corresponding source; original HP39g+ and original HP39gs full NORs complete dump/return/USB-reuse workflows. Earlier derived-OS evidence remains distinct.
 - [x] IR/IrDA assessment with primary sources, not a claimed implementation.
 - [x] Byte-table checkpoint CRC with unchanged format/full validation; independent checks on all six model capacities.
 - [x] Production Pacer + WASM RTC comparison across rates and host partitions.
-- [x] Explicit optimized sanitizer targets and nineteen maintained native/reference/sanitizer suites, including buzzer, Power_OFF and independent PCLK/PWM checks.
+- [x] Explicit optimized sanitizer targets and 21 maintained native/reference/sanitizer suites, including buzzer, Power_OFF, PCLK/PWM, SPI and watchdog reset checks.
 - [x] Checked WASM physical reads and bounded caught-up Worker pacing, with same-input comparisons.
 - [x] Actual Chrome Window/Worker smoke coverage plus original-ROM file/restore/keyboard/result observation.
 
@@ -72,7 +77,10 @@ release result. Do not treat a source push as deployment.
 - [x] Printed modifier/Alpha legends; native/4x matrix PNG capture.
 - [x] Keep per-frame pixels outside React subscriptions; avoid unchanged canvas uploads.
 - [x] Reuse live LCD image/palette buffers and defer traditional keypad construction until requested; keep captures independent.
+- [x] Sample pixels/annunciators once per observed completed LCD scan, coalesce Canvas updates and share published images with PNG/recording; preserve genuine blank frames and immediate disabled/invalid states. [LCD evidence](lcd.md#host-presentation-synchronized-to-the-scan-counter) separates original-ROM checkpoint equality from synthetic browser fixtures.
 - [x] Add bounded standalone loopback USB/IP/raw serial and generated-guest TCP tests.
+- [x] Connect the same live browser Worker to the optional authenticated loopback HTTP/USB-IP helper, with exclusive transfer/card ownership, delayed-handshake cleanup and fresh connection identities. Generated guests pass real Chrome Worker/network tests; original HP48gII/HP49g+ object round trips pass through the bridge modules in Node. See [host mode](host-mode.md) for separate runtime and OS-driver boundaries.
+- [x] Original HP49g+ completes SEND/GET/FINISH through the production Chrome page/Worker and a user-space USB/IP peer with all object bytes equal, keeps the connection while another tab has focus and the sidebar is hidden, and returns to arithmetic. Kernel attachment, installed HP drivers and unmodified Conn3x are not covered by this witness.
 - [x] Preserve extra single-transfer reference tests, reject unproductive CPU optimization prototypes.
 - [ ] Observe the accepted revision's Build/Pages and downloaded-package results in the current repository.
 - [ ] Broader browser E2E, kernel attachment/Conn3x transfer and physical clock calibration remain open.

@@ -31,6 +31,8 @@ try:
           const hash='a'.repeat(64),small=new Uint8Array([1,2,3]);
           writeAuto(localStorage,hash,5,small,null,'legacy');
           const a=new AutoSaveStore(localStorage),b=new AutoSaveStore(localStorage);
+          await a.write('b'.repeat(64),2,small,null,'hp39gs');
+          check((await b.read('b'.repeat(64))).model===2,'HP39gs binary autosave is accepted and readable');
           check((await a.read(hash)).token==='legacy','Legacy save remains readable');
           const file=new Uint8Array(16*1024*1024+500000);file[0]=23;file[file.length-1]=97;
           const start=performance.now();await a.write(hash,5,file,'legacy','binary');

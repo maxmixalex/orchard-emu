@@ -105,9 +105,8 @@ def main():
                 stage('open-rom-and-session')
                 page.goto(f'http://127.0.0.1:{server.server_port}/')
                 page.get_by_role('button', name='Settings', exact=True).wait_for()
-                with page.expect_file_chooser() as picker:
-                    page.get_by_role('button', name='Open ROM', exact=True).click()
-                picker.value.set_files(str(args.rom.resolve()))
+                # Standard file-input/local-copy path; native picker permission UI is separate.
+                page.locator('#rom').set_input_files(str(args.rom.resolve()))
                 page.wait_for_function('window.__transferProbe.snapshot?.loaded===true')
                 helper.verify_model(page, model)
                 page.locator('#session-file').set_input_files(str(args.session.resolve()))

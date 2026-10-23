@@ -1,6 +1,100 @@
 # Continuation handoff
 
-## Current r21 continuation from 6b1a15e (2026-10-23)
+## Current r22 continuation from 2ae6512 (2026-10-23)
+
+The user requested mapped-key highlighting and model isolation, system keyboard
+layouts and calculator-side binding selection, persistent connection/SD panels,
+less LCD flicker, local ROM recall, a working factory-test shortcut, and SD
+creation from local directories plus progress toward native virtual devices.
+The work is split across keyboard/UI, LCD/core peripherals, directory SD,
+ROM/sidebar integration, host connectivity, original-ROM validation and
+independent review.
+
+The wider keyboard editor now shows bound/custom keys and a clickable calculator
+with binding badges. Defaults use OS-resolved characters; physical custom
+bindings retain their codes, model isolation and eight-step limit. Layout-map
+labels have explicit denied/unavailable and capture fallbacks. Connections and
+SD share a persistent sidebar: hiding it retains inputs/drafts while the
+calculator remains usable. The narrow layout stacks the panel below the machine.
+
+ROM remembering is enabled by default independently of optional calculator
+autosave. It stores a read-only original-file handle when supported and a
+labelled local copy for the standard input fallback. Startup only queries
+permission; explicit Continue reading/Open requests it. Every reopen rechecks
+identity. Disabling recall cancels pending automatic reads, including an
+off/on transition, without canceling an explicit Open. Forget removes browser
+records, never the original file or current calculator state. This replaces
+the old claim that ROM bytes are never stored locally; they are never uploaded
+or included in exported sessions. See [ROM storage](rom-storage.md).
+
+Directory SD imports recursively into a 16/32 MiB FAT16 draft with deterministic
+8.3 aliases and exact file contents. Native directory handles support explicit
+re-read and additive write-back; conflicting local changes/deletions are
+preserved, and card deletion never removes host entries. The directory input
+fallback imports without write handles or empty folders. An atomic Worker
+copy/validation/eject returns mounted media to the editor before synchronization.
+The association lasts for the page session, including insert/eject; it is not
+a mounted operating-system drive. [Directory SD](directory-sd.md) records
+capacity limits, conflict handling and separate fixture/original-ROM evidence.
+
+The optional local-device helper now carries USB/IP requests to the existing
+browser Worker and its original calculator state. Generated guests pass real
+Chrome Worker/HTTP/USB-IP checks; original HP48gII/HP49g+ objects make exact
+round trips through the production bridge modules under Node. Original HP49g+
+also passes the production Chrome page and Worker: stock FLAGS/SERVER input,
+exact 15-byte SEND/GET/FINISH through a user-space USB/IP peer, transfer while
+another real tab has focus, preserved connection across sidebar hide/reopen,
+disconnect and visually checked `1+1=2`. Manual pause,
+reset, ROM replacement and session operations tear down the connection;
+autosave and internal transfers are excluded while it is active. SD insertion,
+export, edit/eject and removal are guarded in both controller and Worker,
+with translated UI guidance; separate unmounted drafts remain editable.
+Rapid reconnect waits for the old cleanup. Canceling an allocated but unanswered
+session POST waits for its bounded reply and then deletes the session before
+reconnecting; total reply loss uses the documented lease fallback. Same-calculator
+connection identities reject late status from older attempts. OS attachment,
+HP driver binding and unmodified Conn3x remain independent acceptance gates.
+
+LCD presentation samples pixels/annunciators at observed completed scans and
+reuses them for other requests during that scan. Canvas paints coalesce at
+animation frames. Real blank frames, disable and invalid data remain visible,
+and live display, PNG and recording share the same published image. This host
+cache does not change guest timing or claim a physical row-fetch/panel model.
+The [LCD record](lcd.md#host-presentation-synchronized-to-the-scan-counter)
+retains its measured build and exact checkpoint comparisons.
+
+The self-test controls send held ON/F4 and ON/F3 physical combinations. SPI0
+reads on entry required a bounded two-channel [SPI implementation](spi.md),
+and the 39gs/48gII/49g+ exit path required real [watchdog reset propagation](watchdog-reset.md).
+Four unchanged ROMs reach their factory version pages, leave and calculate
+`1+1=2`; 39g+ uses its different non-WDT exit. This is not a full factory-test
+PASS claim. Checkpoint v5 appends 72 SPI bytes and a four-byte reset-hold counter,
+retaining v1–v4 imports. External SRAM, card contents and independent RTC are
+preserved across the declared watchdog reset domain.
+
+The final production WASM is SHA-256
+`51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189`.
+Native/reference/sanitizer each pass 21 suites, including SPI and watchdog reset.
+Native and WASM each have 1,199,909 default-plus-clock assertions; the optional
+physical-read WASM checks remain separate. Unicorn has 17,075 matching cases,
+and Clang analysis is clean for 48 C files. The final 32 MiB original-ROM SD
+gate passes with byte-identical v5 native/WASM continuation. The real HP49g+
+browser passes all seven sidebar/card/manual/automatic-restore stages. That
+probe caught a draft reset on tab hide/reopen: Mantine Activity retention was
+replaced by explicit display-none retention, and exact-byte reinsertion now
+passes. The directory evidence pins all 47 browser assets from that run.
+The [validation page](validation.md) separates final integrated gates from
+earlier component/peripheral evidence and records each tested asset identity.
+Host-device work and final release checks are still consolidated there; a
+source change or a local passing test does not establish deployed acceptance.
+
+Continue with physical clock/reset/pad evidence, broader stock key and native
+application coverage, UART2/IrDA, full original HP40gs/HP50g admission, and the
+remaining OS-device/Conn3x and larger-media/DMA gates. Keep user ROMs, acquisition
+sidecars, checkpoints, card images and stock LCD pixels private. The earlier
+derived39gs fixture remains historical and is not a physical ROM capture.
+
+## Historical r21 continuation from 6b1a15e (2026-10-23)
 
 The user requested a dedicated Transfer settings tab, more buzzer work, the
 landscape cut below FN, a fix for compatibility termination after inactivity,
@@ -488,7 +582,7 @@ them now, restart the retired dumper or make the blocked forum attachment the
 main task. HP39g+ NOR part identification and HP50g GET_CONFIGURATION remain
 separate open items. Ordinary CI and production packages stay ROM-free.
 
-## Current continuation from 1001d15
+## Historical continuation from 1001d15
 
 Skins are build-time pinned/hashes checked, served locally under the emulator
 subdirectory, separately Apache-2.0 with NOTICE. Build creates one tested `orchard-pages` artifact containing documents and
@@ -592,7 +686,7 @@ then verify the accepted CI artifact. Documentation and issue #1 must retain
 the separation of local checks, remote builds, asset deployment and browser E2E.
 
 
-## Current continuation
+## Historical React frontend recovery
 
 Do not retry the old incomplete compressed React transport. The missing frontend
 was rebuilt and the standalone host prototype recovered/checked locally. The

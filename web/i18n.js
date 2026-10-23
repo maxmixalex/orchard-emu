@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: MIT
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import {directoryEn,directoryZh} from './directory-i18n.js';
+import {hostBridgeEn,hostBridgeZh} from './host-bridge-i18n.js';
 export const LANG_KEY='orchard:language:v1';
 export const en={
+  ...directoryEn,
+  ...hostBridgeEn,
   sdDraftRename:'Rename',
   sdDraftRenameEntry:'Rename {{name}}',
   sdDraftNewName:'New card name',
@@ -55,7 +59,7 @@ export const en={
   fileTransferError_receiveCapacity:'The received files exceed the available size or file-count limit. Download and clear the current list before receiving more.',
   sdPrepareFiles:"Prepare card files",
   sdDraftTitle:"Card image draft",
-  sdDraftHelp:"Prepare a FAT16 card before inserting it. The source image stays unchanged. Insert or download the draft to keep your changes. Closing this window discards the draft.",
+  sdDraftHelp:"Prepare a FAT16 card before inserting it. The source image stays unchanged. Insert or download the draft to keep your changes. The back button discards the draft.",
   sdDraftImageName:"Image filename",
   sdDraftOpen:"Open image for editing",
   sdDraftBlank:"Start a new blank card",
@@ -107,7 +111,7 @@ export const en={
   model:'Calculator',noROM:'Open a ROM to begin',loading:'Opening…',running:'Running',paused:'Paused',stopped:'Stopped',ready:'Ready',
   general:'General',keyboard:'Keyboard',storage:'Storage',language:'Language',view:'Appearance',immersive:'Immersive',immersiveLandscape:'Immersive (landscape)',traditional:'Traditional',size:'Size',
   pauseBlur:'Pause when focus is lost',pauseHidden:'Pause in background tabs',speed:'Speed',half:'Half',normal:'Normal',double:'Double',unlimited:'Unlimited',
-  autosave:'Save automatically on this device',interval:'Save interval',seconds:'{{count}} seconds',storagePrivacy:'ROMs are never stored or uploaded. Keep exported backups of important work.',
+  autosave:'Save automatically on this device',interval:'Save interval',seconds:'{{count}} seconds',storagePrivacy:'Calculator saves and remembered ROMs stay on this device. Remembering ROMs is controlled separately above. Keep exported backups of important work.',
   apply:'Apply',cancel:'Cancel',close:'Close',ok:'OK',delete:'Delete',switch:'Switch',startNew:'Start new',error:'Unable to complete the operation',
   replaceMemory:'Replace the current calculator memory and inserted SD card? Save or export any work you want to keep first.',clearMemory:'Clear current memory? Exported session files will not be deleted.',
   restoreLocal:'Restore local save?',localSaveTime:'Saved {{time}}',localKept:'Local save kept',autoSaved:'Saved on this device',autoStopped:'Automatic save stopped',foreignSave:'Another tab changed the local save',
@@ -121,6 +125,20 @@ export const en={
   keyboardHint:'Select a PC key below, then choose its calculator-key sequence. Changes apply only when you press Apply.',
   pcKey:'PC key',sequence:'Calculator sequence',addStep:'Add key',removeStep:'Remove key',unassign:'Unassign',defaultKey:'Reset this binding',captureKey:'Or press a key here',
   keyStateHint:'Sequences use the calculator’s current Alpha/Shift mode; they do not force a character.',unassigned:'Unassigned',
+  // Keyboard settings: model scope, system layout and calculator-side assignment.
+  keyboardModel:'Mappings for',keyboardModelHint:'Each model has its own saved mappings. Changes apply only when you press Apply.',
+  keyboardLayoutReady:'Key labels read from your system layout.',keyboardLayoutLoading:'Reading your keyboard layout…',
+  keyboardLayoutUnavailable:'This browser cannot read the layout. Unknown keys show physical codes. Press a key in the capture field to identify it; character input still follows your active layout.',
+  keyboardLayoutHelp:'The outline uses a standard full-size keyboard. Labels show unmodified characters; capture Shift/AltGr combinations to preview them.',
+  keyboardRefreshLayout:'Read layout again',keyboardMapped:'Mapped',keyboardCustom:'Custom',keyboardOtherModifiers:'Dot: other modifier mapping',keyboardDefault:'Default',
+  keyboardCurrentLabel:'Key label: {{label}}',keyboardCaptureHint:'Press a key or combination here. Tab moves focus.',
+  keyboardCalculator:'Calculator keyboard · {{model}}',keyboardCalculatorHelp:'Select a calculator key to find its bindings, assign it, or add it to the sequence.',
+  keyboardCalculatorLoading:'Loading calculator keyboard…',keyboardCalculatorUnavailable:'Calculator keyboard could not load. Use the sequence selectors.',
+  keyboardBindTarget:'Assign selected key',keyboardAppendTarget:'Add to sequence',keyboardTargetHint:'Select a calculator key.',
+  keyboardBindingList:'Bindings ending with {{label}}',keyboardBindingEmpty:'No binding ends with this key.',
+  keyboardSequenceHint:'Blue outlines trace the selected sequence. Key badges show PC bindings; click one of the bindings below to edit it.',
+  keyboardExtraKeys:'Additional layout keys',keyboardUnknownCombo:'This combination’s character is unknown. Press it in the capture field to preview its default.',
+  keyboardKeyBindings:'PC bindings: {{bindings}}',keyboardPhysicalHint:'Custom bindings follow physical key positions. Defaults follow the characters you type.',
   serial:'Serial',usb:'USB',connect:'Connect',disconnect:'Disconnect',connected:'Connected',disconnected:'Disconnected',connecting:'Connecting…',
   target:'Connection',format:'Format',text:'Text',hex:'Hexadecimal',data:'Data',send:'Send',receive:'Receive',clear:'Clear log',
   linkNotice:'Send individual bytes or USB packets for connection diagnostics.',invalidBytes:'Enter valid hex byte pairs. Serial accepts at most 1024 bytes; USB accepts one packet of at most 64 bytes.',
@@ -143,6 +161,8 @@ export const en={
   copyright:'Unofficial. HP marks belong to their owners.',artwork:'Artwork',developer:'Developer',screen1:'Original size',screen4:'4× pixels',
 };
 export const zh={
+  ...directoryZh,
+  ...hostBridgeZh,
   sdDraftRename:'重命名',
   sdDraftRenameEntry:'重命名 {{name}}',
   sdDraftNewName:'新的卡内名称',
@@ -195,7 +215,7 @@ export const zh={
   fileTransferError_receiveCapacity:'已接收文件超过了容量或数量限制。请先下载并清空当前列表，再接收更多文件。',
   sdPrepareFiles:"准备卡内文件",
   sdDraftTitle:"卡镜像草稿",
-  sdDraftHelp:"插卡前可准备 FAT16 卡内文件，原始镜像保持不变。请插入或下载草稿以保留修改；关闭窗口会丢弃草稿。",
+  sdDraftHelp:"插卡前可准备 FAT16 卡内文件，原始镜像保持不变。请插入或下载草稿以保留修改；返回按钮会丢弃草稿。",
   sdDraftImageName:"镜像文件名",
   sdDraftOpen:"打开镜像进行编辑",
   sdDraftBlank:"改用新空白卡",
@@ -247,7 +267,7 @@ export const zh={
   model:'计算器',noROM:'打开 ROM 开始使用',loading:'正在打开…',running:'运行中',paused:'已暂停',stopped:'已停止',ready:'就绪',
   general:'常规',keyboard:'键盘',storage:'存储',language:'语言',view:'外观',immersive:'沉浸式',immersiveLandscape:'沉浸式-横屏',traditional:'传统',size:'尺寸',
   pauseBlur:'失去焦点时暂停',pauseHidden:'切换到后台标签页时暂停',speed:'速度',half:'半速',normal:'正常',double:'两倍速',unlimited:'不限速',
-  autosave:'自动保存到本机',interval:'保存间隔',seconds:'{{count}} 秒',storagePrivacy:'ROM 不会保存或上传。重要内容请另外导出备份。',
+  autosave:'自动保存到本机',interval:'保存间隔',seconds:'{{count}} 秒',storagePrivacy:'计算器存档和记住的 ROM 都只保存在本机，不会上传。ROM 记忆由上方的开关单独控制。重要内容请另外导出备份。',
   apply:'应用',cancel:'取消',close:'关闭',ok:'确定',delete:'删除',switch:'切换',startNew:'重新开始',error:'未能完成操作',
   replaceMemory:'替换当前计算器内存和已插入的 SD 卡？请先保存存档或导出需要保留的内容。',clearMemory:'清空当前内存并重新启动？已导出的存档文件不会删除。',
   restoreLocal:'恢复本机存档？',localSaveTime:'保存于 {{time}}',localKept:'已保留本机存档',autoSaved:'已保存到本机',autoStopped:'自动保存已停止',foreignSave:'其他标签页修改了本机存档',
@@ -261,6 +281,20 @@ export const zh={
   keyboardHint:'点击下方 PC 键盘中的按键，再选择对应的计算器按键序列。点击「应用」后才会生效。',
   pcKey:'PC 按键',sequence:'计算器按键序列',addStep:'添加按键',removeStep:'移除按键',unassign:'取消映射',defaultKey:'恢复此键默认映射',captureKey:'也可在此按下按键',
   keyStateHint:'序列遵循计算器当前的 Alpha／Shift 状态，不会强制写入字符。',unassigned:'未分配',
+  // Keyboard settings: model scope, system layout and calculator-side assignment.
+  keyboardModel:'映射对应的型号',keyboardModelHint:'每个型号独立保存键盘映射。点击「应用」后才会生效。',
+  keyboardLayoutReady:'已读取系统键盘布局。',keyboardLayoutLoading:'正在读取键盘布局…',
+  keyboardLayoutUnavailable:'此浏览器无法读取布局，未知按键显示物理代码。可在捕获框中实按按键识别；字符输入仍遵循当前系统布局。',
+  keyboardLayoutHelp:'外形采用标准全尺寸键盘，标签显示未加修饰键的字符。Shift／AltGr 组合请在捕获框中实按后预览。',
+  keyboardRefreshLayout:'重新读取布局',keyboardMapped:'已有映射',keyboardCustom:'自定义',keyboardOtherModifiers:'圆点：其他修饰键组合有映射',keyboardDefault:'默认',
+  keyboardCurrentLabel:'键面标签：{{label}}',keyboardCaptureHint:'在此按下按键或组合键；Tab 移动焦点。',
+  keyboardCalculator:'计算器键盘 · {{model}}',keyboardCalculatorHelp:'点击计算器按键，可查看其映射、设为绑定目标或加入按键序列。',
+  keyboardCalculatorLoading:'正在载入计算器键盘…',keyboardCalculatorUnavailable:'未能载入计算器键盘，可继续使用按键序列选择框。',
+  keyboardBindTarget:'绑定所选按键',keyboardAppendTarget:'加入序列',keyboardTargetHint:'请选择计算器上的按键。',
+  keyboardBindingList:'以「{{label}}」结束的映射',keyboardBindingEmpty:'尚无以此键结束的映射。',
+  keyboardSequenceHint:'蓝色描边表示当前序列；键上标签显示 PC 映射。点击下方映射标签可快速编辑。',
+  keyboardExtraKeys:'其他布局按键',keyboardUnknownCombo:'尚不知道此组合键的字符，请在捕获框中实按以预览默认映射。',
+  keyboardKeyBindings:'PC 映射：{{bindings}}',keyboardPhysicalHint:'自定义映射跟随物理按键位置，默认映射跟随实际输入字符。',
   serial:'串口',usb:'USB',connect:'连接',disconnect:'断开',connected:'已连接',disconnected:'未连接',connecting:'正在连接…',
   target:'连接类型',format:'格式',text:'文本',hex:'十六进制',data:'数据',send:'发送',receive:'接收',clear:'清空日志',
   linkNotice:'发送单个字节流或 USB 数据包，用于连接诊断。',invalidBytes:'请输入有效的十六进制字节对。串口最多 1024 字节，USB 每包最多 64 字节。',
@@ -282,6 +316,30 @@ export const zh={
   transferPhase_idle:'就绪',transferPhase_preparing:'正在读取文件…',transferPhase_negotiating:'正在等待计算器…',transferPhase_sending:'正在上传…',transferPhase_receiving:'正在接收…',transferPhase_listing:'正在读取目录…',transferPhase_finishing:'正在结束传输…',transferPhase_complete:'传输完成',transferPhase_cancelled:'传输已取消',transferPhase_error:'传输失败',
   copyright:'非官方项目。HP 商标归其权利人所有。',artwork:'皮肤',developer:'开发版',screen1:'原始尺寸',screen4:'4 倍像素',
 };
+Object.assign(en,{
+  deviceSidebar:'Connections & storage',closeSidebar:'Close sidebar',
+  romRemember:'Remember local ROMs',
+  romRememberHelp:'Reopen the last ROM automatically and remember one ROM per model. Where supported, read its original file; otherwise keep a copy in this browser. ROMs stay on this device.',
+  romOriginalFile:'Original local file',romLocalCopy:'Copy stored in this browser',romOpenRemembered:'Open',romContinue:'Continue reading',romForget:'Forget saved ROM locations and copies',
+  romIssue_permission:'Allow access to “{{name}}” again to reopen it from the saved location.',
+  romIssue_missing:'The saved ROM “{{name}}” could not be read. Choose it again if it was moved or removed.',
+  romIssue_changed:'The ROM at “{{name}}” has changed. Choose the file again to use this version.',
+  romIssue_invalid:'The saved file “{{name}}” is no longer a supported complete ROM. Choose the correct file again.',
+  romIssue_storage:'This browser could not remember or read the saved ROM. You can still open a ROM manually.',
+  selfTest:'Enter self-test',selfTestActions:'Self-test actions',selfTestExit:'Leave self-test',selfTestHelp:'Send the calculator’s held ON + F4 combination. Leave self-test uses ON + F3 (warm restart). Finish any transfer first.',
+});
+Object.assign(zh,{
+  deviceSidebar:'连接与存储',closeSidebar:'收起侧栏',
+  romRemember:'记住本地 ROM',
+  romRememberHelp:'下次自动打开最近的 ROM，并按型号分别记住。支持时从原文件读取，否则在此浏览器保存本地副本。ROM 始终留在本机。',
+  romOriginalFile:'读取原本地文件',romLocalCopy:'保存在此浏览器的本地副本',romOpenRemembered:'打开',romContinue:'继续读取',romForget:'忘记已保存的 ROM 位置和副本',
+  romIssue_permission:'请再次允许读取「{{name}}」，即可从已保存的位置打开。',
+  romIssue_missing:'无法读取已保存的 ROM「{{name}}」。如果文件已移动或删除，请重新选择。',
+  romIssue_changed:'「{{name}}」位置的 ROM 内容已更改。请重新选择文件以使用新版本。',
+  romIssue_invalid:'已保存的文件「{{name}}」不再是支持的完整 ROM，请重新选择正确文件。',
+  romIssue_storage:'此浏览器无法保存或读取已记住的 ROM，仍可手动打开 ROM。',
+  selfTest:'进入自检',selfTestActions:'自检操作',selfTestExit:'退出自检',selfTestHelp:'发送计算器的 ON + F4 按住组合键。「退出自检」使用 ON + F3 热重启。请先结束文件传输。',
+});
 export function initialLanguage(storage,locale='en'){try{const l=storage?.getItem(LANG_KEY);if(l==='en'||l==='zh')return l;}catch{}return locale.toLowerCase().startsWith('zh')?'zh':'en';}
 i18n.use(initReactI18next).init({resources:{en:{translation:en},zh:{translation:zh}},lng:'en',fallbackLng:'en',interpolation:{escapeValue:false},react:{useSuspense:false}});
 export default i18n;

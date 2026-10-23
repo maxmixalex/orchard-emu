@@ -28,7 +28,7 @@ const native=resolve(root,process.env.ORCHARD_BUILD_DIR||'build',process.platfor
 const report={schema:'orchard-sd-stock-workflows-v1',wasm_sha256:sha256(wasm),
   tool_sha256:sha256(await readFile(fileURLToPath(import.meta.url))),native_sha256:sha256(await readFile(native)),
   roms:{hp49gplus:HP49_ROM,hp48gii:HP48_ROM},
-  physical_input_only:true,guest_memory_patched:false,card_image_bytes:16777216,
+  physical_input_only:true,guest_memory_patched:false,card_image_bytes:prepared?.length||16777216,
   sram_decode:'explicit nGCS1 low-address mirror; physical capacity unchanged',
   canonical_hardware_boot:false,stages:[],keys:[],passed:false};
 if(prepared)report.prepared_image={sha256:sha256(prepared),bytes:prepared.length,
@@ -114,7 +114,7 @@ try{
   a.tap(36);a.run(10000000);a.tap(42);await a.picture('hp49-copy-destination-sd');
   const writesBefore=readSDState(a.c).writtenBlocks;let partial=null;
   a.setObserver(()=>{if(partial||readSDState(a.c).cardState!==6)return;
-    const bytes=a.checkpoint(),v=new DataView(bytes.buffer);assert.equal(v.getUint32(8,true),4);
+    const bytes=a.checkpoint(),v=new DataView(bytes.buffer);assert.equal(v.getUint32(8,true),5);
     const count=v.getUint32(4122+96,true);if(count>0&&count<512)partial=bytes;});
   a.tap(40);a.run(15000000);a.setObserver(null);await a.picture('hp49-copy-complete');
   assert(partial,'No in-flight sector write captured');assert(readSDState(a.c).writtenBlocks>writesBefore);await crossHost(partial);

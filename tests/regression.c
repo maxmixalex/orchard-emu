@@ -272,10 +272,10 @@ static void watchdog(void) {
     CHECK(write_reg(0x53000004, UINT32_MAX));
     CHECK(read_reg(0x53000004, &value) && value == 0xffff);
     CHECK(write_reg(0x53000008, 1));
-    CHECK(write_reg(0x53000000, 0x21)); /* Reset output is not implemented yet. */
+    CHECK(write_reg(0x53000000, 0x21));
     ticks(16);
-    CHECK(machine.stop.status == (orchard_status)14);
-    CHECK(machine.stop.address == 0x53000000);
+    CHECK(machine.stop.status == ORCHARD_OK && machine.soc.wtreset == 128);
+    CHECK(machine.cpu.r[15] == 0 && (machine.soc.gpio[0xb4/4] & 4u));
     orchard_reset(&machine);
     CHECK(!o_phys_write(&machine, 0x53000000, 1, 0));
     CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_MMIO);

@@ -23,7 +23,7 @@ export async function buildProfile(directory) {
   const out = resolve(directory);
   await mkdir(out); // Fail rather than replacing another build/evidence directory.
   const names = ['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'checkpoint', 'scheduler',
-    'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb', 'sdi', 'buzzer'];
+    'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb', 'sdi', 'spi', 'buzzer'];
   const inputs = [...names.map(n => `src/${n}.c`), 'src/internal.h', 'include/orchard/orchard.h',
     'include/orchard/clock.h', 'app/wasm.c', 'tools/arm-block-profile.h',
     'tools/build-arm-block-profile.mjs'];

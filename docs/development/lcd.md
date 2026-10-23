@@ -106,9 +106,76 @@ The packed-memory view makes the known HP50g recovery text readable. It is a
 No register or guest buffer is modified to obtain it. It does not infer bits
 per pixel from a convenient bootloader convention or hardcode a 160-pixel
 stride. Physical line wiring, temporal grayscale, contrast and annunciators
-remain separate work. The browser page still displays the default controller
-view; these new controls are exposed through the CLI/core/WASM research APIs,
-not a claimed browser interaction feature.
+remain separate work. The calculator's admitted HOME setups select packed LSB;
+the workbench and CLI retain the explicit controller/packed-memory choice.
+
+## Host presentation synchronized to the scan counter
+
+The raw framebuffer APIs above remain instantaneous, side-effect-free memory
+inspection. They are not a latched panel image. In particular, the firmware
+can clear and redraw part of its RAM while the LCD's current scan is still in
+progress. Previously the Worker decoded that RAM whenever a wall-time refresh,
+key queue update or link-status request happened. Two UI updates could therefore
+publish different partial redraws during the same scan.
+
+The calculator Worker now uses `web/lcd-frames.js`. After each existing bounded
+`core.run` call, it checks the LCD frame serial. A changed serial samples one
+independent image and its annunciators; UI publications reuse that image until
+the next observed scan boundary. Link polling and exact key-contact scheduling
+run first and never wait for a display deadline. The maximum observation offset
+is the existing 1,024-reference-tick run quantum (about 85 microseconds at the
+functional 12 MHz timebase). Multiple completed scans in one quantum use the
+latest observed state. The calculator still publishes at roughly 30 Hz and its
+Canvas paints only the latest update in a `requestAnimationFrame` callback.
+
+This is a bounded **host presentation policy**, not a new hardware DMA, FIFO,
+row-fetch or analog response model. Sampling RAM just after a frame boundary
+does not reconstruct every pixel that the physical panel received during the
+preceding scan. Firmware redraws that span complete scans remain visible. No
+ROM hash, pixel count, content recognition, arbitrary white-frame delay or
+guest modification is used. Valid entirely white images are published normally.
+Disabling the LCD resamples immediately. Paused/stopped and debugger inspection
+bypass the cache, so unsupported frames and real power-off are not concealed.
+Reset, model/view changes, restore and virtual-time rewind invalidate the old
+image. None of this host cache is serialized in a checkpoint.
+
+The live display, PNG capture and recording use the same published pixels and
+the same empty-screen fallback when the LCD decoder reports unavailable data.
+The original error status remains in the controller/workbench. Recording no
+longer keeps obsolete good pixels while the live display has already cleared.
+
+Maintained verification:
+
+- `tests/lcd-publication.mjs` supplies partial rewrites within one synthetic
+  scan, a completed white frame, video disable, invalid data, forced observation,
+  model/view/reset/rewind changes, 64-bit serial carry and WASM memory growth.
+- `tests/browser-lcd.py` sends 300 synthetic messages before one real browser
+  animation frame: one Canvas paint and no resize/clear. Legitimate white frames
+  remain visible; decoded PNG and the actual recording canvas match every live
+  pixel for healthy, unavailable and recovered images. Real MediaRecorder also
+  produces a nonempty video. These synthetic pixels contain no firmware artwork.
+- `tools/probe-lcd-publication.mjs` uses only original ROMs and physical keys to
+  compare raw/synchronized publication requests during menu navigation and
+  arithmetic. It verifies byte-for-byte final checkpoint equality, measures
+  alternating warmed execution/CPU samples, and emits only hashes and metadata.
+  Its 33-virtual-ms publication schedule is deterministic; it does not substitute
+  for a browser wall-time benchmark or physical-panel calibration.
+
+[r22 evidence](evidence/lcd-publication-r22.json) records 278 requests per original
+ROM, without publishing the ROM, RAM, checkpoints or pixels:
+
+| Original firmware | Same-scan image changes before | After | Final guest checkpoint |
+| --- | ---: | ---: | --- |
+| HP39g+ | 6 | 0 | Byte-identical |
+| HP39gs | 4 | 0 | Byte-identical |
+| HP48gII | 11 | 0 | Byte-identical |
+| HP49g+ | 7 | 0 | Byte-identical |
+
+Three warmed, alternating CPU measurements per path found candidate/baseline
+ratios of 0.962, 0.905, 1.003 and 0.992 respectively. This rules out a large
+observer overhead in these workloads; it is not a statistically established
+speedup. The longest retained-frame age was 76.5 virtual milliseconds, following
+the guest's variable scan period rather than a fixed debounce timer.
 
 ## Corrected inspection behavior
 

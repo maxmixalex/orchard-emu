@@ -2,20 +2,20 @@
 import React,{memo,useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {MantineProvider,Button,Group,Modal,Select,Slider,Switch,Tabs,Text,TextInput,Textarea,Tooltip,Menu,Stack} from '@mantine/core';
 import {useMediaQuery} from '@mantine/hooks';
-import {PCKeyboardView} from './pc-keyboard-view.js';
+import {KeyboardSettings} from './KeyboardSettings.jsx';
 import {TraditionalKeypad,MODEL_SLUGS} from './traditional-keypad.js';
 import {RecordingControl} from './RecordingControl.jsx';
 import {SDCard} from './SDCard.jsx';
+import {ROMSettings,ROMAccessNotice} from './ROMSettings.jsx';
 import {FileTransfer,TransferStatus} from './FileTransfer.jsx';
+import {HostBridge} from './HostBridge.jsx';
 import {useTranslation} from 'react-i18next';
 import i18n,{LANG_KEY} from './i18n.js';
 import {CALCULATORS} from './catalog.js';
-import {keyRows} from './hp48.js';
 import {SkinView} from './skin.js';
 import {bindLifecycle} from './lifecycle.js';
-import {bindings,keyCode,validatePreferences} from './preferences.js';
-import {bindingCode} from './pc-keyboard.js';
-import {capturePNG,captureName,createLCDRenderer} from './capture.js';
+import {resolveKeyBinding,validatePreferences} from './preferences.js';
+import {capturePNG,captureName,createLCDRenderer,displayFrame} from './capture.js';
 import '@mantine/core/styles.css';
 import './react.css';
 import './keyboards.css';
@@ -61,13 +61,12 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
    host.current.style.setProperty('--lcd-width',`${Math.max(lcdWidth/dpr,Math.floor((plain-46)*dpr/lcdWidth)*lcdWidth/dpr)}px`);
   }
   function paint(){raf=0;if(!last||disposed)return;const d=last;
-   const changed=!painted||ink!==skin.rgb.join(',')||painted.width!==d.width||painted.height!==d.height||
+   const changed=!painted||ink!==skin.rgb.join(',')||painted.width!==d.width||painted.height!==d.height||painted.frameStatus!==d.frameStatus||
     (d.pixels? !painted.pixels||painted.pixels.length!==d.pixels.length||d.pixels.some((v,i)=>v!==painted.pixels[i]):painted.pixels!==null);
    if(changed){
     if(canvas.width!==d.width)canvas.width=d.width;
     if(canvas.height!==d.height)canvas.height=d.height;
-    const frame=d.pixels?d:{...d,pixels:new Uint8Array(d.width*d.height),frameStatus:0};
-    paintLCD(frame,skin.rgb);painted=d;ink=skin.rgb.join(',');}
+    paintLCD(displayFrame(d),skin.rgb);painted=d;ink=skin.rgb.join(',');}
    controller.screenRGB=skin.rgb;skin.update(d.active,d.annunciators,d.annunciatorStatus,model.id);
    if(active!==d.active){for(const button of host.current.querySelectorAll('.traditional-key'))button.setAttribute('aria-pressed',String(Number(button.dataset.scan)===d.active));active=d.active;}
   }
@@ -89,30 +88,10 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
   <div className="traditional-keypad" ref={keypadHost}/>
  </section></main>;
 });
-function KeyboardMap({selected,mods,onChoose}){
- const host=useRef(null),view=useRef(null),choose=useRef(onChoose);choose.current=onChoose;
- useEffect(()=>{view.current=new PCKeyboardView(host.current,token=>choose.current(token));return()=>view.current.destroy();},[]);
- useEffect(()=>{view.current?.update(selected,mods);},[selected,mods]);
- return <div className="pc-keyboard"><div ref={host}/></div>;
-}
-function MappingEditor({model,draft,onChange}){
- const {t}=useTranslation();const [selected,setSelected]=useState('KeyA'),[mods,setMods]=useState([]);
- const code=bindingCode(selected,mods),map=bindings(draft,model.id),sequence=map[code]||[],names=keyRows(model.id).flat().map(([label,s])=>({value:String(s),label}));
- function setSequence(next){onChange({...draft,mappings:{...draft.mappings,[model.id]:{...draft.mappings[model.id],[code]:next}}});}
- function choose(token){if(token.startsWith('{')){const mod=token.slice(1,-1);setMods(m=>m.includes(mod)?m.filter(x=>x!==mod):[...m,mod]);}else setSelected(token);}
- function capture(e){e.preventDefault();e.stopPropagation();const value=keyCode(e);if(!value)return;const parts=value.split('+');setSelected(parts.pop());setMods(parts);}
- return <Stack gap="sm"><Text size="sm" c="dimmed">{t('keyboardHint')}</Text>
-  <KeyboardMap selected={selected} mods={mods} onChoose={choose}/>
-  <Group grow><TextInput label={t('pcKey')} value={code} readOnly onKeyDown={capture} description={t('captureKey')}/><Text size="sm">{sequence.map(s=>names.find(n=>n.value===String(s))?.label).join(' → ')||t('unassigned')}</Text></Group>
-  <Text size="sm" fw={600}>{t('sequence')}</Text>
-  {sequence.map((scan,i)=><Group key={i} wrap="nowrap"><Select aria-label={`${t('sequence')} ${i+1}`} data={names} value={String(scan)} onChange={v=>{if(v){const n=[...sequence];n[i]=Number(v);setSequence(n);}}} style={{flex:1}}/><Button variant="subtle" onClick={()=>setSequence(sequence.filter((_,j)=>j!==i))} aria-label={t('removeStep')}>−</Button></Group>)}
-  <Group><Button size="xs" variant="light" disabled={sequence.length>=8} onClick={()=>setSequence([...sequence,6])}>{t('addStep')}</Button><Button size="xs" variant="subtle" onClick={()=>setSequence([])}>{t('unassign')}</Button><Button size="xs" variant="subtle" onClick={()=>{const m={...draft.mappings[model.id]};delete m[code];onChange({...draft,mappings:{...draft.mappings,[model.id]:m}});}}>{t('defaultKey')}</Button></Group>
-  <Text size="xs" c="dimmed">{t('keyStateHint')}</Text></Stack>;
-}
 function Settings({controller,state,onClose}){
  const {t}=useTranslation(),small=useMediaQuery('(max-width: 48em)');const [draft,setDraft]=useState(()=>validatePreferences(state.prefs)),[language,setLanguage]=useState(i18n.resolvedLanguage);
  const set=(k,v)=>setDraft(p=>({...p,[k]:v}));
- return <Modal opened trapFocus={!state.dialog} onClose={onClose} title={t('settings')} size="xl" fullScreen={small} closeButtonProps={{'aria-label':t('close')}}>
+ return <Modal opened trapFocus={!state.dialog} onClose={onClose} title={t('settings')} size="min(1440px, calc(100vw - 48px))" fullScreen={small} closeButtonProps={{'aria-label':t('close')}}>
   <Tabs defaultValue="general" keepMounted={false}><Tabs.List>{['general','keyboard','transferSettings','storage'].map(k=><Tabs.Tab key={k} value={k}>{t(k)}</Tabs.Tab>)}</Tabs.List>
    <Tabs.Panel value="general" pt="md"><Stack><Select allowDeselect={false} label={t('language')} value={language} onChange={setLanguage} data={[{value:'zh',label:'简体中文'},{value:'en',label:'English'}]}/>
     <Select allowDeselect={false} label={t('view')} value={draft.view} onChange={v=>set('view',v)} data={['immersive','immersive-landscape','traditional'].map(k=>({value:k,label:t(k==='immersive-landscape'?'immersiveLandscape':k)}))}/>
@@ -122,63 +101,90 @@ function Settings({controller,state,onClose}){
     <Switch label={t('sound')} description={t('soundHelp')} checked={draft.sound} onChange={e=>set('sound',e.currentTarget.checked)}/>
     <div><Text size="sm">{t('volume')} · {Math.round(draft.volume*100)}%</Text><Slider min={0} max={100} step={5} value={Math.round(draft.volume*100)} disabled={!draft.sound} onChange={v=>set('volume',v/100)} thumbLabel={t('volume')}/></div>
    </Stack></Tabs.Panel>
-   <Tabs.Panel value="keyboard" pt="md"><MappingEditor model={state.model} draft={draft} onChange={setDraft}/></Tabs.Panel>
+   <Tabs.Panel value="keyboard" pt="md"><KeyboardSettings model={state.model} draft={draft} onChange={setDraft}/></Tabs.Panel>
    <Tabs.Panel value="transferSettings" pt="md"><Stack>
     <Switch label={t('fileTransferUnlimited')} description={t('fileTransferUnlimitedHelp')} checked={draft.transferUnlimited} onChange={e=>set('transferUnlimited',e.currentTarget.checked)}/>
    </Stack></Tabs.Panel>
-   <Tabs.Panel value="storage" pt="md"><Stack><Switch label={t('autosave')} checked={draft.autosave} onChange={e=>set('autosave',e.currentTarget.checked)}/><Select allowDeselect={false} label={t('interval')} value={String(draft.interval)} onChange={v=>set('interval',Number(v))} data={[15,30,60,120].map(v=>({value:String(v),label:t('seconds',{count:v})}))}/><Text size="sm" c="dimmed">{t('storagePrivacy')}</Text><Button variant="light" color="red" onClick={()=>controller.clearSaves()}>{t('deleteSaves')}</Button></Stack></Tabs.Panel>
+   <Tabs.Panel value="storage" pt="md"><Stack><ROMSettings controller={controller} state={state} remember={draft.rememberROM} onChange={v=>set('rememberROM',v)}/><Switch label={t('autosave')} checked={draft.autosave} onChange={e=>set('autosave',e.currentTarget.checked)}/><Select allowDeselect={false} label={t('interval')} value={String(draft.interval)} onChange={v=>set('interval',Number(v))} data={[15,30,60,120].map(v=>({value:String(v),label:t('seconds',{count:v})}))}/><Text size="sm" c="dimmed">{t('storagePrivacy')}</Text><Button variant="light" color="red" onClick={()=>controller.clearSaves()}>{t('deleteSaves')}</Button></Stack></Tabs.Panel>
   </Tabs><Group justify="flex-end" mt="lg"><Button variant="default" onClick={onClose}>{t('cancel')}</Button><Button onClick={()=>{controller.setPreferences(draft);void i18n.changeLanguage(language);try{controller.storage?.setItem(LANG_KEY,language);}catch{}onClose();}}>{t('apply')}</Button></Group>
  </Modal>;
 }
-function Connections({controller,state,target,onTargetChange,onClose}){
+function Connections({controller,state,target,onTargetChange}){
  const {t}=useTranslation();const [format,setFormat]=useState('hex'),[text,setText]=useState('');
- const active=Boolean(state.transfer?.active||state.uploadBatch?.active);
+ const bridgeActive=Boolean(state.hostBridge?.active),active=Boolean(state.transfer?.active||state.uploadBatch?.active||bridgeActive);
  function send(){try{let bytes;if(format==='text')bytes=new TextEncoder().encode(text);else{const value=text.trim();if(!/^[a-f\d]{2}(?:\s+[a-f\d]{2})*$/i.test(value))throw Error('hex');bytes=Uint8Array.from(value.split(/\s+/).map(x=>parseInt(x,16)));}
   if(bytes.length>(target==='serial'?1024:64))throw Error('length');controller.send(target==='serial'?'uart':'usb-send',{bytes});}catch{controller.report('invalidBytes');}}
- return <Modal opened trapFocus={!state.dialog} onClose={onClose} title={t('connections')} size="lg" closeButtonProps={{'aria-label':t('close')}}><Stack>
-  <Group justify="space-between"><Text>{t('serial')} · {t(state.serial?'connected':'disconnected')}</Text><Button variant="light" aria-label={`${t(state.serial?'disconnect':'connect')} ${t('serial')}`} onClick={()=>controller.connectLink('serial',!state.serial)}>{t(state.serial?'disconnect':'connect')}</Button></Group>
-  <Group justify="space-between"><Text>USB · {t(state.usbReady?'connected':state.usb?'connecting':'disconnected')}</Text><Button variant="light" aria-label={`${t(state.usb?'disconnect':'connect')} USB`} onClick={()=>controller.connectLink('usb',!state.usb)}>{t(state.usb?'disconnect':'connect')}</Button></Group>
+ return <Stack>
+  <Group justify="space-between"><Text>{t('serial')} · {t(state.serial?'connected':'disconnected')}</Text><Button variant="light" disabled={bridgeActive} aria-label={`${t(state.serial?'disconnect':'connect')} ${t('serial')}`} onClick={()=>controller.connectLink('serial',!state.serial)}>{t(state.serial?'disconnect':'connect')}</Button></Group>
+  <Group justify="space-between"><Text>USB · {t(state.usbReady?'connected':state.usb?'connecting':'disconnected')}</Text><Button variant="light" disabled={bridgeActive} aria-label={`${t(state.usb?'disconnect':'connect')} USB`} onClick={()=>controller.connectLink('usb',!state.usb)}>{t(state.usb?'disconnect':'connect')}</Button></Group>
   {state.usbInfo&&<Text size="sm">{state.usbInfo.manufacturer} · {state.usbInfo.name} · {state.usbInfo.vendor.toString(16).padStart(4,'0')}:{state.usbInfo.product.toString(16).padStart(4,'0')}</Text>}
   <Select label={t('target')} value={target} onChange={value=>{if(value)onTargetChange(value);}} disabled={active} data={['serial','usb'].map(k=>({value:k,label:t(k)}))}/>
-  <Tabs defaultValue="files" keepMounted><Tabs.List><Tabs.Tab value="files">{t('transferFiles')}</Tabs.Tab><Tabs.Tab value="bytes">{t('rawConnection')}</Tabs.Tab></Tabs.List>
+  {bridgeActive&&<Text size="sm" c="dimmed">{t('hostBridgeDisconnectFirst')}</Text>}
+  <Tabs defaultValue="files" keepMounted keepMountedMode="display-none"><Tabs.List><Tabs.Tab value="files">{t('transferFiles')}</Tabs.Tab><Tabs.Tab value="bytes">{t('rawConnection')}</Tabs.Tab><Tabs.Tab value="host">{t('hostBridgeTab')}</Tabs.Tab></Tabs.List>
   <Tabs.Panel value="files" pt="md"><FileTransfer controller={controller} state={state} transport={target}/></Tabs.Panel>
   <Tabs.Panel value="bytes" pt="md"><Stack><Text size="sm" c="dimmed">{t('linkNotice')}</Text>
   <Select label={t('format')} value={format} onChange={setFormat} disabled={active} data={['hex','text'].map(k=>({value:k,label:t(k)}))}/>
   <Textarea label={t('data')} value={text} onChange={e=>setText(e.currentTarget.value)} maxLength={4096}/>
   <Group><Button disabled={active||(target==='serial'?!state.serial:!state.usbReady)} onClick={send}>{t('send')}</Button><Button variant="light" disabled={active||!state.usbReady} onClick={()=>controller.send('usb-read')}>{t('receive')}</Button><Button variant="subtle" onClick={()=>controller.patch({log:''})}>{t('clear')}</Button></Group>
-  <pre className="link-log">{state.log||'—'}</pre></Stack></Tabs.Panel></Tabs></Stack></Modal>;
+  <pre className="link-log">{state.log||'—'}</pre></Stack></Tabs.Panel>
+  <Tabs.Panel value="host" pt="md"><HostBridge controller={controller} state={state}/></Tabs.Panel></Tabs></Stack>;
 }
 export function App({controller}){
- const {t}=useTranslation(),state=useSyncExternalStore(controller.subscribe,controller.getSnapshot,controller.getSnapshot),[settings,setSettings]=useState(false),[connections,setConnections]=useState(false),[sdOpen,setSDOpen]=useState(false),[connectionTarget,setConnectionTarget]=useState('usb');
- const rom=useRef(null),session=useRef(null),modalOpen=settings||connections||sdOpen||Boolean(state.dialog),modalRef=useRef(modalOpen);modalRef.current=modalOpen;
- useEffect(()=>{const unbind=bindLifecycle(window,document,()=>controller.pause(),{preferences:()=>controller.state.prefs,release:()=>controller.release(),save:()=>controller.requestAuto()});
+ const {t}=useTranslation(),state=useSyncExternalStore(controller.subscribe,controller.getSnapshot,controller.getSnapshot),[settings,setSettings]=useState(false),[panel,setPanel]=useState(null),[connectionTarget,setConnectionTarget]=useState('usb');
+ const rom=useRef(null),session=useRef(null),modalOpen=settings||Boolean(state.dialog),modalRef=useRef(modalOpen);modalRef.current=modalOpen;
+ const connections=panel==='connections',hasSD=[5,6].includes(state.model.id);
+ useEffect(()=>{if(panel==='sd'&&!hasSD)setPanel('connections');},[panel,hasSD]);
+ useEffect(()=>{const held=new Map(),release=()=>{held.clear();controller.release();};
+  // A desktop USB client must be able to take focus without freezing its guest.
+  // This override lasts only for the explicit host-bridge connection; Pause
+  // remains available and the normal preferences apply again after disconnect.
+  const unbind=bindLifecycle(window,document,()=>controller.pause(),{preferences:()=>controller.state.hostBridge?.active?
+   {...controller.state.prefs,pauseOnBlur:false,pauseOnHidden:false}:controller.state.prefs,release,save:()=>controller.requestAuto()});
   const key=e=>{if(e.repeat||e.isComposing||modalRef.current||e.target.closest('input,textarea,select,[contenteditable="true"]')||e.target.closest('button,[role="button"]')&&(e.key==='Enter'||e.key===' '))return;
-   const s=controller.state,code=keyCode(e),seq=code?bindings(s.prefs,s.model.id)[code]:null;if(seq?.length&&s.loaded&&s.running&&!s.busy){e.preventDefault();controller.tap(seq);}};
+   const s=controller.state,seq=resolveKeyBinding(s.prefs,s.model.id,e);if(seq?.length&&s.loaded&&s.running&&!s.busy){
+    e.preventDefault();held.set(e.code,seq.length===1?seq[0]:null);
+    const scans=[...held.values()];if(scans.includes(56)&&scans.includes(38)){controller.systemChord('self-test');return;}
+    if(scans.includes(56)&&scans.includes(37)){controller.systemChord('warm-restart');return;}
+    controller.tap(seq);}};
+  const keyUp=e=>held.delete(e.code);
   const storage=e=>controller.foreignSave(e.key),unlockAudio=()=>controller.unlockAudio?.();
   window.addEventListener('pointerdown',unlockAudio,true);window.addEventListener('keydown',unlockAudio,true);
-  window.addEventListener('keydown',key);window.addEventListener('storage',storage);
-  return()=>{unbind();window.removeEventListener('pointerdown',unlockAudio,true);window.removeEventListener('keydown',unlockAudio,true);window.removeEventListener('keydown',key);window.removeEventListener('storage',storage);};},[controller]);
+  window.addEventListener('keydown',key);window.addEventListener('keyup',keyUp);window.addEventListener('storage',storage);
+  return()=>{unbind();window.removeEventListener('pointerdown',unlockAudio,true);window.removeEventListener('keydown',unlockAudio,true);window.removeEventListener('keydown',key);window.removeEventListener('keyup',keyUp);window.removeEventListener('storage',storage);};},[controller]);
  useEffect(()=>{document.documentElement.lang=i18n.resolvedLanguage==='zh'?'zh-CN':'en';},[i18n.resolvedLanguage]);
  async function capture(scale){try{downloadFile(await capturePNG(controller.last,scale,controller.screenRGB),captureName(state.model.id));}catch(e){controller.report('captureError',e.message);}}
  const enabled=state.loaded&&state.running&&!state.stopped&&!state.busy;
  return <div className="app-shell"><header className="app-header"><a className="brand" href="./">Orchard<span> BETA</span></a>
   <Select aria-label={t('model')} value={String(state.model.id)} onChange={v=>controller.select(v)} data={CALCULATORS.map(c=>({value:String(c.id),label:c.name}))} disabled={!state.ready||state.busy} w={132}/>
-  <Button onClick={()=>{rom.current.value='';rom.current.click();}} disabled={!state.ready||state.busy}>{t('open')}</Button><div className="header-spacer"/>
+  <Button onClick={()=>controller.chooseROM(()=>{rom.current.value='';rom.current.click();})} disabled={!state.ready||state.busy}>{t('open')}</Button><div className="header-spacer"/>
   <Text size="xs" c="dimmed" role="status">{t(state.busy?'loading':!state.ready?'loading':state.stopped?'stopped':!state.loaded?'noROM':state.running?'running':'paused')}</Text>
   <Tooltip label={<><div>{t('helpText')}</div><div>{t('boot'+state.model.id)}</div></>} multiline w={320} events={{hover:true,focus:true,touch:true}}><Button variant="subtle" aria-label={t('help')}>?</Button></Tooltip>
   <Button variant="default" onClick={()=>setSettings(true)}>{t('settings')}</Button></header>
-  <div className="app-toolbar"><Group gap="xs"><Button variant="light" disabled={!state.loaded||state.busy||state.stopped} onClick={()=>controller.toggle()}>{t(state.running?'pause':'resume')}</Button><Button variant="subtle" disabled={!state.loaded||state.busy} onClick={()=>controller.restart()}>{t('restart')}</Button></Group>
+  <div className="app-toolbar"><Group gap="xs"><Button variant="light" disabled={!state.loaded||state.busy||state.stopped} onClick={()=>controller.toggle()}>{t(state.running?'pause':'resume')}</Button><Button variant="subtle" disabled={!state.loaded||state.busy} onClick={()=>controller.restart()}>{t('restart')}</Button>
+   <Button.Group><Tooltip label={t('selfTestHelp')} multiline w={300}><Button variant="subtle" disabled={!state.loaded||state.busy||state.stopped||state.transfer?.active||state.uploadBatch?.active||state.hostBridge?.active} onClick={()=>controller.systemChord('self-test')}>{t('selfTest')}</Button></Tooltip>
+    <Menu><Menu.Target><Button variant="subtle" px={7} aria-label={t('selfTestActions')} disabled={!state.loaded||state.busy||state.stopped||state.transfer?.active||state.uploadBatch?.active||state.hostBridge?.active}>▾</Button></Menu.Target><Menu.Dropdown><Menu.Item onClick={()=>controller.systemChord('warm-restart')}>{t('selfTestExit')}</Menu.Item></Menu.Dropdown></Menu>
+   </Button.Group></Group>
    <Group gap="xs"><Button variant="default" disabled={!state.loaded||state.busy} onClick={()=>controller.save()}>{t('save')}</Button><Button variant="default" disabled={!state.loaded||state.busy} onClick={()=>{session.current.value='';session.current.click();}}>{t('restore')}</Button>
    <Menu><Menu.Target><Button variant="default" disabled={!state.loaded}>{t('capture')}</Button></Menu.Target><Menu.Dropdown><Menu.Item onClick={()=>capture(1)}>{t('screen1')}</Menu.Item><Menu.Item onClick={()=>capture(4)}>{t('screen4')}</Menu.Item></Menu.Dropdown></Menu>
-   {[5,6].includes(state.model.id)&&<Button variant="default" disabled={!state.loaded||state.busy} onClick={()=>setSDOpen(true)}>{t('sdTitle')}</Button>}
+   {hasSD&&<Button variant={panel==='sd'?'light':'default'} aria-expanded={panel==='sd'} aria-controls="device-sidebar" disabled={!state.loaded||state.busy} onClick={()=>setPanel(panel==='sd'?null:'sd')}>{t('sdTitle')}</Button>}
    <RecordingControl controller={controller} state={state} onDownload={downloadFile}/>
-   <Button variant="subtle" disabled={!state.loaded||state.busy} onClick={()=>setConnections(true)}>{t('connections')}</Button></Group><Text size="xs" c="dimmed" role="status">{state.note?t(state.note):''}</Text></div>
-  {!connections&&<TransferStatus state={state} compact onOpen={()=>{setConnectionTarget(state.transfer.transport||'usb');setConnections(true);}}/>}
-  <CalculatorDisplay controller={controller} model={state.model} prefs={state.prefs} enabled={enabled}/>
+   <Button variant={connections?'light':'subtle'} aria-expanded={connections} aria-controls="device-sidebar" disabled={!state.loaded||state.busy} onClick={()=>setPanel(connections?null:'connections')}>{t('connections')}</Button></Group><Text size="xs" c="dimmed" role="status">{state.note?t(state.note):''}</Text></div>
+  {!settings&&<ROMAccessNotice controller={controller} state={state}/>}
+  {!connections&&<TransferStatus state={state} compact onOpen={()=>{setConnectionTarget(state.transfer.transport||'usb');setPanel('connections');}}/>}
+  <div className="calculator-body" data-panel-open={Boolean(panel)}>
+   <CalculatorDisplay controller={controller} model={state.model} prefs={state.prefs} enabled={enabled}/>
+   <aside id="device-sidebar" className="device-sidebar" aria-label={t('deviceSidebar')} hidden={!panel}>
+    <Group justify="space-between" className="device-sidebar-header"><Text fw={600}>{t('deviceSidebar')}</Text><Button variant="subtle" size="xs" aria-label={t('closeSidebar')} onClick={()=>setPanel(null)}>×</Button></Group>
+    <Tabs value={panel||'connections'} onChange={setPanel} keepMounted keepMountedMode="display-none" className="device-sidebar-tabs">
+     <Tabs.List><Tabs.Tab value="connections">{t('connections')}</Tabs.Tab>{hasSD&&<Tabs.Tab value="sd">{t('sdTitle')}</Tabs.Tab>}</Tabs.List>
+     <Tabs.Panel value="connections" pt="md"><Connections controller={controller} state={state} target={connectionTarget} onTargetChange={setConnectionTarget}/></Tabs.Panel>
+     {hasSD&&<Tabs.Panel value="sd" pt="md"><SDCard key={state.model.id} controller={controller} state={state}/></Tabs.Panel>}
+    </Tabs>
+   </aside>
+  </div>
   <footer><span>Orchard · <a href="LICENSE">MIT</a> · <a href="debug.html">{t('developer')}</a></span><span>{t('artwork')} <a href="https://github.com/zyf722/hp-calcs-svg">hp-calcs-svg</a> · <a href="licenses/hp-calcs-svg/NOTICE.txt">Apache-2.0 / NOTICE</a> · {t('copyright')}</span></footer>
-  <input ref={rom} id="rom" type="file" accept=".bin,.rom,.raw" hidden onChange={e=>controller.open(e.target.files[0])}/><input ref={session} id="session-file" type="file" accept=".ord,.orchard" hidden onChange={e=>controller.restore(e.target.files[0])}/>
-  {settings&&<Settings controller={controller} state={state} onClose={()=>setSettings(false)}/>}{connections&&<Connections controller={controller} state={state} target={connectionTarget} onTargetChange={setConnectionTarget} onClose={()=>setConnections(false)}/>}
-  {sdOpen&&[5,6].includes(state.model.id)&&<SDCard controller={controller} state={state} onClose={()=>setSDOpen(false)}/>}
+  <input ref={rom} id="rom" type="file" hidden onChange={e=>controller.open(e.target.files[0])}/><input ref={session} id="session-file" type="file" accept=".ord,.orchard" hidden onChange={e=>controller.restore(e.target.files[0])}/>
+  {settings&&<Settings controller={controller} state={state} onClose={()=>setSettings(false)}/>}
   <Modal opened={Boolean(state.dialog)} onClose={()=>controller.answer(null)} title={state.dialog?t(state.dialog.title):''} zIndex={400} centered closeButtonProps={{'aria-label':t('close')}}>
    {state.dialog&&<><Text>{t(state.dialog.message,state.dialog.values)}</Text>{state.dialog.values.detail&&<details className="error-details"><summary>{t('details')}</summary><pre>{state.dialog.values.detail}</pre></details>}
     <Group justify="flex-end" mt="lg">{state.dialog.cancel&&<Button variant="default" onClick={()=>controller.answer(false)}>{t(state.dialog.cancel)}</Button>}<Button onClick={()=>controller.answer(true)}>{t(state.dialog.ok)}</Button></Group></>}

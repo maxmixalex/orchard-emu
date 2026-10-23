@@ -208,9 +208,8 @@ def main():
                 page.goto(f'http://127.0.0.1:{server.server_port}/')
                 page.get_by_role('button', name='Settings', exact=True).wait_for()
                 stage('open-rom')
-                with page.expect_file_chooser() as picker:
-                    page.get_by_role('button', name='Open ROM', exact=True).click()
-                picker.value.set_files(str(args.rom.resolve()))
+                # Standard file-input/local-copy path; native picker permission UI is separate.
+                page.locator('#rom').set_input_files(str(args.rom.resolve()))
                 page.get_by_role('button', name='Restore', exact=True).wait_for(state='visible')
                 page.wait_for_function('window.__transferProbe.snapshot?.loaded===true')
                 verify_model(page, model)
@@ -283,7 +282,7 @@ def main():
                     before = page.evaluate('window.__transferProbe.events.length')
                     page.get_by_role('button', name='Exit calculator SERVER', exact=True).click()
                     report['finish'] = terminal(page, 'receive', before, args.transport)
-                    page.get_by_role('button', name='Close', exact=True).click()
+                    page.get_by_role('button', name='Close sidebar', exact=True).click()
                     if args.active_send:
                         stage('calculator-send')
                         # Enter the command before starting the bounded receiver;
@@ -294,13 +293,13 @@ def main():
                         page.get_by_role('button', name='Clear list', exact=True).click()
                         before = page.evaluate('window.__transferProbe.events.length')
                         page.get_by_role('button', name='Receive from calculator', exact=True).click()
-                        page.get_by_role('button', name='Close', exact=True).click()
+                        page.get_by_role('button', name='Close sidebar', exact=True).click()
                         physical_keys(page, (6,))
                         report['calculator_send'] = terminal(page, 'receive', before, args.transport)
                         page.get_by_role('button', name='Connections', exact=True).click()
                         report['active_send_download'] = download_object(page, source, args.output/'active-send.hp')
                         page.get_by_role('button', name='Clear list', exact=True).click()
-                        page.get_by_role('button', name='Close', exact=True).click()
+                        page.get_by_role('button', name='Close sidebar', exact=True).click()
                         physical_keys(page, (57,15,57,39,57,22,57,30,57,39,57,22,6))
                         page.screenshot(path=str(args.output/'server-after-active-send.png'))
                         page.get_by_role('button', name='Connections', exact=True).click()

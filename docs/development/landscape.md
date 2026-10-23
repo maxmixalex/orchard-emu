@@ -50,8 +50,8 @@ keyboard gestures call the controller's audio-unlock hook in the capture phase;
 the listeners are removed when the app unmounts. The transfer speed switch is
 in the dedicated **Settings → Transfer** / **设置 → 传输** tab, with the Chinese
 label **传输时不限速**. It follows the same draft/Apply/Cancel behavior as the
-other settings and can be changed while a transfer is running. The connection
-dialog shows the resulting active boost without duplicating the switch.
+other settings and can be changed while a transfer is running. The Connections
+sidebar shows the resulting active boost without duplicating the switch.
 
 ## Verification
 

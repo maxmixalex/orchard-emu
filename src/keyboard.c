@@ -74,7 +74,10 @@ void o_gpio_sample(const orchard_machine *m, unsigned port, uint32_t *known,
         unsigned direction = (con >> (pin * 2u)) & 3u;
         unsigned *d = &drive[root(parents, pin)];
         if (direction == 1) *d |= latch & (1u << pin) ? 2u : 1u;
-        else if (direction == 0 || direction == 2) {
+        else if (direction == 0 || direction == 2 ||
+                 (pin == 5 && direction == 3 && (s->spi[1].control & 8u))) {
+            /* GPG5 function 11 is SPI1 MISO, an input in master mode.
+               Its real pull-up/external drives still use this net resolver. */
             if (s->gpio_input_known[port] & (1u << pin))
                 *d |= s->gpio_input_levels[port] & (1u << pin) ? 2u : 1u;
             if (!(s->gpio[port * 4 + 2] & (1u << pin))) *d |= 4u;

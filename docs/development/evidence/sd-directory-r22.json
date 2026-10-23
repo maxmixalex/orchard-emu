@@ -1,0 +1,449 @@
+{
+  "schema": "orchard-sd-directory-r22",
+  "scope": "Browser directory snapshots and explicit additive synchronization; no operating-system mount",
+  "source_sha256": {
+    "web/directory-card.js": "8871b39e4b0f4de7487fd3d2216fa7dcb36c3256c646f175d1799e795c1bc76b",
+    "web/directory-i18n.js": "fbdb5ecd829bf79077edefc400403d625a05b90b8b9a718ff110ab0effd1adc9",
+    "web/DirectoryCardControls.jsx": "c38bdb5791c76e2bf245bec0d958dfad2dc1bafb757530df853b7fb794051c86",
+    "web/SDCardFiles.jsx": "d2ad98d5509c17d38dde32322d06ed311f39911b29a5ef67ae64f22aa042744a",
+    "web/sd-filesystem.js": "e3e37332ccc10769ff966102ac513fe966d6fafc10c5d91cac948558aef3c816",
+    "web/sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+    "tests/sd-directory.mjs": "728d5164fb4f13c52bf3aff5655af6e9411942942f9818ca7ca5423a2faa6c07",
+    "tests/sd-worker.mjs": "27464f3b9be27e76f1455b3062e65df7d29424d9896afec84c8558b4d52b1ecc",
+    "tests/sd-directory-fixture.jsx": "9444f939dd09d1ca260cd71d4c427e47a243235574f8cbb686ee351cb8a125ca",
+    "tests/browser-sd-directory.py": "63ecfeea4df50e70acbdfcaad8772043c69d80984fb7d028a16678220e990497",
+    "tests/sd-files-controller.mjs": "38f558cd5b8cab8cd91d92d086f3e68176c215f3cefdc0db192fc0e94f960a0b",
+    "tests/sd-files-fixture.jsx": "b987d82b63399f88162f6872b1e3639b8cc824a2605f8343c1a8e77d12e00402",
+    "tests/browser-sd-files.py": "c5d5d178e55775a790d6b5e7d88e76d579ec6333f74f5c010a04f3bd31314df3",
+    "tools/verify-sd-workflows.mjs": "b8315e5bd7d19160ba62434867999c896a7560c5e79115c40b3437cc075a482b",
+    "tools/probe-sd-browser.py": "5775ecf797da3e9c18dab2323accaba1d4d12f7206f641375877a56dc842dbae",
+    "web/SDCard.jsx": "0b088d3dbf20e965d553d3b7290b8b19fcc74d9839ca5ae44b279cf4df623631"
+  },
+  "unit": {
+    "directory_sd": {
+      "test": "tests/sd-directory.mjs",
+      "checks": 68,
+      "passed": true
+    },
+    "controller": {
+      "test": "tests/sd-files-controller.mjs",
+      "checks": 86,
+      "passed": true,
+      "local_device_exclusion": true
+    },
+    "worker": {
+      "test": "tests/sd-worker.mjs",
+      "actual_wasm": true,
+      "synthetic_rom": true,
+      "passed": true,
+      "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+      "local_device_exclusion": true,
+      "rejected_media_exact": true
+    },
+    "filesystem": {
+      "test": "tests/sd-filesystem.mjs",
+      "checks": 220,
+      "passed": true
+    }
+  },
+  "browser": {
+    "test": "tests/browser-sd-directory.py",
+    "checks": [
+      "native browser directory handles recursively import empty/nested folders and arbitrary names with reviewed 8.3 aliases and exact bytes",
+      "sidebar preserves draft; insertion transfers ownership; eject-to-edit returns card before explicit write-back; conflicts and locally deleted card entries are preserved",
+      "explicit re-read refreshes current directory; Chinese sync states and narrow sidebar remain usable",
+      "real directory file input fallback imports nested files without extension filter and clearly omits direct write-back",
+      "capacity overflow keeps the current draft; changing to 32 MiB rebuilds the already-read snapshot successfully"
+    ],
+    "browser": "156.0.8078.47",
+    "errors": [],
+    "picker_adapter": "Origin-private FileSystemDirectoryHandle; native permission dialog not automated",
+    "guest_adapter": "Explicit Worker ack; firmware acceptance tested separately",
+    "native_permission_dialog_tested": false,
+    "real_origin_private_directory_handles": true,
+    "real_directory_input": true,
+    "mobile_width": 390,
+    "languages": [
+      "en",
+      "zh"
+    ],
+    "source_file_editor_regression": {
+      "test": "tests/browser-sd-files.py",
+      "checks": 14,
+      "passed": true,
+      "browser": "156.0.8078.47",
+      "page_errors": [],
+      "added_local_device_checks": [
+        "connecting local device disables live-card insertion; separate draft remains editable; SD-specific notice is localized",
+        "attached local device excludes all live-card actions; disconnect immediately restores controls"
+      ]
+    }
+  },
+  "stock": {
+    "passed": true,
+    "roms": {
+      "hp49gplus": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "hp48gii": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937"
+    },
+    "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+    "native_sha256": "8cbbedf09eb7ab3dbb7da38658a974ca8bd78fb8bf472bd210098322c899a6bb",
+    "tool_sha256": "b8315e5bd7d19160ba62434867999c896a7560c5e79115c40b3437cc075a482b",
+    "physical_input_only": true,
+    "guest_memory_patched": false,
+    "canonical_hardware_boot": false,
+    "sram_decode": "explicit nGCS1 low-address mirror; physical capacity unchanged",
+    "card_image_bytes": 33554432,
+    "prepared_image": {
+      "sha256": "bc6ef1b0348eb0a915b0782f1755243a60c932ac18730f3f3b7f5609043a7f83",
+      "bytes": 33554432,
+      "expected_root_file": "ANSWER",
+      "expected_directory": "PROGRAMS",
+      "expected_nested_file": "NESTED",
+      "root_recalled": true,
+      "nested_recalled": true,
+      "guest_created_test": true,
+      "prepared_root_preserved": true
+    },
+    "exported": {
+      "image_sha256": "a31d018a8a2ba28fa0baf99ab45c01235912a67dced6c6fa2ffd2e43b2f579ab",
+      "file": "TEST",
+      "file_bytes": 15,
+      "file_sha256": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42",
+      "filesystem": "FAT16",
+      "fat_copies_equal": true,
+      "writes_before_copy": 0,
+      "writes_after_copy": 7
+    },
+    "continuation": {
+      "checkpoint_bytes": 34087787,
+      "version": 5,
+      "partial_sector_bytes": 32,
+      "delta_ticks": 100000,
+      "before_sha256": "868ecd3075b05eb41ddff617e3a0fdef13a285f4c45e39239339c87d7bb4912c",
+      "after_sha256": "6a2c09b4bd29d414bfb81fd575ab65bb232d63b50c27feee9a3ce6666aad72ac",
+      "native_wasm_equal": true,
+      "full_card_included": true
+    },
+    "fresh_card_reimport": true,
+    "hp48": {
+      "cold_boot": true,
+      "files_navigation": true,
+      "returned_home": true,
+      "sd_slot": false,
+      "card_rejected": true
+    },
+    "observed_stages": [
+      {
+        "name": "hp49-home",
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-files-no-card",
+        "frame_sha256": "bdcc263a4a0d43f220fff1a48a8b366a5f6919edeb3b7503c09b0037bdb94ba6",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-files-no-card-up",
+        "frame_sha256": "31cf57c318cbfb06a581d75873c34022d61b634d36578fe4657087cafad090fd",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-files-no-card-return",
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-files-with-card",
+        "frame_sha256": "a6e64b576e83a248559b7d8ec0a7577350c9623037e28207fb996d2f948d4f4f",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-created-test-42",
+        "frame_sha256": "a1a514e8d87df70a4be85073d28061d0fdd13b435f46ffe1af67cc8ff4ab2d5b",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-home-test-selected",
+        "frame_sha256": "8a343bd812857475a0e31fae2dd96bd2fb21316be4ffdce08a031ba9e58f7014",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-copy-destination-sd",
+        "frame_sha256": "5701815ccf52be394a3f24f01ca2b6b61f3bfb6c14bd4836b81293ae8a9fecf9",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-copy-complete",
+        "frame_sha256": "cd3dc82364b582abd7b2dc78c892014049f20d31e985bdae276b63ca114ce246",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-sd-answer-selected",
+        "frame_sha256": "0301d9120f8a135682d24157d01af05c2b71d9fea4c9472441d74e98a5da15df",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-sd-recalled-42",
+        "frame_sha256": "a6264d8850d44be94b23205730d647fe353d2f349188f6c4c0b4fabdb391d416",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-fresh-home",
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-fresh-sd-answer",
+        "frame_sha256": "27b339dfd51f6605cfdb79fe27eabe9159a34867f5327a9babaa18ba441bf7d3",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-fresh-recalled-42",
+        "frame_sha256": "e01013055e51a5d9a50820786b7ba3eb821eb74dfc614949dda98a4d22dc5b97",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-nested-home",
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-prepared-nested-directory",
+        "frame_sha256": "2ae128468e6483864db8aeb5124dcbe4e3289eee4bbbcc482d7224af0ef712c2",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp49-prepared-nested-recalled-42",
+        "frame_sha256": "e01013055e51a5d9a50820786b7ba3eb821eb74dfc614949dda98a4d22dc5b97",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp48-home",
+        "frame_sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp48-files",
+        "frame_sha256": "913cf167763953fb952d182d075ab89df5ebfa0c0dafdc5a33d0456ced3835a3",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp48-files-up",
+        "frame_sha256": "3f623da8b6c4d0326194be9974eef39b48e9cd81a478b8f1e60a8318167268b2",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp48-files-return",
+        "frame_sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+        "stop": 0,
+        "dfsr": 0
+      },
+      {
+        "name": "hp48-after-files-one-plus-one",
+        "frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+        "stop": 0,
+        "dfsr": 0
+      }
+    ]
+  },
+  "independent": {
+    "tools": {
+      "mtools": "4.0.43",
+      "dosfstools": "4.2"
+    },
+    "prepared": {
+      "image_sha256": "bc6ef1b0348eb0a915b0782f1755243a60c932ac18730f3f3b7f5609043a7f83",
+      "bytes": 33554432,
+      "fsck_exit": 0,
+      "mdir_exit": 0,
+      "file_sha256": {
+        "ANSWER": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42",
+        "PROGRAMS/NESTED": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42"
+      }
+    },
+    "exported": {
+      "image_sha256": "a31d018a8a2ba28fa0baf99ab45c01235912a67dced6c6fa2ffd2e43b2f579ab",
+      "bytes": 33554432,
+      "fsck_exit": 0,
+      "mdir_exit": 0,
+      "file_sha256": {
+        "ANSWER": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42",
+        "PROGRAMS/NESTED": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42",
+        "TEST": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42"
+      }
+    }
+  },
+  "limits": [
+    "Session-only directory handle and original-name mapping; no IndexedDB persistence.",
+    "No background synchronization or native OS mount.",
+    "Write-back does not delete local entries; external edits/deletions and name/type conflicts are preserved.",
+    "Each file commits separately; browser API cannot provide an atomic folder transaction or lock out native applications.",
+    "Directory fallback cannot preserve empty folders or write directly to the source.",
+    "New card names use reviewed uppercase ASCII 8.3 aliases; source bytes and original host names are retained."
+  ],
+  "independent_tools_final_gate": "The final v5 prepared and stock-written images match the independently checked images byte-for-byte by SHA-256; the existing FAT-tool results apply to these identical bytes.",
+  "production_browser": {
+    "passed": true,
+    "performance_sample": false,
+    "original_rom": true,
+    "rom_ram_patches": false,
+    "model": {
+      "id": 5,
+      "name": "hp49gplus",
+      "width": 131,
+      "height": 80,
+      "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab"
+    },
+    "stages": [
+      "cold-boot-and-empty-slot-files",
+      "create-card-and-stock-files",
+      "stock-file-copy-to-card-and-recall",
+      "export-image-and-complete-session",
+      "atomic-eject-to-edit-and-persistent-sidebar-draft",
+      "automatic-save-with-media-and-reload",
+      "read-only-import"
+    ],
+    "browser_version": "156.0.8078.47",
+    "stock_file": {
+      "name": "TEST",
+      "bytes": 15,
+      "sha256": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42"
+    },
+    "session": {
+      "schema": 1,
+      "model": 5,
+      "romHash": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "preset": "hp49-home",
+      "frameView": 1,
+      "stateHash": "253ba8531e591b0219268e83ad9222b1f152b354a2150b970c670bce1cc1cd48",
+      "checkpoint_version": 5,
+      "checkpoint_bytes": 17310571,
+      "file_sha256": "a79045cb587cad0c480d897f4f10038ea3bd74aa799a48153f0d29ea1f50c0c4"
+    },
+    "card_image_sha256": "5d78404dc28a1991f91e6ff9ab42cdc644bef20d4f28310afd6f32a493ddba81",
+    "manual_session_media_exact": true,
+    "atomic_edit_preserves_media": true,
+    "hidden_sidebar_retains_draft": true,
+    "automatic_save": {
+      "bytes": 17310796,
+      "model": 5,
+      "version": 2
+    },
+    "remembered_rom": {
+      "model": 5,
+      "hash": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "kind": "copy"
+    },
+    "automatic_session_media_exact": true,
+    "automatic_rom_reopen": true,
+    "read_only_import": {
+      "bytes": 16777216,
+      "present": true,
+      "writeProtected": true,
+      "dirty": false,
+      "cardState": 0,
+      "lastCommand": 7,
+      "commands": 1393,
+      "readBlocks": 345,
+      "writtenBlocks": 11
+    },
+    "page_errors": [],
+    "test": "tools/probe-sd-browser.py",
+    "tool_sha256": "5775ecf797da3e9c18dab2323accaba1d4d12f7206f641375877a56dc842dbae",
+    "production_worker": true,
+    "assets": {
+      "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+      "README.txt": "6b3fc4e05a8b0d2f95971630d1e2598e8dd5de7ef9e5acc4128b07f7ab0efe5c",
+      "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+      "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+      "calculator.css": "586e2389d0fb0056df96bb2f8034f595d748bc7dc49419910e09cd1a003cc9de",
+      "calculator.js": "baacf29e38c8026cdae222e7869455b11caff8d89638084910f29f4d52a8ddf4",
+      "catalog.js": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8",
+      "debug.html": "134082d0e77b5fae7486ce9783610edaa448a7060fe95d19ae1d27d79b54682b",
+      "file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+      "host-bridge-client.js": "3c88849d7047c69af848438365066a61b31bfb8de256055c628dec957f9350c6",
+      "host-bridge-protocol.js": "16b621ef9a032cf3126ffdf08f45252b35ba7e923b247ef602ebbc82d82d5827",
+      "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+      "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+      "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+      "hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+      "hp48.js": "bd684d892870ab30a33f9cc2db28c76b8996306e2d3eabdc8dfc539060b0bf8c",
+      "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+      "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+      "lcd-frames.js": "fc96250cde32d76f14a5418a4b6e7b3a7de45b044a7bce514f4b0b0a70c4798d",
+      "licenses/frontend.txt": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+      "licenses/hp-calcs-svg/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "licenses/hp-calcs-svg/NOTICE.txt": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+      "licenses/hp-calcs-svg/README.md": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+      "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+      "main.js": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35",
+      "orchard.wasm": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+      "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+      "preferences.js": "d342707ecf2467724352c1beaec90e6ca7ccc02634d9084f2ca7c57a0753a7a8",
+      "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+      "sd-filesystem.js": "e3e37332ccc10769ff966102ac513fe966d6fafc10c5d91cac948558aef3c816",
+      "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+      "session.js": "c4dd1c9e78b1b2d95236f62450d45df10b9eeb1829c36bb7f521f19bafec2dcd",
+      "skin.js": "b63ffb7b17bcb971d283daea4672f93dfb84ad9fc79fa09aa0bd2dce7b7416d0",
+      "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+      "skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+      "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+      "skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+      "skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+      "skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+      "skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+      "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+      "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+      "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+      "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+      "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "worker.js": "b17df949c37c7f05424fc7be4835df7370bc1b97ec0d688fa63e39e5af3b43a8"
+    },
+    "asset_count": 47,
+    "native_permission_dialog_tested": false,
+    "visual_review": {
+      "stock_recall": "The original calculator screen visibly contains the recalled integer 42.",
+      "mobile_sidebar": "390\u00d7844 viewport; calculator and persistent SD panel are stacked, with internal panel scrolling and no horizontal overflow."
+    },
+    "integration_regression": {
+      "initial_run_passed": false,
+      "initial_calculator_sha256": "fac27aea503cd9a1698be0789e54d43fdf0c188e863dac95d4569b23fbd134de",
+      "initial_wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+      "failure": "The ejected draft existed before hiding, but disappeared after closing and reopening the SD sidebar.",
+      "cause": "Mantine Activity-based keepMounted retention cleans up and recreates effects; the SD generation effect reset the preserved draft state on reopening.",
+      "fix": "Explicit keepMountedMode=display-none on the device sidebar and connection subtabs.",
+      "fixed_calculator_sha256": "baacf29e38c8026cdae222e7869455b11caff8d89638084910f29f4d52a8ddf4",
+      "regression_verified_by": [
+        "draft visible after hide/reopen",
+        "reinserted media equals original exported image",
+        "automatic ROM and whole-card session reload"
+      ]
+    },
+    "subsequent_guard_verification": {
+      "scope": "The recorded 47-asset production run precedes the local-device SD guards. The same media core is unchanged; subsequent guards are verified by 86 controller checks, the actual-WASM Worker test and 14 ROM-free Chrome file-editor flows. The production asset hashes above remain those actually tested.",
+      "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189"
+    }
+  }
+}

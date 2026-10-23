@@ -24,6 +24,7 @@ void o_soc_reset(o_soc *s) {
     o_adc_reset(&s->adc);
     o_usb_reset(&s->usb);
     o_sdi_reset(&s->sdi);
+    for(unsigned channel=0;channel<2;channel++)o_spi_reset(&s->spi[channel]);
     o_lcd_reset(s);
     s->intsubmsk = 0x7ff;
     s->priority = 0x7f;
@@ -110,6 +111,14 @@ void o_soc_tick(orchard_machine *m) {
     o_soc *s = &m->soc;
     bool power_off=(s->clock[3]&8u)!=0;
     m->power_wake=0;
+    if(s->wtreset) {
+        /* Clock registers are at reset: the functional Fin/PCLK ratio is
+           1:1. Hold all internal logic for the documented 128 PCLK pulse;
+           the independently powered RTC oscillator/calendar still advance. */
+        o_rtc_tick(m);
+        --s->wtreset;
+        return;
+    }
     o_eint_tick(m);
     if (m->stop.status != ORCHARD_OK) return;
     o_rtc_tick(m);
@@ -129,10 +138,12 @@ void o_soc_tick(orchard_machine *m) {
     }
     unsigned edges=o_pclk_advance(s,1);
     for(unsigned i=0;i<edges;i++) {
+        if(s->spi[0].remaining||s->spi[1].remaining)o_spi_tick(m);
+        if(m->stop.status!=ORCHARD_OK)return;
         if(s->sdi.remaining||s->sdi.data_remaining||s->sdi.interrupt_mask)o_sdi_tick(m);
         if(s->clock[3]&0x8000u)o_adc_tick(m);
         o_watchdog_tick(m);
-        if(m->stop.status!=ORCHARD_OK)return;
+        if(m->stop.status!=ORCHARD_OK||s->wtreset)return;
         pwm_tick(m);
         if(m->stop.status!=ORCHARD_OK)return;
     }
@@ -220,6 +231,8 @@ static bool uart_register(orchard_machine *m, uint32_t address, unsigned width, 
 bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value) {
     o_schedule_sync(m);
     o_soc *s = &m->soc;
+    if (o_spi_register(m, address, width, value, false)) return true;
+    if (m->stop.status != ORCHARD_OK) return false;
     if (o_lcd_register(m, address, width, value, false)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
     if (o_usb_register(m, address, width, value, false)) return true;
@@ -263,6 +276,8 @@ bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
 bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value) {
     o_schedule_sync(m);
     o_soc *s = &m->soc;
+    if (o_spi_register(m, address, width, &value, true)) return true;
+    if (m->stop.status != ORCHARD_OK) return false;
     if (o_lcd_register(m, address, width, &value, true)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
     if (o_usb_register(m, address, width, &value, true)) return true;

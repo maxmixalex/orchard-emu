@@ -5,7 +5,7 @@
  */
 #include "internal.h"
 #define HEADER 32u
-#define VERSION 4u
+#define VERSION 5u
 static const uint8_t magic[8] = {'O','R','C','H','S','T','0','1'};
 typedef struct {
     o_cpu cpu;
@@ -106,6 +106,15 @@ static void fields(codec *c, saved *s, unsigned version) {
         o_zero(d->pending_count,sizeof d->pending_count);
         o_zero(d->pending_compare,sizeof d->pending_compare);d->reload_pending=0;
     }
+    if(version>=5u) {
+        /* Append-only SPI/reset extension: bytes 4895..4970. */
+        for(unsigned channel=0;channel<2;channel++) {
+            o_spi *spi=&d->spi[channel];
+            U32(spi->control);U32(spi->status);U32(spi->pin);U32(spi->prescaler);
+            U32(spi->tx);U32(spi->rx);U32(spi->remaining);U32(spi->half);U32(spi->shift);
+        }
+        U32(d->wtreset);
+    } else if(c->in)for(unsigned channel=0;channel<2;channel++)o_spi_reset(&d->spi[channel]);
 }
 static size_t scalar_size(unsigned version) { saved s; o_zero(&s,sizeof s); codec c={0}; fields(&c,&s,version); return c.pos; }
 /* Reflected CRC-32 (polynomial 0xedb88320), advanced eight bits at once.
@@ -194,7 +203,15 @@ static bool valid(const saved *s, const orchard_machine *m) {
         d->usb.index>4||d->usb.active_address>127||d->usb.frame>2047||
         d->keyboard_switches>>56||d->keyboard_direct&~0x71u)return false;
     for(unsigned i=0;i<8;i++)if(d->adc.inputs[i]>1023)return false;
-    if(d->mpll_configured>1u||d->reload_pending&~31u)return false;
+    if(d->mpll_configured>1u||d->reload_pending&~31u||d->wtreset>128u)return false;
+    for(unsigned channel=0;channel<2;channel++) {
+        const o_spi *spi=&d->spi[channel];
+        if(spi->control>0x3fu||spi->status&~5u||(spi->pin!=2u&&spi->pin!=3u)||
+           spi->prescaler>255u||spi->tx>255u||spi->rx>255u||spi->shift>255u||
+           spi->half>15u||spi->remaining>spi->prescaler+1u||
+           ((spi->remaining!=0)==((spi->status&1u)!=0))||
+           (!spi->remaining&&(spi->half||spi->shift)))return false;
+    }
     uint32_t num,den;
     if(o_pclk_ratio(d,&num,&den)?d->pclk_phase>=den:d->pclk_phase!=0)return false;
     for(unsigned ch=0;ch<5;ch++) {

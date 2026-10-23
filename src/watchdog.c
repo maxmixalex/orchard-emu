@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: MIT
  * Samsung S3C2410A manual (2004), chapter 18. Functional countdown model:
  * Each call consumes one edge of the shared functional PCLK domain.
- * Reset propagation remains explicit/unsupported rather than approximated
- * by a fabricated full-machine cold reset.
+ * The internal reset output restarts the actual reset vector and retains
+ * the powered memory/RTC domains; it is not a host cold-reset operation.
  */
 #include "internal.h"
 
@@ -10,6 +10,7 @@ void o_watchdog_reset(o_soc *s) {
     s->wtcon = 0x8021;
     s->wtdat = s->wtcnt = 0x8000;
     s->wtphase = 0;
+    s->wtreset = 0;
 }
 void o_watchdog_tick(orchard_machine *m) {
     o_soc *s = &m->soc;
@@ -23,7 +24,7 @@ void o_watchdog_tick(orchard_machine *m) {
     s->wtcnt = s->wtdat;
     if (s->wtcon & 4u) s->srcpnd |= 1u << 9;
     if (s->wtcon & 1u)
-        o_stop(m, ORCHARD_UNIMPLEMENTED_RESET, 0x53000000u, s->wtcon);
+        o_watchdog_system_reset(m);
 }
 bool o_watchdog_register(o_soc *s, uint32_t address, uint32_t *value, bool write) {
     switch (address) {

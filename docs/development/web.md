@@ -4,7 +4,7 @@
 [Developer workbench](https://maxmixalex.github.io/orchard-emu/emulator/debug.html)
 
 The user page identifies the four supported complete ROMs automatically. It
-shows Open ROM, Pause/Resume, Restart, Save/Restore, Connections and Settings;
+shows Open ROM, Pause/Resume, Restart, Self-test, Save/Restore, Connections and Settings;
 CPU registers, boot presets and implementation counters stay in the workbench.
 The viewport-filling workspace switches between immersive outlined skin,
 [immersive landscape](landscape.md) and traditional LCD/HTML keys in Settings.
@@ -13,14 +13,21 @@ left and the remaining keyboard on the right. Help is a question-button tooltip;
 confirmations and errors use Mantine modal dialogs.
 
 Settings configure scale, blur/background policies, speed, model-specific
-physical-key sequences, firmware sound/volume and optional IndexedDB autosave.
+physical-key sequences, firmware sound/volume, local ROM recall and optional
+IndexedDB autosave. The wider [keyboard editor](keyboard-settings.md) highlights
+bound PC keys and shows their assignments on a clickable calculator keypad.
+Character defaults use the OS-resolved key value; layout-map labels or the
+capture field identify physical override keys without assuming QWERTY.
 The separate **Transfer** tab contains the transfer-only Unlimited switch,
 using the same Apply/Cancel draft behavior as the other settings. See
 [interaction and clock boundaries](interaction.md) and [sessions](sessions.md).
 Normal is paced to the existing functional timebase; it is not a measured
 ARM920T instruction/clock calibration. Other rates are explicit.
 
-Connections provides HP48gII USB/serial object transfers, HP49g+ USB object
+Connections and SD card occupy tabs in a persistent sidebar. It leaves the
+calculator available for physical input and keeps selections and drafts when
+hidden or switched to another tab. On narrow screens it stacks below the
+calculator. Connections provides HP48gII USB/serial object transfers, HP49g+ USB object
 transfers, and the separate HP39/40 Disk drive file host. Object workflows include
 upload, named GET, calculator-initiated SEND/Receive, directory, FINISH and bounded
 upload batches. HP39/40 uses the appropriate stock catalog's RECV/SEND menus:
@@ -36,11 +43,21 @@ on completion or interruption. Transfer failures carry stable translated
 messages; unknown errors have a translated summary and collapsed technical
 details. See [file transfer](file-transfer.md).
 
-The HP49g+ [SD dialog](sd-cards.md) prepares files and folders in an unmounted
+The HP49g+ [SD sidebar](sd-cards.md) prepares files and folders in an unmounted
 FAT16 image, including file/folder rename and deletion of files or empty
 folders, inserts the resulting card and exports its contents. It never
-edits a mounted guest filesystem behind the calculator's cache. Manual and
-automatic saves retain the whole card. [Firmware sound](buzzer.md) follows
+edits a mounted guest filesystem behind the calculator's cache.
+[Choose local folder](directory-sd.md) imports a recursive directory into a
+16 or 32 MiB draft with a visible 8.3 alias preview. **Eject to edit / sync**
+copies, validates and ejects the card in one Worker operation before making it
+editable. Direct directory handles support explicit re-read and conflict-aware,
+additive write-back; the file-input fallback supports import and image download.
+Directory associations last for this page session. Manual and automatic saves
+retain the whole card, separately from any directory handle.
+While a local device bridge is active, insertion, export, edit/eject and removal
+are disabled with translated guidance to disconnect first. Preparation and
+directory work on a separate unmounted draft remain available.
+[Firmware sound](buzzer.md) follows
 GPIO/Timer2 output and starts after a user gesture. PWM, watchdog, ADC and SDI
 now share the register-derived PCLK; physical board and speaker calibration
 remain separate from this functional clock model.
@@ -56,6 +73,18 @@ system device or access a physical cable. HP49g+ infrared uses UART2 and is not
 implemented by the UART0 link; see [virtual links](virtual-link.md) and
 [infrared](infrared.md).
 
+**Connections → Local device** can explicitly link the current Worker to the
+optional [loopback HTTP/USB-IP helper](host-mode.md). It uses the same ROM,
+memory and SD card. Starting the bridge releases internal transfer links;
+manual pause, reset, ROM replacement and session operations disconnect it.
+Blur/background pause is suspended only for this active connection so a desktop
+client can take focus, while physical keys are still released. The helper
+does not install an OS USB/IP or calculator driver. Generated Chrome network
+checks and original-ROM Node-module object transfers have separate witnesses;
+the production Chrome page and Worker also complete an exact original HP49g+
+SEND/GET/FINISH round trip and return to arithmetic. Kernel attachment and
+unmodified Conn3x need their own acceptance.
+
 ## Build and use
 
 Build with Python 3, Node.js 22+, Clang and wasm-ld using `npm run build`;
@@ -69,13 +98,28 @@ guest screens, not host-detected states. Restart clears memory; a saved HOME
 session can be restored instead. Both main thread and Worker bind the image
 to the documented hash. The displayed Beta is not an all-model support claim.
 
+**Settings → Storage → Remember local ROMs** is enabled by default, independently
+of automatic calculator saves. It remembers one ROM per model and reopens the
+last one when permission permits. A supported picker stores a read-only handle
+and reads the original file again; the standard file input stores a labelled
+copy in this browser. Startup never requests file permission automatically.
+Use **Continue reading** if access is required again, or disable automatic recall and
+use **Forget saved ROM locations and copies** to remove saved references/copies. Both paths
+recheck the original ROM identity before loading. No ROM is uploaded or placed
+inside an exported `.ord`. See [local ROM storage](rom-storage.md).
+
 ## Ownership, rendering and lifecycle
 
 One Worker owns CPU and peripheral state. Its user pump runs bounded 1024-tick
 calls in tasks capped around 6 ms, independently draining UART and polling the
-USB host; user frame delivery is limited to about 30 Hz. Unchanged LCD pixels
-reuse their ImageData and do not repaint. Unchanged key/annunciator attributes
-are not rewritten. Debug snapshots retain their existing state layout.
+USB host; user frame delivery is limited to about 30 Hz. After each existing
+core slice, an observed completed LCD scan samples an independent image and
+its annunciators. UI publications reuse it until another scan completes;
+paused/stopped inspection and LCD disable bypass that cache. The display then
+paints only the latest pending image in a browser animation frame. Unchanged
+pixels reuse ImageData and do not repaint. Live display, PNG capture and
+recording share the published image and unavailable-screen handling. Debug
+snapshots retain their existing state layout. See [LCD presentation](lcd.md#host-presentation-synchronized-to-the-scan-counter).
 
 Key macros are atomic bounded queues of switch transitions. Blur/hidden always
 release keys even when pause is disabled. Pagehide pauses for safe cache return;

@@ -19,3 +19,19 @@
 #calculator[data-view=traditional] .skin-keyboard{display:none}
 .transfer-error-details{font-size:12px;color:#63756b;overflow-wrap:anywhere}
 .transfer-error-details pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:160px;overflow:auto;margin:4px 0 0;padding:8px;background:#f1f4f2;border-radius:6px}
+/* A persistent dock leaves the calculator interactive while files are selected
+   or a transfer is waiting for an action on the calculator itself. */
+.calculator-body{display:flex;flex:1;min-height:0;min-width:0;overflow:hidden}
+.calculator-body #workspace{min-width:0}
+.device-sidebar{width:clamp(340px,34vw,500px);flex:none;min-width:0;overflow:auto;overscroll-behavior:contain;background:#fff;border-left:1px solid #dfe7e3;padding:12px 16px}
+.device-sidebar[hidden]{display:none}
+.device-sidebar-header{padding-bottom:12px}
+.device-sidebar-tabs{min-width:0}
+.device-sidebar pre{max-width:100%}
+.rom-access-notice{padding:8px 20px;background:#fff8e8;flex-shrink:0}
+@media(max-width:760px){
+ .calculator-body[data-panel-open=true]{flex-direction:column;overflow:auto}
+ .calculator-body[data-panel-open=true] #workspace{min-height:280px;flex:1 0 48%;overflow:auto}
+ .device-sidebar{width:100%;max-height:52%;min-height:200px;border-left:0;border-top:1px solid #dfe7e3;padding:10px 12px;flex:1 0 48%}
+ .rom-access-notice{padding:8px 10px}
+}

@@ -35,8 +35,19 @@ with sync_playwright() as p:
         with page.expect_download() as pending:button('Download draft image').click()
         pending.value.save_as(OUT/name)
         return (OUT/name).read_bytes()
+    page.evaluate('window.__controller.patch({hostBridge:{active:true,phase:"connecting"}})')
+    assert button('Create 16 MiB card').is_disabled() and button('Import card image').is_disabled()
+    page.get_by_text('Disconnect the local device before changing the SD card.',exact=True).wait_for()
+    assert button('Prepare card files').is_enabled()
     button('Prepare card files').click()
     editor=page.get_by_test_id('sd-file-editor');editor.wait_for()
+    assert button('Insert prepared card').is_disabled()
+    assert button('Open image for editing').is_enabled() and button('Download draft image').is_enabled()
+    page.evaluate("window.__i18n.changeLanguage('zh')")
+    page.get_by_text('请先断开本机设备连接，再修改 SD 卡。',exact=True).wait_for()
+    page.evaluate("()=>{window.__i18n.changeLanguage('en');window.__controller.patch({hostBridge:{active:false}})}")
+    assert button('Insert prepared card').is_enabled()
+    passed('connecting local device disables live-card insertion; separate draft remains editable; SD-specific notice is localized')
     assert page.locator('#sd-draft-files').get_attribute('accept') is None
     assert page.locator('#sd-draft-image').get_attribute('accept') is None
     assert page.locator('#sd-image-file').get_attribute('accept') is None
@@ -151,7 +162,7 @@ with sync_playwright() as p:
     passed('download failure is visible; reopening an arbitrary-suffix image preserves nested contents')
 
     page.set_viewport_size({'width':390,'height':844})
-    page.get_by_role('dialog').evaluate('(element)=>{element.scrollTop=0}')
+    page.get_by_role('complementary',name='SD tools').evaluate('(element)=>{element.scrollTop=0}')
     page.screenshot(path=str(OUT/'browser-mobile.png'),full_page=True)
     assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
     page.evaluate("window.__i18n.changeLanguage('zh')")
@@ -159,7 +170,7 @@ with sync_playwright() as p:
     page.get_by_role('button',name='重命名 RAW.XYZ',exact=True).click()
     page.get_by_label('新的卡内名称',exact=True).wait_for()
     page.get_by_role('button',name='取消',exact=True).click()
-    page.get_by_role('dialog').evaluate('(element)=>{element.scrollTop=0}')
+    page.get_by_role('complementary',name='SD tools').evaluate('(element)=>{element.scrollTop=0}')
     page.screenshot(path=str(OUT/'browser-mobile-zh.png'),full_page=True)
     page.evaluate("window.__i18n.changeLanguage('en')")
     passed('390px viewport and both language controls render without horizontal overflow')
@@ -197,21 +208,33 @@ with sync_playwright() as p:
     button('Export card image').wait_for()
     assert page.get_by_test_id('sd-file-editor').count()==0 and button('Prepare card files').count()==0
     passed('production insertion sends exact image/read-only state; mounted card has no host file editor')
+    page.evaluate('window.__controller.patch({hostBridge:{active:true,phase:"attached"}})')
+    assert button('Export card image').is_disabled() and button('Eject card').is_disabled() and button('Eject to edit / sync').is_disabled()
+    page.evaluate('window.__controller.patch({hostBridge:{active:false}})')
+    assert button('Export card image').is_enabled() and button('Eject card').is_enabled() and button('Eject to edit / sync').is_enabled()
+    passed('attached local device excludes all live-card actions; disconnect immediately restores controls')
 
-    # A pending browser read must not populate a successor editor after closure.
+    # A hidden sidebar retains its draft; a new calculator generation still
+    # cancels a pending read before it can populate a successor editor.
     page.evaluate('window.__controller.patch({sd:null,busy:false})')
     button('Prepare card files').click()
     page.evaluate("""()=>{File.prototype.arrayBuffer=function(){return this.name==='WAIT.DAT'?new Promise(resolve=>window.__resolveRead=()=>resolve(new Uint8Array([1,2]).buffer)):window.__arrayBuffer.call(this)}}""")
     page.locator('#sd-draft-files').set_input_files({'name':'WAIT.DAT','mimeType':'application/octet-stream','buffer':b'xx'})
     page.wait_for_function('typeof window.__resolveRead==="function"')
-    button('Close').click();page.get_by_role('dialog').wait_for(state='hidden')
-    button('Open SD dialog').click();button('Prepare card files').click()
+    button('Close').click();page.get_by_role('complementary',name='SD tools').wait_for(state='hidden')
+    button('Open SD sidebar').click()
+    page.evaluate('window.__resolveRead()')
+    page.get_by_label('Card name for WAIT.DAT',exact=True).wait_for();button('Cancel').click()
+    page.locator('#sd-draft-files').set_input_files({'name':'WAIT.DAT','mimeType':'application/octet-stream','buffer':b'xx'})
+    page.wait_for_function('typeof window.__resolveRead==="function"')
+    page.evaluate('()=>{const c=window.__controller;c.create(c.state.model);c.patch({loaded:true,ready:true,busy:false})}')
+    button('Prepare card files').click()
     page.evaluate('()=>{window.__resolveRead();File.prototype.arrayBuffer=window.__arrayBuffer;}')
     page.wait_for_timeout(100)
     assert page.get_by_label('Card name for WAIT.DAT',exact=True).count()==0
     assert page.get_by_test_id('sd-file-editor').get_by_text('This folder is empty.',exact=True).count()==1
     assert not errors,errors
-    passed('closing during pending file read cannot mutate a new draft; no uncaught page errors')
+    passed('sidebar hiding retains pending draft; new calculator generation cancels stale reads; no uncaught page errors')
     report={'checks':checks,'browser':browser.version,'card_sha256':sha(complete),'file_sha256':sha(payload),'errors':errors}
     (OUT/'browser-result.json').write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps(report,indent=2))

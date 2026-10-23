@@ -26,7 +26,7 @@ typedef enum {
     ORCHARD_UNSUPPORTED_ENDIAN,
     ORCHARD_UNSUPPORTED_LCD,
     ORCHARD_BUS_ERROR,
-    ORCHARD_UNIMPLEMENTED_RESET,
+    ORCHARD_UNIMPLEMENTED_RESET, /* Retained legacy checkpoint diagnostic; WDT now propagates. */
     ORCHARD_GPIO_CONTENTION,
     ORCHARD_UNRESOLVED_ANALOG,
     ORCHARD_UNSUPPORTED_USB
@@ -106,8 +106,8 @@ void orchard_get_buzzer_state(const orchard_machine *m, orchard_buzzer_state *st
 size_t orchard_buzzer_read(orchard_machine *m, orchard_buzzer_edge *edges, size_t capacity);
 /* Portable versioned state, excluding immutable NOR. Load the matching ROM first.
  * Save uses a non-overlapping buffer of exactly checkpoint_size bytes. Load
- * also accepts the bounded v1/v2 wire formats; export emits v3, including an
- * inserted SD card's complete image and its in-flight controller state.
+ * also accepts bounded v1-v4 wire formats; export emits v5, including an
+ * inserted SD card's image, in-flight controller/clock/SPI state and WDT reset.
  * Invalid data/ROM/version is rejected without changing the current machine.
  * CRC is corruption detection, not authentication; hosts should bind SHA-256. */
 size_t orchard_checkpoint_size(const orchard_machine *m);

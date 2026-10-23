@@ -25,13 +25,13 @@ function compileRegression(name, testModule, extraFlags = []) {
   command(process.env.CLANG || 'clang', [
     '--target=wasm32', '-std=c17', '-O3', '-flto', '-mbulk-memory', '-ffreestanding', '-nostdlib', '-fno-builtin',
     '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc', ...extraFlags,
-    ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'checkpoint', 'scheduler', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb', 'sdi', 'buzzer'].map(s => `src/${s}.c`),
+    ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'checkpoint', 'scheduler', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb', 'sdi', 'spi', 'buzzer'].map(s => `src/${s}.c`),
     `tests/${name}.c`, '-o', testModule, '-Wl,--no-entry', '-Wl,--stack-first',
     '-Wl,-z,stack-size=524288', '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216',
   ]);
 }
 let totalAssertions = 0, physicalReadAssertions = 0;
-for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb', 'sdi', 'buzzer', 'power', 'pwm-clock', 'nor-bus', 'physical-read', 'memory', 'segments-nor', 'performance', 'execution', 'cpu-transactions', 'scheduler', 'checkpoint']) {
+for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb', 'sdi', 'spi', 'watchdog-reset', 'buzzer', 'power', 'pwm-clock', 'nor-bus', 'physical-read', 'memory', 'segments-nor', 'performance', 'execution', 'cpu-transactions', 'scheduler', 'checkpoint']) {
   const testModule = resolve(build, `${name}.wasm`);
   compileRegression(name, testModule);
   const { instance: { exports: test } } = await WebAssembly.instantiate(await readFile(testModule), {});

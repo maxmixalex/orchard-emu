@@ -31,6 +31,15 @@ Details: [HP39g+ startup](hp39-startup.md), [HP39gs startup](hp39gs-startup.md),
 [HP49 startup](hp49-startup.md), [SD cards](sd-cards.md), [file transfer](file-transfer.md),
 [full HP39gs reader](hp39gs-rom-dump.md), [power management](power-management.md).
 
+The current browser continuation adds model-specific, layout-aware
+[keyboard editing](keyboard-settings.md), persistent connection/storage sidebars,
+[local ROM recall](rom-storage.md), and [directory-backed SD preparation](directory-sd.md).
+[LCD publication](lcd.md#host-presentation-synchronized-to-the-scan-counter)
+now follows observed completed scans. [SPI](spi.md) and
+[watchdog reset propagation](watchdog-reset.md) support the factory-test
+entry/exit path without patching firmware or substituting diagnostic results.
+Exact build identities and evidence boundaries remain in [validation](validation.md).
+
 ## M0 — Repository, contracts and reproducibility
 
 **Engineering baseline implemented; verify each revision.** Native/reference/
@@ -64,16 +73,21 @@ two Orchard builds is a regression check, not an independent CPU oracle.
 
 **Functional pieces implemented; canonical board gate open.** SRAM, GPIO drives
 and bias, passive keyboard circuits, unfiltered EINT, IRQ arbitration, timers,
-RTC/watchdog, LCD frame interrupts, normal ADC, USB PIO/packet transactions and
-a bounded SDI controller with SDSC media cover observed paths. Selected SST39VF1601 /
+RTC/watchdog reset, LCD frame interrupts, normal ADC, USB PIO/packet transactions,
+two bounded SPI channels and an SDI controller with SDSC media cover observed
+paths. Selected SST39VF1601 /
 SST39VF800A devices provide array/software-ID behavior, not flash programming.
 
-PWM, watchdog, ADC and SDI share the functional PCLK derived from guest clock
+PWM, watchdog, ADC, SDI and SPI share the functional PCLK derived from guest clock
 register writes, with fractional phase, peripheral gates and buffered PWM
 reloads. RTC time stays independent. The [Power_OFF model](power-management.md)
 executes the original reset-vector wake path while retaining external SRAM,
 RTC and SD media; four admitted original ROMs pass inactivity/ON continuation.
-The SDI subset models command duration, absent-card timeout, status/IRQ, clock
+The SPI subset uses shared PCLK and resolved external pin inputs; it has no
+invented attached-device reply. Watchdog expiry now propagates a 128-PCLK reset
+pulse, preserving the declared external-memory/media and independent RTC
+domains before the original reset vector executes. This path is separate from
+host Restart and retained Power_OFF wake. The SDI subset models command duration, absent-card timeout, status/IRQ, clock
 gating, a PIO FIFO and reads/writes of an actual host-owned card image. It does
 not implement DMA or SDHC. The original
 HP39 reader uses both documented 2410X/2410A MAXP addresses; their functional
@@ -82,8 +96,8 @@ compatibility is recorded without asserting a silicon alias.
 Remaining work includes measured board input clocks, PLL lock duration,
 physical reset and power-rail behavior, shared-prescaler startup phase, verified
 component identities and pad bias, LCD/annunciator routing, flash commands,
-DMA, larger SD media and further peripheral modes. Watchdog reset propagation
-and digital input filters remain explicit gaps.
+DMA, larger SD media, attached SPI devices and further peripheral modes.
+Digital input filters and physical reset/clock-switch transients remain open.
 
 **Gate:** one model's dependencies follow independently supported register/pin
 behavior with unchanged firmware and no unverified readback shortcuts. Current
@@ -143,6 +157,13 @@ witnesses with accurate model-specific hardware limits.
 The bilingual UI automatically identifies four supported images, offers normal
 calculator controls, seven separately licensed skins, traditional keys, editable
 physical PC macros, captures, recording, settings and optional local autosave.
+The keyboard editor isolates each model, highlights assigned PC keys and shows
+bindings on a clickable calculator keypad. Default characters follow the OS
+layout; API labels and captured keys identify physical custom bindings.
+Connections and SD use a persistent sidebar that preserves drafts while the
+calculator remains accessible. ROM recall is independently controlled in
+Storage settings: read-only handles reopen original files where permitted,
+and a labelled browser-local copy supports the ordinary file-input fallback.
 [Immersive landscape](landscape.md) cuts the unchanged skin below the six
 function keys, placing those keys with the screen to the left of the remaining
 keyboard. [Firmware sound](buzzer.md) observes GPB2/Timer2 edges with
@@ -153,10 +174,15 @@ The separate workbench retains research controls and diagnostics. The 49g+ LCD
 uses its full 131×80 dimensions in both views and capture export.
 
 One Worker owns execution. Bounded slices, explicit pacing, input queues,
-operation/generation isolation and cancellation remain invariant. Version-4
-sessions include complete SD media, in-flight controller state, fractional PCLK
-and PWM latches. Version-1/2/3 files remain importable with an explicit first-cycle
-clock/PWM migration; see [sessions](sessions.md). Binary IndexedDB
+operation/generation isolation and cancellation remain invariant. LCD pixels
+and annunciators are sampled at observed completed scans, then reused for
+same-scan UI requests and coalesced into browser animation frames. Live display,
+capture and recording share the published image, including real blank or
+unavailable frames. This is presentation policy, not physical panel calibration.
+Version-5 sessions include complete SD media, in-flight controller state,
+fractional PCLK, PWM latches, both SPI channels and the watchdog reset hold.
+Version-1/2/3/4 files remain importable with explicit legacy timing/device
+migration; see [sessions](sessions.md). Binary IndexedDB
 autosaves retain the card and migrate the former small localStorage records.
 Original-ROM and native/WASM continuation are independently checked. Actual
 Chrome file-picker/download/session and Worker tests supplement synthetic tests.
@@ -212,12 +238,31 @@ renames files or directories and deletes files or empty directories
 transactionally in an unmounted image. The original HP49g+ reads prepared
 files and can add its own objects through FILES; the independent filesystem
 checks and remaining 8.3/PIO/media limits are in [SD cards](sd-cards.md).
+Local directories can be copied recursively into 16/32 MiB FAT16 drafts with
+a reviewable name mapping. A validated copy/eject operation returns mounted
+media to the editor. Associated directory handles support explicit re-read and
+additive write-back with conflict preservation; the association is page-session
+only. This snapshot workflow does not mount an operating-system block device
+or synchronize a mounted filesystem concurrently.
 
-Remaining work includes remote file management, broader capacity/recovery cases,
-infrared/UART2, UART FIFO/baud timing and a host-OS bridge. The standalone loopback
-USB/IP/raw serial prototype has TCP tests; it does not establish kernel attach
-or Conn3x interoperability. The original HP50g GET_CONFIGURATION NAK remains
-an explicit counterexample. See [virtual links](virtual-link.md).
+The optional [local device bridge](host-mode.md) connects the live browser
+Worker to a loopback HTTP/USB-IP helper. Generated ARM guests pass real Chrome
+Worker, authenticated HTTP, USB/IP control/bulk, cancellation and reconnect
+checks. Unchanged HP48gII and HP49g+ ROMs complete object round trips using the
+same bridge modules under Node; each evidence record retains its runtime and
+build identity. Original HP49g+ also completes exact SEND/GET/FINISH through
+the production Chrome page and Worker, remains connected across sidebar
+hide/reopen and another tab taking focus, then returns to `1+1=2`. Internal
+transfers and live SD-card operations are excluded
+while the bridge owns the machine; unmounted drafts remain editable. The
+separate command-line calculator and raw serial entry point remain available.
+
+Remaining work includes remote file management, broader capacity/recovery
+cases, infrared/UART2, UART FIFO/baud timing, operating-system USB/IP attachment,
+HP driver binding and unmodified Conn3x interoperability. The original-ROM
+GET_CONFIGURATION timeout is retained rather than synthesized into success;
+the earlier HP50g case also remains an explicit counterexample. See
+[USB evidence](usb.md) and [virtual links](virtual-link.md).
 
 **Gate:** unchanged stock firmware completes both directions with file/object
 identity, cancellation/reconnect recovery and responsive UI. Internal packets

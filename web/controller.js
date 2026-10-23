@@ -11,23 +11,30 @@ import { MAX_SESSION_BYTES } from './session.js';
 import { createSDImage, validateSDSize, sdImageName } from './sd-card.js';
 import { AutoSaveStore, AUTO_SIGNAL_PREFIX } from './autosave.js';
 import { BuzzerAudio } from './buzzer-audio.js';
+import {ROMStore,ROMAccessError,romRecordInfo,readRememberedROM} from './rom-storage.js';
 import { AUTO_PREFIX, readPreferences, writePreferences, validatePreferences,
   readAuto, writeAuto, sessionName } from './preferences.js';
 import { MAX_FILE_BYTES, MAX_UPLOAD_FILES, MAX_UPLOAD_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename, validateUpload, transferCapabilities } from './file-transfer.js';
+import {bridgeAddress,bridgeToken} from './host-bridge-protocol.js';
+const bridgeDisconnected=()=>({active:false,phase:'disconnected',ready:false,attached:false,usbipPort:null,errorCode:null});
 export class CalculatorController {
-  constructor({worker, storage=null, database=globalThis.indexedDB, locks=null, mayRun=()=>true, download=()=>{}, now=()=>new Date(), audio=null}={}) {
+  constructor({worker, storage=null, database=globalThis.indexedDB, locks=null, mayRun=()=>true, download=()=>{}, now=()=>new Date(), audio=null,romStore=undefined}={}) {
     this.worker=worker; this.storage=storage;this.autoStore=database?new AutoSaveStore(storage,database):null; this.locks=locks; this.mayRun=mayRun;
     this.download=download; this.now=now; this.listeners=new Set(); this.frames=new Set();
     this.generation=0; this.selection=0; this.dead=false; this.pending=null; this.last=null;
     this.autoRequest=0; this.autoPending=null; this.autoBlocked=false; this.autoToken=null;
+    this.romStore=romStore===undefined?(database?new ROMStore(database):null):romStore;this.romRecords=new Map();this.currentROM=null;this.romStorageEpoch=0;this.automaticROMEpoch=0;
     this.writer=crypto.randomUUID(); this.dialogs=[]; this.dialogId=0;
     this.transferRequest=0;this.received=new Map();this.receivedId=0;this.uploadQueue=null;
+    this.sdDirectory=null;this.sdInsertDirectory=null;this.sdEditPending=null;
     this.state={model:CALCULATORS[0],prefs:readPreferences(storage),ready:false,loaded:false,running:false,
       busy:false,stopped:false,note:null,dialog:null,sd:null,sdName:'orchard-sd.img',serial:false,usb:false,usbReady:false,usbInfo:null,usbPhase:'Disconnected',log:'',
-      transfer:null,uploadBatch:null,receivedFiles:[],transferListing:'',effectiveSpeed:1,transferBoosted:false};
+      transfer:null,uploadBatch:null,receivedFiles:[],transferListing:'',effectiveSpeed:1,transferBoosted:false,
+      rememberedROMs:[],romSource:null,romIssue:null,hostBridge:bridgeDisconnected()};
     this.audio=audio||new BuzzerAudio();this.audioLive=false;this.audio.configure(this.state.prefs);
+    this.hostBridgeRequest=0;
     worker.onmessage=({data})=>this.receive(data);
-    worker.onerror=()=>{this.audioLive=false;this.audio.reset();this.endTransfer('error','The calculator worker stopped.');this.patch({ready:false,running:false,busy:false});this.report('workerFailure');};
+    worker.onerror=()=>{if(this.state.hostBridge?.active)this.send('host-bridge-stop');this.sdEditPending?.(null);this.sdEditPending=null;this.audioLive=false;this.audio.reset();this.endTransfer('error','The calculator worker stopped.');this.patch({ready:false,running:false,busy:false,hostBridge:bridgeDisconnected()});this.report('workerFailure');};
   }
   subscribe=(fn)=>{this.listeners.add(fn);return()=>this.listeners.delete(fn);};
   getSnapshot=()=>this.state;
@@ -46,26 +53,92 @@ export class CalculatorController {
   report(message='operationFailed',detail=''){return this.ask('error',message,'ok',null,{detail:String(detail)});}
   linksReset(){++this.transferRequest;this.uploadQueue=null;this.received.clear();this.patch({serial:false,usb:false,usbReady:false,usbInfo:null,usbPhase:'Disconnected',log:'',transfer:null,uploadBatch:null,receivedFiles:[],transferListing:'',effectiveSpeed:this.state.prefs.speed,transferBoosted:false});}
   create(model=this.state.model,rom=null){
+    this.sdEditPending?.(null);this.sdEditPending=null;this.sdDirectory=null;this.sdInsertDirectory=null;
     ++this.generation;clearTimeout(this.autoTimer);this.autoPending=null;this.autoBlocked=false;this.autoToken=null;this.awaitingRestore=false;
-    this.pending=rom;this.last=null;this.linksReset();this.patch({model,loaded:false,running:false,stopped:false,busy:Boolean(rom),note:null,sd:null,sdName:'orchard-sd.img'});
+    this.pending=rom;this.last=null;this.linksReset();this.patch({model,loaded:false,running:false,stopped:false,busy:Boolean(rom),note:null,sd:null,sdName:'orchard-sd.img',hostBridge:bridgeDisconnected()});
     this.send('create',{model:model.id,preset:model.preset,audience:'calculator'});this.send('configure',{speed:this.state.prefs.speed,transferUnlimited:this.state.prefs.transferUnlimited,sound:this.state.prefs.sound});
   }
-  async open(file){if(!file||!this.state.ready||this.state.busy)return;
-    if(this.state.loaded){this.send('pause');if(!await this.ask('open','replaceMemory','open','cancel'))return;}
-    const token=++this.selection;this.patch({busy:true});this.send('pause');
+  async chooseROM(fallback){
+    if(!this.state.ready||this.state.busy)return;
+    const token=++this.selection;
+    if(typeof globalThis.showOpenFilePicker!=='function'){fallback();return;}
+    try{
+      const [handle]=await globalThis.showOpenFilePicker({id:'orchard-rom',multiple:false});
+      const file=await handle.getFile();if(this.dead||token!==this.selection)return;
+      await this.open(file,{handle,selection:token});
+    }catch(error){
+      if(this.dead||token!==this.selection||error?.name==='AbortError')return;
+      // Embedded/older browsers can expose the API but disallow the picker.
+      if(error?.name==='SecurityError'||error?.name==='NotAllowedError'){fallback();return;}
+      this.report('romError',error.message);
+    }
+  }
+  async open(file,{handle=null,expectedHash=null,automatic=false,selection=null,automaticEpoch=this.automaticROMEpoch}={}){if(!file||!this.state.ready||this.state.busy)return false;
+    const token=selection??++this.selection;if(token!==this.selection)return false;
+    const current=()=>!this.dead&&token===this.selection&&(!automatic||(this.state.prefs.rememberROM&&automaticEpoch===this.automaticROMEpoch));
+    if(!current())return false;
+    if(this.state.loaded){if(automatic)return false;this.send('pause');if(!await this.ask('open','replaceMemory','open','cancel'))return false;}
+    if(!current())return false;
+    this.patch({busy:true,romIssue:null});this.send('pause');
     try{if(!CALCULATORS.some(c=>c.bytes===file.size))throw Error('Expected a complete 1 MiB or 2 MiB NOR.');
-      const rom=await file.arrayBuffer(),model=await identifyROM(rom);
-      if(this.dead||token!==this.selection)return;this.create(model,rom);
-    }catch(e){if(!this.dead&&token===this.selection){this.patch({busy:false});this.report('romError',e.message);}}
+      const rom=await file.arrayBuffer();
+      if(!current()){if(!this.dead&&token===this.selection)this.patch({busy:false});return false;}
+      const model=await identifyROM(rom);
+      if(!current()){if(!this.dead&&token===this.selection)this.patch({busy:false});return false;}
+      if(expectedHash&&model.hash!==expectedHash)throw new ROMAccessError('changed');
+      this.create(model,rom);
+      this.currentROM={file,handle,model};this.patch({romSource:{name:file.name,kind:handle?'handle':'copy'}});
+      void this.rememberCurrentROM();return true;
+    }catch(e){if(!this.dead&&token===this.selection){this.patch({busy:false});if(!current())return false;
+      if(expectedHash)this.patch({romIssue:{code:e.code==='changed'?'changed':'invalid',name:file.name,model:this.state.model.id}});
+      else this.report('romError',e.message);}return false;}
+  }
+  async restoreRememberedROMs(){
+    if(!this.romStore)return;
+    const token=this.selection,epoch=this.romStorageEpoch;
+    try{
+      const {records,last}=await this.romStore.list();if(this.dead||epoch!==this.romStorageEpoch)return;
+      this.romRecords=new Map(records.map(r=>[r.model,r]));this.patch({rememberedROMs:records.map(romRecordInfo)});
+      if(last&&this.state.prefs.rememberROM&&token===this.selection&&!this.state.loaded&&!this.state.busy)
+        await this.openRememberedROM(last.model,{automatic:true});
+    }catch(error){if(!this.dead&&epoch===this.romStorageEpoch)this.patch({romIssue:{code:'storage',name:''}});}
+  }
+  async openRememberedROM(model,{automatic=false}={}){
+    const record=this.romRecords.get(model);if(!record||this.dead||!this.state.ready||this.state.busy||(automatic&&(this.state.loaded||!this.state.prefs.rememberROM)))return false;
+    const token=++this.selection,automaticEpoch=this.automaticROMEpoch;this.patch({romIssue:null});
+    const current=()=>!this.dead&&token===this.selection&&(!automatic||(this.state.prefs.rememberROM&&automaticEpoch===this.automaticROMEpoch));
+    try{
+      const file=await readRememberedROM(record,{request:!automatic});
+      if(!current())return false;
+      return await this.open(file,{handle:record.kind==='handle'?record.handle:null,expectedHash:record.hash,automatic,selection:token,automaticEpoch});
+    }catch(error){if(current())this.patch({romIssue:{code:error.code||'missing',name:record.name,model}});return false;}
+  }
+  async rememberCurrentROM(){
+    const selected=this.currentROM,epoch=this.romStorageEpoch;
+    if(!selected||!this.romStore||!this.state.prefs.rememberROM)return;
+    const current=()=>!this.dead&&selected===this.currentROM&&epoch===this.romStorageEpoch&&this.state.prefs.rememberROM;
+    try{
+      const record=await this.romStore.remember(selected.model,selected.file,selected.handle,current);if(!record||!current())return;
+      this.romRecords.set(record.model,record);this.patch({rememberedROMs:[...this.romRecords.values()].map(romRecordInfo)});
+    }catch(error){if(current())this.patch({romIssue:{code:'storage',name:selected.file.name}});}
+  }
+  async forgetROMs(){
+    if(!this.romStore||this.state.busy)return;
+    ++this.selection;++this.romStorageEpoch;
+    try{await this.romStore.clear();if(this.dead)return;this.romRecords.clear();this.patch({rememberedROMs:[],romIssue:null});}
+    catch(error){if(!this.dead)this.patch({romIssue:{code:'storage',name:''}});}
   }
   async select(id){const model=CALCULATORS.find(c=>c.id===Number(id));if(!model||this.state.busy)return;
     if(this.state.loaded){this.pause();if(!await this.ask('model','replaceMemory','switch','cancel'))return;}
-    ++this.selection;this.create(model);
+    ++this.selection;this.currentROM=null;this.patch({romSource:null,romIssue:null});this.create(model);
+    if(this.state.prefs.rememberROM)void this.openRememberedROM(model.id,{automatic:true});
   }
   toggle(){if(!this.state.loaded||this.state.busy||this.state.stopped)return;if(this.state.running)this.pause();else{this.unlockAudio();this.send('run');}}
   pause(){if(this.state.loaded){this.cancelTransfer();this.send('pause');}}
   release(){if(this.state.loaded)this.send('release');}
   tap(scans){if(this.state.loaded&&this.state.running&&!this.state.busy&&!this.state.stopped){this.unlockAudio();this.send('tap-sequence',{scans});}}
+  systemChord(action){const s=this.state;if(!['self-test','warm-restart'].includes(action)||!s.loaded||s.busy||s.stopped||s.transfer?.active||s.uploadBatch?.active||s.hostBridge?.active)return;
+    this.unlockAudio();if(!s.running)this.send('run');this.send('system-chord',{action});}
   async restart(){if(!this.state.loaded||this.state.busy)return;this.pause();
     if(await this.ask('restart','clearMemory','restart','cancel')){this.autoPending=null;this.send('reset');this.send('configure',{speed:this.state.prefs.speed,transferUnlimited:this.state.prefs.transferUnlimited,sound:this.state.prefs.sound});if(this.mayRun(this.state.prefs))this.send('run');}}
   save(){if(!this.state.loaded||this.state.busy)return;this.cancelTransfer();this.autoPending=null;this.patch({busy:true});this.send('checkpoint-save');}
@@ -76,31 +149,44 @@ export class CalculatorController {
       if(!this.dead&&token===this.generation)this.send('checkpoint-load',{file:bytes});
     }catch(e){if(!this.dead&&token===this.generation){this.patch({busy:false});this.report('sessionError',e.message);}}
   }
-  async insertSD(file=null,writeProtected=false){
+  async insertSD(file=null,writeProtected=false,association=null){
     const s=this.state;if(this.dead||!s.loaded||s.busy||![5,6].includes(s.model.id)||s.sd?.present||s.transfer?.active||s.uploadBatch?.active)return;
-    const token=this.generation;this.autoPending=null;this.patch({busy:true});
+    if(s.hostBridge?.active){this.report('sdHostBridgeBusy');return;}
+    const token=this.generation;this.autoPending=null;this.sdInsertDirectory=association;this.patch({busy:true});
     try{
       if(file)validateSDSize(file.size);
       const bytes=file?new Uint8Array(await file.arrayBuffer()):createSDImage();
       validateSDSize(bytes.length);
       if(this.dead||token!==this.generation)return;
+      if(this.state.hostBridge?.active)throw Object.assign(new Error(),{code:'hostBridgeBusy'});
       this.send('sd-insert',{bytes,writeProtected:Boolean(writeProtected),name:sdImageName(file?.name)});
-    }catch(e){if(!this.dead&&token===this.generation){this.patch({busy:false});this.report('sdError',e.message);}}
+    }catch(e){if(!this.dead&&token===this.generation){this.sdInsertDirectory=null;this.patch({busy:false});this.report(e.code==='hostBridgeBusy'?'sdHostBridgeBusy':'sdError',e.message);}}
   }
   exportSD(){
     const s=this.state;if(!s.loaded||s.busy||!s.sd?.present||s.transfer?.active||s.uploadBatch?.active)return;
+    if(s.hostBridge?.active){this.report('sdHostBridgeBusy');return;}
     this.patch({busy:true});this.send('sd-export');
+  }
+  editSD(){
+    const s=this.state;if(this.dead||!s.loaded||s.busy||!s.sd?.present||s.transfer?.active||s.uploadBatch?.active)return Promise.resolve(null);
+    if(s.hostBridge?.active){this.report('sdHostBridgeBusy');return Promise.resolve(null);}
+    this.autoPending=null;this.patch({busy:true});
+    return new Promise(resolve=>{this.sdEditPending=resolve;this.send('sd-edit');});
   }
   async ejectSD(){
     const s=this.state;if(!s.loaded||s.busy||!s.sd?.present||s.transfer?.active||s.uploadBatch?.active)return;
+    if(s.hostBridge?.active){this.report('sdHostBridgeBusy');return;}
     const token=this.generation;
     if(s.sd.dirty&&!await this.ask('sdEject','sdEjectConfirm','sdEject','cancel'))return;
     if(this.dead||token!==this.generation)return;
+    if(this.state.hostBridge?.active){this.report('sdHostBridgeBusy');return;}
     this.autoPending=null;this.patch({busy:true});this.send('sd-eject');
   }
   setPreferences(value){const previous=this.state.prefs;const prefs=validatePreferences(value);this.patch({prefs});this.audio.configure(prefs);if(prefs.sound&&!previous.sound)this.unlockAudio();this.send('configure',{speed:prefs.speed,transferUnlimited:prefs.transferUnlimited,sound:prefs.sound});
+    if(previous.rememberROM&&!prefs.rememberROM)++this.automaticROMEpoch;
     try{writePreferences(this.storage,prefs);}catch(e){this.report('storageError',e.message);}
     if(prefs.autosave&&!previous.autosave)this.autoBlocked=false;
+    if(prefs.rememberROM&&!previous.rememberROM)void this.rememberCurrentROM();
     this.scheduleAuto();
   }
   async loadedROM(){const token=this.generation;this.awaitingRestore=true;
@@ -116,7 +202,7 @@ export class CalculatorController {
   scheduleAuto(delay=this.state.prefs.interval*1000){clearTimeout(this.autoTimer);
     if(!this.dead&&this.state.prefs.autosave&&this.state.loaded&&!this.autoBlocked&&!this.awaitingRestore)
       this.autoTimer=setTimeout(()=>this.requestAuto(),delay);}
-  requestAuto(){const s=this.state;if(!s.prefs.autosave||(!this.storage&&!this.autoStore)||!s.loaded||s.busy||s.stopped||this.autoBlocked||this.awaitingRestore){this.scheduleAuto();return;}
+  requestAuto(){const s=this.state;if(!s.prefs.autosave||(!this.storage&&!this.autoStore)||!s.loaded||s.busy||s.stopped||s.hostBridge?.active||this.autoBlocked||this.awaitingRestore){this.scheduleAuto();return;}
     if(this.autoPending)return;this.autoPending={request:++this.autoRequest,generation:this.generation,model:s.model};this.send('checkpoint-auto',{request:this.autoRequest});}
   async acceptAuto(data){const r=this.autoPending;if(!r||r.request!==data.request||r.generation!==this.generation)return;
     const valid=()=>!this.dead&&this.state.prefs.autosave&&r.generation===this.generation&&this.autoPending===r;
@@ -139,15 +225,24 @@ export class CalculatorController {
   log(text){this.patch({log:(this.state.log+text+'\n').slice(-16000)});}
   connectLink(transport,connected){
     if(!['serial','usb'].includes(transport)||!this.state.ready||!this.state.loaded||this.state.busy)return;
+    if(this.state.hostBridge?.active){this.report('hostBridgeDisconnectFirst');return;}
     if(!connected&&this.state.transfer?.transport===transport)this.cancelTransfer();
     if(connected&&!this.state.running&&!this.state.stopped)this.send('run');
     this.send(transport==='usb'?'usb-connect':'serial-connect',{connected});
   }
+  connectHostBridge(address,token){
+    const s=this.state;if(this.dead||!s.ready||!s.loaded||s.busy||s.stopped||s.hostBridge?.active)return;
+    try{address=bridgeAddress(address);token=bridgeToken(token);}catch(error){this.patch({hostBridge:{...bridgeDisconnected(),phase:'error',errorCode:error.code}});return;}
+    this.cancelTransfer();this.linksReset();this.patch({hostBridge:{...bridgeDisconnected(),active:true,phase:'connecting'}});
+    if(!s.running)this.send('run');this.send('host-bridge-start',{address,token,request:++this.hostBridgeRequest});
+  }
+  disconnectHostBridge(){if(!this.state.hostBridge?.active)return;++this.hostBridgeRequest;this.send('host-bridge-stop');this.patch({hostBridge:bridgeDisconnected()});}
   remainingReceiveBudget(){
     return {files:MAX_RECEIVE_FILES-this.received.size,
       bytes:MAX_RECEIVE_BYTES-[...this.received.values()].reduce((n,f)=>n+f.bytes.length,0)};
   }
   async startTransfer(mode,transport,{file=null,name=''}={}){
+    if(this.state.hostBridge?.active){this.report('hostBridgeDisconnectFirst');return;}
     if(transferCapabilities(this.state.model.id,transport).serve&&['send','receive'].includes(mode))return this.startHp39Server(transport,mode==='send'?[{file,name:name||file?.name}]:[]);
     const s=this.state;if(this.dead||!s.ready||!s.loaded||s.busy||s.stopped||s.transfer?.active||s.uploadBatch?.active)return;
     const token=this.generation,request=++this.transferRequest;
@@ -177,6 +272,7 @@ export class CalculatorController {
     }
   }
   async startHp39Server(transport,files=[],{protocol='disk'}={}){
+    if(this.state.hostBridge?.active){this.report('hostBridgeDisconnectFirst');return;}
     const s=this.state;if(this.dead||!s.ready||!s.loaded||s.busy||s.stopped||s.transfer?.active||s.uploadBatch?.active)return;
     const generation=this.generation,request=++this.transferRequest;
     this.uploadQueue=null;this.patch({uploadBatch:null});
@@ -261,6 +357,7 @@ export class CalculatorController {
     }
   }
   async startUploadBatch(transport,files){
+    if(this.state.hostBridge?.active){this.report('hostBridgeDisconnectFirst');return;}
     if(transferCapabilities(this.state.model.id,transport).serve)return this.startHp39Server(transport,files);
     const s=this.state;if(this.dead||!s.ready||!s.loaded||s.busy||s.stopped||s.transfer?.active||s.uploadBatch?.active)return;
     const generation=this.generation,request=++this.transferRequest;let queue=null;
@@ -479,8 +576,8 @@ export class CalculatorController {
   }
   clearTransferredFiles(){if(this.state.transfer?.active)return;this.received.clear();this.patch({receivedFiles:[],transferListing:''});}
   receive(data){if(this.dead||!data)return;
-    if(data.type==='ready'){this.patch({ready:true});this.create();return;}
-    if(data.type==='fatal'){this.audioLive=false;this.audio.reset();this.endTransfer('error','The calculator worker stopped.');this.patch({ready:false,loaded:false,running:false,busy:false});this.report('workerFailure',data.message);return;}
+    if(data.type==='ready'){this.patch({ready:true});this.create();void this.restoreRememberedROMs();return;}
+    if(data.type==='fatal'){this.audioLive=false;this.audio.reset();this.endTransfer('error','The calculator worker stopped.');this.patch({ready:false,loaded:false,running:false,busy:false,hostBridge:bridgeDisconnected()});this.report('workerFailure',data.message);return;}
     if(data.generation!==this.generation)return;
     switch(data.type){
       case 'created':if(this.pending){const rom=this.pending;this.pending=null;this.send('load',{rom});}else this.patch({busy:false});break;
@@ -489,7 +586,7 @@ export class CalculatorController {
         if(!data.running||data.stopped)this.audio.reset();
         if(data.stopped)this.endTransfer('error','The calculator stopped.');
         const sd=data.sd===undefined?this.state.sd:JSON.stringify(data.sd)===JSON.stringify(this.state.sd)?this.state.sd:data.sd;
-        this.patch({loaded:data.loaded,running:data.running,stopped:data.stopped,sd,
+        this.patch({loaded:data.loaded,running:data.running,stopped:data.stopped,sd,...(data.stopped?{hostBridge:bridgeDisconnected()}:{}),
           ...(data.effectiveSpeed!==undefined?{effectiveSpeed:data.effectiveSpeed,transferBoosted:Boolean(data.transferBoosted)}:{})});for(const f of this.frames)f(data);
         if(stopped)this.report('compatibilityError');break;}
       case 'checkpoint-auto-saved':void this.acceptAuto(data);break;
@@ -497,12 +594,20 @@ export class CalculatorController {
       case 'autosave-error':this.autoPending=null;this.autoBlocked=true;this.patch({note:'autoStopped'});this.report('storageError',data.message);break;
       case 'checkpoint-saved':this.autoPending=null;this.patch({busy:false,running:false,note:'exported'});
         Promise.resolve(this.download(data.file,sessionName(this.state.model.id,this.now()))).catch(e=>this.report('saveError',e.message));this.scheduleAuto();break;
-      case 'checkpoint-restored':this.patch({sdName:'orchard-sd.img'});this.autoPending=null;this.awaitingRestore=false;this.patch({busy:false,running:false,note:'restored'});this.scheduleAuto();break;
-      case 'error':this.audioLive=false;this.audio.reset();this.endTransfer('error','The calculator operation stopped.');if(this.awaitingRestore)this.autoBlocked=true;this.autoPending=null;this.awaitingRestore=false;this.patch({busy:false,running:false});this.report('operationFailed',data.message);this.scheduleAuto();break;
-      case 'sd-complete':this.patch({busy:false,note:data.action==='insert'?'sdInserted':'sdEjected',...(data.action==='insert'?{sdName:sdImageName(data.name)}:{})});this.scheduleAuto();break;
+      case 'checkpoint-restored':this.sdDirectory=null;this.patch({sdName:'orchard-sd.img'});this.autoPending=null;this.awaitingRestore=false;this.patch({busy:false,running:false,note:'restored'});this.scheduleAuto();break;
+      case 'error':this.audioLive=false;this.audio.reset();this.endTransfer('error','The calculator operation stopped.');if(this.awaitingRestore)this.autoBlocked=true;this.autoPending=null;this.awaitingRestore=false;this.patch({busy:false,running:false,hostBridge:bridgeDisconnected()});this.report('operationFailed',data.message);this.scheduleAuto();break;
+      case 'sd-complete':if(data.action==='insert'){this.sdDirectory=this.sdInsertDirectory;this.sdInsertDirectory=null;}this.patch({busy:false,note:data.action==='insert'?'sdInserted':'sdEjected',...(data.action==='insert'?{sdName:sdImageName(data.name)}:{})});this.scheduleAuto();break;
       case 'sd-exported':this.patch({busy:false,note:'sdExported'});Promise.resolve(this.download(data.bytes,sdImageName(this.state.sdName))).catch(e=>this.report('saveError',e.message));break;
-      case 'sd-error':this.patch({busy:false});this.report('sdError',data.message);this.scheduleAuto();break;
+      case 'sd-edited':{
+        const draft={bytes:data.bytes,name:this.state.sdName,association:this.sdDirectory,writeProtected:Boolean(this.state.sd?.writeProtected)};
+        const resolve=this.sdEditPending;this.sdEditPending=null;
+        this.patch({busy:false,sd:null,note:'sdEjected'});resolve?.(draft);this.scheduleAuto();break;
+      }
+      case 'sd-error':this.sdEditPending?.(null);this.sdEditPending=null;this.sdInsertDirectory=null;this.patch({busy:false});this.report(data.code==='hostBridgeBusy'?'sdHostBridgeBusy':['format','damaged','limit'].includes(data.code)?'sdFs_'+data.code:'sdError',data.code==='hostBridgeBusy'?undefined:data.message);this.scheduleAuto();break;
       case 'links-reset':this.linksReset();break;
+      case 'host-bridge-status':if(data.request!==undefined&&data.request!==this.hostBridgeRequest)break;
+        this.patch({hostBridge:{active:Boolean(data.active),phase:data.phase,ready:Boolean(data.ready),attached:Boolean(data.attached),usbipPort:data.usbipPort??null,errorCode:data.errorCode??null}});break;
+      case 'host-bridge-conflict':this.report('hostBridgeDisconnectFirst');break;
       case 'serial-status':this.patch({serial:data.connected});if(!data.connected&&this.state.transfer?.transport==='serial')this.cancelTransfer();break;
       case 'uart-output':this.log('RX '+Array.from(data.bytes,b=>b.toString(16).padStart(2,'0')).join(' '));break;
       case 'uart-sent':this.log(`TX ${data.accepted}/${data.requested}`);break;
@@ -515,6 +620,7 @@ export class CalculatorController {
     }
   }
   dispose(){if(this.dead)return;this.dead=true;++this.selection;clearTimeout(this.autoTimer);this.autoPending=null;
+    this.sdEditPending?.(null);this.sdEditPending=null;this.sdDirectory=null;this.sdInsertDirectory=null;
     this.state.dialog?.resolve(null);for(const d of this.dialogs)d.resolve(null);this.dialogs=[];
     ++this.transferRequest;this.uploadQueue=null;this.received.clear();this.audioLive=false;this.audio.dispose();this.worker.terminate();this.listeners.clear();this.frames.clear();}
 }

@@ -39,7 +39,7 @@ Open the printed localhost URL (default port 8123). In a downloaded web build,
 only Node.js 22+ is needed: extract it and run `node serve.mjs` in that folder.
 Do not use `file://`. No ROM is bundled or uploaded.
 
-The default page is a calculator: **Open ROM**, Pause/Resume, Restart and
+The default page is a calculator: **Open ROM**, Pause/Resume, Restart, Self-test and
 physical keys. It detects the four supported ROM identities and selects their
 compatibility settings automatically. CPU counters, boot setup and internal
 research controls live in the separate **[developer workbench](https://maxmixalex.github.io/orchard-emu/emulator/debug.html)**.
@@ -51,16 +51,29 @@ Resume, to continue without another cold boot. Automatic local saves are off
 by default and can be enabled in **Settings → Storage**; loading the same ROM
 then offers to restore its saved state. See [saved sessions](docs/development/sessions.md).
 
-On HP49g+, **SD card** creates a 16 MiB FAT16 card or imports a 1–32 MiB
-raw image; the original calculator accesses it as port 3. **Prepare files**
-opens an unmounted FAT16 image for directory browsing, file extraction, folder
-creation, file addition, file/folder rename, and deletion of files or empty
-folders. Changes are transactional. Review the explicit 8.3 destination
-names, then insert the prepared image. File selection has no extension filter.
-Export the image
-for a separate card backup. Manual and automatic sessions include the whole
-inserted card. HP48gII has no SD slot; HP50g still requires its own full-ROM
-acceptance before it can join the supported calculator catalog.
+**Settings → Storage → Remember local ROMs** is enabled by default and remembers
+one ROM per model. Supported file pickers retain a read-only reference to the
+original file; the standard file input stores a clearly labelled browser-local
+copy instead. The last ROM reopens when permission allows. If the browser needs
+permission again, use **Continue reading**; startup never opens a permission prompt.
+The switch and **Forget saved ROM locations and copies** are separate from calculator-state
+autosave. ROMs remain on this device and outside exported sessions. See
+[local ROM storage](docs/development/rom-storage.md).
+
+On HP49g+, **SD card** opens a persistent sidebar. It creates a 16 MiB FAT16
+card or imports a supported 1–32 MiB raw image; the original calculator accesses
+it as port 3. **Prepare card files** browses, extracts, adds, renames and deletes
+files or empty folders in an unmounted draft. **Choose local folder** recursively
+copies a directory into a 16 or 32 MiB card, with an explicit preview of 8.3
+aliases for long or non-ASCII names. Files retain their exact bytes and accept
+any extension. With direct directory access, **Eject to edit / sync** enables
+explicit re-read and write-back; conflicts preserve existing local files, and
+card deletions never silently delete host files. The association lasts for the
+page session. See [directory SD cards](docs/development/directory-sd.md).
+
+Export the image for a separate card backup. Manual and automatic sessions
+include the whole inserted card. HP48gII has no SD slot; HP50g still requires
+its own full-ROM acceptance before it can join the supported calculator catalog.
 
 [Performance and benchmarks](docs/development/performance.md) ·
 [Browser usage](docs/development/web.md) ·
@@ -93,7 +106,10 @@ separate developer tool, never a linked dependency of the MIT runtime.
 [Roadmap](docs/development/roadmap.md) ·
 [Board](docs/development/board.md) ·
 [Validation](docs/development/validation.md) ·
-[ROM provenance](docs/development/native-roms.md)
+[ROM provenance](docs/development/native-roms.md) ·
+[Keyboard settings](docs/development/keyboard-settings.md) ·
+[Local ROM storage](docs/development/rom-storage.md) ·
+[Directory SD cards](docs/development/directory-sd.md)
 
 Zensical configuration is in `zensical.toml`; install
 `tools/requirements-docs.txt` in a virtual environment and run
@@ -111,11 +127,13 @@ in `licenses/hp-calcs-svg`; see [licensing](docs/development/licensing.md).
 
 Settings switches immersive, **immersive landscape** and traditional view,
 scale, pause-on-focus/background,
-per-model key sequences and optional automatic local saves. Normal uses a
+per-model key sequences, local ROM recall and optional automatic calculator
+saves. Normal uses a
 fixed functional time rate instead of running clocks at maximum host speed;
 physical timing is still being refined. CPU research details stay in the
 developer workbench. Save exports `<model>-<yyyymmdd-hhmmss>.ord`; Restore also
-accepts earlier `.orchard` files. No ROM is stored or uploaded.
+accepts earlier `.orchard` files. Remembered ROMs stay in the browser's local
+storage; exported sessions omit ROMs and no ROM is uploaded.
 Landscape splits the unchanged skin below the six FN keys, keeping those
 soft keys with the screen on the left and the remaining keyboard on the right.
 [Firmware sound](docs/development/buzzer.md)
@@ -124,7 +142,9 @@ The original HP49g+ `BEEP` path now uses the shared register-derived peripheral
 clock and buffered PWM counters. Physical board clock and speaker calibration
 remain open.
 
-Connections adds a Files tab for HP48gII USB/serial and HP49g+ USB object
+Connections and SD share a persistent sidebar, leaving the calculator available
+for stock RECV and file-manager actions. Switching tabs or hiding the sidebar
+retains in-progress selections and drafts. Connections adds a Files tab for HP48gII USB/serial and HP49g+ USB object
 upload, named retrieval and explicit local download. Start Kermit SERVER with
 the matching connection selected. These supported links also provide Receive,
 directory and FINISH. The file chooser accepts up to 16 objects per batch
@@ -180,15 +200,32 @@ The [HP49g+ capture package](docs/development/flash-capture.md) has now produced
 the user's 2 MiB image used by the new model's startup and transfer validation.
 
 
-## React user interface and host prototype
+## React user interface and local device bridge
 
-The user frontend now uses React + Mantine, with English/Chinese settings, a
-clickable PC-keyboard editor, traditional Shift/Alpha legends and matrix PNG
-capture. Existing `.ord`/legacy sessions and opt-in autosave remain compatible.
-Live LCD drawing reuses its image and palette buffers, and the traditional
-keypad is created when that view is first selected. These reduce display
-allocation and hidden layout work; scene latency remains a separate benchmark.
-The independent loopback USB/IP/raw serial package (`npm run build:host`) is
-experimental: generated ARM/TCP tests pass, but OS attachment and Conn3x are
-not yet verified. See [frontend](docs/development/react-ui.md) and
+The user frontend uses React + Mantine, with English/Chinese settings,
+traditional Shift/Alpha legends and matrix PNG capture. The wider keyboard
+editor highlights bound PC keys, shows bindings on a clickable calculator
+keypad, and keeps each model's mappings independent. Default text keys follow
+the operating system's resolved characters; available layout labels and a
+capture fallback avoid assuming QWERTY. Existing `.ord`/legacy sessions and
+opt-in autosave remain compatible.
+
+The Worker publishes one sampled image per observed completed LCD scan, and
+the Canvas coalesces updates at browser animation frames. This prevents UI
+requests from showing several different partial RAM redraws during one scan.
+Live display, captures and recording use the same published image; genuine
+blank frames remain visible. See [LCD presentation](docs/development/lcd.md#host-presentation-synchronized-to-the-scan-counter)
+for its timing and physical-panel limits.
+The loopback host package (`npm run build:host`) now also connects the current
+browser calculator to a local USB/IP client: run `node host/bridge.mjs`, then
+use **Connections → Local device** with its printed address and token. It
+forwards requests to the same Worker and memory, including genuine USB errors,
+cancellation and re-enumeration after a guest reset. The separate command-line
+calculator and raw serial entry point remain available. Generated guests pass
+real Chrome Worker/HTTP/USB-IP tests, and unchanged HP48gII/HP49g+ ROMs complete
+object round trips through the same bridge modules in Node. Original HP49g+
+also completes exact SEND/GET/FINISH through the production Chrome page and
+Worker, then returns to arithmetic. OS attachment,
+HP driver binding and unmodified Conn3x still require a
+supported computer. See [frontend](docs/development/react-ui.md) and
 [host mode](docs/development/host-mode.md). No firmware or driver is bundled.

@@ -7,14 +7,15 @@ export function validateSDSize(length){
 }
 // A standard MBR with one FAT16 partition. Firmware owns all subsequent
 // filesystem reads/writes; this formatter never edits calculator memory.
-export function createSDImage(){
-  const image=new Uint8Array(16*1024*1024),v=new DataView(image.buffer);
+export function createSDImage(bytes=16*1024*1024){
+  if(![16*1024*1024,32*1024*1024].includes(bytes))throw new Error('New FAT16 cards use 16 or 32 MiB.');
+  const image=new Uint8Array(bytes),v=new DataView(image.buffer);
   const sector=512,start=1,total=image.length/sector-start,cluster=2,rootEntries=512;
   const reserved=1,rootSectors=rootEntries*32/sector;
   let fatSectors=1;
   while(Math.ceil((Math.floor((total-reserved-rootSectors-2*fatSectors)/cluster)+2)*2/sector)>fatSectors)fatSectors++;
   const put=(offset,text)=>image.set(new TextEncoder().encode(text),offset);
-  image.set([0,0,2,0,6,63,32,15],446); // LBA 1..32767, matching the BPB's 64 heads / 32 sectors.
+  image.set([0,0,2,0,6,63,32,bytes/(64*32*sector)-1],446); // Matches the BPB's 64 heads / 32 sectors.
   v.setUint32(454,start,true);v.setUint32(458,total,true);v.setUint16(510,0xaa55,true);
   const b=start*sector;
   image.set([0xeb,0x3c,0x90],b);put(b+3,'ORCHARD ');

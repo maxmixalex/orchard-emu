@@ -1,0 +1,473 @@
+{
+  "schema": "orchard-release-validation-r22",
+  "date": "2026-10-23",
+  "base_revision": "2ae6512e1cdb8efc3dd0633b8d5914ced3f11342",
+  "scope": "Local final working-tree acceptance. Exact GitHub Build, merge, Pages and independent live-site checks are recorded separately in the release pull request; this record does not assert a future deployment.",
+  "production": {
+    "asset_count": 47,
+    "assets": {
+      "LICENSE": {
+        "bytes": 1077,
+        "sha256": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f"
+      },
+      "README.txt": {
+        "bytes": 6088,
+        "sha256": "6b3fc4e05a8b0d2f95971630d1e2598e8dd5de7ef9e5acc4128b07f7ab0efe5c"
+      },
+      "buzzer-audio.js": {
+        "bytes": 6740,
+        "sha256": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e"
+      },
+      "buzzer-worker.js": {
+        "bytes": 1126,
+        "sha256": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591"
+      },
+      "calculator.css": {
+        "bytes": 250060,
+        "sha256": "586e2389d0fb0056df96bb2f8034f595d748bc7dc49419910e09cd1a003cc9de"
+      },
+      "calculator.js": {
+        "bytes": 813792,
+        "sha256": "b3a76c8331162bbcae764e25492dcbbe84541b22a2a4c076faef594b792f7e05"
+      },
+      "catalog.js": {
+        "bytes": 1614,
+        "sha256": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8"
+      },
+      "debug.html": {
+        "bytes": 7842,
+        "sha256": "134082d0e77b5fae7486ce9783610edaa448a7060fe95d19ae1d27d79b54682b"
+      },
+      "file-transfer.js": {
+        "bytes": 8448,
+        "sha256": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78"
+      },
+      "host-bridge-client.js": {
+        "bytes": 9009,
+        "sha256": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277"
+      },
+      "host-bridge-protocol.js": {
+        "bytes": 1513,
+        "sha256": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88"
+      },
+      "hp39-archive.js": {
+        "bytes": 10154,
+        "sha256": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a"
+      },
+      "hp39-files.js": {
+        "bytes": 8990,
+        "sha256": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3"
+      },
+      "hp39-transfer.js": {
+        "bytes": 14282,
+        "sha256": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e"
+      },
+      "hp39-wire.js": {
+        "bytes": 8782,
+        "sha256": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6"
+      },
+      "hp48.js": {
+        "bytes": 6543,
+        "sha256": "bd684d892870ab30a33f9cc2db28c76b8996306e2d3eabdc8dfc539060b0bf8c"
+      },
+      "index.html": {
+        "bytes": 386,
+        "sha256": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282"
+      },
+      "kermit.js": {
+        "bytes": 22383,
+        "sha256": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3"
+      },
+      "lcd-frames.js": {
+        "bytes": 1819,
+        "sha256": "fc96250cde32d76f14a5418a4b6e7b3a7de45b044a7bce514f4b0b0a70c4798d"
+      },
+      "licenses/frontend.txt": {
+        "bytes": 28034,
+        "sha256": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd"
+      },
+      "licenses/hp-calcs-svg/LICENSE.txt": {
+        "bytes": 11358,
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      },
+      "licenses/hp-calcs-svg/NOTICE.txt": {
+        "bytes": 1280,
+        "sha256": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868"
+      },
+      "licenses/hp-calcs-svg/README.md": {
+        "bytes": 567,
+        "sha256": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c"
+      },
+      "lifecycle.js": {
+        "bytes": 1258,
+        "sha256": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013"
+      },
+      "main.js": {
+        "bytes": 13307,
+        "sha256": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35"
+      },
+      "orchard.wasm": {
+        "bytes": 138565,
+        "sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189"
+      },
+      "pacing.js": {
+        "bytes": 1274,
+        "sha256": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952"
+      },
+      "preferences.js": {
+        "bytes": 9877,
+        "sha256": "d342707ecf2467724352c1beaec90e6ca7ccc02634d9084f2ca7c57a0753a7a8"
+      },
+      "sd-card.js": {
+        "bytes": 2749,
+        "sha256": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003"
+      },
+      "sd-filesystem.js": {
+        "bytes": 20541,
+        "sha256": "e3e37332ccc10769ff966102ac513fe966d6fafc10c5d91cac948558aef3c816"
+      },
+      "serve.mjs": {
+        "bytes": 1689,
+        "sha256": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7"
+      },
+      "session.js": {
+        "bytes": 2546,
+        "sha256": "c4dd1c9e78b1b2d95236f62450d45df10b9eeb1829c36bb7f521f19bafec2dcd"
+      },
+      "skin.js": {
+        "bytes": 6936,
+        "sha256": "b63ffb7b17bcb971d283daea4672f93dfb84ad9fc79fa09aa0bd2dce7b7416d0"
+      },
+      "skins/hp39gplus.svg": {
+        "bytes": 117738,
+        "sha256": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26"
+      },
+      "skins/hp39gs.svg": {
+        "bytes": 117582,
+        "sha256": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458"
+      },
+      "skins/hp40gs.svg": {
+        "bytes": 116791,
+        "sha256": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2"
+      },
+      "skins/hp48gii.svg": {
+        "bytes": 160533,
+        "sha256": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f"
+      },
+      "skins/hp49gplus.svg": {
+        "bytes": 160313,
+        "sha256": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71"
+      },
+      "skins/hp50g-blue.svg": {
+        "bytes": 160256,
+        "sha256": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e"
+      },
+      "skins/hp50g.svg": {
+        "bytes": 159981,
+        "sha256": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433"
+      },
+      "skins/manifest.json": {
+        "bytes": 98613,
+        "sha256": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75"
+      },
+      "style.css": {
+        "bytes": 10997,
+        "sha256": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86"
+      },
+      "task-scheduler.js": {
+        "bytes": 2145,
+        "sha256": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7"
+      },
+      "transfer-errors.js": {
+        "bytes": 681,
+        "sha256": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7"
+      },
+      "usb-device.js": {
+        "bytes": 5408,
+        "sha256": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e"
+      },
+      "virtual-usb.js": {
+        "bytes": 7099,
+        "sha256": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373"
+      },
+      "worker.js": {
+        "bytes": 22400,
+        "sha256": "504384b9baa0c11d1e0179932685293a6c0c1727a718ac027c452042cc7f82ea"
+      }
+    }
+  },
+  "source": {
+    "sha256": {
+      ".github/workflows/build.yml": "1e9c70ef2b8d1946c5a4c95b11c32b629191ee3efc35c83e6a9bd75f617231fa",
+      "CMakeLists.txt": "a7e0ef8a47feb107f390c16120d6a99ba7c6fa6317f373fb61037d7f3eeee2b7",
+      "host/README.md": "25304784434d4eca5c171545a50522ffe874c2aeff5e02e84aa394074248b611",
+      "host/bridge.mjs": "ff9197b965bab8980063632d146fece4cadddad2047bc444fd6414be33346c18",
+      "host/device.mjs": "c5fd6943a078be6596d0322aa56de16de3bbdd21e5a009c11fb703fc8d266b43",
+      "host/usbip.mjs": "abaddeb6feba190527094c3aa5a120aa408ebbfd7b995259f3e83e159fb586a0",
+      "include/orchard/orchard.h": "88c19b44c1fe38d715ce224544686abeea9c4ff8742b3bf9eaabec32cc9efcf3",
+      "package.json": "d4f47155da68c6d18e8ee2e27f46975bed77c7e0186e17697d845219132714c8",
+      "src/checkpoint.c": "8d815012cf7c949df813bf5448f833defe9ababcfd13687c3635ac64fc7f000e",
+      "src/internal.h": "0ffb4855f57646088be2c256a6de8ecc86782bba83f7c3b71d1476e1cb54f2ce",
+      "src/keyboard.c": "0c0b3c6ac3183fe66b3ab581ad8dccf538c6552ce4a9970f1e710f34ad3d116f",
+      "src/machine.c": "255919b1578c83a4c3acd2636e36632282d8fe469da6720244494a47cdb18e91",
+      "src/scheduler.c": "fd30a47391c57e216dd1c1985e00bede24c21c6e4a2fd0fbc6ee30ffbb04692b",
+      "src/soc.c": "eec13c65e36aae0d711c5d363bc118f4cd59cccb7341e6a7a8f17cf947e2ed9b",
+      "src/spi.c": "ac354d0131b903f1017cc7551f025a466aafb5989537c68186112087b03bf76e",
+      "src/watchdog.c": "00b4111a70f50dca5cdae27eaf7c10c0f687ddbaccd46bfb62b4f5997189e53c",
+      "tests/browser-components.py": "782c2f8927a109ec1323c0d72ab235641b376c1f88aab571f9aa4c7d69de911e",
+      "tests/browser-host-bridge-network.py": "1ab33aed1a39aa1ff7178288610639039c982447fd890acbd98b38b9667a4a98",
+      "tests/browser-host-bridge.py": "d23f135d23231d01ddbd01001fa9f3ce6d3462d225a866c0b25c625b2e6f530e",
+      "tests/browser-keyboard.py": "d0d693c687b72e77ce693b6b6cc777024f63874df2bcc9b6351c8adc0f51a92b",
+      "tests/browser-lcd.py": "e20e0252501d54e1ac5e128c84bdbc22cff900d1ef9bcd3bf36fc61f49a4a94f",
+      "tests/browser-sd-directory.py": "63ecfeea4df50e70acbdfcaad8772043c69d80984fb7d028a16678220e990497",
+      "tests/browser-sd-files.py": "c5d5d178e55775a790d6b5e7d88e76d579ec6333f74f5c010a04f3bd31314df3",
+      "tests/checkpoint-equivalence.mjs": "7c853eaacf16a74f2d88f11adb0b833c3e99bade3484701e81c2683e1f328eb9",
+      "tests/checkpoint.c": "133c803528a60eddb0ce55d4cb41985e997d5f56be736809c3ba93a94f1cf52f",
+      "tests/clock-domains.c": "d5c120c9d2cfe22b1b810dfb7404a30e679e4ed9bb4f9582ca25f9a4871e9d94",
+      "tests/file-transfer-worker.mjs": "48a5a3fdab3ce49f98d2ccd1d07a409dc0ebc3b8769fb65a21a1534519d81305",
+      "tests/host-bridge-client.mjs": "211701047496e51c1167cfcd58cd53f4c3a79ee7678a674550b36824bf8daff0",
+      "tests/host-bridge-helpers.mjs": "773d39ee6c61b1d8d3356d618b032d65d10ef292369f348ff4e5251f3e868169",
+      "tests/host-bridge-worker.mjs": "88fe49880abdf0a7bf99b536184e9bcb6f17c7d87fa394d8afbadb5559244e90",
+      "tests/host-bridge.mjs": "6e67cfd4cf0e35690023be435efce789108f87909e810dff2cb4d285f3cacda1",
+      "tests/keyboard-geometry.mjs": "f5e0dad3936e4c3da36db2e45e23a7468a733205fd436539e29546684da56a98",
+      "tests/lcd-browser-fixture.jsx": "031bc6043dfc35641bf576c4440367c9b4fec3a22baf23f32ccf13159b68a6f8",
+      "tests/lcd-publication.mjs": "2c531d1a23d1fa0d745b9b148467fbb34df5db32e01224e7c85cf6ccf44eb05e",
+      "tests/lcd-renderer.mjs": "4748a7baea5847ecde9174b57ab8de2a84ada94f7d38ce3041bf96a28622fc7a",
+      "tests/pacing-rtc.mjs": "5a6582db38343bae4aa35010da649f827338f213d979008607ce202231b5d8c3",
+      "tests/preferences.mjs": "149f4bb06aaa043bca3092e390b3f83153dfa633ee65cf5830b78ce09a87cdde",
+      "tests/pwm-clock.c": "ce52b54e7badc88f6e416a6eac4979746bfeba550616d6ed6d90832a61fad3aa",
+      "tests/recording.mjs": "e743829e5e4fd3a1bafe9c8529093070bed21306bf02bfcdfe6df1ca6fec755c",
+      "tests/regression.c": "bf1c03e59f683fbb8f8b6bac565be34fadf619dbb919c7609f29652abd327a5b",
+      "tests/rom-storage-browser.py": "e0fe41e784da26d158fef78425205de4742c5cf2c84752f9e87175787afc62a4",
+      "tests/rom-storage.mjs": "73b7e947fbce997104cc4b5cf87b2b26829ac691a91dc52a7f7177c7e0b07eca",
+      "tests/scheduler.c": "5e2e5e8cd68a3b00f13d06f7f7edd2e3354eee65bb64b22661b4bd9f016a751b",
+      "tests/sd-directory-fixture.jsx": "9444f939dd09d1ca260cd71d4c427e47a243235574f8cbb686ee351cb8a125ca",
+      "tests/sd-directory.mjs": "728d5164fb4f13c52bf3aff5655af6e9411942942f9818ca7ca5423a2faa6c07",
+      "tests/sd-files-controller.mjs": "38f558cd5b8cab8cd91d92d086f3e68176c215f3cefdc0db192fc0e94f960a0b",
+      "tests/sd-files-fixture.jsx": "b987d82b63399f88162f6872b1e3639b8cc824a2605f8343c1a8e77d12e00402",
+      "tests/sd-storage-browser.py": "6491893ed1744461be52fe9080eb75a8036f52347a3be0da0887df86c92932a6",
+      "tests/sd-worker.mjs": "27464f3b9be27e76f1455b3062e65df7d29424d9896afec84c8558b4d52b1ecc",
+      "tests/spi.c": "b6f931321a954e415701837e90b4424616bda06e0ca7f2cd835f31018f729b7d",
+      "tests/system-keys.mjs": "2b0c98909929c048f90aad8be7ca9c6dd290e3cb3bf48392fdaafcbd1bcbbee4",
+      "tests/timing.mjs": "9783cc9db7b1071aeaeeb6a68f3ae08b6255e93392049c8bc4a90c3b7234dae8",
+      "tests/usb-guest.S": "1a4f342f6557ee570881c5bc7385ed5e6f687e9d9daaf32928137dab7c68da36",
+      "tests/usb.c": "8adb59d82569451b6d9b111aa8d45df1b7e9da8fdc7717ca445b37e073dbdf80",
+      "tests/watchdog-reset.c": "a3d63f080a2e5bea805370ca94a468a30f94583388a35fedb69e9c607cee0093",
+      "tests/worker-pacing.mjs": "c8864bff6ae2d45d8c6409d066eb068fb067974fac4895c809c590c5f18b02cf",
+      "tools/build-arm-block-profile.mjs": "90efbea217760f31ca571f59f72783429109f7c091d178cf27bab402ae785041",
+      "tools/build-host.mjs": "3a3364b81a4694487dc18f62e5c55539cb6dac7b32897e37e3d7aacd096fedb3",
+      "tools/build-web.mjs": "c7211677fe32264cfbc68a45f908987ae78fc198325c6d1f78b8ebc4a6d8aaaf",
+      "tools/check-clock-domains.mjs": "dc29e73f92949f4c05164442d4e8c6d19567dbe4d0eeae7a023517dc94d5d258",
+      "tools/check-wasm.mjs": "d5a6c73adafea9c2459c8b617a890d851b2fe4aa526b8e597bb28c7ed2f16af8",
+      "tools/checkpoint-equivalence.mjs": "222a31caf259a8c944c915ba9750faeeb948382d35a5472a5b78311ded302770",
+      "tools/pages.py": "05b6404978a04ce4d221e408d45b227af878c0da5d2380a2598f5a54e043257c",
+      "tools/probe-browser-host-device.py": "03163e792f009d555ebb6be9600e44ea037495d6786978b33397b10777f5ca5e",
+      "tools/probe-browser-latency.py": "d93c3d50acda0c56d9a099ec16deb11fa9c1bb31d3df92dd316d2ae1a74c5d96",
+      "tools/probe-file-batch-browser.py": "da76a9d0f4a756b66db75ec51eec3c6cb281c6138cf2445836c30d61a030f502",
+      "tools/probe-file-transfer-browser.py": "9d759a46372326950f44d1346076430c139b15c7e4b6384363910019573e68ca",
+      "tools/probe-hp39-transfer-recovery.py": "ba241768c567cd01312301491d0b5737d5ca1ab5e2d2ff459a61f2ab1d6ac03d",
+      "tools/probe-hp39-transfer-timing.py": "b329ffb2a3f771c51f16e888b7beb948efdf07cef2b590c30dfa04fb8ebb0205",
+      "tools/probe-hp39gs-browser.py": "22e9e116b6a954cdce976f051701aef2cd1a22f3de6c8d9563a357c2cacf7628",
+      "tools/probe-hp49-browser.py": "b0c026ec6ac14c09ec89d5edbcaef69890190d1a2a383272a83f9c948b72c08e",
+      "tools/probe-lcd-publication.mjs": "8672f8b3afbe545e45113fc990dff048557f04eb5e85db5c4527557945901cf7",
+      "tools/probe-local-workflows-browser.py": "58419e0be057d9762c0f23be075fbcc2f22ee326075179cca38fa49832cb29ec",
+      "tools/probe-sd-browser.py": "5775ecf797da3e9c18dab2323accaba1d4d12f7206f641375877a56dc842dbae",
+      "tools/probe-usbip-kermit.mjs": "9433185d273bb007b9af7ee5000345f0efc9445a945bbf718dcf755b27643a9b",
+      "tools/verify-hp39-file-browser.py": "cb305c77c2b80172f1886c9f6d610a237342e922e6829421ef3f8c9012c626ba",
+      "tools/verify-sd-workflows.mjs": "b8315e5bd7d19160ba62434867999c896a7560c5e79115c40b3437cc075a482b",
+      "web/App.jsx": "ef3dbf14e67db2a1591be8081d85216a4491bcb9a131d0a8450eafa1bc8f1637",
+      "web/DirectoryCardControls.jsx": "c38bdb5791c76e2bf245bec0d958dfad2dc1bafb757530df853b7fb794051c86",
+      "web/HostBridge.jsx": "5a1f63a92613589f9017823ed3da325287f72cc4def8025c631ccb9ec3b2e35b",
+      "web/KeyboardSettings.jsx": "e166628cafd7cd1820fc9a9297aab5d7ccf0ded1e174e0cf3e1fdc80ff3aab8d",
+      "web/ROMSettings.jsx": "d4cad2180b686a10e5d11e38364708340f14f5248d2aa4315824579d42e7d70d",
+      "web/SDCard.jsx": "0b088d3dbf20e965d553d3b7290b8b19fcc74d9839ca5ae44b279cf4df623631",
+      "web/SDCardFiles.jsx": "d2ad98d5509c17d38dde32322d06ed311f39911b29a5ef67ae64f22aa042744a",
+      "web/autosave.js": "371e91c9adc783fd616ed6edfb47b8e13451e59880c96bb9ad9bf287f7bbc573",
+      "web/capture.js": "e926322516f425d27a57e470c3ea894dd40cd460691e09ac754c4fec53b4e9ef",
+      "web/controller.js": "6e6ddcceafcc85ff8502c01dfe4cfa0e6199786765edd50ad45c83a57e21e283",
+      "web/directory-card.js": "8871b39e4b0f4de7487fd3d2216fa7dcb36c3256c646f175d1799e795c1bc76b",
+      "web/directory-i18n.js": "fbdb5ecd829bf79077edefc400403d625a05b90b8b9a718ff110ab0effd1adc9",
+      "web/host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+      "web/host-bridge-i18n.js": "3f969ffb5d2bc344208a7b818cc6b6c85ca6dba05c8e979c8cd28e93e9c379b1",
+      "web/host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+      "web/hp48.js": "bd684d892870ab30a33f9cc2db28c76b8996306e2d3eabdc8dfc539060b0bf8c",
+      "web/i18n.js": "0eceb9bcc4b18171b7b60ed13bd54aa88990e06642a3729a5fff1f91d94051fd",
+      "web/keyboards.css": "6687185d8cfd99631cf392e3518cff6c0c26b0227539d64be7a7534121d0ba9d",
+      "web/lcd-frames.js": "fc96250cde32d76f14a5418a4b6e7b3a7de45b044a7bce514f4b0b0a70c4798d",
+      "web/pc-keyboard-view.js": "5041c58d75b37d70c6947900aa8f6ab9f34c5b7c3fc894cc0661822302074583",
+      "web/pc-keyboard.js": "c7077d5efbd5dd85719c26ed2df1493b845fc6a1b224f18a69cd18754fbeb22c",
+      "web/preferences.js": "d342707ecf2467724352c1beaec90e6ca7ccc02634d9084f2ca7c57a0753a7a8",
+      "web/react.css": "2b593315aee82edeca8aac951f95aa8784a64d4a7169913369c28f48858fc4b8",
+      "web/recording.js": "6b958e8edb6fa1991efcb59588b4300beda676568cd42c45364d2260f54cdefc",
+      "web/rom-storage.js": "9074e89c22b2976ecfbbc1dd30c6f117181c1b89dc07f44cfd965b5bf13996b1",
+      "web/sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+      "web/sd-filesystem.js": "e3e37332ccc10769ff966102ac513fe966d6fafc10c5d91cac948558aef3c816",
+      "web/usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+      "web/worker.js": "504384b9baa0c11d1e0179932685293a6c0c1727a718ac027c452042cc7f82ea",
+      "zensical.toml": "2e5a676381f381fc17d313fb27b097a3efcecab2dbb3a40e39e39cb37d223055"
+    },
+    "normal_pacing_changed": false,
+    "ordinary_key_dwell_changed": false,
+    "system_chords": "New overlapping ON/F4 and ON/F3 guest-time contacts"
+  },
+  "checkpoint": {
+    "export_version": 5,
+    "read_versions": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "added_bytes": 76,
+    "spi_bytes": 72,
+    "watchdog_reset_hold_bytes": 4
+  },
+  "completed_local_gates": [
+    {
+      "name": "Native Release",
+      "passed": true,
+      "detail": "21/21 suites; final USB directed target rerun after adding 110 assertions"
+    },
+    {
+      "name": "Retained reference",
+      "passed": true,
+      "detail": "21/21 suites; final USB directed target rerun"
+    },
+    {
+      "name": "ASan / UBSan / LSan",
+      "passed": true,
+      "detail": "21/21 suites, leak detection enabled; final USB directed target rerun"
+    },
+    {
+      "name": "Native/WASM default core",
+      "passed": true,
+      "detail": "1,166,060 assertions on each host, including 54,175 USB checks"
+    },
+    {
+      "name": "Native/WASM functional clocks",
+      "passed": true,
+      "detail": "33,849 assertions on each host; default-plus-clock total 1,199,909"
+    },
+    {
+      "name": "Quarantined physical-read WASM",
+      "passed": true,
+      "detail": "217,824 extra assertions, excluded from default totals"
+    },
+    {
+      "name": "Checkpoint comparator",
+      "passed": true,
+      "detail": "199 assertions; all supported model profiles and v1-v5 boundaries"
+    },
+    {
+      "name": "Independent Unicorn 2.1.4 differential",
+      "passed": true,
+      "detail": "17,075 cases, zero mismatches and skips; instruction scope distinct from peripheral acceptance"
+    },
+    {
+      "name": "Clang 18 static analysis",
+      "passed": true,
+      "detail": "48 C files, zero diagnostics; tests/usb.c reanalyzed after added assertions"
+    },
+    {
+      "name": "Syntax / tools / web / skins / trace",
+      "passed": true,
+      "detail": "Maintained npm command gates passed"
+    },
+    {
+      "name": "Calculator / frontend / continuation",
+      "passed": true,
+      "detail": "SD, keyboard, ROM storage, system chords, capture, recording, transfer, pacing and existing controller gates passed"
+    },
+    {
+      "name": "Actual Chromium component suite",
+      "passed": true,
+      "detail": "All eleven test:components scripts passed; includes real AudioContext, actual IndexedDB/OPFS, directory input and production Worker HTTP bridge"
+    },
+    {
+      "name": "Production Worker",
+      "passed": true,
+      "detail": "All six model profiles in calculator/debug audiences, generated ARM guests"
+    },
+    {
+      "name": "Stopped-core recovery",
+      "passed": true,
+      "detail": "Normal and diagnostic-only browser paths, exact full-checkpoint replay, no original-ROM substitution"
+    },
+    {
+      "name": "Timer receiver",
+      "passed": true,
+      "detail": "Native receiver binding, cancellation, burst fallback and shutdown"
+    },
+    {
+      "name": "HP39 Go receiver",
+      "passed": true,
+      "detail": "go test, go vet and Windows amd64 cross build"
+    },
+    {
+      "name": "Source host and packaged host",
+      "passed": true,
+      "detail": "Both complete test:host suites passed against frozen WASM; both packaged CLI help paths passed"
+    },
+    {
+      "name": "Pages contract",
+      "passed": true,
+      "detail": "9 tests passed; firmware/extraneous assets rejected"
+    },
+    {
+      "name": "Documentation",
+      "passed": true,
+      "detail": "52 pages pass navigation/local links; strict Zensical build passes"
+    },
+    {
+      "name": "Original factory-test entry/exit",
+      "passed": true,
+      "detail": "39g+,39gs,48gII,49g+ original version pages, normal exit, 1+1=2 on final WASM"
+    },
+    {
+      "name": "Original directory SD",
+      "passed": true,
+      "detail": "32 MiB image: 49g+ stock reads/writes, 48gII no-card FILES, whole-card v5 native/WASM continuation, independent FAT tools"
+    },
+    {
+      "name": "Original SD production browser",
+      "passed": true,
+      "detail": "49g+ seven-stage workflow; retains its recorded earlier frontend asset map and final core"
+    },
+    {
+      "name": "Original ROM memory and self-test browser",
+      "passed": true,
+      "detail": "39gs actual production-page auto-reopen, toggle/Forget, sidebar, toolbar and held Escape+F4; retains its tested frontend asset map"
+    },
+    {
+      "name": "Original Chrome local device",
+      "passed": true,
+      "detail": "Final 47-asset build, 49g+ cold boot and physical SERVER, real HTTP/USB-IP SEND/GET/FINISH, all 15 bytes equal, verified loss of focus, responsive arithmetic"
+    }
+  ],
+  "evidence": [
+    "lcd-publication-r22.json",
+    "spi-watchdog-r22.json",
+    "sd-directory-r22.json",
+    "host-bridge-r22.json",
+    "usb-original-bridge-r22.json",
+    "browser-local-devices-r22.json"
+  ],
+  "runtime_boundary_notes": [
+    "No original HP40gs or HP50g ROM acceptance was added.",
+    "ROM reopening uses a read-only browser-managed original handle where supported, otherwise a clearly labelled IndexedDB copy; native permission UI is not automated.",
+    "Directory SD is a snapshot plus explicit additive conflict-aware synchronization. It is not a host OS mount or concurrent live directory block device.",
+    "USB/IP is verified with user-space clients. The local kernel lacks the virtual-controller/FUSE environment; OS attach, HP driver binding and unmodified Conn3x remain unverified.",
+    "Original 48gII/49g+ GET_CONFIGURATION still NAKs and times out; actual subsequent SETUP recovery is recorded without synthesizing a configuration reply.",
+    "The Chrome bridge witness verifies real focus loss before/after the complete transfer, while both headless tabs remain visible; hidden-tab throttling and public-HTTPS LNA permission UI are separate gates.",
+    "Unknown session IDs after a permanently lost/timed-out create reply use the 35-second server lease; ordinary delayed reply and delayed DELETE reconnect races are covered.",
+    "LCD comparative publication evidence retains its measured earlier core identity. Final original-browser gates exercise the unchanged presentation source on final WASM, without claiming physical panel calibration or a performance speedup.",
+    "Original screenshots, ROMs, checkpoints and card images remain outside Git and release artifacts."
+  ],
+  "test_environment_notes": [
+    "The restored scratch environment initially required own-build executable bits and a writable Go cache; final targeted retries passed.",
+    "The connection fixture requires clang in PATH and permitted child-process execution. The final retry used installed LLVM 18 in the normal test environment.",
+    "An initial multi-tab probe harness used Playwright single-page convenience context; the maintained probe now uses an explicit multi-page context.",
+    "The initial focus claim was tightened after independent review: the maintained probe disables Playwright always-focused emulation, records native focus and starts the external peer only afterward."
+  ]
+}

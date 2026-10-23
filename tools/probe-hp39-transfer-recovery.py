@@ -189,8 +189,8 @@ def main():
                     page.route('**/worker.js',lambda route:route.fulfill(status=200,content_type='text/javascript',body=diagnostic))
                 page.add_init_script(OBSERVE);page.goto(f'http://127.0.0.1:{server.server_port}/')
                 stage('open-rom')
-                with page.expect_file_chooser() as picker:page.get_by_role('button',name='Open ROM',exact=True).click()
-                picker.value.set_files(str(args.rom.resolve()))
+                # Standard file-input/local-copy path; native picker permission UI is separate.
+                page.locator('#rom').set_input_files(str(args.rom.resolve()))
                 wait('window.__recovery.snapshot?.loaded&&window.__recovery.snapshot?.running',label='rom-load')
                 assert observe()['snapshot']['model']==1
                 ticks(50000000);keys((40,));ticks(70000000);stage('cold-home')
@@ -211,9 +211,9 @@ def main():
                 page.get_by_role('button',name='Upload through Wire',exact=True).click()
                 wait('window.__recovery.commands.some(e=>e.type==="file-transfer-start")',label='queue-library')
                 library_first=request();status(library_first,'negotiating');normal('initial-wait-normal')
-                page.get_by_role('button',name='Close',exact=True).click();stage('library-waiting-normal')
+                page.get_by_role('button',name='Close sidebar',exact=True).click();stage('library-waiting-normal')
                 interrupt(library_first,'library-interrupted')
-                page.get_by_role('button',name='Close',exact=True).click()
+                page.get_by_role('button',name='Close sidebar',exact=True).click()
                 page.get_by_role('button',name='Settings',exact=True).click()
                 page.get_by_role('tab',name='Transfer',exact=True).click()
                 page.get_by_role('switch',name='Use Unlimited during transfers',exact=False).check()
@@ -223,7 +223,7 @@ def main():
                 wait('window.__recovery.commands.filter(e=>e.type==="file-transfer-start").length===2',label='retry-library')
                 library_retry=request();assert library_retry!=library_first
                 status(library_retry,'negotiating');normal('retry-wait-normal')
-                page.get_by_role('button',name='Close',exact=True).click();menu(recover=True);keys((6,))
+                page.get_by_role('button',name='Close sidebar',exact=True).click();menu(recover=True);keys((6,))
                 done=status(library_retry,'complete');assert done['effectiveSpeed']==1 and not done['transferBoosted']
                 wait('window.__recovery.commands.filter(e=>e.type==="file-transfer-start").length===3',label='queue-aplet')
                 aplet_first=request();status(aplet_first,'negotiating');normal('between-files-normal')
@@ -238,7 +238,7 @@ def main():
                 page.get_by_role('button',name='Upload through Wire',exact=True).click()
                 wait('window.__recovery.commands.filter(e=>e.type==="file-transfer-start").length===4',label='queue-renamed-aplet')
                 aplet_retry=request();status(aplet_retry,'negotiating');normal('new-queue-wait-normal')
-                page.get_by_role('button',name='Close',exact=True).click();menu(recover=True);keys((6,))
+                page.get_by_role('button',name='Close sidebar',exact=True).click();menu(recover=True);keys((6,))
                 done=status(aplet_retry,'complete');assert done['effectiveSpeed']==1 and not done['transferBoosted']
                 normal('completion-restored');ticks(24000000)
                 page.screenshot(path=str(args.output/'installed-aplet.png'));stage('renamed-aplet-complete')
@@ -253,13 +253,13 @@ def main():
                 page.get_by_role('button',name='Cancel transfer',exact=True).click()
                 done=status(cancelled,'cancelled');assert done['effectiveSpeed']==1 and not done['transferBoosted']
                 normal('cancel-restored');stage('cancel-restored')
-                page.get_by_role('button',name='Close',exact=True).click()
+                page.get_by_role('button',name='Close sidebar',exact=True).click()
                 if args.roundtrip:
                     stage('stock-send');keys((38,));ticks(3000000);keys((44,44,6));ticks(3000000)
                     page.get_by_role('button',name='Connections',exact=True).click()
                     page.get_by_label('Calculator transfer menu',exact=True).select_option('disk')
                     page.get_by_role('button',name='Receive from calculator',exact=True).click()
-                    page.get_by_role('button',name='Close',exact=True).click();keys((6,))
+                    page.get_by_role('button',name='Close sidebar',exact=True).click();keys((6,))
                     wait('window.__recovery.events.filter(e=>e.type==="file-transfer-received").length===3',label='stock-send-files')
                     ticks(12000000);page.get_by_role('button',name='Connections',exact=True).click()
                     returned={}
@@ -274,7 +274,7 @@ def main():
                     report['returned']={name:{'bytes':len(data),'sha256':sha(data)} for name,data in returned.items()}
                     report.update(aplet_file_equal=True,library_body_equal=True,library_alias_preserved=True)
                     page.get_by_role('button',name='Stop file server',exact=True).click();normal('receive-server-cancel-restored')
-                    page.get_by_role('button',name='Close',exact=True).click();stage('roundtrip-equal')
+                    page.get_by_role('button',name='Close sidebar',exact=True).click();stage('roundtrip-equal')
                 keys((48,));ticks(10000000);keys((26,5,26,6));ticks(30000000)
                 page.screenshot(path=str(args.output/'home-arithmetic.png'));stage('home-arithmetic')
                 report['observation']=observe();report['page_errors']=page_errors

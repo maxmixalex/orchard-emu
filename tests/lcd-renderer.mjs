@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import assert from 'node:assert/strict';
-import {frameRGBA,createLCDRenderer} from '../web/capture.js';
+import {frameRGBA,createLCDRenderer,displayFrame} from '../web/capture.js';
 
 const saved={ImageData:globalThis.ImageData,Uint8ClampedArray,Uint32Array};
 let images=0,bytes=0,words=0;
@@ -55,6 +55,12 @@ try{
   assert.deepEqual([...a.target.image.data],expected(tall));
   const blank=frame(1,4,new Uint8Array(4));a.paint(blank);
   assert.deepEqual([...a.target.image.data],expected(blank),'the display null-LCD fallback fully clears prior ink');
+  assert.equal(displayFrame(blank),blank,'a legitimate white image remains a valid frame');
+  const unavailable={...tall,pixels:null,frameStatus:12},empty=displayFrame(unavailable);
+  a.paint(empty);assert.deepEqual([...a.target.image.data],expected(blank));
+  assert.equal(unavailable.frameStatus,12);assert.equal(unavailable.pixels,null,'presentation never changes diagnostic status');
+  assert.notEqual(empty.pixels,displayFrame(unavailable).pixels,'fallback captures cannot share mutable pixel storage');
+  for(const invalid of [null,{...unavailable,width:-1},{...unavailable,height:1.5}])assert.throws(()=>displayFrame(invalid));
 
   const b=display();b.paint(blank,[255,255,255]);
   assert.notEqual(b.target.image,a.target.image);assert.notEqual(b.target.image.data.buffer,a.target.image.data.buffer);

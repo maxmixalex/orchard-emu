@@ -27,12 +27,18 @@ static uint32_t lcd_period(const o_soc *s) {
 }
 void o_schedule_plan(orchard_machine *m) {
     const o_soc *s = &m->soc;
+    /* The reset pulse is brief and has a separate held-reset domain. Keep
+       its 128 edges explicit; never defer active peripheral transitions. */
+    if(s->wtreset){m->quiet_left=0;return;}
     /* The RTC oscillator remains running even with its calendar held reset. */
     uint32_t n = s->rtc.phase < O_FUNCTIONAL_TIMEBASE_HZ ?
         (O_FUNCTIONAL_TIMEBASE_HZ - s->rtc.phase + 32767u) / 32768u : 1u;
     if (s->clock[3]&8u) { m->quiet_left=n>0?n-1u:0; return; }
     uint32_t num,den;
     if(!o_pclk_ratio(s,&num,&den)){m->quiet_left=0;return;}
+    if(s->clock[3]&0x40000u)for(unsigned channel=0;channel<2;channel++)
+        if(s->spi[channel].remaining&&(s->spi[channel].control&0x18u)==0x18u)
+            pclk_bound(&n,s->spi[channel].remaining,s,num,den);
     if ((s->clock[3] & 0x200u) && s->sdi.remaining) pclk_bound(&n,s->sdi.remaining,s,num,den);
     if ((s->clock[3] & 0x200u) && s->sdi.data_remaining) pclk_bound(&n,s->sdi.data_remaining,s,num,den);
     if ((s->clock[3] & 0x8000u) && s->adc.remaining && !(s->adc.con & 4u)) pclk_bound(&n,s->adc.remaining,s,num,den);
@@ -58,6 +64,9 @@ void o_schedule_sync(orchard_machine *m) {
     s->rtc.phase += n * 32768u;
     if (s->clock[3]&8u) return;
     uint32_t pclk=o_pclk_advance(s,n);
+    if(s->clock[3]&0x40000u)for(unsigned channel=0;channel<2;channel++)
+        if(s->spi[channel].remaining&&(s->spi[channel].control&0x18u)==0x18u)
+            s->spi[channel].remaining-=pclk;
     if ((s->clock[3] & 0x200u) && s->sdi.remaining) s->sdi.remaining -= pclk;
     if ((s->clock[3] & 0x200u) && s->sdi.data_remaining) s->sdi.data_remaining -= pclk;
     if ((s->clock[3] & 0x8000u) && s->adc.remaining && !(s->adc.con & 4u)) s->adc.remaining -= pclk;

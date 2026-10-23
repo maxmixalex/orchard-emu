@@ -298,6 +298,11 @@ def wait_probe(page, expression, argument=None, timeout=15000):
 
 def choose_file(page, button, path):
     expect(button).to_be_enabled(timeout=15000)
+    if button.inner_text() == 'Open ROM':
+        # The standard file-input/local-copy path is automatable independently
+        # of the browser's native File System Access permission dialog.
+        page.locator('#rom').set_input_files(str(path))
+        return
     with page.expect_file_chooser() as chosen:
         button.click()
     chosen.value.set_files(str(path))
