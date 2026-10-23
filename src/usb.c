@@ -239,7 +239,12 @@ bool o_usb_register(orchard_machine *m, uint32_t address, unsigned width, uint32
         if (u->index >= 5) return unsupported(m, address, u->index);
         o_usb_ep *e = &u->ep[u->index];
         switch (off) {
-        case 0x180:
+        /* Samsung's S3C2410X revision table (2003-04-28, 13-19) places
+           MAXP at +18c; the S3C2410A 2004 manual places it at +180.
+           Accept both documented layouts as one indexed functional register.
+           This is address-layout compatibility, not a claim that a particular
+           physical silicon revision decodes both addresses simultaneously. */
+        case 0x180: case 0x18c:
             if (write) e->maxp = v & 15u; else *value = e->maxp;
             return true;
         case 0x184:

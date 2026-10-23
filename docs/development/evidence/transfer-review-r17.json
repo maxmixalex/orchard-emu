@@ -1,0 +1,59 @@
+{
+  "schema": "orchard-transfer-independent-review-r17",
+  "review_date": "2026-10-22",
+  "scope": "Independent targeted review of HP39 disk host, Kermit final acknowledgements, retained download capacity and controller cancellation",
+  "passed": true,
+  "generated_packet_tests": true,
+  "stock_rom_execution_claimed": false,
+  "production_dist_rebuilt": false,
+  "confirmed_before_fix": [
+    {
+      "case": "retained-download-capacity",
+      "setup": "15 earlier browser downloads; two typed files in a new HP39 S..B transaction",
+      "observation": "Host sent final B ACK; browser rejected second new file at its cumulative 16-file limit."
+    },
+    {
+      "case": "hp39-finish-first-ack-loss",
+      "setup": "Drop first final Y ACK; let independent client reach its negotiated timeout and retransmit G F",
+      "observation": "Host completed immediately and ignored the retry; client timed out."
+    },
+    {
+      "case": "kermit-break-first-ack-loss",
+      "setup": "Drop first B ACK; deliver the retry in the ordinary poll after its timeout",
+      "observation": "One-timeout linger expired before retransmission arrived; sender timed out after receiver had published the file."
+    }
+  ],
+  "repairs": [
+    "Controller includes immutable remaining receive file/byte budget in each request; FileTransfer validates its range before starting a session.",
+    "Kermit EOF checks include all uncommitted regular files in the transaction. HP39 checks also include files already received in the active server session. Previously retained browser files stay intact.",
+    "Final B and G ACK grace periods are fixed at twice the negotiated timeout, without extending on repeated packets. G retries must match original sequence and command bytes.",
+    "An HP39 receive with no selected upload files observes synchronous cancellation before posting its worker start request."
+  ],
+  "targeted_checks": [
+    "node tests/kermit.mjs",
+    "node tests/hp39-transfer.mjs",
+    "node tests/file-transfer-controller.mjs",
+    "node tests/file-transfer-worker.mjs",
+    "git diff --check"
+  ],
+  "additional_boundaries_checked": [
+    "Actual timeout retry of Kermit B, persistent HP39 B and HP39 FINISH G succeeds with exactly one delivery/completion.",
+    "Expired retries and different G commands/sequences receive no stale ACK.",
+    "Zero file capacity and insufficient byte capacity refuse EOF ACK; exact capacity succeeds.",
+    "Directory screen output remains available when downloadable file capacity is exhausted.",
+    "Malformed, fractional, negative or excessive budgets cannot start a protocol session.",
+    "Controller-to-protocol integration for model 1 and model 4 preserves 15 earlier files and rejects a two-file new transaction before second EOF ACK."
+  ],
+  "source_sha256": {
+    "web/kermit.js": "b2d73695db7a29c8b71e26c4cafc1a4ea23903776cd508da4f74ddea0612b3d5",
+    "web/hp39-transfer.js": "ab1c66af18a3a5184bac53d3b51a8bb838a367fd92917a36f76b43e27bac2385",
+    "web/file-transfer.js": "31be1e3ccb741f41e4bb967143555691d4a14338175e40df53726bf04da1cb2f",
+    "web/controller.js": "9fc2655841757c5b15ee32798b7576a7280eb180b5ec5b974b9abf94f2228098",
+    "tests/kermit.mjs": "6cc812906a3a54121344f2bd79ab30b60b47deebf19694ad1e339ec818979134",
+    "tests/hp39-transfer.mjs": "908560d2aa71002704be4ce05c3e12f98125313d00df9081957d913f3ac60bf6"
+  },
+  "limitations": [
+    "Generated packets validate protocol and host lifecycle boundaries, not a physical cable, optical IrDA, host OS device bridge or every original-firmware transfer mode.",
+    "Final current-build stock browser validation remains part of root integration, separate from this review."
+  ]
+}

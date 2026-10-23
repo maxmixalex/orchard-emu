@@ -11,7 +11,7 @@ revision**, not every product carrying that name.
 | 2 | `hp39gs` | HP 39gs | 1 MiB | 256 KiB | 131 × 64 | No | Unverified |
 | 3 | `hp40gs` | HP 40gs | 2 MiB | 256 KiB | 131 × 64 | No | Unverified |
 | 4 | `hp48gii` | HP 48gII, USB revision | 2 MiB | 256 KiB | 131 × 64 | No | Conditional HOME; hardware gate open |
-| 5 | `hp49gplus` | HP 49g+ | 2 MiB | 512 KiB | 131 × 80 | Yes | Unverified |
+| 5 | `hp49gplus` | HP 49g+ | 2 MiB | 512 KiB | 131 × 80 | Yes | Conditional HOME, CAS, plot and USB files; hardware gate open |
 | 6 | `hp50g` | HP 50g | 2 MiB | 512 KiB | 131 × 80 | Yes | Unverified |
 
 The shared CPU target is ARM920T/ARMv4T. IDs intentionally match hpclang's
@@ -32,7 +32,8 @@ clock setup, LCD wiring, peripheral availability and behavior must be pinned
 per hardware revision. The current table deliberately does not invent those
 values. All six profiles use the same provisional peripheral implementation.
 A SoC UART channel is not proof that the calculator exposes a physical serial
-connector. Likewise `sd_slot=true` does not mean SD emulation exists.
+connector. The SDI controller now models an empty slot; `sd_slot=true` still
+does not imply card media, a filesystem or successful SD data transfers.
 
 ## Promotion rule
 
@@ -52,21 +53,30 @@ acceptance remains open; its physical SRAM capacity is still 256 KiB. HP39g+
 now also reaches HOME and performs calculations under its separately declared
 [startup conditions](hp39-startup.md), retaining its physical 256 KiB SRAM
 decode. See [boot research](boot-research.md).
-HP40gs NOR capacity is corrected to 2 MiB using HP's 2007 specification sheet,
-not inherited from the HP39gs sibling. All other stock/UI promotion gates
-remain open; supplied update packages are not full physical dumps.
+HP49g+ now reaches stock HOME with its exact 512 KiB SRAM, performs arithmetic,
+CAS factorization, graph display and USB file round trips under its own
+[startup conditions](hp49-startup.md). HP40gs NOR capacity is corrected to
+2 MiB using HP's 2007 specification sheet, not inherited from the HP39gs sibling.
+HP39gs, HP40gs and HP50g stock/UI promotion gates remain open; supplied update
+packages are not full physical dumps.
 
 ## HP49g+ acquisition and model identity
 
-The [HP49g+ flash capture package](flash-capture.md) provides original executable
-RPL probes and two independent, fixed-address full reads to SD. Its initial
-hardware gate is a 16-byte memory probe plus a 16-byte SD-format probe; no new
-HP49g+ full NOR or cold-boot witness is claimed before those captures arrive.
-HP39gs still needs a verified read-only path on the original operating system;
-the Saturn ROMUPL39 program does not acquire the native ARM boot region.
+The user returned the complete HP49g+ image from the
+[flash capture package](flash-capture.md): 2,097,152 bytes, SHA-256
+`3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab`.
+The two independent reads agree, and all 128 supplied chunk hashes match.
+The boot region and original OS now execute together from cold reset.
+This image is admitted to the webpage's HP49g+ catalog after the repeatable
+original-ROM workflows in [HP49g+ startup](hp49-startup.md); the input's
+`physical_mapping_verified=false` remains an open hardware claim.
+
+HP39gs has a separate [full-ROM dump package](hp39gs-rom-dump.md) reusing the
+hpclang ARM USB streamer. Its complete image still needs to be captured and
+verified. The Saturn ROMUPL39 program does not acquire the native ARM boot region.
 
 The local ROM inspector now recognizes a hash-pinned HP49g+ or HP50g boot
 prefix inside a full-size image and rejects a clearly mismatched model during
 research preparation. The remainder remains unidentified unless the whole
 image matches a known fixture. A matching boot region, A/B read agreement,
-or 2 MiB file length does not admit a user-facing preset.
+or 2 MiB file length alone does not admit a user-facing preset.

@@ -100,3 +100,21 @@ external compiler; no compiler binary, calculator firmware or bootloader is
 included. The GPL calculator code is not linked, copied or translated into
 Orchard's native/WASM core, browser bundle or standalone host. See the package's
 `licenses/hpgcc39/NOTICE.md` and `manifest.json` for identities and licensing.
+
+## Separate HP39 full-ROM reader package
+
+The [HP39gs ROMstream package](hp39gs-rom-dump.md) pins the user's hpclang source
+at `e240c58c2e9dd3ac4d18002ed9a93d2c7cc67900`. Its original ARM reader and Go
+receiver retain MIT notices. The compiled calculator aplet and 39-specific
+launcher are separately GPLv2-or-later, with their exact corresponding SDK
+source, build inputs, license and notices inside the ZIP. This does not relicense
+the compiled combination as MIT or add GPL calculator code to Orchard's core.
+
+The rebuilt ARM payload, 7,373-byte aplet and 1,489-byte launcher match the user's
+original package byte-for-byte. The Go receiver adds strict framing, independent
+per-block read comparison, bounded retries and exclusive output creation. Rebuilding
+from the unpacked source reproduces the complete distributed ZIP. Arm Toolchain
+for Embedded, HPTools and Go remain external build tools; the Windows receiver
+is self-contained at runtime. No calculator ROM, raw stock checkpoint or captured
+user file is included. Exact source/tool identities and license boundaries are
+recorded in `licenses/hp39-romstream/NOTICE.md` and the package manifest.

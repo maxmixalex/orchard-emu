@@ -23,6 +23,7 @@ void o_soc_reset(o_soc *s) {
     o_rtc_reset(s);
     o_adc_reset(&s->adc);
     o_usb_reset(&s->usb);
+    o_sdi_reset(&s->sdi);
     o_lcd_reset(s);
     s->intsubmsk = 0x7ff;
     s->priority = 0x7f;
@@ -44,6 +45,7 @@ void o_soc_tick(orchard_machine *m) {
     o_rtc_tick(m);
     if (m->stop.status != ORCHARD_OK) return;
     o_usb_tick(m);
+    if (s->sdi.remaining || s->sdi.interrupt_mask) o_sdi_tick(m);
     o_adc_tick(m);
     o_lcd_tick(m);
     if (m->stop.status != ORCHARD_OK) return;
@@ -153,6 +155,8 @@ bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
     if (m->stop.status != ORCHARD_OK) return false;
     if (o_usb_register(m, address, width, value, false)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
+    if (o_sdi_register(m, address, width, value, false)) return true;
+    if (m->stop.status != ORCHARD_OK) return false;
     if (o_adc_register(m, address, width, value, false)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
     if (o_rtc_register(m, address, width, value, false)) return true;
@@ -188,6 +192,8 @@ bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t
     if (o_lcd_register(m, address, width, &value, true)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
     if (o_usb_register(m, address, width, &value, true)) return true;
+    if (m->stop.status != ORCHARD_OK) return false;
+    if (o_sdi_register(m, address, width, &value, true)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
     if (o_adc_register(m, address, width, &value, true)) return true;
     if (m->stop.status != ORCHARD_OK) return false;

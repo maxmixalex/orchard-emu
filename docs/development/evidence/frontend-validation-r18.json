@@ -1,0 +1,74 @@
+{
+  "schema": "orchard-final-frontend-validation-v1",
+  "passed": true,
+  "scope": "Final production calculator/controller/Worker regression suites and generated-guest browser recovery; no new original-ROM or performance claim",
+  "production_wasm_sha256": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f",
+  "production_wasm_bytes": 102147,
+  "browser": "156.0.8078.47",
+  "assets": {
+    "calculator.js": "7ad1f8a42253b2fdac2cd2947182b726b6fce00de7cf211cdb12648f095bb1f0",
+    "worker.js": "604b544a5a04dfacb965b319b4165de5f7e6b64562cea0e633bcab7c1d76b852",
+    "file-transfer.js": "31be1e3ccb741f41e4bb967143555691d4a14338175e40df53726bf04da1cb2f",
+    "hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+    "hp39-transfer.js": "91800384d2b0823784b1476675e9b2bc2d239ceb68caddac7bcbe684769a3d5a",
+    "hp39-archive.js": "d671f01d2333f52f7c3d3cebf699c85ab2e72d56d823da1de1a91ed28c621bb1"
+  },
+  "runs": [
+    {
+      "command": "CLANG=clang-18 npm run test:calculator",
+      "passed": true,
+      "includes": [
+        "test:frontend",
+        "test:continuation"
+      ],
+      "log": "build-r18/calculator-frontend-regression.log",
+      "log_sha256": "285123589736efda0c93754de938f2635cdbbe508d62878db50fc93905462187"
+    },
+    {
+      "command": "python3 tests/browser-components.py",
+      "passed": true,
+      "scope": "Offline React fixture with production controller, real browser file chooser and downloads; explicit synthetic Worker messages",
+      "hp39_zip_download_and_reimport_picker": true,
+      "log": "build-r18/components-final.log",
+      "log_sha256": "00c9c978d60830561c63feef80a3fdc3bfac6b4569ac13fb0d3d84a8641a765d"
+    },
+    {
+      "command": "python3 tests/browser-stop-recovery.py --new-report build-r18/frontend-stop-final.json",
+      "passed": true,
+      "generated_guest": true,
+      "production_worker": true,
+      "instrumented": false,
+      "report_sha256": "cf092ebaacdf401148be492dc27863df155aee962717e12651b723a043be923a",
+      "page_errors": [],
+      "worker_errors": [],
+      "save_acknowledged": true,
+      "original_observation_preserved": true,
+      "screenshot_failure_preserves_observation": true
+    },
+    {
+      "command": "python3 tests/browser-stop-recovery.py --diagnostic-trace --new-report build-r18/frontend-stop-trace-final.json",
+      "passed": true,
+      "generated_guest": true,
+      "production_worker_source": true,
+      "instrumented": true,
+      "report_sha256": "b15815c481e04d2c13db44eb7f16b3b236d298fc176569b351c2790be00365a2",
+      "page_errors": [],
+      "worker_errors": [],
+      "immediate_stop_complete_checkpoint_equal": true,
+      "active_timeout_complete_checkpoint_equal": true,
+      "missing_pause_ack_rejected": true,
+      "changed_generation_rejected": true
+    }
+  ],
+  "retained_environment_failure": {
+    "command": "npm run test:calculator",
+    "passed": false,
+    "failure": "connections fixture compiler spawn failed with clang ENOENT; calculator, session and preferences had passed",
+    "repair": "Explicitly selected installed clang-18; subsequent full calculator/frontend/continuation chain exited successfully",
+    "product_code_changed_for_failure": false,
+    "log_sha256": "3b014497f4acab3f471884d3a4ce0c8c0f04eedfc31f30d65d54aa0c17c0461c"
+  },
+  "git_diff_check_passed": true,
+  "original_rom_reproduced": false,
+  "performance_sample": false
+}

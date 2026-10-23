@@ -27,9 +27,9 @@ function saved(c) {
   return new Uint8Array(c.memory.buffer, c.checkpoint_buffer(), c.checkpoint_size()).slice();
 }
 function calendar(c, bytes) {
-  // Checkpoint v1: RTC's 19 register bytes and 3 words precede RAM/boot SRAM.
-  const offset = bytes.length - c.profile(1, 1) - 4096 - 31;
-  assert.equal(new DataView(bytes.buffer).getUint32(8, true), 1);
+  // Version 2 appends 52 SDI bytes after RTC and before RAM/boot SRAM.
+  const offset = bytes.length - c.profile(1, 1) - 4096 - 52 - 31;
+  assert.equal(new DataView(bytes.buffer).getUint32(8, true), 2);
   return [...bytes.slice(offset + 12, offset + 15)];
 }
 for (const policy of ['run','run_idle','run_clocked']) for (const speed of [0.5, 1, 2]) {

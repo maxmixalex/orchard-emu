@@ -46,7 +46,7 @@ function snapshot() {
   const annunciators = annunciatorStatus ? null : new Uint8Array(core.memory.buffer,core.annunciator_buffer(),6).slice();
   const pixels = frameStatus ? null : new Uint8Array(core.memory.buffer,core.frame_buffer(),width*height).slice();
   sendUart();
-  const visible = {type:'snapshot',generation,width,height,pixels,running,loaded,model,
+  const visible = {type:'snapshot',generation,width,height,pixels,running,loaded,model,tick,
     stopped:s[28]!==0,frameStatus,annunciatorStatus,annunciators,pending:taps.pending,active:taps.active};
   if (audience === 'calculator') postMessage(visible);
   else postMessage({...visible,state:s,preset,frameView,
@@ -154,7 +154,7 @@ self.onmessage=({data})=>{
         if(token!==generation||job!==operation)return;
         if(saved.model!==model||saved.romHash!==romHash||saved.preset!==preset)
           throw new Error('This session belongs to a different ROM or calculator. Open its original ROM first.');
-        if(saved.state.length!==core.checkpoint_size())throw new Error('This session version is not supported.');
+        if(saved.state.length<32||saved.state.length>core.checkpoint_size())throw new Error('This session version is not supported.');
         new Uint8Array(core.memory.buffer,core.checkpoint_buffer(),saved.state.length).set(saved.state);
         if(core.checkpoint_load(saved.state.length))throw new Error('The session is damaged or incompatible. Your current calculator was not replaced.');
         // Session files created here have no held keys. Also release all inputs

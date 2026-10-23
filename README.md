@@ -5,8 +5,11 @@ An original MIT-licensed ARM hardware emulator for HP 39g+, 39gs, 40gs,
 The ROM's ARM Saturn interpreter executes as guest software; there is no
 host-side Saturn replacement or firmware patch.
 
-**HP48gII and HP39g+ D1.55 reach original HOME and evaluate `1+2=3` and
-`7*8=56` under explicit experimental setups.** HP39g+ uses a separately selected
+**HP39g+ D1.55, HP48gII and the supplied HP49g+ complete ROM reach original
+HOME and evaluate `1+2=3` and `7*8=56`.** [HP49g+](docs/development/hp49-startup.md)
+also runs original-OS symbolic algebra, graphing, menus and
+[native ARM programs that return to HOME](docs/development/hp49-native.md).
+HP39g+ uses a separately selected
 1 MiB NOR and exact SRAM, not the HP48gII mirroring hypothesis. LCD `+0x68`,
 component identification, panel interpretation and pad/ADC conditions remain
 unverified hardware assumptions.
@@ -30,7 +33,7 @@ only Node.js 22+ is needed: extract it and run `node serve.mjs` in that folder.
 Do not use `file://`. No ROM is bundled or uploaded.
 
 The default page is a calculator: **Open ROM**, Pause/Resume, Restart and
-physical keys. It detects the two supported ROM identities and selects their
+physical keys. It detects the three supported ROM identities and selects their
 compatibility settings automatically. CPU counters, boot setup and internal
 research controls live in the separate **[developer workbench](https://maxmixalex.github.io/orchard-emu/emulator/debug.html)**.
 Both pages use the same optimized core, not different levels of emulation.
@@ -95,25 +98,37 @@ physical timing is still being refined. CPU research details stay in the
 developer workbench. Save exports `<model>-<yyyymmdd-hhmmss>.ord`; Restore also
 accepts earlier `.orchard` files. No ROM is stored or uploaded.
 
-Connections adds a Files tab for HP48gII object upload, named retrieval and
-explicit local download over internal USB or serial. Start Kermit SERVER with
-the matching connection selected. Both connections also support Receive,
+Connections adds a Files tab for HP48gII USB/serial and HP49g+ USB object
+upload, named retrieval and explicit local download. Start Kermit SERVER with
+the matching connection selected. These supported links also provide Receive,
 directory and FINISH. The file chooser accepts up to 16 objects per batch
 (8 MiB total), validates them all before sending and shows each result. Serial
 and USB two-object batches, active SEND and connection reuse have original-ROM
-browser witnesses. Raw data retains UART and USB packets. HP39 applet upload
-remains under development. See
+browser witnesses. HP39/40 uses its own disk-drive server: select typed files or
+an applet bundle, start serving, then choose **RECV → Disk drive** in the
+calculator. Directory requests and applet/library dependencies are served from
+the selected files, preserving their original names and aliases. Calculator
+**SEND → Disk drive** returns typed files for local download. Select an existing
+HP39 ZIP directly, or download received objects as a reusable ZIP. The fixed
+catalog entry point is restored when the stock SEND omits it, while original
+directory aliases and object bytes are preserved. Raw data retains
+UART and USB packets. Original-ROM HP39 file-transfer and ZIP round-trip
+verification is for HP39g+; HP39gs/40gs still await their own ROM execution.
+Browser connections are internal to the emulator and do not create desktop
+USB or serial devices. See
 [file transfer](docs/development/file-transfer.md),
 [interaction](docs/development/interaction.md), [sessions](docs/development/sessions.md),
 and [the infrared assessment](docs/development/infrared.md).
 
-The [HP39gs ARM return probe](docs/development/hp39-return-probe.md) provides a
-ready-to-transfer aplet and its separately licensed, byte-for-byte rebuilt
-39-specific launcher. It only enters ARM and returns; installation and return
-on physical HP39gs hardware still need validation before a flash reader is
-implemented. The [HP49g+ capture package](docs/development/flash-capture.md)
-already provides staged short reads and independent A/B programs. Neither
-package establishes a new supported emulator model.
+The [HP39gs full ROM capture package](docs/development/hp39gs-rom-dump.md)
+reuses the exact calculator program from the user's successful hpclang HP39g+
+capture. Its Windows receiver reads each 16 KiB block twice and compares every
+byte, producing a complete 1 MiB image in one launch. The package includes the
+rebuilt receiver, matching calculator files, complete corresponding source and
+licenses. HP39gs hardware execution awaits the returned image; a separate short
+probe is not required. The older ARM-return package remains historical.
+The [HP49g+ capture package](docs/development/flash-capture.md) has now produced
+the user's 2 MiB image used by the new model's startup and transfer validation.
 
 
 ## React user interface and host prototype

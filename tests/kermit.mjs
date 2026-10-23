@@ -35,9 +35,9 @@ assert.deepEqual(parameters(bytes('          ')),parameters(new Uint8Array()));
 assert.equal(parameters(bytes('~* @-#N1 ')).binary,null);
 for(const name of ['', '..', '../x', 'a/b', 'a\\b', 'C:x','x\n','\u0100', 'x'.repeat(65),' name'])assert.throws(()=>validateFilename(name));
 assert.equal(validateFilename('A\xe9'), 'A\xe9');
-assert.deepEqual(transferCapabilities(4),{send:true,receive:true,get:true,directory:true,finish:true});
-assert.deepEqual(transferCapabilities(4,'serial'),{send:true,receive:true,get:true,directory:true,finish:true});
-for(const model of [0,1,2,3,5,6,7])for(const transport of ['usb','serial'])
+assert.deepEqual(transferCapabilities(4),{send:true,receive:true,get:true,directory:true,finish:true,serve:false});
+assert.deepEqual(transferCapabilities(4,'serial'),{send:true,receive:true,get:true,directory:true,finish:true,serve:false});
+for(const model of [0,6,7])for(const transport of ['usb','serial'])
   assert(Object.values(transferCapabilities(model,transport)).every(enabled=>!enabled));
 assert(Object.values(transferCapabilities(4,'invalid')).every(enabled=>!enabled));
 assert.throws(()=>validateUpload(4,'ROM',new Uint8Array(10)));
@@ -79,6 +79,48 @@ s.start({mode:'receive'},0);
 for(const p of [packet(0,'S',PARAMETERS),packet(1,'F',bytes('ONE')),packet(2,'D',bytes('abc')),packet(3,'Z'),packet(4,'B')]){s.receive(p,1);s.poll(1);}
 assert.equal(received.length,1);s.receive(packet(4,'B'),2);s.poll(2);assert.equal(received.length,1);
 assert.deepEqual(new PacketReader().feed(out.at(-1))[0],{sequence:4,type:'Y',data:new Uint8Array()});
+
+// The lost final ACK must survive an actual peer timeout and later delivery,
+// not merely an immediate duplicate. Its grace period is still finite.
+{
+  let now=0,dropped=false;const ab=[],ba=[],files=[];
+  const sender=new KermitSession({hz:1000,write:b=>{ab.push(b.slice());return b.length;}});
+  const receiver=new KermitSession({hz:1000,write:b=>{
+    const p=new PacketReader().feed(b)[0];
+    if(!dropped&&p?.type==='Y'&&p.sequence===4)dropped=true;else ba.push(b.slice());return b.length;
+  },file:f=>files.push(f)});
+  sender.start({mode:'send',name:'ONE',bytes:Uint8Array.of(42)},now);receiver.start({mode:'receive'},now);
+  for(;now<30000&&sender.active;now++){
+    while(ab.length)receiver.receive(ab.shift(),now);while(ba.length)sender.receive(ba.shift(),now);
+    sender.poll(now);receiver.poll(now);
+  }
+  assert(dropped&&now>5000);assert.equal(sender.phase,'complete');assert.equal(files.length,1);
+  const expiry=receiver.lingerUntil,n=ba.length;
+  receiver.receive(packet(4,'B'),expiry);receiver.poll(expiry);
+  assert.equal(ba.length,n);assert.equal(receiver.pending,false);assert.equal(files.length,1);
+}
+
+// Retained browser downloads reduce each new session's capacity. Reject before
+// EOF ACK, including earlier uncommitted files in the same transaction.
+for(const [budget,extra] of [[{files:0,bytes:10},false],[{files:1,bytes:2},false],[{files:1,bytes:6},true]]){
+  const out=[],files=[],r=new KermitSession({write:b=>{out.push(...new PacketReader().feed(b));return b.length;},receiveBudget:budget,file:f=>files.push(f)});
+  r.start({mode:'receive',passive:true},0);
+  const first=[packet(0,'S',PARAMETERS),packet(1,'F',bytes('A')),packet(2,'D',bytes('abc')),packet(3,'Z')];
+  const second=[packet(4,'F',bytes('B')),packet(5,'D',bytes('xyz')),packet(6,'Z')];
+  for(const p of extra?[...first,...second]:first){r.receive(p,1);r.poll(1);}
+  assert.equal(r.phase,'error');assert.equal(files.length,0);
+  assert(!out.some(p=>p.type==='Y'&&p.sequence===(extra?6:3)));
+}
+{
+  const files=[],listings=[],r=new KermitSession({write:b=>b.length,receiveBudget:{files:1,bytes:3},file:f=>files.push(f)});
+  r.start({mode:'receive',passive:true},0);
+  for(const p of [packet(0,'S',PARAMETERS),packet(1,'F',bytes('A')),packet(2,'D',bytes('abc')),packet(3,'Z'),packet(4,'B')]){r.receive(p,1);r.poll(1);}
+  assert.equal(r.phase,'complete');assert.deepEqual(files[0].bytes,bytes('abc'));
+  const directory=new KermitSession({write:b=>b.length,receiveBudget:{files:0,bytes:0},listing:s=>listings.push(s)});
+  directory.start({mode:'receive',passive:true},0);
+  for(const p of [packet(0,'S',PARAMETERS),packet(1,'X',bytes('Directory')),packet(2,'D',bytes('abc')),packet(3,'Z'),packet(4,'B')]){directory.receive(p,1);directory.poll(1);}
+  assert.equal(directory.phase,'complete');assert.deepEqual(listings,['abc'],'Directory screens do not consume downloadable file capacity');
+}
 
 // GET negotiates I, sends R, accepts an independent peer's file transaction.
 const getOut=[],getFiles=[],g=new KermitSession({hz:1000,write:b=>{getOut.push(b.slice());return b.length;},file:f=>getFiles.push(f)});
@@ -161,6 +203,11 @@ for(const ending of ['cancel','error','early-break','discard']){
   f.cancel(1,'cancel',2);assert(!f.active);assert.equal(events.at(-1).phase,'cancelled');
   assert.throws(()=>f.start({request:2,transport:'usb',mode:'receive'},2));
   assert.equal(f.receiveUart(bytes('unclaimed'),2),false);
+}
+for(const receiveBudget of [null,[],{}, {files:-1,bytes:0},{files:17,bytes:0},{files:1.5,bytes:1},{files:1,bytes:-1},{files:1,bytes:8388609},{files:1,bytes:NaN}]){
+  const {transfer}=usbFixture();
+  assert.throws(()=>transfer.start({request:1,transport:'usb',mode:'receive',receiveBudget},0),/capacity/);
+  assert.equal(transfer.lastRequest,0);assert.equal(transfer.session,null);
 }
 assert.equal(MAX_FILE_BYTES,2097152);
 // HP USB is a character stream over bulk packets. Enumeration alone is not

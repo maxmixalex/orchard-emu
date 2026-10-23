@@ -2,7 +2,8 @@
 
 ## User connection panel
 
-Connections has a Files tab for bounded HP48gII USB and serial object transfers and a
+Connections has a Files tab for bounded HP48gII USB/serial and HP49g+ USB
+object transfers, plus the distinct HP39/40 Disk drive file host, and a
 Raw data tab for a UART0 byte stream and individual USB packets. The original
 Kermit client, setup, supported operations and stock evidence are described in
 [file transfer](file-transfer.md). A transfer owns its chosen connection until
@@ -25,10 +26,13 @@ The original GET_CONFIGURATION NAK counterexample is not resolved by this host,
 which does not issue that request during enumeration.
 
 The page creates no OS USB/serial device and does not invoke WebUSB/WebSerial
-to access real hardware. Serial currently exposes upload and GET; USB also
-supports Receive, directory and FINISH. Complete Conn3x replacement and HP39
-typed-file upload remain open. The [HP39 format validator](hp39-files.md)
-checks envelopes and bundle references without certifying opaque payloads.
+to access real hardware. HP48gII USB/serial and HP49g+ USB support upload, GET, Receive, directory and
+FINISH. HP39/40 serves catalogs and typed files to the calculator's own Disk
+drive client; reverse SEND produces explicit downloadable files. Original
+HP39g+ USB installation and export now have stock evidence. The
+[HP39 format validator](hp39-files.md) checks envelopes, directory aliases and
+bundle references without certifying opaque payloads. Complete desktop Conn3x
+replacement remains separate.
 Serial routing, FIFO timing and physical board connectors remain
 separate from the UART0 host queue. Restoring a session disconnects host links.
 See the [infrared assessment](infrared.md) for the next independent transport.
@@ -39,8 +43,8 @@ A usable link can exist at three different levels. Keep them separately named:
 
 | Level | Meaning | Current status |
 | --- | --- | --- |
-| Host byte stream | The emulated UART exchanges bytes with a host adapter | Functional UART0 queues; bounded HP48gII stock object upload and GET; raw CLI/UI diagnostics remain available |
-| Internal virtual USB | Guest USB device controller talks to a modeled packet host inside Orchard | Functional PIO subset; bounded HP48gII Kermit object upload/retrieval; HP50g bootloader control and synthetic bulk evidence remain separately scoped |
+| Host byte stream | The emulated UART exchanges bytes with a host adapter | Functional UART0 queues; HP48gII upload/GET/SEND/directory/FINISH; raw CLI/UI diagnostics remain available |
+| Internal virtual USB | Guest USB device controller talks to a modeled packet host inside Orchard | Functional PIO subset; HP48gII/HP49g+ Kermit workflows and HP39g+ Disk drive transfer; HP50g bootloader control remains separately scoped |
 | Host-OS virtual device | Windows/Linux/macOS enumerates a device that existing PC software can use | Not implemented; optional native companion work |
 
 The first level does not imply the second or third. A UART channel inside the
@@ -69,7 +73,9 @@ quiet interval, so enabling or acknowledging this source needs no extra polling
 timer or change to the normal execution budget.
 
 This is an error-free functional byte stream. The [stock serial record](stock-serial-validation.md)
-establishes object upload and GET after the TX interrupt repair. Baud timing and
+establishes object workflows after the TX interrupt repair. HP49g+ has no
+corresponding stock UART0 file route: its infrared SERVER configures UART2,
+which is not part of this link. Its user file panel therefore offers USB only. Baud timing and
 a complete UART FIFO model remain unverified. The separate
 [native host prototype](host-mode.md) has its own loopback socket tests.
 Nothing currently creates an operating-system USB device or opens the user's
@@ -77,21 +83,21 @@ real USB hardware.
 
 ## USB architecture and current boundary
 
-```text
-Guest HP stock transfer code
-  -> S3C2410 USB device MMIO / endpoint FIFO / IRQ
-  -> modeled USB bus transactions
-  -> virtual host reset + EP0 enumeration + bulk transactions
-  -> transport byte stream
-  -> HP39 typed-file or HP48/49/50 object transfer protocol
-  -> browser file operations / native host adapter
-```
+The guest's stock transfer code accesses the S3C2410 USB registers and endpoint
+FIFOs. Orchard's packet host performs reset, enumeration and bulk transactions;
+the resulting byte stream goes to the HP39 disk host or HP48/49 Kermit client.
+Browser file operations and native host adapters sit above those protocols.
+
 
 [USB device research](usb.md) records the current original implementation,
 143-step real-bootloader transcript and unresolved GET_CONFIGURATION request.
 The declared endpoints and strings are obtained from the guest. Physical
-VBUS/pull-up sensing, a browser USB interface and host-OS enumeration are not
-provided by the logical packet host.
+VBUS/pull-up sensing and host-OS enumeration are not inferred from the logical
+packet host. The native HP39 ROMstream witness supplies explicit GPF1 cable
+inputs through the public GPIO API; stock Disk drive transfer does not depend
+on that extra condition. The USB model accepts the documented MAXP offsets
+from both S3C2410X and S3C2410A layouts for that unchanged payload; this is a
+functional compatibility choice, not proof of two aliases on one physical chip.
 
 Use guest-provided descriptors. Do not fabricate VID/PID, endpoint layout or
 successful enumeration from the selected model name. Implement bus reset,

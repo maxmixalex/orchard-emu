@@ -1,0 +1,223 @@
+{
+  "schema": "orchard-hp39-file-transfer-evidence-v1",
+  "scope": "Original admitted HP39g+ D1.55, production browser, internal USB Disk drive Kermit server",
+  "physical_calculator_or_host_usb_verified": false,
+  "model": 1,
+  "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+  "production_browser": {
+    "passed": true,
+    "cold_boot": true,
+    "normal_speed": true,
+    "ordinary_worker_budget_unchanged": true,
+    "guest_memory_patching": false,
+    "browser_version": "156.0.8078.47",
+    "tool": "tools/verify-hp39-file-browser.py",
+    "tool_sha256": "ed4692de4dd8c16855f689f4f89bd73f538953657de6bba497a9f9a38d3a0ee4",
+    "private_report_sha256": "3a7e99a52ae1a845361e480596b266d8bbbcee9d2a3eb38d1c3bd597232ae0b9",
+    "assets": {
+      "orchard.wasm": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f",
+      "calculator.js": "30204e8478009544ec5d4345b4c867aea82c91966139d41c995f6e801f13e630",
+      "worker.js": "604b544a5a04dfacb965b319b4165de5f7e6b64562cea0e633bcab7c1d76b852",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "file-transfer.js": "31be1e3ccb741f41e4bb967143555691d4a14338175e40df53726bf04da1cb2f",
+      "kermit.js": "b2d73695db7a29c8b71e26c4cafc1a4ea23903776cd508da4f74ddea0612b3d5",
+      "hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+      "hp39-transfer.js": "ab1c66af18a3a5184bac53d3b51a8bb838a367fd92917a36f76b43e27bac2385"
+    },
+    "upload": {
+      "input_files": {
+        "HP39DIR.CUR": {
+          "bytes": 31,
+          "sha256": "542dda3d8ae6257461c7836962e390dfa7898f6c20759b650d927f73b9718d41"
+        },
+        "HP39DIR.000": {
+          "bytes": 67,
+          "sha256": "e0af2757fafa7a7ef0989cc5926f593ec64388644dc162c5f2255581484f4799"
+        },
+        "HPGCC000.000": {
+          "bytes": 7373,
+          "sha256": "3669fb2c2ae1f755bd542c8373a469d49165f2769affdce5435e649010c62455"
+        },
+        "LIB275L.000": {
+          "bytes": 1489,
+          "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+        }
+      },
+      "complete_object_bytes": 8862,
+      "stock_os_requested_library": true,
+      "original_aliases_preserved": true
+    },
+    "download": {
+      "files": {
+        "H39ROMUS.000": {
+          "bytes": 7373,
+          "sha256": "3669fb2c2ae1f755bd542c8373a469d49165f2769affdce5435e649010c62455"
+        },
+        "LIB275L0.000": {
+          "bytes": 1484,
+          "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f"
+        },
+        "HP39DIR.000": {
+          "bytes": 66,
+          "sha256": "ed6f8a343736666c2c8deaa8efa4b16860482511520034efef3086156691a1f3"
+        }
+      },
+      "aplet_file_bytes_equal": true,
+      "library": {
+        "source": {
+          "title": "ARMToolbox39",
+          "header_bytes": 21,
+          "body_bytes": 1468,
+          "body_sha256": "69ab7a7893c1f7fd0d6ab967e24563e02048c719d01eee74f5057e74d383903e"
+        },
+        "returned": {
+          "title": "LIB275L",
+          "header_bytes": 16,
+          "body_bytes": 1468,
+          "body_sha256": "69ab7a7893c1f7fd0d6ab967e24563e02048c719d01eee74f5057e74d383903e"
+        },
+        "object_bytes_equal": true,
+        "directory_alias_preserved": true
+      },
+      "all_three_equal_earlier_user_exports": true
+    },
+    "same_usb_connection_for_both_directions": true,
+    "post_send": {
+      "physical_keys": [
+        48,
+        26,
+        5,
+        26,
+        6
+      ],
+      "screenshot_sha256": "55a082216af6a4f57a007224bf148078a4ff4b75288e16c66fe6b34e1fe541ca",
+      "stopped": false,
+      "visual_result": "1+1=2",
+      "visually_reviewed": true
+    },
+    "page_errors": [],
+    "worker_errors": []
+  },
+  "retained_counterexample": {
+    "scope": "Original HP39g+ reverse SEND before USB response scheduling repair",
+    "last_repeated_data_sequence": 44,
+    "calculator_error": "Timeout",
+    "partial_download_published": false,
+    "private_log_sha256": "0d34efaa841aa58fe1430c3d0fb7ec139ad4d3894df4d9b13fa6203ffb408f1f",
+    "repair": "After a nonempty HP39 USB IN completion, defer dependent OUT until the next ordinary guest slice. No extra run budget or wall timer."
+  },
+  "regressions": {
+    "protocol": "tests/hp39-transfer.mjs",
+    "typed_envelopes": "tests/hp39-files.mjs",
+    "controller": "tests/file-transfer-controller.mjs",
+    "worker": "tests/file-transfer-worker.mjs",
+    "offline_components": "tests/browser-components.py",
+    "limits_rejected_before_eof_ack": [
+      "Full catalog plus new name",
+      "Near-8-MiB catalog plus new bytes",
+      "Fifteen previously received files plus two files in one transaction"
+    ],
+    "same_name_replacement_in_full_catalog": true,
+    "remaining_capacity_from_prior_ui_sessions": true,
+    "finish_ack_loss_and_expiry": true,
+    "independent_transfer_review": "docs/development/evidence/transfer-review-r17.json"
+  },
+  "remaining_model_boundary": "HP39gs/HP40gs use the same implemented USB/UART server, but require their own complete NOR and native-ROM witness. HP39/40 Wire is a separate protocol entry.",
+  "prior_browser_attempts": [
+    {
+      "scope": "Initial automation run before correcting the Choose file button locator",
+      "passed": false,
+      "stage": "host-original-package",
+      "failure": "The script asked for Choose file(s); the product button is Choose file. No file-transfer start was posted.",
+      "private_report_sha256": "aa07729e9c52fb5e1304bbfc31150c3f4108d5c5290d5e6802f4547f20e3980b",
+      "protocol_failure_claimed": false
+    }
+  ],
+  "prior_production_browser": {
+    "passed": true,
+    "cold_boot": true,
+    "tool_sha256": "79d1cbe61de8735c9ca4a819519d08c5978aa65bf98d019f79ed932a9e5deaf6",
+    "private_report_sha256": "485d459f894fe3b56403ed5655efca0f2bdc843868a7e4f6885ee66dbdd2c83f",
+    "assets": {
+      "orchard.wasm": "6fda3ed5604d2ac113ffb4288e0fd5baa8ecbc7f7bb46f803ff694a2c8a22767",
+      "calculator.js": "4c9564dfdb85aa0fbd33fc477e84e606a8cbb94bb8f556d112de5ac405382380",
+      "worker.js": "604b544a5a04dfacb965b319b4165de5f7e6b64562cea0e633bcab7c1d76b852",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "file-transfer.js": "4107a8feff935f481601596d109ebbdba6f3e624af0d3dc7d3edc24e227581f9",
+      "kermit.js": "3b79705785190415bae880264de84bdfd85948d4f2f4411ce9553ae62a4016b6",
+      "hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+      "hp39-transfer.js": "e9d807e4bed8a70458b223f288b9c310a4be584cf58eb2d1e15d74681480a839"
+    },
+    "upload": {
+      "input_files": {
+        "HP39DIR.CUR": {
+          "bytes": 31,
+          "sha256": "542dda3d8ae6257461c7836962e390dfa7898f6c20759b650d927f73b9718d41"
+        },
+        "HP39DIR.000": {
+          "bytes": 67,
+          "sha256": "e0af2757fafa7a7ef0989cc5926f593ec64388644dc162c5f2255581484f4799"
+        },
+        "HPGCC000.000": {
+          "bytes": 7373,
+          "sha256": "3669fb2c2ae1f755bd542c8373a469d49165f2769affdce5435e649010c62455"
+        },
+        "LIB275L.000": {
+          "bytes": 1489,
+          "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+        }
+      },
+      "complete_object_bytes": 8862,
+      "stock_os_requested_library": true,
+      "original_aliases_preserved": true
+    },
+    "download": {
+      "files": {
+        "H39ROMUS.000": {
+          "bytes": 7373,
+          "sha256": "3669fb2c2ae1f755bd542c8373a469d49165f2769affdce5435e649010c62455"
+        },
+        "LIB275L0.000": {
+          "bytes": 1484,
+          "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f"
+        },
+        "HP39DIR.000": {
+          "bytes": 66,
+          "sha256": "ed6f8a343736666c2c8deaa8efa4b16860482511520034efef3086156691a1f3"
+        }
+      },
+      "aplet_file_bytes_equal": true,
+      "library": {
+        "source": {
+          "title": "ARMToolbox39",
+          "header_bytes": 21,
+          "body_bytes": 1468,
+          "body_sha256": "69ab7a7893c1f7fd0d6ab967e24563e02048c719d01eee74f5057e74d383903e"
+        },
+        "returned": {
+          "title": "LIB275L",
+          "header_bytes": 16,
+          "body_bytes": 1468,
+          "body_sha256": "69ab7a7893c1f7fd0d6ab967e24563e02048c719d01eee74f5057e74d383903e"
+        },
+        "object_bytes_equal": true,
+        "directory_alias_preserved": true
+      },
+      "all_three_equal_earlier_user_exports": true
+    },
+    "same_usb_connection_for_both_directions": true,
+    "post_send": {
+      "physical_keys": [
+        48,
+        26,
+        5,
+        26,
+        6
+      ],
+      "visual_result": "1+1=2",
+      "screenshot_sha256": "55a082216af6a4f57a007224bf148078a4ff4b75288e16c66fe6b34e1fe541ca",
+      "stopped": false
+    },
+    "scope": "Successful cold production browser roundtrip before the later receive-budget, final-ACK and checkpoint hardening"
+  }
+}

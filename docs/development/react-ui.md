@@ -63,10 +63,12 @@ selection, traditional legends, modal interactions and viewport bounds.
 This offline component fixture is excluded from production. Its patterned
 screen is synthetic and must never be presented as original-firmware evidence.
 
-The environment still blocks normal HTTP navigation with
-ERR_BLOCKED_BY_ADMINISTRATOR. No policy was changed. Component tests,
-production Worker tests and local full-ROM core replay are separate evidence;
-none alone is actual browser-origin ROM/file/storage E2E.
+The earlier environment blocked normal HTTP navigation; the current Chrome
+environment now runs production-page stock-ROM file-picker, download and
+session workflows. Component fixtures remain distinct from those original-ROM
+witnesses. See [browser validation](web.md#publication-and-verification) and
+[HP49 startup](hp49-startup.md) for their precise scope. Sustained storage,
+background, touch and multiple-browser coverage remain separate.
 
 ## Primary library references
 

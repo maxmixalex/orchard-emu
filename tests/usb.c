@@ -71,7 +71,14 @@ static void registers(void) {
     uint32_t value=0;
     CHECK(o_phys_read(&m,BASE+0x15c,1,&value)&&value==31);
     CHECK(o_phys_write(&m,BASE+0x15c,1,3));CHECK(rd(0x15c)==3);
-    const unsigned bad[]={0x144+1,0x14c,0x150,0x164,0x17c,0x18c,0x1bc,0x234};
+    /* The two vendor-documented MAXP register layouts share indexed state.
+       Check byte/word access, reserved bits, endpoint isolation and reset. */
+    orchard_reset(&m);wr(0x178,2);wr(0x18c,0xf8);CHECK(rd(0x180)==8&&rd(0x18c)==8);
+    CHECK(o_phys_write(&m,BASE+0x18c,1,4));CHECK(rd(0x180)==4);
+    wr(0x178,1);CHECK(rd(0x180)==1&&rd(0x18c)==1);
+    wr(0x180,8);CHECK(rd(0x18c)==8);
+    orchard_reset(&m);CHECK(rd(0x180)==1&&rd(0x18c)==1);
+    const unsigned bad[]={0x144+1,0x14c,0x150,0x164,0x17c,0x1bc,0x234};
     for(unsigned i=0;i<sizeof(bad)/sizeof(bad[0]);++i){orchard_reset(&m);CHECK(!o_phys_read(&m,BASE+bad[i],4,&value));}
     orchard_reset(&m);wr(0x178,255);CHECK(!o_phys_read(&m,BASE+0x184,4,&value));CHECK(m.stop.status==ORCHARD_UNSUPPORTED_USB);
     orchard_reset(&m);CHECK(!o_phys_read(&m,BASE+0x144,2,&value));

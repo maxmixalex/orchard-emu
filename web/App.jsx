@@ -50,10 +50,13 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
    const width=Math.max(180,box.clientWidth-32),height=Math.max(240,box.clientHeight-24),dpr=window.devicePixelRatio||1;
    const caseWidth=Math.round(Math.min(width,height*(w/h||.497))*p.zoom/100*dpr)/dpr;
    host.current.style.setProperty('--case-width',`${caseWidth}px`);
-   const plain=Math.min(width,500)*p.zoom/100;host.current.style.setProperty('--plain-width',`${plain}px`);
-   const rows=keyRows(model.id).length;
-   host.current.style.setProperty('--key-height',`${Math.max(38,Math.min(56,(height-72-(plain-40)*64/131-18-(rows-1)*7)/rows))}px`);
-   host.current.style.setProperty('--lcd-width',`${Math.max(131/dpr,Math.floor((plain-40)*dpr/131)*131/dpr)}px`);
+   const lcdHeight=last?.height??(model.id>=5?80:64),lcdWidth=last?.width??131;
+   // Traditional keys now use measured SVG geometry. Fit the LCD and that
+   // geometry together; the old HTML-row height does not resize an SVG keypad.
+   const bounds=keypad.current?.bounds,keyRatio=bounds?bounds.height/bounds.width:1.5;
+   const inner=Math.max(lcdWidth/dpr,(height-74)/(lcdHeight/lcdWidth+18/393+keyRatio));
+   const plain=Math.min(width,500,inner+46)*p.zoom/100;host.current.style.setProperty('--plain-width',`${plain}px`);
+   host.current.style.setProperty('--lcd-width',`${Math.max(lcdWidth/dpr,Math.floor((plain-46)*dpr/lcdWidth)*lcdWidth/dpr)}px`);
   }
   function paint(){raf=0;if(!last||disposed)return;const d=last;
    const changed=!painted||ink!==skin.rgb.join(',')||painted.width!==d.width||painted.height!==d.height||
@@ -77,7 +80,7 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
  useEffect(()=>{ensureKeypadRef.current?.();view.current?.setEnabled(enabled&&prefs.view==='immersive');keypad.current?.setEnabled(enabled&&prefs.view==='traditional');window.dispatchEvent(new Event('resize'));},[enabled,prefs.view,prefs.zoom]);
  return <main id="workspace" ref={workspace}><section id="calculator" ref={host} tabIndex={0} data-view={prefs.view}>
   <div className="calculator-stage" ref={stage} id="skin-stage"><img className="skin-image" alt={model.name} hidden/><svg className="skin-keys"/>
-   <div className="glass-overlay"><Indicators/><canvas id="lcd" width="131" height="64"/></div></div>
+   <div className="glass-overlay"><Indicators/><canvas id="lcd" width="131" height={model.id>=5?80:64}/></div></div>
   <div className="traditional-keypad" ref={keypadHost}/>
  </section></main>;
 });

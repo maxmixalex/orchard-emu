@@ -126,7 +126,7 @@ export function createHp39Directory(entries) {
 }
 
 /** Check a finite, in-memory package. Does not upload, execute, or read paths. */
-export function inspectHp39Bundle(files) {
+export function inspectHp39Bundle(files, {allowTitleAliases = true} = {}) {
   if (!Array.isArray(files) || files.length < 2 || files.length > MAX_HP39_DIRECTORY_ENTRIES)
     throw new Error('An HP39 bundle needs 2 to 256 explicit files.');
   const byName = new Map();
@@ -153,9 +153,9 @@ export function inspectHp39Bundle(files) {
       const targetKey = entry.file.toUpperCase(), target = byName.get(targetKey);
       if (!target) throw new Error(`Missing HP39 bundle file: ${entry.file}.`);
       if (target.info.kind !== entry.kind) throw new Error(`HP39 type mismatch for ${entry.file}.`);
-      // Some historical SDKs emit a directory display alias rather than the
-      // typed object's title. This is a host subset limit, not proof of damage.
-      if (entry.kind !== 'A' && target.info.title !== entry.title)
+      // Historical SDKs use independent directory display aliases. Preserve
+      // both titles; strict equality remains an optional diagnostic policy.
+      if (!allowTitleAliases && entry.kind !== 'A' && target.info.title !== entry.title)
         throw Object.assign(new Error(`Unsupported HP39 directory title alias for ${entry.file}; this bundle subset requires matching titles.`),
           { code: 'HP39_UNSUPPORTED_TITLE_ALIAS' });
       visit(targetKey);

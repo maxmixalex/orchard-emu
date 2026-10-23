@@ -37,6 +37,7 @@ async function main(){
   const bytes=await readFile(values.session);if(bytes.length>MAX_SESSION_BYTES)throw Error('Session too large');
   const saved=await decodeSession(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.length));
   if(saved.model!==model.id||saved.romHash!==model.hash||saved.preset!==model.preset)throw Error('Session identity/configuration does not match this ROM');
+  if(saved.state.length<32||saved.state.length>c.checkpoint_size())throw Error('Session checkpoint exceeds this model capacity');
   new Uint8Array(c.memory.buffer,c.checkpoint_buffer(),saved.state.length).set(saved.state);
   if(c.checkpoint_load(saved.state.length))throw Error('Core rejected saved state');
  }

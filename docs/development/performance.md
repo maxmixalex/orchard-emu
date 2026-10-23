@@ -1,5 +1,137 @@
 # Performance and the two frontends
 
+## Quiet CPU candidates evaluated and withdrawn (2026-10-23)
+
+This round implemented the continuous ARM execution idea from the earlier
+instruction profile, then **withdrew both final candidates** after the bounded
+browser comparison. The released CPU, MMU and scheduler remain the restored
+r17 implementation. The selected production WASM is 102,147 bytes with SHA-256
+`5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f`.
+The comparison baseline is `d1dd7c8e…`, 102,159 bytes: its custom name section
+contains the longer benchmark output filename. Every noncustom section,
+including the 98,127-byte code section, is byte-for-byte identical to the
+released WASM; the filename changes no executable instruction or data.
+There is no new HOLD branch and no claim that HOME or APLET latency improved.
+
+The first implementation ran ordinary ARM operations inside an already-proven
+quiet peripheral interval. It still advanced one guest tick, performed a fresh
+translation and fetched the actual instruction for every operation. Successful
+word/byte loads and stores could continue; MMIO, faults, mode changes and complex
+instructions returned to the existing dispatcher. Version 3 also moved the full
+CPU rollback copy into a separate cold function. Inspection of clang-18's
+pre-link WASM assembly showed why this was worth measuring: the 256-byte hot
+instruction frame became a 16-byte outer frame. That observation alone did not
+establish a production-browser speedup.
+
+Version 4 removed the new execution loop completely and tested only the cold
+rollback function. Both versions used the same production source order and
+compiler options as the final application. The HP39g+ `1+1`, APLET Library,
+Function START and `7*8` scenes, plus HP48gII `1+1` and `7*8`, used the original
+ROMs and fixed private HOME/APLET sessions. The two standalone `7*8` scenes
+start from HOME; their screen-history hashes therefore differ from earlier
+workflows which entered `1+1` first. Existing version-1 sessions were loaded
+and saved through the core as version 2 before the browser comparison.
+
+Each variant completed two warmups per scene, then five alternating Node pairs
+and four alternating default-Chrome pairs. This team's other builds and ROM
+probes were paused for these two declared comparisons; the host was still
+shared infrastructure. Every completed replay matched the full checkpoint
+bytes, LCD, UART, key contacts, ticks and instruction count. No guest clock,
+contact schedule or result endpoint was shortened to improve the timings.
+
+| Original-ROM scene | v3 Node | v3 Chrome | v4 Node | v4 Chrome |
+| --- | ---: | ---: | ---: | ---: |
+| HP39g+ HOME `1+1` | 1.0395× | 0.9595× | 1.0059× | 0.9632× |
+| HP39g+ APLET Library | 1.0167× | 0.9617× | 1.0424× | 1.0062× |
+| HP39g+ Function START | 1.0238× | 0.9438× | 1.0193× | 0.9933× |
+| HP39g+ HOME `7*8` | 1.0522× | 0.9988× | 1.0376× | 1.0235× |
+| HP48gII HOME `1+1` | 1.0558× | 1.0598× | 1.0095× | 0.9718× |
+| HP48gII HOME `7*8` | 1.0561× | 0.8839× | 1.0053× | 1.0537× |
+
+Ratios are `median(baseline ms) / median(candidate ms)`; values above one
+favor the candidate. The aggregate below sums the six scene medians for each
+variant before dividing. It does not pool unequal scene workloads or combine
+Node with browser measurements.
+
+| Comparison | Baseline sum of medians | Candidate sum of medians | Ratio |
+| --- | ---: | ---: | ---: |
+| v3 Node | 1,984.05 ms | 1,913.69 ms | 1.0368× |
+| v3 Chrome | 1,847.40 ms | 1,913.00 ms | 0.9657× |
+| v4 Node | 1,887.80 ms | 1,846.73 ms | 1.0222× |
+| v4 Chrome | 1,909.75 ms | 1,911.50 ms | 0.9991× |
+
+Version 3's Chrome HP48gII `7*8` exceeded the existing rollback threshold:
+candidate median elapsed time increased by more than 10%, with three of the
+four pairs slower. Before v4 was measured, the team additionally fixed the
+selection rule that its Chrome sum of medians must decrease, with no scene
+crossing that existing rollback threshold. V4 did not meet the aggregate
+condition. Its 0.092% elapsed-time difference does not establish a stable
+regression, but it also does not justify shipping this change as a speedup.
+The favorable Node results do not replace the browser results. The experiment
+ended with the original production core restored, without further timing runs.
+
+The withdrawn implementations remain available as the
+[v3 quiet-loop patch](evidence/quiet-loop-v3-r18.patch) and
+[v4 cold-rollback patch](evidence/cold-rollback-v4-r18.patch), each relative to
+the restored r17 baseline. These contain only core source differences and are
+retained for review and reproducibility; neither is enabled in production.
+Both passed `git apply --check` in temporary baseline trees, and applying them
+reproduced the exact frozen candidate source hashes recorded in the experiment
+JSON. Archiving these patches introduced no new build or timing experiment.
+
+The retained result is a stronger scheduler regression: **48,561 checks** now
+cover dependent ALU/condition chains, budget partitions, IRQ unmasking, WFI,
+ISA and mode transitions, MMIO instruction/descriptor reads, self-modifying
+instructions through SRAM mirrors, and live descriptor remapping and faults.
+Native and WASM checks passed for the two final candidates. The v3 independent
+ARMv4T oracle also matched all 17,075 admitted cases across native, WASM and
+Unicorn; this is instruction-subset evidence, not full ARM920T or peripheral
+conformance. An independent source review found no semantic blocker in either
+candidate; performance determined their withdrawal.
+
+The [r18 experiment record](evidence/performance-r18.json) preserves all
+candidate hashes and timing samples, including the earlier v1/v2 explorations
+that overlapped other work and the failed local-server startup. Those early
+measurements are not relabeled as isolated results. The
+[independent statistical review](evidence/performance-review-r18.json) checks
+all 216 final timed replays, both ratio-of-medians and paired-ratio estimates,
+and the predeclared withdrawal rules. ROM bytes, sessions, RAM and raw guest
+screen data remain private.
+
+## SDI and checkpoint compatibility check (2026-10-22)
+
+The r17 check compares the retained `ce9f81ac…` production WASM with
+`6fda3ed5…`, which includes the empty-slot SDI controller and ROM-stream USB
+MAXP compatibility. It reuses the existing private HP39g+ HOME/APLET sessions
+and their complete LCD results. All three scenes retain identical guest
+instructions, input contacts, LCD, UART and complete canonical machine state.
+
+Version 2 inserts 52 serialized SDI bytes before RAM. The Node scene and cold
+workflow tools now validate the exact wire layout and CRC, migrate version 1
+by inserting the documented SDI reset state, and compare **every** resulting
+byte. Version-2 SDI state is preserved in that comparison. Reports retain the
+original version-specific hashes and explicitly mark raw checkpoint equality
+false across versions; the canonical equality is a separate field. The
+comparator's six-model tests also ensure that a nonzero SDI field cannot be
+hidden and malformed inputs are rejected. This helper is only a benchmark
+comparison tool; checkpoint imports still go through the core's full loader.
+
+| HP39g+ scene | Default Node, 5 pairs | CPU 8 / `--no-liftoff`, 7 pairs |
+| --- | ---: | ---: |
+| HOME `1+1` | 0.974× | 1.145× |
+| APLET library | 1.028× | 1.072× |
+| Function START | 0.913× | 1.013× |
+
+Ratios are baseline median time divided by candidate median time. The first
+START slowdown did not repeat in the targeted steady-state experiment; the
+shared host also shows substantial variation within each build's samples.
+These results do not establish a precise speed improvement or a browser
+latency change. No core performance optimization was introduced. The bounded
+[r17 evidence](evidence/performance-r17.json) retains all samples, execution
+identities, migration checks and the two existing cold-boot stock workflows.
+The browser fixed-scene harness below still requires matching wire checkpoint
+versions; this round's cross-version comparison uses the Node tools.
+
 ## Fixed-scene execution comparison (2026-10-21)
 
 `tools/benchmark-scenes.mjs` compares two production WASM builds using private

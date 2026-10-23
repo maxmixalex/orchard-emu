@@ -1,0 +1,96 @@
+{
+  "schema": "orchard-hp39-package-review-v1",
+  "reviewed_on": "2026-10-22",
+  "scope": "Independent source, protocol, Windows HID API, provenance and distribution review; no physical HP39gs or Windows HID runtime acceptance.",
+  "package": {
+    "file": "docs/downloads/hp39gs-rom-dump-v1.zip",
+    "bytes": 1045637,
+    "sha256": "eeebe4ac2e9abf537fb25ecda40e441f3da0f52f30f36f3ea6a85ac0a84d1300",
+    "archive_files": 50
+  },
+  "findings": [
+    {
+      "severity": "low",
+      "status": "fixed",
+      "issue": "Standalone README contained site-relative download and evidence links whose targets were absent from the ZIP.",
+      "change": "Builder converts download/evidence links to published absolute HTTPS URLs; conversion is idempotent during archive-only rebuilding.",
+      "calculator_payload_changed": false,
+      "windows_receiver_changed": false
+    }
+  ],
+  "source_correspondence": {
+    "four_calculator_files_equal_to_user_original_archive": true,
+    "packaged_receiver_sources_equal_to_repository": true,
+    "packaged_builder_equal_to_repository": true,
+    "packaged_readme_equal_to_documentation_with_only_declared_link_conversion": true,
+    "complete_rebuild_from_unpacked_archive_equal": true,
+    "unchanged_windows_receiver_sha256": "a9b456019e431e7611e0d28a410162ddaf48f608a122f4cdd31797dbc5cdf508"
+  },
+  "protocol_review": {
+    "info_geometry_checked": true,
+    "sequence_offset_length_sum_and_fnv_checked": true,
+    "second_read_uses_original_volatile_nor_read_path": true,
+    "checksum_valid_unequal_reads_abort_without_further_retry": true,
+    "ack_requires_two_valid_equal_reads": true,
+    "maximum_transport_retries_per_block": 3,
+    "maximum_reports_per_read_block": 301,
+    "end_total_sum_pass_marker_checked": true,
+    "file_transaction_review": "Both output paths are reserved with O_EXCL. Failed normal execution removes only this invocation's reservations. Both file contents are written, synced and closed before FINISH; failure of FINISH preserves the completed capture and reports that distinction.",
+    "arbitrary_process_termination_or_power_loss_tested": false
+  },
+  "windows_api_review": {
+    "descriptor_usage_page": "0xffab",
+    "descriptor_usage": "0x0200",
+    "windows_report_bytes": 65,
+    "payload_bytes": 64,
+    "report_id": 0,
+    "matches_original_payload_descriptor": true,
+    "hidp_caps_layout_matches_documented_fields": true,
+    "overlapped_timeout_cancels_specific_operation_and_waits_for_completion": true,
+    "buffers_and_overlapped_kept_alive_until_completion": true,
+    "physical_runtime_verified": false
+  },
+  "validation": {
+    "go_version": "go1.22.2 linux/amd64",
+    "go_test": "PASS",
+    "go_vet": "PASS",
+    "package_python_groups": 5,
+    "package_negative_cases": 25,
+    "independent_fault_read_positions": [
+      1,
+      2,
+      120,
+      295,
+      296,
+      589,
+      37634
+    ],
+    "independent_fault_write_positions": [
+      1,
+      2,
+      3,
+      4,
+      33,
+      130
+    ],
+    "transport_fault_cases": 13,
+    "transport_fault_cases_return_no_complete_capture": true,
+    "missing_checkpoint_report_budget_test": "PASS; aborts after exactly 301 reports",
+    "independent_fault_driver_sha256": "f97f6ebade468cb78e061a13f4211bc702d1060fefb29f9dfde24475478221c2",
+    "git_diff_check": "PASS",
+    "windows_amd64_go_vet": "PASS"
+  },
+  "boundaries": {
+    "target_hp39gs_physical_execution_verified": false,
+    "windows_native_hid_runtime_verified": false,
+    "new_stock_os_execution_run_by_this_review": false,
+    "firmware_or_private_capture_published": false,
+    "additional_blocking_source_defect_found": false
+  },
+  "primary_sources": [
+    "https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/hidpi/ns-hidpi-_hidp_caps",
+    "https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex",
+    "https://learn.microsoft.com/en-us/windows/win32/api/setupapi/ns-setupapi-sp_device_interface_detail_data_w",
+    "https://github.com/maxmixalex/hpclang/blob/e240c58c2e9dd3ac4d18002ed9a93d2c7cc67900/research/hp39gplus/rom-stream.c"
+  ]
+}

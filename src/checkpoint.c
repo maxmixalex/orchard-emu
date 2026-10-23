@@ -5,7 +5,8 @@
  */
 #include "internal.h"
 #define HEADER 32u
-#define VERSION 1u
+#define VERSION 2u
+#define SDI_BYTES 52u
 static const uint8_t magic[8] = {'O','R','C','H','S','T','0','1'};
 typedef struct {
     o_cpu cpu;
@@ -31,7 +32,7 @@ static void bytes(codec *c, uint8_t *p, size_t n) {
 #define U8(x) do { (x)=(uint8_t)scalar(c,(x),1); } while(0)
 #define BOOL(x) do { uint64_t b=scalar(c,(x)?1u:0u,1); if(b>1)c->ok=false; (x)=b!=0; } while(0)
 #define A32(x,n) do { for(unsigned ai=0;ai<(n);ai++) U32((x)[ai]); } while(0)
-static void fields(codec *c, saved *s) {
+static void fields(codec *c, saved *s, unsigned version) {
     o_cpu *p=&s->cpu; o_soc *d=&s->soc;
     A32(p->r,16); U32(p->cpsr); A32(p->usr,7); A32(p->fiq,7);
     for(unsigned i=0;i<4;i++) A32(p->bank[i],2);
@@ -72,8 +73,14 @@ static void fields(codec *c, saved *s) {
     bytes(c,d->rx.data,O_QUEUE); U32(d->rx.head); U32(d->rx.count);
     bytes(c,d->tx.data,O_QUEUE); U32(d->tx.head); U32(d->tx.count);
     bytes(c,d->rtc.reg,19); U32(d->rtc.phase); U32(d->rtc.divider); U32(d->rtc.tick_count);
+    if (version >= 2u) {
+        o_sdi *sd=&d->sdi;
+        U32(sd->control); U32(sd->prescaler); U32(sd->argument); U32(sd->command); U32(sd->status);
+        U32(sd->data_timer); U32(sd->block_size); U32(sd->data_control); U32(sd->data_status);
+        U32(sd->interrupt_mask); U32(sd->remaining); U32(sd->response_remaining); U32(sd->phase);
+    } else if(c->in) o_sdi_reset(&d->sdi);
 }
-static size_t scalar_size(void) { saved s; o_zero(&s,sizeof s); codec c={0}; fields(&c,&s); return c.pos; }
+static size_t scalar_size(void) { saved s; o_zero(&s,sizeof s); codec c={0}; fields(&c,&s,VERSION); return c.pos; }
 /* Reflected CRC-32 (polynomial 0xedb88320), advanced eight bits at once.
  * Generated from the same bit recurrence as the independent test reference.
  * Recompute both ROM and payload checksums on every call: no stale hash cache.
@@ -137,7 +144,7 @@ orchard_status orchard_checkpoint_save(const orchard_machine *m, void *buffer, s
     s.nor=m->nor_device; s.decode=m->sram_decode; s.sequence=m->nor_sequence; s.id_mode=m->nor_id_mode;
     s.status=m->stop.status; s.pc=m->stop.pc; s.instruction=m->stop.instruction;
     s.address=m->stop.address; s.detail=m->stop.detail;
-    codec c={.out=out,.pos=HEADER,.ok=true}; fields(&c,&s);
+    codec c={.out=out,.pos=HEADER,.ok=true}; fields(&c,&s,VERSION);
     o_copy(out+c.pos,m->ram,m->profile->ram_bytes);c.pos+=m->profile->ram_bytes;
     o_copy(out+c.pos,m->boot_sram,O_BOOT_SRAM_SIZE);
     o_copy(out,magic,8);put(out+8,VERSION);put(out+12,(uint32_t)length);
@@ -161,17 +168,28 @@ static bool valid(const saved *s, const orchard_machine *m) {
         const o_usb_ep *e=&d->usb.ep[i];
         if(e->tx_count>64||e->rx_count>64||e->rx_pos>e->rx_count||e->tx_toggle>1||e->rx_toggle>1)return false;
     }
+    const o_sdi *sd=&d->sdi;
+    if(sd->control&~0x1du||sd->prescaler>255||sd->command&~0x1fffu||sd->status&~0x1fffu||
+       sd->data_timer>65535||sd->block_size>4095||sd->data_control&~0x3fffffu||
+       sd->data_status&~0x7ffu||sd->interrupt_mask&~0x3ffdfu||sd->phase>2||
+       sd->remaining>32768||sd->response_remaining>32768||
+       ((sd->data_control&0xb000u) && !(sd->data_control&0x4000u))||
+       ((sd->remaining!=0)!=(sd->phase!=0))||((sd->status&0x100u)!=0)!=(sd->phase!=0)||
+       (sd->response_remaining && sd->phase!=1))return false;
     return true;
 }
 orchard_status orchard_checkpoint_load(orchard_machine *m, const void *buffer, size_t length) {
     size_t required=orchard_checkpoint_size(m);
-    if(!required||!buffer||length!=required||overlap(buffer,length,m))return ORCHARD_BAD_ARGUMENT;
+    if(!required||!buffer||length<HEADER||overlap(buffer,length,m))return ORCHARD_BAD_ARGUMENT;
     const uint8_t *in=buffer;
+    unsigned version=word(in+8);
+    if((version!=1u&&version!=VERSION)||length!=required-(version==1u?SDI_BYTES:0u))
+        return ORCHARD_BAD_ARGUMENT;
     for(unsigned i=0;i<8;i++)if(in[i]!=magic[i])return ORCHARD_BAD_ARGUMENT;
-    if(word(in+8)!=VERSION||word(in+12)!=length||word(in+16)!=m->profile->id||
+    if(word(in+12)!=length||word(in+16)!=m->profile->id||
         word(in+24)!=m->profile->ram_bytes||word(in+28)!=crc(in+HEADER,length-HEADER)||
         word(in+20)!=crc(m->flash,m->profile->flash_bytes))return ORCHARD_BAD_ARGUMENT;
-    saved s; o_zero(&s,sizeof s); codec c={.in=in,.pos=HEADER,.ok=true};fields(&c,&s);
+    saved s; o_zero(&s,sizeof s); codec c={.in=in,.pos=HEADER,.ok=true};fields(&c,&s,version);
     if(!c.ok||!valid(&s,m))return ORCHARD_BAD_ARGUMENT;
     /* Validation complete. There are no fallible operations beyond this point. */
     m->cpu=s.cpu;m->soc=s.soc;m->ticks=s.ticks;

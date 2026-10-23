@@ -184,7 +184,7 @@ static void exercise_idle(bool use_ratio) {
         idle_program(model,3,3); duplicate(); idle_steps(63);
         size_t n=orchard_checkpoint_size(&a); CHECK(n<=sizeof saved);
         CHECK(orchard_checkpoint_save(&a,saved,n)==ORCHARD_OK);
-        CHECK(saved[8]==1 && saved[9]==0 && saved[10]==0 && saved[11]==0);
+        CHECK(saved[8]==2 && saved[9]==0 && saved[10]==0 && saved[11]==0);
         a.cpu.sleeping=false; a.soc.clock[3]=0; a.idle_write_enabled=true;
         CHECK(orchard_checkpoint_load(&a,saved,n)==ORCHARD_OK); same_state();
         a.soc.srcpnd=b.soc.srcpnd=1u<<10;

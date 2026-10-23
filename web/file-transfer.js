@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: MIT
-import { KermitSession, MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename } from './kermit.js';
+import {Hp39FileServer,prepareHp39Files} from './hp39-transfer.js';
+import {inspectHp39File,validateHp39Filename} from './hp39-files.js';
+import { KermitSession, MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename, validateReceiveBudget } from './kermit.js';
 export { MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename };
 export const MAX_UPLOAD_FILES = 16;
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+export const isHp39 = model => [1,2,3].includes(model);
 export function transferCapabilities(model,transport='usb') {
-  // HP39 typed catalog/client mode has a different application protocol. A
-  // generic Kermit ACK must not imply that an HP48 object can be sent to it.
-  const usb=model===4&&transport==='usb',serial=model===4&&transport==='serial';
-  // Both HP48gII paths use the same bounded Kermit application protocol.
-  // Admission is scoped to this model; other families need their own witness.
-  const supported=usb||serial;
-  return Object.freeze({send:supported,receive:supported,get:supported,directory:supported,finish:supported});
+  const link=['usb','serial'].includes(transport),hp39=isHp39(model)&&(transport==='usb'||model!==1&&transport==='serial');
+  const supported=model===4&&link||model===5&&transport==='usb';
+  return Object.freeze({send:supported||hp39,receive:supported||hp39,get:supported,directory:supported,finish:supported,serve:hp39});
 }
 export function validateUpload(model, name, bytes) {
   validateFilename(name);
   if (!(bytes instanceof Uint8Array) || bytes.length < 1 || bytes.length > MAX_FILE_BYTES) throw new Error('Choose a calculator file of 1 byte to 2 MiB.');
   if (!transferCapabilities(model).send) throw new Error('File transfer for this calculator family is not available yet.');
+  if(isHp39(model)){validateHp39Filename(name);inspectHp39File(bytes);return bytes;}
   const prefix=Array.from(bytes.subarray(0,8),b=>String.fromCharCode(b)).join('');
   if (!/^HPHP(?:48|49)-[\x20-\x7e]$/.test(prefix) && !prefix.startsWith('%%HP:'))
     throw new Error('Choose an HP48/49 binary object or an HP text file beginning with %%HP:. HP39 typed files, ROMs and ZIP files use different formats.');
@@ -33,8 +33,10 @@ export class FileTransfer {
     if (!Number.isSafeInteger(data.request)||data.request<=this.lastRequest) throw new Error('Stale file-transfer request.');
     if (!['serial','usb'].includes(data.transport)) throw new Error('Select a file-transfer connection.');
     if (!transferCapabilities(this.model,data.transport)[data.mode]) throw new Error('This file operation is not available for the selected calculator and connection.');
+    const receiveBudget=validateReceiveBudget(data.receiveBudget);
     if (data.mode==='send') validateUpload(this.model,data.name,data.bytes);
     if (data.mode==='get') validateFilename(data.name);
+    if(data.mode==='serve')prepareHp39Files(data.files);
     if (data.transport==='usb') {this.usb.endpoint(true);this.usb.endpoint(false);}
     this.lastRequest=data.request;this.request=data.request;this.currentTransport=data.transport;this.lastProgress=null;this.writeAfter=-Infinity;
     if(data.transport==='usb'&&!this.usbReady){this.writeAfter=Infinity;this.readyDeadline=tick+30*this.core.timebase_hz();}
@@ -46,20 +48,21 @@ export class FileTransfer {
       if (previous&&state.active&&state.phase===previous.phase&&state.name===previous.name&&state.transferred-previous.transferred<4096)return;
       this.lastProgress={...state};this.notify({type:'file-transfer-status',request:this.request,transport:this.currentTransport,...state});
     };
-    this.session=new KermitSession({hz:this.core.timebase_hz(),write:bytes=>this.write(bytes),notify:status,
+    const Session=isHp39(this.model)?Hp39FileServer:KermitSession;
+    this.session=new Session({hz:this.core.timebase_hz(),write:bytes=>this.write(bytes),notify:status,receiveBudget,
       end:data.transport==='usb'?13:null,
       onPacket:p=>{
         // Stock HP48gII USB can consume and then lose an application packet
         // sent immediately after enumeration. Wait for its complete first
         // Kermit response, but deliver every packet to the session unchanged.
         // Readiness is connection state, not an arbitrary per-packet delay.
-        if(this.currentTransport==='usb'&&!this.usbReady&&p.sequence===0&&['N','S','I'].includes(p.type)){
+        if(this.currentTransport==='usb'&&!this.usbReady&&p.sequence===0&&['N','S','I','R'].includes(p.type)){
           this.usbReady=true;this.writeAfter=this.session.now;
         }
       },
       file:({name,bytes})=>this.notify({type:'file-transfer-received',request:this.request,name,bytes}),
       listing:text=>this.notify({type:'file-transfer-listing',request:this.request,text})});
-    this.session.start({mode:data.mode,name:data.name,bytes:data.bytes},tick);
+    this.session.start(isHp39(this.model)?{files:data.mode==='send'?[{name:data.name,bytes:data.bytes}]:data.files||[]}:{mode:data.mode,name:data.name,bytes:data.bytes},tick);
   }
   write(bytes) {
     if (this.currentTransport==='serial') {
@@ -80,11 +83,17 @@ export class FileTransfer {
     if (!this.pending)return;
     try {
       if (this.currentTransport==='usb') {
-        if(this.active&&!this.usbReady&&tick>=this.readyDeadline)throw new Error('The calculator did not enter USB file-transfer mode. Start SERVER or SEND on the calculator and reconnect.');
+        if(this.active&&!this.usbReady&&tick>=this.readyDeadline)throw new Error(isHp39(this.model)?'Choose Disk drive in the calculator Send/Receive menu, then reconnect USB.':'The calculator did not enter USB file-transfer mode. Start SERVER or SEND on the calculator and reconnect.');
         // One IN transaction per original Worker slice, independent of the
         // display. NAK is ordinary backpressure, never a successful file read.
         const incoming=this.usb.read();
-        if (incoming.result===0)this.session.receive(incoming.bytes,tick);
+        if (incoming.result===0){
+          // A device IN completion must reach the guest before a dependent
+          // HP39 reply is placed in OUT. Drain the response on the next
+          // ordinary guest slice; no extra run budget or wall timer is added.
+          if(isHp39(this.model)&&incoming.bytes.length)this.writeAfter=tick;
+          this.session.receive(incoming.bytes,tick);
+        }
         else if (incoming.result!==1)throw new Error('USB file transfer: '+incoming.status);
       }
       this.session.poll(tick);

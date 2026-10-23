@@ -1,0 +1,196 @@
+{
+  "schema": "orchard-hp49-native-evidence-v1",
+  "validated_on": "2026-10-23",
+  "scope": "Original stock OS, ordinary virtual USB uploads, RAM port 0 library installation, physical-key native ARM launch and ON return. No guest-memory or firmware patch.",
+  "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+  "sdk": {
+    "upstream": "https://github.com/lobakkang/patched-hpgcc-1.1-sdk-for-hp39gs",
+    "revision": "7fa1503912338ea0fdf1d39eb584770f4d121cd2",
+    "library": {
+      "name": "LIB275.LIB",
+      "bytes": 4474,
+      "sha256": "7d204b746d0ded75e92da3d8e323637c2846fcd8f159dde2ba25ba8bdc0db637"
+    },
+    "program": {
+      "name": "template/main.hp",
+      "bytes": 12536,
+      "sha256": "423be27dbfa7f12f5645b666c0d389da28b1bfd9424813d00981601ce099248b"
+    }
+  },
+  "initial_stock_witness": {
+    "wasm_sha256": "b159d08738a864976c07c2f511a24bd663bf0a5b068178c5a244fb9367119c78",
+    "all_stages_same_wasm": true,
+    "starting_fixture": "Prior original-OS checkpoint prepared by physical CF(-33), CF(-78), SF(-35) input. This initial investigation is not a new cold-boot replay.",
+    "ordinary_usb_uploaded_objects": [
+      "ARMTOOL",
+      "ARMHELLO",
+      "INSTALL"
+    ],
+    "installation": "Original LIB275 library, ARMTOOL 0 STO in RAM port 0; physical ON+F3 warmstart.",
+    "launch": "MODE selects RPN, recall ARMHELLO, right-shift LIB, ARMToolbox, PrRUN.",
+    "guest_memory_patched": false,
+    "native_lcd": {
+      "sha256": "e45f97780f19f1acf92f2f12a36be1034b1091bd4feedfbb3521ad3b118ae8ab",
+      "independently_viewed": true,
+      "visible_text": "Hello From Lobakkang"
+    },
+    "on_return_to_home": {
+      "frame_sha256": "75d0af6e61e183dbfdc7a57d2d53cfc879ab75ec3a8b79cda8de2c637d6eee43",
+      "independently_viewed": true,
+      "stop": 0
+    },
+    "arithmetic_after_return": {
+      "keys": "1 ENTER 1 +",
+      "result": "2",
+      "frame_sha256": "163c140dc1b48de99058fef457585c5fb80a632d41f3fd55792c8b5001ca00e6",
+      "independently_viewed": true,
+      "stop": 0
+    },
+    "private_checkpoint_chain": [
+      "USB upload and install",
+      "ON+F3 warmstart",
+      "RPN native execution / ON return / arithmetic"
+    ],
+    "private_report_sha256": [
+      "9df68baf5809aca3ab4af5196ddb0861f8302d802e9c31dfcd3ecb32b3eb7b79",
+      "e1e446baecb294f54ee93480688df80ccb6c07e2027f61d8ddb96b0b65e988e7",
+      "04d217f1300eb9633b1d856bedfc3c0866d78800a6d021f8be1adf005aaa61e9"
+    ]
+  },
+  "maintained_workflow": {
+    "tool": "tools/verify-hp49-native.mjs",
+    "status": "PASS; complete cold-boot workflow on the final production WASM.",
+    "wasm_sha256": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f",
+    "tool_sha256": "3be3dbc423120238f415ea4a5b84236e0889bf258b73bf274148d0517f6501ba",
+    "host_modules_sha256": {
+      "hp48.js": "d624cbb35b831f3d69c1da3bc1b5fa1f73080c83f871998060b0bd2eed565bbc",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "file-transfer.js": "31be1e3ccb741f41e4bb967143555691d4a14338175e40df53726bf04da1cb2f",
+      "kermit.js": "b2d73695db7a29c8b71e26c4cafc1a4ea23903776cd508da4f74ddea0612b3d5"
+    },
+    "execution_host": "Node, production WASM and production virtual USB/Kermit modules",
+    "production_worker": false,
+    "cold_boot": true,
+    "physical_key_launch": true,
+    "guest_memory_patched": false,
+    "canonical_hardware_boot": false,
+    "frame_view": "packed-lsb",
+    "stages": [
+      {
+        "name": "wired-home",
+        "tick": 247200000,
+        "frame_sha256": "38cc56ba54df2ac0e500342dbf91c37ecb829c4da876dec4463e33e0a7355483",
+        "checkpoint_sha256": "435021367b25076f7a27f0e50c07c6356ed351f57630b5a53da298b537aefe26",
+        "stop": 0
+      },
+      {
+        "name": "installed",
+        "tick": 1349159616,
+        "frame_sha256": "cb4f399fb6ab4ec673a3316d6fae12c502b394b81a0037e1f961ff382aa51064",
+        "checkpoint_sha256": "a64082090c19dc3c57339f91a4a1e31d4c7b0ab251a9545ccc9493f5d7b391b0",
+        "stop": 0
+      },
+      {
+        "name": "native-running",
+        "tick": 1480859616,
+        "frame_sha256": "e45f97780f19f1acf92f2f12a36be1034b1091bd4feedfbb3521ad3b118ae8ab",
+        "checkpoint_sha256": "485d813d1aae95f362e9790841f14e776a2e818a6bf63465321a5595d052b152",
+        "stop": 0
+      },
+      {
+        "name": "returned-home",
+        "tick": 1493259616,
+        "frame_sha256": "75d0af6e61e183dbfdc7a57d2d53cfc879ab75ec3a8b79cda8de2c637d6eee43",
+        "checkpoint_sha256": "550db9b00ddb44e405afd2671da46172ca83bdf0f72e3433547730b246be62c2",
+        "stop": 0
+      },
+      {
+        "name": "one-plus-one",
+        "tick": 1514859616,
+        "frame_sha256": "163c140dc1b48de99058fef457585c5fb80a632d41f3fd55792c8b5001ca00e6",
+        "checkpoint_sha256": "adfda3a0e42312549b53988cd044b51aef5621dc37440b17b2835c868ac79507",
+        "stop": 0
+      },
+      {
+        "name": "final-home",
+        "tick": 1842810528,
+        "frame_sha256": "163c140dc1b48de99058fef457585c5fb80a632d41f3fd55792c8b5001ca00e6",
+        "checkpoint_sha256": "0e651d982f7da7c6ab352acae1d59921bf22bbcb138e1e2c2bb382f92b1b3a62",
+        "stop": 0
+      }
+    ],
+    "transfers": [
+      {
+        "mode": "send",
+        "name": "ARMTOOL",
+        "start_tick": 283584320,
+        "end_tick": 566560576,
+        "transferred": 4474,
+        "sent_sha256": "7d204b746d0ded75e92da3d8e323637c2846fcd8f159dde2ba25ba8bdc0db637"
+      },
+      {
+        "mode": "send",
+        "name": "ARMHELLO",
+        "start_tick": 569560576,
+        "end_tick": 1265113600,
+        "transferred": 12536,
+        "sent_sha256": "423be27dbfa7f12f5645b666c0d389da28b1bfd9424813d00981601ce099248b"
+      },
+      {
+        "mode": "send",
+        "name": "INSTALL",
+        "start_tick": 1268113600,
+        "end_tick": 1275606208,
+        "transferred": 41,
+        "sent_sha256": "bcef103cdb1a25e703c1a3e37f2040f1062109c95007d3df86cc3cba2c356cdd"
+      },
+      {
+        "mode": "finish",
+        "start_tick": 1278606208,
+        "end_tick": 1280159616,
+        "transferred": 0
+      },
+      {
+        "mode": "get",
+        "name": "ARMTOOL",
+        "start_tick": 1551243936,
+        "end_tick": 1825353376,
+        "transferred": 4474,
+        "received_sha256": "7d204b746d0ded75e92da3d8e323637c2846fcd8f159dde2ba25ba8bdc0db637"
+      },
+      {
+        "mode": "finish",
+        "start_tick": 1828353376,
+        "end_tick": 1829810528,
+        "transferred": 0
+      }
+    ],
+    "native_return_verified": true,
+    "arithmetic_after_return_verified": true,
+    "usb_after_return": {
+      "get_completed": true,
+      "bytes": 4474,
+      "byte_equal": true
+    },
+    "sram_alias_reads": "0",
+    "sram_alias_writes": "0",
+    "final_tick": 1842810528,
+    "passed": true,
+    "physical_switch_events": 214,
+    "native_visible_text": "Hello From Lobakkang",
+    "native_lcd_independently_viewed": true,
+    "final_result_two_lcd_independently_viewed": true,
+    "final_cpu_stop": 0,
+    "private_report_sha256": "4bdf98e066acae3849992f152145f76b2c943177acc32e800073f8c63b0d53b4"
+  },
+  "limits": {
+    "canonical_hardware_boot": false,
+    "all_native_applications_verified": false,
+    "populated_sd_card": false,
+    "irda_uart2": false,
+    "nor_program_erase": false,
+    "firmware_or_sdk_binaries_published": false,
+    "private_checkpoints_or_lcd_images_published": false
+  },
+  "performance_sample": false
+}

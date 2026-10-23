@@ -1,0 +1,39 @@
+{
+  "hpclang_commit": "e240c58c2e9dd3ac4d18002ed9a93d2c7cc67900",
+  "sdk_commit": "7fa1503912338ea0fdf1d39eb584770f4d121cd2",
+  "hpclang": {
+    "LICENSE": "853599ca5c45048b47ed66e099a8ba573293d21cb4ff300ed28241ef54d0bb29",
+    "research/hp39gplus/ROM-STREAM-README.md": "ae6b90ad97aae4a4ea8c02775e49de28a07431ec09efffcd4d37e0cf012b9feb",
+    "research/hp39gplus/build-rom-streamer.sh": "8aa25eab3fda61d62d40eff027723f145f9c6160c26239beb5682e8f68358482",
+    "research/hp39gplus/rom-stream-entry.S": "f42e47e64bfd8408bf5fcf416f302d407a4e2555d8e070e2084d476830bd607c",
+    "research/hp39gplus/rom-stream-wrap.py": "40f654b14599fd753685d7898a938620f6e210f9dc811240e8a046deabcb1458",
+    "research/hp39gplus/rom-stream.c": "aae1d7b89363d22c498939fd7339f764fb4db86bdc80b26bac43e3f0bbaec68f",
+    "research/hp39gplus/rom-stream.ld": "6e91fb74994f5ea4155608d642163efbee46c4e469c3dedecdd172bafdcc0bd8",
+    "tools/prepare-hp39-aplet.py": "f2dab9fdbf48fbf34abef7486dbe8b4f0b779f72b944c6d031df119f88ce1035"
+  },
+  "hpgcc39": {
+    "LIB275L.L39": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1",
+    "README.TXT": "e62bdc6bfa0ed8bc36300575dcabb9cc7465af98b8025d7a848a19045074804a",
+    "apletcode.bin": "849eefd23abeef14f360642a3a674dbbca0ffe4aabea6597fa955719e5c17505",
+    "apletepilog.bin": "3d72a94d0555457d442fd9898c4678777391995608828c7bafdf52b9c18b2843",
+    "blank.gro": "189b286566bff94e60e4bc8ae71382858bd1fe90f51a129d571242fb3fa35d3d",
+    "sources/HP39-Aplet/LIB275/HEADER.H": "4c149a3f5df4fb33ee0acbce70ebc363dd16f4f756eb3dffcad52eaa97f16132",
+    "sources/HP39-Aplet/LIB275/SEXE.s": "48eefd8683599d1e01b779d0dfcb23e575f7b569b851e2e60b6ae1873a84a127",
+    "sources/HP39-Aplet/LIB275/SUPROM39.A": "72cdc61b0287d036edbb63d5109d4908af44233e8360b636e10c10da248e0e44",
+    "sources/HP39-Aplet/LIB275/lib275.s": "87ea762769d00b2c6002d06733e5ba11b1079f5fe141720b95a6809e7e4a71c8",
+    "sources/HP39-Aplet/LIB275/makefile.bat": "87d5c4e3ca26431a3a342342a266451a08b2d7e7945a8a445196eb43bac474ee",
+    "sources/HP39-Aplet/Skeleton/=Common.h": "081d2a538d71042ffd1bbf89fabefd588890dd8211fb1c42b9c118f7de188594",
+    "sources/HP39-Aplet/Skeleton/=Entry39.h": "7e13f8dfce7e22bf5a79fc2359c8f3720b5dda15fd92f3d6795f36a48c80ba88",
+    "sources/HP39-Aplet/Skeleton/=Funcdir.h": "495ea1ddfc92e9529bda786910347aebb2acd30c0319b5bc1b9dbea0d48731b3",
+    "sources/HP39-Aplet/Skeleton/=Head39.h": "4c149a3f5df4fb33ee0acbce70ebc363dd16f4f756eb3dffcad52eaa97f16132",
+    "sources/HP39-Aplet/Skeleton/=Sharedvar.h": "193ae4a5c61b50b11b70d076c54dc67d63a0b51b89153018005a22ab302c20fe",
+    "sources/HP39-Aplet/Skeleton/Makefile": "1dedbcd4c4811cc9bbbe1cbd97d8a839f731fb8637472c5132f47187e7dc37ee",
+    "sources/HP39-Aplet/Skeleton/howtopatch.txt": "0019d9100c9eef1808a3878e6ac643e0fc5e1deb0fbe5f37bf724b93eae695c5",
+    "sources/HP39-Aplet/Skeleton/hpgccaplet.c": "07adce8603fab1d41dca88f296aab45c3e22c37df6e7590549352607160cd876",
+    "sources/HP39-Aplet/Skeleton/hpgccaplet.m": "1e9a7306332173721ace281d1092f477e9784705471dc1565e289356e4ad4564",
+    "sources/HP39-Aplet/Skeleton/hpgccaplet.s": "a00382fad0d4afe4c1c0db1e194e70a681350c316057f4e347c03cea8f3408e7",
+    "sources/HP39-Aplet/hp2aplet/build.sh": "b25a54b9c67c8fd7da232c6a97681a8e316f50b87cc74f811f9299abfb9f43d6",
+    "sources/HP39-Aplet/hp2aplet/hp2aplet.c": "bd2d2dce75e820045a2c6fa7c0818f33384dfdee55f8020368154b4e4b018e73",
+    "sources/HP39-Aplet/hp2aplet/hp39wiz.c": "57377e8081c203a8605154dc427b0e3ae6515246bfd09f9022db83ee9461d806"
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "schema": "orchard-hp39-archive-evidence-v1",
+  "passed": true,
+  "scope": "Original admitted HP39g+ D1.55, production browser ZIP import, stock USB RECV/SEND, downloaded ZIP and fresh cold-boot reimport",
+  "performance_sample": false,
+  "physical_calculator_or_host_usb_verified": false,
+  "model": 1,
+  "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+  "production_browser": {
+    "browser_version": "156.0.8078.47",
+    "cold_boot": true,
+    "normal_speed": true,
+    "ordinary_worker_budget_unchanged": true,
+    "guest_memory_patching": false,
+    "aplet_start_or_romstream_command": false,
+    "tool": "tools/verify-hp39-file-browser.py",
+    "tool_sha256": "4d9e45d8c58ffbdd67db33dff964b93adec6b9e3e4188d3d5a04e13016ecf2f6",
+    "private_report_sha256": "f8729285d5b2819b9819b2293aa66134b608fa179bf44949baa9a9011e66cbf2",
+    "assets": {
+      "orchard.wasm": "b159d08738a864976c07c2f511a24bd663bf0a5b068178c5a244fb9367119c78",
+      "calculator.js": "7ad1f8a42253b2fdac2cd2947182b726b6fce00de7cf211cdb12648f095bb1f0",
+      "worker.js": "604b544a5a04dfacb965b319b4165de5f7e6b64562cea0e633bcab7c1d76b852",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "file-transfer.js": "31be1e3ccb741f41e4bb967143555691d4a14338175e40df53726bf04da1cb2f",
+      "kermit.js": "b2d73695db7a29c8b71e26c4cafc1a4ea23903776cd508da4f74ddea0612b3d5",
+      "hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+      "hp39-transfer.js": "91800384d2b0823784b1476675e9b2bc2d239ceb68caddac7bcbe684769a3d5a",
+      "hp39-archive.js": "d671f01d2333f52f7c3d3cebf699c85ab2e72d56d823da1de1a91ed28c621bb1"
+    },
+    "original_archive": {
+      "bytes": 895961,
+      "sha256": "b7daaf8d3ed935a4dcf83a5190308bd0a47eaccaf04b966b5f1cb6fe06694759",
+      "selected_directory": "calculator/",
+      "unrelated_source_and_executables_excluded": true
+    },
+    "upload": {
+      "files": {
+        "HP39DIR.CUR": {
+          "bytes": 31,
+          "sha256": "542dda3d8ae6257461c7836962e390dfa7898f6c20759b650d927f73b9718d41"
+        },
+        "HP39DIR.000": {
+          "bytes": 67,
+          "sha256": "e0af2757fafa7a7ef0989cc5926f593ec64388644dc162c5f2255581484f4799"
+        },
+        "HPGCC000.000": {
+          "bytes": 7373,
+          "sha256": "3669fb2c2ae1f755bd542c8373a469d49165f2769affdce5435e649010c62455"
+        },
+        "LIB275L.000": {
+          "bytes": 1489,
+          "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+        }
+      },
+      "complete_object_bytes": 8862,
+      "original_aliases_preserved": true,
+      "stock_os_requested_library": true
+    },
+    "download": {
+      "files": {
+        "H39ROMUS.000": {
+          "bytes": 7373,
+          "sha256": "3669fb2c2ae1f755bd542c8373a469d49165f2769affdce5435e649010c62455"
+        },
+        "LIB275L0.000": {
+          "bytes": 1484,
+          "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f"
+        },
+        "HP39DIR.000": {
+          "bytes": 66,
+          "sha256": "ed6f8a343736666c2c8deaa8efa4b16860482511520034efef3086156691a1f3"
+        }
+      },
+      "aplet_file_bytes_equal": true,
+      "library": {
+        "source": {
+          "title": "ARMToolbox39",
+          "header_bytes": 21,
+          "body_bytes": 1468,
+          "body_sha256": "69ab7a7893c1f7fd0d6ab967e24563e02048c719d01eee74f5057e74d383903e"
+        },
+        "returned": {
+          "title": "LIB275L",
+          "header_bytes": 16,
+          "body_bytes": 1468,
+          "body_sha256": "69ab7a7893c1f7fd0d6ab967e24563e02048c719d01eee74f5057e74d383903e"
+        },
+        "object_bytes_equal": true,
+        "directory_alias_preserved": true
+      },
+      "all_three_equal_original_zip_test_exports": true
+    },
+    "downloaded_archive": {
+      "sha256": "2e69c9142c298fe4160c582b5cca1a2fa0529c268138107b44f9a05e265fe97c",
+      "exact_returned_files": true,
+      "missing_cur_rebuilt": true,
+      "bytes": 9375,
+      "verified_by": "Python standard-library zipfile, CRC and exact entry bytes",
+      "generated_entry": "HP39DIR.CUR"
+    },
+    "same_usb_connection_for_upload_and_send": true,
+    "post_send": {
+      "physical_keys": [
+        48,
+        26,
+        5,
+        26,
+        6
+      ],
+      "stopped": false,
+      "visual_result": "1+1=2",
+      "visually_reviewed": true,
+      "screenshot_sha256": "55a082216af6a4f57a007224bf148078a4ff4b75288e16c66fe6b34e1fe541ca"
+    },
+    "archive_reimport": {
+      "fresh_cold_boot": true,
+      "separate_browser_context": true,
+      "existing_ram_or_save_restored": false,
+      "object_bytes": 8857,
+      "stock_os_requested_library": true,
+      "aplet_list_shows": "H39 ROM USB",
+      "visually_reviewed": true,
+      "screenshot_sha256": "977188108b5630da9d39149dd3fd982c0c226290258d9cc73a98e7842ea4c416",
+      "stopped": false,
+      "page_errors": [],
+      "worker_errors": []
+    },
+    "page_errors": [],
+    "worker_errors": []
+  },
+  "archive_regressions": {
+    "independent_zip_writer_and_reader": "Python standard-library zipfile",
+    "archive_and_controller": "tests/hp39-archive.mjs",
+    "browser_picker_and_download_ui": "tests/browser-components.py",
+    "protocol": "tests/hp39-transfer.mjs",
+    "worker": "tests/file-transfer-worker.mjs",
+    "controller": "tests/file-transfer-controller.mjs",
+    "production_asset_contract": "tests/pages.py",
+    "production_assets_count": 37,
+    "verified_cases": [
+      "Stored ZIP",
+      "Raw DEFLATE",
+      "Data-descriptor ZIP",
+      "Calculator-directory selection in full source package",
+      "Original aliases and exact file bytes",
+      "Stock SEND directory without HP39DIR.CUR",
+      "Loose typed files",
+      "16 objects plus two directories",
+      "Unicode and parenthesized archive label",
+      "Missing dependency",
+      "Ambiguous package",
+      "Path traversal",
+      "Case-insensitive duplicate entry",
+      "CRC failure",
+      "Truncated ZIP",
+      "Expansion beyond declared size",
+      "Cancellation before worker dispatch"
+    ]
+  },
+  "remaining_model_boundary": "HP39gs/HP40gs share the implemented USB/UART server but require their own original full-ROM witness. Physical host USB/serial and the HP39/40 Wire entry are separate from this internal Disk drive workflow."
+}

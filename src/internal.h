@@ -85,6 +85,13 @@ typedef struct {
     uint64_t resets, setups, in_packets, out_packets;
 } o_usb;
 
+/* S3C2410A SDI controller with an empty card slot. No storage is synthesized. */
+typedef struct {
+    uint32_t control, prescaler, argument, command, status;
+    uint32_t data_timer, block_size, data_control, data_status, interrupt_mask;
+    uint32_t remaining, response_remaining, phase;
+} o_sdi;
+
 /* Host optimization state only. Exact input comparison, not a hash or a
  * hardware debounce filter. It must never replace architectural EINT state. */
 typedef struct {
@@ -101,6 +108,7 @@ typedef struct {
     uint64_t lcd_frames;
     o_adc adc;
     o_usb usb;
+    o_sdi sdi;
     uint32_t gpio_input_known[8], gpio_input_levels[8];
     uint32_t gpio_bias_known[8], gpio_bias_levels[8];
     bool lcd_probe68_idle_zero;
@@ -205,6 +213,10 @@ bool o_watchdog_register(o_soc *s, uint32_t address, uint32_t *value, bool write
 void o_usb_reset(o_usb *u);
 void o_usb_tick(orchard_machine *m);
 bool o_usb_register(orchard_machine *m, uint32_t address, unsigned width,
+                    uint32_t *value, bool write);
+void o_sdi_reset(o_sdi *s);
+void o_sdi_tick(orchard_machine *m);
+bool o_sdi_register(orchard_machine *m, uint32_t address, unsigned width,
                     uint32_t *value, bool write);
 void o_adc_reset(o_adc *a);
 void o_adc_tick(orchard_machine *m);

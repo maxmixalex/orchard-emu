@@ -22,7 +22,7 @@ export function validatePreferences(value) {
   if(!value.mappings || typeof value.mappings!=='object'||Array.isArray(value.mappings))throw new Error('Invalid keyboard mappings.');
   p.mappings={};
   for(const [model,map] of Object.entries(value.mappings)) {
-    if(!['1','4'].includes(model)||!map||typeof map!=='object'||Array.isArray(map)||Object.keys(map).length>160)throw new Error('Invalid keyboard mappings.');
+    if(!['1','4','5'].includes(model)||!map||typeof map!=='object'||Array.isArray(map)||Object.keys(map).length>160)throw new Error('Invalid keyboard mappings.');
     p.mappings[model]={};
     for(const [code,sequence] of Object.entries(map)) {
       if(!validBinding(code,sequence))throw new Error('Invalid key sequence.');
@@ -52,6 +52,11 @@ export function defaultBindings(model) {
   // HP39g+ printed alpha legends, pinned hp-calcs-svg resolved_design.json.
   if(model===1){const alpha=[28,21,14,7,29,22,15,8,1,30,23,16,9,2,57,24,17,10,3,25,18,11,4,26,19,12];
     for(let i=0;i<26;i++){const code='Key'+String.fromCharCode(65+i);map[code]=[58,alpha[i]];}}
+  if(model===5){
+    // HP49g+ printed alpha legends; A-F are the six menu keys.
+    const alpha=[35,36,37,38,39,40,41,46,47,48,49,50,28,21,14,7,29,22,15,8,1,30,23,16,9,2];
+    for(let i=0;i<26;i++)map['Key'+String.fromCharCode(65+i)]=[57,alpha[i]];
+  }
   return map;
 }
 export function bindings(p,model){return {...defaultBindings(model),...(p.mappings[String(model)]||{})};}
@@ -79,7 +84,7 @@ export function readAuto(storage,hash) {
   if(text.length>850000)throw new Error('Local save too large.');
   const r=JSON.parse(text);
   if(r?.version!==1||r.romHash!==hash||typeof r.token!=='string'||r.token.length>100||
-    !Number.isFinite(r.savedAt)||!Number.isInteger(r.model)||!['1','4'].includes(String(r.model)))throw new Error('Damaged local save.');
+    !Number.isFinite(r.savedAt)||!Number.isInteger(r.model)||!['1','4','5'].includes(String(r.model)))throw new Error('Damaged local save.');
   return {...r,file:fromBase64(r.data)};
 }
 export function writeAuto(storage,hash,model,file,expectedToken,token,now=Date.now()) {

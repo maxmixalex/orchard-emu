@@ -7,6 +7,7 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { applySetup, setupHash, TapQueue } from '../web/hp48.js';
 import { decodeSession } from '../web/session.js';
+import { canonicalCheckpoint } from './checkpoint-equivalence.mjs';
 
 const args = process.argv.slice(2);
 assert(args.length === 5 || args.length === 7 && args[5] === '--repeats',
@@ -33,6 +34,8 @@ const report = { schema: 'orchard-scene-throughput-v1', passed: false,
   platform: process.platform, architecture: process.arch,
   baseline_wasm_sha256: hash(binaries[0]), candidate_wasm_sha256: hash(binaries[1]),
   fixture_sha256: hash(fixtureBytes), probe_sha256: hash(await readFile(new URL(import.meta.url))),
+  checkpoint_equivalence_sha256: hash(await readFile(new URL('./checkpoint-equivalence.mjs', import.meta.url))),
+  checkpoint_comparison: 'Validate each wire checksum and exact schema layout, then migrate v1 to v2 by inserting only the documented 52-byte SDI reset state. Compare every canonical byte, including SDI, CPU, peripheral state, RAM and boot SRAM. Raw wire hashes are retained separately.',
   runner: 'run', quantum: 1024, result_sample_ticks: 12000, repeats,
   process_cpu_measurement: 'process.cpuUsage user plus system time; may include V8 background work. exec_argv records engine switches. --no-liftoff requests optimizing WASM compilation up front for a separate steady-state experiment; default-engine browser measurements are still required.',
   measurement: 'Node/V8 execution from exact private scene checkpoints to the baseline first full LCD result, including all key releases and their final gap. Each variant executes the complete workload twice before alternating timed replays; the first baseline replay locates the result. Loading, explicit WASM compilation, restore, LCD sampling and final checkpoint hashing are outside timed intervals. JS key scheduling, UART draining and incremental UART hashing are included. This is host execution throughput, not browser latency or real-calculator calibration.',
@@ -60,10 +63,11 @@ function create(module, model, rom) {
   return c;
 }
 function restore(c, saved) {
-  assert.equal(saved.length, c.checkpoint_size());
+  assert(saved.length <= c.checkpoint_size(), 'Checkpoint exceeds destination capacity');
   new Uint8Array(c.memory.buffer, c.checkpoint_buffer(), saved.length).set(saved);
   assert.equal(c.checkpoint_load(saved.length), 0);
-  assert(checkpoint(c).equals(saved), 'Restore changed the full checkpoint');
+  assert(Buffer.from(canonicalCheckpoint(checkpoint(c))).equals(canonicalCheckpoint(saved)),
+    'Restore changed the full canonical checkpoint');
 }
 function replay(c, model, frame, saved, endpoint = null) {
   restore(c, saved);
@@ -127,14 +131,19 @@ try {
       assert.equal(saved.model, model.model); assert.equal(saved.romHash, hash(rom));
       assert.equal(saved.preset, model.preset); assert.equal(saved.frameView, 1);
       const reference = replay(machines[0], model, frame, saved.state);
+      const canonicalReference = Buffer.from(canonicalCheckpoint(reference.checkpoint));
+      const wireCheckpoints = [reference.checkpoint, null];
       const check = result => {
-        assert(result.checkpoint.equals(reference.checkpoint), 'Complete result checkpoint differs');
+        assert(canonicalReference.equals(canonicalCheckpoint(result.checkpoint)),
+          'Complete canonical result checkpoint differs');
         assert.equal(result.uart, reference.uart, 'UART output differs');
         assert.deepEqual(result.final, reference.final); assert.deepEqual(result.events, reference.events);
       };
       // Match the baseline's result-finding execution before warming both
       // variants once more. Keep all raw timed values for host/JIT variability.
-      check(replay(machines[1], model, frame, saved.state, reference.endpoint));
+      const candidate = replay(machines[1], model, frame, saved.state, reference.endpoint);
+      wireCheckpoints[1] = candidate.checkpoint;
+      check(candidate);
       for (const c of machines) check(replay(c, model, frame, saved.state, reference.endpoint));
       const times = [[], []], cpuTimes = [[], []];
       for (let repeat = 0; repeat < repeats; ++repeat) {
@@ -146,6 +155,9 @@ try {
       const row = { model: model.model, expression: frame.expression,
         rom_sha256: hash(rom), initial_checkpoint_sha256: hash(saved.state),
         final_checkpoint_sha256: hash(reference.checkpoint), pixel_sha256: frame.sha256,
+        candidate_final_checkpoint_sha256: hash(candidate.checkpoint),
+        canonical_final_checkpoint_sha256: hash(canonicalReference),
+        checkpoint_versions: wireCheckpoints.map(bytes => bytes.readUInt32LE(8)),
         uart_sha256: reference.uart, hold_ticks: reference.hold, gap_ticks: reference.gap,
         first_result_ticks: reference.firstResult, measured_ticks: reference.endpoint,
         instructions: reference.final.instructions - reference.initial.instructions,
@@ -153,12 +165,14 @@ try {
         baseline_process_cpu_ms: cpuTimes[0], candidate_process_cpu_ms: cpuTimes[1],
         speedup: median(times[0]) / median(times[1]),
         process_cpu_speedup: median(cpuTimes[0]) / median(cpuTimes[1]), events: reference.events,
-        complete_checkpoint_equal: true };
+        complete_checkpoint_equal: reference.checkpoint.equals(candidate.checkpoint),
+        canonical_checkpoint_equal: true };
       report.cases.push(row);
       console.log(JSON.stringify({ model: row.model, expression: row.expression,
         baseline_ms: row.baseline_ms, candidate_ms: row.candidate_ms, speedup: row.speedup,
         process_cpu_speedup: row.process_cpu_speedup,
-        complete_checkpoint_equal: true }));
+        complete_checkpoint_equal: row.complete_checkpoint_equal,
+        canonical_checkpoint_equal: true }));
     }
   }
   report.passed = true;

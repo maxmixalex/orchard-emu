@@ -1,0 +1,193 @@
+{
+  "schema": "orchard-hp39-romstream-evidence-v1",
+  "generated_at": "2026-10-22",
+  "scope": "HP39gs full-ROM package with unchanged HP39g+ calculator payload; reference stock-OS execution is HP39g+ in Orchard.",
+  "package": {
+    "file": "docs/downloads/hp39gs-rom-dump-v1.zip",
+    "bytes": 1045637,
+    "sha256": "eeebe4ac2e9abf537fb25ecda40e441f3da0f52f30f36f3ea6a85ac0a84d1300",
+    "archive_files": 50,
+    "windows_receiver": {
+      "bytes": 1812480,
+      "sha256": "a9b456019e431e7611e0d28a410162ddaf48f608a122f4cdd31797dbc5cdf508"
+    },
+    "calculator_artifacts": {
+      "HPGCC000.000": {
+        "bytes": 7373,
+        "sha256": "3669fb2c2ae1f755bd542c8373a469d49165f2769affdce5435e649010c62455"
+      },
+      "LIB275L.000": {
+        "bytes": 1489,
+        "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+      },
+      "HP39DIR.000": {
+        "bytes": 67,
+        "sha256": "e0af2757fafa7a7ef0989cc5926f593ec64388644dc162c5f2255581484f4799"
+      },
+      "HP39DIR.CUR": {
+        "bytes": 31,
+        "sha256": "542dda3d8ae6257461c7836962e390dfa7898f6c20759b650d927f73b9718d41"
+      }
+    }
+  },
+  "source_correspondence": {
+    "hpclang_commit": "e240c58c2e9dd3ac4d18002ed9a93d2c7cc67900",
+    "hpgcc39_sdk_commit": "7fa1503912338ea0fdf1d39eb584770f4d121cd2",
+    "calculator_payload_bytes": 6376,
+    "calculator_payload_sha256": "9baa02a66891d27ec771ce69c43f737fa322a6c3bc1d63402981a02ff90851f4",
+    "original_uploaded_calculator_bytes_unchanged": true,
+    "arm_payload_from_source_byte_equal": true,
+    "aplet_template_from_source_byte_equal": true,
+    "library_275_from_source_byte_equal": true,
+    "final_aplet_from_source_byte_equal": true,
+    "complete_package_rebuilt_from_extracted_package_only": true,
+    "independent_rebuild": {
+      "bytes": 1045637,
+      "sha256": "eeebe4ac2e9abf537fb25ecda40e441f3da0f52f30f36f3ea6a85ac0a84d1300"
+    },
+    "toolchain": {
+      "arm": "clang version 22.1.0",
+      "go": "go version go1.22.2 linux/amd64",
+      "hptools": "3.0.8 with pdo 20190426 patch"
+    },
+    "licenses": {
+      "calculator_aplet_and_library": "GPL-2.0-or-later",
+      "hpclang_arm_sources_and_receiver": "MIT",
+      "orchard_changes": "MIT"
+    }
+  },
+  "receiver_checks": {
+    "full_bytes": 1048576,
+    "blocks": 64,
+    "block_bytes": 16384,
+    "independent_reads_per_block": 2,
+    "checksum_algorithms": [
+      "sum32",
+      "FNV-1a"
+    ],
+    "comparison": "each validated block compared byte-for-byte before ACK",
+    "maximum_transport_retries_per_block": 3,
+    "checksum_valid_unequal_reads_rejected": true,
+    "unknown_or_malformed_frames_rejected": true,
+    "output_no_overwrite": true,
+    "failed_output_rollback": true,
+    "file_sync_before_finish": true
+  },
+  "stock_os_execution": {
+    "schema": "orchard-hp39-romstream-stock-v1",
+    "model": "hp39gplus",
+    "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+    "wasm_sha256": "6fda3ed5604d2ac113ffb4288e0fd5baa8ecbc7f7bb46f803ff694a2c8a22767",
+    "starting_checkpoint_sha256": "70af7368340c5c9721762e593c9452d43188e11a743c8e15177fba3db856049d",
+    "guest_memory_patched": false,
+    "physical_key_launch": true,
+    "usb_hid_identity": {
+      "vendor": 1008,
+      "product": 289,
+      "manufacturer": "hpclang",
+      "name": "HP39g+ ROM Stream",
+      "endpoints": [
+        {
+          "address": 129,
+          "type": 3,
+          "maxPacket": 64
+        },
+        {
+          "address": 2,
+          "type": 3,
+          "maxPacket": 64
+        }
+      ]
+    },
+    "read_reports": 37634,
+    "write_reports": 131,
+    "returned_to_stock_os": true,
+    "arithmetic_after_return_verified": true,
+    "external_cable_input": {
+      "port": "F",
+      "known_mask": "0x8e",
+      "connected_levels": "0x02",
+      "disconnected_levels": "0x00"
+    },
+    "after_return_lcd_sha256": "1c0341538082ea6ff9aea93205ecce184ce76c9071b2aef664fb3ffc818cc378",
+    "home_lcd_sha256": "4590ac57444ea61d6207adb9b2de2b4c82f96bc185797151adeed94d98652ea2",
+    "arithmetic_lcd_sha256": "80c3d9d1b982b326ca0da7e205f2cd9e124dc3a1c1098c37dbf7ddf31a39c6b5",
+    "final_cpu_stop": 0,
+    "final_tick": 2562327328
+  },
+  "stock_capture": {
+    "bytes": 1048576,
+    "sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+    "independent_block_reads_equal": true,
+    "read_passes_per_block": 2,
+    "transport_retries": 0
+  },
+  "stock_installation": {
+    "method": "original HP39g+ OS Kermit USB GETs from HP39 directory server",
+    "requested_files": [
+      "HP39DIR.CUR",
+      "HP39DIR.000",
+      "HPGCC000.000",
+      "LIB275L.000"
+    ],
+    "guest_memory_patch": false,
+    "entry": "APLET / H39 ROM USB / START / ENTER with USB disconnected; then GPF1 cable input high and host enumeration"
+  },
+  "usb_compatibility": {
+    "maxp_indexed_offsets": [
+      "0x180",
+      "0x18c"
+    ],
+    "justification": "S3C2410A March 2004 uses 0x180; S3C2410X April 2003 revision uses 0x18c. The original unchanged ROM-stream payload writes both offsets. Orchard accepts both documented layouts as compatibility decoding; this does not assert that one physical chip aliases both addresses.",
+    "global_gpio_default_changed": false,
+    "external_cable_input_explicit_in_fixture": true
+  },
+  "validation": {
+    "package_test_groups_passed": 5,
+    "package_rehashed_or_boundary_negative_cases": 25,
+    "receiver_unit_and_protocol_tests": "PASS",
+    "stock_receiver_test": "PASS; actual receiveImage and emulated endpoint transport",
+    "stock_receiver_seconds": 29.62,
+    "usb_native_checks": 54065,
+    "usb_native_failures": 0,
+    "private_capture_manifest": {
+      "bytes": 14868,
+      "sha256": "d8729c5e58f580d55a6118dbe8186ced8be68872ca25a7776c40981b2ec52fc4"
+    },
+    "private_stock_execution_report": {
+      "bytes": 1329,
+      "sha256": "81478056342f42761291c29ebdf3c00f6ef3b94e35925b1af3c57d49a1e5f213"
+    },
+    "private_stock_execution_log": {
+      "bytes": 2585,
+      "sha256": "939187e05032ca2dbb07088a3444d7a6f3b593bbc1ba7225d7a7c6fd9782d6a6"
+    },
+    "standalone_readme_links": "All Markdown links are absolute HTTPS URLs; archive-only source rebuild reproduces the final ZIP",
+    "independent_package_review": "package-review-r17.json"
+  },
+  "boundaries": {
+    "hp39gs_physical_execution_verified": false,
+    "hp39gs_stock_os_execution_verified": false,
+    "windows_native_hid_runtime_verified": false,
+    "reference_hp39gplus_emulated_stock_execution_verified": true,
+    "separate_full_power_cycle_double_capture": false,
+    "physical_mapping_authenticated": false,
+    "rom_or_user_checkpoint_distributed": false,
+    "automatic_catalog_admission": false
+  },
+  "sources": [
+    "https://github.com/maxmixalex/hpclang/tree/e240c58c2e9dd3ac4d18002ed9a93d2c7cc67900/research/hp39gplus",
+    "https://github.com/lobakkang/patched-hpgcc-1.1-sdk-for-hp39gs/tree/7fa1503912338ea0fdf1d39eb584770f4d121cd2/sources/HP39-Aplet",
+    "https://github.com/arm/arm-toolchain/releases/tag/release-22.1.0-ATfE",
+    "https://www.sistemasorp.es/blog/S3C2410%20-%20datasheet.pdf",
+    "https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf"
+  ],
+  "previous_package_revisions": [
+    {
+      "bytes": 1045412,
+      "sha256": "8b6a81b0e2a0cd845c4d84c7eb445c669a53e2fab98c3ba2b270794fa3fcf94a",
+      "status": "superseded by standalone README link correction; calculator and Windows receiver bytes unchanged",
+      "complete_package_rebuilt_from_extracted_package_only": true
+    }
+  ]
+}

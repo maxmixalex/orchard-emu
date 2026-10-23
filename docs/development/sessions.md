@@ -5,7 +5,7 @@
 **Save** pauses the calculator, releases queued/held host keys and
 exports `<model>-<yyyymmdd-hhmmss>.ord`, using local wall time for the filename
 only. Legacy `.orchard` files are still accepted: the validated format is
-unchanged. Keep the exported backup. To resume later, open the same original
+backwards compatible. Keep the exported backup. To resume later, open the same original
 ROM and choose **Restore**, then **Resume**. Optional automatic local saves
 are described below; the ROM is never persisted.
 Restoring a saved HOME session avoids repeating cold boot and its prompts.
@@ -13,7 +13,7 @@ Restart still clears the current RAM; it does not delete exported files.
 
 The file records RAM, internal SRAM, CPU register banks and CP15 state,
 peripheral registers, pending interrupts, clock phases, ADC sample-and-hold,
-UART/USB queues and NOR command state. It does not include the immutable NOR
+UART/USB queues, empty-slot SDI state and NOR command state. It does not include the immutable NOR
 image, UI timers, pointers or execution caches. Like a calculator backup,
 it contains the user's calculations and any data in calculator memory; treat
 it as private. Nothing is uploaded. A snapshot is not native warm reset,
@@ -23,11 +23,15 @@ battery-backed storage or continuation of an external USB host connection.
 
 The C API is `orchard_checkpoint_size/save/load`. The core format uses an
 explicit little-endian field stream, not `memcpy` of a C struct. Native and
-WASM share the schema. A 32-byte header contains `ORCHST01`, version 1, exact
+WASM share the schema. A 32-byte header contains `ORCHST01`, version 2, exact
 length, model, ROM CRC32, physical SRAM size and a payload CRC32. The body
 contains explicitly enumerated architectural scalars, active SRAM and the
-4 KiB internal SRAM. The current 256 KiB machines produce **270,310 bytes**
-before the small browser envelope.
+4 KiB internal SRAM. The current 256 KiB machines produce **270,362 bytes**
+before the small browser envelope; 512 KiB machines produce **532,506 bytes**.
+Version 2 appends 52 bytes of explicitly serialized SDI state. The loader also
+accepts exact version-1 files and initializes the previously absent SDI controller
+to its reset state. Exports always use version 2; the browser envelope remains
+version 1. Version-1 length, checksum, model and field validation still apply.
 
 The browser envelope (`ORCHARD1`) adds versioned JSON metadata with the exact
 ROM SHA-256, model, compatibility configuration, display mode and state SHA-256.
@@ -44,8 +48,8 @@ No raw host pointers, padding bytes, translation memo, EINT memo or deferred
 scheduler state is restored. Public execution boundaries materialize phases;
 import invalidates the disposable host caches. Schema or incompatible
 architectural changes must bump the format version or supply an explicit
-migration. Do not silently accept a different layout. This first format has
-no old-version migration requirement.
+migration. Do not silently accept a different layout. The version-1 migration is explicit and is
+covered on all six model capacities. Unknown versions remain errors.
 
 For manual save and every import the Worker pauses first, binds asynchronous results to a
 machine generation and operation token, and leaves restored machines paused.
@@ -61,8 +65,8 @@ in-flight ADC completion, continued execution, banked registers, internal and
 external RAM, circular UART queues and partly consumed USB FIFOs. They reject
 wrong ROMs, damaged/truncated files, every changed header byte, bad versions,
 noncanonical booleans and invalid queue cursors even with a repaired checksum.
-The current suite has **769 assertions per host**, including independent bitwise
-verification of both CRC fields on all six models. Browser-envelope and
+The suite includes independent bitwise verification of both CRC fields on all
+six models, legacy-version import, and in-flight SDI timing continuation. Browser-envelope and
 production Worker tests cover save/import/continued execution, exact ROM
 binding, corrupted payloads and stale-generation isolation.
 
@@ -84,18 +88,16 @@ browser envelope hashing; they are not end-to-end browser latency claims.
 The established final frame hashes remain unchanged. All prior board/LCD
 hypotheses remain explicit; saved state does not certify physical hardware.
 
-Actual browser-origin testing remains unavailable: the installed Chromium
-still rejects the local HTTP origin with `ERR_BLOCKED_BY_ADMINISTRATOR`.
-Its policy was not modified. Node Worker/envelope tests are not file-picker,
-real download, touch, background-tab or sustained browser E2E acceptance.
+Actual Chrome file-picker/download tests now cover original-ROM sessions.
+The HP49g+ production-page witness saves a version-2 session, changes the guest
+calculation, restores the saved session and compares every displayed RGBA byte.
+It also opens the prior HP48gII ROM, imports an unchanged version-1 HOME session,
+resumes execution and exports a version-2 replacement. These use normal UI
+controls and do not inject guest memory. See [HP49 startup](hp49-startup.md).
 
-The initial added button group collided with Pause/Restart on narrow screens
-because both inherited a fixed grid cell. The dedicated session row fixes
-that overlap. Offline Chromium HTML/CSS checks at 320, 390 and 720 pixels
-reproduced the old collision; the corrected layout at those widths and 1360
-pixels has no control overlap or horizontal overflow. The shipped selector
-contract is guarded in `tests/session.mjs`. This offline rendering does not
-replace the still-open browser-origin/file-picker interaction gate.
+Layout and lifecycle component tests cover narrow viewports separately. Neither
+checkpoint identity nor one desktop browser run proves long-term browser-storage
+reliability or physical warm-reset behavior.
 
 ## Opt-in automatic saves
 
@@ -137,8 +139,9 @@ does not guarantee locking between agents; the
 
 The current implementation uses a byte-table form of the same reflected CRC32
 recurrence. It still reads and validates the complete NOR and serialized payload
-on every operation; no stale identity cache is introduced. The wire format is
-unchanged and checkpoints compare byte-for-byte with the previous implementation.
+on every operation; no stale identity cache is introduced. That checksum optimization preserved the then-current format and compared
+byte-for-byte with its predecessor. The later SDI extension described above is
+an explicit version change, independent of the checksum implementation.
 An interleaved local benchmark reduced core save/import times by roughly a third;
 see [the validation record](validation.md#faster-checkpoints-unchanged-format).
 This reduces the synchronous Worker copy/checksum interval, not every source of

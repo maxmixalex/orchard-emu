@@ -1,0 +1,671 @@
+{
+  "schema": "orchard-release-validation-r18",
+  "validated_on": "2026-10-23",
+  "scope": "Final local release artifact and fresh functional validation. GitHub Build, merge and Pages results are separate per-revision publication evidence in the pull request and Actions.",
+  "main_base_revision": "d199afd29572a8a8fca6e6bf673b286b2637ecb9",
+  "recovered_implementation_commit": "9377548a7c8fb3a41a2b1388a83db649bb2be639",
+  "production_wasm": {
+    "sha256": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f",
+    "bytes": 102147,
+    "same_as_recovered_r17_final_artifact": true,
+    "experimental_physical_reads_enabled": false,
+    "quiet_loop_enabled": false,
+    "cold_rollback_candidate_enabled": false
+  },
+  "production_assets": {
+    "LICENSE": {
+      "sha256": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+      "bytes": 1077
+    },
+    "README.txt": {
+      "sha256": "5309d971e815297dc6b37a8b60ccd294d792bc6b1f7a6718ee4edf5edbf10d96",
+      "bytes": 2535
+    },
+    "calculator.css": {
+      "sha256": "bf13f9ec0840a54132650be17ffcd60c250b390c20aeb8a8606d0d7211f3f71a",
+      "bytes": 244680
+    },
+    "calculator.js": {
+      "sha256": "7ad1f8a42253b2fdac2cd2947182b726b6fce00de7cf211cdb12648f095bb1f0",
+      "bytes": 643046
+    },
+    "catalog.js": {
+      "sha256": "42dd61ebc3f95f88048a75a76ebf19fe7bbb8e3057445bfc799da7eab56f8875",
+      "bytes": 1428
+    },
+    "debug.html": {
+      "sha256": "cde0f1bfe988408c6341b9fe39e737676fd2a35001ed0e8d21aaa5cfe4aae24f",
+      "bytes": 7778
+    },
+    "file-transfer.js": {
+      "sha256": "31be1e3ccb741f41e4bb967143555691d4a14338175e40df53726bf04da1cb2f",
+      "bytes": 7426
+    },
+    "hp39-archive.js": {
+      "sha256": "d671f01d2333f52f7c3d3cebf699c85ab2e72d56d823da1de1a91ed28c621bb1",
+      "bytes": 9086
+    },
+    "hp39-files.js": {
+      "sha256": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+      "bytes": 8881
+    },
+    "hp39-transfer.js": {
+      "sha256": "91800384d2b0823784b1476675e9b2bc2d239ceb68caddac7bcbe684769a3d5a",
+      "bytes": 9832
+    },
+    "hp48.js": {
+      "sha256": "d624cbb35b831f3d69c1da3bc1b5fa1f73080c83f871998060b0bd2eed565bbc",
+      "bytes": 5038
+    },
+    "index.html": {
+      "sha256": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+      "bytes": 386
+    },
+    "kermit.js": {
+      "sha256": "b2d73695db7a29c8b71e26c4cafc1a4ea23903776cd508da4f74ddea0612b3d5",
+      "bytes": 19562
+    },
+    "licenses/frontend.txt": {
+      "sha256": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+      "bytes": 28034
+    },
+    "licenses/hp-calcs-svg/LICENSE.txt": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "licenses/hp-calcs-svg/NOTICE.txt": {
+      "sha256": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+      "bytes": 1280
+    },
+    "licenses/hp-calcs-svg/README.md": {
+      "sha256": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+      "bytes": 567
+    },
+    "lifecycle.js": {
+      "sha256": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+      "bytes": 1258
+    },
+    "main.js": {
+      "sha256": "d56f80d0a04e5aac8d936a811288aa09dcb4100f277b9617037aa9656e577e65",
+      "bytes": 12872
+    },
+    "orchard.wasm": {
+      "sha256": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f",
+      "bytes": 102147
+    },
+    "pacing.js": {
+      "sha256": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+      "bytes": 1274
+    },
+    "preferences.js": {
+      "sha256": "65f6b4f9834ca5eb1bb30e13220acbefe90dba2cec077b12b4da7d8f7ae2949d",
+      "bytes": 6524
+    },
+    "serve.mjs": {
+      "sha256": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+      "bytes": 1689
+    },
+    "session.js": {
+      "sha256": "fbd69bf94bdcac8eba4c9055f05e59256bae44964d0b3482421023035cfe5041",
+      "bytes": 2248
+    },
+    "skin.js": {
+      "sha256": "94c541faa00c201e986aa00b0032f2fb90b59ea276fb9ccc017f8da3c1a82102",
+      "bytes": 5232
+    },
+    "skins/hp39gplus.svg": {
+      "sha256": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+      "bytes": 117738
+    },
+    "skins/hp39gs.svg": {
+      "sha256": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+      "bytes": 117582
+    },
+    "skins/hp40gs.svg": {
+      "sha256": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+      "bytes": 116791
+    },
+    "skins/hp48gii.svg": {
+      "sha256": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+      "bytes": 160533
+    },
+    "skins/hp49gplus.svg": {
+      "sha256": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+      "bytes": 160313
+    },
+    "skins/hp50g-blue.svg": {
+      "sha256": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+      "bytes": 160256
+    },
+    "skins/hp50g.svg": {
+      "sha256": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+      "bytes": 159981
+    },
+    "skins/manifest.json": {
+      "sha256": "0f5a784541d7bd9a6cfe0956b7640880e511f576c1bed06bbb85c50cfec8644d",
+      "bytes": 98457
+    },
+    "style.css": {
+      "sha256": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+      "bytes": 10997
+    },
+    "task-scheduler.js": {
+      "sha256": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+      "bytes": 2145
+    },
+    "virtual-usb.js": {
+      "sha256": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "bytes": 7099
+    },
+    "worker.js": {
+      "sha256": "604b544a5a04dfacb965b319b4165de5f7e6b64562cea0e633bcab7c1d76b852",
+      "bytes": 15698
+    }
+  },
+  "fresh_core_checks": {
+    "clang18_release_ctest": {
+      "passed": 16,
+      "failed": 0
+    },
+    "gcc13_reference_ctest": {
+      "passed": 16,
+      "failed": 0
+    },
+    "gcc13_asan_ubsan_ctest": {
+      "passed": 16,
+      "failed": 0,
+      "leak_detection_enabled": false,
+      "leak_detection_note": "This container restricts the proc/ptrace access required by LeakSanitizer; address and undefined-behavior detection remain enabled."
+    },
+    "native_and_wasm_assertions_per_host": 1139510,
+    "functional_clock_assertions_per_host": 32949,
+    "scheduler_assertions_per_host": 48561,
+    "experimental_physical_reads_wasm_only_assertions": 217824,
+    "independent_instruction_oracle": {
+      "cases": 17075,
+      "mismatches": 0,
+      "skips": 0,
+      "scope": "Fresh v3 candidate comparison with Unicorn 2.1.4; final CPU source is the restored r17 baseline. Final exact-source CI independently repeats the maintained oracle."
+    },
+    "test_log_sha256": {
+      "final-check.log": "b97b6734eb558e60a40b1f6a94887b86a086d9beebfa9402f99c410cecd07bb6",
+      "final-test-wasm.log": "7c4f1f236f689a5608b533136d0bf4cbd234a2df133473413b47ea7f2bc89033",
+      "final-test-trace.log": "5d53a741d818eac9a68e59a5226721c4d66a7ca2b28ccf09d4ba0bcb9dbbdf5b",
+      "final-test-tools.log": "fb56df9c5e7656805274f7754e308bdfdbfed208ba2f3c9c185ffdbe7d7babd1",
+      "final-test-web.log": "b56f4817a8d6a285db62436d7904097a356507535bff682c5030798c5310a04c",
+      "final-test-skins.log": "4ad1dc5298414ca062a9f485d5ed574d6644a847db72ac94ef9a385b460cec81",
+      "final-test-pages.log": "3332d91c94e8c3a5a6debd07316aa882ee53b85af6338c318add9529955db8b7"
+    }
+  },
+  "hp49_original_rom": {
+    "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+    "rom_bytes": 2097152,
+    "ram_alias_reads": 0,
+    "ram_alias_writes": 0,
+    "rom_or_guest_memory_patched": false,
+    "cold_start": {
+      "native_cold_runs": 2,
+      "wasm_cold_runs": 2,
+      "all_equal": true,
+      "ticks_per_run": 300000000,
+      "result": {
+        "model": "hp49gplus",
+        "status": "budget-exhausted",
+        "boot_verified": false,
+        "ticks": "300000000",
+        "instructions": "299984175",
+        "exceptions": "663807",
+        "pc": "00000018",
+        "cpsr": "80000092",
+        "sleeping": false,
+        "stop": {
+          "code": 0,
+          "reason": "ready",
+          "pc": "00000000",
+          "instruction": "00000000",
+          "address": "00000000",
+          "detail": "00000000"
+        },
+        "frame_status": 0,
+        "cp15_control": "c000107f",
+        "fault_status": "00000000",
+        "fault_address": "00000000",
+        "registers": [
+          "0720000c",
+          "00000031",
+          "07100010",
+          "00000000",
+          "08000acc",
+          "00000001",
+          "00000000",
+          "00000000",
+          "00000000",
+          "07200000",
+          "00000000",
+          "00000000",
+          "00000001",
+          "0800072c",
+          "0000842c",
+          "00000018"
+        ],
+        "gpio_inputs": [
+          {
+            "port": "D",
+            "known_mask": "0000cc7f",
+            "levels": "00000000"
+          },
+          {
+            "port": "E",
+            "known_mask": "0000c000",
+            "levels": "0000c000"
+          },
+          {
+            "port": "F",
+            "known_mask": "0000008e",
+            "levels": "00000000"
+          },
+          {
+            "port": "G",
+            "known_mask": "00000001",
+            "levels": "00000000"
+          }
+        ],
+        "gpio_bias": [
+          {
+            "port": "G",
+            "known_mask": "0000f800",
+            "levels": "0000f800"
+          }
+        ],
+        "keyboard": "apples",
+        "nor_device": "sst39vf1601",
+        "lcd_probe68": "idle-zero",
+        "lcd_unverified_reads": "24",
+        "frame_view": "packed-lsb",
+        "key_events_applied": 20,
+        "key_events": [
+          {
+            "tick": "60000000",
+            "column": 5,
+            "row": 5,
+            "down": 1
+          },
+          {
+            "tick": "65000000",
+            "column": 5,
+            "row": 5,
+            "down": 0
+          },
+          {
+            "tick": "120000000",
+            "column": 5,
+            "row": 5,
+            "down": 1
+          },
+          {
+            "tick": "125000000",
+            "column": 5,
+            "row": 5,
+            "down": 0
+          },
+          {
+            "tick": "180000000",
+            "column": 3,
+            "row": 5,
+            "down": 1
+          },
+          {
+            "tick": "182000000",
+            "column": 3,
+            "row": 5,
+            "down": 0
+          },
+          {
+            "tick": "190000000",
+            "column": 0,
+            "row": 5,
+            "down": 1
+          },
+          {
+            "tick": "192000000",
+            "column": 0,
+            "row": 5,
+            "down": 0
+          },
+          {
+            "tick": "200000000",
+            "column": 2,
+            "row": 5,
+            "down": 1
+          },
+          {
+            "tick": "202000000",
+            "column": 2,
+            "row": 5,
+            "down": 0
+          },
+          {
+            "tick": "210000000",
+            "column": 0,
+            "row": 6,
+            "down": 1
+          },
+          {
+            "tick": "212000000",
+            "column": 0,
+            "row": 6,
+            "down": 0
+          },
+          {
+            "tick": "240000000",
+            "column": 3,
+            "row": 3,
+            "down": 1
+          },
+          {
+            "tick": "242000000",
+            "column": 3,
+            "row": 3,
+            "down": 0
+          },
+          {
+            "tick": "250000000",
+            "column": 0,
+            "row": 3,
+            "down": 1
+          },
+          {
+            "tick": "252000000",
+            "column": 0,
+            "row": 3,
+            "down": 0
+          },
+          {
+            "tick": "260000000",
+            "column": 2,
+            "row": 3,
+            "down": 1
+          },
+          {
+            "tick": "262000000",
+            "column": 2,
+            "row": 3,
+            "down": 0
+          },
+          {
+            "tick": "270000000",
+            "column": 0,
+            "row": 6,
+            "down": 1
+          },
+          {
+            "tick": "272000000",
+            "column": 0,
+            "row": 6,
+            "down": 0
+          }
+        ],
+        "adc_inputs": [
+          {
+            "channel": 0,
+            "code": 1023
+          },
+          {
+            "channel": 7,
+            "code": 512
+          }
+        ],
+        "peripherals": {
+          "lcd_control": 19663649,
+          "lcd_source_pending": 2,
+          "lcd_interrupt_pending": 0,
+          "lcd_interrupt_mask": 3,
+          "lcd_frames": "2505",
+          "adc_control": 49668,
+          "adc_data": 1023,
+          "adc_remaining": 0,
+          "adc_valid": true
+        },
+        "sram_decode": "exact",
+        "sram_alias_reads": "0",
+        "sram_alias_writes": "0",
+        "annunciators": {
+          "status": 0,
+          "levels": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "usb": {
+          "address": 0,
+          "active_address": 0,
+          "power": 1,
+          "index": 3,
+          "ep_pending": 0,
+          "bus_pending": 0,
+          "ep_enable": 11,
+          "bus_enable": 4,
+          "frame": 0,
+          "phase": 0,
+          "connected": false,
+          "endpoints": [
+            {
+              "max_packet": 8,
+              "in_csr": 8192,
+              "out_csr": 0,
+              "tx_bytes": 0,
+              "rx_bytes": 0
+            },
+            {
+              "max_packet": 64,
+              "in_csr": 40960,
+              "out_csr": 0,
+              "tx_bytes": 0,
+              "rx_bytes": 0
+            },
+            {
+              "max_packet": 8,
+              "in_csr": 8192,
+              "out_csr": 0,
+              "tx_bytes": 0,
+              "rx_bytes": 0
+            },
+            {
+              "max_packet": 64,
+              "in_csr": 0,
+              "out_csr": 32768,
+              "tx_bytes": 0,
+              "rx_bytes": 0
+            },
+            {
+              "max_packet": 8,
+              "in_csr": 8192,
+              "out_csr": 0,
+              "tx_bytes": 0,
+              "rx_bytes": 0
+            }
+          ],
+          "resets": "0",
+          "setups": "0",
+          "in_packets": "0",
+          "out_packets": "0"
+        }
+      },
+      "frame_sha256": "63bd1ac6a568ac693dfaf37f9514b942430dd832812b17263b571efec87834c2",
+      "private_report_sha256": "5e8e646e21f960ffd02ef6645acf5138c1ac02860f4cc7078bd77a1483e65fcd"
+    },
+    "cas_menus_graph_and_resume": {
+      "passed": true,
+      "stages": [
+        {
+          "name": "home",
+          "tick": 160000000,
+          "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+          "stop": 0
+        },
+        {
+          "name": "version",
+          "tick": 206000000,
+          "frame_sha256": "bef9069bbed7d994b37bbb8d12feb46114936b64101e6f93f4b7501c31e6d237",
+          "stop": 0
+        },
+        {
+          "name": "factor",
+          "tick": 286200000,
+          "frame_sha256": "8c4c67757137cc527e4c7a9ee8955029af85252491a1127f8bba92b7e75347ba",
+          "stop": 0
+        },
+        {
+          "name": "apps",
+          "tick": 293600000,
+          "frame_sha256": "45bffac03251f577ea6a14676e047e7bce52912542e3f7c815d5c080fbb88377",
+          "stop": 0
+        },
+        {
+          "name": "apps-return",
+          "tick": 301000000,
+          "frame_sha256": "8c4c67757137cc527e4c7a9ee8955029af85252491a1127f8bba92b7e75347ba",
+          "stop": 0
+        },
+        {
+          "name": "mode",
+          "tick": 308400000,
+          "frame_sha256": "fede67d0bc1b92e424b8741441eec2853bd58ac77bcc0d8df971d742349dbe2b",
+          "stop": 0
+        },
+        {
+          "name": "mode-return",
+          "tick": 315800000,
+          "frame_sha256": "8c4c67757137cc527e4c7a9ee8955029af85252491a1127f8bba92b7e75347ba",
+          "stop": 0
+        },
+        {
+          "name": "plot",
+          "tick": 555600000,
+          "frame_sha256": "4456afd374894f168ce36162995dd0569ef2276075edf9bb6c01b2c84967820c",
+          "stop": 0
+        },
+        {
+          "name": "plot-return",
+          "tick": 563000000,
+          "frame_sha256": "eeaa7fae390582e8b7e7cbaa6aa36c677b897c7f0290958f13cf85efcca59527",
+          "stop": 0
+        }
+      ],
+      "final_tick": 563000000,
+      "resume": {
+        "bytes": 532506,
+        "reset_restore_equal": true,
+        "native_wasm_equal": true,
+        "before_sha256": "aabae7056cb598ec54a3fd03e4451e73e9b701fae262a2d8800e23afd360e2f9",
+        "after_sha256": "036bddbd90343a539a80a996d98c652e04d213b20d797ba63f1ca1d6ca0b3419"
+      },
+      "private_report_sha256": "0eb4741ea4e446954334bebe603075d1c8428ea84251c7a35ad5bdf0164a50ca"
+    },
+    "production_browser_lifecycle": {
+      "passed": true,
+      "browser": "156.0.8078.47",
+      "cold_boot_from_real_file_picker": true,
+      "physical_pc_input": true,
+      "one_plus_one_result_2_independently_viewed": true,
+      "seven_times_eight_result_56_independently_viewed": true,
+      "exact_display_restoration": true,
+      "png_capture": {
+        "width": 524,
+        "height": 320,
+        "sha256": "5ed0e93b1e1a8dc69519b01cd785025c8c08a18d3d29677a264b83f6bf509112"
+      },
+      "checkpoint_version": 2,
+      "checkpoint_bytes": 532506,
+      "narrow_layout": {
+        "x": 66.6875,
+        "y": 241,
+        "width": 256.625,
+        "height": 480.6875
+      },
+      "page_errors": [],
+      "private_report_sha256": "01fde40b4c474f28673af3c480b41b28b5b733044872285f8a6866ab7af2e1ec"
+    },
+    "production_browser_usb": {
+      "passed": true,
+      "upload_get_directory_finish": true,
+      "calculator_initiated_send": true,
+      "get_after_active_send": true,
+      "same_connection": true,
+      "file_bytes_equal": true,
+      "object_bytes_equal": true,
+      "returned_bytes": 45,
+      "header": "HPHP49-C",
+      "page_errors": [],
+      "private_report_sha256": "f91cb80730add84bf89e39c9c95d14a1285651f843b92beb9ff03157858ce20f"
+    },
+    "production_browser_batch": {
+      "passed": true,
+      "count": 2,
+      "same_connection": true,
+      "all_complete_files_byte_equal": true,
+      "page_errors": [],
+      "private_report_sha256": "1d43c3ac49ebcd4b912291f3dba4f8a42d9e6411089a91749221f3be281ce0c3"
+    },
+    "native_arm_entry_return_and_usb_reconnect": "hp49-native-r18.json"
+  },
+  "hp39_original_rom": {
+    "final_build_full_1mib_double_read_and_return": "hp39-romstream-revalidation-r18.json",
+    "zip_import_send_download_and_fresh_cold_reimport": "hp39-archive-r18.json",
+    "zip_workflow_artifact_scope": "The complete original-ROM ZIP roundtrip used intermediate WASM b159d08738a864976c07c2f511a24bd663bf0a5b068178c5a244fb9367119c78. Its frontend runtime modules match the final build; final production frontend/ZIP component regressions use 5fb9626e. This record does not relabel the earlier full roundtrip as a final-WASM run."
+  },
+  "frontend_regression": "frontend-validation-r18.json",
+  "independent_reviews": [
+    "core-review-r18.json",
+    "performance-review-r18.json"
+  ],
+  "performance_decision": {
+    "v3_quiet_loop": "withdrawn",
+    "v4_cold_rollback_only": "withdrawn",
+    "new_hold_pr_created": false,
+    "new_home_or_aplet_latency_improvement_claimed": false,
+    "record": "performance-r18.json"
+  },
+  "download_package": {
+    "file": "hp39gs-rom-dump-v1.zip",
+    "bytes": 1046118,
+    "sha256": "f21b775a89ac6f3ce513abdb70181627c87c6088fdeeeff1fa6bebe0a5bf9ce1",
+    "whole_source_only_rebuild_byte_equal": true,
+    "preliminary_return_or_short_probe_required": false,
+    "documentation_sync": {
+      "initial_ci_run": "https://github.com/maxmixalex/orchard-emu/actions/runs/39897284391",
+      "initial_failure": "Standalone README did not match the final r18 documentation.",
+      "package_test": "5 tests passed, including the existing 25 negative cases",
+      "tools_suite_rerun": "passed",
+      "unchanged_calculator_and_receiver_bytes": true,
+      "whole_source_only_rebuild_repeated": true
+    }
+  },
+  "documentation": {
+    "strict_build": "passed",
+    "expected_markdown_pages": 42,
+    "publication_contract_tests": 9,
+    "production_assets": 37,
+    "strict_builder": "zensical 0.0.67",
+    "markdown_pages": 42,
+    "assembled_assets": 37,
+    "strict_log_sha256": "b0fa95585acf69059a94dcb29a8af2012412875f813116c75e37aed09ce24760",
+    "assembly_scope": "Local precommit assembly; deployed commit identity is verified separately after GitHub Build/Pages."
+  },
+  "boundaries": {
+    "hp39gs_own_full_rom_received": false,
+    "hp40gs_own_full_rom_received": false,
+    "hp50g_own_full_rom_received": false,
+    "physical_hp39gs_or_windows_hid_run": false,
+    "populated_sdi_storage": false,
+    "uart2_irda": false,
+    "nor_program_erase": false,
+    "desktop_usbip_kernel_attach_or_conn3x_interoperability": false,
+    "canonical_hardware_timing": false,
+    "firmware_or_private_user_payloads_published": false
+  }
+}

@@ -8,14 +8,17 @@ import { TapQueue } from '../dist/hp48.js';
 import { bindLifecycle } from '../dist/lifecycle.js';
 const defaults=()=>({...DEFAULTS,mappings:{}});
 assert.deepEqual(validatePreferences(defaults()),defaults());
+assert.deepEqual(validatePreferences({...defaults(),mappings:{'5':{KeyA:[57,35]}}}).mappings,{'5':{KeyA:[57,35]}});
 for(const update of [{version:2},{zoom:NaN},{zoom:181},{zoom:0},{view:'hidden'},{speed:Infinity},{speed:3},{interval:1},{autosave:1},
  {mappings:[]},{mappings:{'6':{KeyA:[58]}}},{mappings:{'1':{KeyA:[55]}}},{mappings:{'1':{KeyA:Array(9).fill(6)}}}])assert.throws(()=>validatePreferences({...defaults(),...update}));
 assert.deepEqual(defaultBindings(1).KeyA,[58,28]);assert.equal(defaultBindings(4).KeyA,undefined);
+assert.deepEqual(defaultBindings(5).KeyA,[57,35]);assert.deepEqual(defaultBindings(5).KeyZ,[57,2]);
 assert.deepEqual(bindings({...defaults(),mappings:{'1':{KeyA:[58,28],Enter:[]}}},1).Enter,[]);
 assert.equal(keyCode({code:'KeyA',shiftKey:false}), 'KeyA');assert.equal(keyCode({code:'KeyA',ctrlKey:true,shiftKey:true}),'Ctrl+Shift+KeyA');
 assert.equal(keyCode({code:'KeyA',isComposing:true}),null);assert(!validBinding('__proto__',[6]));
 assert.equal(sessionName(1,new Date(2026,9,3,1,2,3)), 'hp39gplus-20261003-010203.ord');
 assert.equal(sessionName(4,new Date(2026,11,31,23,59,59)), 'hp48gii-20261231-235959.ord');
+assert.equal(sessionName(5,new Date(2026,9,23,1,2,3)), 'hp49gplus-20261023-010203.ord');
 assert.throws(()=>sessionName(0));
 const data=Uint8Array.from({length:600000},(_,i)=>i%256);assert.deepEqual(fromBase64(toBase64(data)),data);
 for(const bad of ['%foo','!!!!','a', 'a'.repeat(850000)])assert.throws(()=>fromBase64(bad));
@@ -24,6 +27,7 @@ const store=new MemoryStorage();writePreferences(store,defaults());assert.deepEq
 const badStore={getItem:()=>{throw Error('blocked');}};assert.deepEqual(readPreferences(badStore),defaults());
 const hash='a'.repeat(64);assert.equal(readAuto(store,hash),null);
 writeAuto(store,hash,1,data,null,'tab1:1',10);assert.deepEqual(readAuto(store,hash).file,data);
+const hp49hash='5'.repeat(64);writeAuto(store,hp49hash,5,data,null,'hp49:1',11);assert.equal(readAuto(store,hp49hash).model,5);
 const before=store.getItem(autoKey(hash));assert.throws(()=>writeAuto(store,hash,1,data,null,'tab2:1'));assert.equal(store.getItem(autoKey(hash)),before);
 store.full=true;assert.throws(()=>writeAuto(store,hash,1,data,'tab1:1','tab1:2'));assert.equal(store.getItem(autoKey(hash)),before);store.full=false;
 writeAuto(store,hash,1,data,'tab1:1','tab2:2');assert.equal(readAuto(store,hash).token,'tab2:2');
