@@ -413,16 +413,27 @@ static bool arm_without_checkpoint(orchard_machine *m, uint32_t op) {
     data_processing(m, op);
     return true;
 }
-static void cpu_step(orchard_machine *m, bool fast) {
+/* Keep the run-local mapping proof scalar under WASM LTO, without adding an
+ * out-of-line call for every interpreted instruction. */
+#if defined(__wasm__) && !defined(ORCHARD_REFERENCE) && (defined(__GNUC__) || defined(__clang__))
+__attribute__((always_inline))
+#endif
+static void cpu_step(orchard_machine *m, bool fast, o_fetch_reuse *fetch) {
     o_cpu *c = &m->cpu;
     uint32_t pc = c->r[15], physical = 0, instruction = 0;
     unsigned width = c->cpsr & O_T ? 2 : 4;
     c->data_abort = c->prefetch_abort = false;
+    if (fetch && width != 4) fetch->valid = false;
     if (pc & (width - 1u)) {
+        if (fetch) fetch->valid = false;
         o_stop(m, ORCHARD_UNPREDICTABLE, pc, width); return;
     }
-    if (!o_translate(m, pc, false, true, (c->cpsr & 31u) == O_USR, &physical) ||
+    bool translated = fetch && width == 4
+        ? o_translate_fetch_reuse(m, pc, &physical, fetch)
+        : o_translate(m, pc, false, true, (c->cpsr & 31u) == O_USR, &physical);
+    if (!translated ||
         !o_phys_read(m, physical, width, &instruction)) {
+        if (fetch) fetch->valid = false;
         if (m->stop.status != ORCHARD_OK) return;
         if (!c->prefetch_abort) o_fault(c, pc, 8, 0, true);
         o_exception(c, O_ABT, 0xc, pc + 4u);
@@ -433,6 +444,10 @@ static void cpu_step(orchard_machine *m, bool fast) {
         ++c->instructions;
         return;
     }
+    /* No bus/control/bank-changing instruction can execute with a retained
+     * mapping, including loads, stores, CP15, PSR/SPSR returns, SWI and Thumb.
+     * Invalidating before execution also covers partial writes and faults. */
+    if (fetch) fetch->valid = false;
     /* Word/byte single transfers commit GPRs and writeback only after their
      * last fallible bus operation. Keep just the speculative PC and fault
      * registers, rather than copying all banks/CP15 state on every LDR/STR.
@@ -476,11 +491,22 @@ static void cpu_step(orchard_machine *m, bool fast) {
     ++c->instructions;
 }
 
-void o_cpu_step_reference(orchard_machine *m) { cpu_step(m, false); }
+void o_cpu_step_reference(orchard_machine *m) { cpu_step(m, false, NULL); }
 void o_cpu_step(orchard_machine *m) {
 #ifdef ORCHARD_REFERENCE
-    cpu_step(m, false);
+    cpu_step(m, false, NULL);
 #else
-    cpu_step(m, true);
+    cpu_step(m, true, NULL);
+#endif
+}
+#if defined(__wasm__) && !defined(ORCHARD_REFERENCE) && (defined(__GNUC__) || defined(__clang__))
+__attribute__((always_inline))
+#endif
+void o_cpu_step_reuse(orchard_machine *m, o_fetch_reuse *fetch) {
+#ifdef ORCHARD_REFERENCE
+    (void)fetch;
+    cpu_step(m, false, NULL);
+#else
+    cpu_step(m, true, fetch);
 #endif
 }
