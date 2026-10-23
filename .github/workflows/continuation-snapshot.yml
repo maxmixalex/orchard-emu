@@ -6,34 +6,52 @@ on:
 permissions:
   contents: read
 jobs:
-  snapshot:
+  dependencies:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
           path: orchard
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Restore locked frontend packages
+        working-directory: orchard
+        run: npm ci
+      - name: Archive frontend dependencies
+        run: |
+          mkdir inputs
+          tar -czf inputs/frontend-dependencies.tar.gz -C orchard node_modules
+          cp orchard/package-lock.json inputs/package-lock.json
+          sha256sum inputs/frontend-dependencies.tar.gz > inputs/frontend.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: continuation-frontend-inputs
+          path: inputs/
+          retention-days: 7
+          if-no-files-found: error
+  hp39-sdk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
       - uses: actions/checkout@v4
         with:
           repository: maxmixalex/hpclang
           ref: e240c58c2e9dd3ac4d18002ed9a93d2c7cc67900
           persist-credentials: false
-          path: hpclang-streamer
-      - name: Archive tracked public source only
-        shell: bash
+      - run: sudo apt-get update && sudo apt-get install -y innoextract
+      - name: Restore the original HP39 packaging toolchain
+        run: bash tools/bootstrap-hp39-aplet.sh
+      - name: Archive SDK inputs
         run: |
-          set -euo pipefail
-          mkdir snapshots
-          git -C orchard archive --format=tar.gz --prefix=orchard-emu/ HEAD > snapshots/orchard-source.tar.gz
-          git -C hpclang-streamer archive --format=tar.gz --prefix=hpclang-streamer/ HEAD > snapshots/hpclang-streamer-source.tar.gz
-          git -C orchard rev-parse HEAD > snapshots/orchard-commit.txt
-          git -C hpclang-streamer rev-parse HEAD > snapshots/hpclang-commit.txt
-          cd snapshots
-          sha256sum *.tar.gz > SHA256SUMS
+          mkdir inputs
+          tar -czf inputs/hp39-sdk.tar.gz -C .cache/hp39-aplet sdk
+          sha256sum inputs/hp39-sdk.tar.gz > inputs/SDK.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: continuation-source-inputs
-          path: snapshots/
+          name: continuation-hp39-sdk-inputs
+          path: inputs/
           retention-days: 7
           if-no-files-found: error
