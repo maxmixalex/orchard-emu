@@ -47,12 +47,14 @@ export class Hp39FileServer {
     this.reader=new PacketReader({end});this.active=false;this.queue=[];this.lingerUntil=0;
   }
   get pending(){return this.active||this.queue.length>0||Boolean(this.child?.pending)||this.lingerUntil>this.now;}
-  status(phase,error){this.phase=phase;this.notify({active:this.active,phase,direction:'serve',name:this.name||'',transferred:this.transferred,total:this.total,...(error?{error}:{})});}
+  progress(transferred=0){return {hostedTransferred:(this.transferred||0)+transferred,hostedTotal:this.total,filesCompleted:this.served?.size||0,filesTotal:this.objectCount};}
+  status(phase,error){this.phase=phase;this.notify({active:this.active,phase,direction:'serve',name:this.name||'',transferred:this.transferred,total:this.total,...this.progress(),...(error?{error}:{})});}
   start({files=[]},now){
     if(this.active)throw Error('An HP39 file server is already running.');
     const prepared=prepareHp39Files(files);
     this.files=new Map(prepared.map(f=>[f.name.toUpperCase(),f]));
     this.total=prepared.filter(f=>inspectHp39File(f.bytes).kind!=='A').reduce((n,f)=>n+f.bytes.length,0);
+    this.objectCount=prepared.filter(f=>inspectHp39File(f.bytes).kind!=='A').length;
     this.transferred=0;this.served=new Set();this.received=0;this.receivedBytes=0;this.child=null;this.lastAck=null;this.queue=[];this.reader.reset();
     this.peer=parameters(PARAMETERS);this.now=now;this.end=now+900*this.hz;this.active=true;this.mode='serve';this.lingerUntil=0;
     this.publishListing();this.status('serving');
@@ -61,7 +63,7 @@ export class Hp39FileServer {
   enqueue(bytes,sent=null){if(this.queue.length>=8)throw Error('HP39 output queue exceeded its limit.');this.queue.push({bytes,offset:0,sent});}
   publishListing(){this.listing([...this.files.values()].filter(f=>inspectHp39File(f.bytes).kind!=='A').map(f=>`${f.name} · ${inspectHp39File(f.bytes).title} · ${f.bytes.length} bytes`).join('\n'));}
   makeChild(mode,name='',bytes){
-    const child=new KermitSession({write:bytes=>this.queue.length?0:this.write(bytes),hz:this.hz,
+    const child=new KermitSession({write:bytes=>this.queue.length?0:this.write(bytes),hz:this.hz,adaptiveSendTimeout:true,
       validateFile:file=>this.validateStore([...child.files.filter(f=>!f.screen),file]),notify:state=>{
       if(state.phase==='complete'){
         if(mode==='send'){
@@ -70,7 +72,12 @@ export class Hp39FileServer {
         }
         this.lastAck=child.ack?{...child.ack,type:'B'}:null;this.lingerUntil=child.lingerUntil;this.child=null;this.name=name;this.status('serving');
       }else if(state.phase==='error'||state.phase==='cancelled')this.fail(state.error||'The HP39 transfer ended unexpectedly.');
-      else{this.name=state.name||name;this.notify({...state,active:true,direction:mode==='send'?'send':'receive'});}
+      else{
+        this.name=state.name||name;
+        const item=mode==='send'?this.files.get(name.toUpperCase()):null;
+        const partial=item&&inspectHp39File(item.bytes).kind!=='A'&&!this.served.has(name.toUpperCase())?state.transferred||0:0;
+        this.notify({...state,...this.progress(partial),active:true,direction:mode==='send'?'send':'receive'});
+      }
     },file:received=>this.store(received)});
     this.child=child;
     child.start({mode,name,bytes,passive:true},this.now);

@@ -6,7 +6,7 @@ const operations = new Map([
   ['annunciators', 0], ['uart_receive', 0], ['uart_send', 1],
   ['gpio_inputs', 3], ['gpio_bias', 3], ['adc_input', 3],
   ['keyboard_attach', 1], ['keyboard_matrix', 3], ['keyboard_dedicated', 2],
-  ['sram_select', 1], ['nor_select', 1], ['lcd_probe68', 1],
+  ['sram_select', 1], ['nor_select', 1], ['lcd_probe68', 1], ['sd_reconnect', 0],
   ['usb_connect', 1], ['usb_reset_signal', 1], ['usb_sof', 1],
   ['usb_out', 5], ['usb_in', 3], ['checkpoint_save', 0],
 ]);
@@ -14,7 +14,7 @@ const observers = new Set([
   'profile', 'rom_buffer', 'snapshot', 'clock_snapshot', 'clock_divisor', 'clock_slots',
   'frame_buffer', 'annunciator_buffer', 'uart_input', 'uart_output',
   'usb_buffer', 'usb_length', 'usb_data1', 'usb_snapshot', 'peripheral_snapshot',
-  'checkpoint_buffer', 'checkpoint_size', 'timebase_hz',
+  'checkpoint_buffer', 'checkpoint_size', 'timebase_hz', 'sd_snapshot', 'sd_image_buffer',
   'sram_alias_reads', 'sram_alias_writes', 'lcd_probe68_reads',
 ]);
 export const traceOperationArguments = Object.freeze(Object.fromEntries(operations));

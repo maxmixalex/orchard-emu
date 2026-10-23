@@ -1,0 +1,221 @@
+{
+  "schema": "orchard-frontend-validation-v2",
+  "round": "r19",
+  "passed": true,
+  "performance_sample": false,
+  "production_wasm_sha256": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+  "production_root_asset_sha256": {
+    "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+    "preferences.js": "073c0d07c2e7deac6b607b00f65bf67866d7234285dcafc685942ca62bfdc8af",
+    "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+    "main.js": "3c4f3be40bd1944cef23a37be452765e951ba1e04db40c813d9d795ce194b07d",
+    "sd-card.js": "d364546b1353b5986d4d6e1b496b0b0c92ce76ffaa356813d6c4fca9b5b2daf6",
+    "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+    "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+    "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+    "skin.js": "94c541faa00c201e986aa00b0032f2fb90b59ea276fb9ccc017f8da3c1a82102",
+    "hp39-wire.js": "ac4406698535c384bccb745693c93fe79f77cea2b36b45afb8e927b2798107ea",
+    "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+    "hp39-transfer.js": "a7ec8c0b53041d9365cdf3a64470301a3b060197ec245a774081148b5dc84716",
+    "debug.html": "cde0f1bfe988408c6341b9fe39e737676fd2a35001ed0e8d21aaa5cfe4aae24f",
+    "calculator.css": "bf13f9ec0840a54132650be17ffcd60c250b390c20aeb8a8606d0d7211f3f71a",
+    "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+    "kermit.js": "4539d26c37c91fd4555c85804876d34182038ad176a63a657988699a12748d57",
+    "hp48.js": "60041c0c6695f433ceaa1f79e00a77103eba55ea527f88dfbe20e94e24801e50",
+    "hp39-archive.js": "d671f01d2333f52f7c3d3cebf699c85ab2e72d56d823da1de1a91ed28c621bb1",
+    "file-transfer.js": "1e0af1f5c6a849c1bc749a0e25e790aa3c155fe971e46e6ccd220d26fcaa41bd",
+    "worker.js": "73b0c4eec19703194138f726567bc455aadc5fd1208f088a5b85be408eb5a21f",
+    "README.txt": "333ef03dc75d8a7564f076c24494322a1a7218cdcc775b6a76f1a02483a43fbd",
+    "calculator.js": "951ad5dd0b5a7e1499281d01491673c228df7cb5b06883dae45cf38c3f8657ed",
+    "catalog.js": "42dd61ebc3f95f88048a75a76ebf19fe7bbb8e3057445bfc799da7eab56f8875",
+    "hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+    "orchard.wasm": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+    "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+    "session.js": "e19f3b64aa5d61e2505d38aac38849bda295361bfa55f05fa6aa325864319de5"
+  },
+  "private_aggregate_report_sha256": "6d05a581a4db530ddb3048db770e1781197f9c7c35389e1cb5f847119dfad600",
+  "checks": [
+    {
+      "name": "components",
+      "command": [
+        "python3",
+        "tests/browser-components.py"
+      ],
+      "source_sha256": "2d29c6cd5b4f6d319c2a2c450acec06aae778d88b19349e46a2ebad9d8eda350",
+      "exit_code": 0,
+      "elapsed_seconds": 9.373674831000244,
+      "log_sha256": "00c9c978d60830561c63feef80a3fdc3bfac6b4569ac13fb0d3d84a8641a765d"
+    },
+    {
+      "name": "storage",
+      "command": [
+        "python3",
+        "tests/sd-storage-browser.py"
+      ],
+      "source_sha256": "a8a9545b5df49df99eb5fda584b28816f88b05eabd2ab6e0314efb0c53c12918",
+      "exit_code": 0,
+      "elapsed_seconds": 1.4412839600008738,
+      "log_sha256": "c2a70056dd87266b9b7427efb89a41a47a91e43f29420f5add8f88d601462c02"
+    },
+    {
+      "name": "worker",
+      "command": [
+        "python3",
+        "tests/browser-worker.py"
+      ],
+      "source_sha256": "f4dbb79c955bc42c0b831121a4f8871b4a015c03428cf08d8b71c4be358b5554",
+      "exit_code": 0,
+      "elapsed_seconds": 6.733488735000719,
+      "log_sha256": "ff666e72cffad3490175451e7bd90c44ba43a9b7bf5c82198dbaa3d0a3ecd7ec",
+      "report_sha256": "ff666e72cffad3490175451e7bd90c44ba43a9b7bf5c82198dbaa3d0a3ecd7ec"
+    },
+    {
+      "name": "stop-recovery",
+      "command": [
+        "python3",
+        "tests/browser-stop-recovery.py",
+        "--new-report",
+        "build-r19/r19-final-stop-recovery.json"
+      ],
+      "source_sha256": "d64335e614bf6a573e49850d777029901250a970da109552b4df96949997444c",
+      "exit_code": 0,
+      "elapsed_seconds": 4.521651041999576,
+      "log_sha256": "3fe36db91efef6c8ab268e85e791ec477319f5d7535762aa1a53d38e126f43ab",
+      "report_sha256": "3fe36db91efef6c8ab268e85e791ec477319f5d7535762aa1a53d38e126f43ab"
+    },
+    {
+      "name": "stop-recovery-trace",
+      "command": [
+        "python3",
+        "tests/browser-stop-recovery.py",
+        "--diagnostic-trace",
+        "--new-report",
+        "build-r19/r19-final-stop-recovery-trace.json"
+      ],
+      "source_sha256": "d64335e614bf6a573e49850d777029901250a970da109552b4df96949997444c",
+      "exit_code": 0,
+      "elapsed_seconds": 9.340802241000347,
+      "log_sha256": "859d4a83e7d1e2520b7e45ea93f4d9fdd6792a9817836926b537318b669e32a6",
+      "report_sha256": "859d4a83e7d1e2520b7e45ea93f4d9fdd6792a9817836926b537318b669e32a6"
+    }
+  ],
+  "components": {
+    "framework": "Real React/Mantine components with a Worker double",
+    "original_firmware_used": false,
+    "passed": true,
+    "cases": [
+      "Bilingual settings and keyboard mappings",
+      "Native artwork keys and full canvas RGBA",
+      "HP39 Disk drive ZIP chooser/download and catalog aliases",
+      "HP39 Wire library-first ordering and exact payloads",
+      "Final ACK advances queue; payload progress does not",
+      "Live progress outside Connections at 320px",
+      "Wire cancellation ON recovery remains visible after closing dialog",
+      "Mode persistence, stale requests and lifecycle cancellation"
+    ]
+  },
+  "binary_storage": {
+    "framework": "Real Chrome IndexedDB transactions, no mock IndexedDB",
+    "passed": true,
+    "synthetic_bytes": 17277216,
+    "legacy_migration": true,
+    "concurrent_winners": 1,
+    "stale_generation_rejected": true,
+    "reload_and_clear": true,
+    "original_firmware_used": false
+  },
+  "http_worker": {
+    "passed": true,
+    "transport": "HTTP production modules",
+    "worker_cases": 12,
+    "models": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "audiences": [
+      "calculator",
+      "debug"
+    ],
+    "rates": [
+      0.5,
+      2,
+      0,
+      1
+    ],
+    "fixture": "Generated ARM loop, not original HP firmware",
+    "run_pause_step_reset_checkpoint": true,
+    "window_and_worker_native_timer_checks": true,
+    "production_settings_ui": {
+      "settings": true,
+      "physicalKeys": 104
+    },
+    "page_errors": []
+  },
+  "stop_recovery": {
+    "passed": true,
+    "instrumented": false,
+    "original_rom_reproduced": false,
+    "guest": "Generated strict-mode stop fixture",
+    "stop": {
+      "code": 9,
+      "pc": "00000010",
+      "instruction": "e7f000f0",
+      "address": "00000010",
+      "detail": "e7f000f0"
+    },
+    "ticks": "2",
+    "session_bytes": 271293,
+    "session_sha256": "4c60d35202da7bdbf7e7bdd5f85a5356466d7d7a9d1844d5acf9444eb7d53665",
+    "checkpoint_sha256": "94b1ad09bc04a9086359f8487ca6f3fe8379d0dfb4a2b9fb55b6217d868da9af",
+    "worker_save_ack": {
+      "worker": 1,
+      "generation": 2,
+      "command_seq": 16,
+      "saved_marker_seq": 17,
+      "snapshot_seq": 18
+    },
+    "screenshot_failure_preserves_observation": true,
+    "original_observation_preserved": true,
+    "no_unstopped_capture": true,
+    "page_errors": [],
+    "worker_errors": []
+  },
+  "diagnostic_stop_recovery": {
+    "passed": true,
+    "instrumented": true,
+    "original_rom_reproduced": false,
+    "same_generated_stop_checkpoint_as_uninstrumented": true,
+    "immediate_stop_replay": {
+      "every_call_result_equal": true,
+      "complete_checkpoint_equal": true,
+      "same_wasm": true,
+      "start_tick": 0,
+      "end_tick": 2
+    },
+    "active_timeout_replay": {
+      "complete_checkpoint_equal": true,
+      "original_observation_preserved": true,
+      "missing_pause_ack_rejected": true,
+      "changed_generation_rejected": true
+    },
+    "page_errors": [],
+    "worker_errors": []
+  },
+  "original_rom_evidence": "hp39-transfer-r19.json separately records original HP39g+ Normal uploads and the intermediate-build Wire/stock SEND ZIP roundtrip; these generated-fixture gates do not establish new model compatibility.",
+  "production_asset_scope": {
+    "description": "Only the listed top-level files were compared before and after these browser gates; this is not the complete recursive release manifest.",
+    "listed_top_level_files": 27,
+    "subdirectory_files_included": false,
+    "excluded_release_metadata": [
+      "revision.txt",
+      "asset-manifest.json"
+    ],
+    "metadata_note": "Release assembly refreshes these two metadata files separately; their pre-assembly hashes are retained only in the unmodified private aggregate report.",
+    "complete_release_manifest_recorded_separately": true
+  },
+  "listed_root_assets_unchanged_during_all_five_checks": true
+}

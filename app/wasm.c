@@ -8,9 +8,12 @@ static uint8_t rom_input[O_FLASH_MAX];
 static uint8_t pixels[131 * 80];
 static uint8_t uart_input[O_QUEUE], uart_output[O_QUEUE];
 static uint32_t snapshot[33];
+static bool sd_bound;
 
 EXPORT("create") unsigned web_create(unsigned model) {
-    return orchard_init(&machine, sizeof(machine), model) ? ORCHARD_OK : ORCHARD_BAD_ARGUMENT;
+    if (!orchard_init(&machine, sizeof(machine), model)) return ORCHARD_BAD_ARGUMENT;
+    sd_bound = false;
+    return ORCHARD_OK;
 }
 EXPORT("profile") uint32_t web_profile(unsigned id, unsigned field) {
     const orchard_profile *p = orchard_get_profile(id);
@@ -192,20 +195,89 @@ EXPORT("annunciator_buffer") uintptr_t web_annunciator_buffer(void) {
     return (uintptr_t)annunciator_levels;
 }
 
-/* Bounded interchange buffer, distinct from ROM and emulated machine storage. */
+/* SD storage is allocated only on demand. Ordinary calculators retain the
+   original 16 MiB initial WASM memory; large media never uses the C stack. */
+extern unsigned char __heap_base;
+static uintptr_t sd_base(void) {
+    return ((uintptr_t)&__heap_base + 65535u) & ~(uintptr_t)65535u;
+}
+static bool grow_memory(uintptr_t end) {
+    size_t pages = (end + 65535u) / 65536u;
+    size_t current = __builtin_wasm_memory_size(0);
+    return pages <= current || __builtin_wasm_memory_grow(0, pages-current) != (size_t)-1;
+}
+static bool bind_sd(void) {
+    if (sd_bound) return true;
+    if (!machine.profile || !machine.profile->sd_slot || !grow_memory(sd_base()+ORCHARD_SD_MAX_BYTES)) return false;
+    if (orchard_sd_bind(&machine, (void *)sd_base(), ORCHARD_SD_MAX_BYTES)) return false;
+    sd_bound = true;
+    return true;
+}
+EXPORT("sd_reconnect") unsigned web_sd_reconnect(void) {
+    if (!machine.profile || !machine.profile->sd_slot) return ORCHARD_BAD_ARGUMENT;
+    orchard_sd_state s; orchard_get_sd_state(&machine, &s);
+    unsigned f=ORCHARD_GPIO_F, d=ORCHARD_GPIO_D;
+    orchard_status status=orchard_gpio_inputs(&machine, f, machine.soc.gpio_input_known[f]|8u,
+        (machine.soc.gpio_input_levels[f]&~8u)|(s.present?8u:0u));
+    if (status) return status;
+    return orchard_gpio_inputs(&machine, d, machine.soc.gpio_input_known[d]|8u,
+        (machine.soc.gpio_input_levels[d]&~8u)|(s.write_protected?0u:8u));
+}
+EXPORT("sd_buffer") uintptr_t web_sd_buffer(unsigned length) {
+    orchard_sd_state s; orchard_get_sd_state(&machine, &s);
+    if (s.present || length<1048576u || length>ORCHARD_SD_MAX_BYTES || (length&(length-1u)) || !bind_sd()) return 0;
+    return sd_base();
+}
+EXPORT("sd_insert") unsigned web_sd_insert(unsigned length, unsigned write_protected) {
+    if (write_protected>1 || !bind_sd()) return ORCHARD_BAD_ARGUMENT;
+    orchard_status status=orchard_sd_insert(&machine, length, write_protected!=0);
+    return status ? status : web_sd_reconnect();
+}
+EXPORT("sd_eject") unsigned web_sd_eject(void) {
+    orchard_status status=orchard_sd_eject(&machine);
+    return status ? status : web_sd_reconnect();
+}
+EXPORT("sd_image_buffer") uintptr_t web_sd_image_buffer(void) {
+    orchard_sd_state s; orchard_get_sd_state(&machine, &s);
+    return s.present && sd_bound ? sd_base() : 0;
+}
+EXPORT("sd_snapshot") uintptr_t web_sd_snapshot(void) {
+    static uint32_t words[12];
+    if (!machine.profile || !machine.profile->sd_slot) return 0;
+    orchard_sd_state s; orchard_get_sd_state(&machine, &s);
+    words[0]=s.bytes; words[1]=s.present; words[2]=s.write_protected; words[3]=s.dirty;
+    words[4]=s.card_state; words[5]=s.last_command;
+    words[6]=(uint32_t)s.commands; words[7]=(uint32_t)(s.commands>>32);
+    words[8]=(uint32_t)s.read_blocks; words[9]=(uint32_t)(s.read_blocks>>32);
+    words[10]=(uint32_t)s.written_blocks; words[11]=(uint32_t)(s.written_blocks>>32);
+    return (uintptr_t)words;
+}
+
+/* Bounded interchange buffers, distinct from ROM, machine, and card storage. */
 static uint8_t checkpoint_bytes[600000];
-EXPORT("checkpoint_buffer") uintptr_t web_checkpoint_buffer(void) { return (uintptr_t)checkpoint_bytes; }
+EXPORT("checkpoint_buffer") uintptr_t web_checkpoint_buffer(unsigned length) {
+    size_t n=length ? length : orchard_checkpoint_size(&machine);
+    if(n<=sizeof(checkpoint_bytes))return (uintptr_t)checkpoint_bytes;
+    if(n>sizeof(checkpoint_bytes)+ORCHARD_SD_MAX_BYTES)return 0;
+    uintptr_t p=sd_base()+ORCHARD_SD_MAX_BYTES;
+    return grow_memory(p+n) ? p : 0;
+}
 EXPORT("checkpoint_size") unsigned web_checkpoint_size(void) {
     return (unsigned)orchard_checkpoint_size(&machine);
 }
 EXPORT("checkpoint_save") unsigned web_checkpoint_save(void) {
     size_t n=orchard_checkpoint_size(&machine);
-    if(!n||n>sizeof(checkpoint_bytes))return ORCHARD_BAD_ARGUMENT;
-    return orchard_checkpoint_save(&machine,checkpoint_bytes,n);
+    uintptr_t p=web_checkpoint_buffer((unsigned)n);
+    if(!n||!p)return ORCHARD_BAD_ARGUMENT;
+    return orchard_checkpoint_save(&machine,(void *)p,n);
 }
 EXPORT("checkpoint_load") unsigned web_checkpoint_load(unsigned length) {
-    if(length>sizeof(checkpoint_bytes))return ORCHARD_BAD_ARGUMENT;
-    return orchard_checkpoint_load(&machine,checkpoint_bytes,length);
+    uintptr_t p=web_checkpoint_buffer(length);size_t required=0;
+    if(!p)return ORCHARD_BAD_ARGUMENT;
+    orchard_status status=orchard_checkpoint_sd_size(&machine,(void *)p,length,&required);
+    if(status)return status;
+    if(required && !bind_sd())return ORCHARD_BAD_ARGUMENT;
+    return orchard_checkpoint_load(&machine,(void *)p,length);
 }
 
 /* Provisional virtual timebase shared by RTC and the user host pacer. */

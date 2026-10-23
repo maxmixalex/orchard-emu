@@ -10,7 +10,8 @@ for the immutable input, physical-key schedule and remaining SRAM/LCD/pad
 assumptions. This is not canonical physical-board or all-six-model acceptance.
 
 [HP49g+ support](development/hp49-startup.md) uses the user's complete 2 MiB
-capture, exact 512 KiB SRAM and an empty-slot SD controller. Its original OS
+capture, fixed 512 KiB SRAM with an explicit bank-1 mirror condition, and an
+[SD controller with card images](development/sd-cards.md). Its original OS
 also performs symbolic algebra and USB object workflows, and an existing
 [native ARM example](development/hp49-native.md) runs through stock ARMToolbox
 and returns to HOME for another calculation. The

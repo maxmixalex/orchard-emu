@@ -6,9 +6,10 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"time"
 )
 
-func openStreamer(time.Duration) (reportDevice, error) {
+func openStreamer(time.Duration, io.Writer) (reportDevice, error) {
 	return nil, fmt.Errorf("the native HID receiver is supported on Windows only")
 }

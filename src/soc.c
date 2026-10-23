@@ -45,7 +45,7 @@ void o_soc_tick(orchard_machine *m) {
     o_rtc_tick(m);
     if (m->stop.status != ORCHARD_OK) return;
     o_usb_tick(m);
-    if (s->sdi.remaining || s->sdi.interrupt_mask) o_sdi_tick(m);
+    if (s->sdi.remaining || s->sdi.data_remaining || s->sdi.interrupt_mask) o_sdi_tick(m);
     o_adc_tick(m);
     o_lcd_tick(m);
     if (m->stop.status != ORCHARD_OK) return;

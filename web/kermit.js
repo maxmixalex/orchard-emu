@@ -127,10 +127,12 @@ export function decodeData(bytes, config = LOCAL, maximum = MAX_FILE_BYTES) {
 
 export class KermitSession {
   constructor({write, notify = () => {}, file = () => {}, listing = () => {}, hz = 12000000,
-    timeout = 5, retries = 4, duration = 300, end=null, onPacket=()=>{}, validateFile=()=>{}, receiveBudget} = {}) {
+    timeout = 5, retries = 4, duration = 300, end=null, onPacket=()=>{}, validateFile=()=>{}, receiveBudget,
+    adaptiveSendTimeout=false} = {}) {
     if (typeof write !== 'function' || !Number.isFinite(hz) || hz <= 0) throw new Error('Invalid Kermit transport.');
     this.write = write; this.notify = notify; this.file = file; this.listing = listing; this.hz = hz;
     this.timeout = timeout * hz; this.retryLimit = retries; this.duration = duration * hz;
+    this.adaptiveSendTimeout=adaptiveSendTimeout;
     this.receiveBudget=validateReceiveBudget(receiveBudget);
     this.reader = new PacketReader({end});this.onPacket=onPacket;this.validateFile=validateFile;this.active = false; this.queue = []; this.lingerUntil = 0;
   }
@@ -149,6 +151,8 @@ export class KermitSession {
     this.now=now; this.started=now; this.end=now+this.duration; this.active=true; this.mode=mode; this.name=name || '';
     this.bytes=bytes || EMPTY; this.total=this.bytes.length; this.transferred=0; this.sequence=0; this.expected=0; this.retries=0;
     this.peer=parameters(PARAMETERS); this.rx={...LOCAL}; this.tx={...LOCAL}; this.queue=[]; this.reader.reset();
+    this.adaptive=this.adaptiveSendTimeout&&mode==='send';this.sentAt=null;this.rtt=null;this.rttVariation=0;
+    this.retryCeiling=this.peer.timeout*this.hz;this.baseTimeout=this.adaptive?this.hz:this.timeout;
     this.last=null; this.ack=null; this.receiving=false; this.current=null; this.files=[]; this.receivedBytes=0;this.listingBytes=0; this.lingerUntil=0;this.initialProbe=null;
     this.status('negotiating');
     if (mode === 'send') this.send('S', PARAMETERS, 'send-init');
@@ -166,7 +170,9 @@ export class KermitSession {
   frame(sequence, type, data = EMPTY) { return packet(sequence,type,data,this.peer.end,this.peer.pad,this.peer.padding); }
   send(type, data, stage) {
     this.stage=stage; this.last=this.frame(this.sequence,type,data); this.retries=0; this.deadline=Infinity;
-    this.enqueue(this.last, () => { this.deadline=this.now+this.timeout; });
+    if(this.adaptive)this.timeout=this.baseTimeout;
+    this.sentAt=null;
+    this.enqueue(this.last, () => { this.sentAt=this.now;this.deadline=this.now+this.timeout; });
   }
   encoded(bytes) {
     const encoded=encodeData(bytes,0,this.peer.max-3,this.tx);
@@ -175,6 +181,8 @@ export class KermitSession {
   }
   negotiate(data) {
     this.peer=parameters(data); this.timeout=this.peer.timeout*this.hz;
+    this.retryCeiling=this.timeout;
+    if(this.adaptive)this.timeout=this.baseTimeout=Math.min(this.retryCeiling,this.baseTimeout);
     this.tx={ctl:35,binary:this.peer.binary,repeat:this.peer.repeat};
     this.rx={ctl:this.peer.ctl,binary:this.peer.binary,repeat:this.peer.repeat};
   }
@@ -193,8 +201,21 @@ export class KermitSession {
   retry() {
     if (++this.retries>this.retryLimit) throw new Error('File transfer timed out. Check the calculator transfer mode and try again.');
     if (this.queue.length) throw new Error('The link did not accept the queued packet.');
+    // HP39's advertised ten-second timeout makes an occasional lost packet
+    // look like a frozen calculator. Use measured, bounded sender timeouts:
+    // start at one guest second, back off after loss, and never time an ACK
+    // whose original packet was retransmitted (its round trip is ambiguous).
+    if(this.adaptive)this.timeout=Math.min(this.retryCeiling,this.timeout*2);
+    this.sentAt=null;
     this.deadline=this.now+this.timeout;
-    this.enqueue(this.last || this.frame(this.expected,'N'));
+    this.enqueue(this.last || this.frame(this.expected,'N'),this.adaptive?()=>{this.deadline=this.now+this.timeout;}:null);
+  }
+  sampleRoundTrip() {
+    if(!this.adaptive||this.retries||this.sentAt===null)return;
+    const sample=Math.max(1,this.now-this.sentAt);
+    if(this.rtt===null){this.rtt=sample;this.rttVariation=sample/2;}
+    else{this.rttVariation=.75*this.rttVariation+.25*Math.abs(this.rtt-sample);this.rtt=.875*this.rtt+.125*sample;}
+    this.baseTimeout=Math.min(this.retryCeiling,Math.max(this.hz,Math.ceil(this.rtt+4*this.rttVariation)));
   }
   receive(bytes, now) {
     this.now=now;
@@ -226,9 +247,11 @@ export class KermitSession {
     if (p.type==='N' && p.sequence===this.sequence) { if(!this.queue.length)this.retry(); return; }
     // A receiver requesting the next sequence already accepted our current
     // packet. This is the protocol's implicit ACK after a lost explicit ACK.
+    const explicitAck=p.type==='Y';
     if(p.type==='N'&&p.sequence===((this.sequence+1)&63)&&this.stage.startsWith('send-')&&this.stage!=='send-init')
       p={...p,type:'Y',sequence:this.sequence};
     if (p.type!=='Y' || p.sequence!==this.sequence) return;
+    if(explicitAck)this.sampleRoundTrip();
     this.deadline=this.now+this.timeout;
     switch(this.stage) {
       case 'send-init':this.negotiate(p.data);this.sequence=1;this.send('F',this.encoded(ascii(this.name)),'send-name');this.status('sending');break;

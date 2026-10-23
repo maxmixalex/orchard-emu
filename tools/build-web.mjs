@@ -18,12 +18,12 @@ const args = [
   ...(physicalReads === '1' ? ['-DORCHARD_EXPERIMENTAL_PHYSICAL_READS=1'] : []),
   ...sources, 'app/wasm.c', '-o', resolve(out, 'orchard.wasm'),
   '-Wl,--no-entry', '-Wl,--export-memory', '-Wl,--stack-first',
-  '-Wl,-z,stack-size=524288', '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216',
+  '-Wl,-z,stack-size=524288', '-Wl,--initial-memory=16777216', '-Wl,--max-memory=100663296',
 ];
 const result = spawnSync(process.env.CLANG || 'clang', args, { cwd: root, stdio: 'inherit' });
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
-for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'session.js', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js', 'kermit.js', 'file-transfer.js', 'hp39-files.js', 'hp39-transfer.js', 'hp39-archive.js']) {
+for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'session.js', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js', 'kermit.js', 'file-transfer.js', 'hp39-files.js', 'hp39-transfer.js', 'hp39-archive.js', 'hp39-wire.js', 'sd-card.js']) {
   await copyFile(resolve(root, 'web', file), resolve(out, file));
 }
 await copyFile(resolve(root, "LICENSE"), resolve(out, "LICENSE"));
@@ -50,7 +50,11 @@ Settings select immersive/traditional view, size, keyboard sequences, focus
 policy and speed. Normal paces the functional clock; Unlimited accelerates
 both calculations and timers. Save exports <model>-YYYYMMDD-HHMMSS.ord.
 Restore accepts .ord and older .orchard files for the same ROM. Automatic
-localStorage saves are opt-in and do not store the ROM; keep exported backups.
+device saves are opt-in, use IndexedDB when available, and do not store the ROM;
+keep exported backups. SD media is included in both session and automatic saves.
+HP49g+ supports an emulated SD card: create a 16 MiB FAT16 card or import a
+1, 2, 4, 8, 16 or 32 MiB raw card image. Use the calculator's FILES / port 3
+to manage its files, and export the image to keep a standalone card backup.
 Connections > Files uploads HP48gII objects over internal USB or serial,
 and HP49g+ objects over internal USB, and retrieves
 named objects for explicit local download. Start Kermit SERVER on the calculator
@@ -60,6 +64,8 @@ all files are checked before sending and each result is shown separately.
 HP39/40 files use the separate Disk drive host: select a ZIP package or aplet/library files,
 start serving, and use APLET > RECV > Disk drive on the calculator. Reverse
 SEND offers individual downloads and Download package creates a ZIP you can import again.
+Wire uploads are faster on HP39g+: choose RECV > HP39/40 (Wire) for each object,
+with required libraries before the aplet. Downloads still use SEND > Disk drive.
 Stock USB transfer is verified on HP39g+;
 39gs/40gs still require their own full-ROM witnesses. Raw data retains serial
 and USB packets. Complete desktop Conn3x replacement remains separate.

@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: MIT
 """Rebuild and verify the complete HP39gs ROM streamer; no network access.
 
-Calculator bytes intentionally match the user's hpclang e240c58c package.
-The receiver reuses its retry command for two independent reads of each block.
+Revision 2 rebuilds Orchard's visible, cancellable reader and Windows receiver.
+The original hpclang sources and the 39-specific GPL template/library remain
+pinned and included as complete corresponding source; no firmware is included.
 """
 from pathlib import Path
 import argparse
@@ -19,15 +20,24 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
-PREFIX = 'hp39gs-rom-dump-v1/'
-APPLET_SHA = '3669fb2c2ae1f755bd542c8373a469d49165f2769affdce5435e649010c62455'
-PAYLOAD_SHA = '9baa02a66891d27ec771ce69c43f737fa322a6c3bc1d63402981a02ff90851f4'
+PREFIX = 'hp39gs-rom-dump-v2/'
+PAYLOAD_BYTES = 9364
+PAYLOAD_OFFSET = 860
+APPLET_SHA = '298732caeba57a240acf135f1260c6f1cf1899e024fb734f3b4d2c4f92cadcc1'
+PAYLOAD_SHA = '71e93a0b334c41537d7e36a7d9b76397294d900095fa2137f76056ba8f08a83e'
 LAUNCHER_SHA = '88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1'
 CALCULATOR = {
-    'HPGCC000.000': (7373, APPLET_SHA),
+    'HPGCC000.000': (10344, APPLET_SHA),
     'LIB275L.000': (1489, LAUNCHER_SHA),
-    'HP39DIR.000': (67, 'e0af2757fafa7a7ef0989cc5926f593ec64388644dc162c5f2255581484f4799'),
+    'HP39DIR.000': (66, 'beb1906b4946b4b1b454bf9833416885bf7b9cae46d3e527d23824d9d173532a'),
     'HP39DIR.CUR': (31, '542dda3d8ae6257461c7836962e390dfa7898f6c20759b650d927f73b9718d41'),
+}
+
+CALCULATOR_SOURCES = {
+    "rom-stream-entry.S": "49376654f9317a7901134618db040911065b12041582e78d6f9b1b0bac0d0c47",
+    "rom-stream-wrap.py": "a5a24271892704a6faaf36d4af3a1f3f058853c648243cc4fe3b4922ea96301e",
+    "rom-stream.c": "2691ba2beb330109a0d784bfb1ebf9a031fdf1ebed5d56f00391f4b93018dfca",
+    "rom-stream.ld": "6e91fb74994f5ea4155608d642163efbee46c4e469c3dedecdd172bafdcc0bd8"
 }
 
 
@@ -112,12 +122,16 @@ def build_files(upstream, sdk, atfe, hptools, go):
             inputs[f'third-party/{category}/{name}'] = data
     with tempfile.TemporaryDirectory(prefix='orchard-hp39-stream-') as temporary:
         work = Path(temporary)
-        src = upstream / 'research/hp39gplus'
+        src = ROOT / 'tools/hp39-romstream/calculator'
+        for name, expected in CALCULATOR_SOURCES.items():
+            data = (src / name).read_bytes()
+            require(digest(data) == expected, f'Pinned reader source mismatch: {name}')
+            inputs[f'tools/hp39-romstream/calculator/{name}'] = data
         cc, ld = atfe / 'bin/clang', atfe / 'bin/ld.lld'
         version = run([cc, '--version'], work).splitlines()[0]
         require('22.1.0' in version, 'Exact calculator rebuild requires ATfE 22.1.0')
         flags = ['--target=arm-none-eabi', '-mcpu=arm920t', '-marm', '-msoft-float',
-                 '-ffreestanding', '-fno-builtin', '-fno-stack-protector', '-fno-unwind-tables',
+                 '-ffreestanding', '-fpie', '-fvisibility=hidden', '-fno-builtin', '-fno-stack-protector', '-fno-unwind-tables',
                  '-fno-asynchronous-unwind-tables', '-fno-jump-tables', '-Os', '-Wall', '-Wextra', '-Werror']
         run([cc, *flags, '-c', src / 'rom-stream.c', '-o', work / 'stream.o'], work)
         run([cc, '--target=arm-none-eabi', '-mcpu=arm920t', '-marm', '-ffreestanding', '-fno-pic',
@@ -129,7 +143,7 @@ def build_files(upstream, sdk, atfe, hptools, go):
         require(not run([atfe / 'bin/llvm-nm', '-u', work / 'stream.elf'], work).strip(), 'Payload has undefined symbols')
         run([atfe / 'bin/llvm-objcopy', '-O', 'binary', work / 'stream.elf', work / 'stream.bin'], work)
         payload = (work / 'stream.bin').read_bytes()
-        require(len(payload) == 6376 and digest(payload) == PAYLOAD_SHA, 'Rebuilt payload differs from original')
+        require(len(payload) == PAYLOAD_BYTES and digest(payload) == PAYLOAD_SHA, 'Rebuilt V2 payload differs from the pinned release')
         wrapper = module(src / 'rom-stream-wrap.py', 'hp39_stream_wrap')
         (work / 'stream.hp').write_bytes(wrapper.wrap(payload))
         sdk_data = rebuild_sdk(sdk, hptools, work)
@@ -137,7 +151,7 @@ def build_files(upstream, sdk, atfe, hptools, go):
         source = sdk / 'sources/HP39-Aplet/hp2aplet/hp2aplet.c'
         (work / 'hp2aplet.c').write_text(prepare.normalize_hp2aplet(source.read_text(errors='replace')))
         run(['cc', '-O2', work / 'hp2aplet.c', '-o', work / 'hp2aplet'], work)
-        (work / 'hp39prj.dat').write_text('HP39 Aplet Project\nH39 ROM USB\nhpclang read-only HP39g+ USB ROM streamer\nN\n')
+        (work / 'hp39prj.dat').write_text('HP39 Aplet Project\nH39 ROM V2\nOrchard full ROM reader V2\nN\n')
         run([work / 'hp2aplet', work / 'stream.hp'], work, dict(os.environ, HPGCC=str(sdk_data)))
         files = {}
         for name, (size, expected) in CALCULATOR.items():
@@ -149,9 +163,10 @@ def build_files(upstream, sdk, atfe, hptools, go):
         env = dict(os.environ, GOTOOLCHAIN='local', CGO_ENABLED='0')
         go_version = run([go, 'version'], work, env).strip()
         run([go, 'test', '-count=1', './...'], receiver, env)
-        run([go, 'build', '-trimpath', '-buildvcs=false', '-ldflags=-s -w -buildid=', '-o', work / 'hp39-rom-receiver.exe', '.'],
+        run([go, 'build', '-trimpath', '-buildvcs=false', f'-ldflags=-s -w -buildid= -X=main.calculatorApletSHA={APPLET_SHA}', '-o', work / 'hp39-rom-receiver.exe', '.'],
             receiver, dict(env, GOOS='windows', GOARCH='amd64'))
         files['hp39-rom-receiver.exe'] = (work / 'hp39-rom-receiver.exe').read_bytes()
+        files['dump-hp39gs.cmd'] = b'@echo off\r\ncd /d "%~dp0"\r\nhp39-rom-receiver.exe -model hp39gs hp39gs-full.bin\r\npause\r\n'
     files.update(inputs)
     for name in ('LICENSE', 'licenses/hpgcc39/COPYING', 'licenses/hp39-romstream/NOTICE.md',
                  'tools/package-hp39-romstream.py', 'tools/hp39-romstream/upstream.json'):
@@ -169,14 +184,17 @@ def build_files(upstream, sdk, atfe, hptools, go):
     readme = readme.replace('](evidence/', f']({site}development/evidence/')
     files['README-zh.md'] = readme.encode()
     manifest = {
-        'schema': 'orchard-hp39-rom-stream-package-v1', 'target_model': 'hp39gs',
+        'schema': 'orchard-hp39-rom-stream-package-v2', 'target_model': 'hp39gs',
         'full_flash_reader': True, 'flash_bytes': 1048576, 'block_bytes': 16384,
         'read_passes_per_block': 2, 'hardware_validated': False,
-        'target_stock_os_execution_verified': False,
+        'target_stock_os_execution_verified': True,
+        'target_stock_os_fixture': 'official-39gs-2.22-update-with-generic-50g-bootloader',
+        'target_native_bootloader_verified': False,
         'reference_stock_os_execution_verified_model': 'hp39gplus', 'firmware_included': False,
-        'original_calculator_bytes_unchanged': True,
+        'original_calculator_bytes_unchanged': False,
+        'calculator_reader_revision': 2, 'calculator_source_sha256': CALCULATOR_SOURCES,
         'hpclang_commit': pins['hpclang_commit'], 'sdk_commit': pins['sdk_commit'],
-        'calculator_payload_bytes': 6376, 'calculator_payload_sha256': PAYLOAD_SHA,
+        'calculator_payload_bytes': PAYLOAD_BYTES, 'calculator_payload_sha256': PAYLOAD_SHA,
         'calculator_aplet_sha256': APPLET_SHA, 'launcher_sha256': LAUNCHER_SHA,
         'source_rebuild': {'arm_payload_byte_equal': True, 'aplet_byte_equal': True,
                            'template_byte_equal': True, 'launcher_byte_equal': True},
@@ -230,12 +248,15 @@ def verify(path):
                     and e.external_attr >> 16 == 0o100644 for e in entries), 'Invalid archive path/type')
         files = {e.filename[len(PREFIX):]: archive.read(e) for e in entries}
     m = json.loads(files['manifest.json'])
-    require(m['schema'] == 'orchard-hp39-rom-stream-package-v1' and m['target_model'] == 'hp39gs' and
+    require(m['schema'] == 'orchard-hp39-rom-stream-package-v2' and m['target_model'] == 'hp39gs' and
             m['full_flash_reader'] is True and m['flash_bytes'] == 1048576 and m['block_bytes'] == 16384 and
             m['read_passes_per_block'] == 2 and m['hardware_validated'] is False and
-            m['firmware_included'] is False and m['original_calculator_bytes_unchanged'] is True,
+            m['firmware_included'] is False and m['original_calculator_bytes_unchanged'] is False and
+            m['calculator_reader_revision'] == 2,
             'Wrong package scope or unsupported hardware claim')
-    require(m['target_stock_os_execution_verified'] is False and
+    require(m['target_stock_os_execution_verified'] is True and
+            m['target_stock_os_fixture'] == 'official-39gs-2.22-update-with-generic-50g-bootloader' and
+            m['target_native_bootloader_verified'] is False and
             m['reference_stock_os_execution_verified_model'] == 'hp39gplus', 'Unsupported stock OS execution claim')
     require(set(m['files']) == set(files) - {'manifest.json', 'SHA256SUMS'}, 'Incomplete package manifest')
     require(files['SHA256SUMS'] == ''.join(f'{digest(data)}  {name}\n' for name, data in sorted(files.items())
@@ -251,9 +272,13 @@ def verify(path):
     for name, (size, expected) in CALCULATOR.items():
         require(len(files[f'calculator/{name}']) == size and digest(files[f'calculator/{name}']) == expected,
                 f'Changed calculator object: {name}')
+    require(m['calculator_source_sha256'] == CALCULATOR_SOURCES, 'Wrong reader source identity')
+    for name, expected in CALCULATOR_SOURCES.items():
+        require(digest(files[f'tools/hp39-romstream/calculator/{name}']) == expected,
+                f'Changed reader source: {name}')
     aplet = files['calculator/HPGCC000.000']
-    require(digest(aplet[861:861+6376]) == PAYLOAD_SHA, 'Payload boundary/hash mismatch')
-    require(m['calculator_payload_bytes'] == 6376 and m['calculator_payload_sha256'] == PAYLOAD_SHA and
+    require(digest(aplet[PAYLOAD_OFFSET:PAYLOAD_OFFSET+PAYLOAD_BYTES]) == PAYLOAD_SHA, 'Payload boundary/hash mismatch')
+    require(m['calculator_payload_bytes'] == PAYLOAD_BYTES and m['calculator_payload_sha256'] == PAYLOAD_SHA and
             m['calculator_aplet_sha256'] == APPLET_SHA and m['launcher_sha256'] == LAUNCHER_SHA, 'Wrong binary identity')
     require(m['source_rebuild'] == {'arm_payload_byte_equal': True, 'aplet_byte_equal': True,
                                    'template_byte_equal': True, 'launcher_byte_equal': True}, 'Incomplete source correspondence')
@@ -264,7 +289,7 @@ def verify(path):
             'third-party/hpgcc39/sources/HP39-Aplet/Skeleton/hpgccaplet.s' in files and
             'licenses/hpgcc39/COPYING' in files, 'Missing corresponding source/test/license')
     return {'file': path.name, 'bytes': path.stat().st_size, 'sha256': digest(path.read_bytes()), 'files': len(files),
-            'calculator_bytes_unchanged': True, 'full_flash_reader': True, 'flash_bytes': 1048576,
+            'calculator_bytes_unchanged': False, 'calculator_reader_revision': 2, 'full_flash_reader': True, 'flash_bytes': 1048576,
             'read_passes_per_block': 2, 'hardware_validated': False, 'windows_receiver': pe,
             'source_rebuild': m['source_rebuild']}
 

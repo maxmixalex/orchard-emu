@@ -4,6 +4,8 @@ The complete user-captured HP49g+ image now cold boots to the original
 131 × 80 HOME screen, accepts physical-key input, calculates, runs CAS,
 displays a graph, transfers files over the internal virtual USB connection,
 and runs the existing HP-GCC native example through stock ARMToolbox.
+The r19 continuation also fixes FILES navigation and adds
+[emulated SD media](sd-cards.md), including stock file writes and recalls.
 The catalog admits this exact image as **HP49g+ HOME · experimental**.
 The immutable ROM and all private snapshots remain outside the repository.
 
@@ -15,20 +17,22 @@ The immutable ROM and all private snapshots remain outside the repository.
 | Full SHA-256 | `3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab` |
 | First 16 KiB SHA-256 | `54191621b1a104157258fd6190597b53e92050dc3a3d111a2daf295fa7f83e5e` |
 | Independent acquisition | Both user reads equal; all 128 sidecar chunk hashes rechecked |
-| SRAM | Exact 512 KiB, with no bank alias decode |
+| SRAM | Fixed 512 KiB; explicit bank-1 address mirror in the HOME preset |
 | NOR device selection | Explicit SST39VF1601 array/software-ID subset |
 | Keyboard | Apples electrical matrix plus dedicated keys |
 | GPIO inputs | D `cc7f:0000`, E `c000:c000`, F `008e:0000`, G `0001:0000` |
 | Weak GPIO bias | G `f800:f800` |
 | ADC | Explicit ideal AIN0=1023, AIN7=512 |
-| SDI | Empty card slot, with command completion and absent-response timeout |
+| SDI | Initially empty slot; bounded SDSC PIO controller and optional card image |
 | LCD | Counted idle-zero `+0x68` hypothesis; packed-LSB inspection view |
 
 These conditions are declared by the preset, not injected into the CPU
 instruction implementation. The ROM is neither patched nor padded. GPE14/15
 high resolves the first cold-boot unknown input; the new empty-slot SDI
-controller resolves the subsequent SD initialization. No SRAM mirror is
-needed. Actual board-pad levels, LCD routing, electrical timing and the
+controller resolves the subsequent SD initialization. Later FILES navigation
+requires the explicit bank-1 SRAM decode described in [SD cards](sd-cards.md).
+The older arithmetic witness alone did not expose that boundary. Actual
+board wiring, pad levels, LCD routing, electrical timing and the
 acquisition's `physical_mapping_verified=false` remain unverified.
 
 At the stock startup prompts, press F6 for **NO** on recovery and F6 for
@@ -36,9 +40,9 @@ At the stock startup prompts, press F6 for **NO** on recovery and F6 for
 mapping, default A–Z PC-key macros, custom mappings, autosave and `.ord`
 sessions now use model 5 and the `hp49-home` identity.
 
-## Original-system workflows
+## Original-system workflows from r17/r18
 
-The fixed cold-start arithmetic witness reaches 300,000,000 virtual ticks
+The earlier fixed cold-start arithmetic witness reaches 300,000,000 virtual ticks
 with no diagnostic stop, no CPU data-fault state and zero SRAM alias accesses.
 Its original LCD history contains `1+2`, `3`, `7*8`, `56`. Two native cold runs
 and two production-WASM cold runs agree. The final raw frame SHA-256 is
@@ -131,7 +135,11 @@ ULCON=`0x43`, UCON=`0x705`, divisor=`0x138` and reaches the explicitly
 unsupported receive register `0x50008024`. Model 5's file operations therefore
 advertise USB only. IrDA framing, discovery and UART2 are not implemented.
 
-## SDI and checkpoint compatibility
+## Historical r17/r18 empty-slot controller
+
+The following records the original boot-only subset. The r19
+[SD card implementation](sd-cards.md) supersedes its FIFO/data restrictions
+and exports version-3 checkpoints while retaining v1/v2 imports.
 
 The new SDI subset follows Samsung's
 [S3C2410A User's Manual, March 2004](https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf),

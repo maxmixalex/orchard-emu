@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+import {readSDState,validateSDSize} from '../web/sd-card.js';
+import {MAX_STATE} from '../web/session.js';
 // Execute the real Worker pump against an advancing, high-resolution clock.
 // This makes its host-work amplification deterministic; it is not a firmware
 // benchmark or a physical-clock oracle. Production-WASM RTC/replay tests are
@@ -31,7 +33,7 @@ function fixture(hostHz,{speed=1,model=1,audience='calculator',preset=model===1?
     schedule(fn,delay=0){const id=++next;jobs.set(id,{fn,at:wall+delay});return id;}
     cancel(id){jobs.delete(id);}
   }
-  const scope={Pacer,FileTransfer,TaskScheduler:Scheduler,TapQueue,isPlayable,setupHash,applySetup,VirtualUSB,
+  const scope={readSDState,validateSDSize,MAX_STATE,Pacer,FileTransfer,TaskScheduler:Scheduler,TapQueue,isPlayable,setupHash,applySetup,VirtualUSB,
     Uint32Array,Uint8Array,ArrayBuffer,self:{},postMessage:d=>output.push(d),initialCore:core,
     // 250 ns for a monotonic-clock read, 300 ns fixed host cost per core call;
     // the requested hostHz supplies only the per-tick cost. Faster clock reads

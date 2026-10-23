@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+import {readSDState,validateSDSize} from '../web/sd-card.js';
+import {MAX_STATE} from '../web/session.js';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
@@ -55,7 +57,7 @@ async function fixture(){
  class FakeScheduler{schedule(fn){return schedule(fn);}cancel(id){jobs.delete(id);}}
  class FakeUSB{poll(){}resetLocal(){}}
  const saved={model:4,romHash:HP48_ROM,preset:'hp48-home',frameView:1,state:new Uint8Array(32)};
- const scope={console,Pacer,FileTransfer,TaskScheduler:FakeScheduler,VirtualUSB:FakeUSB,TapQueue,isPlayable,setupHash,applySetup,
+ const scope={readSDState,validateSDSize,MAX_STATE,console,Pacer,FileTransfer,TaskScheduler:FakeScheduler,VirtualUSB:FakeUSB,TapQueue,isPlayable,setupHash,applySetup,
   encodeSession:async()=>new Uint8Array(32),decodeSession:async()=>saved,Uint32Array,Uint8Array,ArrayBuffer,
   setTimeout:schedule,clearTimeout:id=>jobs.delete(id),performance:{now:()=>++wall},
   crypto:{subtle:{digest:async()=>Uint8Array.from(HP48_ROM.match(/../g),b=>parseInt(b,16)).buffer}},

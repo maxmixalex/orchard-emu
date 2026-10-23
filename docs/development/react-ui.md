@@ -48,9 +48,12 @@ DOM state independently. Typed-array palette copies avoid allocating a
 subarray object for every pixel. This does not alter guest LCD timing.
 
 Manual save/restore, the old `.orchard` envelope, timestamped `.ord`, opt-in
-localStorage autosave, conflict/quota reporting and configurable lifecycle
+binary IndexedDB autosave with legacy localStorage migration, conflict/quota reporting and configurable lifecycle
 policies remain. Confirmation and error dialogs use Mantine Modal, not alert.
 Selected ROM bytes are never sent to a network service or saved to storage.
+The [SD card dialog](sd-cards.md) creates/imports/exports/ejects a card image
+for the supported HP49g+ system, with write protection and guest block counters.
+Both manual and automatic sessions retain its entire contents.
 
 ## Verification boundaries
 

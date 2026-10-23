@@ -75,7 +75,11 @@ func TestStockOSFullCapture(t *testing.T) {
 	if rom == "" || checkpoint == "" || out == "" {
 		t.Fatal("missing stock integration paths")
 	}
-	process := exec.Command("node", filepath.Join(root, "tools/test-hp39-romstream-stock.mjs"), rom, checkpoint, out)
+	model := os.Getenv("ORCHARD_STOCK_MODEL")
+	if model == "" {
+		model = "hp39gplus"
+	}
+	process := exec.Command("node", filepath.Join(root, "tools/test-hp39-romstream-stock.mjs"), rom, checkpoint, out, model)
 	process.Dir = root
 	process.Stderr = os.Stderr
 	input, err := process.StdinPipe()
@@ -114,7 +118,7 @@ func TestStockOSFullCapture(t *testing.T) {
 	if !bytes.Equal(result.Image, expected) {
 		t.Fatal("actual stock-OS ARM dump differs from source physical NOR")
 	}
-	manifest := captureManifest(result, "hp39gplus", "original user ROM", false)
+	manifest := captureManifest(result, model, os.Getenv("ORCHARD_STOCK_FIXTURE"), false)
 	metadata, _ := json.MarshalIndent(manifest, "", "  ")
 	if err = os.WriteFile(filepath.Join(out, "capture.json"), append(metadata, '\n'), 0600); err != nil {
 		t.Fatal(err)

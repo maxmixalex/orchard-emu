@@ -3,22 +3,25 @@
 // subscription so LCD refresh never rerenders settings or the PC keyboard.
 import {prepareHp39Files,MAX_HP39_HOST_FILES} from './hp39-transfer.js';
 import {readHp39Archive,writeHp39Archive,MAX_HP39_ARCHIVE_BYTES} from './hp39-archive.js';
-import {validateHp39Filename} from './hp39-files.js';
+import {inspectHp39File,validateHp39Filename} from './hp39-files.js';
+import {validateHp39WireFile} from './hp39-wire.js';
 import { CALCULATORS, identifyROM } from './catalog.js';
 import { MAX_SESSION_BYTES } from './session.js';
+import { createSDImage, validateSDSize, sdImageName } from './sd-card.js';
+import { AutoSaveStore, AUTO_SIGNAL_PREFIX } from './autosave.js';
 import { AUTO_PREFIX, readPreferences, writePreferences, validatePreferences,
   readAuto, writeAuto, sessionName } from './preferences.js';
 import { MAX_FILE_BYTES, MAX_UPLOAD_FILES, MAX_UPLOAD_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename, validateUpload, transferCapabilities } from './file-transfer.js';
 export class CalculatorController {
-  constructor({worker, storage=null, locks=null, mayRun=()=>true, download=()=>{}, now=()=>new Date()}={}) {
-    this.worker=worker; this.storage=storage; this.locks=locks; this.mayRun=mayRun;
+  constructor({worker, storage=null, database=globalThis.indexedDB, locks=null, mayRun=()=>true, download=()=>{}, now=()=>new Date()}={}) {
+    this.worker=worker; this.storage=storage;this.autoStore=database?new AutoSaveStore(storage,database):null; this.locks=locks; this.mayRun=mayRun;
     this.download=download; this.now=now; this.listeners=new Set(); this.frames=new Set();
     this.generation=0; this.selection=0; this.dead=false; this.pending=null; this.last=null;
     this.autoRequest=0; this.autoPending=null; this.autoBlocked=false; this.autoToken=null;
     this.writer=crypto.randomUUID(); this.dialogs=[]; this.dialogId=0;
     this.transferRequest=0;this.received=new Map();this.receivedId=0;this.uploadQueue=null;
     this.state={model:CALCULATORS[0],prefs:readPreferences(storage),ready:false,loaded:false,running:false,
-      busy:false,stopped:false,note:null,dialog:null,serial:false,usb:false,usbReady:false,usbInfo:null,usbPhase:'Disconnected',log:'',
+      busy:false,stopped:false,note:null,dialog:null,sd:null,sdName:'orchard-sd.img',serial:false,usb:false,usbReady:false,usbInfo:null,usbPhase:'Disconnected',log:'',
       transfer:null,uploadBatch:null,receivedFiles:[],transferListing:''};
     worker.onmessage=({data})=>this.receive(data);
     worker.onerror=()=>{this.endTransfer('error','The calculator worker stopped.');this.patch({ready:false,running:false,busy:false});this.report('workerFailure');};
@@ -37,7 +40,7 @@ export class CalculatorController {
   linksReset(){++this.transferRequest;this.uploadQueue=null;this.received.clear();this.patch({serial:false,usb:false,usbReady:false,usbInfo:null,usbPhase:'Disconnected',log:'',transfer:null,uploadBatch:null,receivedFiles:[],transferListing:''});}
   create(model=this.state.model,rom=null){
     ++this.generation;clearTimeout(this.autoTimer);this.autoPending=null;this.autoBlocked=false;this.autoToken=null;this.awaitingRestore=false;
-    this.pending=rom;this.last=null;this.linksReset();this.patch({model,loaded:false,running:false,stopped:false,busy:Boolean(rom),note:null});
+    this.pending=rom;this.last=null;this.linksReset();this.patch({model,loaded:false,running:false,stopped:false,busy:Boolean(rom),note:null,sd:null,sdName:'orchard-sd.img'});
     this.send('create',{model:model.id,preset:model.preset,audience:'calculator'});this.send('configure',{speed:this.state.prefs.speed});
   }
   async open(file){if(!file||!this.state.ready||this.state.busy)return;
@@ -66,13 +69,36 @@ export class CalculatorController {
       if(!this.dead&&token===this.generation)this.send('checkpoint-load',{file:bytes});
     }catch(e){if(!this.dead&&token===this.generation){this.patch({busy:false});this.report('sessionError',e.message);}}
   }
+  async insertSD(file=null,writeProtected=false){
+    const s=this.state;if(this.dead||!s.loaded||s.busy||![5,6].includes(s.model.id)||s.sd?.present||s.transfer?.active||s.uploadBatch?.active)return;
+    const token=this.generation;this.autoPending=null;this.patch({busy:true});
+    try{
+      if(file)validateSDSize(file.size);
+      const bytes=file?new Uint8Array(await file.arrayBuffer()):createSDImage();
+      validateSDSize(bytes.length);
+      if(this.dead||token!==this.generation)return;
+      this.send('sd-insert',{bytes,writeProtected:Boolean(writeProtected),name:sdImageName(file?.name)});
+    }catch(e){if(!this.dead&&token===this.generation){this.patch({busy:false});this.report('sdError',e.message);}}
+  }
+  exportSD(){
+    const s=this.state;if(!s.loaded||s.busy||!s.sd?.present||s.transfer?.active||s.uploadBatch?.active)return;
+    this.patch({busy:true});this.send('sd-export');
+  }
+  async ejectSD(){
+    const s=this.state;if(!s.loaded||s.busy||!s.sd?.present||s.transfer?.active||s.uploadBatch?.active)return;
+    const token=this.generation;
+    if(s.sd.dirty&&!await this.ask('sdEject','sdEjectConfirm','sdEject','cancel'))return;
+    if(this.dead||token!==this.generation)return;
+    this.autoPending=null;this.patch({busy:true});this.send('sd-eject');
+  }
   setPreferences(value){const previous=this.state.prefs;const prefs=validatePreferences(value);this.patch({prefs});this.send('configure',{speed:prefs.speed});
     try{writePreferences(this.storage,prefs);}catch(e){this.report('storageError',e.message);}
     if(prefs.autosave&&!previous.autosave)this.autoBlocked=false;
     this.scheduleAuto();
   }
   async loadedROM(){const token=this.generation;this.awaitingRestore=true;
-    try{const {prefs,model}=this.state;const saved=prefs.autosave&&this.storage?readAuto(this.storage,model.hash):null;this.autoToken=saved?.token??null;
+    try{const {prefs,model}=this.state;const saved=prefs.autosave?(this.autoStore?await this.autoStore.read(model.hash):this.storage?readAuto(this.storage,model.hash):null):null;
+      if(this.dead||token!==this.generation)return;this.autoToken=saved?.token??null;
       if(saved){const restore=await this.ask('restoreLocal','localSaveTime','restore','startNew',{time:new Date(saved.savedAt).toLocaleString()});
         if(this.dead||token!==this.generation)return;
         if(restore===null){this.awaitingRestore=false;this.autoBlocked=true;this.patch({note:'localKept'});return;}
@@ -83,18 +109,24 @@ export class CalculatorController {
   scheduleAuto(delay=this.state.prefs.interval*1000){clearTimeout(this.autoTimer);
     if(!this.dead&&this.state.prefs.autosave&&this.state.loaded&&!this.autoBlocked&&!this.awaitingRestore)
       this.autoTimer=setTimeout(()=>this.requestAuto(),delay);}
-  requestAuto(){const s=this.state;if(!s.prefs.autosave||!this.storage||!s.loaded||s.busy||s.stopped||this.autoBlocked||this.awaitingRestore){this.scheduleAuto();return;}
+  requestAuto(){const s=this.state;if(!s.prefs.autosave||(!this.storage&&!this.autoStore)||!s.loaded||s.busy||s.stopped||this.autoBlocked||this.awaitingRestore){this.scheduleAuto();return;}
     if(this.autoPending)return;this.autoPending={request:++this.autoRequest,generation:this.generation,model:s.model};this.send('checkpoint-auto',{request:this.autoRequest});}
   async acceptAuto(data){const r=this.autoPending;if(!r||r.request!==data.request||r.generation!==this.generation)return;
-    try{const put=()=>{if(this.dead||!this.state.prefs.autosave||r.generation!==this.generation||this.autoPending!==r)return;
-      this.autoToken=writeAuto(this.storage,r.model.hash,r.model.id,data.file,this.autoToken,`${this.writer}:${r.request}`);this.patch({note:'autoSaved'});};
-      if(this.locks)await this.locks.request('orchard-autosave:'+r.model.hash,put);else put();
-    }catch(e){this.autoBlocked=true;this.patch({note:'autoStopped'});this.report('storageError',e.message);}
+    const valid=()=>!this.dead&&this.state.prefs.autosave&&r.generation===this.generation&&this.autoPending===r;
+    try{
+      const put=async()=>{if(!valid())return;
+        const token=this.autoStore?await this.autoStore.write(r.model.hash,r.model.id,data.file,this.autoToken,`${this.writer}:${r.request}`,valid):
+          writeAuto(this.storage,r.model.hash,r.model.id,data.file,this.autoToken,`${this.writer}:${r.request}`);
+        if(valid()&&token!==null){this.autoToken=token;this.patch({note:'autoSaved'});}};
+      if(this.locks)await this.locks.request('orchard-autosave:'+r.model.hash,put);else await put();
+    }catch(e){if(valid()){this.autoBlocked=true;this.patch({note:'autoStopped'});this.report('storageError',e.message);}}
     finally{if(this.autoPending===r){this.autoPending=null;this.scheduleAuto();}}
   }
-  foreignSave(key){if(key===AUTO_PREFIX+this.state.model.hash&&this.state.loaded&&this.state.prefs.autosave){this.autoBlocked=true;this.autoPending=null;clearTimeout(this.autoTimer);this.patch({note:'foreignSave'});}}
+  foreignSave(key){if((key===AUTO_PREFIX+this.state.model.hash||key===AUTO_SIGNAL_PREFIX+this.state.model.hash||key==='orchard:autosave-clear:v2')&&this.state.loaded&&this.state.prefs.autosave){this.autoBlocked=true;this.autoPending=null;clearTimeout(this.autoTimer);this.patch({note:'foreignSave'});}}
   async clearSaves(){if(!await this.ask('deleteSaves','deleteSavesConfirm','delete','cancel'))return;
-    try{this.autoPending=null;for(let i=this.storage.length-1;i>=0;--i){const key=this.storage.key(i);if(key?.startsWith(AUTO_PREFIX))this.storage.removeItem(key);}
+    try{this.autoPending=null;if(this.autoStore)await this.autoStore.clear();
+      for(let i=(this.storage?.length??0)-1;i>=0;--i){const key=this.storage.key(i);if(key?.startsWith(AUTO_PREFIX)||key?.startsWith(AUTO_SIGNAL_PREFIX))this.storage.removeItem(key);}
+      this.storage?.setItem('orchard:autosave-clear:v2',crypto.randomUUID());
       this.autoToken=null;this.autoBlocked=false;this.patch({note:'savesDeleted'});this.scheduleAuto();
     }catch(e){this.report('storageError',e.message);}}
   log(text){this.patch({log:(this.state.log+text+'\n').slice(-16000)});}
@@ -136,10 +168,11 @@ export class CalculatorController {
       this.patch({transfer:{request,active:false,phase:'error',transport,direction:mode,name,transferred:0,total:0,error:String(error.message||error)}});
     }
   }
-  async startHp39Server(transport,files=[]){
+  async startHp39Server(transport,files=[],{protocol='disk'}={}){
     const s=this.state;if(this.dead||!s.ready||!s.loaded||s.busy||s.stopped||s.transfer?.active||s.uploadBatch?.active)return;
     const generation=this.generation,request=++this.transferRequest;
     try{
+      if(!['disk','wire'].includes(protocol))throw Error('Choose a valid HP39 transfer mode.');
       if(!transferCapabilities(s.model.id,transport).serve)throw Error('HP39 file serving is unavailable on this connection.');
       if(transport==='usb'?!s.usbReady:!s.serial)throw Error('Connect the selected link first.');
       if(!Array.isArray(files)||files.length>MAX_HP39_HOST_FILES+2)throw Error('Choose at most 16 HP39 objects and their two directory files, or one ZIP package.');
@@ -161,6 +194,19 @@ export class CalculatorController {
       const prepared=archive?await readHp39Archive(loaded[0].bytes,{cancelled:()=>this.dead||generation!==this.generation||request!==this.transferRequest}):prepareHp39Files(loaded);
       if(this.dead||generation!==this.generation||request!==this.transferRequest)return;
       if(!this.state.ready||!this.state.loaded||this.state.busy||this.state.stopped||(transport==='usb'?!this.state.usbReady:!this.state.serial))throw Error('The selected calculator connection is no longer ready.');
+      if(protocol==='wire'){
+        const entries=prepared.filter(entry=>inspectHp39File(entry.bytes).kind!=='A').map(entry=>{
+          const info=validateHp39WireFile(entry.name,entry.bytes);
+          return {...entry,size:entry.bytes.length,library:info.kind==='H'};
+        }).sort((a,b)=>Number(b.library)-Number(a.library));
+        if(!entries.length)throw Error('Choose at least one binary HP39 object for Wire upload.');
+        const total=entries.reduce((sum,entry)=>sum+entry.size,0);
+        const queue={generation,request,transport,protocol:'hp39-wire',entries,index:0,completedBytes:0};
+        this.uploadQueue=queue;
+        this.patch({uploadBatch:{active:true,protocol:'hp39-wire',completed:0,total,transferred:0,
+          items:entries.map(entry=>({name:entry.name,size:entry.size,phase:'queued',transferred:0}))}});
+        this.sendNextUpload(queue);return;
+      }
       if(!this.state.running)this.send('run');
       this.send('file-transfer-start',{request,mode:'serve',transport,files:prepared,receiveBudget:this.remainingReceiveBudget()});
     }catch(error){
@@ -222,12 +268,12 @@ export class CalculatorController {
     }
     if(queue.index>0)queue.request=++this.transferRequest;
     const entry=queue.entries[queue.index],bytes=entry.bytes;
-    this.patch({transfer:{request:queue.request,active:true,phase:'negotiating',transport:queue.transport,direction:'send',name:entry.name,transferred:0,total:entry.size,error:null},
+    this.patch({transfer:{request:queue.request,active:true,phase:'negotiating',transport:queue.transport,protocol:queue.protocol,direction:'send',name:entry.name,transferred:0,total:entry.size,error:null},
       uploadBatch:{...s.uploadBatch,items:s.uploadBatch.items.map((item,i)=>i===queue.index?{...item,phase:'sending',transferred:0}:item)}});
     // Subscribers may cancel or replace the machine while the state is posted.
     if(this.dead||this.uploadQueue!==queue||queue.generation!==this.generation)return;
     if(!this.state.running)this.send('run');
-    this.send('file-transfer-start',{request:queue.request,mode:'send',transport:queue.transport,name:entry.name,bytes,receiveBudget:this.remainingReceiveBudget()});
+    this.send('file-transfer-start',{request:queue.request,mode:'send',transport:queue.transport,...(queue.protocol?{protocol:queue.protocol}:{}),name:entry.name,bytes,receiveBudget:this.remainingReceiveBudget()});
     // The Worker owns a structured clone; pending files stay bounded locally.
     delete entry.bytes;
   }
@@ -250,7 +296,11 @@ export class CalculatorController {
   }
   transferStatus(data){
     if(data.request!==this.transferRequest||this.state.transfer?.request!==data.request||!this.state.transfer.active)return;
-    const {type,generation,...status}=data,transfer={...this.state.transfer,...status};
+    const previous=this.state.transfer,{type,generation,...status}=data,now=Number(this.now());
+    const changed=previous.phase!==status.phase||previous.name!==status.name||previous.transferred!==status.transferred;
+    const transfer={...previous,...status,startedAt:previous.startedAt??now,
+      fileStartedAt:previous.name!==status.name||previous.phase==='serving'?now:previous.fileStartedAt??now,
+      progressAt:changed?now:previous.progressAt??now};
     const queue=this.uploadQueue,batch=this.state.uploadBatch;
     if(!queue||queue.request!==data.request||!batch?.active){this.patch({transfer});return;}
     const index=queue.index,item=batch.items[index];if(!item){this.patch({transfer});return;}
@@ -317,15 +367,19 @@ export class CalculatorController {
       case 'loaded':this.patch({loaded:true,busy:false});void this.loadedROM();break;
       case 'snapshot':{const stopped=!this.state.stopped&&data.stopped;this.last=data;
         if(data.stopped)this.endTransfer('error','The calculator stopped.');
-        this.patch({loaded:data.loaded,running:data.running,stopped:data.stopped});for(const f of this.frames)f(data);
+        const sd=data.sd===undefined?this.state.sd:JSON.stringify(data.sd)===JSON.stringify(this.state.sd)?this.state.sd:data.sd;
+        this.patch({loaded:data.loaded,running:data.running,stopped:data.stopped,sd});for(const f of this.frames)f(data);
         if(stopped)this.report('compatibilityError');break;}
       case 'checkpoint-auto-saved':void this.acceptAuto(data);break;
       case 'checkpoint-skipped':if(data.request===this.autoPending?.request){this.autoPending=null;this.scheduleAuto(5000);}break;
       case 'autosave-error':this.autoPending=null;this.autoBlocked=true;this.patch({note:'autoStopped'});this.report('storageError',data.message);break;
       case 'checkpoint-saved':this.autoPending=null;this.patch({busy:false,running:false,note:'exported'});
         Promise.resolve(this.download(data.file,sessionName(this.state.model.id,this.now()))).catch(e=>this.report('saveError',e.message));this.scheduleAuto();break;
-      case 'checkpoint-restored':this.autoPending=null;this.awaitingRestore=false;this.patch({busy:false,running:false,note:'restored'});this.scheduleAuto();break;
+      case 'checkpoint-restored':this.patch({sdName:'orchard-sd.img'});this.autoPending=null;this.awaitingRestore=false;this.patch({busy:false,running:false,note:'restored'});this.scheduleAuto();break;
       case 'error':this.endTransfer('error','The calculator operation stopped.');if(this.awaitingRestore)this.autoBlocked=true;this.autoPending=null;this.awaitingRestore=false;this.patch({busy:false,running:false});this.report('operationFailed',data.message);this.scheduleAuto();break;
+      case 'sd-complete':this.patch({busy:false,note:data.action==='insert'?'sdInserted':'sdEjected',...(data.action==='insert'?{sdName:sdImageName(data.name)}:{})});this.scheduleAuto();break;
+      case 'sd-exported':this.patch({busy:false,note:'sdExported'});Promise.resolve(this.download(data.bytes,sdImageName(this.state.sdName))).catch(e=>this.report('saveError',e.message));break;
+      case 'sd-error':this.patch({busy:false});this.report('sdError',data.message);this.scheduleAuto();break;
       case 'links-reset':this.linksReset();break;
       case 'serial-status':this.patch({serial:data.connected});if(!data.connected&&this.state.transfer?.transport==='serial')this.cancelTransfer();break;
       case 'uart-output':this.log('RX '+Array.from(data.bytes,b=>b.toString(16).padStart(2,'0')).join(' '));break;

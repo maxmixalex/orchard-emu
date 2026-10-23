@@ -14,7 +14,7 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [x] Portable manual sessions, with .ord names and legacy .orchard import.
 - [x] Settings: exclusive immersive/traditional view, viewport/scale, editable physical key sequences, independent blur/hidden policies.
 - [x] Normal wall-time pacing distinct from raw execution throughput; explicit faster modes.
-- [x] Opt-in bounded localStorage autosave, modal restore/confirm and quota/conflict handling.
+- [x] Opt-in binary IndexedDB autosave with legacy localStorage migration, transactional writer-token checks, modal restore and quota/conflict handling.
 - [x] User UART stream and bounded USB host; original bootloader descriptors observed.
 - [x] Bounded HP48gII USB and serial upload, GET, Receive, directory and FINISH; stock object bytes agree. Both active SEND and connection reuse have production-browser evidence.
 - [x] Complete-batch preflight and sequential multi-file upload on both transports; two-object stock browser round trips, per-file results and lifecycle cancellation.
@@ -22,10 +22,12 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [x] Implemented and measured quiet-loop and cold-rollback candidates; withdrew both after Chrome gates failed, retaining the 48,561-check scheduler regression and all timing evidence.
 - [x] HP39/40 Disk drive host, typed-file and alias-preserving catalog validation; original HP39g+ USB installs aplet/library and exports both. Target 39gs/40gs stock witnesses remain open.
 - [x] Direct HP39 ZIP import and standard ZIP download, bounded decompression/CRC checks, and reconstruction of the catalog entry omitted by stock SEND.
-- [x] HP49g+ full capture admission, empty-slot SDI, exact 512 KiB SRAM, 131×80 UI, arithmetic, CAS, graphing, menus, sessions and USB object workflows.
+- [x] HP39 direct Wire upload with library-first package ordering, per-object RECV instructions and original-ROM SEND/ZIP verification; visible progress and cancellation recovery guidance.
+- [x] HP49g+ full capture admission, fixed 512 KiB SRAM with explicit bank-1 mirror, 131×80 UI, arithmetic, CAS, graphing, menus, sessions and USB object workflows.
+- [x] HP49g+ FILES recovery and bounded SD image read/write, FAT16 create/import/export/eject and write protection; HP48gII no-card FILES navigation.
 - [x] HP49g+ SDK native ARM example installed over stock USB, run through ARMToolbox, returned to HOME and followed by arithmetic and USB reconnect.
-- [x] Checkpoint v2 SDI serialization and exact v1 migration on all six model capacities.
-- [x] Complete HP39gs ROMstream package: proven hpclang bytes, one-launch double-read receiver, corresponding source and reproducible ZIP. Original HP39g+ OS installs/runs/returns with a complete equal 1 MiB capture.
+- [x] Checkpoint v3 includes complete SD media and in-flight state; exact v1/v2 migration remains supported on all six model capacities.
+- [x] Revised HP39gs ROMstream v2: visible progress, repaired mapping/cable/USB exit paths, one-launch double reads and corresponding source; original HP39g+ and explicitly derived 39gs 2.22 OS fixtures complete dump/return/USB-reuse workflows.
 - [x] IR/IrDA assessment with primary sources, not a claimed implementation.
 - [x] Byte-table checkpoint CRC with unchanged format/full validation; independent checks on all six model capacities.
 - [x] Production Pacer + WASM RTC comparison across rates and host partitions.
@@ -42,7 +44,7 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [ ] Target HP39gs/HP40gs stock acceptance, remote file management and broader stock capacity/recovery cases; preserve the original HP50g GET_CONFIGURATION counterexample, then implement applicable infrared links.
 - [x] Receive the HP49g+ full A/B capture and independently validate original-byte boot and user workflows; retain the original acquisition sidecar unchanged.
 - [ ] Receive the HP39gs full image using the complete ROMstream package; no preliminary return/short-read task is required.
-- [ ] Independently establish SRAM/LCD/NOR/pad/analog assumptions; implement HP49 infrared/UART2 and SD storage with their own evidence.
+- [ ] Independently establish SRAM/LCD/NOR/pad/analog assumptions; implement HP49 infrared/UART2, SD DMA/larger media and NOR programming with their own evidence.
 
 
 Do not infer all-model or canonical physical-board support from skins, arithmetic,

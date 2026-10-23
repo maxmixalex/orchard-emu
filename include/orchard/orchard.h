@@ -90,12 +90,36 @@ orchard_stop orchard_run(orchard_machine *m, uint32_t tick_budget);
 void orchard_get_state(const orchard_machine *m, orchard_state *state);
 /* Portable versioned state, excluding immutable NOR. Load the matching ROM first.
  * Save uses a non-overlapping buffer of exactly checkpoint_size bytes. Load
- * also accepts the bounded v1 wire format; export always emits current v2.
+ * also accepts the bounded v1/v2 wire formats; export emits v3, including an
+ * inserted SD card's complete image and its in-flight controller state.
  * Invalid data/ROM/version is rejected without changing the current machine.
  * CRC is corruption detection, not authentication; hosts should bind SHA-256. */
 size_t orchard_checkpoint_size(const orchard_machine *m);
 orchard_status orchard_checkpoint_save(const orchard_machine *m, void *buffer, size_t length);
 orchard_status orchard_checkpoint_load(orchard_machine *m, const void *buffer, size_t length);
+/* Validate a checkpoint without mutation and report its embedded SD image size.
+ * This does not require SD storage to be bound yet. The matching ROM is required. */
+orchard_status orchard_checkpoint_sd_size(const orchard_machine *m, const void *buffer,
+                                          size_t length, size_t *required);
+
+/* Functional SDSC memory card, 1/2/4/8/16/32 MiB, 512-byte sectors. The caller
+ * owns the writable backing buffer and must keep it alive and unmodified while
+ * inserted. Bind storage while ejected; insert consumes its existing bytes
+ * without formatting. Only profiles with a physical SD slot accept media.
+ * Eject preserves bytes and aborts card transfers with hardware timeout status.
+ * Cold reset preserves insertion/image/write protection, resets card protocol.
+ * Checkpoint v3 includes the image; load requires sufficient bound storage and
+ * restores bytes and protocol atomically after validation. No core allocator. */
+#define ORCHARD_SD_MAX_BYTES (32u * 1024u * 1024u)
+typedef struct {
+    uint32_t bytes, card_state, last_command;
+    uint64_t commands, read_blocks, written_blocks;
+    bool present, write_protected, dirty;
+} orchard_sd_state;
+orchard_status orchard_sd_bind(orchard_machine *m, void *storage, size_t capacity);
+orchard_status orchard_sd_insert(orchard_machine *m, size_t length, bool write_protected);
+orchard_status orchard_sd_eject(orchard_machine *m);
+void orchard_get_sd_state(const orchard_machine *m, orchard_sd_state *state);
 
 /* Physical memory debug access; MMIO is deliberately not exposed here. */
 orchard_status orchard_read_memory(const orchard_machine *m, uint32_t address,

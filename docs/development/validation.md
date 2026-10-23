@@ -1,6 +1,93 @@
 # Validation
 
-## Final recovered implementation and ZIP/native workflows (2026-10-23)
+## r19 FILES, SD media, transfer and reader fixes (2026-10-23)
+
+The [r19 release record](evidence/release-validation-r19.json) pins all **39
+production assets** and the fresh checks below. The final production WASM is
+**120,723 bytes**, SHA-256
+`eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f`.
+This is a new SD/controller/checkpoint build. The CPU interpreter, MMU/bus
+execution sources, Normal pacer and physical-key dwell policy are unchanged;
+no general CPU performance improvement is claimed.
+
+### Core and browser gates
+
+Fresh Release, retained-reference and ASan/UBSan runs each pass **16/16 suites**.
+The final sanitizer run includes LeakSanitizer with `detect_leaks=1`.
+Native and test-WASM execution pass **1,151,590 assertions per host**, including
+**12,566 SD assertions** and **1,129 checkpoint assertions**, plus **32,949
+functional-clock checks per host**. The quarantined physical-read experiment
+has 217,824 additional WASM-only assertions; they are not counted twice in the
+default total. The fresh independent Unicorn 2.1.4 corpus passes **17,075
+cases**, with zero mismatches and zero skips. Clang static analysis covers the
+exact 41-source CI set and reports zero diagnostics.
+
+The complete ROM-free tool, frontend/controller/Worker, session, host-package,
+recording, trace, skin and Pages contract gates pass. The
+[frontend evidence](evidence/frontend-validation-r19.json) separately records
+real Chromium component, IndexedDB, production HTTP Worker and both ordinary
+and diagnostic stop-recovery runs. Synthetic model fixtures are not original
+firmware acceptance. Binary IndexedDB testing covers a 17,277,216-byte record,
+legacy migration, competing writers, stale-generation cancellation, reload
+and deletion; the original-ROM test below covers an actual SD session.
+
+Pinned Zensical 0.0.67 renders all 43 documentation pages in strict mode with
+zero issues. Local Pages assembly validates all 39 emulator assets against
+their exact bytes; publication metadata is regenerated for the resulting
+commit instead of reusing an older revision/manifest.
+
+### Original-system operations
+
+| Workflow | Fresh result and precise scope |
+| --- | --- |
+| HP49g+ FILES without a card | Original cold boot, FILES navigation and return pass. The old FIFO stop and later SRAM boundary abort are both reproduced and recorded in the [SD evidence](evidence/sd-workflows-r19.json). |
+| HP49g+ SD file persistence | Physical keys create TEST=42; stock FILES COPY writes it to port 3. Independent FAT16 parsing finds the exact 15-byte integer object. Both the same machine and a separate cold boot RCL the exported card's TEST as 42. |
+| Partial SD write continuation | A snapshot taken with four bytes of a sector staged includes the whole 16 MiB card. Native and WASM continue 100,000 ticks and produce byte-identical 17,310,431-byte checkpoints. |
+| Production browser SD lifecycle | The real page/Worker creates a card, writes and recalls TEST, exports its image, saves/restores the complete session, automatically saves, reloads and restores the exact image again, then imports it read-only. FILES, recalled 42 and the 390px modal were visually reviewed. |
+| HP48gII FILES | Its own original full NOR cold-boots, navigates FILES and returns to HOME for `1+1=2`. It has no SD slot. |
+| HP39g+ final Normal Disk upload | Original ROM cold boot and the original 8,862-byte two-object ZIP complete in **49.887 seconds**, measured from aplet selection to both acknowledgements. The old matching sample was 108.147 seconds. The installed aplet is visible and HOME calculates `1+1=2`. |
+| HP39g+ Wire and reverse transfer | An independently identified earlier `25ceecb4…` build completes both Wire uploads in **13.138 seconds**, then stock SEND → Disk drive exports them with exact aplet bytes, exact library body and correct aliases. That reverse Kermit leg takes **184.716 seconds**. Its timing is not relabeled as a final-core run. |
+| Revised HP39 ROM reader | Final-core normal installation, complete 64-block double reads, FINISH/disconnect, HOME `1+1=2` and stock USB reuse pass on the original HP39g+ NOR and a separately identified original 39gs 2.22 OS fixture. Six cable/control/reset/timeout/protocol exits also return correctly. |
+
+The [transfer evidence](evidence/hp39-transfer-r19.json) preserves the exact
+artifacts, timing windows and rejected fixed-delay experiments. These are
+single coordinated host observations, not physical throughput or statistical
+CPU benchmarks. Progress appears within the first second in the final Disk
+sample; the earlier display threshold hid progress for about 40 seconds.
+Wire upload still requires a new stock RECV for each object, with libraries
+first. Reverse transfer continues to use Disk drive.
+
+The [reader evidence](evidence/hp39-romstream-r19.json) distinguishes the final
+payload/package, previous diagnostic builds and the derived 39gs fixture.
+The original 39gs OS is exercised without guest RAM injection, but its boot
+backing includes a generic bootloader. This is not a physical complete 39gs
+NOR or native bootloader acceptance. The complete
+[V2 download](hp39gs-rom-dump.md) replaces the invisible-progress reader;
+physical HP39gs extraction and native Windows HID I/O remain unobserved.
+
+### Compatibility and remaining limits
+
+The HP49g+ HOME preset now explicitly selects bank-1 SRAM mirroring while
+keeping the physical capacity at 512 KiB. Strict core defaults stay
+exact-range. This declared condition resolves the observed stock counterexample;
+it is not physical wiring proof for every board revision. Older sessions
+preserve their saved decode condition. New ROM startup or Restart applies
+the revised preset; restoring an old session does not silently change it.
+
+[SD media](sd-cards.md) is bounded to 1/2/4/8/16/32 MiB SDSC with PIO.
+SDHC/SDXC, DMA, physical SD timing calibration, UART2/IrDA and NOR programming
+remain open. HP50g controller tests do not establish full original-system
+support. Checkpoint v3 includes the complete card and in-flight state;
+v1/v2 imports remain supported. Independent review also closed invalid-model
+card-binding loss, stale autosave-error races and a correct-CRC write-protection
+bypass before final verification.
+
+Earlier failed controller/harness/environment trials are preserved with their
+causes in the release record. Private ROMs, sessions, card images and stock-OS
+screenshots are excluded. GitHub Build, merge, Pages and live-asset acceptance
+are separate per-revision publication results recorded in the release PR.
+
+## Historical r18 implementation and ZIP/native workflows (2026-10-23)
 
 The [r18 release record](evidence/release-validation-r18.json) pins the final
 37 production assets and the fresh checks below. The production WASM is

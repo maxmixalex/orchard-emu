@@ -27,9 +27,9 @@ function saved(c) {
   return new Uint8Array(c.memory.buffer, c.checkpoint_buffer(), c.checkpoint_size()).slice();
 }
 function calendar(c, bytes) {
-  // Version 2 appends 52 SDI bytes after RTC and before RAM/boot SRAM.
-  const offset = bytes.length - c.profile(1, 1) - 4096 - 52 - 31;
-  assert.equal(new DataView(bytes.buffer).getUint32(8, true), 2);
+  // Versions 2/3 append 52+709 SDI/media bytes after RTC, before RAM/boot SRAM.
+  const offset = bytes.length - c.profile(1, 1) - 4096 - 52 - 709 - 31;
+  assert.equal(new DataView(bytes.buffer).getUint32(8, true), 3);
   return [...bytes.slice(offset + 12, offset + 15)];
 }
 for (const policy of ['run','run_idle','run_clocked']) for (const speed of [0.5, 1, 2]) {

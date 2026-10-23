@@ -138,13 +138,56 @@ function fixture(hostFiles=files){
  transfer.poll(2);assert.equal(writes.length,1);assert.equal(writes[0][3],89);
  transfer.cancel(3);assert(!transfer.active);
 }
-// Controller reads/validates every file before publishing the private catalog.
+// A slow library below 4 KiB must show acknowledged progress before its final
+// packet, while fast successive packets remain coalesced for the React UI.
+{
+ let wall=0,tick=0;const incoming=[],outgoing=[],status=[],received=[];
+ const body=new Uint8Array(1489).fill(65);body.set(library);
+ const usb={endpoint:()=>({maxPacket:64}),send:bytes=>{outgoing.push(bytes.slice());return {result:0,accepted:bytes.length};},
+  read:()=>incoming.length?{result:0,bytes:incoming.shift()}:{result:1}};
+ const host=new FileTransfer({core:{timebase_hz:()=>1000},usb,model:1,now:()=>wall,notify:s=>status.push({...s,wall})});
+ const client=new KermitSession({hz:1000,write:bytes=>{incoming.push(bytes.slice());return bytes.length;},file:f=>received.push(f)});
+ host.start({request:1,mode:'serve',transport:'usb',files:[{name:'LIB.000',bytes:body}]},tick);
+ client.start({mode:'get',name:'LIB.000'},tick);
+ for(let n=0;n<1000&&client.active;n++){
+  ++tick;wall+=50;while(outgoing.length)client.receive(outgoing.shift(),tick);client.poll(tick);host.poll(tick);
+ }
+ assert.equal(client.phase,'complete');assert.deepEqual(received[0].bytes,body);
+ const sending=status.filter(s=>s.phase==='sending');
+ assert(sending.filter(s=>s.transferred>0&&s.transferred<body.length).length>=3,'Small HP39 libraries must publish live progress');
+ for(let i=1;i<sending.length;i++){
+  assert(sending[i].transferred>sending[i-1].transferred);
+  assert(sending[i].transferred===body.length||sending[i].wall-sending[i-1].wall>=250,'Packet progress is coalesced');
+ }
+ assert(sending.every(s=>s.hostedTotal===body.length&&s.hostedTransferred===s.transferred));
+ const complete=status.filter(s=>s.phase==='serving').at(-1);
+ assert.equal(complete.filesCompleted,1);assert.equal(complete.filesTotal,1);
+ assert.equal(complete.hostedTransferred,body.length);assert.equal(complete.hostedTotal,body.length);
+}
 const browserFile=(name,bytes)=>({name,size:bytes.length,arrayBuffer:async()=>bytes.slice().buffer});
 function controller(){const sent=[];const c=new CalculatorController({worker:{postMessage:x=>sent.push(x),terminate(){}}});c.patch({model:{id:1},ready:true,loaded:true,running:false,usbReady:true,serial:true});return {c,sent};}
+// Controller reads/validates every file before publishing the private catalog.
 for(const transport of ['usb','serial']){
  const {c,sent}=controller();if(transport==='serial')c.patch({model:{id:2}});await c.startHp39Server(transport,files.map(f=>({file:browserFile(f.name,f.bytes)})));
  assert.equal(sent.at(-1).mode,'serve');assert.equal(sent.at(-1).files.length,4);assert.equal(sent.at(-2).type,'run');c.dispose();
  const bad=controller();if(transport==='serial')bad.c.patch({model:{id:2}});await bad.c.startHp39Server(transport,[{file:browserFile('TEST.000',program)},{file:browserFile('BAD.000',text('not hp39'))}]);assert(!bad.sent.some(m=>m.type==='file-transfer-start'));assert.equal(bad.c.state.transfer.phase,'error');bad.c.dispose();
+}
+// Wire reuses complete-package preflight, sends libraries first, preserves
+// every object byte, and waits for the current file's final acknowledgement.
+{
+ const {c,sent}=controller(),aplet=text('HP39BinB\x04TESTopaque-body');
+ const packageFiles=prepareHp39Files([{name:'APLET.000',bytes:aplet},{name:'LIB.000',bytes:library}]);
+ await c.startHp39Server('usb',packageFiles.map(f=>({file:browserFile(f.name,f.bytes)})),{protocol:'wire'});
+ let start=sent.filter(e=>e.type==='file-transfer-start').at(-1);
+ assert.equal(start.protocol,'hp39-wire');assert.equal(start.mode,'send');assert.equal(start.name,'LIB.000');assert.deepEqual(start.bytes,library);
+ assert.equal(c.state.uploadBatch.items.length,2);assert.equal(c.state.uploadBatch.completed,0);
+ c.receive({type:'file-transfer-status',generation:c.generation,request:start.request,active:true,phase:'sending',transferred:library.length,total:library.length});
+ assert.equal(sent.filter(e=>e.type==='file-transfer-start').length,1,'Payload progress alone cannot start the next object');
+ c.receive({type:'file-transfer-status',generation:c.generation,request:start.request,active:false,phase:'complete',transferred:library.length,total:library.length});
+ start=sent.filter(e=>e.type==='file-transfer-start').at(-1);assert.equal(start.name,'APLET.000');assert.deepEqual(start.bytes,aplet);assert.equal(c.state.uploadBatch.completed,1);
+ c.cancelTransfer();assert.equal(c.state.uploadBatch.active,false);assert.equal(c.state.uploadBatch.items[0].phase,'complete');assert.equal(c.state.uploadBatch.items[1].phase,'cancelled');c.dispose();
+ const invalid=controller();await invalid.c.startHp39Server('usb',[{file:browserFile('LIB.000',library)},{file:browserFile('TEST.000',program)}],{protocol:'wire'});
+ assert.equal(invalid.c.state.transfer.phase,'error');assert(!invalid.sent.some(e=>e.type==='file-transfer-start'),'Unsupported ASCII files fail before sending the library');invalid.c.dispose();
 }
 {
  const {c,sent}=controller();let release;const slow=browserFile('TEST.000',program);slow.arrayBuffer=()=>new Promise(r=>release=r);

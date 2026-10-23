@@ -5,7 +5,10 @@ hpclang, Copyright (c) 2026 Max Alex, MIT licence, at commit
 e240c58c2e9dd3ac4d18002ed9a93d2c7cc67900. The original MIT licence is included
 as third-party/hpclang/LICENSE in the downloadable package.
 
-Orchard's receiver changes, package builder and tests use MIT. Changes include
+Orchard's V2 calculator/receiver changes, package builder and tests use MIT.
+Calculator changes include framebuffer-safe MMU mappings and a private stack,
+visible progress/errors, asynchronous EP0 transfers, cancellation and bounded
+USB waits, reset-safe packet writes, and platform restoration. Receiver changes include
 two independent checksummed reads per 16 KiB block, bounded retries and packet
 budgets, exact USB identity, exclusive output creation, explicit model metadata
 and completed cancellation of Windows asynchronous I/O before freeing memory.

@@ -5,7 +5,8 @@ import {useMediaQuery} from '@mantine/hooks';
 import {PCKeyboardView} from './pc-keyboard-view.js';
 import {TraditionalKeypad,MODEL_SLUGS} from './traditional-keypad.js';
 import {RecordingControl} from './RecordingControl.jsx';
-import {FileTransfer} from './FileTransfer.jsx';
+import {SDCard} from './SDCard.jsx';
+import {FileTransfer,TransferStatus} from './FileTransfer.jsx';
 import {useTranslation} from 'react-i18next';
 import i18n,{LANG_KEY} from './i18n.js';
 import {CALCULATORS} from './catalog.js';
@@ -139,8 +140,8 @@ function Connections({controller,state,target,onTargetChange,onClose}){
   <pre className="link-log">{state.log||'—'}</pre></Stack></Tabs.Panel></Tabs></Stack></Modal>;
 }
 export function App({controller}){
- const {t}=useTranslation(),state=useSyncExternalStore(controller.subscribe,controller.getSnapshot,controller.getSnapshot),[settings,setSettings]=useState(false),[connections,setConnections]=useState(false),[connectionTarget,setConnectionTarget]=useState('usb');
- const rom=useRef(null),session=useRef(null),modalOpen=settings||connections||Boolean(state.dialog),modalRef=useRef(modalOpen);modalRef.current=modalOpen;
+ const {t}=useTranslation(),state=useSyncExternalStore(controller.subscribe,controller.getSnapshot,controller.getSnapshot),[settings,setSettings]=useState(false),[connections,setConnections]=useState(false),[sdOpen,setSDOpen]=useState(false),[connectionTarget,setConnectionTarget]=useState('usb');
+ const rom=useRef(null),session=useRef(null),modalOpen=settings||connections||sdOpen||Boolean(state.dialog),modalRef=useRef(modalOpen);modalRef.current=modalOpen;
  useEffect(()=>{const unbind=bindLifecycle(window,document,()=>controller.pause(),{preferences:()=>controller.state.prefs,release:()=>controller.release(),save:()=>controller.requestAuto()});
   const key=e=>{if(e.repeat||e.isComposing||modalRef.current||e.target.closest('input,textarea,select,[contenteditable="true"]')||e.target.closest('button,[role="button"]')&&(e.key==='Enter'||e.key===' '))return;
    const s=controller.state,code=keyCode(e),seq=code?bindings(s.prefs,s.model.id)[code]:null;if(seq?.length&&s.loaded&&s.running&&!s.busy){e.preventDefault();controller.tap(seq);}};
@@ -158,12 +159,15 @@ export function App({controller}){
   <div className="app-toolbar"><Group gap="xs"><Button variant="light" disabled={!state.loaded||state.busy||state.stopped} onClick={()=>controller.toggle()}>{t(state.running?'pause':'resume')}</Button><Button variant="subtle" disabled={!state.loaded||state.busy} onClick={()=>controller.restart()}>{t('restart')}</Button></Group>
    <Group gap="xs"><Button variant="default" disabled={!state.loaded||state.busy} onClick={()=>controller.save()}>{t('save')}</Button><Button variant="default" disabled={!state.loaded||state.busy} onClick={()=>{session.current.value='';session.current.click();}}>{t('restore')}</Button>
    <Menu><Menu.Target><Button variant="default" disabled={!state.loaded}>{t('capture')}</Button></Menu.Target><Menu.Dropdown><Menu.Item onClick={()=>capture(1)}>{t('screen1')}</Menu.Item><Menu.Item onClick={()=>capture(4)}>{t('screen4')}</Menu.Item></Menu.Dropdown></Menu>
+   {[5,6].includes(state.model.id)&&<Button variant="default" disabled={!state.loaded||state.busy} onClick={()=>setSDOpen(true)}>{t('sdTitle')}</Button>}
    <RecordingControl controller={controller} state={state} onDownload={downloadFile}/>
    <Button variant="subtle" disabled={!state.loaded||state.busy} onClick={()=>setConnections(true)}>{t('connections')}</Button></Group><Text size="xs" c="dimmed" role="status">{state.note?t(state.note):''}</Text></div>
+  {!connections&&<TransferStatus state={state} compact onOpen={()=>{setConnectionTarget(state.transfer.transport||'usb');setConnections(true);}}/>}
   <CalculatorDisplay controller={controller} model={state.model} prefs={state.prefs} enabled={enabled}/>
   <footer><span>Orchard · <a href="LICENSE">MIT</a> · <a href="debug.html">{t('developer')}</a></span><span>{t('artwork')} <a href="https://github.com/zyf722/hp-calcs-svg">hp-calcs-svg</a> · <a href="licenses/hp-calcs-svg/NOTICE.txt">Apache-2.0 / NOTICE</a> · {t('copyright')}</span></footer>
   <input ref={rom} id="rom" type="file" accept=".bin,.rom,.raw" hidden onChange={e=>controller.open(e.target.files[0])}/><input ref={session} id="session-file" type="file" accept=".ord,.orchard" hidden onChange={e=>controller.restore(e.target.files[0])}/>
   {settings&&<Settings controller={controller} state={state} onClose={()=>setSettings(false)}/>}{connections&&<Connections controller={controller} state={state} target={connectionTarget} onTargetChange={setConnectionTarget} onClose={()=>setConnections(false)}/>}
+  {sdOpen&&[5,6].includes(state.model.id)&&<SDCard controller={controller} state={state} onClose={()=>setSDOpen(false)}/>}
   <Modal opened={Boolean(state.dialog)} onClose={()=>controller.answer(null)} title={state.dialog?t(state.dialog.title):''} zIndex={400} centered closeButtonProps={{'aria-label':t('close')}}>
    {state.dialog&&<><Text>{t(state.dialog.message,state.dialog.values)}</Text>{state.dialog.values.detail&&<details className="error-details"><summary>{t('details')}</summary><pre>{state.dialog.values.detail}</pre></details>}
     <Group justify="flex-end" mt="lg">{state.dialog.cancel&&<Button variant="default" onClick={()=>controller.answer(false)}>{t(state.dialog.cancel)}</Button>}<Button onClick={()=>controller.answer(true)}>{t(state.dialog.ok)}</Button></Group></>}

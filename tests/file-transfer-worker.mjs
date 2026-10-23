@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+import {readSDState,validateSDSize} from '../web/sd-card.js';
+import {MAX_STATE} from '../web/session.js';
 // Real Worker handlers and protocol engine, deterministic host/core double.
 // This checks ownership and lifecycle boundaries; stock-ROM evidence is separate.
 import assert from 'node:assert/strict';
@@ -28,7 +30,7 @@ function fixture(){
     disconnect(){this.connected=false;}endpoint(){if(!this.connected)throw Error('Connect USB first.');return {maxPacket:64};}
     send(bytes){writes.push(bytes.slice());return {result:0,status:'ACK',accepted:bytes.length};}
     read(){return incoming.length?{result:0,bytes:incoming.shift()}:{result:1,status:'NAK',bytes:new Uint8Array()};}}
-  const scope={Pacer,FileTransfer,TaskScheduler:Scheduler,VirtualUSB:USB,TapQueue,HP48_ROM,isPlayable,setupHash,applySetup,
+  const scope={readSDState,validateSDSize,MAX_STATE,Pacer,FileTransfer,TaskScheduler:Scheduler,VirtualUSB:USB,TapQueue,HP48_ROM,isPlayable,setupHash,applySetup,
     Uint8Array,Uint32Array,ArrayBuffer,performance:{now:()=>++wall},self:{},postMessage:d=>output.push(d),initialCore:core,
     encodeSession:async()=>new Uint8Array(32),decodeSession:async()=>({model:4,romHash:HP48_ROM,preset:'hp48-home',frameView:1,state:new Uint8Array(32)})};
   const context=vm.createContext(scope);vm.runInContext(source+'\ncore=initialCore;',context);

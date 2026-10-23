@@ -9,11 +9,19 @@ backwards compatible. Keep the exported backup. To resume later, open the same o
 ROM and choose **Restore**, then **Resume**. Optional automatic local saves
 are described below; the ROM is never persisted.
 Restoring a saved HOME session avoids repeating cold boot and its prompts.
-Restart still clears the current RAM; it does not delete exported files.
+Restart still clears the current RAM and preserves an inserted SD card; it
+does not delete exported files. Restore replaces the current RAM and card.
+
+Restoring also preserves the board conditions stored in the checkpoint. In
+particular, an older HP49g+ session keeps its former exact-range SRAM decode;
+the r19 FILES mirror condition is applied at a fresh ROM startup or Restart.
+Back up wanted objects before restarting. See [SD cards and FILES](sd-cards.md)
+for this compatibility boundary.
 
 The file records RAM, internal SRAM, CPU register banks and CP15 state,
 peripheral registers, pending interrupts, clock phases, ADC sample-and-hold,
-UART/USB queues, empty-slot SDI state and NOR command state. It does not include the immutable NOR
+UART/USB queues, SDI state, the complete inserted SD card and NOR command state.
+It does not include the immutable NOR
 image, UI timers, pointers or execution caches. Like a calculator backup,
 it contains the user's calculations and any data in calculator memory; treat
 it as private. Nothing is uploaded. A snapshot is not native warm reset,
@@ -23,15 +31,17 @@ battery-backed storage or continuation of an external USB host connection.
 
 The C API is `orchard_checkpoint_size/save/load`. The core format uses an
 explicit little-endian field stream, not `memcpy` of a C struct. Native and
-WASM share the schema. A 32-byte header contains `ORCHST01`, version 2, exact
+WASM share the schema. A 32-byte header contains `ORCHST01`, version 3, exact
 length, model, ROM CRC32, physical SRAM size and a payload CRC32. The body
 contains explicitly enumerated architectural scalars, active SRAM and the
-4 KiB internal SRAM. The current 256 KiB machines produce **270,362 bytes**
-before the small browser envelope; 512 KiB machines produce **532,506 bytes**.
-Version 2 appends 52 bytes of explicitly serialized SDI state. The loader also
-accepts exact version-1 files and initializes the previously absent SDI controller
-to its reset state. Exports always use version 2; the browser envelope remains
-version 1. Version-1 length, checksum, model and field validation still apply.
+4 KiB internal SRAM. Without a card, 256 KiB machines produce **271,071 bytes**
+before the small browser envelope; 512 KiB machines produce **533,215 bytes**.
+An inserted card adds its complete image length. Version 2 added 52 bytes of
+SDI state; version 3 adds 709 bytes for media metadata and controller/FIFO/
+partial-transfer state, followed by the card image. The loader accepts exact
+version-1/2 files and resets the fields absent from those versions. Exports
+always use version 3; the browser envelope remains version 1. Legacy length,
+checksum, model and field validation still apply.
 
 The browser envelope (`ORCHARD1`) adds versioned JSON metadata with the exact
 ROM SHA-256, model, compatibility configuration, display mode and state SHA-256.
@@ -39,7 +49,8 @@ Its metadata and payload lengths are bounded before decoding. These checks
 provide integrity and identity, **not a signature or authentication**. Input
 is still untrusted: core import stages small scalar state, checks booleans,
 enums, queue cursors/counts, ADC/sample bounds, endpoint indices and other
-index-bearing fields, and only then mutates the machine. Malformed data is
+index-bearing fields, card geometry, protocol state and bound media capacity,
+and only then mutates the machine. Malformed data is
 rejected without partial replacement. Buffers overlapping the machine and
 incorrect/truncated/extra lengths are refused. The matched original ROM must
 already be loaded.
@@ -48,7 +59,7 @@ No raw host pointers, padding bytes, translation memo, EINT memo or deferred
 scheduler state is restored. Public execution boundaries materialize phases;
 import invalidates the disposable host caches. Schema or incompatible
 architectural changes must bump the format version or supply an explicit
-migration. Do not silently accept a different layout. The version-1 migration is explicit and is
+migration. Do not silently accept a different layout. Legacy migration is explicit and is
 covered on all six model capacities. Unknown versions remain errors.
 
 For manual save and every import the Worker pauses first, binds asynchronous results to a
@@ -89,11 +100,13 @@ The established final frame hashes remain unchanged. All prior board/LCD
 hypotheses remain explicit; saved state does not certify physical hardware.
 
 Actual Chrome file-picker/download tests now cover original-ROM sessions.
-The HP49g+ production-page witness saves a version-2 session, changes the guest
+The historical r18 HP49g+ production-page witness saves a version-2 session, changes the guest
 calculation, restores the saved session and compares every displayed RGBA byte.
 It also opens the prior HP48gII ROM, imports an unchanged version-1 HOME session,
 resumes execution and exports a version-2 replacement. These use normal UI
-controls and do not inject guest memory. See [HP49 startup](hp49-startup.md).
+controls and do not inject guest memory. The r19 [SD card workflow](sd-cards.md)
+extends the production-page test to version 3 and complete media preservation.
+See [HP49 startup](hp49-startup.md).
 
 Layout and lifecycle component tests cover narrow viewports separately. Neither
 checkpoint identity nor one desktop browser run proves long-term browser-storage
@@ -101,9 +114,9 @@ reliability or physical warm-reset behavior.
 
 ## Opt-in automatic saves
 
-Settings / Storage enables localStorage snapshots at a chosen interval. One
-latest envelope per exact supported-ROM hash is stored under Orchard's own
-prefix. An automatic copy is taken only between core runs with no queued/held
+Settings / Storage enables binary IndexedDB snapshots at a chosen interval.
+One latest envelope per exact supported-ROM hash is stored in Orchard's
+`sessions` object store. An automatic copy is taken only between core runs with no queued/held
 host keys or active EP0 job. Unlike manual export it does not pause execution
 or clear an input sequence. Hashing occurs on a copied buffer, and every async
 completion is guarded by model generation, operation and request identity.
@@ -115,23 +128,32 @@ Import validates the existing state/envelope and leaves execution paused.
 Host USB links are detached and serial subscriptions cleared: a restored core
 state is not restoration of another program's USB transactions.
 
-Each complete record uses one setItem operation. Web Locks serialize saves
-when supported, with a compare-token check and storage-event detection of
-foreign-tab updates. Without Web Locks the token check is best effort, not a
-cross-tab atomic lock. A conflict stops autosave rather than intentionally
-replacing another tab's latest snapshot. Quota/access failures are visible,
-leave the preceding complete record intact, and do not disable manual export.
-Deleting local saves touches only Orchard's own prefix and asks confirmation.
+The prior writer-token read and complete replacement share one IndexedDB
+transaction, so competing writes remain atomic without Web Locks. A small
+localStorage notification signals foreign-tab updates; it does not contain
+the binary session. A conflict stops autosave and preserves the current
+record. Quota/access failures are visible, leave the preceding complete record
+intact, and do not disable manual export. Deletion clears Orchard's records
+and asks confirmation.
 
-localStorage is synchronous and capacity/eviction policies belong to the
-browser. Saves are therefore infrequent, not per animation frame. Periodic
+Old localStorage saves remain readable and are removed only after a successful
+binary replacement. When IndexedDB is unavailable, the legacy localStorage
+fallback retains its smaller size bound and best-effort token check. It
+refuses an oversized SD-card session before overwriting the previous save;
+manual export remains available. The real-browser regression exercises
+migration, a 16 MiB card-sized record, competing writers, cancelled generations,
+reload and clearing.
+
+Capacity and eviction policies belong to the browser. Saves remain infrequent,
+not per animation frame. Periodic
 copies are the primary safety net: a pagehide-triggered asynchronous snapshot
 is best effort and may not finish before the document is frozen or closed.
 No claim of zero-loss shutdown is made. Private/incognito storage may be
 unavailable or cleared, and saved calculator data remains private user data.
 
 The default is off. Neither settings nor autosave records enter deployed
-assets. The [Web Storage specification](https://html.spec.whatwg.org/multipage/webstorage.html)
+assets. The [IndexedDB specification](https://w3c.github.io/IndexedDB/) defines
+the transaction model. The legacy [Web Storage specification](https://html.spec.whatwg.org/multipage/webstorage.html)
 does not guarantee locking between agents; the
 [Storage standard](https://storage.spec.whatwg.org/) describes quotas and eviction.
 

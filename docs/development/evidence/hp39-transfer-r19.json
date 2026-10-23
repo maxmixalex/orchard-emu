@@ -1,0 +1,703 @@
+{
+  "schema": "orchard-hp39-transfer-evidence-v2",
+  "passed": true,
+  "scope": "r19: original HP39g+ D1.55 Normal-speed old Disk drive timing, bounded sender-timeout diagnostics, native Wire ZIP upload and stock Disk drive SEND/ZIP roundtrip; final eb79a3bc production Normal Disk upload and visible-progress/recovery witness",
+  "model": 1,
+  "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+  "archive_sha256": "b7daaf8d3ed935a4dcf83a5190308bd0a47eaccaf04b966b5f1cb6fe06694759",
+  "physical_calculator_or_host_usb_verified": false,
+  "guest_memory_or_rom_patching": false,
+  "baseline_normal_disk": {
+    "passed": true,
+    "private_report_sha256": "dc18c2115b5eb05c2ef55f3d0d791cee2c9c57361d8bf9ea18c95bbcb344f0ac",
+    "tool_sha256": "73c11ef86fe31d1db029505ce0763721d4af1af80d5161ab420e77e0f4153a55",
+    "production_assets": {
+      "orchard.wasm": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f",
+      "calculator.js": "7ad1f8a42253b2fdac2cd2947182b726b6fce00de7cf211cdb12648f095bb1f0",
+      "worker.js": "604b544a5a04dfacb965b319b4165de5f7e6b64562cea0e633bcab7c1d76b852",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "file-transfer.js": "31be1e3ccb741f41e4bb967143555691d4a14338175e40df53726bf04da1cb2f",
+      "kermit.js": "b2d73695db7a29c8b71e26c4cafc1a4ea23903776cd508da4f74ddea0612b3d5",
+      "hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+      "hp39-transfer.js": "91800384d2b0823784b1476675e9b2bc2d239ceb68caddac7bcbe684769a3d5a",
+      "hp39-archive.js": "d671f01d2333f52f7c3d3cebf699c85ab2e72d56d823da1de1a91ed28c621bb1"
+    },
+    "browser_version": "156.0.8078.47",
+    "cold_boot": true,
+    "all_speed_configurations": [
+      1,
+      1
+    ],
+    "objects_bytes": 8862,
+    "selected_aplet_to_object_acknowledgements_wall_seconds": 108.14709571200001,
+    "first_aplet_visible_progress_delay_seconds": 40.06920000000298,
+    "first_aplet_progress_bytes": 4128,
+    "old_progress_threshold_bytes": 4096,
+    "no_stop": true,
+    "page_errors": [],
+    "worker_errors": [],
+    "stages": [
+      {
+        "name": "open-rom",
+        "elapsed_seconds": 1.0874599919989123,
+        "snapshot": null
+      },
+      {
+        "name": "home-ready",
+        "elapsed_seconds": 11.87261569399925,
+        "snapshot": {
+          "at": 10865.300000000745,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 126245792
+        }
+      },
+      {
+        "name": "request-directory",
+        "elapsed_seconds": 15.531201649999275,
+        "snapshot": {
+          "at": 14540.300000000745,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 170243632
+        }
+      },
+      {
+        "name": "select-aplet",
+        "elapsed_seconds": 20.03966567899988,
+        "snapshot": {
+          "at": 19050.800000000745,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 224465824
+        }
+      },
+      {
+        "name": "objects-acknowledged",
+        "elapsed_seconds": 128.1867613909999,
+        "snapshot": {
+          "at": 127196.19999999925,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 1522216800
+        }
+      },
+      {
+        "name": "installed-aplet",
+        "elapsed_seconds": 138.49243679199935,
+        "snapshot": {
+          "at": 137509.5,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 1645978624
+        }
+      },
+      {
+        "name": "home-arithmetic",
+        "elapsed_seconds": 143.76636445799886,
+        "snapshot": {
+          "at": 142761.59999999776,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 1707699168
+        }
+      }
+    ],
+    "private_heartbeat_samples": 23,
+    "claim": "One actual host/UI sample, not an emulator CPU speedup or physical-calculator throughput claim."
+  },
+  "disk_timeout_diagnostics": {
+    "wasm_sha256": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f",
+    "ordinary_quantum": 1024,
+    "observed_baseline_retry_wait_guest_seconds": [
+      7.911546666666666,
+      7.925968,
+      7.9337333333333335,
+      7.931770666666667,
+      7.931856,
+      7.947130666666666,
+      7.911376
+    ],
+    "sum_retry_wait_guest_seconds": 55.49338133333333,
+    "experiments": [
+      {
+        "label": "Original sender timeout",
+        "decision": "baseline",
+        "private_report_sha256": "6030c10abf8b0e7f9fd6cc3e8697655445fed98b63f214add0ae3cb8b4b5e628",
+        "same_directory_checkpoint": true,
+        "guest_seconds_to_object_acknowledgements": 95.25833333333334,
+        "retry_count": 7,
+        "wall_clock_performance_claim": false
+      },
+      {
+        "label": "50 ms complete-packet reply pause",
+        "decision": "rejected",
+        "private_report_sha256": "560761e128c9b2923112849805c66a4d7b20a7dffd5234bf141ae605d8c7c48f",
+        "same_directory_checkpoint": true,
+        "guest_seconds_to_object_acknowledgements": 265.925,
+        "retry_count": 28,
+        "wall_clock_performance_claim": false
+      },
+      {
+        "label": "1 ms USB OUT fragment gap",
+        "decision": "rejected",
+        "private_report_sha256": "6d7715fff1619bd66d9987e23eebd1b6d6d6c3018dc0ef68e6f183276f5e1986",
+        "same_directory_checkpoint": true,
+        "guest_seconds_to_object_acknowledgements": 110.175,
+        "retry_count": 9,
+        "wall_clock_performance_claim": false
+      },
+      {
+        "label": "One-second initial sender timeout with exponential backoff",
+        "decision": "supports bounded timeout policy",
+        "private_report_sha256": "09e68f3c1ac8bf587a64374c2c6519ca7c4b20f7fd270fd7c7b9f34bcf50f662",
+        "same_directory_checkpoint": true,
+        "guest_seconds_to_object_acknowledgements": 50.00833333333333,
+        "retry_count": 9,
+        "wall_clock_performance_claim": false
+      }
+    ],
+    "production_policy": "HP39 sender only: initial one guest second, clean-ACK RTT plus variance, backoff after loss, bounded by negotiated timeout; HP39 receive and HP48/49 defaults unchanged.",
+    "experiment_scope_note": "The one-second experiment uses a fixed initial RTO and a 30-second retry cap; production adds measured RTT estimation and uses the negotiated cap. Its 50.008 seconds is not a final production Normal wall-clock result.",
+    "underlying_first_packet_or_ack_loss_cause_fully_resolved": false
+  },
+  "normal_wire_roundtrip": {
+    "passed": true,
+    "private_report_sha256": "049f640aae396be86d0201db93d3eb9d6bd19299a1f305ed98d03f5b5155ba5e",
+    "tool": "tools/probe-hp39-transfer-timing.py",
+    "tool_sha256": "f8efc209cd2c8e6030d2e6979ac801b5c12d2ac1a7f1b085f378d15b74f8407a",
+    "production_assets": {
+      "orchard.wasm": "25ceecb48e5df39ba3ff574b2d9e65c59c9659b6a32c576c37d150ba736486e7",
+      "calculator.js": "f0d5e0328bd95482c30f518c065f71bcc4edeeed26db90ab78c7d18f16613001",
+      "worker.js": "73b0c4eec19703194138f726567bc455aadc5fd1208f088a5b85be408eb5a21f",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "file-transfer.js": "1e0af1f5c6a849c1bc749a0e25e790aa3c155fe971e46e6ccd220d26fcaa41bd",
+      "kermit.js": "4539d26c37c91fd4555c85804876d34182038ad176a63a657988699a12748d57",
+      "hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+      "hp39-transfer.js": "a7ec8c0b53041d9365cdf3a64470301a3b060197ec245a774081148b5dc84716",
+      "hp39-archive.js": "d671f01d2333f52f7c3d3cebf699c85ab2e72d56d823da1de1a91ed28c621bb1",
+      "hp39-wire.js": "ac4406698535c384bccb745693c93fe79f77cea2b36b45afb8e927b2798107ea"
+    },
+    "browser_version": "156.0.8078.47",
+    "build_identity": "Intermediate production build 25ceecb4; this full roundtrip is not relabelled as a subsequent final build.",
+    "cold_boot": true,
+    "all_speed_configurations": [
+      1,
+      1
+    ],
+    "ordinary_worker_budget_unchanged": true,
+    "aplet_start_or_romstream_command": false,
+    "timing_window": {
+      "other_agent_heavy_tasks_paused": true,
+      "coordinated_quiet_window": true,
+      "dedicated_physical_host": false,
+      "raw_report_isolated_host": false,
+      "samples": 1,
+      "includes_menu_and_browser_observation_overhead": true
+    },
+    "upload": {
+      "protocol": "HP39/40 (Wire), D handshake / HP CRC, final EOT ACK required",
+      "order": [
+        "LIB275L.000",
+        "HPGCC000.000"
+      ],
+      "object_bytes": 8862,
+      "input_files_unchanged": true,
+      "library_confirm_to_ack_wall_seconds": 1.0425010219987598,
+      "aplet_confirm_to_ack_wall_seconds": 9.634115759999986,
+      "first_confirm_to_both_acknowledgements_wall_seconds": 13.137611977999768,
+      "aplet_list_shows": "H39 ROM USB",
+      "visually_reviewed": true
+    },
+    "return": {
+      "protocol": "Stock SEND -> Disk drive, existing Kermit receiver",
+      "send_to_downloaded_zip_verified_wall_seconds": 184.7161607579983,
+      "files": {
+        "H39ROMUS.000": {
+          "bytes": 7373,
+          "sha256": "3669fb2c2ae1f755bd542c8373a469d49165f2769affdce5435e649010c62455"
+        },
+        "LIB275L0.000": {
+          "bytes": 1484,
+          "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f"
+        },
+        "HP39DIR.000": {
+          "bytes": 66,
+          "sha256": "ed6f8a343736666c2c8deaa8efa4b16860482511520034efef3086156691a1f3"
+        }
+      },
+      "aplet_entire_file_equal": true,
+      "library_body_equal": true,
+      "library_alias_preserved": true,
+      "library_body_bytes": 1468,
+      "returned_library_title": "LIB275L",
+      "body_sha256": "69ab7a7893c1f7fd0d6ab967e24563e02048c719d01eee74f5057e74d383903e",
+      "slow_reverse_transfer_remains": true
+    },
+    "downloaded_zip": {
+      "bytes": 9375,
+      "sha256": "2e69c9142c298fe4160c582b5cca1a2fa0529c268138107b44f9a05e265fe97c",
+      "verified_by": "Python standard-library zipfile, CRC and exact returned entry bytes",
+      "generated_entry": "HP39DIR.CUR",
+      "cold_reimport_in_this_run": false
+    },
+    "post_transfer": {
+      "no_stop": true,
+      "physical_key_arithmetic": "1+1=2",
+      "visually_reviewed": true
+    },
+    "screenshot_sha256": {
+      "installed-aplet.png": "de4492241a6b88645ea1cbcd77798c4655bee8f7738669a482a9cd004108aa8a",
+      "completed-transfer-ui.png": "86a06f7c3dec6610e2f1727bc748485551b5bfef868aa05cbd484ef51916b717",
+      "home-arithmetic.png": "2e887195493a58810f42f64426f40e421e5b93f0382b7cb5c842acac66b3ffd7"
+    },
+    "stages": [
+      {
+        "name": "open-rom",
+        "elapsed_seconds": 0.5681906230020104,
+        "snapshot": null
+      },
+      {
+        "name": "home-ready",
+        "elapsed_seconds": 11.361740799999097,
+        "snapshot": {
+          "at": 10872.5,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 126661024
+        }
+      },
+      {
+        "name": "wire-select-LIB275L.000",
+        "elapsed_seconds": 15.097192810000706,
+        "snapshot": {
+          "at": 14630,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 171565024
+        }
+      },
+      {
+        "name": "wire-acknowledged-LIB275L.000",
+        "elapsed_seconds": 16.139693831999466,
+        "snapshot": {
+          "at": 15666.699999999255,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 184194000
+        }
+      },
+      {
+        "name": "wire-select-HPGCC000.000",
+        "elapsed_seconds": 18.368417550998856,
+        "snapshot": {
+          "at": 17899,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 210981600
+        }
+      },
+      {
+        "name": "wire-acknowledged-HPGCC000.000",
+        "elapsed_seconds": 28.002533310998842,
+        "snapshot": {
+          "at": 27523.199999999255,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 326469600
+        }
+      },
+      {
+        "name": "objects-acknowledged",
+        "elapsed_seconds": 28.234804788000474,
+        "snapshot": {
+          "at": 27747.099999997765,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 329156399
+        }
+      },
+      {
+        "name": "installed-aplet",
+        "elapsed_seconds": 38.541547015000106,
+        "snapshot": {
+          "at": 38061.599999997765,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 452931600
+        }
+      },
+      {
+        "name": "calculator-send",
+        "elapsed_seconds": 38.753632944000856,
+        "snapshot": {
+          "at": 38272.39999999851,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 455461199
+        }
+      },
+      {
+        "name": "roundtrip-verified",
+        "elapsed_seconds": 223.46979370199915,
+        "snapshot": {
+          "at": 223019.8999999985,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 2672089678
+        }
+      },
+      {
+        "name": "home-arithmetic",
+        "elapsed_seconds": 228.6424496360014,
+        "snapshot": {
+          "at": 228179.09999999776,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 2733161277
+        }
+      }
+    ],
+    "private_heartbeat_samples": 38,
+    "private_event_samples": 164,
+    "page_errors": [],
+    "worker_errors": []
+  },
+  "regressions": {
+    "passed_tests": {
+      "tests/hp39-wire.mjs": {
+        "passed": true,
+        "source_sha256": "399fb7cdef58cf28614d0dffe252dcbf0295bd17dadbf9b522672c57f4c9c479"
+      },
+      "tests/kermit.mjs": {
+        "passed": true,
+        "source_sha256": "2ce875f8669158f4749acf2fa1f1b93503c3e7e607b2af4d1d4d294fe5726c00"
+      },
+      "tests/hp39-transfer.mjs": {
+        "passed": true,
+        "source_sha256": "f9c9b6056dd17d7cc3cb7ac7e8e6646926891ec7bb7a74a992496117cc89f44a"
+      },
+      "tests/file-transfer-worker.mjs": {
+        "passed": true,
+        "source_sha256": "08001ae0af75d322b3dafb1cfecc88c4285e70c90679946f79eddf7be9c7f50b"
+      },
+      "tests/file-transfer-controller.mjs": {
+        "passed": true,
+        "source_sha256": "68e9b492c7bbd6faac69ff53a5b5d538c03aedfe023fd5be429d90179662dbe6"
+      },
+      "tests/frontend.mjs": {
+        "passed": true,
+        "source_sha256": "5fc0b7c896b0f5b3daf114eb5adae7e4cb71ba1d68e511c2efeadb6f09459aa9"
+      },
+      "tests/pages.py": {
+        "passed": true,
+        "source_sha256": "16e44dced2a2ce7a5355b93b9dd87a519a91b7f3f7ac5f67d6bdcf0c89d237fe"
+      },
+      "tests/browser-components.py": {
+        "passed": true,
+        "source_sha256": "2d29c6cd5b4f6d319c2a2c450acec06aae778d88b19349e46a2ebad9d8eda350"
+      },
+      "tests/controller.mjs": {
+        "passed": true,
+        "source_sha256": "24b8b85e93361ebebcb022d403f80c1402ca6cd7cee6ab266815ca264a6d63c0"
+      }
+    },
+    "component_report_sha256": "00c9c978d60830561c63feef80a3fdc3bfac6b4569ac13fb0d3d84a8641a765d",
+    "component_scope": "Real React/Mantine UI and file chooser with a Worker double, not original-ROM or HTTP E2E; Wire library-first batch, exact bytes, final ACK advance, visible progress at 320px, cancellation ON recovery, mode persistence and existing Disk ZIP import/download.",
+    "storage_race": {
+      "reproduced": "Deferred write rejection after create changed the new session autoBlocked flag.",
+      "before_fix_report_sha256": "349fd5d3abf0aad04ad7ff65662ac1131f084a38c2a5ee7a2d23eca62802ffdb",
+      "after_fix_report_sha256": "dc3564b6cafd6828bc2d7e5627ddfe97288f29a774065da5c14bfc894f2b969e",
+      "coverage": "Eight deferred success/rejection cases across create, autosave disabled, foreign save and dispose, plus current failure still blocks autosave."
+    },
+    "targeted_test_report_sha256": "2fa9bf8e4b64a4b5a812e7f15d987e9fc1bda0998d70c0f4c7ec088fee75d5e1"
+  },
+  "limits": [
+    "Native Wire upload supports binary B/C/D/H; this stock witness proves B/H, not arbitrary payload execution.",
+    "Wire library-first batch uploads all selected objects, with a separate calculator RECV action for each file; Disk drive retains catalog-based dependency requests.",
+    "Stock Wire SEND begins an HP39BinI negotiation and reverses roles; native Wire download is not implemented.",
+    "Wire cancellation stops host output; press calculator ON if RECV remains active. No unverified remote CAN handshake.",
+    "Reverse stock Disk drive SEND remains slow in this Normal sample.",
+    "HP39gs/HP40gs full-ROM and physical-host USB/serial/Conn3x interoperability are not established.",
+    "No CPU speedup, Unlimited mode, fixed 50 ms packet pause or 1 ms USB fragment gap is adopted."
+  ],
+  "final_normal_disk": {
+    "passed": true,
+    "private_report_sha256": "19acde205482f971a21d6ae251f30e0d8591b1b1b5b0609de15048a11731f422",
+    "tool": "tools/probe-hp39-transfer-timing.py",
+    "tool_sha256": "f8efc209cd2c8e6030d2e6979ac801b5c12d2ac1a7f1b085f378d15b74f8407a",
+    "production_assets": {
+      "orchard.wasm": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+      "calculator.js": "951ad5dd0b5a7e1499281d01491673c228df7cb5b06883dae45cf38c3f8657ed",
+      "worker.js": "73b0c4eec19703194138f726567bc455aadc5fd1208f088a5b85be408eb5a21f",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "file-transfer.js": "1e0af1f5c6a849c1bc749a0e25e790aa3c155fe971e46e6ccd220d26fcaa41bd",
+      "kermit.js": "4539d26c37c91fd4555c85804876d34182038ad176a63a657988699a12748d57",
+      "hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+      "hp39-transfer.js": "a7ec8c0b53041d9365cdf3a64470301a3b060197ec245a774081148b5dc84716",
+      "hp39-archive.js": "d671f01d2333f52f7c3d3cebf699c85ab2e72d56d823da1de1a91ed28c621bb1",
+      "hp39-wire.js": "ac4406698535c384bccb745693c93fe79f77cea2b36b45afb8e927b2798107ea"
+    },
+    "browser_version": "156.0.8078.47",
+    "cold_boot": true,
+    "protocol": "Disk drive, actual production adaptive sender RTO",
+    "archive_sha256": "b7daaf8d3ed935a4dcf83a5190308bd0a47eaccaf04b966b5f1cb6fe06694759",
+    "all_speed_configurations": [
+      1,
+      1
+    ],
+    "timing_window": {
+      "coordinated_quiet_window": true,
+      "other_agent_heavy_tasks_paused": true,
+      "dedicated_physical_host": false,
+      "raw_report_isolated_host": false,
+      "samples": 1,
+      "includes_menu_and_browser_observation_overhead": true
+    },
+    "selected_aplet_to_both_objects_acknowledged_wall_seconds": 49.88742802399793,
+    "complete_object_bytes": 8862,
+    "stock_requested_both_original_objects": true,
+    "progress": {
+      "HPGCC000.000": {
+        "progress_statuses": 98,
+        "intermediate_statuses": 96,
+        "initial_to_first_progress_wall_seconds": 0.3883999999985099,
+        "largest_observed_progress_gap_wall_seconds": 1.3195
+      },
+      "LIB275L.000": {
+        "progress_statuses": 19,
+        "intermediate_statuses": 17,
+        "initial_to_first_progress_wall_seconds": 0.36289999999850986,
+        "largest_observed_progress_gap_wall_seconds": 1.116300000000745
+      }
+    },
+    "progress_visible_with_connections_closed": true,
+    "progress_screenshot_visually_reviewed": true,
+    "aplet_list_shows": "H39 ROM USB",
+    "aplet_list_visually_reviewed": true,
+    "post_transfer_arithmetic": "1+1=2",
+    "arithmetic_visually_reviewed": true,
+    "no_stop": true,
+    "page_errors": [],
+    "worker_errors": [],
+    "screenshot_sha256": {
+      "upload-30s.png": "96be6a713a4fd1421c0415318a678e3d1afbe51077fb920dfb2f30afda67f7e6",
+      "installed-aplet.png": "9545f581435b0092a1842a3fed82dfabe4ab8ff3b952a6b3db57136819bce901",
+      "completed-transfer-ui.png": "5f79ff8684fee930944c8f15e006c6d1e5160fe1a898f3b0058e83c58b30968e",
+      "home-arithmetic.png": "3c4e7c187c6b6bd7a79333fb0509fdff6c66a44b33d3b9bf072a5276e9aa0088"
+    },
+    "stages": [
+      {
+        "name": "open-rom",
+        "elapsed_seconds": 0.5865861880010925,
+        "snapshot": null
+      },
+      {
+        "name": "home-ready",
+        "elapsed_seconds": 11.358600054998533,
+        "snapshot": {
+          "at": 10870.300000000745,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 126105791
+        }
+      },
+      {
+        "name": "request-directory",
+        "elapsed_seconds": 15.076001566998457,
+        "snapshot": {
+          "at": 14572.10000000149,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 170529615
+        }
+      },
+      {
+        "name": "select-aplet",
+        "elapsed_seconds": 19.52762973100107,
+        "snapshot": {
+          "at": 19041.800000000745,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 224166191
+        }
+      },
+      {
+        "name": "objects-acknowledged",
+        "elapsed_seconds": 69.415057754999,
+        "snapshot": {
+          "at": 68917.30000000075,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 822672191
+        }
+      },
+      {
+        "name": "installed-aplet",
+        "elapsed_seconds": 79.7314655980008,
+        "snapshot": {
+          "at": 79239.5,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 946536191
+        }
+      },
+      {
+        "name": "home-arithmetic",
+        "elapsed_seconds": 85.23608555099781,
+        "snapshot": {
+          "at": 84755.80000000075,
+          "loaded": true,
+          "running": true,
+          "stopped": false,
+          "model": 1,
+          "width": 131,
+          "height": 64,
+          "pending": 0,
+          "active": null,
+          "tick": 1011860350
+        }
+      }
+    ],
+    "private_heartbeat_samples": 11,
+    "private_event_samples": 138,
+    "assets_unchanged_during_run": true,
+    "shared_runtime_assets_identical_to_intermediate_wire_witness": {
+      "worker.js": "73b0c4eec19703194138f726567bc455aadc5fd1208f088a5b85be408eb5a21f",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "file-transfer.js": "1e0af1f5c6a849c1bc749a0e25e790aa3c155fe971e46e6ccd220d26fcaa41bd",
+      "kermit.js": "4539d26c37c91fd4555c85804876d34182038ad176a63a657988699a12748d57",
+      "hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+      "hp39-transfer.js": "a7ec8c0b53041d9365cdf3a64470301a3b060197ec245a774081148b5dc84716",
+      "hp39-archive.js": "d671f01d2333f52f7c3d3cebf699c85ab2e72d56d823da1de1a91ed28c621bb1",
+      "hp39-wire.js": "ac4406698535c384bccb745693c93fe79f77cea2b36b45afb8e927b2798107ea"
+    },
+    "scope_note": "Final-build cold Normal Disk drive upload and visual recovery. Wire complete return/download witness remains pinned to 25ceecb4; no final-build reverse or Wire timing is claimed."
+  }
+}
