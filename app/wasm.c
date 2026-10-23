@@ -8,6 +8,8 @@ static uint8_t rom_input[O_FLASH_MAX];
 static uint8_t pixels[131 * 80];
 static uint8_t uart_input[O_QUEUE], uart_output[O_QUEUE];
 static uint32_t snapshot[33];
+static uint32_t buzzer_output[8 + ORCHARD_BUZZER_CAPACITY * 3];
+static uint32_t buzzer_registers[12];
 static bool sd_bound;
 
 EXPORT("create") unsigned web_create(unsigned model) {
@@ -52,6 +54,39 @@ EXPORT("clock_divisor") unsigned web_clock_divisor(void) {
 }
 EXPORT("clock_snapshot") uintptr_t web_clock_snapshot(void) {
     return machine.profile ? (uintptr_t)machine.soc.clock : 0;
+}
+EXPORT("buzzer_enable") unsigned web_buzzer_enable(unsigned enabled) {
+    return enabled > 1 ? ORCHARD_BAD_ARGUMENT : orchard_buzzer_enable(&machine, enabled != 0);
+}
+EXPORT("buzzer_clear") void web_buzzer_clear(void) { orchard_buzzer_clear(&machine); }
+/* Header: count, tick lo/hi, epoch, overflows, level, enabled, timebase Hz.
+ * Records: tick lo/hi, electrical level. This explicit layout is ABI-neutral. */
+EXPORT("buzzer_drain") uintptr_t web_buzzer_drain(void) {
+    if (!machine.profile) return 0;
+    orchard_buzzer_state s;
+    orchard_get_buzzer_state(&machine, &s);
+    buzzer_output[0] = s.queued;
+    buzzer_output[1] = (uint32_t)s.tick; buzzer_output[2] = (uint32_t)(s.tick >> 32);
+    buzzer_output[3] = s.epoch; buzzer_output[4] = s.overflows;
+    buzzer_output[5] = s.level; buzzer_output[6] = s.enabled; buzzer_output[7] = s.timebase_hz;
+    for (unsigned i = 0; i < s.queued; ++i) {
+        orchard_buzzer_edge e;
+        (void)orchard_buzzer_read(&machine, &e, 1);
+        buzzer_output[8 + i * 3] = (uint32_t)e.tick;
+        buzzer_output[9 + i * 3] = (uint32_t)(e.tick >> 32);
+        buzzer_output[10 + i * 3] = e.level;
+    }
+    return (uintptr_t)buzzer_output;
+}
+/* Read-only hardware evidence for private original-ROM audio probes. */
+EXPORT("buzzer_snapshot") uintptr_t web_buzzer_snapshot(void) {
+    if (!machine.profile) return 0;
+    const o_soc *s = &machine.soc;
+    const uint32_t values[] = {s->gpio[4], s->gpio[5], s->tcfg0, s->tcfg1, s->tcon,
+        s->tcntb[2], s->tcmpb[2], s->count[2], s->phase[2], s->clock[3],
+        machine.buzzer.compare, machine.buzzer.pwm_level};
+    o_copy(buzzer_registers, values, sizeof(values));
+    return (uintptr_t)buzzer_registers;
 }
 EXPORT("reset") void web_reset(void) { if (machine.profile) orchard_reset(&machine); }
 EXPORT("snapshot") uintptr_t web_snapshot(void) {

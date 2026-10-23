@@ -63,12 +63,14 @@ void o_soc_tick(orchard_machine *m) {
         if (++s->phase[ch] < divisor) continue;
         s->phase[ch] = 0;
         if (s->count[ch]) --s->count[ch];
+        bool reload = !s->count[ch] && (s->tcon & (1u << (shift + (ch == 4 ? 2u : 3u))));
         if (!s->count[ch]) {
             s->srcpnd |= 1u << (10u + ch);
             unsigned autoreload = shift + (ch == 4 ? 2u : 3u);
             if (s->tcon & (1u << autoreload)) s->count[ch] = s->tcntb[ch];
             else s->tcon &= ~(1u << shift);
         }
+        if (ch == 2) o_buzzer_timer_tick(m, reload);
     }
     if (s->rx.count && (s->uart[0][1] & 3u) == 1u) s->subsrcpnd |= 1u;
     /* S3C2410A 11-11/12/15: non-FIFO TX-empty is a level source when
@@ -97,6 +99,7 @@ static bool timer_register(orchard_machine *m, uint32_t address, uint32_t *value
                 if (*value & (1u << (timer_shift(ch) + 1u))) {
                     s->count[ch] = s->tcntb[ch]; s->phase[ch] = 0;
                 }
+            o_buzzer_timer_write(m);
         } else *value = s->tcon;
         return true;
     } else if (off >= 0x0cu && off <= 0x40u) {

@@ -3,15 +3,17 @@
 [Open calculator](https://maxmixalex.github.io/orchard-emu/emulator/) ·
 [Developer workbench](https://maxmixalex.github.io/orchard-emu/emulator/debug.html)
 
-The user page identifies the three supported complete ROMs automatically. It
+The user page identifies the four supported complete ROMs automatically. It
 shows Open ROM, Pause/Resume, Restart, Save/Restore, Connections and Settings;
 CPU registers, boot presets and implementation counters stay in the workbench.
-The viewport-filling workspace switches between immersive outlined skin and
-traditional LCD/HTML keys in Settings, not a duplicate text keypad. Help is a
+The viewport-filling workspace switches between immersive outlined skin,
+[immersive landscape](landscape.md) and traditional LCD/HTML keys in Settings.
+Landscape places the display-cover piece on the left and keyboard on the right.
+Help is a
 question-button tooltip; confirmations and errors use native modal dialogs.
 
 Settings configure scale, blur/background policies, speed, model-specific
-physical-key sequences and optional localStorage autosave. See
+physical-key sequences, firmware sound/volume and optional IndexedDB autosave. See
 [interaction and clock boundaries](interaction.md) and [sessions](sessions.md).
 Normal is paced to the existing functional timebase; it is not a measured
 ARM920T instruction/clock calibration. Other rates are explicit.
@@ -21,8 +23,19 @@ transfers, and the separate HP39/40 Disk drive file host. Object workflows inclu
 upload, named GET, calculator-initiated SEND/Receive, directory, FINISH and bounded
 upload batches. HP39/40 uses the calculator's APLET RECV/SEND menus: the browser
 serves typed aplets, libraries and catalogs, and offers received files for explicit
-local download. Original HP39g+ USB installation and export are exercised;
-39gs/40gs need their own full-ROM acceptance. See [file transfer](file-transfer.md).
+local download. Original HP39g+ USB installation/export and original HP39gs
+Disk installation/native-reader return are exercised; HP40gs still needs its
+full-ROM acceptance. File selection has no extension filter, recoverable
+batch errors offer Retry/Skip, and the optional **Unlimited during transfers**
+switch restores the user's chosen speed while waiting for the next RECV and
+on completion or interruption. See [file transfer](file-transfer.md).
+
+The HP49g+ [SD dialog](sd-cards.md) prepares files and folders in an unmounted
+FAT16 image, inserts the resulting card and exports its contents. It never
+edits a mounted guest filesystem behind the calculator's cache. Manual and
+automatic saves retain the whole card. [Firmware sound](buzzer.md) follows
+GPIO/Timer2 output and starts after a user gesture; physical pitch calibration
+is still a separate clock-model task.
 
 The Raw data tab retains UART0 and USB packet diagnostics. The USB host reads
 actual guest descriptors. These internal connections do not create an operating
@@ -37,7 +50,7 @@ Build with Python 3, Node.js 22+, Clang and wasm-ld using `npm run build`;
 ZIP needs only Node.js: extract and run `node serve.mjs`. No npm packages or
 ROMs are included. Use HTTP on localhost or HTTPS, not file URLs.
 
-Open the original full NOR. On HP39g+, acknowledge Memory Clear with F6/OK;
+Open the original full NOR. On HP39g+ or HP39gs, acknowledge Memory Clear with F6/OK;
 on HP48gII and HP49g+ first choose F6/NO at Try To Recover Memory, then F6/OK. These are
 guest screens, not host-detected states. Restart clears memory; a saved HOME
 session can be restored instead. Both main thread and Worker bind the image

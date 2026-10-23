@@ -15,6 +15,12 @@ for(const [model,spec] of Object.entries(manifest.models)){
  assert.equal(spec.keys.length,51);assert.deepEqual(new Set(spec.keys.map(k=>k.scan)),new Set(KEYS.keys()));
  assert(spec.glass.every(Number.isFinite));assert(spec.glass[0]>0&&spec.glass[1]>0);
  assert(spec.glass[0]+spec.glass[2]<spec.viewBox[2]);assert(spec.glass[1]+spec.glass[3]<spec.viewBox[3]);
+ assert(Number.isFinite(spec.splitY));assert(spec.splitY>spec.glass[1]+spec.glass[3]);assert(spec.splitY<spec.viewBox[3]);
+ // The cut includes the bottom of the painted bezel, including both upstream
+ // scaling steps on the 48/49/50 shells. Artwork hashes above remain unchanged.
+ const stroke=['hp39gplus','hp39gs','hp40gs','hp48gii'].includes(model)?1.15:1.2;
+ const scale=model.startsWith('hp39')||model==='hp40gs'?1:1.086*.901749664;
+ assert(Math.abs(spec.splitY-(506+stroke/2)*scale)<1e-8);
  for(const k of spec.keys){assert(['path','rect','circle'].includes(k.tag));assert(k.label);assert(!/url|javascript/i.test(k.transform));}
  assert(!/<(?:script|foreignObject|text|image)\b/i.test(data.toString()));
 }

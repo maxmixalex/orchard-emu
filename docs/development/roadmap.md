@@ -24,10 +24,10 @@ Firmware and private calculator data remain outside source, releases and Pages.
 | HP39g+ D1.55 | Unchanged cold boot, HOME/arithmetic, browser controls, USB Disk drive and direct Wire installation, reverse SEND; native ROMstream reads complete 1 MiB and returns to responsive HOME | Explicit board/LCD assumptions; reverse SEND remains slow; wider native-program and sustained-use coverage |
 | HP48gII USB revision | Unchanged cold boot, arithmetic, sessions, USB and UART0 Kermit workflows, two-file browser batches and no-card FILES navigation | Explicit SRAM mirror/LCD assumptions; no physical SD slot; broad keypad/power/long-run checks |
 | HP49g+ | User's full 2 MiB capture, unchanged cold boot, 131×80 display, arithmetic, CAS, graphing, sessions, USB/native ARM workflows, FILES navigation and SD image read/write | Explicit SRAM mirror/LCD conditions; infrared/UART2, SD DMA/SDHC, NOR programming and physical-board calibration remain open |
-| HP39gs | Revised full ROMstream v2 with visible progress and one-launch double reads; original 2.22 OS tested on an explicitly derived boot fixture | Target physical run and its own complete original NOR are pending; fixture is not catalog admission |
+| HP39gs | User's complete 1 MiB capture and its own bootloader, unchanged cold boot, HOME arithmetic, APLET, browser sessions, Disk installation and native ROMstream dump/return/USB reuse | Explicit exact-SRAM/GPIO/ADC/LCD conditions; broader transfer, sound, native-program and sustained-use coverage |
 | HP40gs / HP50g | Model profiles and scoped boot-region/updater research | Complete original NORs and independent stock acceptance |
 
-Details: [HP39 startup](hp39-startup.md), [HP48 startup](startup.md),
+Details: [HP39g+ startup](hp39-startup.md), [HP39gs startup](hp39gs-startup.md), [HP48 startup](startup.md),
 [HP49 startup](hp49-startup.md), [SD cards](sd-cards.md), [file transfer](file-transfer.md),
 [full HP39gs reader](hp39gs-rom-dump.md).
 
@@ -85,19 +85,21 @@ counted LCD `+0x68` idle-zero and packed-memory display assumptions do not close
 
 ## M3 — Genuine stock execution and native return
 
-**Three conditional stock systems; HP39g+ and HP49g+ native-return witnesses.**
-HP39g+, HP48gII and HP49g+ execute their own reset/startup and physical inputs.
+**Four conditional stock systems; HP39g+, HP39gs and HP49g+ native-return witnesses.**
+HP39g+, HP39gs, HP48gII and HP49g+ execute their own reset/startup and physical inputs.
 Their ROMs remain unchanged. HP48gII and HP49g+ use explicitly declared bank-1
-SRAM mirror conditions, retaining fixed physical capacity; HP39g+ uses exact
+SRAM mirror conditions, retaining fixed physical capacity; HP39g+ and HP39gs use exact
 physical SRAM bounds. All retain stated
 GPIO/ADC/LCD conditions.
 
 The original HP39g+ system installs ROMstream through its real USB file client.
 The revised v2 reader reads the full NOR, shows block progress, returns after
 disconnect and leaves HOME able to calculate `1+1=2`. The explicit cable input
-and USB compatibility conditions are part of that witness. A separate HP39gs
-2.22 original-OS fixture also completes this workflow; its derived boot backing
-does not establish physical HP39gs startup or arbitrary native-application support.
+and USB compatibility conditions are part of that witness. The user's complete
+HP39gs 2.22 NOR now independently completes this workflow, including 64 double
+reads matching its original bytes. The earlier derived fixture remains
+historical OS-level evidence, distinct from the newly received native boot area.
+Neither witness establishes arbitrary native-application support.
 
 The independent [HP49g+ native workflow](hp49-native.md) installs the pinned
 SDK ARMToolbox library and example through ordinary stock USB transfers. It
@@ -113,17 +115,17 @@ A recovery menu, guest PASS word or boot-only erased backing is insufficient.
 
 ## M4 — Independent acceptance for all six models
 
-**Three images admitted to the user catalog; six-model gate open.** Each model
+**Four images admitted to the user catalog; six-model gate open.** Each model
 needs its own immutable full-NOR identity, memory bounds, display/keys, reset
 and native return evidence. The HP48gII target is the USB revision.
 
 The user's HP49g+ capture has been received and functionally validated; no repeat
 short probes are requested. Its acquisition metadata remains separate from the
-new execution evidence. The HP39gs next action is the complete
-[ROMstream v2 package](hp39gs-rom-dump.md), with repaired display/USB/mapping
-paths and independent per-block reads in one launch. The earlier return-only package is historical,
-not a mandatory preliminary task. HP39gs target compatibility is still unverified
-until its own hardware capture is received. HP40gs and HP50g acquisition continue
+new execution evidence. The HP39gs image returned by the
+[ROMstream v2 package](hp39gs-rom-dump.md) is also received and validated, with
+its unchanged original bootloader, all 64 block hashes and separate native/WASM
+execution witnesses. No repeat capture or preliminary probe is required.
+HP40gs and HP50g acquisition continue
 independently; padded updaters and foreign bootloaders are not full original NORs.
 
 **Gate:** six independent original-image cold-boot, interaction and ARM-return
@@ -132,9 +134,13 @@ witnesses with accurate model-specific hardware limits.
 ## M5 — Usable browser calculator
 
 **React/Mantine user calculator implemented with bounded browser acceptance.**
-The bilingual UI automatically identifies three supported images, offers normal
+The bilingual UI automatically identifies four supported images, offers normal
 calculator controls, seven separately licensed skins, traditional keys, editable
 physical PC macros, captures, recording, settings and optional local autosave.
+[Immersive landscape](landscape.md) cuts the unchanged skin at the display
+cover and places the screen beside the keyboard. [Firmware sound](buzzer.md)
+observes GPB2/Timer2 edges with gesture-gated Web Audio, mute and volume; the
+original HP49g+ BEEP path is witnessed, with physical pitch/duration still open.
 The separate workbench retains research controls and diagnostics. The 49g+ LCD
 uses its full 131×80 dimensions in both views and capture export.
 
@@ -176,8 +182,18 @@ aliases or object bytes, so the returned bundle can be imported into a fresh
 machine. Direct Wire upload uses the stock D-handshake / CRC-16/KERMIT block
 protocol, validates a whole package first, and uploads its library before the
 aplet. Each object needs a fresh stock RECV selection. This is a faster upload
-path; reverse SEND remains the separate Kermit workflow. HP39gs/40gs still need
-their own complete original-NOR transfer witnesses.
+path; reverse SEND remains the separate Kermit workflow. The original complete
+HP39gs now has its own Disk installation and native-reader return witness;
+HP40gs still needs its complete NOR. Content recognition replaces filename
+extension filtering. Recoverable batch failures expose Retry/Skip without
+resending completed items. Optional transfer-only Unlimited applies during
+active protocol work and restores the user's selected pace at every terminal
+or user-wait state. Init-Info ACK retries are bounded and do not alter guest time.
+
+SD preparation now browses/extracts FAT16 files, creates directories and adds
+files transactionally in an unmounted image. The original HP49g+ reads these
+files and can add its own objects through FILES; the independent filesystem
+checks and remaining 8.3/PIO/media limits are in [SD cards](sd-cards.md).
 
 Remaining work includes remote file management, broader capacity/recovery cases,
 infrared/UART2, UART FIFO/baud timing and a host-OS bridge. The standalone loopback

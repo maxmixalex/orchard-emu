@@ -1,0 +1,442 @@
+{
+  "schema": "orchard-hp39-transfer-r20-v1",
+  "passed": true,
+  "scope": "Original HP39g+ D1.55 cold-boot browser recovery and transfer-only Unlimited; separate fixture coverage is explicitly identified.",
+  "source_report": {
+    "id": "recovery-stock-9",
+    "sha256": "c4a745e694854459a19d77b44ad5931c9af7787cbb41481e7deb71dd9b422410"
+  },
+  "tool": {
+    "file": "tools/probe-hp39-transfer-recovery.py",
+    "sha256": "d9f07c7b2f11ca781fc01500757c934a84f0faa355c56fbe45f2be5f7c2f4025",
+    "options": {
+      "roundtrip": true,
+      "diagnostic_stop": true,
+      "timeout_seconds_per_wait": 100
+    }
+  },
+  "browser_version": "156.0.8078.47",
+  "inputs": {
+    "model": 1,
+    "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+    "archive_sha256": "b7daaf8d3ed935a4dcf83a5190308bd0a47eaccaf04b966b5f1cb6fe06694759",
+    "cold_boot": true,
+    "archive_selected_as": "ORIGINAL_PACKAGE.data",
+    "aplet_reselected_as": "APLET.unlisted-suffix",
+    "aplet_bytes": 7373,
+    "library_bytes": 1489,
+    "original_input_bytes_changed": false
+  },
+  "production_assets": {
+    "orchard.wasm": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+    "calculator.js": "648d8d65d224e6e6f46afb16d9fbfe80bb068f96dc1c5b303b13827c570f8f5a",
+    "worker.js": "e6bd8b75b5486712a5b2b64ba5ee71a052eed218f4d0c8d876edab5db42dce42",
+    "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+    "file-transfer.js": "1e0af1f5c6a849c1bc749a0e25e790aa3c155fe971e46e6ccd220d26fcaa41bd",
+    "kermit.js": "ca158a32e2d5ec94c74e9393482fe6e65a3ce649a7992ae65762a95793ac7352",
+    "hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+    "hp39-transfer.js": "c5c5a037255e1291a7b1584305e1c6b7e3624f6f8a185ede50813320fbc4877b",
+    "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+    "hp39-wire.js": "21b7151da97eeef57634742e9365d7fb682c57f46ffaee09e0e488ae4ec77299",
+    "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+    "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e"
+  },
+  "asset_scope": "These are the 12 relevant runtime inputs captured by the probe, not a complete release manifest.",
+  "instrumentation": {
+    "passive_main_thread_worker_observer": true,
+    "conditional_stop_diagnostic_worker": true,
+    "diagnostic_worker_sha256": "691b9b0e965c609b22c0814036490dca31db33ad05ae96a2dc399bff2fa3edea",
+    "description": "The Worker snapshot already reads the core state. The diagnostic copy adds that state and reason to its message only if stopped. It adds no core read or run call. No stop occurred in the successful run.",
+    "guest_state_patched": false,
+    "protocol_bytes_injected": false,
+    "extra_core_execution": false
+  },
+  "subsequent_ui_change": "The final bilingual help additionally says to wait for the receive screen to close after ON. The original-ROM witness retains calculator.js 648d8d65…; it is not relabeled as a run of the later text bundle.",
+  "speed": {
+    "user_selected_speed": 1,
+    "all_observed_user_configurations_remained_at_speed_1": true,
+    "option_initially_enabled": false,
+    "option_enabled_after_first_real_can": true,
+    "first_interruption_sending_speed": 1,
+    "retry_and_next_aplet_sending_speed": 0,
+    "waiting_and_terminal_speed": 1,
+    "final_boosted": false,
+    "restored": true,
+    "normal_cpu_and_clock_unchanged": true
+  },
+  "wire_requests": [
+    {
+      "request": 4,
+      "name": "LIB275L.000",
+      "bytes": 1489,
+      "transitions": [
+        {
+          "phase": "negotiating",
+          "effectiveSpeed": 1,
+          "transferBoosted": false
+        },
+        {
+          "phase": "sending",
+          "effectiveSpeed": 1,
+          "transferBoosted": false
+        },
+        {
+          "phase": "error",
+          "effectiveSpeed": 1,
+          "transferBoosted": false
+        }
+      ],
+      "terminal_acknowledged_bytes": 0
+    },
+    {
+      "request": 7,
+      "name": "LIB275L.000",
+      "bytes": 1489,
+      "transitions": [
+        {
+          "phase": "negotiating",
+          "effectiveSpeed": 1,
+          "transferBoosted": false
+        },
+        {
+          "phase": "sending",
+          "effectiveSpeed": 0,
+          "transferBoosted": true
+        },
+        {
+          "phase": "complete",
+          "effectiveSpeed": 1,
+          "transferBoosted": false
+        }
+      ],
+      "terminal_acknowledged_bytes": 1489
+    },
+    {
+      "request": 8,
+      "name": "HPGCC000.000",
+      "bytes": 7373,
+      "transitions": [
+        {
+          "phase": "negotiating",
+          "effectiveSpeed": 1,
+          "transferBoosted": false
+        },
+        {
+          "phase": "sending",
+          "effectiveSpeed": 0,
+          "transferBoosted": true
+        },
+        {
+          "phase": "error",
+          "effectiveSpeed": 1,
+          "transferBoosted": false
+        }
+      ],
+      "terminal_acknowledged_bytes": 0
+    },
+    {
+      "request": 11,
+      "name": "APLET.unlisted-suffix",
+      "bytes": 7373,
+      "transitions": [
+        {
+          "phase": "negotiating",
+          "effectiveSpeed": 1,
+          "transferBoosted": false
+        },
+        {
+          "phase": "sending",
+          "effectiveSpeed": 0,
+          "transferBoosted": true
+        },
+        {
+          "phase": "complete",
+          "effectiveSpeed": 1,
+          "transferBoosted": false
+        }
+      ],
+      "terminal_acknowledged_bytes": 7373
+    },
+    {
+      "request": 13,
+      "name": "APLET.unlisted-suffix",
+      "bytes": 7373,
+      "transitions": [
+        {
+          "phase": "negotiating",
+          "effectiveSpeed": 1,
+          "transferBoosted": false
+        },
+        {
+          "phase": "cancelled",
+          "effectiveSpeed": 1,
+          "transferBoosted": false
+        }
+      ],
+      "terminal_acknowledged_bytes": 0
+    }
+  ],
+  "results": {
+    "real_remote_can_errors": 2,
+    "successful_library_completions": 1,
+    "successful_library_not_resent": true,
+    "failed_aplet_skipped": true,
+    "new_selection_after_error_succeeded": true,
+    "ui_cancel_while_waiting_succeeded": true,
+    "received_files": 3,
+    "aplet_file_equal": true,
+    "library_body_bytes": 1468,
+    "library_body_equal": true,
+    "library_alias": "LIB275L",
+    "library_alias_preserved": true,
+    "installed_aplet_list_visually_checked": true,
+    "home_1_plus_1_equals_2_visually_checked": true,
+    "page_errors": 0,
+    "worker_errors": 0,
+    "core_stopped": false
+  },
+  "returned_files": {
+    "H39ROMUS.000": {
+      "bytes": 7373,
+      "sha256": "3669fb2c2ae1f755bd542c8373a469d49165f2769affdce5435e649010c62455"
+    },
+    "LIB275L0.000": {
+      "bytes": 1484,
+      "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f"
+    },
+    "HP39DIR.000": {
+      "bytes": 66,
+      "sha256": "ed6f8a343736666c2c8deaa8efa4b16860482511520034efef3086156691a1f3"
+    }
+  },
+  "stages": [
+    {
+      "name": "open-rom",
+      "elapsed_seconds": 0.6673563629992714
+    },
+    {
+      "name": "cold-home",
+      "elapsed_seconds": 11.332702466999763,
+      "effective_speed": 1,
+      "transfer_boosted": false,
+      "running": true,
+      "stopped": false
+    },
+    {
+      "name": "receive-wire-menu",
+      "elapsed_seconds": 14.897305996997602,
+      "effective_speed": 1,
+      "transfer_boosted": false,
+      "running": true,
+      "stopped": false
+    },
+    {
+      "name": "library-waiting-normal",
+      "elapsed_seconds": 15.540769960000034,
+      "effective_speed": 1,
+      "transfer_boosted": false,
+      "running": true,
+      "stopped": false
+    },
+    {
+      "name": "library-interrupted",
+      "elapsed_seconds": 16.15899684499891,
+      "effective_speed": 1,
+      "transfer_boosted": false,
+      "running": true,
+      "stopped": false
+    },
+    {
+      "name": "library-retry-complete",
+      "elapsed_seconds": 21.79597969599854,
+      "effective_speed": 1,
+      "transfer_boosted": false,
+      "running": true,
+      "stopped": false
+    },
+    {
+      "name": "aplet-interrupted",
+      "elapsed_seconds": 24.559631022999383,
+      "effective_speed": 1,
+      "transfer_boosted": false,
+      "running": true,
+      "stopped": false
+    },
+    {
+      "name": "aplet-skipped",
+      "elapsed_seconds": 25.03034984199985,
+      "effective_speed": 1,
+      "transfer_boosted": false,
+      "running": true,
+      "stopped": false
+    },
+    {
+      "name": "renamed-aplet-complete",
+      "elapsed_seconds": 33.3753466149974,
+      "effective_speed": 1,
+      "transfer_boosted": false,
+      "running": true,
+      "stopped": false
+    },
+    {
+      "name": "cancel-restored",
+      "elapsed_seconds": 33.66239276499982,
+      "effective_speed": 1,
+      "transfer_boosted": false,
+      "running": true,
+      "stopped": false
+    },
+    {
+      "name": "stock-send",
+      "elapsed_seconds": 33.71443002199885,
+      "effective_speed": 1,
+      "transfer_boosted": false,
+      "running": true,
+      "stopped": false
+    },
+    {
+      "name": "roundtrip-equal",
+      "elapsed_seconds": 128.19304774899865,
+      "effective_speed": 1,
+      "transfer_boosted": false,
+      "running": true,
+      "stopped": false
+    },
+    {
+      "name": "home-arithmetic",
+      "elapsed_seconds": 132.8177917569992,
+      "effective_speed": 1,
+      "transfer_boosted": false,
+      "running": true,
+      "stopped": false
+    }
+  ],
+  "elapsed_seconds": 132.8630539149999,
+  "timing_scope": "Functional observation with explicit menu/input waits, not an isolated throughput or performance comparison. The original r19 Normal timing evidence is unchanged.",
+  "prior_attempts_retained": [
+    {
+      "id": "recovery-stock-1",
+      "passed": false,
+      "report_sha256": "f51f3dffcb351d23b475e1bc85f7e0dbcac5fb9eadd0f6dbbf339b0f2566151d",
+      "classification": "harness_locator",
+      "result": "Exact accessible-label matching omitted the Mantine description; no transfer was attempted."
+    },
+    {
+      "id": "recovery-stock-2",
+      "passed": false,
+      "report_sha256": "879d42c0d0c9097e07c11e7ac4924f9557a4c6fcef511285fd6cf47348cadf0a",
+      "classification": "harness_interruption_timing",
+      "result": "ON was sent before the original ROM entered data sending; the library completed instead of producing the expected interruption."
+    },
+    {
+      "id": "recovery-stock-3",
+      "passed": false,
+      "report_sha256": "9fe23c1fbdae74aa416c7ceebbd7ea173cda5b69cce1e6fe24093e14be5010a9",
+      "classification": "usb_mode_precondition",
+      "result": "USB enumeration timed out before the receiver menu was confirmed; this attempt did not establish a working connection."
+    },
+    {
+      "id": "recovery-stock-4",
+      "passed": false,
+      "report_sha256": "1eb315a86f111db6c6d7f537c606eefce22686774ee8ed2aed4138e073a7a853",
+      "classification": "harness_interruption_timing",
+      "result": "ON was sent before data sending; the library completed. The intended error case was not exercised."
+    },
+    {
+      "id": "recovery-stock-5",
+      "passed": false,
+      "report_sha256": "ce2d80c095e48ba563459f9bb14193431f957e87569060ce4983a50f0e68074e",
+      "classification": "harness_interruption_timing",
+      "result": "Passive key/status observation confirmed ON preceded sending; the library completed."
+    },
+    {
+      "id": "recovery-stock-6",
+      "passed": false,
+      "report_sha256": "1d6d34f43d28da79edf6f18b98cf9e9fad59694dc871a45996d040ca51b2d147",
+      "classification": "reproduced_product_bug",
+      "result": "A real ON interruption produced CAN. Retrying before a new receiver handshake then immediately consumed stale CAN and failed again."
+    },
+    {
+      "id": "recovery-stock-7",
+      "passed": false,
+      "report_sha256": "a5fba3c0b741aa43a4784207e745b5b2f60a39a51c7f24d2528cbdb052c685a6",
+      "classification": "wrong_guest_mode",
+      "result": "After the sender fix, the tightly queued recovery-menu sequence reached a diagnostic stop before the expected retry completed; this was not accepted as a successful Wire run."
+    },
+    {
+      "id": "recovery-stock-8",
+      "passed": false,
+      "report_sha256": "617106ce1144a55e4b641153eac35a36844342598a0a7eb081172d6682e01805",
+      "classification": "diagnosed_irda_boundary",
+      "result": "Saved stopped state confirmed the stock IrDA initialization path reading unsupported UART2 URXH. The later successful run waits for ON/receive exit and observes each menu transition; no core change was made."
+    },
+    {
+      "id": "recovery-stock-9",
+      "passed": true,
+      "report_sha256": "c4a745e694854459a19d77b44ad5931c9af7787cbb41481e7deb71dd9b422410",
+      "classification": "passed",
+      "result": "Cold-boot original-ROM browser recovery, reverse file equality and HOME arithmetic completed."
+    }
+  ],
+  "independent_stop_review": {
+    "sha256": "9f47f3747bf8a49fd0bcba7f4cc9c92ee81551be882a5376540ee4d364c6e70a",
+    "finding": "The failed recovery-menu run reached the existing unsupported IrDA/UART2 receive path, not a USB FIFO stop. The exact missed key is not established. The corrected observed menu sequence completed with the same WASM.",
+    "core_changed_for_this_diagnosis": false
+  },
+  "fixture_regressions": [
+    {
+      "file": "tests/hp39-wire.mjs",
+      "passed": true,
+      "scope": "D/C/NAK handshakes; stale CAN/ACK/EOT before a fresh handshake; CAN after the handshake; fixed initial deadline; fragmented real USB adapter tail; bounded blocks and EOT ACK."
+    },
+    {
+      "file": "tests/hp39-transfer.mjs",
+      "passed": true,
+      "scope": "Per-file retry/skip/reselection and exact retained bytes; completed objects are not resent; stale requests; local read/format errors; bounded initial-ACK retries and shared remaining server budget."
+    },
+    {
+      "file": "tests/hp39-archive.mjs",
+      "passed": true,
+      "scope": "ZIP content signature rather than suffix; arbitrary-suffix typed objects; catalog preservation; malformed/oversized/CRC-invalid archives still fail."
+    },
+    {
+      "file": "tests/file-transfer-controller.mjs",
+      "passed": true,
+      "scope": "Actual controller request isolation, retained payload and recovery after synchronous Worker postMessage failure."
+    },
+    {
+      "file": "tests/file-transfer-worker.mjs",
+      "passed": true,
+      "scope": "Actual Worker code with mocked core/link: data-only Unlimited, waiting and inter-file restoration, complete/error/cancel/pause/reset/create/disconnect, user speed change, option disabled during transfer and stale-event isolation."
+    },
+    {
+      "file": "tests/controller.mjs",
+      "passed": true,
+      "scope": "Controller lifecycle, queue/session and audio lifecycle regressions."
+    },
+    {
+      "file": "tests/frontend.mjs",
+      "passed": true,
+      "scope": "English/Chinese translation key and interpolation parity, including the final ON/wait wording."
+    }
+  ],
+  "component_regression": {
+    "file": "tests/browser-components.py",
+    "passed": true,
+    "log_sha256": "9997eea3b97bc500f1177940b72b245c2bc16b4577b45095b6432101374f7c7c",
+    "scope": "Offline real React/Mantine components with controller fixtures: arbitrary suffixes; per-file retry/skip without resending completed objects; optional Unlimited switch; model-specific Wire/USB/Ser hints. This is not an original-ROM/Worker browser flow."
+  },
+  "separate_model_evidence": {
+    "file": "hp39gs-startup-r20.json",
+    "scope": "Independent complete HP39gs NOR, USB Disk install and native lifecycle; USB direct upload and stock Disk SEND round trip are recorded separately."
+  },
+  "limits": [
+    "The actual HP39g+ interruption cases occur after sending starts and before any payload block is acknowledged; later-block interruption and failure families are covered by protocol/queue fixtures, not every original-ROM UI variant.",
+    "The actual UI cancel in this run occurs while waiting for RECV. Cancellation while boosted, pause/reset/model-change restoration and speed changes during transmission are separate Worker fixtures.",
+    "Wire requires a fresh matching calculator RECV for each object or retry. After ON, wait for the receive screen to close before issuing further menu keys.",
+    "File selection has no suffix filter but still enforces typed content, size, catalog dependency and archive integrity rules. Skipping a library does not install its dependency.",
+    "Wire download and remote CAN cancellation are not implemented. Reverse transfer uses stock Disk SEND, which remains slower and bounded by the shared 15-minute guest-time server budget.",
+    "No HP39gs serial, HP40gs, physical calculator, external Conn3x or OS-visible USB-device result is inferred from this HP39g+ emulated-USB witness.",
+    "No ROM, sidecar, checkpoint, screenshot or returned object bytes are included in this public record."
+  ]
+}

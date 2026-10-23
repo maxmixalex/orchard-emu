@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Private original-ROM witness. Files are created through the original Filer,
-// not by writing guest RAM or by placing a prebuilt calculator object on SD.
+// not by writing guest RAM. An optional prepared image additionally verifies
+// host-created files/directories against the unchanged stock Filer.
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve} from 'node:path';
@@ -10,17 +11,18 @@ import {HP48_ROM,HP49_ROM,applySetup} from '../web/hp48.js';
 import {createSDImage,readSDState} from '../web/sd-card.js';
 import {readFirmware,sha256} from './rom-inputs.mjs';
 
-const usage='Usage: node tools/verify-sd-workflows.mjs HP49-FULL-NOR HP48-FULL-NOR NEW-PRIVATE-OUTPUT-DIRECTORY';
+const usage='Usage: node tools/verify-sd-workflows.mjs HP49-FULL-NOR HP48-FULL-NOR NEW-PRIVATE-OUTPUT-DIRECTORY [PREPARED-CARD.img]';
 if(process.argv.length===3&&process.argv[2]==='--help'){
   console.log(usage+'\nBuild production WASM and orchard-checkpoint-replay first. No firmware is fetched.\nCold boots the admitted 49g+/48gII ROMs, exercises physical FILES navigation, copies\n42 to SD through Filer, checks the exported FAT16 file, restores an in-flight card\nwrite on native/WASM, and recalls the exported image in a fresh cold boot.\nOutput includes private ROM/checkpoint/LCD/card artifacts; do not publish them.');
   process.exit(0);
 }
-if(process.argv.length!==5)throw Error(usage);
+if(![5,6].includes(process.argv.length))throw Error(usage);
 const root=fileURLToPath(new URL('../',import.meta.url)),output=resolve(process.argv[4]);
 const [rom49,rom48,wasm]=await Promise.all([
   readFirmware(resolve(process.argv[2])),readFirmware(resolve(process.argv[3])),readFile(resolve(root,'dist/orchard.wasm')),
 ]);
 assert.equal(sha256(rom49),HP49_ROM);assert.equal(sha256(rom48),HP48_ROM);
+const prepared=process.argv[5]?new Uint8Array(await readFile(resolve(process.argv[5]))):null;
 await mkdir(output); // Never overwrite an earlier failed or successful witness.
 const native=resolve(root,process.env.ORCHARD_BUILD_DIR||'build',process.platform==='win32'?'orchard-checkpoint-replay.exe':'orchard-checkpoint-replay');
 const report={schema:'orchard-sd-stock-workflows-v1',wasm_sha256:sha256(wasm),
@@ -29,6 +31,8 @@ const report={schema:'orchard-sd-stock-workflows-v1',wasm_sha256:sha256(wasm),
   physical_input_only:true,guest_memory_patched:false,card_image_bytes:16777216,
   sram_decode:'explicit nGCS1 low-address mirror; physical capacity unchanged',
   canonical_hardware_boot:false,stages:[],keys:[],passed:false};
+if(prepared)report.prepared_image={sha256:sha256(prepared),bytes:prepared.length,
+  expected_root_file:'ANSWER',expected_directory:'PROGRAMS',expected_nested_file:'NESTED'};
 const alphabet=[35,36,37,38,39,40,41,46,47,48,49,50,28,21,14,7,29,22,15,8,1,30,23,16,9,2];
 async function emulator(label,model,rom){
   const {instance:{exports:c}}=await WebAssembly.instantiate(wasm,{});
@@ -101,7 +105,8 @@ try{
   const noCard=a.checkpoint();await strictBoundaryWitness(noCard);
   a.tap(42);a.run(5000000);assert.notEqual(await a.picture('hp49-files-no-card-up'),tree);
   a.tap(56);a.run(5000000);assert.equal(await a.picture('hp49-files-no-card-return'),home);
-  a.insert(createSDImage());a.tap(58);a.tap(41);a.run(20000000);await a.picture('hp49-files-with-card');
+  if(prepared)assert.equal(Buffer.from(fileFromFAT16(prepared,'ANSWER')).toString('hex'),'4850485034392d5814268000004200');
+  a.insert(prepared||createSDImage());a.tap(58);a.tap(41);a.run(20000000);await a.picture('hp49-files-with-card');
   assert(readSDState(a.c).readBlocks>0);a.tap(56);a.run(5000000);
   // ALG HOME: 42 -> TEST, then ordinary File Manager COPY to port 3.
   for(const key of [25,19,49])a.tap(key);a.type('TEST');a.tap(6);a.run(10000000);await a.picture('hp49-created-test-42');
@@ -114,6 +119,7 @@ try{
   a.tap(40);a.run(15000000);a.setObserver(null);await a.picture('hp49-copy-complete');
   assert(partial,'No in-flight sector write captured');assert(readSDState(a.c).writtenBlocks>writesBefore);await crossHost(partial);
   const exported=a.card(),file=fileFromFAT16(exported,'TEST');
+  if(prepared)assert.deepEqual(fileFromFAT16(exported,'ANSWER'),fileFromFAT16(prepared,'ANSWER'),'Guest write changed the prepared root file');
   // This is the stock ROM's exact-integer 42 object, including its transfer header.
   assert.equal(Buffer.from(file).toString('hex'),'4850485034392d5814268000004200');
   await writeFile(resolve(output,'exported-sd.img'),exported,{flag:'wx'});
@@ -121,15 +127,30 @@ try{
     filesystem:'FAT16',fat_copies_equal:true,writes_before_copy:writesBefore,writes_after_copy:readSDState(a.c).writtenBlocks};
   a.tap(40);a.run(5000000);a.tap(42);a.run(5000000);
   const readsBeforeEntry=readSDState(a.c).readBlocks;a.tap(40);a.run(20000000);
-  assert(readSDState(a.c).readBlocks>readsBeforeEntry,'Filer has not entered the SD directory');await a.picture('hp49-sd-test-selected');
+  assert(readSDState(a.c).readBlocks>readsBeforeEntry,'Filer has not entered the SD directory');
+  if(prepared)a.tap(44); // Stock Filer sorts PROGRAMS before the first regular file ANSWER.
+  await a.picture(prepared?'hp49-sd-answer-selected':'hp49-sd-test-selected');
   const readsBefore=readSDState(a.c).readBlocks;a.tap(38);a.run(10000000);a.tap(56);a.run(5000000);
   await a.picture('hp49-sd-recalled-42');assert(readSDState(a.c).readBlocks>readsBefore);
   // A genuinely fresh calculator has no HOME TEST variable or old card cache.
   const fresh=active=await emulator('hp49-fresh',5,rom49);await fresh.cold();fresh.insert(exported);
   fresh.tap(58);fresh.tap(41);fresh.run(20000000);fresh.tap(42);fresh.tap(40);fresh.run(15000000);
-  await fresh.picture('hp49-fresh-sd-test');fresh.tap(38);fresh.run(10000000);fresh.tap(56);fresh.run(5000000);
-  await fresh.picture('hp49-fresh-recalled-42');assert(readSDState(fresh.c).readBlocks>0);
+  if(prepared)fresh.tap(44);
+  await fresh.picture(prepared?'hp49-fresh-sd-answer':'hp49-fresh-sd-test');fresh.tap(38);fresh.run(10000000);fresh.tap(56);fresh.run(5000000);
+  const recalled=await fresh.picture('hp49-fresh-recalled-42');assert(readSDState(fresh.c).readBlocks>0);
+  assert.equal(recalled,'e01013055e51a5d9a50820786b7ba3eb821eb74dfc614949dda98a4d22dc5b97','Fresh original-ROM HOME must display the independently reviewed integer 42');
   assert.equal(Buffer.compare(fileFromFAT16(fresh.card(),'TEST'),file),0);report.fresh_card_reimport=true;
+  if(prepared){
+    const nested=active=await emulator('hp49-nested',5,rom49);await nested.cold();nested.insert(exported);
+    nested.tap(58);nested.tap(41);nested.run(20000000);nested.tap(42);nested.tap(40);nested.run(15000000);
+    nested.tap(45);nested.run(15000000);await nested.picture('hp49-prepared-nested-directory'); // RIGHT enters PROGRAMS; F6 is TREE and EVAL evaluates a name.
+    const reads=readSDState(nested.c).readBlocks;nested.tap(38);nested.run(10000000);nested.tap(56);nested.run(5000000);
+    const nestedRecalled=await nested.picture('hp49-prepared-nested-recalled-42');
+    assert.equal(nestedRecalled,recalled,'Prepared nested file did not recall the same 42 on a fresh machine');
+    assert(readSDState(nested.c).readBlocks>reads);
+    report.prepared_image={...report.prepared_image,root_recalled:true,nested_recalled:true,
+      guest_created_test:true,prepared_root_preserved:true};
+  }
   const h=active=await emulator('hp48',4,rom48),hHome=await h.cold();
   assert.equal(h.c.profile(4,4),0);assert.equal(h.c.sd_buffer(16777216),0);assert.notEqual(h.c.sd_insert(16777216,0),0);
   h.tap(58);h.tap(41);h.run(20000000);const hTree=await h.picture('hp48-files');

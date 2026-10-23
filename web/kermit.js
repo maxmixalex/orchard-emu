@@ -332,7 +332,7 @@ export class KermitSession {
   poll(now) {
     this.now=now;
     try {
-      if (this.active && now>=this.end) throw new Error('File transfer exceeded its five-minute virtual-time limit.');
+      if (this.active && now>=this.end) throw new Error('File transfer exceeded its virtual-time limit.');
       if (this.active && now>=this.deadline) this.retry();
       // At most one bounded write per poll; the transport may accept a prefix.
       const q=this.queue[0];

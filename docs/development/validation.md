@@ -1,6 +1,76 @@
 # Validation
 
-## r19 FILES, SD media, transfer and reader fixes (2026-10-23)
+## r20 original HP39gs, transfer recovery, sound and SD files (2026-10-23)
+
+The [r20 release record](evidence/release-validation-r20.json) identifies all
+**42 production assets**, source identities and local gates. The production
+WASM is **123,871 bytes**, SHA-256
+`1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7`.
+The CPU execution policy, Normal pacing and physical-key dwell remain unchanged.
+The optional transfer setting temporarily removes host pacing during an active
+transaction; it is not a new CPU optimization or physical-clock calibration.
+
+### Original ROM and device workflows
+
+| Workflow | Result and evidence |
+| --- | --- |
+| Original HP39gs admission | The user's complete 1 MiB NOR and all 64 capture-block records agree. Its native 16 KiB bootloader cold-boots without replacing any ROM bytes. Two native and two WASM runs agree through HOME, arithmetic and APLET; full checkpoint continuation also agrees. [Identity, setup and results](evidence/hp39gs-startup-r20.json). |
+| HP39gs production browser | Actual Worker execution displays `1+1=2` and `7*8=56`, exports and restores a session exactly, and returns from APLET in the new landscape view. Both arithmetic screens were visually reviewed. Its tested bundle identity is recorded separately from the final recovery-help text update. |
+| HP39gs direct USB and reverse SEND | Stock RECV → `HP39/40 (USB)` accepts the 1,489-byte library and 10,344-byte V2 aplet. Stock SEND returns the exact aplet and library object body. The roughly 405.4 guest-second reverse leg now completes within the existing 900-second service budget; its old 300-second child limit had stopped at 8,381 bytes despite continued progress. This is not a wall-clock performance measurement. |
+| Original HP39gs full reader | Fresh stock Disk-drive installation, START/ENTER, all 64 blocks read twice, FINISH and unplug return to HOME for `1+1=2`. The captured 1 MiB equals the original input. A separate direct-USB run also verifies the reader's E03 cable-loss screen, ON confirmation and HOME return. |
+| HP39g+ batch recovery | Real ON/CAN during a library transfer → Retry → completion; a later aplet cancellation → Skip; arbitrary-suffix reselection → completion; waiting cancellation; stock SEND byte/body/alias comparison and HOME `1+1=2` all pass. Successful items are not resent. Each terminal state restores the chosen speed. [Transfer evidence](evidence/hp39-transfer-r20.json). |
+| SD files in HP49g+ | Browser-prepared root ANSWER and PROGRAMS/NESTED both recall as 42 in fresh original-ROM boots. Stock FILES adds TEST without changing those existing objects. Independent FAT tools accept the exported image. A checkpoint with 92 bytes of a sector staged includes the whole card; native and WASM continue identically. [SD evidence](evidence/sd-files-r20.json). |
+| HP48gII FILES | Its original full NOR cold-boots, navigates FILES and returns to HOME. It has no SD slot and rejects card insertion. HP50g controller tests do not establish original-ROM support. |
+| Firmware sound | Original HP49g+ `440 .2 BEEP` drives real Timer2/GPB2 transitions and consumes its arguments. Chromium schedules nonzero PCM and stops playback on pause. Current functional output is about 282.486 Hz over 0.30972 seconds; accurate physical pitch and duration remain open. [Buzzer evidence](evidence/buzzer-r20.json). |
+
+The old HP39gs derived fixture remains a historical OS-execution witness. Its
+995,328-byte OS region is identical to the original capture, but the generic
+bootloader and constructed tail are different. It was not a captured physical
+39gs NOR. The r20 catalog accepts only the full original hash, not that fixture.
+The original capture JSON is left unchanged; the independent startup and
+execution conclusions are recorded separately.
+
+### Regression and independent checks
+
+Release, retained-reference and ASan/UBSan each pass **17/17 suites**. Native
+and WASM each pass **1,155,851 default core assertions** plus **32,949 clock
+assertions**: **1,188,800 per host**, including 4,261 buzzer checks. The extra
+217,824 quarantined physical-read WASM checks are outside that total. Independent
+Unicorn comparison passes **17,075 cases**, zero mismatches and zero skips.
+Clang static analysis covers **43 C files** with zero diagnostics.
+
+The FAT16 editor passes 129 parsing/mutation/rejection checks, 27 controller
+ownership and cancellation checks, and ten actual Chromium workflows. The
+draft editor validates chains and both FAT copies before mutation, preserves
+the complete draft on failure, and cannot edit a mounted card. Independent
+`fsck.fat` and mtools checks cover prepared and stock-written images.
+
+The [frontend record](evidence/frontend-validation-r20.json) covers component,
+IndexedDB, audio, production Worker, ordinary stop recovery and diagnostic trace
+checks. Landscape geometry and input cover four admitted models, four viewports
+and 50/100/180% zoom. These synthetic fixtures are not original-ROM acceptance.
+A diagnostic-only regression now recognizes exactly four host audio observers;
+an unknown mutation still invalidates the trace. Actual GPIO audio drain/clear
+and replay leave complete guest checkpoints unchanged. An independent randomized
+probe also compares 542 complete checkpoints across 20,000 operations.
+
+Protocol, tools, package provenance, session, recording, host bridge and Pages
+contracts pass. Pinned Zensical 0.0.67 renders all 46 documentation pages in
+strict mode with zero issues; local Pages assembly verifies all 42 assets.
+The V2 reader archive was rebuilt from pinned source: only its
+README, verification manifest, builder and checksums changed; calculator and
+Windows receiver binaries remain byte-identical to r19 V2. The 49g+ capture
+archive refresh similarly changes only its ROM identity helper and metadata.
+
+Remaining limits include physical clock/audio calibration, UART2/IrDA,
+SDHC/SDXC/DMA, FAT long-name creation/rename/delete, and original full-ROM
+acceptance for HP40gs/HP50g. Reverse HP39 Kermit transfer remains slow.
+The release record distinguishes harness/environment failures from product
+fixes. ROMs, capture sidecars, checkpoints, card images and stock-OS pixels are
+excluded from publication. GitHub Build, merge, Pages and live-asset verification
+are separate per-revision results recorded in the release PR.
+
+## Historical r19 FILES, SD media, transfer and reader fixes (2026-10-23)
 
 The [r19 release record](evidence/release-validation-r19.json) pins all **39
 production assets** and the fresh checks below. The final production WASM is

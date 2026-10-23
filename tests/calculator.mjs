@@ -10,7 +10,7 @@ assert(html.includes('calculator.js'));assert(html.includes('id="root"'));
 assert((await read('calculator.js')).includes('debug.html'));
 assert(debug.includes('CPU registers')&&debug.includes('Boot setup')&&debug.includes('main.js'));
 assert(!html.includes('main.js'));
-assert.deepEqual(CALCULATORS.map(c=>c.id),[1,4,5]);
+assert.deepEqual(CALCULATORS.map(c=>c.id),[1,2,4,5]);
 assert(CALCULATORS.every(c=>c.hash.length===64 && c.name && c.help));
 for(const b of [null,new ArrayBuffer(8),new ArrayBuffer(1048576)])await assert.rejects(identifyROM(b));
 const w=new Worker(new URL('./web-worker-node.mjs',import.meta.url));

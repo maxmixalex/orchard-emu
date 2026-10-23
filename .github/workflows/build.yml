@@ -110,6 +110,9 @@ jobs:
           build/browser-venv/bin/pip install -r tools/requirements-browser.txt
           build/browser-venv/bin/python tests/browser-components.py
           build/browser-venv/bin/python tests/sd-storage-browser.py
+          build/browser-venv/bin/python tests/browser-landscape.py
+          build/browser-venv/bin/python tests/buzzer-browser.py
+          build/browser-venv/bin/python tests/browser-sd-files.py
           build/browser-venv/bin/python tests/browser-worker.py
           build/browser-venv/bin/python tests/browser-stop-recovery.py
           build/browser-venv/bin/python tests/browser-stop-recovery.py --diagnostic-trace
@@ -130,6 +133,11 @@ jobs:
             build/ui-traditional-zh.png
             build/ui-files-zh.png
             build/test-capture.png
+            build/landscape/
+            build/buzzer-browser.json
+            build-r20/sd-files/browser-result.json
+            build-r20/sd-files/browser-mobile.png
+            build-r20/sd-files/browser-mobile-zh.png
           retention-days: 7
           if-no-files-found: warn
       - name: Test and package loopback host

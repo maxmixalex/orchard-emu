@@ -19,7 +19,11 @@ firmware strings are not translated as application UI.
 The traditional keypad now includes Shift, right-Shift where applicable and
 Alpha legends derived from the pinned artwork's resolved design metadata.
 The outlined SVGs remain unchanged and carry separate Apache-2.0 attribution.
-The immersive view does not display a duplicate HTML keypad.
+The immersive views do not display a duplicate HTML keypad. The new
+[landscape appearance](landscape.md) clips the original skin into screen and
+keyboard pieces, preserving one live canvas and one set of physical hotspots.
+Settings also controls [firmware sound](buzzer.md) and volume; global gesture
+listeners unlock Web Audio and have matching unmount cleanup.
 
 The mapping editor displays a clickable PC keyboard through
 react-simple-keyboard. It selects physical `KeyboardEvent.code` names rather
@@ -54,6 +58,9 @@ Selected ROM bytes are never sent to a network service or saved to storage.
 The [SD card dialog](sd-cards.md) creates/imports/exports/ejects a card image
 for the supported HP49g+ system, with write protection and guest block counters.
 Both manual and automatic sessions retain its entire contents.
+Its file-preparation mode operates on a separate unmounted image with explicit
+8.3 destination names. Filesystem edits return a new image only after the full
+operation succeeds; a mounted card remains exclusively owned by the Worker.
 
 ## Verification boundaries
 
@@ -63,7 +70,10 @@ printed legends, capture pixels and controller lifecycle/storage logic.
 PNG encoding/download in Chromium with an explicitly injected fake Worker
 and in-memory assets. It exercises language Apply/Cancel, PC key/modifier
 selection, traditional legends, modal interactions and viewport bounds.
-This offline component fixture is excluded from production. Its patterned
+The separate `tests/browser-landscape.py`, `tests/buzzer-browser.py` and
+`tests/browser-sd-files.py` cover geometry/input, actual Web Audio lifecycle and
+SD draft file-picker/download flows. The production Worker/stock-ROM witnesses
+remain distinct. These offline component fixtures are excluded from production. Their patterned
 screen is synthetic and must never be presented as original-firmware evidence.
 
 The earlier environment blocked normal HTTP navigation; the current Chrome

@@ -47,8 +47,9 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
    }catch(e){skinError(e);}
   }
   ensureKeypadRef.current=ensureKeypad;
-  function fit(){if(disposed)return;const p=prefsRef.current,box=workspace.current,[w,h]=skin.stage.style.aspectRatio.split('/').map(Number);
-   const width=Math.max(180,box.clientWidth-32),height=Math.max(240,box.clientHeight-24),dpr=window.devicePixelRatio||1;
+  function fit(){if(disposed)return;const p=prefsRef.current,box=workspace.current,[w,h]=skin.setLayout(p.view==='immersive-landscape');
+   const boxStyle=getComputedStyle(box),width=Math.max(64,box.clientWidth-parseFloat(boxStyle.paddingLeft)-parseFloat(boxStyle.paddingRight)),
+    height=Math.max(64,box.clientHeight-parseFloat(boxStyle.paddingTop)-parseFloat(boxStyle.paddingBottom)),dpr=window.devicePixelRatio||1;
    const caseWidth=Math.round(Math.min(width,height*(w/h||.497))*p.zoom/100*dpr)/dpr;
    host.current.style.setProperty('--case-width',`${caseWidth}px`);
    const lcdHeight=last?.height??(model.id>=5?80:64),lcdWidth=last?.width??131;
@@ -73,15 +74,18 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
   const unframe=controller.onFrame(d=>{last=d;if(!raf)raf=requestAnimationFrame(paint);});
   skin.show(model.id).then(async()=>{if(disposed)return;const m=await skin.manifest;if(disposed)return;
    keypadSpec=m.models[MODEL_SLUGS[model.id]];ensureKeypad();
-   fit();paint();skin.setEnabled(controller.state.loaded&&controller.state.running&&!controller.state.busy&&prefsRef.current.view==='immersive');
+   fit();paint();skin.setEnabled(controller.state.loaded&&controller.state.running&&!controller.state.busy&&prefsRef.current.view!=='traditional');
   }).catch(skinError);
   const resize=new ResizeObserver(fit);resize.observe(workspace.current);window.addEventListener('resize',fit);fit();
   return()=>{disposed=true;++skin.epoch;if(ensureKeypadRef.current===ensureKeypad)ensureKeypadRef.current=null;keypad.current?.destroy();keypad.current=null;cancelAnimationFrame(raf);unframe();resize.disconnect();window.removeEventListener('resize',fit);};
  },[controller,model.id]);
- useEffect(()=>{ensureKeypadRef.current?.();view.current?.setEnabled(enabled&&prefs.view==='immersive');keypad.current?.setEnabled(enabled&&prefs.view==='traditional');window.dispatchEvent(new Event('resize'));},[enabled,prefs.view,prefs.zoom]);
+ useEffect(()=>{ensureKeypadRef.current?.();view.current?.setEnabled(enabled&&prefs.view!=='traditional');keypad.current?.setEnabled(enabled&&prefs.view==='traditional');window.dispatchEvent(new Event('resize'));},[enabled,prefs.view,prefs.zoom]);
  return <main id="workspace" ref={workspace}><section id="calculator" ref={host} tabIndex={0} data-view={prefs.view}>
-  <div className="calculator-stage" ref={stage} id="skin-stage"><img className="skin-image" alt={model.name} hidden/><svg className="skin-keys"/>
-   <div className="glass-overlay"><Indicators/><canvas id="lcd" width="131" height={model.id>=5?80:64}/></div></div>
+  <div className="calculator-stage" ref={stage} id="skin-stage">
+   <div className="skin-screen"><div className="skin-content"><img className="skin-image" alt={model.name} hidden/>
+    <div className="glass-overlay"><Indicators/><canvas id="lcd" width="131" height={model.id>=5?80:64}/></div></div></div>
+   <div className="skin-keyboard"><div className="skin-content"><img className="skin-keyboard-image" alt="" aria-hidden="true" hidden/><svg className="skin-keys"/></div></div>
+  </div>
   <div className="traditional-keypad" ref={keypadHost}/>
  </section></main>;
 });
@@ -110,14 +114,16 @@ function Settings({controller,state,onClose}){
  const set=(k,v)=>setDraft(p=>({...p,[k]:v}));
  return <Modal opened trapFocus={!state.dialog} onClose={onClose} title={t('settings')} size="xl" fullScreen={small} closeButtonProps={{'aria-label':t('close')}}>
   <Tabs defaultValue="general" keepMounted={false}><Tabs.List>{['general','keyboard','storage'].map(k=><Tabs.Tab key={k} value={k}>{t(k)}</Tabs.Tab>)}</Tabs.List>
-   <Tabs.Panel value="general" pt="md"><Stack><Select label={t('language')} value={language} onChange={setLanguage} data={[{value:'zh',label:'简体中文'},{value:'en',label:'English'}]}/>
-    <Select label={t('view')} value={draft.view} onChange={v=>set('view',v)} data={['immersive','traditional'].map(k=>({value:k,label:t(k)}))}/>
-    <div><Text size="sm">{t('size')} · {draft.zoom}%</Text><Slider min={50} max={180} step={5} value={draft.zoom} onChange={v=>set('zoom',v)} aria-label={t('size')}/></div>
+   <Tabs.Panel value="general" pt="md"><Stack><Select allowDeselect={false} label={t('language')} value={language} onChange={setLanguage} data={[{value:'zh',label:'简体中文'},{value:'en',label:'English'}]}/>
+    <Select allowDeselect={false} label={t('view')} value={draft.view} onChange={v=>set('view',v)} data={['immersive','immersive-landscape','traditional'].map(k=>({value:k,label:t(k==='immersive-landscape'?'immersiveLandscape':k)}))}/>
+    <div><Text size="sm">{t('size')} · {draft.zoom}%</Text><Slider min={50} max={180} step={5} value={draft.zoom} onChange={v=>set('zoom',v)} thumbLabel={t('size')}/></div>
     <Switch label={t('pauseBlur')} checked={draft.pauseOnBlur} onChange={e=>set('pauseOnBlur',e.currentTarget.checked)}/><Switch label={t('pauseHidden')} checked={draft.pauseOnHidden} onChange={e=>set('pauseOnHidden',e.currentTarget.checked)}/>
-    <Select label={t('speed')} value={String(draft.speed)} onChange={v=>set('speed',Number(v))} data={[[.5,'half'],[1,'normal'],[2,'double'],[0,'unlimited']].map(([v,k])=>({value:String(v),label:t(k)}))}/>
+    <Select allowDeselect={false} label={t('speed')} value={String(draft.speed)} onChange={v=>set('speed',Number(v))} data={[[.5,'half'],[1,'normal'],[2,'double'],[0,'unlimited']].map(([v,k])=>({value:String(v),label:t(k)}))}/>
+    <Switch label={t('sound')} description={t('soundHelp')} checked={draft.sound} onChange={e=>set('sound',e.currentTarget.checked)}/>
+    <div><Text size="sm">{t('volume')} · {Math.round(draft.volume*100)}%</Text><Slider min={0} max={100} step={5} value={Math.round(draft.volume*100)} disabled={!draft.sound} onChange={v=>set('volume',v/100)} thumbLabel={t('volume')}/></div>
    </Stack></Tabs.Panel>
    <Tabs.Panel value="keyboard" pt="md"><MappingEditor model={state.model} draft={draft} onChange={setDraft}/></Tabs.Panel>
-   <Tabs.Panel value="storage" pt="md"><Stack><Switch label={t('autosave')} checked={draft.autosave} onChange={e=>set('autosave',e.currentTarget.checked)}/><Select label={t('interval')} value={String(draft.interval)} onChange={v=>set('interval',Number(v))} data={[15,30,60,120].map(v=>({value:String(v),label:t('seconds',{count:v})}))}/><Text size="sm" c="dimmed">{t('storagePrivacy')}</Text><Button variant="light" color="red" onClick={()=>controller.clearSaves()}>{t('deleteSaves')}</Button></Stack></Tabs.Panel>
+   <Tabs.Panel value="storage" pt="md"><Stack><Switch label={t('autosave')} checked={draft.autosave} onChange={e=>set('autosave',e.currentTarget.checked)}/><Select allowDeselect={false} label={t('interval')} value={String(draft.interval)} onChange={v=>set('interval',Number(v))} data={[15,30,60,120].map(v=>({value:String(v),label:t('seconds',{count:v})}))}/><Text size="sm" c="dimmed">{t('storagePrivacy')}</Text><Button variant="light" color="red" onClick={()=>controller.clearSaves()}>{t('deleteSaves')}</Button></Stack></Tabs.Panel>
   </Tabs><Group justify="flex-end" mt="lg"><Button variant="default" onClick={onClose}>{t('cancel')}</Button><Button onClick={()=>{controller.setPreferences(draft);void i18n.changeLanguage(language);try{controller.storage?.setItem(LANG_KEY,language);}catch{}onClose();}}>{t('apply')}</Button></Group>
  </Modal>;
 }
@@ -145,8 +151,10 @@ export function App({controller}){
  useEffect(()=>{const unbind=bindLifecycle(window,document,()=>controller.pause(),{preferences:()=>controller.state.prefs,release:()=>controller.release(),save:()=>controller.requestAuto()});
   const key=e=>{if(e.repeat||e.isComposing||modalRef.current||e.target.closest('input,textarea,select,[contenteditable="true"]')||e.target.closest('button,[role="button"]')&&(e.key==='Enter'||e.key===' '))return;
    const s=controller.state,code=keyCode(e),seq=code?bindings(s.prefs,s.model.id)[code]:null;if(seq?.length&&s.loaded&&s.running&&!s.busy){e.preventDefault();controller.tap(seq);}};
-  const storage=e=>controller.foreignSave(e.key);window.addEventListener('keydown',key);window.addEventListener('storage',storage);
-  return()=>{unbind();window.removeEventListener('keydown',key);window.removeEventListener('storage',storage);};},[controller]);
+  const storage=e=>controller.foreignSave(e.key),unlockAudio=()=>controller.unlockAudio?.();
+  window.addEventListener('pointerdown',unlockAudio,true);window.addEventListener('keydown',unlockAudio,true);
+  window.addEventListener('keydown',key);window.addEventListener('storage',storage);
+  return()=>{unbind();window.removeEventListener('pointerdown',unlockAudio,true);window.removeEventListener('keydown',unlockAudio,true);window.removeEventListener('keydown',key);window.removeEventListener('storage',storage);};},[controller]);
  useEffect(()=>{document.documentElement.lang=i18n.resolvedLanguage==='zh'?'zh-CN':'en';},[i18n.resolvedLanguage]);
  async function capture(scale){try{downloadFile(await capturePNG(controller.last,scale,controller.screenRGB),captureName(state.model.id));}catch(e){controller.report('captureError',e.message);}}
  const enabled=state.loaded&&state.running&&!state.stopped&&!state.busy;

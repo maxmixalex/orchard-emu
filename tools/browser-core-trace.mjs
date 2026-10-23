@@ -16,6 +16,11 @@ const observers = new Set([
   'usb_buffer', 'usb_length', 'usb_data1', 'usb_snapshot', 'peripheral_snapshot',
   'checkpoint_buffer', 'checkpoint_size', 'timebase_hz', 'sd_snapshot', 'sd_image_buffer',
   'sram_alias_reads', 'sram_alias_writes', 'lcd_probe68_reads',
+  // These exact WASM exports only read guest registers or change host audio
+  // observation, queues and output buffers. No guest state/ticks are changed:
+  // tests/buzzer.c and tests/browser-core-trace.mjs compare full checkpoints.
+  // Keep an explicit list so an unknown future buzzer API still fails closed.
+  'buzzer_enable', 'buzzer_clear', 'buzzer_drain', 'buzzer_snapshot',
 ]);
 export const traceOperationArguments = Object.freeze(Object.fromEntries(operations));
 

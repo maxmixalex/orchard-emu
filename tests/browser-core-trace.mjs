@@ -15,7 +15,8 @@ const metadata = {generation: 7, model: 1, preset: 'strict'};
 let captured, epochs = [];
 async function make(options = {}, firmware = rom) {
   const {instance: {exports: raw}} = await WebAssembly.instantiate(wasm, {});
-  const c = attachCoreTrace({...raw, unrepresented_mutation: () => 0}, {
+  const c = attachCoreTrace({...raw, unrepresented_mutation: () => 0,
+    buzzer_unrepresented_mutation: () => 0}, {
     context: () => metadata, onCapture: trace => { captured = trace; },
     onEpoch: epoch => epochs.push(epoch), ...options,
   });
@@ -88,6 +89,10 @@ limited.keyboard_attach(1); limited.keyboard_matrix(0, 0, 1);
 assert.throws(() => validateBrowserTrace(limited.trace_capture('bounded')), /Incomplete trace/); ++negativeChecks;
 const unknown = await make(); unknown.unrepresented_mutation();
 assert.throws(() => validateBrowserTrace(unknown.trace_capture('unknown-call')), /Incomplete trace/); ++negativeChecks;
+const unknownAudio = await make(); unknownAudio.buzzer_unrepresented_mutation();
+const unknownAudioCapture = unknownAudio.trace_capture('unknown-audio-call');
+assert(unknownAudioCapture.problems.includes('Unrepresented API call: buzzer_unrepresented_mutation'));
+assert.throws(() => validateBrowserTrace(unknownAudioCapture), /Incomplete trace/); ++negativeChecks;
 const mixed = await make(); metadata.generation++; mixed.keyboard_attach(1);
 assert.throws(() => validateBrowserTrace(mixed.trace_capture('mixed-generation')), /Incomplete trace/); ++negativeChecks;
 
@@ -132,10 +137,63 @@ for (const policy of ['run_idle','run_clocked']) {
   assert(replay.complete_checkpoint_equal);
 }
 
+// Host audio observation is deliberately absent from guest checkpoints and
+// replay. Exercise a real GPIO waveform, destructive queue drains, clear and
+// enable transitions, not just a silent observer call or a mocked export.
+const audioRom = new Uint8Array(1048576).fill(255), audioView = new DataView(audioRom.buffer);
+for (const [address, word] of [
+  [0, 0xea000002], [16, 0xe59f0020], // Branch, then load GPBCON from address 56.
+  [20, 0xe3a01010], [24, 0xe5801000], // GPB2 output mode.
+  [28, 0xe3a01004], [32, 0xe5801004], // Drive GPB2 high.
+  [36, 0xe3a01000], [40, 0xe5801004], // Drive GPB2 low.
+  [44, 0xe1a00000], [48, 0xe7f000f0], [56, 0x56000010],
+]) audioView.setUint32(address, word, true);
+const audio = await make({}, audioRom);
+assert.equal(audio.buzzer_enable(1), 0);
+assert.equal(audio.run(8), 0);
+function audioBatch() {
+  const pointer = audio.buzzer_drain();
+  assert(pointer);
+  const header = Array.from(new Uint32Array(audio.memory.buffer, pointer, 8));
+  const records = Array.from(new Uint32Array(audio.memory.buffer, pointer + 32, header[0] * 3));
+  return {header, levels: records.filter((_, index) => index % 3 === 2)};
+}
+function checkpointBytes(core) {
+  assert.equal(core.checkpoint_save(), 0);
+  return new Uint8Array(core.memory.buffer, core.checkpoint_buffer(), core.checkpoint_size()).slice();
+}
+const beforeAudio = checkpointBytes(audio);
+const audioRegisters = new Uint32Array(audio.memory.buffer, audio.buzzer_snapshot(), 12);
+assert.equal(audioRegisters[0], 0x10); assert.equal(audioRegisters[1], 0);
+const waveform = audioBatch();
+assert.deepEqual(waveform.levels, [0, 1, 0]);
+assert.equal(waveform.header[6], 1);
+assert.equal(audioBatch().header[0], 0, 'Draining must consume the host waveform');
+assert.equal(audio.buzzer_clear(), undefined);
+const clearedAudio = audioBatch();
+assert.deepEqual(clearedAudio.levels, [0]);
+assert.equal(clearedAudio.header[3], waveform.header[3] + 1, 'Clear must start a new host audio epoch');
+assert.equal(audio.buzzer_enable(0), 0);
+assert.equal(audioBatch().header[6], 0);
+audio.buzzer_clear();
+assert.equal(audioBatch().header[0], 0, 'Disabled observation must not enqueue audio');
+assert.equal(audio.buzzer_enable(1), 0);
+assert.deepEqual(audioBatch().levels, [0]);
+assert.deepEqual(checkpointBytes(audio), beforeAudio, 'Host audio controls must preserve every guest checkpoint byte');
+assert.equal(audio.run(2), 9);
+const audioCapture = captured;
+assert(audioCapture.complete && audioCapture.reason === 'core-stop');
+assert.deepEqual(audioCapture.calls.map(row => row.name), ['run', 'checkpoint_save', 'checkpoint_save', 'run']);
+const audioReport = await replayBrowserTrace(artifact(audioCapture, audioRom));
+assert(audioReport.every_call_result_equal && audioReport.complete_checkpoint_equal);
+
 console.log(JSON.stringify({passed: true, generated_guest: true, original_rom_reproduced: false,
   call_results_equal: true, complete_checkpoint_equal: true, exact_key_ticks: true,
   immutable_stop_capture: true, held_key_stop_preserved: true, release_changes_checkpoint: true,
   held_key_calls: heldReport.calls, held_key_run_calls: heldReport.run_calls,
   idle_stop_replay: true, clocked_stop_replay: true,
+  host_audio_calls_excluded: true, host_audio_checkpoint_equal: true,
+  audio_waveform_levels: waveform.levels, audio_replay_checkpoint_equal: audioReport.complete_checkpoint_equal,
+  unknown_audio_api_rejected: true,
   isolated_epochs: true, negative_checks: negativeChecks,
   wasm_sha256: hash(wasm), calls: report.calls, run_calls: report.run_calls, stop: report.stop}));

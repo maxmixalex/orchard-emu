@@ -58,7 +58,7 @@ export class Hp39WireSender {
     this.enqueue(this.last);
   }
   retry(){
-    if(++this.retries>8)throw Error('Wire upload timed out. Select RECV → HP39/40 (Wire) on the calculator and try again.');
+    if(++this.retries>8)throw Error('Wire upload timed out. Reopen the calculator’s matching wired RECV mode and try again.');
     this.enqueue(this.last);
   }
   receive(bytes,now){
@@ -67,11 +67,16 @@ export class Hp39WireSender {
       if(!(bytes instanceof Uint8Array)||bytes.length>65536)throw Error('Invalid HP39 Wire input.');
       for(const byte of bytes){
         if(!this.active)break;
-        if(byte===24){this.cancelled=true;throw Error('The calculator cancelled the Wire upload.');}
         if(this.stage==='handshake'){
+          // A cancelled receiver may leave several CAN bytes in USB/UART.
+          // They belong to the preceding attempt until this receiver starts a
+          // new D/C/NAK handshake. Do not flush the transport: a fresh handshake
+          // may share the same packet with that old tail. The initial deadline
+          // remains fixed even if the peer keeps sending stale control bytes.
           if([21,67,68].includes(byte)){this.check=byte;this.next();this.status('sending');}
           continue;
         }
+        if(byte===24){this.cancelled=true;throw Error('The calculator cancelled the Wire upload.');}
         // An ACK for a partially written block cannot acknowledge that block.
         if(this.queue.length)continue;
         if(byte===21)this.retry();
@@ -88,7 +93,7 @@ export class Hp39WireSender {
       if(this.active){
         if(now>=this.end)throw Error('Wire upload reached its five-minute virtual-time limit.');
         if(now>=this.deadline){
-          if(this.stage==='handshake')throw Error('Choose RECV → HP39/40 (Wire) on the calculator for this file.');
+          if(this.stage==='handshake')throw Error('Choose the calculator’s matching wired RECV mode for this file.');
           this.retry();
         }
       }

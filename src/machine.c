@@ -63,6 +63,7 @@ void orchard_reset(orchard_machine *m) {
     m->idle_write_enabled = false;
     m->sram_alias_reads = m->sram_alias_writes = 0;
     m->nor_sequence = 0; m->nor_id_mode = false;
+    o_buzzer_reset(m);
 }
 orchard_status orchard_load_rom(orchard_machine *m, const void *bytes, size_t length) {
     if (!m || !bytes) return ORCHARD_BAD_ARGUMENT;

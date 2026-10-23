@@ -8,13 +8,14 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {Pacer} from '../web/pacing.js';
 import {FileTransfer} from '../web/file-transfer.js';
+import {BuzzerStream} from '../web/buzzer-worker.js';
 import {packet,PARAMETERS} from '../web/kermit.js';
 import {TapQueue,HP48_ROM,isPlayable,setupHash,applySetup} from '../web/hp48.js';
 
 const source=readFileSync(new URL('../web/worker.js',import.meta.url),'utf8')
   .replace(/^import .*;\n/gm,'').split('\ntry {\n  const response=await fetch')[0];
 const text=s=>Uint8Array.from(s,c=>c.charCodeAt(0));
-function fixture(){
+function fixture({model=4}={}){
   const memory={buffer:new ArrayBuffer(16384)},output=[],writes=[],jobs=new Map(),incoming=[],uartIncoming=[];
   let tick=0,wall=0,next=0;
   const core=new Proxy({memory,timebase_hz:()=>12000000,profile:(_,field)=>[4,8,1,1][field],
@@ -30,15 +31,15 @@ function fixture(){
     disconnect(){this.connected=false;}endpoint(){if(!this.connected)throw Error('Connect USB first.');return {maxPacket:64};}
     send(bytes){writes.push(bytes.slice());return {result:0,status:'ACK',accepted:bytes.length};}
     read(){return incoming.length?{result:0,bytes:incoming.shift()}:{result:1,status:'NAK',bytes:new Uint8Array()};}}
-  const scope={readSDState,validateSDSize,MAX_STATE,Pacer,FileTransfer,TaskScheduler:Scheduler,VirtualUSB:USB,TapQueue,HP48_ROM,isPlayable,setupHash,applySetup,
+  const scope={readSDState,validateSDSize,MAX_STATE,Pacer,FileTransfer,BuzzerStream,TaskScheduler:Scheduler,VirtualUSB:USB,TapQueue,HP48_ROM,isPlayable,setupHash,applySetup,
     Uint8Array,Uint32Array,ArrayBuffer,performance:{now:()=>++wall},self:{},postMessage:d=>output.push(d),initialCore:core,
     encodeSession:async()=>new Uint8Array(32),decodeSession:async()=>({model:4,romHash:HP48_ROM,preset:'hp48-home',frameView:1,state:new Uint8Array(32)})};
   const context=vm.createContext(scope);vm.runInContext(source+'\ncore=initialCore;',context);
   const send=data=>scope.self.onmessage({data:{generation:1,...data}});
-  send({type:'create',model:4,preset:'hp48-home',audience:'calculator'});
+  send({type:'create',model,preset:model===1?'hp39-home':'hp48-home',audience:'calculator'});
   vm.runInContext("loaded=true;romHash=HP48_ROM;",context);
   send({type:'configure',speed:0});send({type:'run'});send({type:'serial-connect',connected:true});send({type:'usb-connect',connected:true});
-  const inspect=vm.runInContext('()=>({running,generation,active:transfer.active,request:transfer.request})',context);
+  const inspect=vm.runInContext('()=>({running,generation,active:transfer.active,request:transfer.request,speed:pacer.speed,requestedSpeed,transferUnlimited,transferBoosted:transferBoosted()})',context);
   return {send,output,writes,inspect,incoming,uartIncoming,pump(){const [id,fn]=jobs.entries().next().value;assert(fn);jobs.delete(id);fn();}};
 }
 function start(f,request=1,extra={}){f.send({type:'file-transfer-start',request,transport:'usb',mode:'receive',...extra});}
@@ -128,5 +129,51 @@ for(const mode of ['receive','directory','finish']){
   assert(!f.output.some(e=>e.type==='uart-output'),'Owned Kermit bytes must not leak into the raw terminal');
   start(f,2);f.send({type:'file-transfer-cancel',request:1});assert(f.inspect().active);
   f.send({type:'file-transfer-cancel',request:2});assert.equal(final(f,2).phase,'cancelled');
+}
+// The actual Worker applies the speed override after the protocol handshake,
+// and restores it synchronously before a terminal message reaches the UI.
+// No host sleep, test-only core budget or controller speed rewrite is involved.
+for(const ending of ['complete','error','cancel','pause','reset','create','disconnect']){
+  const f=fixture({model:1});f.send({type:'configure',speed:2,transferUnlimited:true});
+  start(f,1,{mode:'send',protocol:'hp39-wire',name:'LIB.any',bytes:text('HP39BinH\x01Lbody')});
+  assert.equal(f.inspect().speed,2,'Waiting for RECV uses the user speed');
+  f.incoming.push(Uint8Array.of(68));for(let i=0;i<4;i++)f.pump();
+  assert.equal(f.inspect().speed,0,ending);assert.equal(f.inspect().requestedSpeed,2);assert(f.inspect().transferBoosted);
+  f.send({type:'file-transfer-cancel',request:999});f.send({type:'configure',generation:0,speed:.5});
+  assert.equal(f.inspect().speed,0,'Stale request/generation cannot restore or change the live transfer');
+  if(ending==='complete'){
+    f.incoming.push(Uint8Array.of(6));for(let i=0;i<4;i++)f.pump();
+    assert.equal(f.inspect().speed,0,'Payload ACK alone does not finish the transfer');
+    f.incoming.push(Uint8Array.of(6));f.pump();assert.equal(final(f,1).phase,'complete');
+  }else if(ending==='error'){f.incoming.push(Uint8Array.of(24));f.pump();assert.equal(final(f,1).phase,'error');}
+  else if(ending==='cancel')f.send({type:'file-transfer-cancel',request:1});
+  else if(ending==='disconnect')f.send({type:'usb-connect',connected:false});
+  else if(ending==='create'){
+    f.send({type:'create',generation:2,model:4,preset:'hp48-home',audience:'calculator'});
+    f.send({type:'configure',generation:2,speed:2,transferUnlimited:true});
+  }else f.send({type:ending});
+  assert.equal(f.inspect().speed,2,`${ending}: restore user speed`);assert.equal(f.inspect().transferBoosted,false,ending);
+  if(ending==='complete'){
+    start(f,2,{mode:'send',protocol:'hp39-wire',name:'NEXT',bytes:text('HP39BinH\x01Nbody')});
+    assert.equal(f.inspect().speed,2,'The gap between batch files is not accelerated');
+  }
+}
+{
+  const f=fixture({model:1});f.send({type:'configure',speed:1,transferUnlimited:true});
+  start(f,1,{mode:'send',protocol:'hp39-wire',name:'LIB',bytes:text('HP39BinH\x01Lbody')});
+  f.incoming.push(Uint8Array.of(68));for(let i=0;i<4;i++)f.pump();
+  f.send({type:'configure',speed:.5});assert.equal(f.inspect().speed,0);assert.equal(f.inspect().requestedSpeed,.5);
+  f.send({type:'configure',transferUnlimited:false});assert.equal(f.inspect().speed,.5,'Turning the switch off immediately restores the new user speed');
+  f.send({type:'configure',transferUnlimited:true});assert.equal(f.inspect().speed,0);
+  f.send({type:'file-transfer-start',request:2,transport:'usb',mode:'receive'});
+  assert.equal(f.inspect().speed,0,'An invalid overlapping request cannot change the live override');
+  f.send({type:'file-transfer-cancel',request:1});assert.equal(f.inspect().speed,.5,'Completion restores the most recent user choice');
+  assert.equal(f.inspect().requestedSpeed,.5);
+}
+{
+  const f=fixture({model:1});f.send({type:'configure',speed:1});
+  start(f,1,{mode:'send',protocol:'hp39-wire',name:'LIB',bytes:text('HP39BinH\x01Lbody')});
+  f.incoming.push(Uint8Array.of(68));f.pump();
+  assert.equal(f.inspect().speed,1,'The optional setting leaves Normal unchanged by default');
 }
 console.log('Worker file transfer: validation without machine pause; stream ownership; generation/request isolation; pause/reset/restore/create/disconnect cancellation; validated complete-file delivery pass.');

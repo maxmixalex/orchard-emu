@@ -1,0 +1,323 @@
+{
+  "schema": "orchard-buzzer-r20",
+  "date": "2026-10-23",
+  "passed": true,
+  "source_sha256": {
+    "src/buzzer.c": "6bbad8365aff6dbc386e4598edc117d2ab05a2c50f5fea4cf3a109305c03ccee",
+    "app/wasm.c": "da3c967163ea174d1dc3d0ba408a041eaf21027140fffcb4d3c604fe7e12b7d7",
+    "web/buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+    "web/buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+    "tests/buzzer.c": "930ca992d6a1d5dc0a363e99a5f88c802e761dbaba910ef6553c6b5561438238",
+    "tests/buzzer.mjs": "2205bc67064d2c3450f6b7e8089109254b1387002c3304e5156989dd96430f9e",
+    "tests/buzzer-browser.py": "52be1d485842255c91142be6366a6ff2bf6ab41d87025c3b5113e7abdfb73587",
+    "tools/verify-buzzer-stock.mjs": "f670e88d0ada01af1927c6627d5adfa75d209d517aeff64e625e396edba47f28"
+  },
+  "implementation": {
+    "source": "GPB2 output or Timer2 TOUT2 alternate function",
+    "edge_capacity": 4096,
+    "tick_width": 64,
+    "audio": "edge area averaged PCM with 40 Hz DC blocking",
+    "default_enabled": true,
+    "default_volume": 0.35,
+    "unlock": "user pointer or keyboard gesture",
+    "unlimited_backlog_limit_ms": 120,
+    "checkpoint_version": 3,
+    "guest_state_changed_by_observer": false,
+    "host_queue_serialized": false
+  },
+  "regression": {
+    "native_and_wasm_buzzer_assertions_per_host": 4261,
+    "passed": true
+  },
+  "independent_noninterference": {
+    "seed": "5ea397c1",
+    "operations": 20000,
+    "ticks": 2562321,
+    "byte_identical_full_guest_checkpoints": 542,
+    "source_sha256": "6cd2317d7e67031dce72ab91a9d369b467adaad4912cec39ffc80ef2516bd1b7",
+    "description": "equal guest register writes and runs, with random audio enable/clear/drain/snapshot only on one instance"
+  },
+  "original_hp49gplus_beep": {
+    "schema": "orchard-stock-buzzer-v1",
+    "model": 5,
+    "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+    "wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+    "tool_sha256": "f670e88d0ada01af1927c6627d5adfa75d209d517aeff64e625e396edba47f28",
+    "physical_input_only": true,
+    "command": "440 .2 BEEP",
+    "clock": "existing 12 MHz functional ticks, not calibrated physical PCLK",
+    "keys": [
+      {
+        "tick": 60000000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "tick": 60600000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "tick": 120000000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "tick": 120600000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "tick": 161000000,
+        "scan": 46,
+        "down": true
+      },
+      {
+        "tick": 162200000,
+        "scan": 46,
+        "down": false
+      },
+      {
+        "tick": 168400000,
+        "scan": 36,
+        "down": true
+      },
+      {
+        "tick": 169600000,
+        "scan": 36,
+        "down": false
+      },
+      {
+        "tick": 175800000,
+        "scan": 44,
+        "down": true
+      },
+      {
+        "tick": 177000000,
+        "scan": 44,
+        "down": false
+      },
+      {
+        "tick": 183200000,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "tick": 184400000,
+        "scan": 6,
+        "down": false
+      },
+      {
+        "tick": 190600000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "tick": 191800000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "tick": 198000000,
+        "scan": 25,
+        "down": true
+      },
+      {
+        "tick": 199200000,
+        "scan": 25,
+        "down": false
+      },
+      {
+        "tick": 202400000,
+        "scan": 25,
+        "down": true
+      },
+      {
+        "tick": 203600000,
+        "scan": 25,
+        "down": false
+      },
+      {
+        "tick": 204800000,
+        "scan": 27,
+        "down": true
+      },
+      {
+        "tick": 206000000,
+        "scan": 27,
+        "down": false
+      },
+      {
+        "tick": 207200000,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "tick": 208400000,
+        "scan": 6,
+        "down": false
+      },
+      {
+        "tick": 209600000,
+        "scan": 20,
+        "down": true
+      },
+      {
+        "tick": 210800000,
+        "scan": 20,
+        "down": false
+      },
+      {
+        "tick": 212000000,
+        "scan": 19,
+        "down": true
+      },
+      {
+        "tick": 213200000,
+        "scan": 19,
+        "down": false
+      },
+      {
+        "tick": 214400000,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "tick": 215600000,
+        "scan": 6,
+        "down": false
+      },
+      {
+        "tick": 216800000,
+        "scan": 57,
+        "down": true
+      },
+      {
+        "tick": 218000000,
+        "scan": 57,
+        "down": false
+      },
+      {
+        "tick": 219200000,
+        "scan": 36,
+        "down": true
+      },
+      {
+        "tick": 220400000,
+        "scan": 36,
+        "down": false
+      },
+      {
+        "tick": 221600000,
+        "scan": 57,
+        "down": true
+      },
+      {
+        "tick": 222800000,
+        "scan": 57,
+        "down": false
+      },
+      {
+        "tick": 224000000,
+        "scan": 39,
+        "down": true
+      },
+      {
+        "tick": 225200000,
+        "scan": 39,
+        "down": false
+      },
+      {
+        "tick": 226400000,
+        "scan": 57,
+        "down": true
+      },
+      {
+        "tick": 227600000,
+        "scan": 57,
+        "down": false
+      },
+      {
+        "tick": 228800000,
+        "scan": 39,
+        "down": true
+      },
+      {
+        "tick": 230000000,
+        "scan": 39,
+        "down": false
+      },
+      {
+        "tick": 231200000,
+        "scan": 57,
+        "down": true
+      },
+      {
+        "tick": 232400000,
+        "scan": 57,
+        "down": false
+      },
+      {
+        "tick": 233600000,
+        "scan": 7,
+        "down": true
+      },
+      {
+        "tick": 234800000,
+        "scan": 7,
+        "down": false
+      },
+      {
+        "tick": 236000000,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "tick": 237200000,
+        "scan": 6,
+        "down": false
+      }
+    ],
+    "passed": true,
+    "empty_stack_before": "43122043fe41b3bfbe8e0e7381010a0f05fa611ae788f99e601c9fe3f5a9ee07",
+    "empty_stack_after": "43122043fe41b3bfbe8e0e7381010a0f05fa611ae788f99e601c9fe3f5a9ee07",
+    "observed": {
+      "cycles": 88,
+      "edges": 176,
+      "period_ticks": 42480,
+      "functional_hz": 282.4858757062147,
+      "first_edge": 237104878,
+      "last_edge": 240821518,
+      "functional_edge_span_seconds": 0.30972
+    },
+    "final_tick": 250400000,
+    "final_stop": 0
+  },
+  "original_report": {
+    "name": "report.json",
+    "sha256": "05cb43234d067969c20f7eb5ffef6a6a5b5d1e28c1abb7d622e9d4a4ff0b7b98"
+  },
+  "chromium_original_trace_playback": {
+    "buffers": 175,
+    "nonzero": 13636,
+    "peak": 0.9988580346107483,
+    "sampleRate": 44100,
+    "state": "running",
+    "scheduled": 79,
+    "afterPause": 0,
+    "disposed": true,
+    "original_rom_trace": true
+  },
+  "boundaries": [
+    "The stock command 440 .2 BEEP exercises the real guest path; current functional-clock output is about 282.486 Hz over 0.30972 seconds, not a verified physical 440 Hz / 0.2 second result",
+    "Physical PCLK and wall-clock pitch/duration calibration remain open",
+    "The first restored PWM cycle uses the existing timer count and compare-phase approximation",
+    "Existing timer clock-gate semantics are not changed by the audio observer",
+    "Unlimited drops old audio beyond its bounded playback window rather than accumulating a delayed backlog"
+  ],
+  "publication_excludes": [
+    "ROMs",
+    "raw stock LCD data",
+    "checkpoints"
+  ]
+}

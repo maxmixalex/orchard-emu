@@ -255,7 +255,7 @@ with sync_playwright() as p:
   assert z.read('TEST.000')==hp39_program and z.read('HP39DIR.000')==hp39_directory
  page.get_by_role('button',name='停止文件服务',exact=True).click()
  count=page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").length')
- page.locator('[data-testid="transfer-file"]').set_input_files({'name':'下载的程序包(1).zip','mimeType':'application/zip','buffer':archive})
+ page.locator('[data-testid="transfer-file"]').set_input_files({'name':'下载的程序包(1).data','mimeType':'application/octet-stream','buffer':archive})
  page.get_by_role('button',name='提供所选文件',exact=True).click()
  page.wait_for_function('(n)=>window.__messages.filter(m=>m.type==="file-transfer-start").length===n',arg=count+1)
  restored=page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).files.map(f=>({name:f.name,bytes:Array.from(f.bytes)}))')
@@ -265,27 +265,59 @@ with sync_playwright() as p:
  # Native Wire keeps the next calculator action visible outside the dialog,
  # and a complete library ACK advances to the original aplet bytes only once.
  hp39_aplet=b'HP39BinB\x04TESTopaque-body'
+ hp39_note=b'HP39BinC\x04NOTEopaque-note'
  page.get_by_label('计算器传输菜单',exact=True).select_option('wire')
  assert page.get_by_role('button',name='接收计算器文件',exact=True).count()==0
+ assert page.get_by_test_id('transfer-file').get_attribute('accept') is None
+ unlimited=page.get_by_label('传输时不限速',exact=False)
+ assert not unlimited.is_checked()
+ unlimited.check()
+ assert page.evaluate('window.__messages.filter(m=>m.type==="configure").at(-1).transferUnlimited')
  page.locator('[data-testid="transfer-file"]').set_input_files([
-  {'name':'APLET.000','mimeType':'application/octet-stream','buffer':hp39_aplet},
-  {'name':'LIB.000','mimeType':'application/octet-stream','buffer':hp39_library}])
+  {'name':'APLET.blob','mimeType':'application/octet-stream','buffer':hp39_aplet},
+  {'name':'LIB','mimeType':'application/octet-stream','buffer':hp39_library},
+  {'name':'NOTE.zip','mimeType':'application/octet-stream','buffer':hp39_note}])
  page.get_by_role('button',name='通过 Wire 上传',exact=True).click()
  page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).protocol==="hp39-wire"')
- assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name')=='LIB.000'
+ assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name')=='LIB'
  page.get_by_role('button',name='关闭',exact=True).click()
  summary=page.get_by_test_id('transfer-summary')
- assert 'RECV → HP39/40 (Wire)' in summary.inner_text() and 'LIB.000' in summary.inner_text()
- page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"complete",transferred:14,total:14})}')
- page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name==="APLET.000"')
+ assert 'RECV → HP39/40 (Wire)' in summary.inner_text() and 'LIB' in summary.inner_text()
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:true,phase:"sending",transferred:0,total:14,effectiveSpeed:0,transferBoosted:true})}')
+ assert '正在不限速传输' in summary.inner_text()
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"complete",transferred:14,total:14,effectiveSpeed:1,transferBoosted:false})}')
+ page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name==="APLET.blob"')
  assert page.evaluate('Array.from(window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).bytes)')==list(hp39_aplet)
- assert 'APLET.000' in summary.inner_text()
+ assert 'APLET.blob' in summary.inner_text() and '正在不限速传输' not in summary.inner_text()
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"error",transferred:3,total:25,error:"Guest RECV interrupted",effectiveSpeed:1,transferBoosted:false})}')
+ assert 'Guest RECV interrupted' in summary.inner_text() and 'RECV' in summary.inner_text()
+ assert page.evaluate('window.__controller.state.uploadBatch.items.map(i=>i.phase)')==['complete','error','queued']
  for width in [320,1360]:
   page.set_viewport_size({'width':width,'height':940})
   assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth'),width
  summary.get_by_role('button',name='传输详情',exact=True).click()
  assert page.get_by_label('计算器传输菜单',exact=True).input_value()=='wire'
  assert page.get_by_test_id('upload-batch').get_by_text('已上传',exact=True).count()==1
+ page.get_by_role('button',name='重试此文件',exact=True).click()
+ page.wait_for_function('window.__controller.state.uploadBatch.active')
+ assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start"&&m.name==="LIB").length')==1
+ assert page.evaluate('Array.from(window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).bytes)')==list(hp39_aplet)
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"error",transferred:0,total:25,error:"Guest RECV interrupted again",effectiveSpeed:1,transferBoosted:false})}')
+ page.get_by_role('button',name='跳过此文件',exact=True).click()
+ page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name==="NOTE.zip"')
+ assert page.evaluate('Array.from(window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).bytes)')==list(hp39_note)
+ assert page.get_by_test_id('upload-batch').get_by_text('已跳过',exact=True).count()==1
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"complete",transferred:25,total:25,effectiveSpeed:1,transferBoosted:false})}')
+ assert page.evaluate('window.__controller.state.uploadBatch.completed')==2
+ assert page.evaluate('window.__controller.uploadQueue') is None
+ page.get_by_test_id('transfer-file').set_input_files({'name':'AGAIN.unknown','mimeType':'application/octet-stream','buffer':hp39_aplet})
+ page.get_by_role('button',name='通过 Wire 上传',exact=True).click()
+ page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name==="AGAIN.unknown"')
+ # The option remains usable during the transfer; the Worker owns immediate
+ # pacing restoration (verified separately with the real Worker module).
+ unlimited=page.get_by_label('传输时不限速',exact=False)
+ unlimited.uncheck()
+ assert not page.evaluate('window.__messages.filter(m=>m.type==="configure").at(-1).transferUnlimited')
  page.get_by_role('button',name='取消传输',exact=True).click()
  assert 'ON 键退出' in page.get_by_test_id('transfer-status').inner_text()
  page.get_by_label('计算器传输菜单',exact=True).select_option('disk')
@@ -296,12 +328,34 @@ with sync_playwright() as p:
   page.set_viewport_size({'width':width,'height':900})
   page.wait_for_timeout(100)
   assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth'),width
+ # The 39gs firmware names its direct links USB/Ser, while 39g+ says Wire.
+ # Help, next-file and persistent recovery hints follow model and transport.
+ select_model(2);resolve_manifest(7);keys_ready('hp39gs')
+ page.evaluate('()=>window.__controller.patch({loaded:true,running:false,busy:false,serial:true,usb:true,usbReady:true})')
+ page.get_by_role('button',name='连接',exact=True).click()
+ page.get_by_label('计算器传输菜单',exact=True).select_option('wire')
+ assert 'HP39/40 (USB)' in page.get_by_label('计算器传输菜单',exact=True).inner_text()
+ assert 'RECV → HP39/40 (USB)' in page.get_by_role('dialog').inner_text()
+ page.get_by_test_id('transfer-file').set_input_files({'name':'LIB.gs','mimeType':'application/octet-stream','buffer':hp39_library})
+ page.get_by_role('button',name='通过 Wire 上传',exact=True).click()
+ page.wait_for_function('window.__controller.state.transfer?.active')
+ page.get_by_role('button',name='关闭',exact=True).click()
+ assert 'RECV → HP39/40 (USB)' in page.get_by_test_id('transfer-summary').inner_text()
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"error",error:"USB interrupted"})}')
+ assert 'RECV → HP39/40 (USB)' in page.get_by_test_id('transfer-summary').inner_text()
+ page.get_by_test_id('transfer-summary').get_by_role('button',name='传输详情',exact=True).click()
+ page.get_by_role('button',name='清空剩余队列',exact=True).click()
+ page.get_by_role('combobox',name='连接类型',exact=True).click()
+ page.get_by_role('option',name='串口',exact=True).click()
+ assert 'HP39/40 (Ser)' in page.get_by_label('计算器传输菜单',exact=True).inner_text()
+ assert 'RECV → HP39/40 (Ser)' in page.get_by_role('dialog').inner_text()
+ page.get_by_role('button',name='关闭',exact=True).click()
  # Unmount also invalidates an outstanding load and removes frame/resize work.
- select_model(4);page.wait_for_function('window.__manifestRequests.length===8')
- page.evaluate('window.__unmount()');resolve_manifest(7)
+ select_model(4);page.wait_for_function('window.__manifestRequests.length===9')
+ page.evaluate('window.__unmount()');resolve_manifest(8)
  page.evaluate('window.dispatchEvent(new Event("resize"))')
  assert page.locator('.traditional-geometry').count()==0
  assert page.evaluate('window.__controller.frames.size')==0
  assert not errors,errors
- print('Offline components: lazy keypad load/view/model races, reuse, active key/segments, PC input and unmount; exact full canvas RGBA, changed and blank frames; bilingual Apply/Cancel, PC key + modifier selection, printed legends, PNG download, file upload/cancel/stale receive/download/raw exclusion, upload batch names/sequencing/partial error/full preflight, HP39 disk catalog/preserved names/preflight/serve/cancel/download, four viewport widths pass. No HTTP/ROM/Worker E2E.')
+ print('Offline components: lazy keypad load/view/model races, reuse, active key/segments, PC input and unmount; exact full canvas RGBA, changed and blank frames; bilingual Apply/Cancel, PC key + modifier selection, printed legends, PNG download, file upload/cancel/stale receive/download/raw exclusion, upload batch names/sequencing/partial error/full preflight, HP39 disk catalog/preserved names/preflight/serve/cancel/download, Wire retry/skip/arbitrary suffixes/Unlimited controls, model-specific USB/Ser/Wire recovery hints, four viewport widths pass. No HTTP/ROM/Worker E2E.')
  b.close()

@@ -11,8 +11,8 @@ export async function sha256(bytes){
 function metadata(m){
   if(!m||m.schema!==1||![1,2,3,4,5,6].includes(m.model)||
      !/^[0-9a-f]{64}$/.test(m.romHash)||!/^[0-9a-f]{64}$/.test(m.stateHash)||
-     !['strict','hp39-home','hp48-home','hp49-home'].includes(m.preset)||![0,1].includes(m.frameView)||
-     (m.preset==='hp39-home'&&m.model!==1)||(m.preset==='hp48-home'&&m.model!==4)||(m.preset==='hp49-home'&&m.model!==5))
+     !['strict','hp39-home','hp39gs-home','hp48-home','hp49-home'].includes(m.preset)||![0,1].includes(m.frameView)||
+     (m.preset==='hp39-home'&&m.model!==1)||(m.preset==='hp39gs-home'&&m.model!==2)||(m.preset==='hp48-home'&&m.model!==4)||(m.preset==='hp49-home'&&m.model!==5))
     throw new Error('This is not a compatible Orchard session.');
 }
 export async function encodeSession({model,romHash,preset,frameView,state}){

@@ -98,6 +98,7 @@ bool o_gpio_register(orchard_machine *m, uint32_t address, uint32_t *value, bool
         uint32_t changed = *r ^ (*value & mask);
         if (clear) *r &= ~(*value & mask);
         else *r = *value & mask;
+        if (off == 0x10 || off == 0x14) o_buzzer_observe(m);
         if (off == 0x50 || off == 0x60) {
             unsigned count = off == 0x50 ? 8 : 16, first = off == 0x50 ? 0 : 8;
             for (unsigned pin = 0; pin < count; ++pin)

@@ -79,6 +79,25 @@ Uploads must begin with an HP48/49 binary-object header or an HP text-file
 `%%HP:` header. This is a family/container check, not a complete parser or a
 guarantee that the calculator can execute every uploaded program. ROMs, ZIP
 archives and HP39 typed files are not accepted as HP48/49 uploads.
+The chooser does not filter filename extensions. These checks inspect the
+selected file's content; an unfamiliar suffix does not bypass or fail them.
+
+### Optional transfer speed
+
+**Use Unlimited during transfers** is off by default. When enabled, the Worker
+temporarily selects Unlimited only while sending, receiving or processing an
+active data operation. Waiting for a calculator RECV command, choosing from an
+HP39 disk directory and waiting between Wire files retain the selected speed.
+Completion, failure, cancellation, pause and machine replacement end the
+override synchronously in the Worker. Changing the speed preference during a
+transfer changes the value used afterward; switching this option off restores
+that selected speed immediately. Normal's default and the emulated CPU clock
+are unchanged. Protocol deadlines still use guest time.
+
+The preference is independent of a transfer request. Request/generation checks
+prevent an old error or completion from changing the pacing of a new transfer.
+The actual effective speed and override status accompany Worker progress and
+snapshots, so the UI does not have to infer completion to restore pacing.
 
 ### Uploading several files
 
@@ -215,8 +234,10 @@ pausing the calculator. Pause, ROM replacement, reset, checkpoint restore and
 disconnect cancel the session. Automatic checkpoint capture skips an active
 transfer. No protocol state is stored in an ordinary calculator session file.
 
-The existing Worker core-call budget, scheduling policy and frame cadence are
-unchanged. The transfer adapter is polled only while a session or its final-ACK
+The existing Worker core-call budget, Pacer implementation and frame cadence are
+unchanged. The optional transfer setting selects its existing Unlimited mode
+for active data phases; otherwise it uses the persistent user speed.
+The transfer adapter is polled only while a session or its final-ACK
 recovery work is pending. There is no timer-driven guest-memory mutation.
 
 ## Original HP48gII observations
@@ -420,9 +441,14 @@ versions remain individually downloadable. Missing referenced files are reported
 ZIP imports support stored and DEFLATE entries, verify CRC and declared/actual
 lengths, and enforce the 2 MiB per-file and 8 MiB decompressed package limits.
 The archive itself is limited to 32 MiB and 1024 directory entries. Selection
-prefers `calculator/`, then the archive root or a unique HP39 catalog; only
-referenced calculator files are decompressed. No executable, source tree or test
-folder is imported from a full release package. Cancelled reads cannot start a
+prefers `calculator/`, then the archive root or a unique HP39 catalog. With an
+explicit catalog, only the catalog and its referenced calculator files are
+decompressed. Without a catalog, bounded regular files in the selected directory
+are inspected for HP39 typed headers; their suffix is irrelevant. No executable,
+source tree or test folder is imported as a calculator object from a full release
+package. ZIP identification also uses content, so a renamed archive is accepted
+and a typed file whose name ends in `.zip` remains a typed object.
+Cancelled reads cannot start a
 later transfer. `tests/hp39-archive.mjs` independently checks ZIP interoperability
 against Python's standard library, plus stock exports and controller lifecycle.
 
@@ -435,6 +461,30 @@ only after final ACK.
 Complete downloads remain available after Stop; interrupted files do not.
 Pause, reconnect and model/session replacement invalidate the running server.
 
+The real HP39gs 2.22 ROM exposed an additional Init-Info boundary: its USB IRQ
+can consume the initial Y reply before the application enables its receive
+notification. Repeating only the calculator's I request can reproduce the same
+loss at each ordinary 8192-tick poll slice. The server now retains this initial
+ACK and schedules a retry one guest second after the entire frame has been
+written, backing off up to the negotiated timeout with at most four retries.
+The following R/S/G command removes an unsent retry. A partly transmitted frame
+finishes before the child transaction writes; cancel, failure and a fresh server
+clear the state. This adds no sleep, extra core execution or per-packet delay to
+a successful exchange. The [independent 39gs startup witness](hp39gs-startup.md)
+covers cold-boot Disk installation of the V2 aplet and library, full native ROM
+reading, return to HOME and reuse of stock USB. It does not claim a physical
+serial or external Conn3x connection.
+
+HP39 child transactions inherit the outer server's remaining 15-minute guest
+time budget. They do not each obtain a fresh 15 minutes. The original five-minute
+default remains in effect for HP48/49. This resolves the observed case in which
+stock 39gs SEND was still making progress at 8,381 of 10,344 aplet bytes when the
+old child default ended it. The subsequent independent cold-boot 39gs witness
+completed that reverse transfer: all 10,344 aplet bytes match, the 1,484-byte
+library export retains its original object body and `LIB275L` alias, and the
+returned directory contains 65 bytes. Packet retry bounds remain unchanged;
+the longer shared budget does not promise a particular wall-clock transfer speed.
+
 Actual original HP39g+ USB evidence includes both directory files and the
 7,373-byte `H39 ROM USB` aplet followed by its 1,489-byte library, installed
 by the original OS with the package's distinct directory aliases intact.
@@ -442,8 +492,9 @@ Stock SEND then returns the complete aplet with identical bytes, the library
 with its 1,468-byte object body intact under the stock-selected `LIB275L` title,
 and the new directory. All three exports also equal the user's earlier stock
 exports. For HP39, USB IN completion is given the next ordinary guest slice
-before the dependent host OUT; this prevents original-OS ACK loss without
-adding guest execution or changing the core scheduling policy.
+before the dependent host OUT. This turn separation was sufficient in that
+39g+ witness; the independent r20 39gs case above additionally needs bounded
+initial-ACK recovery. Neither mechanism adds guest execution.
 The [ZIP round-trip witness](evidence/hp39-archive-r18.json) also imports the
 original full source ZIP, downloads the returned files as one ZIP, and installs
 that downloaded package through stock RECV after a fresh cold boot in a separate
@@ -461,6 +512,59 @@ file waits for a fresh receiver handshake, and an item is complete only after
 the final EOT ACK. This path uploads all selected binary objects; Disk drive
 remains the choice for calculator-side catalog selection and all downloads.
 Original catalog preflight, dependency references and input bytes are preserved.
+
+The exact receiver menu is model-specific: HP39g+ shows **HP39/40 (Wire)**;
+HP39gs shows **HP39/40 (USB)** on USB and **HP39/40 (Ser)** on serial. The UI's
+mode, current-file hint and recovery instructions follow that selection. A menu
+label alone is not a firmware/transport acceptance witness.
+An independent complete HP39gs 2.22 ROM has now accepted its 1,489-byte library
+and 10,344-byte V2 aplet through **HP39/40 (USB)**, recovered both through stock
+Disk SEND with the equality checks above, then started the native aplet and
+returned to HOME for `1+1=2`. The [39gs record](hp39gs-startup.md) keeps that
+identity and scope separate from the original HP39g+ round trip below. HP39gs
+serial, HP40gs and physical calculators are not covered by that emulated USB run.
+
+A failed Wire file retains its original bytes and remaining queue. **Retry this
+file** starts a new request for that file; **Skip this file** advances to a later
+pending object. Neither action resends an already acknowledged object. The
+failed filename and RECV/ON instructions stay visible with Connections closed.
+After ON, wait for the receive screen to close before reopening RECV for the
+current item; sending menu keys while the old receive screen is exiting can
+leave the calculator in a different mode.
+Unsupported loose files or local read errors can be retried or skipped during
+preflight; explicit catalog/ZIP structural errors still reject the package.
+Skipping a library does not satisfy the aplet's dependency on that library.
+
+The original-ROM interruption test exposed old CAN bytes remaining in the
+transport after ON cancellation. A new attempt now waits for its own D/C/NAK
+handshake before treating CAN as a cancellation. It ignores earlier CAN/ACK/EOT
+tail bytes without flushing the transport, so a new handshake in the same packet
+is preserved. CAN after that handshake still fails immediately, and stale input
+cannot extend the two-minute initial deadline. Protocol tests cover all three
+handshakes, fragmented USB tail packets and the fixed deadline.
+
+The [r20 recovery witness](evidence/hp39-transfer-r20.json) cold-boots the original
+HP39g+ D1.55 ROM and imports the unchanged original ZIP renamed `.data`. A real
+ON interruption after data sending begins produces CAN. The same library then
+retries successfully with transfer-only Unlimited enabled. The next aplet is
+also interrupted; skipping it preserves the completed library. Reselecting the
+original aplet as `APLET.unlisted-suffix` installs it successfully, and cancelling
+a later waiting request clears that queue. Stock Disk SEND then returns the
+7,373-byte aplet unchanged, the library with its 1,468-byte body and `LIB275L`
+alias preserved, and a 66-byte directory. The calculator returns to HOME and
+displays `1+1=2`. Waiting, both errors, final ACKs and cancellation restore the
+selected Normal speed; observed data stages use Unlimited only when enabled.
+
+This functional browser run records WASM `1cffba4f…`, Wire `21b7151d…`, and
+calculator bundle `648d8d65…`. Its Worker has a conditional stop diagnostic that
+publishes the state already read by the normal snapshot path, without extra core
+execution or reads; no stop occurs in the successful run. The later bilingual
+ON/wait wording is a separate UI change, not retroactively part of that bundle.
+The public record preserves the exact hashes and earlier failed attempts without
+shipping ROM, session or screenshot contents. Worker/controller regressions also
+cover user speed changes, disabling the option during data transfer, cancel while
+boosted, pause, reset, model changes, local read/format failures and stale events.
+Those fixture-based cases are distinct from the original-ROM actions above.
 
 The new bounded `hp39-wire.js` sender accepts binary B/C/D/H typed files; actual
 stock-ROM acceptance here covers the original B aplet and H library. Original

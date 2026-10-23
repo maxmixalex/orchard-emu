@@ -8,11 +8,12 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 
 ## Current implementation
 
-- [x] Three unchanged original NORs reach conditional HOME and basic arithmetic.
+- [x] Four unchanged original NORs reach conditional HOME and basic arithmetic, including the user's complete HP39gs capture and its own bootloader.
 - [x] User/debug frontends; seven separately licensed skins and guest segments.
 - [x] Scheduler/CPU/memory optimizations with retained reference paths.
 - [x] Portable manual sessions, with .ord names and legacy .orchard import.
-- [x] Settings: exclusive immersive/traditional view, viewport/scale, editable physical key sequences, independent blur/hidden policies.
+- [x] Settings: immersive, immersive landscape and traditional view, viewport/scale, editable physical key sequences, independent blur/hidden policies.
+- [x] Firmware-driven GPIO/Timer2 buzzer observation and browser sound with mute/volume/lifecycle cleanup; original HP49g+ BEEP witness, physical pitch calibration open.
 - [x] Normal wall-time pacing distinct from raw execution throughput; explicit faster modes.
 - [x] Opt-in binary IndexedDB autosave with legacy localStorage migration, transactional writer-token checks, modal restore and quota/conflict handling.
 - [x] User UART stream and bounded USB host; original bootloader descriptors observed.
@@ -20,18 +21,20 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [x] Complete-batch preflight and sequential multi-file upload on both transports; two-object stock browser round trips, per-file results and lifecycle cancellation.
 - [x] Exact adjacent/disjoint ARM operand-pair diagnostics with GPR/NZCV dependencies; three HP39g+ scene checkpoints remain identical. Production CPU execution is unchanged.
 - [x] Implemented and measured quiet-loop and cold-rollback candidates; withdrew both after Chrome gates failed, retaining the 48,561-check scheduler regression and all timing evidence.
-- [x] HP39/40 Disk drive host, typed-file and alias-preserving catalog validation; original HP39g+ USB installs aplet/library and exports both. Target 39gs/40gs stock witnesses remain open.
+- [x] HP39/40 Disk drive host, typed-file and alias-preserving catalog validation; original HP39g+ USB installs aplet/library and exports both. The complete HP39gs NOR independently installs the V2 reader; HP40gs remains open.
 - [x] Direct HP39 ZIP import and standard ZIP download, bounded decompression/CRC checks, and reconstruction of the catalog entry omitted by stock SEND.
 - [x] HP39 direct Wire upload with library-first package ordering, per-object RECV instructions and original-ROM SEND/ZIP verification; visible progress and cancellation recovery guidance.
+- [x] Optional transfer-only Unlimited, content-based selection without extension filters, isolated per-file errors and retry/skip recovery, bounded Init-Info ACK retransmission.
 - [x] HP49g+ full capture admission, fixed 512 KiB SRAM with explicit bank-1 mirror, 131×80 UI, arithmetic, CAS, graphing, menus, sessions and USB object workflows.
 - [x] HP49g+ FILES recovery and bounded SD image read/write, FAT16 create/import/export/eject and write protection; HP48gII no-card FILES navigation.
+- [x] Offline FAT16 file preparation: browse/extract files, create folders and add files transactionally before insertion; explicit 8.3 names and no extension filter.
 - [x] HP49g+ SDK native ARM example installed over stock USB, run through ARMToolbox, returned to HOME and followed by arithmetic and USB reconnect.
 - [x] Checkpoint v3 includes complete SD media and in-flight state; exact v1/v2 migration remains supported on all six model capacities.
-- [x] Revised HP39gs ROMstream v2: visible progress, repaired mapping/cable/USB exit paths, one-launch double reads and corresponding source; original HP39g+ and explicitly derived 39gs 2.22 OS fixtures complete dump/return/USB-reuse workflows.
+- [x] Revised HP39gs ROMstream v2: visible progress, repaired mapping/cable/USB exit paths, one-launch double reads and corresponding source; original HP39g+ and original HP39gs full NORs complete dump/return/USB-reuse workflows. Earlier derived-OS evidence remains distinct.
 - [x] IR/IrDA assessment with primary sources, not a claimed implementation.
 - [x] Byte-table checkpoint CRC with unchanged format/full validation; independent checks on all six model capacities.
 - [x] Production Pacer + WASM RTC comparison across rates and host partitions.
-- [x] Explicit optimized sanitizer targets; all sixteen native/reference/sanitizer suites pass locally.
+- [x] Explicit optimized sanitizer targets and seventeen native/reference/sanitizer suites, including the buzzer observer.
 - [x] Checked WASM physical reads and bounded caught-up Worker pacing, with same-input comparisons.
 - [x] Actual Chrome Window/Worker smoke coverage plus original-ROM file/restore/keyboard/result observation.
 
@@ -41,9 +44,9 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [ ] Identify the browser dispatch cost before another MOV-pair or ADD-to-CMP candidate; the r18 quiet-loop/cold-function experiments are withdrawn, not pending admission. Preserve precise faults, interrupts and self-modifying code.
 - [ ] Broader browser focus/touch/download/storage/zoom E2E and sustained interaction; preserve and classify the observed rare HP48 Unlimited post-result stop.
 - [ ] Broader original-OS keypad/Alpha-state coverage, power management and sustained native applications; HP49g+ warm-start and one native ARM return are now witnessed.
-- [ ] Target HP39gs/HP40gs stock acceptance, remote file management and broader stock capacity/recovery cases; preserve the original HP50g GET_CONFIGURATION counterexample, then implement applicable infrared links.
+- [ ] Target HP40gs/HP50g stock acceptance, remote file management and broader stock capacity/recovery cases; preserve the original HP50g GET_CONFIGURATION counterexample, then implement applicable infrared links.
 - [x] Receive the HP49g+ full A/B capture and independently validate original-byte boot and user workflows; retain the original acquisition sidecar unchanged.
-- [ ] Receive the HP39gs full image using the complete ROMstream package; no preliminary return/short-read task is required.
+- [x] Receive and validate the HP39gs full V2 image; admit its own unchanged boot/OS after native/WASM, browser, continuation and full-reader/return checks. Retain acquisition metadata unchanged.
 - [ ] Independently establish SRAM/LCD/NOR/pad/analog assumptions; implement HP49 infrared/UART2, SD DMA/larger media and NOR programming with their own evidence.
 
 

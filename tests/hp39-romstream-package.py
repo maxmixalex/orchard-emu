@@ -45,6 +45,10 @@ class PackageTests(unittest.TestCase):
         self.assertFalse(result['calculator_bytes_unchanged'])
         self.assertEqual(result['calculator_reader_revision'], 2)
         self.assertFalse(result['hardware_validated'])
+        self.assertEqual(result['target_stock_os_fixture'], 'original-full-39gs-nor')
+        self.assertEqual(result['target_original_rom_sha256'], stream.TARGET_ROM_SHA)
+        self.assertTrue(result['target_native_bootloader_verified'])
+        self.assertEqual(result['verification_scope'], 'r20-original-rom-emulator-execution')
         source = self.files['third-party/hpclang/research/hp39gplus/rom-stream-entry.S']
         self.assertIn(b'0x00000c12', source)
         self.assertIn(b'0x07f00280', source)
@@ -98,8 +102,10 @@ class PackageTests(unittest.TestCase):
 
     def test_rehashed_false_scope_or_provenance(self):
         changes = {'hardware_validated': True, 'target_stock_os_execution_verified': False,
-                   'target_native_bootloader_verified': True,
-                   'target_stock_os_fixture': 'original-full-39gs-nor',
+                   'target_native_bootloader_verified': False,
+                   'target_stock_os_fixture': 'official-39gs-2.22-update-with-generic-50g-bootloader',
+                   'target_original_rom_sha256': '0'*64,
+                   'verification_scope': 'physical-hardware-validation',
                    'original_calculator_bytes_unchanged': True, 'calculator_reader_revision': 1,
                    'reference_stock_os_execution_verified_model': 'hp39gs',
                    'firmware_included': True, 'flash_bytes': 2097152, 'read_passes_per_block': 1,
