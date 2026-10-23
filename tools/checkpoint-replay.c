@@ -9,13 +9,15 @@
 static int read_exact(const char *path, void *data, size_t n) {
     FILE *f=fopen(path,"rb");if(!f)return 0;
     int ok=fread(data,1,n,f)==n && fgetc(f)==EOF && !ferror(f);
-    if(fclose(f))ok=0;return ok;
+    if(fclose(f))ok=0;
+    return ok;
 }
 static int read_checkpoint(const char *path, void *data, size_t capacity, size_t *length) {
     FILE *f=fopen(path,"rb");if(!f)return 0;
     *length=fread(data,1,capacity,f);
     int ok=*length>=32 && fgetc(f)==EOF && !ferror(f);
-    if(fclose(f))ok=0;return ok;
+    if(fclose(f))ok=0;
+    return ok;
 }
 int main(int argc,char **argv){
     if(argc!=6)return 64;

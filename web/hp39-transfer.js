@@ -10,7 +10,6 @@ export const MAX_HP39_HOST_FILES=16;
 /** Preserve explicit directory aliases. Generate a disk catalog for loose typed files. */
 export function prepareHp39Files(files) {
   if(!Array.isArray(files)||files.length>MAX_HP39_HOST_FILES+2)throw Error('An HP39 catalog supports at most 16 objects and two directory files.');
-  if(files.length>MAX_HP39_HOST_FILES&&!files.some(f=>f?.name?.toUpperCase()==='HP39DIR.CUR'))throw Error('Choose at most 16 HP39 files.');
   const prepared=[],names=new Set();let total=0;
   for(const f of files){
     const name=validateHp39Filename(f?.name),key=name.toUpperCase();
@@ -21,13 +20,20 @@ export function prepareHp39Files(files) {
     prepared.push({name,bytes:f.bytes.slice(),info});
   }
   const directories=prepared.filter(f=>f.info.kind==='A');
+  if(prepared.length-directories.length>MAX_HP39_HOST_FILES)throw Error('Choose at most 16 HP39 objects.');
   if(directories.length){
+    // Stock SEND returns HP39DIR.000 and its objects, but not HP39DIR.CUR.
+    // Recreate only this fixed entry point; preserve all original aliases and
+    // directory bytes. Missing object dependencies still fail bundle validation.
+    if(!names.has('HP39DIR.CUR')&&directories.some(f=>f.name.toUpperCase()==='HP39DIR.000'))
+      prepared.push({name:'HP39DIR.CUR',bytes:createHp39Directory([{kind:'A',file:'HP39DIR.000',title:'Orchard'}])});
     inspectHp39Bundle(prepared,{allowTitleAliases:true});
   }else{
     const entries=prepared.map(f=>({kind:f.info.kind,file:f.name,title:f.info.title}));
     prepared.push({name:'HP39DIR.CUR',bytes:createHp39Directory([{kind:'A',file:'HP39DIR.000',title:'Orchard'}])},
       {name:'HP39DIR.000',bytes:createHp39Directory(entries)});
   }
+  if(prepared.length>MAX_HP39_HOST_FILES+2)throw Error('An HP39 catalog supports at most 16 objects and two directory files.');
   if(prepared.reduce((n,f)=>n+f.bytes.length,0)>MAX_RECEIVE_BYTES)throw Error('The HP39 catalog and files exceed 8 MiB.');
   return prepared.map(({name,bytes})=>({name,bytes}));
 }

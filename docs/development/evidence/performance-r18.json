@@ -1,0 +1,5343 @@
+{
+  "schema": "orchard-r18-cpu-performance-experiments-v1",
+  "generated_at": "2026-10-23T03:46:45.363638+00:00",
+  "scope": "Implemented quiet-interval CPU execution and isolated cold-rollback extraction, evaluated original-ROM fixed workloads, then restored the original production core. No new CPU performance optimization is shipped.",
+  "decision": {
+    "v3": "withdrawn: default-Chrome HP48gII 7*8 crosses the existing >10% median elapsed and at-least-three-of-four-slower rollback threshold; aggregate Chrome elapsed also increases.",
+    "v4": "withdrawn: Chrome sum of the six scene medians does not decrease. The near-zero difference does not establish a stable regression; it fails the predeclared selection condition.",
+    "selected": "original restored r17 CPU/MMU/scheduler",
+    "new_hold_branch": false,
+    "further_timing_runs_after_v4": false,
+    "v4_rule_declared_before_sampling": "Require every correctness comparison to pass; require sum(scene median candidate Chrome ms) < sum(scene median baseline Chrome ms); reject if any Chrome scene has median(candidate)/median(baseline)-1 > 0.10 and at least 3 of 4 paired candidate samples are slower. Node is auxiliary, published unchanged.",
+    "normal_mode_input_latency_improvement_claimed": false
+  },
+  "baseline": {
+    "source_commit": "9377548",
+    "source_state": "restored r17 core",
+    "production_order_comparison_artifact": {
+      "bytes": 102159,
+      "sha256": "d1dd7c8e443431afa5d76a303e0cbfeafd28544eef80071b6098f408d7e0f6d2"
+    },
+    "source_sha256": {
+      "app/main.c": "6719b1e5dae8ee0a3644ecbd608f94587c43b278f4b97e27d5700c6c061d9141",
+      "app/wasm.c": "a46e06929ad4b9fbb90bdecbd25481e522049d35a27070fea46f4e7b77560b0d",
+      "include/orchard/clock.h": "48d168414df4db78a8ffc500224be35f9f524a79ab87e98a6966de35665edf5b",
+      "include/orchard/orchard.h": "6638af206dbe8fb2fa355e749154e0b9e381d5c79319de2481553476e008a1f6",
+      "src/adc.c": "d66e9ead11ee9c182010cb2274a4e1ac22555731b19dc5524c9269eca9ee305e",
+      "src/bus.c": "c6ddad9928bbdf956b2b1e4ceb2ffedc692a8913496827e2d43a65701fd868c5",
+      "src/checkpoint.c": "d4e1803b080c16076ba8011b3468659de35f61366bf974c36c1caed4a77dc43a",
+      "src/cpu.c": "a743894494e43e8537a2d8dbdcdc058917dbf5ba8561230e72c7ffcd272c4fe0",
+      "src/gpio.c": "9a69cdac1ba8e6e5614b6c98f508e180a8640dd9716f719345cc73323bd73183",
+      "src/internal.h": "e1d0d589a1364e251555ce9d7d6e2bd1e10641d316a3116430851b54057c5660",
+      "src/interrupt.c": "afd5a1f7e5b33c9e0e81ed3280b298a87befc596f428294aaebe26c83a6ad732",
+      "src/keyboard.c": "1ef3172d77549349f872d18587a90857543ffd991563340f418654c5852fbae1",
+      "src/lcd.c": "5381691535feff023a83ada867b1eeb85c1eded3347cf9c8a8787cdf598da0eb",
+      "src/machine.c": "fc5b06cd0b7846ff13eecee0f955377d1a08defb1f1eed08adca681824490d76",
+      "src/mmu.c": "a0f79da446162b996e212d10a144edd5243b61266f1dbb2ef810e5a5640184aa",
+      "src/nor.c": "082080cc3e2476a4cb38dc3051a972b4085a89f259070097006c05eff523ac62",
+      "src/rtc.c": "71390036072e4b35d61728eb88b21b36bf8b214ff4b8a413a027033e0a97f026",
+      "src/scheduler.c": "24d02a1e3f48613d1fd157c2d411c0da289e3bee0987cbe8832f93aa2e49c2a3",
+      "src/sdi.c": "acdeb0908bd05dd6585352dd7e3336d165bc196422f74c7480c0a95d3caedea8",
+      "src/soc.c": "202d45eb9baf863694962b23fbc0a2c6b1b85729adf2fda87faefa90f983be97",
+      "src/sram.c": "a5c7f61524389155f93053f7a398c93333dd79ef07dcbc5773a0a6169ec2f582",
+      "src/thumb.c": "a61494ca691c83a83e0453bfb683feae1a897bcd67f3cf5484c5a79269a4cbcc",
+      "src/usb.c": "b792a08459cb9274ae88269a0155bf29bbd6b41266aa6a3139f419b51cd76dd3",
+      "src/watchdog.c": "02627d413523e4feb6b392c2dea372e2ce5e903002843c030c42303cc8ee49ee"
+    }
+  },
+  "final_release": {
+    "bytes": 102147,
+    "sha256": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f",
+    "all_core_source_files_equal_to_comparison_baseline": true,
+    "all_noncustom_wasm_sections_identical": true,
+    "name_section_difference": "Only the module output name in the custom name section differs: baseline-production.wasm versus orchard.wasm. The 12-byte difference has no executable effect.",
+    "section_comparison": {
+      "baseline": {
+        "bytes": 102159,
+        "sha256": "d1dd7c8e443431afa5d76a303e0cbfeafd28544eef80071b6098f408d7e0f6d2",
+        "sections": [
+          {
+            "id": 1,
+            "name": null,
+            "bytes": 88,
+            "sha256": "539cd4e8a0b01f2a542c83a9c51644ca9cb6fca13d8a9b9d6d336f40fbe5757e"
+          },
+          {
+            "id": 3,
+            "name": null,
+            "bytes": 88,
+            "sha256": "00a99d12b5d19f2c47b6fb133237d4858f032bdab9cb60580d3426ac6ad9dd9c"
+          },
+          {
+            "id": 4,
+            "name": null,
+            "bytes": 5,
+            "sha256": "b9e6dc08ba3a6e51af06434f96bca8e36d6aad4a86ba589b98eadbfa35804860"
+          },
+          {
+            "id": 5,
+            "name": null,
+            "bytes": 6,
+            "sha256": "9b5fbf82b4188d7e7d31fef10218c0402a8b3db3a66c2b6c846f06be084a852b"
+          },
+          {
+            "id": 6,
+            "name": null,
+            "bytes": 8,
+            "sha256": "6ff8cf0fd9d3de4121f8c926b3596776d1bdf84c4fb77a1c02566cf98c577ac9"
+          },
+          {
+            "id": 7,
+            "name": null,
+            "bytes": 706,
+            "sha256": "28cd798841cd1a2e8ca576ead5aee22fd2853073e58580d2a6c27f97f48dc9d0"
+          },
+          {
+            "id": 10,
+            "name": null,
+            "bytes": 98127,
+            "sha256": "6bf3c3f325d9df8b4b046cd56a1ddd946965d93fbca9217565be3eda3b1c1580"
+          },
+          {
+            "id": 11,
+            "name": null,
+            "bytes": 1577,
+            "sha256": "290e1d6c5eb5a7c58bfa76ae2b3befa2f06a19be32e18fb5ec32098e26cab1c9"
+          },
+          {
+            "id": 0,
+            "name": "name",
+            "bytes": 1406,
+            "sha256": "dcadca7b01c5ae8b4b60ce361b12784c57a52919d0fe96a0e8ea76269f25c08c"
+          },
+          {
+            "id": 0,
+            "name": "producers",
+            "bytes": 56,
+            "sha256": "8d93bda14680509be03c9e020e6fa367cbad7741512ad1b97c23b800fe94d9ed"
+          },
+          {
+            "id": 0,
+            "name": "target_features",
+            "bytes": 57,
+            "sha256": "6675bf660452096f78137708bc3eff26508a078ab53d8450374a4ffc2a3b94bb"
+          }
+        ]
+      },
+      "final_release": {
+        "bytes": 102147,
+        "sha256": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f",
+        "sections": [
+          {
+            "id": 1,
+            "name": null,
+            "bytes": 88,
+            "sha256": "539cd4e8a0b01f2a542c83a9c51644ca9cb6fca13d8a9b9d6d336f40fbe5757e"
+          },
+          {
+            "id": 3,
+            "name": null,
+            "bytes": 88,
+            "sha256": "00a99d12b5d19f2c47b6fb133237d4858f032bdab9cb60580d3426ac6ad9dd9c"
+          },
+          {
+            "id": 4,
+            "name": null,
+            "bytes": 5,
+            "sha256": "b9e6dc08ba3a6e51af06434f96bca8e36d6aad4a86ba589b98eadbfa35804860"
+          },
+          {
+            "id": 5,
+            "name": null,
+            "bytes": 6,
+            "sha256": "9b5fbf82b4188d7e7d31fef10218c0402a8b3db3a66c2b6c846f06be084a852b"
+          },
+          {
+            "id": 6,
+            "name": null,
+            "bytes": 8,
+            "sha256": "6ff8cf0fd9d3de4121f8c926b3596776d1bdf84c4fb77a1c02566cf98c577ac9"
+          },
+          {
+            "id": 7,
+            "name": null,
+            "bytes": 706,
+            "sha256": "28cd798841cd1a2e8ca576ead5aee22fd2853073e58580d2a6c27f97f48dc9d0"
+          },
+          {
+            "id": 10,
+            "name": null,
+            "bytes": 98127,
+            "sha256": "6bf3c3f325d9df8b4b046cd56a1ddd946965d93fbca9217565be3eda3b1c1580"
+          },
+          {
+            "id": 11,
+            "name": null,
+            "bytes": 1577,
+            "sha256": "290e1d6c5eb5a7c58bfa76ae2b3befa2f06a19be32e18fb5ec32098e26cab1c9"
+          },
+          {
+            "id": 0,
+            "name": "name",
+            "bytes": 1394,
+            "sha256": "07779b23b3e03c30ec34373f9a17380f6fa71ba123f46e54597432f819de3b4e"
+          },
+          {
+            "id": 0,
+            "name": "producers",
+            "bytes": 56,
+            "sha256": "8d93bda14680509be03c9e020e6fa367cbad7741512ad1b97c23b800fe94d9ed"
+          },
+          {
+            "id": 0,
+            "name": "target_features",
+            "bytes": 57,
+            "sha256": "6675bf660452096f78137708bc3eff26508a078ab53d8450374a4ffc2a3b94bb"
+          }
+        ]
+      },
+      "all_noncustom_sections_identical": true
+    }
+  },
+  "variants": {
+    "v1": {
+      "artifact": {
+        "bytes": 102300,
+        "sha256": "3adf6fc4bf88f1360b7894fd0b185612744657ddb38d9de595f86a60b7c70ad2"
+      },
+      "change": "bounded quiet-interval continuation for ordinary ARM ALU, branch and failed-condition instructions; no later instruction prefetched"
+    },
+    "v2": {
+      "artifact": {
+        "bytes": 102324,
+        "sha256": "aa56eaaf0cf8df2d8b0734fc62fb5d849a364e641ac89913c647f98aa160a6ac"
+      },
+      "change": "also continue after successful ARM word/byte single transfers; MMIO clears the quiet interval and abort/diagnostic paths return",
+      "source_sha256": {
+        "app/main.c": "6719b1e5dae8ee0a3644ecbd608f94587c43b278f4b97e27d5700c6c061d9141",
+        "app/wasm.c": "a46e06929ad4b9fbb90bdecbd25481e522049d35a27070fea46f4e7b77560b0d",
+        "include/orchard/clock.h": "48d168414df4db78a8ffc500224be35f9f524a79ab87e98a6966de35665edf5b",
+        "include/orchard/orchard.h": "6638af206dbe8fb2fa355e749154e0b9e381d5c79319de2481553476e008a1f6",
+        "src/adc.c": "d66e9ead11ee9c182010cb2274a4e1ac22555731b19dc5524c9269eca9ee305e",
+        "src/bus.c": "c6ddad9928bbdf956b2b1e4ceb2ffedc692a8913496827e2d43a65701fd868c5",
+        "src/checkpoint.c": "d4e1803b080c16076ba8011b3468659de35f61366bf974c36c1caed4a77dc43a",
+        "src/cpu.c": "b1934c762128b08aaa4bf2fe13a2a12d29fd0baffc64e8dd0571cb7fdc07b2da",
+        "src/gpio.c": "9a69cdac1ba8e6e5614b6c98f508e180a8640dd9716f719345cc73323bd73183",
+        "src/internal.h": "d3dd014a4f8014f143ffdc6f3aa7a6384d0282cfabd212be07d65cc908ce40e7",
+        "src/interrupt.c": "afd5a1f7e5b33c9e0e81ed3280b298a87befc596f428294aaebe26c83a6ad732",
+        "src/keyboard.c": "1ef3172d77549349f872d18587a90857543ffd991563340f418654c5852fbae1",
+        "src/lcd.c": "5381691535feff023a83ada867b1eeb85c1eded3347cf9c8a8787cdf598da0eb",
+        "src/machine.c": "61427514cb29fc764aaca29d1370c4e590be83ef170942c8337d1b78ea5daa93",
+        "src/mmu.c": "a0f79da446162b996e212d10a144edd5243b61266f1dbb2ef810e5a5640184aa",
+        "src/nor.c": "082080cc3e2476a4cb38dc3051a972b4085a89f259070097006c05eff523ac62",
+        "src/rtc.c": "71390036072e4b35d61728eb88b21b36bf8b214ff4b8a413a027033e0a97f026",
+        "src/scheduler.c": "24d02a1e3f48613d1fd157c2d411c0da289e3bee0987cbe8832f93aa2e49c2a3",
+        "src/sdi.c": "acdeb0908bd05dd6585352dd7e3336d165bc196422f74c7480c0a95d3caedea8",
+        "src/soc.c": "202d45eb9baf863694962b23fbc0a2c6b1b85729adf2fda87faefa90f983be97",
+        "src/sram.c": "a5c7f61524389155f93053f7a398c93333dd79ef07dcbc5773a0a6169ec2f582",
+        "src/thumb.c": "a61494ca691c83a83e0453bfb683feae1a897bcd67f3cf5484c5a79269a4cbcc",
+        "src/usb.c": "b792a08459cb9274ae88269a0155bf29bbd6b41266aa6a3139f419b51cd76dd3",
+        "src/watchdog.c": "02627d413523e4feb6b392c2dea372e2ce5e903002843c030c42303cc8ee49ee"
+      }
+    },
+    "v3": {
+      "artifact": {
+        "bytes": 104205,
+        "sha256": "7017475e52a9484c10d0065341274dfbd727fd7b8815f44fed05b8445d7cf3de"
+      },
+      "change": "v2 plus noinline cold CPU transaction and inlined hot step; exact production source order",
+      "source_sha256": {
+        "src/cpu.c": "f26357819683db007286ea12739f88669afec5e7d58d812574ec82119a54f84a",
+        "src/internal.h": "d3dd014a4f8014f143ffdc6f3aa7a6384d0282cfabd212be07d65cc908ce40e7",
+        "src/machine.c": "61427514cb29fc764aaca29d1370c4e590be83ef170942c8337d1b78ea5daa93",
+        "tests/scheduler.c": "d55b69f04b21682146ac14de3d31ee52900309a84916827caf8b2bf4e0db1605",
+        "tools/build-arm-block-profile.mjs": "46390a38fc4a9cf3d29146d2f7fe830d781e27677b9cb10a9343e1d8d8644253"
+      },
+      "reconstruction_patch": {
+        "path": "quiet-loop-v3-r18.patch",
+        "bytes": 6152,
+        "sha256": "e4b95e7c101086b5625ba04cafd11f0828ccbfc56b0dfdd38e6d61ec5a472ba4",
+        "scope": "Core source differences only, relative to the restored r17 baseline.",
+        "baseline_commit": "9377548a7c8fb3a41a2b1388a83db649bb2be639",
+        "baseline_source_sha256": {
+          "src/cpu.c": "a743894494e43e8537a2d8dbdcdc058917dbf5ba8561230e72c7ffcd272c4fe0",
+          "src/internal.h": "e1d0d589a1364e251555ce9d7d6e2bd1e10641d316a3116430851b54057c5660",
+          "src/machine.c": "fc5b06cd0b7846ff13eecee0f955377d1a08defb1f1eed08adca681824490d76"
+        },
+        "candidate_source_sha256": {
+          "src/cpu.c": "f26357819683db007286ea12739f88669afec5e7d58d812574ec82119a54f84a",
+          "src/internal.h": "d3dd014a4f8014f143ffdc6f3aa7a6384d0282cfabd212be07d65cc908ce40e7",
+          "src/machine.c": "61427514cb29fc764aaca29d1370c4e590be83ef170942c8337d1b78ea5daa93"
+        },
+        "status": "Withdrawn research candidate; retained for review and reproducibility only. Not enabled in production.",
+        "git_apply_check_on_temporary_baseline": "passed",
+        "applied_source_hashes_equal_frozen_candidate": true,
+        "compiled_or_benchmarked_during_archival": false
+      }
+    },
+    "v4": {
+      "artifact": {
+        "bytes": 102436,
+        "sha256": "43752dfd4b1b49e0aaf0ed7bd89d0adf0cea52bc665d7679109798e829b6924c"
+      },
+      "change": "only noinline cold CPU transaction extracted; original void cpu_step, machine loop, headers and profiling tool restored",
+      "cpu_source_sha256": "95e5a23e222e01843dda1f65ecbed8dec3116de55a992d015c4d4e805f771c77",
+      "reconstruction_patch": {
+        "path": "cold-rollback-v4-r18.patch",
+        "bytes": 1964,
+        "sha256": "d032050dd7bcc67ad1a6ec3bdee5f212352b7d833010b90c25e289d14e00417e",
+        "scope": "Core source differences only, relative to the restored r17 baseline.",
+        "baseline_commit": "9377548a7c8fb3a41a2b1388a83db649bb2be639",
+        "baseline_source_sha256": {
+          "src/cpu.c": "a743894494e43e8537a2d8dbdcdc058917dbf5ba8561230e72c7ffcd272c4fe0"
+        },
+        "candidate_source_sha256": {
+          "src/cpu.c": "95e5a23e222e01843dda1f65ecbed8dec3116de55a992d015c4d4e805f771c77"
+        },
+        "status": "Withdrawn research candidate; retained for review and reproducibility only. Not enabled in production.",
+        "git_apply_check_on_temporary_baseline": "passed",
+        "applied_source_hashes_equal_frozen_candidate": true,
+        "compiled_or_benchmarked_during_archival": false
+      }
+    }
+  },
+  "method": {
+    "timing_scope": "Fixed guest work from saved original-ROM sessions through the full expected result and completed contact releases. This is host throughput, not production UI input-to-display latency or physical-calculator timing.",
+    "node_pairs_per_scene_final": 5,
+    "chrome_pairs_per_scene_final": 4,
+    "warmups_per_variant_per_scene": 2,
+    "all_final_timed_replays": 216,
+    "engine_switches_final": [],
+    "guest_timebase_and_contacts_unchanged": true,
+    "aggregation": "Per scene median(baseline)/median(candidate); aggregate sum(scene baseline medians)/sum(scene candidate medians). Node and Chrome remain separate.",
+    "paired_estimator": "median(candidate_i/baseline_i)-1, retained alongside ratio-of-medians elapsed change.",
+    "fixture_migration": "Existing v1 sessions were imported and exported through the baseline core to v2. Browser comparisons then used identical wire versions and compared every final checkpoint byte.",
+    "standalone_multiplication": "Both 7*8 fixtures start from HOME rather than after 1+1, so complete LCD hashes include their own distinct screen history.",
+    "source_order": [
+      "machine",
+      "cpu",
+      "thumb",
+      "mmu",
+      "bus",
+      "soc",
+      "checkpoint",
+      "scheduler",
+      "watchdog",
+      "gpio",
+      "interrupt",
+      "rtc",
+      "keyboard",
+      "nor",
+      "sram",
+      "lcd",
+      "adc",
+      "usb",
+      "sdi",
+      "app/wasm.c"
+    ],
+    "compiler": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+    "c_flags": [
+      "--target=wasm32",
+      "-std=c17",
+      "-O3",
+      "-flto",
+      "-mbulk-memory",
+      "-ffreestanding",
+      "-nostdlib",
+      "-fno-builtin",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Werror"
+    ],
+    "linker_flags": [
+      "--no-entry",
+      "--export-memory",
+      "--stack-first",
+      "-z,stack-size=524288",
+      "--initial-memory=16777216",
+      "--max-memory=16777216"
+    ]
+  },
+  "experiments": [
+    {
+      "variant": "v1",
+      "engine": "node",
+      "report_identity": {
+        "bytes": 7516,
+        "sha256": "e6d4a459c1b48242651527f5ad72dd4923ff8487c468204851e5dbd8834f2977"
+      },
+      "team_other_cpu_work_paused": false,
+      "exclusive_host_claim": false,
+      "production_source_order": false,
+      "selection_evidence": false,
+      "isolation_note": "Exploratory run without coordinated isolation; other team original-ROM probes overlapped this phase. Not used to claim a final speedup.",
+      "statistics": {
+        "scenes": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "baseline_median_ms": 352.03520100000014,
+            "candidate_median_ms": 353.75598100000025,
+            "median_speedup": 0.9951356864832764,
+            "ratio_of_medians_elapsed_change": 0.0048880907224959635,
+            "median_of_paired_elapsed_changes": 0.000782748427479385,
+            "candidate_slower_pairs": 2,
+            "pairs": 3,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "baseline_median_ms": 411.3565120000003,
+            "candidate_median_ms": 320.93605000000025,
+            "median_speedup": 1.2817398107816182,
+            "ratio_of_medians_elapsed_change": -0.21981045482999417,
+            "median_of_paired_elapsed_changes": -0.03304161622218216,
+            "candidate_slower_pairs": 0,
+            "pairs": 3,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "baseline_median_ms": 451.4385490000004,
+            "candidate_median_ms": 425.37931299999946,
+            "median_speedup": 1.0612611737421302,
+            "ratio_of_medians_elapsed_change": -0.0577248798484884,
+            "median_of_paired_elapsed_changes": -0.06899905872646528,
+            "candidate_slower_pairs": 1,
+            "pairs": 3,
+            "chrome_rollback_threshold": false
+          }
+        ],
+        "baseline_sum_of_scene_medians_ms": 1214.8302620000009,
+        "candidate_sum_of_scene_medians_ms": 1100.071344,
+        "aggregate_speedup": 1.1043195231163125,
+        "aggregate_elapsed_change": -0.09446498131440262,
+        "all_scenes_avoid_chrome_rollback_threshold": true
+      },
+      "complete_original_report": {
+        "schema": "orchard-scene-throughput-v1",
+        "passed": true,
+        "generated_at": "2026-10-23T03:20:30.810Z",
+        "node": "v24.19.0",
+        "exec_argv": [
+          "--no-liftoff"
+        ],
+        "cpu_affinity": "0-8",
+        "platform": "linux",
+        "architecture": "x64",
+        "baseline_wasm_sha256": "a236fd36a60f25edb7446750c8170dcd78cc5d6bdf2eb42669e7264395b1c7c4",
+        "candidate_wasm_sha256": "3adf6fc4bf88f1360b7894fd0b185612744657ddb38d9de595f86a60b7c70ad2",
+        "fixture_sha256": "4aa061effafd53d9c342b97a1ba2d99a1f20254029981e3b374f980d9dd17312",
+        "probe_sha256": "fa7ab8bc89fe162ff9c9bfe9e91240b88ec400b1e5319aeb23a30c5da48ff6ec",
+        "checkpoint_equivalence_sha256": "91a261065838748796b07b84c9fe3fc91b7210805f5de57307424cba3a7cbc9b",
+        "checkpoint_comparison": "Validate each wire checksum and exact schema layout, then migrate v1 to v2 by inserting only the documented 52-byte SDI reset state. Compare every canonical byte, including SDI, CPU, peripheral state, RAM and boot SRAM. Raw wire hashes are retained separately.",
+        "runner": "run",
+        "quantum": 1024,
+        "result_sample_ticks": 12000,
+        "repeats": 3,
+        "process_cpu_measurement": "process.cpuUsage user plus system time; may include V8 background work. exec_argv records engine switches. --no-liftoff requests optimizing WASM compilation up front for a separate steady-state experiment; default-engine browser measurements are still required.",
+        "measurement": "Node/V8 execution from exact private scene checkpoints to the baseline first full LCD result, including all key releases and their final gap. Each variant executes the complete workload twice before alternating timed replays; the first baseline replay locates the result. Loading, explicit WASM compilation, restore, LCD sampling and final checkpoint hashing are outside timed intervals. JS key scheduling, UART draining and incremental UART hashing are included. This is host execution throughput, not browser latency or real-calculator calibration.",
+        "cases": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "c63cbb85ee084cbb779454a979d06b1bbffeac1e2377ff14799aaa533b264dd3",
+            "final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "pixel_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+            "candidate_final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "canonical_final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 13104000,
+            "measured_ticks": 13104000,
+            "instructions": 13103802,
+            "baseline_ms": [
+              378.15204500000027,
+              350.79311199999984,
+              352.03520100000014
+            ],
+            "candidate_ms": [
+              353.75598100000025,
+              364.33679299999994,
+              352.3107560000003
+            ],
+            "baseline_process_cpu_ms": [
+              378.357,
+              350.805,
+              352.149
+            ],
+            "candidate_process_cpu_ms": [
+              353.782,
+              364.351,
+              352.314
+            ],
+            "speedup": 0.9951356864832764,
+            "process_cpu_speedup": 0.9953841631287065,
+            "events": [
+              [
+                0,
+                26,
+                1
+              ],
+              [
+                1500000,
+                26,
+                0
+              ],
+              [
+                2100000,
+                5,
+                1
+              ],
+              [
+                3600000,
+                5,
+                0
+              ],
+              [
+                4200000,
+                26,
+                1
+              ],
+              [
+                5700000,
+                26,
+                0
+              ],
+              [
+                6300000,
+                6,
+                1
+              ],
+              [
+                7800000,
+                6,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "c63cbb85ee084cbb779454a979d06b1bbffeac1e2377ff14799aaa533b264dd3",
+            "final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "pixel_sha256": "6f7de6bb96994c41e97f2e1cefc0f453414714e02e56a05ca84384763c7f1a60",
+            "candidate_final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "canonical_final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 12264000,
+            "measured_ticks": 12264000,
+            "instructions": 12263844,
+            "baseline_ms": [
+              478.6381739999997,
+              318.79284499999994,
+              411.3565120000003
+            ],
+            "candidate_ms": [
+              320.93605000000025,
+              317.86507900000015,
+              397.7646280000008
+            ],
+            "baseline_process_cpu_ms": [
+              478.587,
+              318.772,
+              411.372
+            ],
+            "candidate_process_cpu_ms": [
+              320.957,
+              317.875,
+              397.768
+            ],
+            "speedup": 1.2817398107816182,
+            "process_cpu_speedup": 1.2817044027704647,
+            "events": [
+              [
+                0,
+                49,
+                1
+              ],
+              [
+                1500000,
+                49,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "2a3daff451d69ffaee12d2b10e2b9480d03ffb4e34142616444d17d2d2afb12b",
+            "final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "pixel_sha256": "b0b7cde04193b91d9c95e6679590b8f4911a0c05a4f9082f75a1b184df6d71e0",
+            "candidate_final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "canonical_final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 16164000,
+            "measured_ticks": 16164000,
+            "instructions": 16163798,
+            "baseline_ms": [
+              488.71234800000093,
+              451.4385490000004,
+              424.9922599999991
+            ],
+            "candidate_ms": [
+              454.99165600000015,
+              399.2527769999997,
+              425.37931299999946
+            ],
+            "baseline_process_cpu_ms": [
+              488.72,
+              451.437,
+              425.21
+            ],
+            "candidate_process_cpu_ms": [
+              454.992,
+              399.26,
+              424.934
+            ],
+            "speedup": 1.0612611737421302,
+            "process_cpu_speedup": 1.0623696856453002,
+            "events": [
+              [
+                0,
+                40,
+                1
+              ],
+              [
+                1500000,
+                40,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          }
+        ]
+      }
+    },
+    {
+      "variant": "v2",
+      "engine": "node",
+      "report_identity": {
+        "bytes": 14825,
+        "sha256": "5a1c1fa8a202798c51ce27c55ede22845b4fecb3f4fae247afe4c85c1aabe0ee"
+      },
+      "team_other_cpu_work_paused": false,
+      "exclusive_host_claim": false,
+      "production_source_order": false,
+      "selection_evidence": false,
+      "isolation_note": "Exploratory run without coordinated isolation; other team original-ROM probes overlapped this phase. Not used to claim a final speedup.",
+      "statistics": {
+        "scenes": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "baseline_median_ms": 401.27751999999987,
+            "candidate_median_ms": 391.4247839999998,
+            "median_speedup": 1.0251714669145735,
+            "ratio_of_medians_elapsed_change": -0.024553421283106114,
+            "median_of_paired_elapsed_changes": -0.023904129136060437,
+            "candidate_slower_pairs": 1,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "baseline_median_ms": 407.1742770000001,
+            "candidate_median_ms": 416.28191700000025,
+            "median_speedup": 0.978121461374936,
+            "ratio_of_medians_elapsed_change": 0.022367915937872906,
+            "median_of_paired_elapsed_changes": 0.02687731789700054,
+            "candidate_slower_pairs": 3,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "baseline_median_ms": 485.0138559999996,
+            "candidate_median_ms": 538.5777329999983,
+            "median_speedup": 0.900545689659994,
+            "ratio_of_medians_elapsed_change": 0.11043782839886274,
+            "median_of_paired_elapsed_changes": 0.07915885318645421,
+            "candidate_slower_pairs": 3,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "7*8",
+            "baseline_median_ms": 368.78570000000036,
+            "candidate_median_ms": 445.6230260000011,
+            "median_speedup": 0.8275732591968877,
+            "ratio_of_medians_elapsed_change": 0.20835223816975734,
+            "median_of_paired_elapsed_changes": 0.2220589953951233,
+            "candidate_slower_pairs": 4,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 4,
+            "expression": "1+1",
+            "baseline_median_ms": 204.59058899999945,
+            "candidate_median_ms": 187.64358100000027,
+            "median_speedup": 1.0903148826604367,
+            "ratio_of_medians_elapsed_change": -0.08283376123424346,
+            "median_of_paired_elapsed_changes": -0.06084451421174797,
+            "candidate_slower_pairs": 1,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 4,
+            "expression": "7*8",
+            "baseline_median_ms": 161.30421899999783,
+            "candidate_median_ms": 195.81719599999997,
+            "median_speedup": 0.8237489980195501,
+            "ratio_of_medians_elapsed_change": 0.2139620229028394,
+            "median_of_paired_elapsed_changes": 0.03576752171229636,
+            "candidate_slower_pairs": 5,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          }
+        ],
+        "baseline_sum_of_scene_medians_ms": 2028.1461609999972,
+        "candidate_sum_of_scene_medians_ms": 2175.3682369999997,
+        "aggregate_speedup": 0.9323231471821832,
+        "aggregate_elapsed_change": 0.07258948039889446,
+        "all_scenes_avoid_chrome_rollback_threshold": true
+      },
+      "complete_original_report": {
+        "schema": "orchard-scene-throughput-v1",
+        "passed": true,
+        "generated_at": "2026-10-23T03:26:03.336Z",
+        "node": "v24.19.0",
+        "exec_argv": [],
+        "cpu_affinity": "0-8",
+        "platform": "linux",
+        "architecture": "x64",
+        "baseline_wasm_sha256": "a236fd36a60f25edb7446750c8170dcd78cc5d6bdf2eb42669e7264395b1c7c4",
+        "candidate_wasm_sha256": "aa56eaaf0cf8df2d8b0734fc62fb5d849a364e641ac89913c647f98aa160a6ac",
+        "fixture_sha256": "92f0f1c5b5af470e70865b3d9201b9927fba02d12d5aa6b0324bc3b89ad1635f",
+        "probe_sha256": "fa7ab8bc89fe162ff9c9bfe9e91240b88ec400b1e5319aeb23a30c5da48ff6ec",
+        "checkpoint_equivalence_sha256": "91a261065838748796b07b84c9fe3fc91b7210805f5de57307424cba3a7cbc9b",
+        "checkpoint_comparison": "Validate each wire checksum and exact schema layout, then migrate v1 to v2 by inserting only the documented 52-byte SDI reset state. Compare every canonical byte, including SDI, CPU, peripheral state, RAM and boot SRAM. Raw wire hashes are retained separately.",
+        "runner": "run",
+        "quantum": 1024,
+        "result_sample_ticks": 12000,
+        "repeats": 5,
+        "process_cpu_measurement": "process.cpuUsage user plus system time; may include V8 background work. exec_argv records engine switches. --no-liftoff requests optimizing WASM compilation up front for a separate steady-state experiment; default-engine browser measurements are still required.",
+        "measurement": "Node/V8 execution from exact private scene checkpoints to the baseline first full LCD result, including all key releases and their final gap. Each variant executes the complete workload twice before alternating timed replays; the first baseline replay locates the result. Loading, explicit WASM compilation, restore, LCD sampling and final checkpoint hashing are outside timed intervals. JS key scheduling, UART draining and incremental UART hashing are included. This is host execution throughput, not browser latency or real-calculator calibration.",
+        "cases": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "pixel_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+            "candidate_final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "canonical_final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 13104000,
+            "measured_ticks": 13104000,
+            "instructions": 13103802,
+            "baseline_ms": [
+              401.27751999999987,
+              401.010593,
+              393.55886299999975,
+              415.03395999999975,
+              467.5653970000003
+            ],
+            "candidate_ms": [
+              388.85533099999975,
+              391.4247839999998,
+              474.9368879999997,
+              407.4680019999996,
+              379.8853140000001
+            ],
+            "baseline_process_cpu_ms": [
+              397.725,
+              400.79,
+              393.278,
+              414.594,
+              467.564
+            ],
+            "candidate_process_cpu_ms": [
+              390.5,
+              391.578,
+              474.588,
+              407.132,
+              380.02
+            ],
+            "speedup": 1.0251714669145735,
+            "process_cpu_speedup": 1.023525325733315,
+            "events": [
+              [
+                0,
+                26,
+                1
+              ],
+              [
+                1500000,
+                26,
+                0
+              ],
+              [
+                2100000,
+                5,
+                1
+              ],
+              [
+                3600000,
+                5,
+                0
+              ],
+              [
+                4200000,
+                26,
+                1
+              ],
+              [
+                5700000,
+                26,
+                0
+              ],
+              [
+                6300000,
+                6,
+                1
+              ],
+              [
+                7800000,
+                6,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "pixel_sha256": "6f7de6bb96994c41e97f2e1cefc0f453414714e02e56a05ca84384763c7f1a60",
+            "candidate_final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "canonical_final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 12264000,
+            "measured_ticks": 12264000,
+            "instructions": 12263844,
+            "baseline_ms": [
+              473.0030569999999,
+              379.5700909999996,
+              407.1742770000001,
+              426.1892630000002,
+              378.94624400000066
+            ],
+            "candidate_ms": [
+              407.832257,
+              389.77191700000003,
+              427.9973460000001,
+              416.28191700000025,
+              483.86613000000034
+            ],
+            "baseline_process_cpu_ms": [
+              472.609,
+              373.732,
+              406.262,
+              426.189,
+              375.316
+            ],
+            "candidate_process_cpu_ms": [
+              415.61,
+              383.885,
+              427.987,
+              416.243,
+              483.507
+            ],
+            "speedup": 0.978121461374936,
+            "process_cpu_speedup": 0.9760212183748436,
+            "events": [
+              [
+                0,
+                49,
+                1
+              ],
+              [
+                1500000,
+                49,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "e1f1116405f312f8e4cac59ceb759f3cd87f05e16c22ea6d23d968d2300ff3a8",
+            "final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "pixel_sha256": "b0b7cde04193b91d9c95e6679590b8f4911a0c05a4f9082f75a1b184df6d71e0",
+            "candidate_final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "canonical_final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 16164000,
+            "measured_ticks": 16164000,
+            "instructions": 16163798,
+            "baseline_ms": [
+              485.0138559999996,
+              452.80630400000155,
+              499.0717829999994,
+              568.6003229999988,
+              482.25551500000074
+            ],
+            "candidate_ms": [
+              467.3485010000004,
+              592.4504949999991,
+              538.5777329999983,
+              511.1666359999981,
+              601.759062000001
+            ],
+            "baseline_process_cpu_ms": [
+              485.004,
+              452.763,
+              498.841,
+              568.602,
+              481.98
+            ],
+            "candidate_process_cpu_ms": [
+              467.051,
+              592.164,
+              538.57,
+              510.881,
+              601.728
+            ],
+            "speedup": 0.900545689659994,
+            "process_cpu_speedup": 0.9005403197355961,
+            "events": [
+              [
+                0,
+                40,
+                1
+              ],
+              [
+                1500000,
+                40,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "7*8",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "cf7ec78dd8c0bae386a5587ae1feae8f9b8e3b853ca9ca21d68458da7bc8d86e",
+            "pixel_sha256": "b569165e46546a91191c44ad41a7bfb86be4204cd65ada8fe109b85a39993700",
+            "candidate_final_checkpoint_sha256": "cf7ec78dd8c0bae386a5587ae1feae8f9b8e3b853ca9ca21d68458da7bc8d86e",
+            "canonical_final_checkpoint_sha256": "cf7ec78dd8c0bae386a5587ae1feae8f9b8e3b853ca9ca21d68458da7bc8d86e",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 13104000,
+            "measured_ticks": 13104000,
+            "instructions": 13103802,
+            "baseline_ms": [
+              372.48642800000016,
+              363.71434899999804,
+              368.78570000000036,
+              364.39424900000085,
+              507.8042800000003
+            ],
+            "candidate_ms": [
+              455.20038999999815,
+              445.6230260000011,
+              479.89373599999817,
+              398.1809080000021,
+              433.37785200000144
+            ],
+            "baseline_process_cpu_ms": [
+              372.506,
+              363.719,
+              368.701,
+              364.387,
+              507.785
+            ],
+            "candidate_process_cpu_ms": [
+              455.123,
+              445.653,
+              479.893,
+              398.189,
+              433.384
+            ],
+            "speedup": 0.8275732591968877,
+            "process_cpu_speedup": 0.8273275395879754,
+            "events": [
+              [
+                0,
+                24,
+                1
+              ],
+              [
+                1500000,
+                24,
+                0
+              ],
+              [
+                2100000,
+                3,
+                1
+              ],
+              [
+                3600000,
+                3,
+                0
+              ],
+              [
+                4200000,
+                17,
+                1
+              ],
+              [
+                5700000,
+                17,
+                0
+              ],
+              [
+                6300000,
+                6,
+                1
+              ],
+              [
+                7800000,
+                6,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 4,
+            "expression": "1+1",
+            "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+            "initial_checkpoint_sha256": "42e4f6c4d8131d5ad29e73bc511f33a59e7fe6dae1babf4e3833f8ba60ca7337",
+            "final_checkpoint_sha256": "b02414f4a86cf0ec8cbdf46d3884095d6a6d57252e7d5644a4c0986c263b0b0f",
+            "pixel_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+            "candidate_final_checkpoint_sha256": "b02414f4a86cf0ec8cbdf46d3884095d6a6d57252e7d5644a4c0986c263b0b0f",
+            "canonical_final_checkpoint_sha256": "b02414f4a86cf0ec8cbdf46d3884095d6a6d57252e7d5644a4c0986c263b0b0f",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 600000,
+            "gap_ticks": 360000,
+            "first_result_ticks": 5700000,
+            "measured_ticks": 5700000,
+            "instructions": 5699937,
+            "baseline_ms": [
+              158.86180899999817,
+              208.3924810000026,
+              191.06472500000018,
+              204.59058899999945,
+              209.39992100000018
+            ],
+            "candidate_ms": [
+              184.01122000000032,
+              188.7803509999976,
+              180.42121699999916,
+              192.1423739999991,
+              187.64358100000027
+            ],
+            "baseline_process_cpu_ms": [
+              158.874,
+              208.404,
+              191.082,
+              204.611,
+              209.418
+            ],
+            "candidate_process_cpu_ms": [
+              184.025,
+              188.801,
+              180.435,
+              192.152,
+              187.654
+            ],
+            "speedup": 1.0903148826604367,
+            "process_cpu_speedup": 1.090363115094802,
+            "events": [
+              [
+                0,
+                26,
+                1
+              ],
+              [
+                600000,
+                26,
+                0
+              ],
+              [
+                960000,
+                5,
+                1
+              ],
+              [
+                1560000,
+                5,
+                0
+              ],
+              [
+                1920000,
+                26,
+                1
+              ],
+              [
+                2520000,
+                26,
+                0
+              ],
+              [
+                2880000,
+                6,
+                1
+              ],
+              [
+                3480000,
+                6,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 4,
+            "expression": "7*8",
+            "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+            "initial_checkpoint_sha256": "42e4f6c4d8131d5ad29e73bc511f33a59e7fe6dae1babf4e3833f8ba60ca7337",
+            "final_checkpoint_sha256": "2bfe36136c2ecdbac36168ce532d8ee9a49fd8aaa8b4973b10346091866d9b59",
+            "pixel_sha256": "eb10f0f2f928b3beee8a0f16befa3d9d9350ffc426496d1e70e5af515693f918",
+            "candidate_final_checkpoint_sha256": "2bfe36136c2ecdbac36168ce532d8ee9a49fd8aaa8b4973b10346091866d9b59",
+            "canonical_final_checkpoint_sha256": "2bfe36136c2ecdbac36168ce532d8ee9a49fd8aaa8b4973b10346091866d9b59",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 600000,
+            "gap_ticks": 360000,
+            "first_result_ticks": 5700000,
+            "measured_ticks": 5700000,
+            "instructions": 5699937,
+            "baseline_ms": [
+              158.1562750000012,
+              161.30421899999783,
+              159.84907799999928,
+              169.31896499999857,
+              204.94568300000174
+            ],
+            "candidate_ms": [
+              163.81313299999965,
+              164.67556299999706,
+              195.81719599999997,
+              231.04991299999892,
+              210.5470889999997
+            ],
+            "baseline_process_cpu_ms": [
+              158.18,
+              161.32,
+              159.871,
+              169.336,
+              204.941
+            ],
+            "candidate_process_cpu_ms": [
+              163.83,
+              164.7,
+              195.822,
+              231.068,
+              210.514
+            ],
+            "speedup": 0.8237489980195501,
+            "process_cpu_speedup": 0.8238093779044233,
+            "events": [
+              [
+                0,
+                24,
+                1
+              ],
+              [
+                600000,
+                24,
+                0
+              ],
+              [
+                960000,
+                3,
+                1
+              ],
+              [
+                1560000,
+                3,
+                0
+              ],
+              [
+                1920000,
+                17,
+                1
+              ],
+              [
+                2520000,
+                17,
+                0
+              ],
+              [
+                2880000,
+                6,
+                1
+              ],
+              [
+                3480000,
+                6,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          }
+        ]
+      }
+    },
+    {
+      "variant": "v2",
+      "engine": "chrome",
+      "report_identity": {
+        "bytes": 20167,
+        "sha256": "e2a789fb1d1d97f329d2b186dcf9da6a2764e93550f500dc67af1b30a8c02532"
+      },
+      "team_other_cpu_work_paused": false,
+      "exclusive_host_claim": false,
+      "production_source_order": false,
+      "selection_evidence": false,
+      "isolation_note": "Exploratory run without coordinated isolation; other team original-ROM probes overlapped this phase. Not used to claim a final speedup.",
+      "statistics": {
+        "scenes": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "baseline_median_ms": 462.70000000018626,
+            "candidate_median_ms": 446.3000000002794,
+            "median_speedup": 1.0367465830156768,
+            "ratio_of_medians_elapsed_change": -0.03544413226691223,
+            "median_of_paired_elapsed_changes": -0.030365247460142797,
+            "candidate_slower_pairs": 1,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "baseline_median_ms": 365.14999999990687,
+            "candidate_median_ms": 389.70000000018626,
+            "median_speedup": 0.9370028226834292,
+            "ratio_of_medians_elapsed_change": 0.06723264411963759,
+            "median_of_paired_elapsed_changes": 0.048848962084024006,
+            "candidate_slower_pairs": 3,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "baseline_median_ms": 497.60000000009313,
+            "candidate_median_ms": 549.6999999997206,
+            "median_speedup": 0.9052210296531673,
+            "ratio_of_medians_elapsed_change": 0.10470257234649871,
+            "median_of_paired_elapsed_changes": 0.0678503195204807,
+            "candidate_slower_pairs": 3,
+            "pairs": 4,
+            "chrome_rollback_threshold": true
+          },
+          {
+            "model": 1,
+            "expression": "7*8",
+            "baseline_median_ms": 436.10000000009313,
+            "candidate_median_ms": 478.20000000018626,
+            "median_speedup": 0.9119615223754146,
+            "ratio_of_medians_elapsed_change": 0.09653749140124779,
+            "median_of_paired_elapsed_changes": 0.05945671840644984,
+            "candidate_slower_pairs": 3,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 4,
+            "expression": "1+1",
+            "baseline_median_ms": 183.3999999994412,
+            "candidate_median_ms": 218.14999999990687,
+            "median_speedup": 0.8407059362801719,
+            "ratio_of_medians_elapsed_change": 0.18947655398348706,
+            "median_of_paired_elapsed_changes": 0.1545759731196792,
+            "candidate_slower_pairs": 4,
+            "pairs": 4,
+            "chrome_rollback_threshold": true
+          },
+          {
+            "model": 4,
+            "expression": "7*8",
+            "baseline_median_ms": 197.50000000046566,
+            "candidate_median_ms": 182.75,
+            "median_speedup": 1.0807113543117135,
+            "ratio_of_medians_elapsed_change": -0.07468354430597912,
+            "median_of_paired_elapsed_changes": -0.10634126305414304,
+            "candidate_slower_pairs": 1,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          }
+        ],
+        "baseline_sum_of_scene_medians_ms": 2142.4500000001863,
+        "candidate_sum_of_scene_medians_ms": 2264.8000000002794,
+        "aggregate_speedup": 0.9459775697633,
+        "aggregate_elapsed_change": 0.0571075170949531,
+        "all_scenes_avoid_chrome_rollback_threshold": false
+      },
+      "complete_original_report": {
+        "passed": true,
+        "identities": {
+          "baseline_wasm_sha256": "a236fd36a60f25edb7446750c8170dcd78cc5d6bdf2eb42669e7264395b1c7c4",
+          "candidate_wasm_sha256": "aa56eaaf0cf8df2d8b0734fc62fb5d849a364e641ac89913c647f98aa160a6ac",
+          "fixture_sha256": "92f0f1c5b5af470e70865b3d9201b9927fba02d12d5aa6b0324bc3b89ad1635f",
+          "endpoint_report_sha256": "5a1c1fa8a202798c51ce27c55ede22845b4fecb3f4fae247afe4c85c1aabe0ee",
+          "endpoint_source_candidate_sha256": "aa56eaaf0cf8df2d8b0734fc62fb5d849a364e641ac89913c647f98aa160a6ac",
+          "worker_probe_sha256": "6e2d3b0713b3ec49ca84a737ef81e2262ab868d56d081c002ce589fbbc25044a",
+          "driver_sha256": "87b493eb7ac5a2efe9a6d2f3379aff938b574ba0cfbf22d97cfa6a8a4c90a0a9",
+          "node_probe_sha256": "fa7ab8bc89fe162ff9c9bfe9e91240b88ec400b1e5319aeb23a30c5da48ff6ec",
+          "hp48_module_sha256": "d624cbb35b831f3d69c1da3bc1b5fa1f73080c83f871998060b0bd2eed565bbc",
+          "session_module_sha256": "fbd69bf94bdcac8eba4c9055f05e59256bae44964d0b3482421023035cfe5041"
+        },
+        "browser_args": [
+          "--no-sandbox"
+        ],
+        "v8_flags": [],
+        "host_timing_only": true,
+        "cpu_time_available": false,
+        "browser": "156.0.8078.47",
+        "schema": "orchard-default-chrome-fixed-scenes-v1",
+        "performance_sample": true,
+        "measurement_kind": "default-Chrome fixed-workload core throughput; NOT UI latency",
+        "measurement": "Two complete warmups per variant, then four alternating AB/BA timed replays per scene. Production WASM executes in a dedicated WebWorker under default Chrome with no V8 flags. Loading, explicit compilation, restore, LCD inspection and hashes are outside timing. Key scheduling and UART draining/byte capture are inside; WebCrypto UART hashing is outside. No Worker pacing, UI input, snapshot delivery or canvas rendering is timed.",
+        "runner": "run",
+        "quantum": 1024,
+        "result_sample_ticks": 12000,
+        "repeats": 4,
+        "warmups_per_variant": 2,
+        "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+        "worker_time_origin_ms": 1792726018619.1,
+        "cases": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "pixel_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 13104000,
+            "measured_ticks": 13104000,
+            "instructions": 13103802,
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "events": [
+              [
+                0,
+                26,
+                1
+              ],
+              [
+                1500000,
+                26,
+                0
+              ],
+              [
+                2100000,
+                5,
+                1
+              ],
+              [
+                3600000,
+                5,
+                0
+              ],
+              [
+                4200000,
+                26,
+                1
+              ],
+              [
+                5700000,
+                26,
+                0
+              ],
+              [
+                6300000,
+                6,
+                1
+              ],
+              [
+                7800000,
+                6,
+                0
+              ]
+            ],
+            "run_calls": 13104,
+            "baseline_ms": [
+              365.29999999981374,
+              487,
+              462.70000000018626,
+              462.70000000018626
+            ],
+            "candidate_ms": [
+              373.59999999962747,
+              453.40000000037253,
+              458.1000000005588,
+              439.20000000018626
+            ],
+            "baseline_median_ms": 462.70000000018626,
+            "candidate_median_ms": 446.3000000002794,
+            "speedup": 1.0367465830156768,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 405.70000000018626
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 444.79999999981374
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 356.70000000018626
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 397.5
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 365.29999999981374
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 373.59999999962747
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 453.40000000037253
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 487
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 462.70000000018626
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 458.1000000005588
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 439.20000000018626
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 462.70000000018626
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "pixel_sha256": "6f7de6bb96994c41e97f2e1cefc0f453414714e02e56a05ca84384763c7f1a60",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 12264000,
+            "measured_ticks": 12264000,
+            "instructions": 12263844,
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "events": [
+              [
+                0,
+                49,
+                1
+              ],
+              [
+                1500000,
+                49,
+                0
+              ]
+            ],
+            "run_calls": 12264,
+            "baseline_ms": [
+              401.70000000018626,
+              329.90000000037253,
+              330.29999999981374,
+              400
+            ],
+            "candidate_ms": [
+              432.30000000074506,
+              337,
+              441.79999999981374,
+              347.09999999962747
+            ],
+            "baseline_median_ms": 365.14999999990687,
+            "candidate_median_ms": 389.70000000018626,
+            "speedup": 0.9370028226834292,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 336.70000000018626
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 414.09999999962747
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 403.5
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 375.69999999925494
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 401.70000000018626
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 432.30000000074506
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 337
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 329.90000000037253
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 330.29999999981374
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 441.79999999981374
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 347.09999999962747
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 400
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "e1f1116405f312f8e4cac59ceb759f3cd87f05e16c22ea6d23d968d2300ff3a8",
+            "final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "pixel_sha256": "b0b7cde04193b91d9c95e6679590b8f4911a0c05a4f9082f75a1b184df6d71e0",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 16164000,
+            "measured_ticks": 16164000,
+            "instructions": 16163798,
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "events": [
+              [
+                0,
+                40,
+                1
+              ],
+              [
+                1500000,
+                40,
+                0
+              ]
+            ],
+            "run_calls": 16164,
+            "baseline_ms": [
+              477.3999999994412,
+              484.6000000005588,
+              547.5,
+              510.59999999962747
+            ],
+            "candidate_ms": [
+              567.2999999998137,
+              538.5,
+              560.8999999994412,
+              473.29999999981374
+            ],
+            "baseline_median_ms": 497.60000000009313,
+            "candidate_median_ms": 549.6999999997206,
+            "speedup": 0.9052210296531673,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 428.29999999981374
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 471.70000000018626
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 512.2999999998137
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 551
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 477.3999999994412
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 567.2999999998137
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 538.5
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 484.6000000005588
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 547.5
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 560.8999999994412
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 473.29999999981374
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 510.59999999962747
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "7*8",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "cf7ec78dd8c0bae386a5587ae1feae8f9b8e3b853ca9ca21d68458da7bc8d86e",
+            "pixel_sha256": "b569165e46546a91191c44ad41a7bfb86be4204cd65ada8fe109b85a39993700",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 13104000,
+            "measured_ticks": 13104000,
+            "instructions": 13103802,
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "events": [
+              [
+                0,
+                24,
+                1
+              ],
+              [
+                1500000,
+                24,
+                0
+              ],
+              [
+                2100000,
+                3,
+                1
+              ],
+              [
+                3600000,
+                3,
+                0
+              ],
+              [
+                4200000,
+                17,
+                1
+              ],
+              [
+                5700000,
+                17,
+                0
+              ],
+              [
+                6300000,
+                6,
+                1
+              ],
+              [
+                7800000,
+                6,
+                0
+              ]
+            ],
+            "run_calls": 13104,
+            "baseline_ms": [
+              416.59999999962747,
+              430.5,
+              441.70000000018626,
+              518.2000000001863
+            ],
+            "candidate_ms": [
+              510.5,
+              446.79999999981374,
+              477.5,
+              478.90000000037253
+            ],
+            "baseline_median_ms": 436.10000000009313,
+            "candidate_median_ms": 478.20000000018626,
+            "speedup": 0.9119615223754146,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 386.59999999962747
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 387.79999999981374
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 464.90000000037253
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 528.0999999996275
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 416.59999999962747
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 510.5
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 446.79999999981374
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 430.5
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 441.70000000018626
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 477.5
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 478.90000000037253
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 518.2000000001863
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 4,
+            "expression": "1+1",
+            "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+            "initial_checkpoint_sha256": "42e4f6c4d8131d5ad29e73bc511f33a59e7fe6dae1babf4e3833f8ba60ca7337",
+            "final_checkpoint_sha256": "b02414f4a86cf0ec8cbdf46d3884095d6a6d57252e7d5644a4c0986c263b0b0f",
+            "pixel_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 5700000,
+            "measured_ticks": 5700000,
+            "instructions": 5699937,
+            "hold_ticks": 600000,
+            "gap_ticks": 360000,
+            "events": [
+              [
+                0,
+                26,
+                1
+              ],
+              [
+                600000,
+                26,
+                0
+              ],
+              [
+                960000,
+                5,
+                1
+              ],
+              [
+                1560000,
+                5,
+                0
+              ],
+              [
+                1920000,
+                26,
+                1
+              ],
+              [
+                2520000,
+                26,
+                0
+              ],
+              [
+                2880000,
+                6,
+                1
+              ],
+              [
+                3480000,
+                6,
+                0
+              ]
+            ],
+            "run_calls": 5700,
+            "baseline_ms": [
+              184.59999999962747,
+              212.3999999994412,
+              172.5,
+              182.19999999925494
+            ],
+            "candidate_ms": [
+              216.20000000018626,
+              220.09999999962747,
+              196.29999999981374,
+              233.90000000037253
+            ],
+            "baseline_median_ms": 183.3999999994412,
+            "candidate_median_ms": 218.14999999990687,
+            "speedup": 0.8407059362801719,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 231.90000000037253
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 241.20000000018626
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 276.20000000018626
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 225.79999999981374
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 184.59999999962747
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 216.20000000018626
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 220.09999999962747
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 212.3999999994412
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 172.5
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 196.29999999981374
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 233.90000000037253
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 182.19999999925494
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 4,
+            "expression": "7*8",
+            "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+            "initial_checkpoint_sha256": "42e4f6c4d8131d5ad29e73bc511f33a59e7fe6dae1babf4e3833f8ba60ca7337",
+            "final_checkpoint_sha256": "2bfe36136c2ecdbac36168ce532d8ee9a49fd8aaa8b4973b10346091866d9b59",
+            "pixel_sha256": "eb10f0f2f928b3beee8a0f16befa3d9d9350ffc426496d1e70e5af515693f918",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 5700000,
+            "measured_ticks": 5700000,
+            "instructions": 5699937,
+            "hold_ticks": 600000,
+            "gap_ticks": 360000,
+            "events": [
+              [
+                0,
+                24,
+                1
+              ],
+              [
+                600000,
+                24,
+                0
+              ],
+              [
+                960000,
+                3,
+                1
+              ],
+              [
+                1560000,
+                3,
+                0
+              ],
+              [
+                1920000,
+                17,
+                1
+              ],
+              [
+                2520000,
+                17,
+                0
+              ],
+              [
+                2880000,
+                6,
+                1
+              ],
+              [
+                3480000,
+                6,
+                0
+              ]
+            ],
+            "run_calls": 5700,
+            "baseline_ms": [
+              181.79999999981374,
+              216.79999999981374,
+              195.6000000005588,
+              199.40000000037253
+            ],
+            "candidate_ms": [
+              223.20000000018626,
+              185.79999999981374,
+              179.70000000018626,
+              173.20000000018626
+            ],
+            "baseline_median_ms": 197.50000000046566,
+            "candidate_median_ms": 182.75,
+            "speedup": 1.0807113543117135,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 202.09999999962747
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 216.5
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 155.09999999962747
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 168.59999999962747
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 181.79999999981374
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 223.20000000018626
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 185.79999999981374
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 216.79999999981374
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 195.6000000005588
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 179.70000000018626
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 173.20000000018626
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 199.40000000037253
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          }
+        ]
+      }
+    },
+    {
+      "variant": "v3",
+      "engine": "node",
+      "report_identity": {
+        "bytes": 14834,
+        "sha256": "8b5ef2af7ed5cd1c79749e6200865bdd570211d031b5e3a420a20b6541a17a3f"
+      },
+      "team_other_cpu_work_paused": true,
+      "exclusive_host_claim": false,
+      "production_source_order": true,
+      "selection_evidence": true,
+      "isolation_note": "Other team builds and ROM/browser probes were paused; unrelated shared-host activity is not controlled.",
+      "statistics": {
+        "scenes": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "baseline_median_ms": 402.16831399999955,
+            "candidate_median_ms": 386.90411200000017,
+            "median_speedup": 1.0394521575929887,
+            "ratio_of_medians_elapsed_change": -0.03795476040412127,
+            "median_of_paired_elapsed_changes": -0.04865535611936489,
+            "candidate_slower_pairs": 1,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "baseline_median_ms": 364.2293789999985,
+            "candidate_median_ms": 358.2390240000004,
+            "median_speedup": 1.0167216707245106,
+            "ratio_of_medians_elapsed_change": -0.016446655172201563,
+            "median_of_paired_elapsed_changes": -0.05445701567087935,
+            "candidate_slower_pairs": 1,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "baseline_median_ms": 472.4744720000017,
+            "candidate_median_ms": 461.49811299999783,
+            "median_speedup": 1.0237841904242064,
+            "ratio_of_medians_elapsed_change": -0.02323164456598159,
+            "median_of_paired_elapsed_changes": -0.03440326764574564,
+            "candidate_slower_pairs": 1,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "7*8",
+            "baseline_median_ms": 404.1400199999989,
+            "candidate_median_ms": 384.0729500000016,
+            "median_speedup": 1.0522480690191727,
+            "ratio_of_medians_elapsed_change": -0.04965375614124379,
+            "median_of_paired_elapsed_changes": -0.041927951357236926,
+            "candidate_slower_pairs": 0,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 4,
+            "expression": "1+1",
+            "baseline_median_ms": 170.89582599999994,
+            "candidate_median_ms": 161.8658069999983,
+            "median_speedup": 1.055787069346905,
+            "ratio_of_medians_elapsed_change": -0.052839318615082065,
+            "median_of_paired_elapsed_changes": -0.053065005555955835,
+            "candidate_slower_pairs": 0,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 4,
+            "expression": "7*8",
+            "baseline_median_ms": 170.14361700000154,
+            "candidate_median_ms": 161.10764199999903,
+            "median_speedup": 1.0560865697482096,
+            "ratio_of_medians_elapsed_change": -0.053107928227495216,
+            "median_of_paired_elapsed_changes": -0.05607494520352185,
+            "candidate_slower_pairs": 0,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          }
+        ],
+        "baseline_sum_of_scene_medians_ms": 1984.0516280000002,
+        "candidate_sum_of_scene_medians_ms": 1913.6876479999974,
+        "aggregate_speedup": 1.0367687903893514,
+        "aggregate_elapsed_change": -0.035464792854676075,
+        "all_scenes_avoid_chrome_rollback_threshold": true
+      },
+      "complete_original_report": {
+        "schema": "orchard-scene-throughput-v1",
+        "passed": true,
+        "generated_at": "2026-10-23T03:36:28.084Z",
+        "node": "v24.19.0",
+        "exec_argv": [],
+        "cpu_affinity": "0-8",
+        "platform": "linux",
+        "architecture": "x64",
+        "baseline_wasm_sha256": "d1dd7c8e443431afa5d76a303e0cbfeafd28544eef80071b6098f408d7e0f6d2",
+        "candidate_wasm_sha256": "7017475e52a9484c10d0065341274dfbd727fd7b8815f44fed05b8445d7cf3de",
+        "fixture_sha256": "8b763ca74244fdec4bc8854dcd0b263c355c6095067d0bb54add7cd9c7742984",
+        "probe_sha256": "fa7ab8bc89fe162ff9c9bfe9e91240b88ec400b1e5319aeb23a30c5da48ff6ec",
+        "checkpoint_equivalence_sha256": "91a261065838748796b07b84c9fe3fc91b7210805f5de57307424cba3a7cbc9b",
+        "checkpoint_comparison": "Validate each wire checksum and exact schema layout, then migrate v1 to v2 by inserting only the documented 52-byte SDI reset state. Compare every canonical byte, including SDI, CPU, peripheral state, RAM and boot SRAM. Raw wire hashes are retained separately.",
+        "runner": "run",
+        "quantum": 1024,
+        "result_sample_ticks": 12000,
+        "repeats": 5,
+        "process_cpu_measurement": "process.cpuUsage user plus system time; may include V8 background work. exec_argv records engine switches. --no-liftoff requests optimizing WASM compilation up front for a separate steady-state experiment; default-engine browser measurements are still required.",
+        "measurement": "Node/V8 execution from exact private scene checkpoints to the baseline first full LCD result, including all key releases and their final gap. Each variant executes the complete workload twice before alternating timed replays; the first baseline replay locates the result. Loading, explicit WASM compilation, restore, LCD sampling and final checkpoint hashing are outside timed intervals. JS key scheduling, UART draining and incremental UART hashing are included. This is host execution throughput, not browser latency or real-calculator calibration.",
+        "cases": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "pixel_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+            "candidate_final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "canonical_final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 13104000,
+            "measured_ticks": 13104000,
+            "instructions": 13103802,
+            "baseline_ms": [
+              464.9830850000003,
+              395.378072,
+              396.6412700000001,
+              427.4684979999993,
+              402.16831399999955
+            ],
+            "candidate_ms": [
+              364.0073809999999,
+              410.5602349999999,
+              386.90411200000017,
+              406.6698659999993,
+              376.7376380000005
+            ],
+            "baseline_process_cpu_ms": [
+              465.245,
+              395.865,
+              396.65,
+              428.056,
+              402.482
+            ],
+            "candidate_process_cpu_ms": [
+              365.817,
+              410.943,
+              386.903,
+              407.188,
+              377.099
+            ],
+            "speedup": 1.0394521575929887,
+            "process_cpu_speedup": 1.0402659064416662,
+            "events": [
+              [
+                0,
+                26,
+                1
+              ],
+              [
+                1500000,
+                26,
+                0
+              ],
+              [
+                2100000,
+                5,
+                1
+              ],
+              [
+                3600000,
+                5,
+                0
+              ],
+              [
+                4200000,
+                26,
+                1
+              ],
+              [
+                5700000,
+                26,
+                0
+              ],
+              [
+                6300000,
+                6,
+                1
+              ],
+              [
+                7800000,
+                6,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "pixel_sha256": "6f7de6bb96994c41e97f2e1cefc0f453414714e02e56a05ca84384763c7f1a60",
+            "candidate_final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "canonical_final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 12264000,
+            "measured_ticks": 12264000,
+            "instructions": 12263844,
+            "baseline_ms": [
+              363.32988000000023,
+              364.2293789999985,
+              360.9519629999995,
+              373.7073100000016,
+              397.64730299999974
+            ],
+            "candidate_ms": [
+              338.3542230000003,
+              344.39453400000093,
+              362.9214929999998,
+              364.5583509999997,
+              358.2390240000004
+            ],
+            "baseline_process_cpu_ms": [
+              363.339,
+              364.248,
+              360.919,
+              373.631,
+              397.663
+            ],
+            "candidate_process_cpu_ms": [
+              339.297,
+              347.182,
+              362.909,
+              364.514,
+              358.228
+            ],
+            "speedup": 1.0167216707245106,
+            "process_cpu_speedup": 1.0168049398706969,
+            "events": [
+              [
+                0,
+                49,
+                1
+              ],
+              [
+                1500000,
+                49,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "e1f1116405f312f8e4cac59ceb759f3cd87f05e16c22ea6d23d968d2300ff3a8",
+            "final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "pixel_sha256": "b0b7cde04193b91d9c95e6679590b8f4911a0c05a4f9082f75a1b184df6d71e0",
+            "candidate_final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "canonical_final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 16164000,
+            "measured_ticks": 16164000,
+            "instructions": 16163798,
+            "baseline_ms": [
+              508.42163400000027,
+              475.96714299999985,
+              466.4057470000007,
+              472.4744720000017,
+              460.4565229999971
+            ],
+            "candidate_ms": [
+              488.6116600000005,
+              446.189957999999,
+              472.06242100000054,
+              461.49811299999783,
+              444.61531399999876
+            ],
+            "baseline_process_cpu_ms": [
+              508.407,
+              476.964,
+              466.357,
+              472.48,
+              460.442
+            ],
+            "candidate_process_cpu_ms": [
+              488.499,
+              446.192,
+              470.901,
+              461.509,
+              444.619
+            ],
+            "speedup": 1.0237841904242064,
+            "process_cpu_speedup": 1.0237720174471137,
+            "events": [
+              [
+                0,
+                40,
+                1
+              ],
+              [
+                1500000,
+                40,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "7*8",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "cf7ec78dd8c0bae386a5587ae1feae8f9b8e3b853ca9ca21d68458da7bc8d86e",
+            "pixel_sha256": "b569165e46546a91191c44ad41a7bfb86be4204cd65ada8fe109b85a39993700",
+            "candidate_final_checkpoint_sha256": "cf7ec78dd8c0bae386a5587ae1feae8f9b8e3b853ca9ca21d68458da7bc8d86e",
+            "canonical_final_checkpoint_sha256": "cf7ec78dd8c0bae386a5587ae1feae8f9b8e3b853ca9ca21d68458da7bc8d86e",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 13104000,
+            "measured_ticks": 13104000,
+            "instructions": 13103802,
+            "baseline_ms": [
+              396.8871709999985,
+              404.1400199999989,
+              394.0478980000007,
+              413.771047000002,
+              446.07224099999803
+            ],
+            "candidate_ms": [
+              380.24650499999916,
+              370.3862760000011,
+              384.0729500000016,
+              411.8087099999975,
+              425.8954799999992
+            ],
+            "baseline_process_cpu_ms": [
+              396.843,
+              404.009,
+              394.063,
+              413.786,
+              445.885
+            ],
+            "candidate_process_cpu_ms": [
+              380.248,
+              370.404,
+              384.057,
+              411.797,
+              425.91
+            ],
+            "speedup": 1.0522480690191727,
+            "process_cpu_speedup": 1.0519506219128931,
+            "events": [
+              [
+                0,
+                24,
+                1
+              ],
+              [
+                1500000,
+                24,
+                0
+              ],
+              [
+                2100000,
+                3,
+                1
+              ],
+              [
+                3600000,
+                3,
+                0
+              ],
+              [
+                4200000,
+                17,
+                1
+              ],
+              [
+                5700000,
+                17,
+                0
+              ],
+              [
+                6300000,
+                6,
+                1
+              ],
+              [
+                7800000,
+                6,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 4,
+            "expression": "1+1",
+            "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+            "initial_checkpoint_sha256": "42e4f6c4d8131d5ad29e73bc511f33a59e7fe6dae1babf4e3833f8ba60ca7337",
+            "final_checkpoint_sha256": "b02414f4a86cf0ec8cbdf46d3884095d6a6d57252e7d5644a4c0986c263b0b0f",
+            "pixel_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+            "candidate_final_checkpoint_sha256": "b02414f4a86cf0ec8cbdf46d3884095d6a6d57252e7d5644a4c0986c263b0b0f",
+            "canonical_final_checkpoint_sha256": "b02414f4a86cf0ec8cbdf46d3884095d6a6d57252e7d5644a4c0986c263b0b0f",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 600000,
+            "gap_ticks": 360000,
+            "first_result_ticks": 5700000,
+            "measured_ticks": 5700000,
+            "instructions": 5699937,
+            "baseline_ms": [
+              188.60224000000017,
+              169.99308500000188,
+              170.62540799999988,
+              170.89582599999994,
+              171.789292999998
+            ],
+            "candidate_ms": [
+              168.63634100000127,
+              160.97240100000272,
+              161.8658069999983,
+              159.26393699999971,
+              164.47488000000158
+            ],
+            "baseline_process_cpu_ms": [
+              188.622,
+              170.011,
+              170.644,
+              170.917,
+              171.808
+            ],
+            "candidate_process_cpu_ms": [
+              168.617,
+              160.975,
+              161.886,
+              159.238,
+              164.484
+            ],
+            "speedup": 1.055787069346905,
+            "process_cpu_speedup": 1.0557861705150537,
+            "events": [
+              [
+                0,
+                26,
+                1
+              ],
+              [
+                600000,
+                26,
+                0
+              ],
+              [
+                960000,
+                5,
+                1
+              ],
+              [
+                1560000,
+                5,
+                0
+              ],
+              [
+                1920000,
+                26,
+                1
+              ],
+              [
+                2520000,
+                26,
+                0
+              ],
+              [
+                2880000,
+                6,
+                1
+              ],
+              [
+                3480000,
+                6,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 4,
+            "expression": "7*8",
+            "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+            "initial_checkpoint_sha256": "42e4f6c4d8131d5ad29e73bc511f33a59e7fe6dae1babf4e3833f8ba60ca7337",
+            "final_checkpoint_sha256": "2bfe36136c2ecdbac36168ce532d8ee9a49fd8aaa8b4973b10346091866d9b59",
+            "pixel_sha256": "eb10f0f2f928b3beee8a0f16befa3d9d9350ffc426496d1e70e5af515693f918",
+            "candidate_final_checkpoint_sha256": "2bfe36136c2ecdbac36168ce532d8ee9a49fd8aaa8b4973b10346091866d9b59",
+            "canonical_final_checkpoint_sha256": "2bfe36136c2ecdbac36168ce532d8ee9a49fd8aaa8b4973b10346091866d9b59",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 600000,
+            "gap_ticks": 360000,
+            "first_result_ticks": 5700000,
+            "measured_ticks": 5700000,
+            "instructions": 5699937,
+            "baseline_ms": [
+              170.14361700000154,
+              169.0728080000008,
+              169.16093999999794,
+              188.41623400000026,
+              201.28686400000151
+            ],
+            "candidate_ms": [
+              160.60282299999744,
+              164.613352999997,
+              161.10764199999903,
+              159.8998219999994,
+              175.74171399999977
+            ],
+            "baseline_process_cpu_ms": [
+              170.164,
+              169.085,
+              169.174,
+              188.491,
+              201.3
+            ],
+            "candidate_process_cpu_ms": [
+              160.622,
+              164.628,
+              161.129,
+              159.934,
+              175.755
+            ],
+            "speedup": 1.0560865697482096,
+            "process_cpu_speedup": 1.0560730842989157,
+            "events": [
+              [
+                0,
+                24,
+                1
+              ],
+              [
+                600000,
+                24,
+                0
+              ],
+              [
+                960000,
+                3,
+                1
+              ],
+              [
+                1560000,
+                3,
+                0
+              ],
+              [
+                1920000,
+                17,
+                1
+              ],
+              [
+                2520000,
+                17,
+                0
+              ],
+              [
+                2880000,
+                6,
+                1
+              ],
+              [
+                3480000,
+                6,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          }
+        ]
+      }
+    },
+    {
+      "variant": "v3",
+      "engine": "chrome",
+      "report_identity": {
+        "bytes": 20028,
+        "sha256": "b5f110a252b06d4ed6353ca277e0646390c6c0841791b4d228e4010a3de8b445"
+      },
+      "team_other_cpu_work_paused": true,
+      "exclusive_host_claim": false,
+      "production_source_order": true,
+      "selection_evidence": true,
+      "isolation_note": "Other team builds and ROM/browser probes were paused; unrelated shared-host activity is not controlled.",
+      "statistics": {
+        "scenes": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "baseline_median_ms": 360.8999999994412,
+            "candidate_median_ms": 376.15000000037253,
+            "median_speedup": 0.9594576631638543,
+            "ratio_of_medians_elapsed_change": 0.04225547243268202,
+            "median_of_paired_elapsed_changes": 0.0068121357613823985,
+            "candidate_slower_pairs": 2,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "baseline_median_ms": 334.2500000009313,
+            "candidate_median_ms": 347.55000000074506,
+            "median_speedup": 0.9617321248747368,
+            "ratio_of_medians_elapsed_change": 0.03979057591556234,
+            "median_of_paired_elapsed_changes": 0.039576805771105894,
+            "candidate_slower_pairs": 3,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "baseline_median_ms": 438.55000000074506,
+            "candidate_median_ms": 464.6499999994412,
+            "median_speedup": 0.9438286882627192,
+            "ratio_of_medians_elapsed_change": 0.05951430851362849,
+            "median_of_paired_elapsed_changes": 0.05400524580640198,
+            "candidate_slower_pairs": 3,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "7*8",
+            "baseline_median_ms": 381.79999999981374,
+            "candidate_median_ms": 382.25,
+            "median_speedup": 0.9988227599733518,
+            "ratio_of_medians_elapsed_change": 0.0011786275541814106,
+            "median_of_paired_elapsed_changes": 0.005991632847019979,
+            "candidate_slower_pairs": 3,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 4,
+            "expression": "1+1",
+            "baseline_median_ms": 176.20000000018626,
+            "candidate_median_ms": 166.25,
+            "median_speedup": 1.0598496240612707,
+            "ratio_of_medians_elapsed_change": -0.056469920545832886,
+            "median_of_paired_elapsed_changes": -0.03299506271038588,
+            "candidate_slower_pairs": 2,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 4,
+            "expression": "7*8",
+            "baseline_median_ms": 155.70000000018626,
+            "candidate_median_ms": 176.1499999994412,
+            "median_speedup": 0.8839057621384058,
+            "ratio_of_medians_elapsed_change": 0.1313423249790011,
+            "median_of_paired_elapsed_changes": 0.07528597937757087,
+            "candidate_slower_pairs": 3,
+            "pairs": 4,
+            "chrome_rollback_threshold": true
+          }
+        ],
+        "baseline_sum_of_scene_medians_ms": 1847.4000000013039,
+        "candidate_sum_of_scene_medians_ms": 1913.0,
+        "aggregate_speedup": 0.9657083115532169,
+        "aggregate_elapsed_change": 0.03550936451155673,
+        "all_scenes_avoid_chrome_rollback_threshold": false
+      },
+      "complete_original_report": {
+        "passed": true,
+        "identities": {
+          "baseline_wasm_sha256": "d1dd7c8e443431afa5d76a303e0cbfeafd28544eef80071b6098f408d7e0f6d2",
+          "candidate_wasm_sha256": "7017475e52a9484c10d0065341274dfbd727fd7b8815f44fed05b8445d7cf3de",
+          "fixture_sha256": "8b763ca74244fdec4bc8854dcd0b263c355c6095067d0bb54add7cd9c7742984",
+          "endpoint_report_sha256": "8b5ef2af7ed5cd1c79749e6200865bdd570211d031b5e3a420a20b6541a17a3f",
+          "endpoint_source_candidate_sha256": "7017475e52a9484c10d0065341274dfbd727fd7b8815f44fed05b8445d7cf3de",
+          "worker_probe_sha256": "6e2d3b0713b3ec49ca84a737ef81e2262ab868d56d081c002ce589fbbc25044a",
+          "driver_sha256": "87b493eb7ac5a2efe9a6d2f3379aff938b574ba0cfbf22d97cfa6a8a4c90a0a9",
+          "node_probe_sha256": "fa7ab8bc89fe162ff9c9bfe9e91240b88ec400b1e5319aeb23a30c5da48ff6ec",
+          "hp48_module_sha256": "d624cbb35b831f3d69c1da3bc1b5fa1f73080c83f871998060b0bd2eed565bbc",
+          "session_module_sha256": "fbd69bf94bdcac8eba4c9055f05e59256bae44964d0b3482421023035cfe5041"
+        },
+        "browser_args": [
+          "--no-sandbox"
+        ],
+        "v8_flags": [],
+        "host_timing_only": true,
+        "cpu_time_available": false,
+        "browser": "156.0.8078.47",
+        "schema": "orchard-default-chrome-fixed-scenes-v1",
+        "performance_sample": true,
+        "measurement_kind": "default-Chrome fixed-workload core throughput; NOT UI latency",
+        "measurement": "Two complete warmups per variant, then four alternating AB/BA timed replays per scene. Production WASM executes in a dedicated WebWorker under default Chrome with no V8 flags. Loading, explicit compilation, restore, LCD inspection and hashes are outside timing. Key scheduling and UART draining/byte capture are inside; WebCrypto UART hashing is outside. No Worker pacing, UI input, snapshot delivery or canvas rendering is timed.",
+        "runner": "run",
+        "quantum": 1024,
+        "result_sample_ticks": 12000,
+        "repeats": 4,
+        "warmups_per_variant": 2,
+        "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+        "worker_time_origin_ms": 1792726629533,
+        "cases": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "pixel_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 13104000,
+            "measured_ticks": 13104000,
+            "instructions": 13103802,
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "events": [
+              [
+                0,
+                26,
+                1
+              ],
+              [
+                1500000,
+                26,
+                0
+              ],
+              [
+                2100000,
+                5,
+                1
+              ],
+              [
+                3600000,
+                5,
+                0
+              ],
+              [
+                4200000,
+                26,
+                1
+              ],
+              [
+                5700000,
+                26,
+                0
+              ],
+              [
+                6300000,
+                6,
+                1
+              ],
+              [
+                7800000,
+                6,
+                0
+              ]
+            ],
+            "run_calls": 13104,
+            "baseline_ms": [
+              365.09999999962747,
+              420.80000000074506,
+              350.80000000074506,
+              356.69999999925494
+            ],
+            "candidate_ms": [
+              392,
+              398.5,
+              360.30000000074506,
+              351.90000000037253
+            ],
+            "baseline_median_ms": 360.8999999994412,
+            "candidate_median_ms": 376.15000000037253,
+            "speedup": 0.9594576631638543,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 420.5
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 373.19999999925494
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 372.80000000074506
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 373.09999999962747
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 365.09999999962747
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 392
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 398.5
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 420.80000000074506
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 350.80000000074506
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 360.30000000074506
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 351.90000000037253
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 356.69999999925494
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "pixel_sha256": "6f7de6bb96994c41e97f2e1cefc0f453414714e02e56a05ca84384763c7f1a60",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 12264000,
+            "measured_ticks": 12264000,
+            "instructions": 12263844,
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "events": [
+              [
+                0,
+                49,
+                1
+              ],
+              [
+                1500000,
+                49,
+                0
+              ]
+            ],
+            "run_calls": 12264,
+            "baseline_ms": [
+              321.5,
+              335.1000000014901,
+              333.40000000037253,
+              347.69999999925494
+            ],
+            "candidate_ms": [
+              341.40000000037253,
+              332.5,
+              359.40000000037253,
+              353.7000000011176
+            ],
+            "baseline_median_ms": 334.2500000009313,
+            "candidate_median_ms": 347.55000000074506,
+            "speedup": 0.9617321248747368,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 331.09999999962747
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 341.5
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 349.7000000011176
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 329.40000000037253
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 321.5
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 341.40000000037253
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 332.5
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 335.1000000014901
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 333.40000000037253
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 359.40000000037253
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 353.7000000011176
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 347.69999999925494
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "e1f1116405f312f8e4cac59ceb759f3cd87f05e16c22ea6d23d968d2300ff3a8",
+            "final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "pixel_sha256": "b0b7cde04193b91d9c95e6679590b8f4911a0c05a4f9082f75a1b184df6d71e0",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 16164000,
+            "measured_ticks": 16164000,
+            "instructions": 16163798,
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "events": [
+              [
+                0,
+                40,
+                1
+              ],
+              [
+                1500000,
+                40,
+                0
+              ]
+            ],
+            "run_calls": 16164,
+            "baseline_ms": [
+              429.09999999962747,
+              480.30000000074506,
+              435.5,
+              441.6000000014901
+            ],
+            "candidate_ms": [
+              451.7999999988824,
+              469.7999999988824,
+              459.5,
+              472
+            ],
+            "baseline_median_ms": 438.55000000074506,
+            "candidate_median_ms": 464.6499999994412,
+            "speedup": 0.9438286882627192,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 430.09999999962747
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 441.80000000074506
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 474.59999999962747
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 468.5
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 429.09999999962747
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 451.7999999988824
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 469.7999999988824
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 480.30000000074506
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 435.5
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 459.5
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 472
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 441.6000000014901
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "7*8",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "cf7ec78dd8c0bae386a5587ae1feae8f9b8e3b853ca9ca21d68458da7bc8d86e",
+            "pixel_sha256": "b569165e46546a91191c44ad41a7bfb86be4204cd65ada8fe109b85a39993700",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 13104000,
+            "measured_ticks": 13104000,
+            "instructions": 13103802,
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "events": [
+              [
+                0,
+                24,
+                1
+              ],
+              [
+                1500000,
+                24,
+                0
+              ],
+              [
+                2100000,
+                3,
+                1
+              ],
+              [
+                3600000,
+                3,
+                0
+              ],
+              [
+                4200000,
+                17,
+                1
+              ],
+              [
+                5700000,
+                17,
+                0
+              ],
+              [
+                6300000,
+                6,
+                1
+              ],
+              [
+                7800000,
+                6,
+                0
+              ]
+            ],
+            "run_calls": 13104,
+            "baseline_ms": [
+              395.90000000037253,
+              388.5,
+              375.09999999962747,
+              362.09999999962747
+            ],
+            "candidate_ms": [
+              397.90000000037253,
+              378.5,
+              377.7000000011176,
+              386
+            ],
+            "baseline_median_ms": 381.79999999981374,
+            "candidate_median_ms": 382.25,
+            "speedup": 0.9988227599733518,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 357.69999999925494
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 359.80000000074506
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 368.2999999988824
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 364
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 395.90000000037253
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 397.90000000037253
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 378.5
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 388.5
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 375.09999999962747
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 377.7000000011176
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 386
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 362.09999999962747
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 4,
+            "expression": "1+1",
+            "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+            "initial_checkpoint_sha256": "42e4f6c4d8131d5ad29e73bc511f33a59e7fe6dae1babf4e3833f8ba60ca7337",
+            "final_checkpoint_sha256": "b02414f4a86cf0ec8cbdf46d3884095d6a6d57252e7d5644a4c0986c263b0b0f",
+            "pixel_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 5700000,
+            "measured_ticks": 5700000,
+            "instructions": 5699937,
+            "hold_ticks": 600000,
+            "gap_ticks": 360000,
+            "events": [
+              [
+                0,
+                26,
+                1
+              ],
+              [
+                600000,
+                26,
+                0
+              ],
+              [
+                960000,
+                5,
+                1
+              ],
+              [
+                1560000,
+                5,
+                0
+              ],
+              [
+                1920000,
+                26,
+                1
+              ],
+              [
+                2520000,
+                26,
+                0
+              ],
+              [
+                2880000,
+                6,
+                1
+              ],
+              [
+                3480000,
+                6,
+                0
+              ]
+            ],
+            "run_calls": 5700,
+            "baseline_ms": [
+              183.09999999962747,
+              182,
+              170.40000000037253,
+              162.69999999925494
+            ],
+            "candidate_ms": [
+              162.59999999962747,
+              168.2000000011176,
+              172.5,
+              164.2999999988824
+            ],
+            "baseline_median_ms": 176.20000000018626,
+            "candidate_median_ms": 166.25,
+            "speedup": 1.0598496240612707,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 163.19999999925494
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 160.10000000149012
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 157.90000000037253
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 161.5
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 183.09999999962747
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 162.59999999962747
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 168.2000000011176
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 182
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 170.40000000037253
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 172.5
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 164.2999999988824
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 162.69999999925494
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 4,
+            "expression": "7*8",
+            "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+            "initial_checkpoint_sha256": "42e4f6c4d8131d5ad29e73bc511f33a59e7fe6dae1babf4e3833f8ba60ca7337",
+            "final_checkpoint_sha256": "2bfe36136c2ecdbac36168ce532d8ee9a49fd8aaa8b4973b10346091866d9b59",
+            "pixel_sha256": "eb10f0f2f928b3beee8a0f16befa3d9d9350ffc426496d1e70e5af515693f918",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 5700000,
+            "measured_ticks": 5700000,
+            "instructions": 5699937,
+            "hold_ticks": 600000,
+            "gap_ticks": 360000,
+            "events": [
+              [
+                0,
+                24,
+                1
+              ],
+              [
+                600000,
+                24,
+                0
+              ],
+              [
+                960000,
+                3,
+                1
+              ],
+              [
+                1560000,
+                3,
+                0
+              ],
+              [
+                1920000,
+                17,
+                1
+              ],
+              [
+                2520000,
+                17,
+                0
+              ],
+              [
+                2880000,
+                6,
+                1
+              ],
+              [
+                3480000,
+                6,
+                0
+              ]
+            ],
+            "run_calls": 5700,
+            "baseline_ms": [
+              191.39999999850988,
+              149.30000000074506,
+              152.5,
+              158.90000000037253
+            ],
+            "candidate_ms": [
+              186.09999999962747,
+              166.19999999925494,
+              158.2000000011176,
+              188.90000000037253
+            ],
+            "baseline_median_ms": 155.70000000018626,
+            "candidate_median_ms": 176.1499999994412,
+            "speedup": 0.8839057621384058,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 155.2000000011176
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 168.30000000074506
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 172.90000000037253
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 173.09999999962747
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 191.39999999850988
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 186.09999999962747
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 166.19999999925494
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 149.30000000074506
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 152.5
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 158.2000000011176
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 188.90000000037253
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 158.90000000037253
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          }
+        ]
+      }
+    },
+    {
+      "variant": "v4",
+      "engine": "node",
+      "report_identity": {
+        "bytes": 14821,
+        "sha256": "4dbcbf565a297073deca1a3e0687fd6181adbea746af8ac6647cff6b51c3f9b8"
+      },
+      "team_other_cpu_work_paused": true,
+      "exclusive_host_claim": false,
+      "production_source_order": true,
+      "selection_evidence": true,
+      "isolation_note": "Other team builds and ROM/browser probes were paused; unrelated shared-host activity is not controlled.",
+      "statistics": {
+        "scenes": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "baseline_median_ms": 381.960519,
+            "candidate_median_ms": 379.736617,
+            "median_speedup": 1.0058564328548805,
+            "ratio_of_medians_elapsed_change": -0.0058223347424029015,
+            "median_of_paired_elapsed_changes": -0.010968401135737937,
+            "candidate_slower_pairs": 2,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "baseline_median_ms": 348.48707399999876,
+            "candidate_median_ms": 334.3010319999994,
+            "median_speedup": 1.0424349333148315,
+            "ratio_of_medians_elapsed_change": -0.04070751272685491,
+            "median_of_paired_elapsed_changes": -0.04770591510645916,
+            "candidate_slower_pairs": 0,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "baseline_median_ms": 448.60198800000035,
+            "candidate_median_ms": 440.1062039999997,
+            "median_speedup": 1.0193039405552224,
+            "ratio_of_medians_elapsed_change": -0.018938355663284834,
+            "median_of_paired_elapsed_changes": -0.02299337195387241,
+            "candidate_slower_pairs": 0,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "7*8",
+            "baseline_median_ms": 379.999197000001,
+            "candidate_median_ms": 366.24315899999783,
+            "median_speedup": 1.037559849684464,
+            "ratio_of_medians_elapsed_change": -0.036200176496697045,
+            "median_of_paired_elapsed_changes": -0.03413557213385343,
+            "candidate_slower_pairs": 0,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 4,
+            "expression": "1+1",
+            "baseline_median_ms": 163.61530100000164,
+            "candidate_median_ms": 162.08155199999965,
+            "median_speedup": 1.0094628227646907,
+            "ratio_of_medians_elapsed_change": -0.009374117155472983,
+            "median_of_paired_elapsed_changes": -0.010082611856272794,
+            "candidate_slower_pairs": 1,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 4,
+            "expression": "7*8",
+            "baseline_median_ms": 165.13250899999912,
+            "candidate_median_ms": 164.2648760000011,
+            "median_speedup": 1.0052819143150116,
+            "ratio_of_medians_elapsed_change": -0.005254162280051267,
+            "median_of_paired_elapsed_changes": -0.024340016487687133,
+            "candidate_slower_pairs": 0,
+            "pairs": 5,
+            "chrome_rollback_threshold": false
+          }
+        ],
+        "baseline_sum_of_scene_medians_ms": 1887.7965880000008,
+        "candidate_sum_of_scene_medians_ms": 1846.7334399999977,
+        "aggregate_speedup": 1.0222355577207738,
+        "aggregate_elapsed_change": -0.021751892264784134,
+        "all_scenes_avoid_chrome_rollback_threshold": true
+      },
+      "complete_original_report": {
+        "schema": "orchard-scene-throughput-v1",
+        "passed": true,
+        "generated_at": "2026-10-23T03:40:33.660Z",
+        "node": "v24.19.0",
+        "exec_argv": [],
+        "cpu_affinity": "0-8",
+        "platform": "linux",
+        "architecture": "x64",
+        "baseline_wasm_sha256": "d1dd7c8e443431afa5d76a303e0cbfeafd28544eef80071b6098f408d7e0f6d2",
+        "candidate_wasm_sha256": "43752dfd4b1b49e0aaf0ed7bd89d0adf0cea52bc665d7679109798e829b6924c",
+        "fixture_sha256": "8b763ca74244fdec4bc8854dcd0b263c355c6095067d0bb54add7cd9c7742984",
+        "probe_sha256": "fa7ab8bc89fe162ff9c9bfe9e91240b88ec400b1e5319aeb23a30c5da48ff6ec",
+        "checkpoint_equivalence_sha256": "91a261065838748796b07b84c9fe3fc91b7210805f5de57307424cba3a7cbc9b",
+        "checkpoint_comparison": "Validate each wire checksum and exact schema layout, then migrate v1 to v2 by inserting only the documented 52-byte SDI reset state. Compare every canonical byte, including SDI, CPU, peripheral state, RAM and boot SRAM. Raw wire hashes are retained separately.",
+        "runner": "run",
+        "quantum": 1024,
+        "result_sample_ticks": 12000,
+        "repeats": 5,
+        "process_cpu_measurement": "process.cpuUsage user plus system time; may include V8 background work. exec_argv records engine switches. --no-liftoff requests optimizing WASM compilation up front for a separate steady-state experiment; default-engine browser measurements are still required.",
+        "measurement": "Node/V8 execution from exact private scene checkpoints to the baseline first full LCD result, including all key releases and their final gap. Each variant executes the complete workload twice before alternating timed replays; the first baseline replay locates the result. Loading, explicit WASM compilation, restore, LCD sampling and final checkpoint hashing are outside timed intervals. JS key scheduling, UART draining and incremental UART hashing are included. This is host execution throughput, not browser latency or real-calculator calibration.",
+        "cases": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "pixel_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+            "candidate_final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "canonical_final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 13104000,
+            "measured_ticks": 13104000,
+            "instructions": 13103802,
+            "baseline_ms": [
+              381.960519,
+              368.48089600000003,
+              369.5296940000003,
+              395.4940809999998,
+              392.27102900000045
+            ],
+            "candidate_ms": [
+              373.2835839999998,
+              379.736617,
+              363.2271679999999,
+              516.4265759999998,
+              387.96844299999975
+            ],
+            "baseline_process_cpu_ms": [
+              382.591,
+              368.879,
+              369.541,
+              395.958,
+              392.567
+            ],
+            "candidate_process_cpu_ms": [
+              374.963,
+              380.192,
+              363.228,
+              516.916,
+              388.277
+            ],
+            "speedup": 1.0058564328548805,
+            "process_cpu_speedup": 1.0063099696995201,
+            "events": [
+              [
+                0,
+                26,
+                1
+              ],
+              [
+                1500000,
+                26,
+                0
+              ],
+              [
+                2100000,
+                5,
+                1
+              ],
+              [
+                3600000,
+                5,
+                0
+              ],
+              [
+                4200000,
+                26,
+                1
+              ],
+              [
+                5700000,
+                26,
+                0
+              ],
+              [
+                6300000,
+                6,
+                1
+              ],
+              [
+                7800000,
+                6,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "pixel_sha256": "6f7de6bb96994c41e97f2e1cefc0f453414714e02e56a05ca84384763c7f1a60",
+            "candidate_final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "canonical_final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 12264000,
+            "measured_ticks": 12264000,
+            "instructions": 12263844,
+            "baseline_ms": [
+              340.4553159999996,
+              384.8313739999994,
+              351.048103000001,
+              348.24176400000033,
+              348.48707399999876
+            ],
+            "candidate_ms": [
+              323.4795669999994,
+              321.4706299999998,
+              334.3010319999994,
+              341.8935540000002,
+              342.885773
+            ],
+            "baseline_process_cpu_ms": [
+              340.465,
+              384.839,
+              351.032,
+              348.243,
+              348.502
+            ],
+            "candidate_process_cpu_ms": [
+              323.489,
+              324.237,
+              334.319,
+              341.919,
+              342.892
+            ],
+            "speedup": 1.0424349333148315,
+            "process_cpu_speedup": 1.0424235535521462,
+            "events": [
+              [
+                0,
+                49,
+                1
+              ],
+              [
+                1500000,
+                49,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "e1f1116405f312f8e4cac59ceb759f3cd87f05e16c22ea6d23d968d2300ff3a8",
+            "final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "pixel_sha256": "b0b7cde04193b91d9c95e6679590b8f4911a0c05a4f9082f75a1b184df6d71e0",
+            "candidate_final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "canonical_final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 16164000,
+            "measured_ticks": 16164000,
+            "instructions": 16163798,
+            "baseline_ms": [
+              448.60198800000035,
+              450.54801100000077,
+              452.40631199999916,
+              436.1951000000008,
+              439.72592099999747
+            ],
+            "candidate_ms": [
+              441.48700500000086,
+              440.18839300000036,
+              440.1062039999997,
+              407.4365979999984,
+              432.3330399999977
+            ],
+            "baseline_process_cpu_ms": [
+              448.597,
+              450.554,
+              452.405,
+              435.196,
+              439.723
+            ],
+            "candidate_process_cpu_ms": [
+              441.494,
+              440.189,
+              440.112,
+              407.444,
+              432.342
+            ],
+            "speedup": 1.0193039405552224,
+            "process_cpu_speedup": 1.0192791834805686,
+            "events": [
+              [
+                0,
+                40,
+                1
+              ],
+              [
+                1500000,
+                40,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "7*8",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "cf7ec78dd8c0bae386a5587ae1feae8f9b8e3b853ca9ca21d68458da7bc8d86e",
+            "pixel_sha256": "b569165e46546a91191c44ad41a7bfb86be4204cd65ada8fe109b85a39993700",
+            "candidate_final_checkpoint_sha256": "cf7ec78dd8c0bae386a5587ae1feae8f9b8e3b853ca9ca21d68458da7bc8d86e",
+            "canonical_final_checkpoint_sha256": "cf7ec78dd8c0bae386a5587ae1feae8f9b8e3b853ca9ca21d68458da7bc8d86e",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "first_result_ticks": 13104000,
+            "measured_ticks": 13104000,
+            "instructions": 13103802,
+            "baseline_ms": [
+              399.71064599999954,
+              388.7130909999978,
+              379.999197000001,
+              368.26053500000125,
+              371.7684020000015
+            ],
+            "candidate_ms": [
+              367.37168499999825,
+              366.24315899999783,
+              367.0277070000011,
+              362.75187300000107,
+              360.22498500000074
+            ],
+            "baseline_process_cpu_ms": [
+              399.72,
+              388.721,
+              380.008,
+              368.277,
+              371.775
+            ],
+            "candidate_process_cpu_ms": [
+              367.384,
+              366.255,
+              367.038,
+              362.758,
+              360.183
+            ],
+            "speedup": 1.037559849684464,
+            "process_cpu_speedup": 1.0375503406096844,
+            "events": [
+              [
+                0,
+                24,
+                1
+              ],
+              [
+                1500000,
+                24,
+                0
+              ],
+              [
+                2100000,
+                3,
+                1
+              ],
+              [
+                3600000,
+                3,
+                0
+              ],
+              [
+                4200000,
+                17,
+                1
+              ],
+              [
+                5700000,
+                17,
+                0
+              ],
+              [
+                6300000,
+                6,
+                1
+              ],
+              [
+                7800000,
+                6,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 4,
+            "expression": "1+1",
+            "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+            "initial_checkpoint_sha256": "42e4f6c4d8131d5ad29e73bc511f33a59e7fe6dae1babf4e3833f8ba60ca7337",
+            "final_checkpoint_sha256": "b02414f4a86cf0ec8cbdf46d3884095d6a6d57252e7d5644a4c0986c263b0b0f",
+            "pixel_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+            "candidate_final_checkpoint_sha256": "b02414f4a86cf0ec8cbdf46d3884095d6a6d57252e7d5644a4c0986c263b0b0f",
+            "canonical_final_checkpoint_sha256": "b02414f4a86cf0ec8cbdf46d3884095d6a6d57252e7d5644a4c0986c263b0b0f",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 600000,
+            "gap_ticks": 360000,
+            "first_result_ticks": 5700000,
+            "measured_ticks": 5700000,
+            "instructions": 5699937,
+            "baseline_ms": [
+              164.708161999999,
+              162.3416240000006,
+              163.23746499999834,
+              167.41406100000313,
+              163.61530100000164
+            ],
+            "candidate_ms": [
+              162.08155199999965,
+              165.5110420000019,
+              161.59160500000144,
+              166.8735940000006,
+              160.89004200000272
+            ],
+            "baseline_process_cpu_ms": [
+              164.722,
+              177.615,
+              183.367,
+              167.437,
+              163.625
+            ],
+            "candidate_process_cpu_ms": [
+              162.103,
+              165.532,
+              161.608,
+              166.895,
+              160.91
+            ],
+            "speedup": 1.0094628227646907,
+            "process_cpu_speedup": 1.0329050048426,
+            "events": [
+              [
+                0,
+                26,
+                1
+              ],
+              [
+                600000,
+                26,
+                0
+              ],
+              [
+                960000,
+                5,
+                1
+              ],
+              [
+                1560000,
+                5,
+                0
+              ],
+              [
+                1920000,
+                26,
+                1
+              ],
+              [
+                2520000,
+                26,
+                0
+              ],
+              [
+                2880000,
+                6,
+                1
+              ],
+              [
+                3480000,
+                6,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          },
+          {
+            "model": 4,
+            "expression": "7*8",
+            "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+            "initial_checkpoint_sha256": "42e4f6c4d8131d5ad29e73bc511f33a59e7fe6dae1babf4e3833f8ba60ca7337",
+            "final_checkpoint_sha256": "2bfe36136c2ecdbac36168ce532d8ee9a49fd8aaa8b4973b10346091866d9b59",
+            "pixel_sha256": "eb10f0f2f928b3beee8a0f16befa3d9d9350ffc426496d1e70e5af515693f918",
+            "candidate_final_checkpoint_sha256": "2bfe36136c2ecdbac36168ce532d8ee9a49fd8aaa8b4973b10346091866d9b59",
+            "canonical_final_checkpoint_sha256": "2bfe36136c2ecdbac36168ce532d8ee9a49fd8aaa8b4973b10346091866d9b59",
+            "checkpoint_versions": [
+              2,
+              2
+            ],
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hold_ticks": 600000,
+            "gap_ticks": 360000,
+            "first_result_ticks": 5700000,
+            "measured_ticks": 5700000,
+            "instructions": 5699937,
+            "baseline_ms": [
+              164.3806399999994,
+              165.13250899999912,
+              174.3977100000011,
+              173.9444590000021,
+              164.1049959999982
+            ],
+            "candidate_ms": [
+              161.87415399999736,
+              164.2648760000011,
+              164.32166199999847,
+              169.71064800000022,
+              159.44927500000267
+            ],
+            "baseline_process_cpu_ms": [
+              164.403,
+              165.153,
+              174.411,
+              173.961,
+              164.127
+            ],
+            "candidate_process_cpu_ms": [
+              161.896,
+              164.281,
+              164.304,
+              169.725,
+              159.52
+            ],
+            "speedup": 1.0052819143150116,
+            "process_cpu_speedup": 1.0053079784028585,
+            "events": [
+              [
+                0,
+                24,
+                1
+              ],
+              [
+                600000,
+                24,
+                0
+              ],
+              [
+                960000,
+                3,
+                1
+              ],
+              [
+                1560000,
+                3,
+                0
+              ],
+              [
+                1920000,
+                17,
+                1
+              ],
+              [
+                2520000,
+                17,
+                0
+              ],
+              [
+                2880000,
+                6,
+                1
+              ],
+              [
+                3480000,
+                6,
+                0
+              ]
+            ],
+            "complete_checkpoint_equal": true,
+            "canonical_checkpoint_equal": true
+          }
+        ]
+      }
+    },
+    {
+      "variant": "v4",
+      "engine": "chrome",
+      "report_identity": {
+        "bytes": 20153,
+        "sha256": "904254fab817e57c7418f72ee2b35fe845bbf7d51ff7edd4a30af6238c1bc6ba"
+      },
+      "team_other_cpu_work_paused": true,
+      "exclusive_host_claim": false,
+      "production_source_order": true,
+      "selection_evidence": true,
+      "isolation_note": "Other team builds and ROM/browser probes were paused; unrelated shared-host activity is not controlled.",
+      "statistics": {
+        "scenes": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "baseline_median_ms": 375.75,
+            "candidate_median_ms": 390.09999999962747,
+            "median_speedup": 0.9632145603700559,
+            "ratio_of_medians_elapsed_change": 0.03819028609348618,
+            "median_of_paired_elapsed_changes": 0.05102796833832346,
+            "candidate_slower_pairs": 3,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "baseline_median_ms": 358.40000000037253,
+            "candidate_median_ms": 356.19999999925494,
+            "median_speedup": 1.006176305449529,
+            "ratio_of_medians_elapsed_change": -0.006138392860254749,
+            "median_of_paired_elapsed_changes": -0.008023639859590204,
+            "candidate_slower_pairs": 2,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "baseline_median_ms": 445.0,
+            "candidate_median_ms": 448.0,
+            "median_speedup": 0.9933035714285714,
+            "ratio_of_medians_elapsed_change": 0.006741573033707926,
+            "median_of_paired_elapsed_changes": -0.0048273114229221425,
+            "candidate_slower_pairs": 1,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 1,
+            "expression": "7*8",
+            "baseline_median_ms": 393.6499999994412,
+            "candidate_median_ms": 384.6000000005588,
+            "median_speedup": 1.0235309412347096,
+            "ratio_of_medians_elapsed_change": -0.022989965702769566,
+            "median_of_paired_elapsed_changes": -0.01867342395269156,
+            "candidate_slower_pairs": 1,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 4,
+            "expression": "1+1",
+            "baseline_median_ms": 160.29999999981374,
+            "candidate_median_ms": 164.95000000018626,
+            "median_speedup": 0.9718096392824052,
+            "ratio_of_medians_elapsed_change": 0.029008109796493597,
+            "median_of_paired_elapsed_changes": 0.03608809677772706,
+            "candidate_slower_pairs": 4,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          },
+          {
+            "model": 4,
+            "expression": "7*8",
+            "baseline_median_ms": 176.6499999994412,
+            "candidate_median_ms": 167.6499999994412,
+            "median_speedup": 1.0536832687147628,
+            "ratio_of_medians_elapsed_change": -0.05094820266078948,
+            "median_of_paired_elapsed_changes": -0.008803047102802553,
+            "candidate_slower_pairs": 1,
+            "pairs": 4,
+            "chrome_rollback_threshold": false
+          }
+        ],
+        "baseline_sum_of_scene_medians_ms": 1909.7499999990687,
+        "candidate_sum_of_scene_medians_ms": 1911.4999999990687,
+        "aggregate_speedup": 0.999084488621501,
+        "aggregate_elapsed_change": 0.0009163503076323742,
+        "all_scenes_avoid_chrome_rollback_threshold": true
+      },
+      "complete_original_report": {
+        "passed": true,
+        "identities": {
+          "baseline_wasm_sha256": "d1dd7c8e443431afa5d76a303e0cbfeafd28544eef80071b6098f408d7e0f6d2",
+          "candidate_wasm_sha256": "43752dfd4b1b49e0aaf0ed7bd89d0adf0cea52bc665d7679109798e829b6924c",
+          "fixture_sha256": "8b763ca74244fdec4bc8854dcd0b263c355c6095067d0bb54add7cd9c7742984",
+          "endpoint_report_sha256": "4dbcbf565a297073deca1a3e0687fd6181adbea746af8ac6647cff6b51c3f9b8",
+          "endpoint_source_candidate_sha256": "43752dfd4b1b49e0aaf0ed7bd89d0adf0cea52bc665d7679109798e829b6924c",
+          "worker_probe_sha256": "6e2d3b0713b3ec49ca84a737ef81e2262ab868d56d081c002ce589fbbc25044a",
+          "driver_sha256": "87b493eb7ac5a2efe9a6d2f3379aff938b574ba0cfbf22d97cfa6a8a4c90a0a9",
+          "node_probe_sha256": "fa7ab8bc89fe162ff9c9bfe9e91240b88ec400b1e5319aeb23a30c5da48ff6ec",
+          "hp48_module_sha256": "d624cbb35b831f3d69c1da3bc1b5fa1f73080c83f871998060b0bd2eed565bbc",
+          "session_module_sha256": "fbd69bf94bdcac8eba4c9055f05e59256bae44964d0b3482421023035cfe5041"
+        },
+        "browser_args": [
+          "--no-sandbox"
+        ],
+        "v8_flags": [],
+        "host_timing_only": true,
+        "cpu_time_available": false,
+        "browser": "156.0.8078.47",
+        "schema": "orchard-default-chrome-fixed-scenes-v1",
+        "performance_sample": true,
+        "measurement_kind": "default-Chrome fixed-workload core throughput; NOT UI latency",
+        "measurement": "Two complete warmups per variant, then four alternating AB/BA timed replays per scene. Production WASM executes in a dedicated WebWorker under default Chrome with no V8 flags. Loading, explicit compilation, restore, LCD inspection and hashes are outside timing. Key scheduling and UART draining/byte capture are inside; WebCrypto UART hashing is outside. No Worker pacing, UI input, snapshot delivery or canvas rendering is timed.",
+        "runner": "run",
+        "quantum": 1024,
+        "result_sample_ticks": 12000,
+        "repeats": 4,
+        "warmups_per_variant": 2,
+        "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+        "worker_time_origin_ms": 1792726873646.3,
+        "cases": [
+          {
+            "model": 1,
+            "expression": "1+1",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+            "pixel_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 13104000,
+            "measured_ticks": 13104000,
+            "instructions": 13103802,
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "events": [
+              [
+                0,
+                26,
+                1
+              ],
+              [
+                1500000,
+                26,
+                0
+              ],
+              [
+                2100000,
+                5,
+                1
+              ],
+              [
+                3600000,
+                5,
+                0
+              ],
+              [
+                4200000,
+                26,
+                1
+              ],
+              [
+                5700000,
+                26,
+                0
+              ],
+              [
+                6300000,
+                6,
+                1
+              ],
+              [
+                7800000,
+                6,
+                0
+              ]
+            ],
+            "run_calls": 13104,
+            "baseline_ms": [
+              376.09999999962747,
+              375.40000000037253,
+              390.8999999985099,
+              366.2999999988824
+            ],
+            "candidate_ms": [
+              392.09999999962747,
+              440,
+              373.7000000011176,
+              388.09999999962747
+            ],
+            "baseline_median_ms": 375.75,
+            "candidate_median_ms": 390.09999999962747,
+            "speedup": 0.9632145603700559,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 430.69999999925494
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 516.5
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 370.5
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 368.09999999962747
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 376.09999999962747
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 392.09999999962747
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 440
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 375.40000000037253
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 390.8999999985099
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 373.7000000011176
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 388.09999999962747
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 366.2999999988824
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET library",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+            "pixel_sha256": "6f7de6bb96994c41e97f2e1cefc0f453414714e02e56a05ca84384763c7f1a60",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 12264000,
+            "measured_ticks": 12264000,
+            "instructions": 12263844,
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "events": [
+              [
+                0,
+                49,
+                1
+              ],
+              [
+                1500000,
+                49,
+                0
+              ]
+            ],
+            "run_calls": 12264,
+            "baseline_ms": [
+              358.2000000011176,
+              386.90000000037253,
+              358.59999999962747,
+              354
+            ],
+            "candidate_ms": [
+              339.5,
+              345.59999999962747,
+              388.80000000074506,
+              366.7999999988824
+            ],
+            "baseline_median_ms": 358.40000000037253,
+            "candidate_median_ms": 356.19999999925494,
+            "speedup": 1.006176305449529,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 338.59999999962747
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 336.6000000014901
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 345.7999999988824
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 367.69999999925494
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 358.2000000011176
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 339.5
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 345.59999999962747
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 386.90000000037253
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 358.59999999962747
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 388.80000000074506
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 366.7999999988824
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 354
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "APLET Function START",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "e1f1116405f312f8e4cac59ceb759f3cd87f05e16c22ea6d23d968d2300ff3a8",
+            "final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+            "pixel_sha256": "b0b7cde04193b91d9c95e6679590b8f4911a0c05a4f9082f75a1b184df6d71e0",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 16164000,
+            "measured_ticks": 16164000,
+            "instructions": 16163798,
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "events": [
+              [
+                0,
+                40,
+                1
+              ],
+              [
+                1500000,
+                40,
+                0
+              ]
+            ],
+            "run_calls": 16164,
+            "baseline_ms": [
+              437.90000000037253,
+              452.09999999962747,
+              483.80000000074506,
+              427.69999999925494
+            ],
+            "candidate_ms": [
+              435.90000000037253,
+              449.80000000074506,
+              464.3999999985099,
+              446.19999999925494
+            ],
+            "baseline_median_ms": 445,
+            "candidate_median_ms": 448,
+            "speedup": 0.9933035714285714,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 448.3999999985099
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 427.2000000011176
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 430.90000000037253
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 437.90000000037253
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 437.90000000037253
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 435.90000000037253
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 449.80000000074506
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 452.09999999962747
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 483.80000000074506
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 464.3999999985099
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 446.19999999925494
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 427.69999999925494
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 1,
+            "expression": "7*8",
+            "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+            "initial_checkpoint_sha256": "02a183c55b4cf3795db825f9740ee72103f3c5a8588752991b979aae88383087",
+            "final_checkpoint_sha256": "cf7ec78dd8c0bae386a5587ae1feae8f9b8e3b853ca9ca21d68458da7bc8d86e",
+            "pixel_sha256": "b569165e46546a91191c44ad41a7bfb86be4204cd65ada8fe109b85a39993700",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 13104000,
+            "measured_ticks": 13104000,
+            "instructions": 13103802,
+            "hold_ticks": 1500000,
+            "gap_ticks": 600000,
+            "events": [
+              [
+                0,
+                24,
+                1
+              ],
+              [
+                1500000,
+                24,
+                0
+              ],
+              [
+                2100000,
+                3,
+                1
+              ],
+              [
+                3600000,
+                3,
+                0
+              ],
+              [
+                4200000,
+                17,
+                1
+              ],
+              [
+                5700000,
+                17,
+                0
+              ],
+              [
+                6300000,
+                6,
+                1
+              ],
+              [
+                7800000,
+                6,
+                0
+              ]
+            ],
+            "run_calls": 13104,
+            "baseline_ms": [
+              378.69999999925494,
+              385,
+              409.30000000074506,
+              402.2999999988824
+            ],
+            "candidate_ms": [
+              376.7000000011176,
+              406.80000000074506,
+              379.80000000074506,
+              389.40000000037253
+            ],
+            "baseline_median_ms": 393.6499999994412,
+            "candidate_median_ms": 384.6000000005588,
+            "speedup": 1.0235309412347096,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 371.19999999925494
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 385.09999999962747
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 400.5
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 396.8999999985099
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 378.69999999925494
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 376.7000000011176
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 406.80000000074506
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 385
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 409.30000000074506
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 379.80000000074506
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 389.40000000037253
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 402.2999999988824
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 4,
+            "expression": "1+1",
+            "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+            "initial_checkpoint_sha256": "42e4f6c4d8131d5ad29e73bc511f33a59e7fe6dae1babf4e3833f8ba60ca7337",
+            "final_checkpoint_sha256": "b02414f4a86cf0ec8cbdf46d3884095d6a6d57252e7d5644a4c0986c263b0b0f",
+            "pixel_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 5700000,
+            "measured_ticks": 5700000,
+            "instructions": 5699937,
+            "hold_ticks": 600000,
+            "gap_ticks": 360000,
+            "events": [
+              [
+                0,
+                26,
+                1
+              ],
+              [
+                600000,
+                26,
+                0
+              ],
+              [
+                960000,
+                5,
+                1
+              ],
+              [
+                1560000,
+                5,
+                0
+              ],
+              [
+                1920000,
+                26,
+                1
+              ],
+              [
+                2520000,
+                26,
+                0
+              ],
+              [
+                2880000,
+                6,
+                1
+              ],
+              [
+                3480000,
+                6,
+                0
+              ]
+            ],
+            "run_calls": 5700,
+            "baseline_ms": [
+              166,
+              162.2999999988824,
+              157.69999999925494,
+              158.30000000074506
+            ],
+            "candidate_ms": [
+              179.40000000037253,
+              165.5,
+              164.40000000037253,
+              163
+            ],
+            "baseline_median_ms": 160.29999999981374,
+            "candidate_median_ms": 164.95000000018626,
+            "speedup": 0.9718096392824052,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 177.90000000037253
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 164.10000000149012
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 165.69999999925494
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 173.59999999962747
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 166
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 179.40000000037253
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 165.5
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 162.2999999988824
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 157.69999999925494
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 164.40000000037253
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 163
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 158.30000000074506
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          },
+          {
+            "model": 4,
+            "expression": "7*8",
+            "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+            "initial_checkpoint_sha256": "42e4f6c4d8131d5ad29e73bc511f33a59e7fe6dae1babf4e3833f8ba60ca7337",
+            "final_checkpoint_sha256": "2bfe36136c2ecdbac36168ce532d8ee9a49fd8aaa8b4973b10346091866d9b59",
+            "pixel_sha256": "eb10f0f2f928b3beee8a0f16befa3d9d9350ffc426496d1e70e5af515693f918",
+            "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "uart_bytes": 0,
+            "first_result_ticks": 5700000,
+            "measured_ticks": 5700000,
+            "instructions": 5699937,
+            "hold_ticks": 600000,
+            "gap_ticks": 360000,
+            "events": [
+              [
+                0,
+                24,
+                1
+              ],
+              [
+                600000,
+                24,
+                0
+              ],
+              [
+                960000,
+                3,
+                1
+              ],
+              [
+                1560000,
+                3,
+                0
+              ],
+              [
+                1920000,
+                17,
+                1
+              ],
+              [
+                2520000,
+                17,
+                0
+              ],
+              [
+                2880000,
+                6,
+                1
+              ],
+              [
+                3480000,
+                6,
+                0
+              ]
+            ],
+            "run_calls": 5700,
+            "baseline_ms": [
+              158.30000000074506,
+              189.7000000011176,
+              178,
+              175.2999999988824
+            ],
+            "candidate_ms": [
+              162.19999999925494,
+              159.2000000011176,
+              177.09999999962747,
+              173.09999999962747
+            ],
+            "baseline_median_ms": 176.6499999994412,
+            "candidate_median_ms": 167.6499999994412,
+            "speedup": 1.0536832687147628,
+            "warmups": [
+              {
+                "pass": 0,
+                "variant": "baseline",
+                "ms": 158.39999999850988
+              },
+              {
+                "pass": 0,
+                "variant": "candidate",
+                "ms": 162.19999999925494
+              },
+              {
+                "pass": 1,
+                "variant": "baseline",
+                "ms": 159.40000000037253
+              },
+              {
+                "pass": 1,
+                "variant": "candidate",
+                "ms": 163.59999999962747
+              }
+            ],
+            "order": [
+              {
+                "repeat": 0,
+                "variant": "baseline",
+                "ms": 158.30000000074506
+              },
+              {
+                "repeat": 0,
+                "variant": "candidate",
+                "ms": 162.19999999925494
+              },
+              {
+                "repeat": 1,
+                "variant": "candidate",
+                "ms": 159.2000000011176
+              },
+              {
+                "repeat": 1,
+                "variant": "baseline",
+                "ms": 189.7000000011176
+              },
+              {
+                "repeat": 2,
+                "variant": "baseline",
+                "ms": 178
+              },
+              {
+                "repeat": 2,
+                "variant": "candidate",
+                "ms": 177.09999999962747
+              },
+              {
+                "repeat": 3,
+                "variant": "candidate",
+                "ms": 173.09999999962747
+              },
+              {
+                "repeat": 3,
+                "variant": "baseline",
+                "ms": 175.2999999988824
+              }
+            ],
+            "complete_checkpoint_equal": true,
+            "full_lcd_equal": true,
+            "uart_bytes_equal": true
+          }
+        ]
+      }
+    }
+  ],
+  "failed_startup_retained": {
+    "variant": "v2",
+    "engine": "chrome",
+    "report": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stage": "local HTTP server socket creation under the default sandbox",
+    "error_kind": "PermissionError",
+    "timed_replays_completed": 0,
+    "original_report_replaced": false,
+    "next_action": "Approved local-only execution wrote the separate chrome-v2-six-authorized.json report. The empty failed report was preserved."
+  },
+  "validation": {
+    "scheduler_candidates": {
+      "v3_native": {
+        "checks": 48561,
+        "failures": 0
+      },
+      "v3_wasm": {
+        "checks": 48561,
+        "failures": 0
+      },
+      "v3_asan_ubsan": {
+        "checks": 48561,
+        "failures": 0,
+        "leak_detection": false
+      },
+      "v4_native": {
+        "checks": 48561,
+        "failures": 0
+      },
+      "v4_wasm": {
+        "checks": 48561,
+        "failures": 0
+      }
+    },
+    "v3_instruction_oracle": {
+      "schema": "orchard-cpu-differential-v1",
+      "unicorn": "2.1.4",
+      "cpu_model": "TI925T",
+      "target_scope": "defined shared ARMv4T instruction subset",
+      "seed": "0x9202410",
+      "samples": 1000,
+      "cases": 17075,
+      "transport_rejections": 12,
+      "groups": {
+        "arm-alu-0": 1267,
+        "arm-alu-1": 1389,
+        "arm-alu-2": 1344,
+        "arm-block": 1000,
+        "arm-branch": 1000,
+        "arm-half-signed": 1500,
+        "arm-memory": 1000,
+        "arm-swap": 500,
+        "branch-exchange": 60,
+        "multiply": 1000,
+        "pc-immediate": 15,
+        "thumb-alu": 2000,
+        "thumb-block": 1000,
+        "thumb-branch": 1000,
+        "thumb-memory": 1500,
+        "thumb-shift-immediate": 1000,
+        "thumb-stack": 500
+      },
+      "corpus_sha256": "85710d4d9963872cb74fa052ae982ecccb6f31611e3b16e1ed854ee94bb4c81f",
+      "native_sha256": "696a229008596b91b14f7de2db3ec4260d9aa43768e81f651608310a242e2882",
+      "test_wasm_sha256": "49fee4817f1c652e6a2e0980eb8a29eb507a810f45356d8e244b9ac9a5565bc4",
+      "native_wasm_equal": true,
+      "unicorn_equal": true,
+      "mismatches": 0,
+      "skipped": 0,
+      "arm920t_full_conformance": false,
+      "firmware_used": false
+    },
+    "independent_source_review": "core-review-r18.json",
+    "independent_statistics_review": "performance-review-r18.json",
+    "final_reference": {
+      "compiler": "GCC 13.3.0",
+      "build_type": "Release",
+      "ORCHARD_REFERENCE": true,
+      "ctest_passed": 16,
+      "ctest_failed": 0
+    },
+    "final_asan_ubsan": {
+      "compiler": "GCC 13.3.0",
+      "effective_optimization": "O1",
+      "ctest_passed": 16,
+      "ctest_failed": 0,
+      "ASAN_OPTIONS": "detect_leaks=0",
+      "leak_detection_reason": "LeakSanitizer cannot inspect the process under this sandbox ptrace/proc restriction. AddressSanitizer and UndefinedBehaviorSanitizer remained enabled.",
+      "checkpoint_guard_followup": "Only checkpoint-regression was rebuilt and rerun after the test-size guard correction; other test sources and core binaries were unchanged."
+    },
+    "gcc_build_repairs": [
+      "Split two misleadingly indented if/return lines in the checkpoint replay tool.",
+      "Reject invalid checkpoint size before test offset arithmetic, and retain the model RAM length in a local variable."
+    ],
+    "retained_test_source_sha256": {
+      "tests/scheduler.c": "002c4fd4630fe21f154e13c8bae7758ca53644ffe15b68c1133232b6e58d56d8",
+      "tests/checkpoint.c": "fbfd1fa128e6cac729c93dfdff367a68376fe633b347546b8b2a459775fc5b87",
+      "tools/checkpoint-replay.c": "7120c3ffed6efa4969c8605cc9e5e20dd4ff920032f11d0b4cdfd9fa30ca01cc"
+    }
+  },
+  "private_rom_checkpoint_ram_or_screen_bytes_published": false
+}

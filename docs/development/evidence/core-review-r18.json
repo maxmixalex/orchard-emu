@@ -1,0 +1,143 @@
+{
+  "schema": "orchard-independent-core-review-v1",
+  "validated_on": "2026-10-23",
+  "scope": "Independent review of the rejected v3/v4 CPU experiments and the final restored production core, plus restored r17 empty-slot SDI and compatibility boundaries.",
+  "source_sha256": {
+    "src/cpu.c": "a743894494e43e8537a2d8dbdcdc058917dbf5ba8561230e72c7ffcd272c4fe0",
+    "src/machine.c": "fc5b06cd0b7846ff13eecee0f955377d1a08defb1f1eed08adca681824490d76",
+    "src/scheduler.c": "24d02a1e3f48613d1fd157c2d411c0da289e3bee0987cbe8832f93aa2e49c2a3",
+    "src/sdi.c": "acdeb0908bd05dd6585352dd7e3336d165bc196422f74c7480c0a95d3caedea8",
+    "src/checkpoint.c": "d4e1803b080c16076ba8011b3468659de35f61366bf974c36c1caed4a77dc43a",
+    "src/usb.c": "b792a08459cb9274ae88269a0155bf29bbd6b41266aa6a3139f419b51cd76dd3",
+    "tests/scheduler.c": "002c4fd4630fe21f154e13c8bae7758ca53644ffe15b68c1133232b6e58d56d8",
+    "tests/checkpoint.c": "fbfd1fa128e6cac729c93dfdff367a68376fe633b347546b8b2a459775fc5b87",
+    "tools/checkpoint-replay.c": "7120c3ffed6efa4969c8605cc9e5e20dd4ff920032f11d0b4cdfd9fa30ca01cc"
+  },
+  "blocking_findings": [],
+  "restored_sdi_review": {
+    "vendor_manual": "https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf",
+    "sections": [
+      "19-5",
+      "19-6",
+      "19-7"
+    ],
+    "checked_facts": [
+      "SDICON bit 0 selects MMC/SD clock type; it is not a clock-enable bit.",
+      "SDIPRE divides PCLK by 2*(prescaler+1).",
+      "CmdSent is independent of response receipt; command response timeout is 64 SDCLK periods.",
+      "Status bits are write-one-to-clear."
+    ],
+    "new_fatal_defect_identified": false
+  },
+  "support_boundaries": [
+    "Empty SD slot only; no populated-card FIFO, sector transfer or DMA support.",
+    "UART2 / IrDA remains unsupported.",
+    "NOR program and erase remain unsupported.",
+    "Functional clock equivalence is not electrical or cycle-accurate hardware validation.",
+    "Accepting both vendor-documented MAXP layouts does not establish physical aliasing."
+  ],
+  "private_files_published": false,
+  "rejected_candidate_review": {
+    "candidate": "v3 quiet CPU loop",
+    "production_selected": false,
+    "reason": "Default-browser throughput regression in the performance agent isolated measurement.",
+    "source_sha256": {
+      "src/cpu.c": "f26357819683db007286ea12739f88669afec5e7d58d812574ec82119a54f84a",
+      "src/machine.c": "61427514cb29fc764aaca29d1370c4e590be83ef170942c8337d1b78ea5daa93",
+      "src/scheduler.c": "24d02a1e3f48613d1fd157c2d411c0da289e3bee0987cbe8832f93aa2e49c2a3",
+      "src/sdi.c": "acdeb0908bd05dd6585352dd7e3336d165bc196422f74c7480c0a95d3caedea8",
+      "src/checkpoint.c": "d4e1803b080c16076ba8011b3468659de35f61366bf974c36c1caed4a77dc43a",
+      "src/usb.c": "b792a08459cb9274ae88269a0155bf29bbd6b41266aa6a3139f419b51cd76dd3",
+      "tests/scheduler.c": "d55b69f04b21682146ac14de3d31ee52900309a84916827caf8b2bf4e0db1605"
+    },
+    "blocking_correctness_findings": [],
+    "review": {
+      "caller_constraints": [
+        "scheduled functional time",
+        "exactly one CPU slot per quantum",
+        "more than one transition-free peripheral tick remains",
+        "CPU awake",
+        "no accepted pending FIQ or IRQ"
+      ],
+      "continuing_paths": [
+        "condition-failed ARM instruction",
+        "ARM branch and branch-with-link",
+        "conservatively classified data processing without CPSR mode/mask change",
+        "successful ARM word/byte single transfer"
+      ],
+      "required_boundaries": [
+        "Every instruction fetch still performs translation and physical read after its own tick.",
+        "MMIO fetch, page-table read and data access synchronize deferred peripheral time and clear the quiet interval.",
+        "MSR, CP15, BX, Thumb, SPSR return, block transfers and other complex instructions return to the outer loop.",
+        "Data aborts and diagnostic stops return immediately before another instruction.",
+        "A successful store affects the next instruction fetch and page-table walk; no prefetched or decoded instruction survives."
+      ],
+      "directed_tests_reviewed": [
+        "dependent ALU/condition chains with random public budget partitions",
+        "pending interrupt followed by MSR",
+        "WFI true and condition-failed",
+        "BX / ISA change",
+        "SPSR return",
+        "MMIO instruction fetch",
+        "UART side-effecting descriptor fetch",
+        "last mapped instruction before fetch abort",
+        "store rewriting next opcode through exact or mirrored SRAM",
+        "store rewriting mapped instruction descriptor or permissions"
+      ],
+      "test_execution": "Performed by the performance agent and release integrator; this independent review does not relabel their results as an additional run.",
+      "cold_function_split": "Reviewed v3 cpu_checkpointed extraction: rollback snapshot remains after fetch and before speculative PC update; diagnostic restores the same CPU; data abort preserves FAR/FSR before entering ABT; cpu_step returns false for every cold dispatch. No new continuing instruction class."
+    }
+  },
+  "cold_transaction_review": {
+    "candidate": "v4",
+    "production_selection": "Rejected; not present in production. The final isolated Chrome comparison did not establish improvement.",
+    "changes": [
+      "Extract the unchanged cpu_step rollback tail into a static cpu_checkpointed function.",
+      "Use noinline for compilers that support the GNU attribute, to avoid allocating the full rollback frame on the existing hot paths."
+    ],
+    "unchanged_semantics": [
+      "Function is called at the same point after instruction fetch and after the two pre-existing fast paths.",
+      "Full CPU snapshot remains before speculative next_pc update.",
+      "Diagnostic stop records the instruction and restores the complete saved CPU without incrementing the instruction count.",
+      "Data abort restores the CPU, retains FAR/DFSR and enters ABT with the same link value.",
+      "Successful cold instruction commits next_pc, and successful/aborted retired instructions increment the same counter."
+    ],
+    "source_comparison": "The extracted body is identical statement-for-statement to the previous cpu_step tail.",
+    "no_quiet_cpu_loop": true,
+    "no_new_instruction_classifier": true,
+    "no_new_scheduler_logic": true,
+    "machine_internal_profile_tool_restored_to_baseline": true,
+    "targeted_regressions_retained": true,
+    "blocking_correctness_findings": [],
+    "source_sha256": {
+      "src/cpu.c": "95e5a23e222e01843dda1f65ecbed8dec3116de55a992d015c4d4e805f771c77",
+      "src/machine.c": "fc5b06cd0b7846ff13eecee0f955377d1a08defb1f1eed08adca681824490d76",
+      "src/scheduler.c": "24d02a1e3f48613d1fd157c2d411c0da289e3bee0987cbe8832f93aa2e49c2a3",
+      "src/sdi.c": "acdeb0908bd05dd6585352dd7e3336d165bc196422f74c7480c0a95d3caedea8",
+      "src/checkpoint.c": "d4e1803b080c16076ba8011b3468659de35f61366bf974c36c1caed4a77dc43a",
+      "src/usb.c": "b792a08459cb9274ae88269a0155bf29bbd6b41266aa6a3139f419b51cd76dd3",
+      "tests/scheduler.c": "d55b69f04b21682146ac14de3d31ee52900309a84916827caf8b2bf4e0db1605"
+    }
+  },
+  "final_production": {
+    "cpu_optimization_candidates_selected": false,
+    "quiet_cpu_loop_present": false,
+    "cold_function_extraction_present": false,
+    "cpu_machine_internal_profile_tool_equal_to_r17_checkpoint": true,
+    "retained_change": "The scheduler test adds dependent instruction, interrupt/mode/ISA transition, MMIO fetch, self-modifying code, SRAM mirror and page-table mutation regressions.",
+    "directed_regression_checks_reported_by_performance_agent": 48561,
+    "final_build_identity": {
+      "wasm_sha256": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f",
+      "wasm_bytes": 102147
+    },
+    "all_src_and_include_equal_to_recovered_checkpoint": true,
+    "recovered_checkpoint_revision": "9377548a7c8fb3a41a2b1388a83db649bb2be639"
+  },
+  "gcc_portability_review": {
+    "method": "Static cross-review only; no additional test matrix run.",
+    "blocking_findings": [],
+    "tools/checkpoint-replay.c": "The unconditional return is placed on a separate line after the fclose failure check. File-read checks, close handling and returned status are unchanged.",
+    "tests/checkpoint.c": "Capture immutable per-model ram_bytes, check the lower wire-layout bound and upper backing-array bound before any size subtraction, and return the already-incremented failure count on a bad size. All later offsets use the same captured RAM size. This prevents unsigned offset underflow without suppressing a failure or changing core checkpoint behavior.",
+    "validation_provenance": "The performance agent reports GCC 13 reference 16/16 and ASan+UBSan 16/16, plus a focused checkpoint rerun after the guard change; these are not relabeled as independent runs."
+  }
+}

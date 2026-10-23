@@ -23,7 +23,7 @@ Firmware and private calculator data remain outside source, releases and Pages.
 | --- | --- | --- |
 | HP39g+ D1.55 | Unchanged cold boot, HOME/arithmetic, browser controls, USB Disk drive aplet/library installation and reverse SEND; native ROMstream reads complete 1 MiB and returns to responsive HOME | Explicit board/LCD assumptions; wider native-program and sustained-use coverage |
 | HP48gII USB revision | Unchanged cold boot, arithmetic, sessions, USB and UART0 Kermit workflows and two-file batches in the production browser | Explicit SRAM mirror/LCD assumptions; broad keypad/power/long-run checks |
-| HP49g+ | User's full 2 MiB capture, unchanged cold boot, 131×80 display, arithmetic, CAS, graphing, menus, sessions and USB Kermit workflows | Empty SD slot only; infrared/UART2, SD storage, native payload return and physical-board calibration remain open |
+| HP49g+ | User's full 2 MiB capture, unchanged cold boot, 131×80 display, arithmetic, CAS, graphing, menus, sessions, USB Kermit workflows and native ARM entry/return | Empty SD slot only; infrared/UART2, SD storage, NOR programming and physical-board calibration remain open |
 | HP39gs | Complete source-built ROMstream package reusing the proven HP39g+ payload, launcher and aplet; one-launch double-read receiver | Target hardware run and its own full NOR are pending |
 | HP40gs / HP50g | Model profiles and scoped boot-region/updater research | Complete original NORs and independent stock acceptance |
 
@@ -84,7 +84,7 @@ counted LCD `+0x68` idle-zero and packed-memory display assumptions do not close
 
 ## M3 — Genuine stock execution and native return
 
-**Three conditional stock systems; one HP39g+ native-reader return witness.**
+**Three conditional stock systems; HP39g+ and HP49g+ native-return witnesses.**
 HP39g+, HP48gII and HP49g+ execute their own reset/startup and physical inputs.
 Their ROMs remain unchanged. HP48gII alone uses the documented experimental
 SRAM mirror; HP39g+ and HP49g+ use exact physical SRAM bounds. All retain stated
@@ -94,7 +94,14 @@ The original HP39g+ system now installs the unchanged ROMstream aplet and librar
 through its real USB Disk drive client. The native program reads the full NOR,
 returns after disconnect and leaves HOME able to calculate `1+1=2`. The explicit
 cable input and USB compatibility conditions are part of that witness. It is
-not inherited by HP39gs, HP49g+ or arbitrary native applications.
+not inherited by HP39gs or arbitrary native applications.
+
+The independent [HP49g+ native workflow](hp49-native.md) installs the pinned
+SDK ARMToolbox library and example through ordinary stock USB transfers. It
+uses the original library's `PrRUN` in RPN mode, observes the native greeting,
+returns with ON, calculates `1 ENTER 1 +` and reconnects for an exact GET.
+The original ROM and guest RAM are not patched. This closes the specific
+49g+ entry/return gap while wider native-application coverage remains open.
 
 **Gate:** distinguish bootloader progress, initialized display, interactive stock
 UI and native ARM entry/return. Require sustained operation, reset/input coverage
@@ -157,7 +164,11 @@ preserved. Original HP39g+ stock USB installs the 7,373-byte reader aplet and
 1,489-byte library and exports both through SEND. The OS may rename a library
 header to its directory alias while preserving its object body. Responses are
 queued for the next ordinary guest slice after USB input; no extra guest ticks
-or wall-clock sleeps are inserted. HP39gs/40gs still need their own ROM witnesses.
+or wall-clock sleeps are inserted. The browser also reads an HP39 ZIP package
+directly and writes received typed files as a standard ZIP. A missing
+`HP39DIR.CUR` from stock SEND is regenerated without changing original catalog
+aliases or object bytes, so the returned bundle can be imported into a fresh
+machine. HP39gs/40gs still need their own ROM witnesses.
 
 Remaining work includes remote file management, broader capacity/recovery cases,
 infrared/UART2, UART FIFO/baud timing and a host-OS bridge. The standalone loopback
@@ -190,7 +201,14 @@ structural instruction counts are not speedups. A new path needs identical
 architecture, exceptions, interrupts and self-modifying-code behavior plus a
 measured benefit before production admission.
 
-The current feature round also checks the incremental cost of the idle SDI
+The r18 continuation implemented and measured a quiet execution loop and a
+separate cold-rollback function. Both preserved complete scene states but failed
+the declared Chrome admission conditions and were withdrawn. Their samples and
+independent review remain in [the performance record](performance.md); the
+production CPU is unchanged and the stronger scheduler regression is retained.
+This round does not establish lower HOME/APLET input latency.
+
+The preceding feature round checked the incremental cost of the idle SDI
 controller and checkpoint migration. Do not claim an interpreter speedup from
 model admission, checksum work, display caching or input dwell changes. Physical
 clock calibration remains independent of host execution throughput.

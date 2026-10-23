@@ -11,7 +11,9 @@ assumptions. This is not canonical physical-board or all-six-model acceptance.
 
 [HP49g+ support](development/hp49-startup.md) uses the user's complete 2 MiB
 capture, exact 512 KiB SRAM and an empty-slot SD controller. Its original OS
-also performs symbolic algebra and USB object workflows. The
+also performs symbolic algebra and USB object workflows, and an existing
+[native ARM example](development/hp49-native.md) runs through stock ARMToolbox
+and returns to HOME for another calculation. The
 [HP39/40 disk-drive server](development/file-transfer.md) serves applet bundles
 and receives typed files. For the remaining HP39gs image, the
 [complete ROM dump package](development/hp39gs-rom-dump.md) reuses the existing

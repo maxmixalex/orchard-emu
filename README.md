@@ -7,7 +7,9 @@ host-side Saturn replacement or firmware patch.
 
 **HP39g+ D1.55, HP48gII and the supplied HP49g+ complete ROM reach original
 HOME and evaluate `1+2=3` and `7*8=56`.** [HP49g+](docs/development/hp49-startup.md)
-also has original-OS symbolic algebra and menu witnesses. HP39g+ uses a separately selected
+also runs original-OS symbolic algebra, graphing, menus and
+[native ARM programs that return to HOME](docs/development/hp49-native.md).
+HP39g+ uses a separately selected
 1 MiB NOR and exact SRAM, not the HP48gII mirroring hypothesis. LCD `+0x68`,
 component identification, panel interpretation and pad/ADC conditions remain
 unverified hardware assumptions.
@@ -106,8 +108,14 @@ browser witnesses. HP39/40 uses its own disk-drive server: select typed files or
 an applet bundle, start serving, then choose **RECV → Disk drive** in the
 calculator. Directory requests and applet/library dependencies are served from
 the selected files, preserving their original names and aliases. Calculator
-**SEND → Disk drive** returns typed files for local download. Raw data retains
-UART and USB packets. See
+**SEND → Disk drive** returns typed files for local download. Select an existing
+HP39 ZIP directly, or download received objects as a reusable ZIP. The fixed
+catalog entry point is restored when the stock SEND omits it, while original
+directory aliases and object bytes are preserved. Raw data retains
+UART and USB packets. Original-ROM HP39 file-transfer and ZIP round-trip
+verification is for HP39g+; HP39gs/40gs still await their own ROM execution.
+Browser connections are internal to the emulator and do not create desktop
+USB or serial devices. See
 [file transfer](docs/development/file-transfer.md),
 [interaction](docs/development/interaction.md), [sessions](docs/development/sessions.md),
 and [the infrared assessment](docs/development/infrared.md).

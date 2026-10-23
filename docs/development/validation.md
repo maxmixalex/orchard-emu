@@ -1,5 +1,53 @@
 # Validation
 
+## Final recovered implementation and ZIP/native workflows (2026-10-23)
+
+The [r18 release record](evidence/release-validation-r18.json) pins the final
+37 production assets and the fresh checks below. The production WASM is
+102,147 bytes, SHA-256
+`5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f`.
+It is byte-identical to the recovered r17 final core: both new performance
+candidates were withdrawn after their Chrome gates failed. The new ZIP UI,
+native workflow tool, stronger regression tests and documentation remain.
+GitHub Build, merge and Pages results are recorded separately for the published
+revision; a local pass is not a deployment claim.
+
+Fresh native Release, GCC reference and ASan/UBSan checks each pass 16 suites.
+The native/test-WASM comparison passes **1,139,510 assertions per host** and
+**32,949 functional-clock checks per host**, including the expanded
+48,561-check scheduler suite. The compiler-portability fixes affect only the
+checkpoint test's invalid-size guard and two unambiguously unconditional
+returns in the replay tool. The [independent review](evidence/core-review-r18.json)
+verifies that production core/include files are unchanged from the recovered
+implementation. The [performance record](evidence/performance-r18.json)
+separately identifies the 17,075-case fresh candidate/Unicorn differential;
+it is not relabeled as a second final-core run.
+
+| Fresh original-ROM check | Result and scope |
+| --- | --- |
+| HP49g+ cold startup | Two native and two WASM cold runs agree on all outputs, original HOME, `1+2=3` and `7*8=56`; no SRAM aliases. |
+| HP49g+ CAS, menus and graph | Original `VERSION`, factorization, APPS/MODE, parabola and return pass through physical keys. Save/reset/restore and native/WASM continuation preserve the entire checkpoint. |
+| HP49g+ production browser | Real ROM/session pickers, PC input, visually reviewed `1+1=2` and `7*8=56`, 524×320 PNG capture, exact displayed-LCD restore and narrow layouts pass on the final assets. |
+| HP49g+ USB | Upload, named GET, directory, FINISH, active calculator SEND, subsequent GET and a two-file batch complete in the production browser; complete downloaded objects are byte-identical. |
+| HP49g+ native ARM | A fresh cold boot installs the unchanged SDK library and example over USB, runs through ARMToolbox, returns with ON, calculates `2`, reconnects and retrieves the exact 4,474-byte library. [Evidence](evidence/hp49-native-r18.json). |
+| HP39g+ full reader | Final WASM runs the actual installed ARM reader and Go receiver: all 64 blocks are read twice, the full 1 MiB equals the input NOR, and FINISH/disconnect/HOME/`1+1=2` succeed. This replay uses the prior USB-installed checkpoint. [Evidence](evidence/hp39-romstream-revalidation-r18.json). |
+| HP39g+ ZIP round trip | A separately identified intermediate core completed user ZIP → stock RECV → stock SEND → real ZIP download → another fresh cold boot and RECV. Its frontend runtime modules are unchanged in the final build; its recorded WASM identity is retained. [Evidence](evidence/hp39-archive-r18.json). |
+
+Final-asset [frontend checks](evidence/frontend-validation-r18.json) cover the
+calculator/controller/Kermit/Worker chains, actual ZIP file selection/download,
+component layouts and both normal and diagnostic stop recovery. Diagnostic
+active-timeout replay agrees on every call and the complete stopped checkpoint.
+Independent ZIP fixtures include Python-produced stored, DEFLATE and descriptor
+archives, malformed CRC/length/paths, expansion limits and lifecycle cancellation.
+The complete HP39gs download was independently rebuilt from its own included
+sources plus external compilers and matched every archive byte.
+
+HP39gs physical extraction, its own full-NOR acceptance and HP40gs/HP50g images
+remain outstanding. Internal USB does not establish desktop device attachment
+or complete Conn3x interoperability. SD media, UART2/IrDA and NOR programming
+remain outside the current implementation. No firmware, private checkpoint or
+raw guest picture is included in these public evidence records.
+
 ## HP49g+ and HP39/40 file-transfer continuation (2026-10-22)
 
 The [release validation record](evidence/release-validation-r17.json) identifies

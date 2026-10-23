@@ -2,6 +2,7 @@
 // Owns one Worker. React receives only changed controls; pixels use a separate
 // subscription so LCD refresh never rerenders settings or the PC keyboard.
 import {prepareHp39Files,MAX_HP39_HOST_FILES} from './hp39-transfer.js';
+import {readHp39Archive,writeHp39Archive,MAX_HP39_ARCHIVE_BYTES} from './hp39-archive.js';
 import {validateHp39Filename} from './hp39-files.js';
 import { CALCULATORS, identifyROM } from './catalog.js';
 import { MAX_SESSION_BYTES } from './session.js';
@@ -141,12 +142,14 @@ export class CalculatorController {
     try{
       if(!transferCapabilities(s.model.id,transport).serve)throw Error('HP39 file serving is unavailable on this connection.');
       if(transport==='usb'?!s.usbReady:!s.serial)throw Error('Connect the selected link first.');
-      if(!Array.isArray(files)||files.length>MAX_HP39_HOST_FILES)throw Error('Choose at most 16 HP39 files.');
+      if(!Array.isArray(files)||files.length>MAX_HP39_HOST_FILES+2)throw Error('Choose at most 16 HP39 objects and their two directory files, or one ZIP package.');
+      const archive=files.some(entry=>/\.zip$/i.test(entry?.file?.name||''));
+      if(archive&&files.length!==1)throw Error('Select one HP39 ZIP package, or select its extracted calculator files together.');
       const seen=new Set();let total=0;
-      const selected=files.map(entry=>{const file=entry?.file,name=validateHp39Filename(entry?.name||file?.name),key=name.toUpperCase();
-        if(name.length>64||seen.has(key))throw Error('Use unique HP39 filenames of at most 64 bytes.');seen.add(key);
-        if(!file||!Number.isSafeInteger(file.size)||file.size<8||file.size>MAX_FILE_BYTES)throw Error('Choose HP39 typed files of 8 bytes to 2 MiB.');
-        total+=file.size;if(total>MAX_UPLOAD_BYTES)throw Error('The selected HP39 files exceed 8 MiB.');return {file,name};});
+      const selected=files.map(entry=>{const file=entry?.file,name=archive?file.name:validateHp39Filename(entry?.name||file?.name),key=name.toUpperCase();
+        if(!archive&&(name.length>64||seen.has(key)))throw Error('Use unique HP39 filenames of at most 64 bytes.');seen.add(key);
+        if(!file||!Number.isSafeInteger(file.size)||file.size<8||file.size>(archive?MAX_HP39_ARCHIVE_BYTES:MAX_FILE_BYTES))throw Error(archive?'Choose an HP39 ZIP package of at most 32 MiB.':'Choose HP39 typed files of 8 bytes to 2 MiB.');
+        total+=file.size;if(!archive&&total>MAX_UPLOAD_BYTES)throw Error('The selected HP39 files exceed 8 MiB.');return {file,name};});
       this.patch({uploadBatch:null,transferListing:'',transfer:{request,active:true,phase:'preparing',transport,direction:'serve',name:'',transferred:0,total,error:null}});
       const loaded=[];
       for(const entry of selected){
@@ -155,7 +158,7 @@ export class CalculatorController {
         if(this.dead||generation!==this.generation||request!==this.transferRequest)return;
         if(bytes.length!==entry.file.size)throw Error('An HP39 file changed while being read.');loaded.push({name:entry.name,bytes});
       }
-      const prepared=prepareHp39Files(loaded);
+      const prepared=archive?await readHp39Archive(loaded[0].bytes,{cancelled:()=>this.dead||generation!==this.generation||request!==this.transferRequest}):prepareHp39Files(loaded);
       if(this.dead||generation!==this.generation||request!==this.transferRequest)return;
       if(!this.state.ready||!this.state.loaded||this.state.busy||this.state.stopped||(transport==='usb'?!this.state.usbReady:!this.state.serial))throw Error('The selected calculator connection is no longer ready.');
       if(!this.state.running)this.send('run');
@@ -285,6 +288,16 @@ export class CalculatorController {
   }
   downloadTransferredFile(id){const f=this.received.get(id);if(!f)return;
     Promise.resolve().then(()=>this.download(f.bytes,f.name)).catch(e=>this.report('saveError',e.message));
+  }
+  async downloadHp39Package(){
+    if(this.dead||!transferCapabilities(this.state.model.id).serve||!this.received.size)return;
+    try{
+      // A disk replaces a repeated name. Keep individual earlier downloads in
+      // the list while the exported package uses each name's latest version.
+      const latest=new Map();for(const file of this.received.values())latest.set(file.name.toUpperCase(),file);
+      const bytes=writeHp39Archive([...latest.values()]);
+      await this.download(bytes,'orchard-hp39-files.zip');
+    }catch(e){this.report('saveError',e.message);}
   }
   acceptTransferListing(data){
     if(data.request!==this.transferRequest||this.state.transfer?.request!==data.request||!this.state.transfer.active)return;

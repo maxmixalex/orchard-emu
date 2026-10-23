@@ -1,0 +1,157 @@
+diff --git a/src/cpu.c b/src/cpu.c
+--- a/src/cpu.c
++++ b/src/cpu.c
+@@ -413,25 +413,57 @@
+     data_processing(m, op);
+     return true;
+ }
+-static void cpu_step(orchard_machine *m, bool fast) {
++/* Keep the full rollback transaction out of the per-instruction hot frame.
++ * Its state copy and abort/diagnostic behavior are identical to the reference
++ * dispatcher; ordinary ARM operations do not need to allocate that frame. */
++#if defined(__GNUC__) || defined(__clang__)
++__attribute__((noinline))
++#endif
++static void cpu_checkpointed(orchard_machine *m, uint32_t instruction, unsigned width, uint32_t pc) {
++    o_cpu *c = &m->cpu;
++    o_cpu before = *c;
++    c->next_pc = pc + width;
++    if (width == 2) o_thumb(m, (uint16_t)instruction);
++    else arm(m, instruction);
++    if (m->stop.status != ORCHARD_OK) {
++        m->stop.instruction = instruction;
++        *c = before;
++        return;
++    }
++    if (c->data_abort) {
++        uint32_t far = c->far, fsr = c->dfsr;
++        *c = before;
++        c->far = far;
++        c->dfsr = fsr;
++        o_exception(c, O_ABT, 0x10, pc + 8u);
++    } else c->r[15] = c->next_pc;
++    ++c->instructions;
++}
++/* The return value permits another instruction in the same quiet interval:
++ * these ARM paths leave interrupt masks, modes and sleep unchanged.
++ * A fetch/descriptor MMIO read still ends the interval through schedule_sync. */
++#if defined(__GNUC__) || defined(__clang__)
++__attribute__((always_inline))
++#endif
++static inline bool cpu_step(orchard_machine *m, bool fast) {
+     o_cpu *c = &m->cpu;
+     uint32_t pc = c->r[15], physical = 0, instruction = 0;
+     unsigned width = c->cpsr & O_T ? 2 : 4;
+     c->data_abort = c->prefetch_abort = false;
+     if (pc & (width - 1u)) {
+-        o_stop(m, ORCHARD_UNPREDICTABLE, pc, width); return;
++        o_stop(m, ORCHARD_UNPREDICTABLE, pc, width); return false;
+     }
+     if (!o_translate(m, pc, false, true, (c->cpsr & 31u) == O_USR, &physical) ||
+         !o_phys_read(m, physical, width, &instruction)) {
+-        if (m->stop.status != ORCHARD_OK) return;
++        if (m->stop.status != ORCHARD_OK) return false;
+         if (!c->prefetch_abort) o_fault(c, pc, 8, 0, true);
+         o_exception(c, O_ABT, 0xc, pc + 4u);
+-        return;
++        return false;
+     }
+     if (fast && width == 4 && arm_without_checkpoint(m, instruction)) {
+         c->r[15] = c->next_pc;
+         ++c->instructions;
+-        return;
++        return true;
+     }
+     /* Word/byte single transfers commit GPRs and writeback only after their
+      * last fallible bus operation. Keep just the speculative PC and fault
+@@ -447,33 +479,39 @@
+             c->next_pc = previous_pc; c->far = previous_far; c->dfsr = previous_fsr;
+             c->data_abort = false;
+             m->stop.instruction = instruction;
+-            return;
++            return false;
+         }
+         if (c->data_abort) {
+             c->next_pc = previous_pc;
+             c->data_abort = false;
+             o_exception(c, O_ABT, 0x10, pc + 8u);
+-        } else c->r[15] = c->next_pc;
++            ++c->instructions;
++            return false;
++        }
++        c->r[15] = c->next_pc;
+         ++c->instructions;
+-        return;
+-    }
+-    o_cpu before = *c;
+-    c->next_pc = pc + width;
+-    if (width == 2) o_thumb(m, (uint16_t)instruction);
+-    else arm(m, instruction);
+-    if (m->stop.status != ORCHARD_OK) {
+-        m->stop.instruction = instruction;
+-        *c = before;
+-        return;
+-    }
+-    if (c->data_abort) {
+-        uint32_t far = c->far, fsr = c->dfsr;
+-        *c = before;
+-        c->far = far;
+-        c->dfsr = fsr;
+-        o_exception(c, O_ABT, 0x10, pc + 8u);
+-    } else c->r[15] = c->next_pc;
+-    ++c->instructions;
++        return true;
++    }
++    cpu_checkpointed(m, instruction, width, pc);
++    return false;
++}
++
++/* Called only with an awake CPU, no accepted interrupt, one instruction per
++ * quantum and at least one already-proven transition-free peripheral tick.
++ * Do not prefetch or decode a later instruction before its tick: page faults,
++ * live descriptors and side-effecting fetches retain the ordinary ordering.
++ * A complex instruction executes normally, then returns to the outer loop
++ * before any possible interrupt/mode/sleep/clock change is used again. */
++uint32_t o_cpu_run_quiet(orchard_machine *m, uint32_t budget) {
++    uint32_t done = 0;
++    do {
++        --m->quiet_left;
++        ++m->deferred_ticks;
++        ++m->ticks;
++        ++done;
++        if (!cpu_step(m, true)) break;
++    } while (done < budget && m->quiet_left);
++    return done;
+ }
+ 
+ void o_cpu_step_reference(orchard_machine *m) { cpu_step(m, false); }
+diff --git a/src/internal.h b/src/internal.h
+--- a/src/internal.h
++++ b/src/internal.h
+@@ -164,6 +164,7 @@
+ uint32_t *o_spsr(o_cpu *c);
+ void o_exception(o_cpu *c, unsigned mode, uint32_t vector, uint32_t link);
+ void o_cpu_step(orchard_machine *m);
++uint32_t o_cpu_run_quiet(orchard_machine *m, uint32_t budget);
+ /* Full-checkpoint dispatcher retained for test/reference comparison. */
+ void o_cpu_step_reference(orchard_machine *m);
+ uint32_t o_getr(const o_cpu *c, unsigned r);
+diff --git a/src/machine.c b/src/machine.c
+--- a/src/machine.c
++++ b/src/machine.c
+@@ -119,6 +119,15 @@
+                    cp15_reserved ? m->cpu.control : m->soc.clock[5]);
+             break;
+         }
++        /* Within a proven quiet interval, ordinary ARM ALU/memory operations
++           cannot change interrupt masks. Any MMIO ends the interval. Run them in
++           one CPU loop, retaining one fetch and one tick per instruction. */
++        if (scheduled && slots == 1u && m->quiet_left > 1u && !m->cpu.sleeping &&
++            !((m->soc.srcpnd & ~m->soc.intmsk & m->soc.intmod) && !(m->cpu.cpsr & O_F)) &&
++            !(m->soc.intpnd && !(m->cpu.cpsr & O_I))) {
++            i += o_cpu_run_quiet(m, budget - i) - 1u;
++            continue;
++        }
+         /* A sleeping CPU executes no instruction. Only cross an interval
+            already proven free of peripheral transitions, and never postpone
+            a wake request or a latched, unmasked CPU interrupt. */

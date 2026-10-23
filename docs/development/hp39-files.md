@@ -7,10 +7,10 @@
 APLET、库、程序和笔记保持各自的 HP39 typed 封装。它通过原有 USB/UART
 硬件输入输出传递字节，不直接写入计算器对象内存。
 
-浏览器中打开 **连接 → 文件**，选择 typed 文件和所需库，然后点击
+浏览器中打开 **连接 → 文件**，选择 ZIP 包，或同时选择对象文件和所需库，然后点击
 **提供所选文件**。计算器中选择相应对象目录的 **RECV → Disk drive…**，
 在远程列表中选取对象。若使用发布包，选择其 `HP39DIR.CUR`、`HP39DIR.000`
-和被引用文件；文件名和目录别名保持原样。仅选择独立 typed 文件时，浏览器
+和被引用文件，也可直接选择整个 ZIP；文件名和目录别名保持原样。仅选择独立 typed 文件时，浏览器
 自动创建内存中的目录。需传给计算器的文件在开始前全部读取、校验；任一
 目录引用缺失、重复文件名、错误格式或超限都会阻止整个服务启动。
 APLET 内部的运行时依赖由原系统请求，用户需同时选入其配套库；预检的引用
@@ -20,7 +20,11 @@ APLET 内部的运行时依赖由原系统请求，用户需同时选入其配�
 每个文件只在完整 EOF、事务结束及最终 ACK 写入成功后出现下载按钮。
 服务持续运行，可响应后续目录/对象请求；完成后点击 **停止文件服务**。
 关闭连接、暂停/保存、替换 ROM 或恢复会话都会取消活动服务，并清除旧请求。
-下载到浏览器的完整文件仍可手动保存。
+下载到浏览器的完整文件仍可手动保存。**下载完整包**将已接收的对象、库和目录
+保存为可再次选择导入的 ZIP，也可解压后用于 Conn3x。原厂 SEND 返回
+`HP39DIR.000` 而通常不返回 `HP39DIR.CUR`；导入和打包时会补齐这个固定目录入口，
+原有目录别名与对象字节保持不变。跨事务同名文件以最近收到的版本写入包，
+列表中的较早版本仍可单独下载。缺失依赖会报告具体文件名，不生成不完整的包。
 
 | 路线 | 应用协议 | 验证范围 |
 | --- | --- | --- |
@@ -29,10 +33,18 @@ APLET 内部的运行时依赖由原系统请求，用户需同时选入其配�
 | HP39g+ 串口 | 不开放文件能力 | 此机型没有 39gs/40gs 的有线串口；保留原始数据诊断 |
 | HP39/40 (Wire) | 独立的旧传输路径 | 当前文件服务使用 Disk drive，不把两者混同 |
 
-每次选择最多 16 个文件、总共 8 MiB、每文件最多 2 MiB。自动目录计入总字节
-上限，最多增加两个目录文件。主机 basename 限制为 64 个 ASCII 字节，拒绝
+每次选择最多 16 个对象及其两个目录文件、总共 8 MiB、每文件最多 2 MiB。自动目录计入总字节
+上限。主机 basename 限制为 64 个 ASCII 字节，拒绝
 路径、大小写重复、保留设备名和尾随句点。服务最多运行 15 分钟虚拟时间，
 活动 Kermit 事务仍有重试与超时限制；这些均不是实机速度承诺。
+
+ZIP 导入按 PKWARE ZIP 格式和浏览器 Compression Streams 标准接受 stored 和 DEFLATE 文件，[10][11]
+压缩包上限 32 MiB、目录记录上限
+1024 项，解压后的对象仍遵守上述限制。优先读取发布包的 `calculator/` 目录，
+其次读取根目录或唯一 HP39 目录；只解压目录明确引用的文件。README、接收器
+EXE、源码和 `test/` 对照导出不会成为计算器对象。路径遍历和重复项会阻止导入；
+选中的计算器文件若有加密、符号链接、CRC 或长度不匹配，同样会被拒绝。解压在本机进行，取消或更换机器后
+不会继续启动传输。ZIP64 和多卷包不支持；此时可解压并选择计算器文件。
 
 `web/hp39-files.js` 仍可独立检查目录、ASCII/二进制标题和完整引用集合：
 
@@ -142,6 +154,15 @@ USB 连接，最后停止服务、断开 USB，物理按 HOME、`1+1`、ENTER，
 保存输入/结果、生产资产、私有报告和截图的哈希，不包含 ROM、会话或原始
 协议捕获。
 
+后续 ZIP 验证直接选择用户原始发布压缩包，仍完成上述 8,862 字节对象上传和
+三文件回收；所有返回文件也与该包的 `test/` 对照导出逐字节相同。点击
+**下载完整包**后，以独立的 Python ZIP 读取器核对 CRC、目录入口和全部返回字节。
+在无既有 RAM 或保存状态的新浏览器上下文中，同一完整 ROM 冷启动，原版 RECV
+再次从这个下载包安装 aplet 与库，共 8,857 字节，APLET 列表恢复显示
+`H39 ROM USB`。此流程没有启动 aplet 或执行 ROM stream 命令；传输后 HOME
+的 `1+1` 仍显示 `2`。本轮 [ZIP 往返证据](evidence/hp39-archive-r18.json)
+单独记录对应生产资产和截图哈希，不替换旧轮次的验证版本。
+
 可复现工具只接受用户自备的原始完整镜像和旧包四文件目录：
 
 ```sh
@@ -150,6 +171,11 @@ CHROMIUM=/path/to/chrome python3 tools/verify-hp39-file-browser.py \
   --expected-wasm <SHA-256-of-dist-orchard.wasm> \
   --output /private/new-hp39-browser-result
 ```
+
+添加 `--archive /private/hp39gplus-romstream.zip` 后，工具通过文件选择器直接导入
+整个发布包，再下载计算器返回文件的 ZIP。随后打开无既有 RAM 或本地保存的全新
+浏览器上下文，以同一原始 ROM 冷启动，经 RECV 再次安装这个下载包。`--package`
+仍需提供原始四文件目录，供独立字节比较使用。
 
 工具通过普通页面控件操作，旁观 Worker 状态；不会注入 ACK、对象或键盘
 消息。它拒绝覆盖输出目录，并在结束时再次核对生产资产和输入文件未变化。
@@ -185,3 +211,5 @@ CHROMIUM=/path/to/chrome python3 tools/verify-hp39-file-browser.py \
 8. James Bergamin：[Saturnus 作者的 HP39 文件服务器模块说明](https://github.com/ractive/saturnus/blob/7244b7ae9aac83adb00dae275ba40c770bc0189a/crates/saturnus-tx/src/aplets.rs)。用于客户端/服务器角色的交叉核对；该项目含 AI 辅助生成代码，不作为本项目的真机验证证据，也没有复制其解析器或传输实现。
 
 9. 用户 hpclang 项目：[HP39g+ 原始 USB 安装序列](https://github.com/maxmixalex/hpclang/blob/53856bc7/tests/e2e/sequences/hp39gplus-stock-usb-run.seq)，固定功能提交。用于核对菜单、客户端角色和按需依赖请求，不复制其协议实现。
+10. PKWARE：[APPNOTE 6.3.10](https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT)，ZIP 本地头、中央目录、CRC-32、stored 与 DEFLATE 方法的格式规范。
+11. WHATWG：[Compression Standard](https://compression.spec.whatwg.org/)，浏览器原生 `DecompressionStream('deflate-raw')` 接口。

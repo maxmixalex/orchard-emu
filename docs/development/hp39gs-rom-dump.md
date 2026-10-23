@@ -76,7 +76,7 @@ S3C2410 外设区，以轮询方式进行 USB 传输。五个 L1 表项在进入
 保存/恢复相关平台状态；USB endpoint 状态在断线后清理，不声称恢复已经结束的
 连接。操作限制与旧 hpclang 包相同。[1]
 
-本次还在原始 **HP39g+ stock OS** 内，通过正常 USB 文件传输安装原 aplet 和库，
+r17 已在原始 **HP39g+ stock OS** 内，通过正常 USB 文件传输安装原 aplet 和库，
 按 START / ENTER 执行其 ARM 代码，并用新版 Go 接收器经模拟的真实 USB endpoint
 接收完整双读结果：**1,048,576 个字节与该机原 NOR 完全相同**，共 37,634 个 HID
 输入报告、64 块各读两次。FINISH、断线、HOME 后重新输入 `1+1`，显示结果 `2`。
@@ -92,8 +92,26 @@ JSON 中的 `model` 是使用者明确选择；HID 名称不会自动证明它�
 `physical_mapping_verified`、`boot_verified` 和 `catalog_admitted` 初始仍为 false，
 它们由后续对返回镜像的独立分析和原厂启动结果确定，不能由收到 1 MiB 文件自动推导。
 
-可公开的结果与工具身份见 [完整读出记录](evidence/hp39-romstream-r17.json)。
+可公开的原始结果与工具身份见 [r17 完整读出记录](evidence/hp39-romstream-r17.json)。
 ROM、安装后的 checkpoint 与原始回传字节不随代码或文档发布。
+
+### r18 完整包重建与最终回放
+
+r18 只使用分发 ZIP 内的源码及外部编译器，离线重新生成了整个包，结果逐字节
+相同：**1,045,637 字节**，SHA-256 为
+`eeebe4ac2e9abf537fb25ecda40e441f3da0f52f30f36f3ea6a85ac0a84d1300`。
+计算器目录中的四个文件也分别与本次用户上传的旧 ROM Stream ZIP 比对一致。
+接收器协议测试、包检查及 25 个负例、Linux/Windows Go vet 均已通过。
+
+最终生产 WASM
+`5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f`
+再次完成全部 64 块双遍读出，1 MiB 内容与原 NOR 完全一致；FINISH、拔线、
+返回 HOME 后的 `1+1=2` 也通过并重新看图核对。此次读出回放复用了此前正常 USB
+安装所得的 checkpoint，没有重新宣称安装是在这一回放中完成的。
+
+精确输入、工具身份、完整包重建和最终原系统执行结果见
+[r18 独立复核记录](evidence/hp39-romstream-revalidation-r18.json)。
+这仍不替代 HP39gs 真机运行或 Windows 原生 HID 驱动验收。
 
 ## 来源、重建与许可证
 

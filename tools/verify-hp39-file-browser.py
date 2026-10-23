@@ -20,6 +20,7 @@ from pathlib import Path
 import re
 import shutil
 import threading
+import zipfile
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -33,7 +34,7 @@ SOURCE_HASHES = (
 )
 RETURNED = ('H39ROMUS.000', 'LIB275L0.000', 'HP39DIR.000')
 ASSETS = ('orchard.wasm', 'calculator.js', 'worker.js', 'virtual-usb.js',
-          'file-transfer.js', 'kermit.js', 'hp39-files.js', 'hp39-transfer.js')
+          'file-transfer.js', 'kermit.js', 'hp39-files.js', 'hp39-transfer.js', 'hp39-archive.js')
 sha = lambda data: hashlib.sha256(data).hexdigest()
 
 
@@ -108,6 +109,8 @@ def main():
     parser.add_argument('--rom', type=Path, required=True)
     parser.add_argument('--package', type=Path, required=True,
                         help='Original hpclang calculator/ directory (four files)')
+    parser.add_argument('--archive', type=Path,
+                        help='Import the original hpclang ZIP through the picker, then re-import the downloaded ZIP on a fresh machine')
     parser.add_argument('--expected-wasm', required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
@@ -118,6 +121,9 @@ def main():
     assert sha((ROOT/'dist/orchard.wasm').read_bytes()) == args.expected_wasm
     sources = {name: (args.package/name).read_bytes() for name in FILES}
     assert tuple(sha(sources[name]) for name in FILES) == SOURCE_HASHES, 'Use the original unchanged four-file hpclang package'
+    if args.archive:
+        with zipfile.ZipFile(args.archive) as archive:
+            assert all(archive.read('calculator/'+name) == data for name, data in sources.items())
     expected_total = len(sources['HPGCC000.000']) + len(sources['LIB275L.000'])
     args.output.mkdir()  # Never replace an earlier success or failed witness.
     report = {'schema': 'orchard-hp39-stock-browser-transfer-v1', 'passed': False,
@@ -170,7 +176,7 @@ def main():
                 page.wait_for_function("window.__hp39Transfer.events.some(e=>e.type==='usb-status'&&e.phase==='Connected')", timeout=300000)
                 with page.expect_file_chooser() as picker:
                     page.get_by_role('button', name='Choose file', exact=True).click()
-                picker.value.set_files([str((args.package/name).resolve()) for name in FILES])
+                picker.value.set_files(str(args.archive.resolve()) if args.archive else [str((args.package/name).resolve()) for name in FILES])
                 page.get_by_role('button', name='Host selected files', exact=True).click()
                 page.get_by_role('button', name='Close', exact=True).click()
                 keys(page, (6,))
@@ -219,6 +225,19 @@ def main():
                 report['library'] = {'source': source_library, 'returned': returned_library,
                                      'object_bytes_equal': source_body == returned_body,
                                      'directory_alias_preserved': returned_library['title'] == 'LIB275L'}
+                with page.expect_download() as pending:
+                    page.get_by_role('button', name='Download package', exact=True).click()
+                downloaded = pending.value
+                assert downloaded.suggested_filename == 'orchard-hp39-files.zip'
+                archive_path = args.output/'orchard-hp39-files.zip'
+                downloaded.save_as(archive_path)
+                with zipfile.ZipFile(archive_path) as archive:
+                    assert archive.testzip() is None
+                    assert set(archive.namelist()) == set(RETURNED) | {'HP39DIR.CUR'}
+                    assert all(archive.read(name) == data for name, data in downloads.items())
+                    assert b'HP39DIR.000' in archive.read('HP39DIR.CUR')
+                report['downloaded_archive'] = {'sha256': sha(archive_path.read_bytes()),
+                                                'exact_returned_files': True, 'missing_cur_rebuilt': True}
                 page.screenshot(path=str(args.output/'downloads.png'))
                 page.get_by_role('button', name='Stop file server', exact=True).click()
                 page.get_by_role('button', name='Disconnect USB', exact=True).click()
@@ -237,6 +256,48 @@ def main():
                 assert not report['worker_observation']['snapshot']['stopped']
                 statuses = [e for e in report['worker_observation']['events'] if e['type'] == 'file-transfer-status']
                 assert all(e['phase'] != 'error' for e in statuses), statuses
+                if args.archive:
+                    stage('fresh-machine-archive-reimport')
+                    # A new browser context has no calculator RAM or local
+                    # saves from the first pass. Restore through the public
+                    # file picker, stock RECV and USB protocol again.
+                    restored = browser.new_page(viewport={'width': 1360, 'height': 1000}, locale='en-US')
+                    restore_errors = []
+                    restored.on('pageerror', lambda e: restore_errors.append(str(e)))
+                    restored.add_init_script(OBSERVE)
+                    try:
+                        restored.goto(f'http://127.0.0.1:{server.server_port}/')
+                        with restored.expect_file_chooser() as picker:
+                            restored.get_by_role('button', name='Open ROM', exact=True).click()
+                        picker.value.set_files(str(args.rom.resolve()))
+                        restored.wait_for_function('window.__hp39Transfer.snapshot?.loaded&&window.__hp39Transfer.snapshot?.running')
+                        wait_ticks(restored, 50000000); keys(restored, (40,)); wait_ticks(restored, 70000000)
+                        keys(restored, (49,)); wait_ticks(restored, 20000000)
+                        keys(restored, (39,)); wait_ticks(restored, 3000000); keys(restored, (44, 44))
+                        restored.get_by_role('button', name='Connections', exact=True).click()
+                        restored.get_by_role('button', name='Connect USB', exact=True).click()
+                        restored.wait_for_function("window.__hp39Transfer.events.some(e=>e.type==='usb-status'&&e.phase==='Connected')", timeout=300000)
+                        with restored.expect_file_chooser() as picker:
+                            restored.get_by_role('button', name='Choose file', exact=True).click()
+                        picker.value.set_files(str(archive_path.resolve()))
+                        restored.get_by_role('button', name='Host selected files', exact=True).click()
+                        restored.get_by_role('button', name='Close', exact=True).click(); keys(restored, (6,))
+                        wait_transfer(restored, "window.__hp39Transfer.events.some(e=>e.type==='file-transfer-status'&&e.phase==='serving'&&e.name==='HP39DIR.000')")
+                        wait_ticks(restored, 30000000); keys(restored, (6,))
+                        returned_total = len(downloads['H39ROMUS.000']) + len(downloads['LIB275L0.000'])
+                        wait_transfer(restored, "window.__hp39Transfer.events.some(e=>e.type==='file-transfer-status'&&e.phase==='serving'&&e.transferred===arg&&e.total===arg)", returned_total)
+                        wait_ticks(restored, 120000000)
+                        restored.screenshot(path=str(args.output/'archive-reinstalled-aplet.png'))
+                        report['archive_reimport'] = {'fresh_cold_boot': True, 'object_bytes': returned_total,
+                                                     'worker_observation': restored.evaluate('window.__hp39Transfer'),
+                                                     'page_errors': restore_errors}
+                        assert not restore_errors and not report['archive_reimport']['worker_observation']['errors']
+                        assert not report['archive_reimport']['worker_observation']['snapshot']['stopped']
+                    except Exception:
+                        restored.screenshot(path=str(args.output/'archive-reimport-failure.png'))
+                        raise
+                    finally:
+                        restored.close()
                 assert {name: sha((ROOT/'dist'/name).read_bytes()) for name in ASSETS} == report['assets'], 'Production assets changed during witness'
                 assert sha(args.rom.read_bytes()) == ROM_HASH
                 assert all((args.package/name).read_bytes() == data for name, data in sources.items())

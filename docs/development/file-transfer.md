@@ -402,13 +402,29 @@ RECV or SEND menu and **Disk drive…**. The calculator requests HP39DIR.CUR and
 the selected directory, then individual objects and dependencies. No SERVER
 command or HP48 object conversion is involved.
 
-Select loose HP39 typed files to generate an in-memory directory, or select a
-complete package with its original directory files. Directory aliases are
+Select loose HP39 typed files to generate an in-memory directory, select a
+complete package with its original directory files, or choose its ZIP directly. Directory aliases are
 preserved independently of object titles, including `LIB275L` pointing to
 `ARMToolbox39`. Every explicit reference, type, filename, size and complete
-file is checked before publishing the catalog. Up to 16 selected files and
-8 MiB are accepted; filenames are safe ASCII basenames of up to 64 bytes.
+file is checked before publishing the catalog. Up to 16 objects plus two directory
+files and 8 MiB are accepted; filenames are safe ASCII basenames of up to 64 bytes.
 No host filesystem path is requested or opened by the calculator.
+
+**Download package** creates a standard ZIP containing the received typed files
+and catalogs. Original SEND exports omit `HP39DIR.CUR`; it is reconstructed when
+`HP39DIR.000` is present, preserving the original directory aliases and object
+bytes. The ZIP can be selected again in Orchard or extracted for Conn3x. When a
+filename was received more than once, its latest version is included; earlier
+versions remain individually downloadable. Missing referenced files are reported.
+
+ZIP imports support stored and DEFLATE entries, verify CRC and declared/actual
+lengths, and enforce the 2 MiB per-file and 8 MiB decompressed package limits.
+The archive itself is limited to 32 MiB and 1024 directory entries. Selection
+prefers `calculator/`, then the archive root or a unique HP39 catalog; only
+referenced calculator files are decompressed. No executable, source tree or test
+folder is imported from a full release package. Cancelled reads cannot start a
+later transfer. `tests/hp39-archive.mjs` independently checks ZIP interoperability
+against Python's standard library, plus stock exports and controller lifecycle.
 
 The server handles I/R requests, both Kermit transfer directions, repeated
 packets, backpressure, missing files and FINISH. It remains active between
@@ -428,5 +444,10 @@ and the new directory. All three exports also equal the user's earlier stock
 exports. For HP39, USB IN completion is given the next ordinary guest slice
 before the dependent host OUT; this prevents original-OS ACK loss without
 adding guest execution or changing the core scheduling policy.
+The [ZIP round-trip witness](evidence/hp39-archive-r18.json) also imports the
+original full source ZIP, downloads the returned files as one ZIP, and installs
+that downloaded package through stock RECV after a fresh cold boot in a separate
+browser context. The restored aplet and library total 8,857 bytes; their object
+bytes are preserved, and the APLET list shows `H39 ROM USB` again.
 See [HP39 files](hp39-files.md) for exact scope and the separate 39gs/40gs
 model-validation boundary. The older HP39/40 (Wire) entry is a different path.

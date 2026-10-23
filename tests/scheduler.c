@@ -27,6 +27,8 @@ static void same(void) {
     CHECK(!different(&x,&y,sizeof(x)));
     CHECK(!different(&a->stop,&b->stop,sizeof(a->stop)));
     CHECK(!different(a->ram,b->ram,sizeof(a->ram)));
+    CHECK(a->nor_id_mode==b->nor_id_mode && a->nor_sequence==b->nor_sequence);
+    CHECK(a->sram_alias_reads==b->sram_alias_reads && a->sram_alias_writes==b->sram_alias_writes);
     CHECK(a->ticks==b->ticks);
     CHECK(a->quiet_left==0 && a->deferred_ticks==0);
 }
@@ -37,8 +39,77 @@ static void guest_mmio(uint32_t address, uint32_t value, bool write) {
     put(a->ram+4,write?0xe5801000:0xe5901000);
     put(a->ram+8,0xeafffffc);
 }
+static void instruction_intervals(void) {
+    /* Dependent ALU/flag chains cross many peripheral boundaries and public
+       budget partitions. None may be decoded against an earlier CPSR/GPR. */
+    for (unsigned trial=0;trial<64;trial++) {
+        init(); a->cpu.r[15]=O_RAM_BASE;
+        for (unsigned reg=0;reg<15;reg++) a->cpu.r[reg]=rnd();
+        for (unsigned i=0;i<31;i++) {
+            unsigned kind=rnd()%16, rd=rnd()%15, rn=rnd()%16;
+            unsigned flags=(kind>=8 && kind<=11)?1:rnd()%2;
+            put(a->ram+4*i,(rnd()%16)<<28 | 1u<<25 | kind<<21 |
+                flags<<20 | rn<<16 | rd<<12 | (rnd()&0xfffu));
+        }
+        put(a->ram+124,0xeaffffdf); /* back to first instruction */
+        a->soc.wtcon=32|4;a->soc.wtcnt=5;a->soc.wtdat=7;
+        *b=*a;
+        for(unsigned part=0;part<20;part++) compare(rnd()%1000);
+    }
+    /* Observe mask/ISA/sleep changes before another instruction issues, even
+       inside a quiet interval. MSR may unmask IRQ; a failed WFI may not sleep. */
+    const uint32_t tails[]={0xe121f004,0xee070f90,0x0e070f90,0xe12fff14,
+        0xe5901000,0xe1b0f00e,0xee010f10,0xffffffff};
+    for(unsigned which=0;which<sizeof(tails)/sizeof(*tails);which++) {
+        init();a->cpu.r[15]=O_RAM_BASE;a->cpu.r[0]=0x4d000068;
+        a->cpu.r[4]=which==3?O_RAM_BASE+33:O_SYS|O_F;
+        a->soc.srcpnd=a->soc.intpnd=1u<<9;a->soc.intmsk=~(1u<<9);
+        for(unsigned i=0;i<8;i++)put(a->ram+4*i,0xe2800001);
+        put(a->ram+12,tails[which]);put(a->ram+32,0xe7fe2001);
+        *b=*a;compare(2);compare(1);compare(1);compare(1);compare(300);
+    }
+    /* Fetches can have bus side effects too. Every MMIO fetch synchronizes
+       deferred time, including a condition-failed instruction. */
+    init();a->cpu.r[15]=0x4c000000;
+    for(unsigned i=0;i<6;i++)a->soc.clock[i]=0x12800001;
+    *b=*a;compare(6);compare(1);
+    /* A page-table descriptor read from UART is consumed once. A second fetch
+       must walk it again and fault instead of executing a speculative opcode. */
+    init();a->cpu.r[15]=0x00900000;a->cpu.control|=1;
+    a->cpu.ttb=0x50000000;a->cpu.domain=UINT32_MAX;
+    put(a->flash,0xe2800001);CHECK(o_q_push(&a->soc.rx,2));
+    *b=*a;compare(2);CHECK(a->cpu.exceptions==1);
+    /* A successful last-page instruction commits before the next fetch fails;
+       the fault still consumes its exact quantum and retains the first result. */
+    init();a->cpu.r[15]=a->profile->flash_bytes-4;
+    put(a->flash+a->profile->flash_bytes-4,0xe2800001);
+    *b=*a;compare(3);CHECK(a->cpu.r[0]==1 && a->cpu.exceptions==1);
+    /* Stores in a continuing interval must affect the very next fetch, even
+       through an SRAM mirror. The block must not retain decoded opcodes. */
+    for(unsigned mirror=0;mirror<2;mirror++) {
+        init();a->cpu.r[15]=O_RAM_BASE;
+        if(mirror)CHECK(orchard_sram_select(a,ORCHARD_SRAM_BANK1_MIRROR)==ORCHARD_OK);
+        a->cpu.r[1]=O_RAM_BASE+8+mirror*a->profile->ram_bytes;
+        a->cpu.r[2]=0xe2800009;
+        put(a->ram,0xe1a00000);put(a->ram+4,0xe5812000);put(a->ram+8,0xe2800001);
+        *b=*a;compare(3);CHECK(a->cpu.r[0]==9);
+    }
+    /* A guest STR changes the already-memoized instruction descriptor. The
+       following fetch uses the new mapping or takes its permission fault. */
+    for(unsigned fault=0;fault<2;fault++) {
+        init();a->cpu.r[15]=0x10000000;a->cpu.control|=1;
+        a->cpu.ttb=O_RAM_BASE+0x4000;a->cpu.domain=UINT32_MAX;
+        a->cpu.r[1]=O_RAM_BASE+0x4400;a->cpu.r[2]=fault?0:O_RAM_BASE|0xc02;
+        put(a->ram+0x4200,O_RAM_BASE|0xc02);put(a->ram+0x4400,0xc02);
+        put(a->flash,0xe1a00000);put(a->flash+4,0xe5812000);put(a->flash+8,0xe2800001);
+        put(a->ram+8,0xe2800009);
+        *b=*a;compare(3);
+        CHECK(fault?a->cpu.exceptions==1:a->cpu.r[0]==9);
+    }
+}
 EXPORT("regression") unsigned regression(void) {
     checks=failures=first=0; seed=0x2410920u;
+    instruction_intervals();
     for(unsigned trial=0;trial<1600;trial++) {
         init(); o_soc *s=&a->soc;
         s->rtc.phase=rnd()%O_FUNCTIONAL_TIMEBASE_HZ;

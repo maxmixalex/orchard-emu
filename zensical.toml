@@ -44,6 +44,7 @@ nav = [
     "development/skins-segments.md",
     "development/hp39-startup.md",
     "development/hp49-startup.md",
+    "development/hp49-native.md",
     "development/validation.md",
     { "Validation history" = "development/validation-history.md" },
     "development/licensing.md",

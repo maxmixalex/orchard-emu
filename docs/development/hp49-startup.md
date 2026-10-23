@@ -2,7 +2,8 @@
 
 The complete user-captured HP49g+ image now cold boots to the original
 131 × 80 HOME screen, accepts physical-key input, calculates, runs CAS,
-displays a graph and transfers files over the internal virtual USB connection.
+displays a graph, transfers files over the internal virtual USB connection,
+and runs the existing HP-GCC native example through stock ARMToolbox.
 The catalog admits this exact image as **HP49g+ HOME · experimental**.
 The immutable ROM and all private snapshots remain outside the repository.
 
@@ -77,6 +78,33 @@ Build `orchard`, `orchard-checkpoint-replay` and `dist/orchard.wasm` first.
 The workflow directory is private: it contains local screenshots, checkpoints
 and an immutable input snapshot for the cross-host comparison. These commands
 are explicit local acceptance work, not firmware downloads or ordinary CI.
+
+## Native ARM installation, execution and return
+
+The unchanged SDK `LIB275.LIB` and `template/main.hp` also run on the original
+HP49g+ OS. They are uploaded through ordinary virtual USB as `ARMTOOL` and
+`ARMHELLO`, Library 275 is installed in RAM port 0, and the physical ON+F3
+warmstart attaches it. In RPN mode the stock ARMToolbox PrRUN command launches
+the example. Its own LCD output reads `Hello From Lobakkang`; ON returns to
+HOME and `1 ENTER 1 +` then yields `2` without a diagnostic stop. No host
+memory edit or firmware patch is involved.
+
+The maintained reproduction starts from cold boot and includes USB GET after
+the native return. It takes the original ROM and the external pinned SDK as
+inputs; the SDK code is not embedded in the MIT emulator:
+
+```sh
+node tools/verify-hp49-native.mjs \
+  /private/hp49gplus-full.bin \
+  /private/patched-hpgcc-1.1-sdk-for-hp39gs \
+  /new/hp49-native
+```
+
+See [native ARM execution](hp49-native.md) for the exact fixture hashes,
+launcher choreography and licensing boundary. This proves the existing
+example's install/run/return path, not compatibility with every native program.
+The empty SD slot, USB-only file service and explicit board conditions remain
+the same.
 
 ## USB and the serial/infrared distinction
 

@@ -1,0 +1,93 @@
+{
+  "schema": "orchard-hp39-romstream-revalidation-v1",
+  "validated_on": "2026-10-23",
+  "scope": "Recovery of the interrupted r17 implementation; fresh independent source-only reconstruction and maintained receiver/package checks.",
+  "package": {
+    "path": "docs/downloads/hp39gs-rom-dump-v1.zip",
+    "bytes": 1045637,
+    "sha256": "eeebe4ac2e9abf537fb25ecda40e441f3da0f52f30f36f3ea6a85ac0a84d1300",
+    "source_only_rebuild_sha256": "eeebe4ac2e9abf537fb25ecda40e441f3da0f52f30f36f3ea6a85ac0a84d1300",
+    "whole_archive_byte_equal": true
+  },
+  "source_rebuild": {
+    "inputs": "Only files extracted from the distributed package plus external compilers; no upstream checkout or network used in reconstruction.",
+    "arm_compiler": "Arm Toolchain for Embedded clang 22.1.0",
+    "saturn_tools": "HPTools 3.0.8 with pdo 20190426 64-bit patch",
+    "go_compiler": "go1.22.2 linux/amd64",
+    "go_compiler_archive_sha256": "5901c52b7a78002aeff14a21f93e0f064f74ce1360fce51c6ee68cd471216a17",
+    "go_archive_checked_against": "https://go.dev/dl/?mode=json&include=all",
+    "all_four_calculator_files_byte_equal_to_new_user_upload": true,
+    "calculator_payload_bytes": 6376,
+    "calculator_payload_sha256": "9baa02a66891d27ec771ce69c43f737fa322a6c3bc1d63402981a02ff90851f4",
+    "windows_receiver_bytes": 1812480,
+    "windows_receiver_sha256": "a9b456019e431e7611e0d28a410162ddaf48f608a122f4cdd31797dbc5cdf508"
+  },
+  "fresh_checks": {
+    "package_python_test_groups": 5,
+    "package_negative_cases": 25,
+    "go_unit_protocol_tests": "PASS; fresh -count=1 run",
+    "go_vet_linux_amd64": "PASS",
+    "go_vet_windows_amd64": "PASS",
+    "full_source_only_package_rebuild": "PASS; exact complete archive match",
+    "stock_os_full_capture": "PASS; final production WASM, actual ARM payload and Go receiver, all 64 blocks independently read twice; complete 1 MiB byte-equal to the original input."
+  },
+  "documentation_change": "The remaining obsolete instruction to run short probes after the return probe now points directly to the complete 1 MiB reader.",
+  "boundaries": {
+    "hp39gs_physical_execution_verified": false,
+    "hp39gs_stock_os_execution_verified": false,
+    "windows_native_hid_runtime_verified": false,
+    "hp40gs_reader_included": false,
+    "two_separate_power_cycles_verified": false,
+    "firmware_distributed": false,
+    "stock_replay_in_this_revalidation": true
+  },
+  "previous_evidence": "hp39-romstream-r17.json",
+  "stock_execution": {
+    "schema": "orchard-hp39-romstream-stock-v1",
+    "model": "hp39gplus",
+    "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+    "wasm_sha256": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f",
+    "starting_checkpoint_sha256": "70af7368340c5c9721762e593c9452d43188e11a743c8e15177fba3db856049d",
+    "guest_memory_patched": false,
+    "physical_key_launch": true,
+    "usb_hid_identity": {
+      "vendor": 1008,
+      "product": 289,
+      "manufacturer": "hpclang",
+      "name": "HP39g+ ROM Stream",
+      "endpoints": [
+        {
+          "address": 129,
+          "type": 3,
+          "maxPacket": 64
+        },
+        {
+          "address": 2,
+          "type": 3,
+          "maxPacket": 64
+        }
+      ]
+    },
+    "read_reports": 37634,
+    "write_reports": 131,
+    "returned_to_stock_os": true,
+    "arithmetic_after_return_verified": true,
+    "external_cable_input": {
+      "port": "F",
+      "known_mask": "0x8e",
+      "connected_levels": "0x02",
+      "disconnected_levels": "0x00"
+    },
+    "after_return_lcd_sha256": "1c0341538082ea6ff9aea93205ecce184ce76c9071b2aef664fb3ffc818cc378",
+    "home_lcd_sha256": "4590ac57444ea61d6207adb9b2de2b4c82f96bc185797151adeed94d98652ea2",
+    "arithmetic_lcd_sha256": "80c3d9d1b982b326ca0da7e205f2cd9e124dc3a1c1098c37dbf7ddf31a39c6b5",
+    "final_cpu_stop": 0,
+    "final_tick": 2562327328,
+    "build_status": "Final production build; CPU optimization candidates rejected and production core restored.",
+    "one_plus_one_lcd_independently_viewed": true,
+    "installation_scope": "Restored a prior checkpoint installed through stock-OS USB transfers; installation itself was not repeated in this run.",
+    "private_report_sha256": "b392ab4f8a217c4c251dacfcafd18ccd338f3abd74776bef28c2390c7371954b"
+  },
+  "initial_candidate_stock_wasm_sha256": "123be1b96339b4f9e211fe51c4bc36e90a0862606ab270ad3267ec520d078daf",
+  "performance_sample": false
+}

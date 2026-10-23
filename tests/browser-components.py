@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 """Offline React/Mantine interaction test. Not real HTTP/ROM/Worker E2E."""
 from pathlib import Path
-import base64,json,subprocess,os,shutil
+import base64,io,json,subprocess,os,shutil,zipfile
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parent.parent
 subprocess.run(['node','--input-type=module','-e', '''import {build} from 'esbuild'; await build({entryPoints:['tests/ui-fixture.jsx'],bundle:true,format:'iife',target:'es2022',outfile:'build/ui-fixture.js',define:{'process.env.NODE_ENV':'"production"','import.meta.url':'"https://offline.invalid/calculator.js"'}});'''],cwd=ROOT,check=True)
@@ -225,6 +225,28 @@ with sync_playwright() as p:
  page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-received",generation:c.generation,request:c.transferRequest,name:"RETURN.000",bytes:new Uint8Array([0,255,13,10])})}')
  page.get_by_role('button',name='下载',exact=True).click();page.wait_for_function('window.__downloadName==="RETURN.000"')
  assert page.evaluate('window.__downloadBytes')==[0,255,13,10]
+ page.get_by_role('button',name='停止文件服务',exact=True).click()
+ # A completed HP39 SEND package is downloadable with its missing CUR added,
+ # then goes through the real file picker and archive importer again.
+ page.get_by_role('button',name='清空列表',exact=True).click()
+ page.get_by_role('button',name='接收计算器文件',exact=True).click()
+ hp39_directory=b'HP39AscA D 8 TEST.0004 TESTH 7 LIB.0003 Lib'
+ page.evaluate('''files=>{const c=window.__controller;for(const f of files)c.receive({type:'file-transfer-received',generation:c.generation,request:c.transferRequest,name:f.name,bytes:new Uint8Array(f.bytes)})}''',
+  [{'name':'TEST.000','bytes':list(hp39_program)},{'name':'LIB.000','bytes':list(hp39_library)},{'name':'HP39DIR.000','bytes':list(hp39_directory)}])
+ page.get_by_role('button',name='下载完整包',exact=True).click()
+ page.wait_for_function('window.__downloadName==="orchard-hp39-files.zip"')
+ archive=bytes(page.evaluate('window.__downloadBytes'))
+ with zipfile.ZipFile(io.BytesIO(archive)) as z:
+  assert z.testzip() is None
+  assert set(z.namelist())=={'TEST.000','LIB.000','HP39DIR.000','HP39DIR.CUR'}
+  assert z.read('TEST.000')==hp39_program and z.read('HP39DIR.000')==hp39_directory
+ page.get_by_role('button',name='停止文件服务',exact=True).click()
+ count=page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").length')
+ page.locator('[data-testid="transfer-file"]').set_input_files({'name':'下载的程序包(1).zip','mimeType':'application/zip','buffer':archive})
+ page.get_by_role('button',name='提供所选文件',exact=True).click()
+ page.wait_for_function('(n)=>window.__messages.filter(m=>m.type==="file-transfer-start").length===n',arg=count+1)
+ restored=page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).files.map(f=>({name:f.name,bytes:Array.from(f.bytes)}))')
+ assert {f['name']:bytes(f['bytes']) for f in restored}['HP39DIR.000']==hp39_directory
  page.get_by_role('button',name='停止文件服务',exact=True).click()
  page.screenshot(path=str(ROOT/'build/ui-hp39-files-zh.png'))
  page.get_by_role('button',name='关闭',exact=True).click()

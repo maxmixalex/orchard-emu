@@ -1,6 +1,63 @@
 # Continuation handoff
 
-## Current continuation from 640a229 (2026-10-22)
+## Current continuation from d199afd (2026-10-23)
+
+The user supplied both earlier conversations, the existing hpclang HP39g+
+ROMstream package and a complete 2 MiB HP49g+ capture. The latest instruction
+is to implement usable 49g+ support and HP39/40 transfers, deliver a complete
+39gs reader without another preliminary probe, and continue measured CPU
+performance work. The interrupted r17 implementation was recovered and
+preserved as `9377548`; the subsequent r18 work builds on that exact tree.
+
+The supplied HP49g+ NOR is admitted by its full SHA-256
+`3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab`.
+Its exact 512 KiB SRAM and empty-slot SDI controller support unchanged startup,
+131×80 display, arithmetic, CAS, graphing, menus, sessions and USB Kermit
+workflows. [Native ARM execution](hp49-native.md) follows the stock USB and
+ARMToolbox route, including a warmstart, RPN launch and ON return. The
+[model record](hp49-startup.md) lists explicit pad/ADC/LCD conditions. Empty SD
+slot support does not implement SD media, UART2/IrDA or NOR program/erase.
+
+The [HP39 Disk drive host](file-transfer.md) now serves catalogs and typed
+objects through the original system's Kermit client. Original HP39g+ USB can
+install the reader aplet and library, SEND them back, download a standard ZIP,
+and install that ZIP in another freshly cold-booted machine. ZIP import accepts
+the existing user package directly; export reconstructs only the fixed catalog
+entry omitted by stock SEND, preserving original aliases and object bytes.
+Input, expansion, CRC, file count and retained-download limits remain bounded.
+HP39gs/40gs protocol availability is distinct from their still-missing original
+NOR acceptance. The browser link is internal; desktop Conn3x interoperability
+and the host-OS USB/IP bridge still need their own device-level evidence.
+
+Deliver [hp39gs-rom-dump-v1.zip](../downloads/hp39gs-rom-dump-v1.zip) directly.
+It contains the independent Windows receiver and all four original calculator
+files, corresponding source and licenses. The entire package has been rebuilt
+byte-for-byte, with SHA-256
+`eeebe4ac2e9abf537fb25ecda40e441f3da0f52f30f36f3ea6a85ac0a84d1300`.
+One launch reads every 16 KiB block twice and writes a complete 1 MiB image
+plus its JSON. START opens the aplet; ENTER launches the reader. USB disconnect
+returns to the OS after the receiver reports completion. No separate return
+or short-read probe is required. This is a 39gs/39g+ package, not a 2 MiB
+HP40gs reader. Physical HP39gs and Windows HID execution await the user's
+full capture; original HP39g+ emulator execution is separately witnessed.
+
+The CPU continuation implemented a quiet-interval loop and a separate cold
+rollback-function candidate. Both preserved full machine behavior but failed
+the predeclared Chrome performance conditions, so both were withdrawn. The
+production CPU/MMU/scheduler remain the restored r17 implementation; the new
+48,561-check scheduler regression is retained. The
+[performance record](performance.md) includes all candidate identities, samples
+and the independent withdrawal review. No additional HOLD branch was created,
+and no new HOME/APLET speedup is claimed. Earlier HOLD candidates remain disabled.
+
+The current [validation record](validation.md) separates recovered evidence,
+fresh final-build runs, generated fixtures and original-ROM workflows.
+Published CI and Pages identity are checked for the actual merged revision.
+Do not publish ROMs, SDK binaries, checkpoints, private user objects or raw
+LCD captures. The earlier sections below are historical and do not reinstate
+their superseded requests for extra capture probes.
+
+## Previous continuation from 640a229 (2026-10-22)
 
 The user's latest instruction resumes three parallel lanes: measured `1+1` /
 APLET performance work, browser file transfer toward Conn3x replacement, and

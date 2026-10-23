@@ -54,7 +54,8 @@ export function FileTransfer({controller,state,transport}){
       </Group>)}</Stack>
     </Stack>}
     {state.receivedFiles.length>0&&<Stack gap="xs"><Group justify="space-between"><Text size="sm" fw={600}>{t('receivedFiles')}</Text>
-      <Button variant="subtle" size="compact-xs" disabled={active} onClick={()=>controller.clearTransferredFiles()}>{t('clearReceivedFiles')}</Button></Group>
+      <Group gap="xs">{hp39&&<Button variant="light" size="compact-xs" onClick={()=>controller.downloadHp39Package()}>{t('downloadHp39Package')}</Button>}
+      <Button variant="subtle" size="compact-xs" disabled={active} onClick={()=>controller.clearTransferredFiles()}>{t('clearReceivedFiles')}</Button></Group></Group>
       {state.receivedFiles.map(f=><Group key={f.id} justify="space-between" wrap="nowrap"><Text size="sm" style={{overflowWrap:'anywhere',minWidth:0}}>{f.name} <Text span size="xs" c="dimmed">({size(f.size)})</Text></Text>
         <Button size="compact-sm" variant="light" onClick={()=>controller.downloadTransferredFile(f.id)}>{t('downloadFile')}</Button></Group>)}
     </Stack>}

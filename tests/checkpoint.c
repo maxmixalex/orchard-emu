@@ -37,7 +37,10 @@ EXPORT("regression") unsigned regression(void){
  checks=failures=first=0;
  CHECK(orchard_checkpoint_size(NULL)==0);
  for(unsigned id=1;id<=6;id++){
-  init(id);size_t n=orchard_checkpoint_size(&a);CHECK(n>4096+a.profile->ram_bytes&&n<600000);
+  init(id);size_t n=orchard_checkpoint_size(&a),ram_bytes=a.profile->ram_bytes;
+  bool valid_size=n>ram_bytes+O_BOOT_SRAM_SIZE+52u+31u+1032u+8u&&n<sizeof original;
+  CHECK(valid_size);
+  if(!valid_size)return failures; /* Do not underflow the test's wire offsets. */
   export_to(original,n);
   CHECK(o_read_le(original+20,4)==crc(a.flash,a.profile->flash_bytes));
   CHECK(o_read_le(original+28,4)==crc(original+32,n-32));
@@ -70,7 +73,7 @@ EXPORT("regression") unsigned regression(void){
   original[256]=2;put(original+28,crc(original+32,n-32));
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
   original[256]=0;
-  size_t head=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE-52-31-1032-8;
+  size_t head=n-ram_bytes-O_BOOT_SRAM_SIZE-52-31-1032-8;
   CHECK(o_read_le(original+head,4)==1020);
   put(original+head,0xffffffffu);put(original+28,crc(original+32,n-32));
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
@@ -79,7 +82,7 @@ EXPORT("regression") unsigned regression(void){
   /* A genuine v1 wire image has no trailing SD scalars. Import on every model
      restores the original state and initializes the newly modeled empty slot. */
   export_to(original,n);
-  size_t ram_offset=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE;
+  size_t ram_offset=n-ram_bytes-O_BOOT_SRAM_SIZE;
   size_t legacy_n=n-52;
   o_copy(actual,original,ram_offset-52);
   o_copy(actual+ram_offset-52,original+ram_offset,n-ram_offset);

@@ -23,7 +23,7 @@ const args = [
 const result = spawnSync(process.env.CLANG || 'clang', args, { cwd: root, stdio: 'inherit' });
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
-for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'session.js', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js', 'kermit.js', 'file-transfer.js', 'hp39-files.js', 'hp39-transfer.js']) {
+for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'session.js', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js', 'kermit.js', 'file-transfer.js', 'hp39-files.js', 'hp39-transfer.js', 'hp39-archive.js']) {
   await copyFile(resolve(root, 'web', file), resolve(out, file));
 }
 await copyFile(resolve(root, "LICENSE"), resolve(out, "LICENSE"));
@@ -57,9 +57,10 @@ named objects for explicit local download. Start Kermit SERVER on the calculator
 with the matching connection and binary transfer selected. Both connections support
 Receive, directory and FINISH. Select up to 16 objects (8 MiB total) for a batch;
 all files are checked before sending and each result is shown separately.
-HP39/40 files use the separate Disk drive host: select aplet/library files,
+HP39/40 files use the separate Disk drive host: select a ZIP package or aplet/library files,
 start serving, and use APLET > RECV > Disk drive on the calculator. Reverse
-SEND offers explicit local downloads. Stock USB transfer is verified on HP39g+;
+SEND offers individual downloads and Download package creates a ZIP you can import again.
+Stock USB transfer is verified on HP39g+;
 39gs/40gs still require their own full-ROM witnesses. Raw data retains serial
 and USB packets. Complete desktop Conn3x replacement remains separate.
 The browser connection does not create a device in the desktop operating system.
