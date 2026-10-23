@@ -150,7 +150,26 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enu
                 o_exception(&m->cpu, O_FIQ, 0x1c, m->cpu.r[15] + 4u);
             else if (m->soc.intpnd && !(m->cpu.cpsr & O_I))
                 o_exception(&m->cpu, O_IRQ, 0x18, m->cpu.r[15] + 4u);
-            else if (!m->cpu.sleeping) o_cpu_step(m);
+            else if (!m->cpu.sleeping) {
+                /* A quiet interval has no peripheral transitions. Guest MMIO,
+                 * including translation-table reads, synchronizes and clears
+                 * quiet_left before touching any interrupt source or mask.
+                 * Exclude latched IRQs even with CPSR.I set: a guest PSR write
+                 * can unmask them without touching MMIO. Bound an ineligible
+                 * interval to this quantum, so the CPU loop has no invariant
+                 * one-shot branch for the compiler to split before inlining. */
+                uint32_t last = scheduled && policy == RUN_LEGACY && m->quiet_left &&
+                                !pending && !m->soc.intpnd ? budget - 1u : i;
+                for (;;) {
+                    o_cpu_step(m);
+                    if (i == last || !m->quiet_left || m->cpu.sleeping ||
+                        m->stop.status != ORCHARD_OK) break;
+                    ++i;
+                    ++m->ticks;
+                    --m->quiet_left;
+                    ++m->deferred_ticks;
+                }
+            }
         }
     }
     o_schedule_sync(m);

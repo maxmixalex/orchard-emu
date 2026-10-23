@@ -1129,3 +1129,36 @@ failure. The browser regression exercises a running timeout, missing Pause
 acknowledgement and changed generation, including a complete generated-guest
 checkpoint replay. Ordinary uninstrumented failure handling does not gain
 these diagnostic operations.
+
+## Continuing execution inside quiet intervals
+
+The scheduled Legacy runner can continue at its existing CPU dispatch site
+while a previously planned quiet interval remains valid. Entry requires no
+unmasked interrupt source and no latched IRQ, independently of the current
+CPU interrupt masks. Every instruction still executes, and each additional
+instruction advances the same one functional quantum before CPU execution.
+
+Guest MMIO reads and writes, including page-table walks through device
+addresses, synchronize peripheral phases and invalidate the interval. The
+inner loop also ends at sleep, a diagnostic stop, the next peripheral boundary
+or the requested budget. Requiring an empty latched IRQ prevents a guest PSR
+write from unmasking an interrupt inside a region that omitted its delivery
+check. Reference execution and the opt-in clock policies retain their existing
+outer-loop checks.
+
+The two CPU step helpers are explicitly inlined only for non-Reference WASM.
+Inspect the built module when changing this loop: the initial source change
+caused LLVM to outline a step helper and introduce a call per instruction.
+Source-level reductions alone do not establish a throughput improvement.
+The continuation uses a final iteration index: an ineligible interval ends
+at the current quantum, while an eligible interval is bounded by the request.
+An earlier invariant Boolean exit caused the production compiler to split
+the one-shot and continuing paths before inlining, producing two static CPU
+bodies. The index bound keeps a single interpreter body in the measured build.
+Verify the emitted fetch/decode paths as well as helper names and module size;
+one source call site does not guarantee one generated interpreter body. This
+code-size finding alone does not establish the cause of browser latency noise.
+The scheduler differential matrix covers interrupt unmasking, device-backed
+fetch and descriptors, MMIO synchronization, aborts, sleep and budget edges.
+Use the fixed-checkpoint scene tool above and the uninstrumented browser probe
+to assess throughput and user-visible latency separately.
