@@ -1,0 +1,39 @@
+name: Continuation source snapshot
+on:
+  push:
+    branches: [feat/hp49-hp39-continuation]
+    paths: [.github/workflows/continuation-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          path: orchard
+      - uses: actions/checkout@v4
+        with:
+          repository: maxmixalex/hpclang
+          ref: e240c58c2e9dd3ac4d18002ed9a93d2c7cc67900
+          persist-credentials: false
+          path: hpclang-streamer
+      - name: Archive tracked public source only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir snapshots
+          git -C orchard archive --format=tar.gz --prefix=orchard-emu/ HEAD > snapshots/orchard-source.tar.gz
+          git -C hpclang-streamer archive --format=tar.gz --prefix=hpclang-streamer/ HEAD > snapshots/hpclang-streamer-source.tar.gz
+          git -C orchard rev-parse HEAD > snapshots/orchard-commit.txt
+          git -C hpclang-streamer rev-parse HEAD > snapshots/hpclang-commit.txt
+          cd snapshots
+          sha256sum *.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: continuation-source-inputs
+          path: snapshots/
+          retention-days: 7
+          if-no-files-found: error
