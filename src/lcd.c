@@ -140,8 +140,15 @@ orchard_status orchard_framebuffer_view(const orchard_machine *m, orchard_frame_
     uint32_t start = (r[5] & 0x3fffffffu) << 1;
     uint32_t end = (start & 0xffc00000u) | ((r[6] & 0x1fffffu) << 1);
     if (end <= start) return ORCHARD_UNSUPPORTED_LCD;
+    /* Debug memory reads are observational. Reuse one packed byte for its
+       pixels, except when output aliases machine state and could change the
+       next read. Difference comparisons avoid overflowing either span end. */
+    uintptr_t output = (uintptr_t)pixels, source = (uintptr_t)m;
+    bool overlap = output >= source ? output - source < sizeof(*m)
+                                   : source - output < width * height;
+    unsigned group = overlap ? 1u : 8u / bpp;
     for (unsigned y = 0; y < height && y < lines; ++y) {
-        for (unsigned x = 0; x < width; ++x) {
+        for (unsigned x = 0; x < width;) {
             uint32_t byte_offset = y * stride + (x * bpp) / 8u;
             uint32_t logical = start + byte_offset;
             if (logical < start || logical >= end) return ORCHARD_BUS_ERROR;
@@ -158,14 +165,17 @@ orchard_status orchard_framebuffer_view(const orchard_machine *m, orchard_frame_
             uint8_t byte;
             if (orchard_read_memory(m, address, &byte, 1) != ORCHARD_OK)
                 return ORCHARD_BUS_ERROR;
-            unsigned shift = view == ORCHARD_FRAME_PACKED_LSB
-                ? (x * bpp) & 7u : 8u - bpp - ((x * bpp) & 7u);
-            unsigned level = (byte >> shift) & ((1u << bpp) - 1u);
-            /* The 4-level STN palette is BLUELUT (manual 15-14/15-34).
-               This is an ideal intensity, not temporal grayscale/contrast. */
-            pixels[y * width + x] = bpp == 2
-                ? (uint8_t)(((r[10] >> (level * 4u)) & 15u) * 17u)
-                : (uint8_t)(level * 255u / ((1u << bpp) - 1u));
+            unsigned limit = x + group < width ? x + group : width;
+            do {
+                unsigned shift = view == ORCHARD_FRAME_PACKED_LSB
+                    ? (x * bpp) & 7u : 8u - bpp - ((x * bpp) & 7u);
+                unsigned level = (byte >> shift) & ((1u << bpp) - 1u);
+                /* The 4-level STN palette is BLUELUT (manual 15-14/15-34).
+                   This is an ideal intensity, not temporal grayscale/contrast. */
+                pixels[y * width + x] = bpp == 2
+                    ? (uint8_t)(((r[10] >> (level * 4u)) & 15u) * 17u)
+                    : (uint8_t)(level * 255u / ((1u << bpp) - 1u));
+            } while (++x < limit);
         }
     }
     return ORCHARD_OK;
