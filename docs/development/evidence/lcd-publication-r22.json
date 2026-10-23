@@ -1,0 +1,189 @@
+{
+  "schema": "orchard-lcd-publication-summary-v1",
+  "passed": true,
+  "scope": "Original-ROM menus and arithmetic, physical keys only, 278 publication requests at 33 virtual ms and input transitions per model; no private ROM, RAM, checkpoint or pixel payload included. Real Chromium synthetic canvas/PNG/recording checks are separate.",
+  "source_sha256": "fc96250cde32d76f14a5418a4b6e7b3a7de45b044a7bce514f4b0b0a70c4798d",
+  "models": [
+    {
+      "model": 1,
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+      "report_sha256": "1fd5ddc4d752050f3ed1f6ea80a5fcb06227e983c9a9d641c315dd63caa3eadb",
+      "baseline": {
+        "observations": 278,
+        "changed": 32,
+        "sameScanChanges": 6,
+        "scans": 233,
+        "multiImageScans": 6,
+        "off": 0,
+        "sourceChanges": 0,
+        "maxAge": 0
+      },
+      "candidate": {
+        "observations": 278,
+        "changed": 31,
+        "sameScanChanges": 0,
+        "scans": 233,
+        "multiImageScans": 0,
+        "off": 0,
+        "sourceChanges": 789,
+        "maxAge": 489920
+      },
+      "baseline_cpu_ms": [
+        3550.193,
+        3386.594,
+        3645.562
+      ],
+      "candidate_cpu_ms": [
+        3627.834,
+        3413.766,
+        3369.903
+      ],
+      "median_cpu_ratio": 0.9615719483419634,
+      "identical_final_checkpoint": true,
+      "read_only_checkpoint_equal": true,
+      "final_checkpoint_sha256": "0645dfc1c562bb574478b7c3cf2a4cd191245fa03890dcf3968e68b9783f73bd"
+    },
+    {
+      "model": 2,
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+      "report_sha256": "df78dc6c8d9ff1738bc524903370c7007eb206c7350c4fc937b9dd6112cc8dc2",
+      "baseline": {
+        "observations": 278,
+        "changed": 34,
+        "sameScanChanges": 4,
+        "scans": 228,
+        "multiImageScans": 4,
+        "off": 0,
+        "sourceChanges": 0,
+        "maxAge": 0
+      },
+      "candidate": {
+        "observations": 278,
+        "changed": 30,
+        "sameScanChanges": 0,
+        "scans": 228,
+        "multiImageScans": 0,
+        "off": 0,
+        "sourceChanges": 723,
+        "maxAge": 719296
+      },
+      "baseline_cpu_ms": [
+        3735.089,
+        4373.872,
+        4380.653
+      ],
+      "candidate_cpu_ms": [
+        3957.055,
+        4358.175,
+        3841.607
+      ],
+      "median_cpu_ratio": 0.9047029725606966,
+      "identical_final_checkpoint": true,
+      "read_only_checkpoint_equal": true,
+      "final_checkpoint_sha256": "a35fe5fe3fc7d0a5baded727baa0ec5324297c3be2887c52abe933fe7298b348"
+    },
+    {
+      "model": 4,
+      "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+      "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+      "report_sha256": "38338493251771e992b5f5ed732625e91a40a7482730a1273b57cc794cffd415",
+      "baseline": {
+        "observations": 278,
+        "changed": 30,
+        "sameScanChanges": 11,
+        "scans": 211,
+        "multiImageScans": 11,
+        "off": 0,
+        "sourceChanges": 0,
+        "maxAge": 0
+      },
+      "candidate": {
+        "observations": 278,
+        "changed": 26,
+        "sameScanChanges": 0,
+        "scans": 211,
+        "multiImageScans": 0,
+        "off": 0,
+        "sourceChanges": 433,
+        "maxAge": 722368
+      },
+      "baseline_cpu_ms": [
+        4877.703,
+        4045.24,
+        3850.188
+      ],
+      "candidate_cpu_ms": [
+        4059.231,
+        4432.821,
+        3809.621
+      ],
+      "median_cpu_ratio": 1.0034586328623272,
+      "identical_final_checkpoint": true,
+      "read_only_checkpoint_equal": true,
+      "final_checkpoint_sha256": "d1f6a561131be41c6df8933fbadaa6e296f256a1012f48dbce86eaa6ca849cc8"
+    },
+    {
+      "model": 5,
+      "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+      "report_sha256": "58fb098b31ae7f47fa0cc0bdfbcc763ac2ecee91f95d06a079f63288df0f7d31",
+      "baseline": {
+        "observations": 278,
+        "changed": 34,
+        "sameScanChanges": 7,
+        "scans": 229,
+        "multiImageScans": 7,
+        "off": 0,
+        "sourceChanges": 0,
+        "maxAge": 0
+      },
+      "candidate": {
+        "observations": 278,
+        "changed": 32,
+        "sameScanChanges": 0,
+        "scans": 229,
+        "multiImageScans": 0,
+        "off": 0,
+        "sourceChanges": 735,
+        "maxAge": 917664
+      },
+      "baseline_cpu_ms": [
+        3930.528,
+        4744.595,
+        4475.516
+      ],
+      "candidate_cpu_ms": [
+        4195.238,
+        4753.664,
+        4438.362
+      ],
+      "median_cpu_ratio": 0.9916983874038212,
+      "identical_final_checkpoint": true,
+      "read_only_checkpoint_equal": true,
+      "final_checkpoint_sha256": "138d7ddf218f95e43a7b8efe0df349603bb0e3e4a2aa0cbcc375b39f1c83a397"
+    }
+  ],
+  "browser": {
+    "passed": true,
+    "scope": "Offline real Chromium, production React/canvas/controller/capture/MediaRecorder; all pixels synthetic",
+    "burst_messages": 300,
+    "burst_canvas_paints": 1,
+    "burst_canvas_resizes": 0,
+    "valid_white_visible": true,
+    "png_and_recorder_preencode_exact": true,
+    "encoded_recording": {
+      "bytes": 7303,
+      "width": 131,
+      "height": 64,
+      "type": "video/webm;codecs=vp8"
+    },
+    "page_errors": []
+  },
+  "limitations": [
+    "Scan-boundary RAM sampling is host presentation, not LCD FIFO/row-fetch/analog calibration.",
+    "Firmware updates spanning complete scans remain visible.",
+    "Host CPU samples alternate warmed paths, three repetitions; no statistically established speedup is claimed."
+  ]
+}

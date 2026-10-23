@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "revision": "r22",
+  "scope": "Live bridge generated-guest and browser integration; no OS driver attachment claim",
+  "production_wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+  "tested_runtime": {
+    "node": "24.19.0",
+    "chrome": "156.0.8078.47",
+    "platform": "Linux container"
+  },
+  "production_sources_sha256": {
+    "host/bridge.mjs": "ff9197b965bab8980063632d146fece4cadddad2047bc444fd6414be33346c18",
+    "host/usbip.mjs": "abaddeb6feba190527094c3aa5a120aa408ebbfd7b995259f3e83e159fb586a0",
+    "web/usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+    "web/host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+    "web/host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88"
+  },
+  "generated_guest": {
+    "source": "tests/usb-guest.S",
+    "source_sha256": "1a4f342f6557ee570881c5bc7385ed5e6f687e9d9daaf32928137dab7c68da36",
+    "define": "ORCHARD_BRIDGE_TEST",
+    "model": 6,
+    "vid": "1234",
+    "pid": "5678",
+    "contains_hp_code": false
+  },
+  "passed": [
+    {
+      "test": "tests/host-bridge.mjs",
+      "boundary": "real loopback HTTP + production BrowserHostBridge module in Node + same production WASM + USB/IP",
+      "checks": [
+        "strict address/token/Origin/Host and CORS preflight",
+        "JSON body limit",
+        "single browser session and exclusive USB/IP import",
+        "fragmented TCP",
+        "guest EP0 descriptors",
+        "SET_CONFIGURATION and GET_CONFIGURATION",
+        "129-byte binary multi-packet bulk echo",
+        "zero-length packets",
+        "real NAK remains pending and STALL returns -32",
+        "unlink suppresses canceled completion",
+        "late canceled request cannot complete reused USB/IP sequence",
+        "guest WDT register write resets core and releases old import",
+        "new epoch enumerates the same restarted core",
+        "natural detach and explicit disconnect",
+        "HTTP process loss disconnects USB",
+        "abandoned-session lease expiry",
+        "delayed DELETE serializes immediate reconnect",
+        "Stop during allocated-but-unanswered session POST retrieves identity and deletes it before next session"
+      ]
+    },
+    {
+      "test": "tests/host-bridge-client.mjs",
+      "boundary": "production client with deliberately delayed HTTP responses",
+      "checks": [
+        "old-epoch descriptor/reset/result failures do not stop new device",
+        "new-epoch results resume after old HTTP failure",
+        "Stop waits for session-creation reply and releases it without USB enumeration",
+        "cancel while previous cleanup is pending opens no session"
+      ]
+    },
+    {
+      "test": "tests/host-bridge-worker.mjs",
+      "boundary": "actual Worker/controller handlers with deterministic core/device doubles",
+      "checks": [
+        "internal transfer cancellation and serial/USB exclusion",
+        "self-test and autosave exclusion",
+        "pause/reset/model/session/core-stop teardown",
+        "source generation and connection request isolation",
+        "reconnect uses a fresh client",
+        "translated validation errors"
+      ]
+    },
+    {
+      "test": "tests/browser-host-bridge.py",
+      "boundary": "real Chrome App/controller with offline fixture",
+      "checks": [
+        "persistent sidebar",
+        "explicit token/address connect and disconnect",
+        "internal links and self-test disabled while external bridge active",
+        "blur keeps calculator running",
+        "connection survives sidebar hide/reopen",
+        "English and Chinese retry/error states",
+        "token absent from preferences",
+        "390-pixel viewport has no horizontal overflow"
+      ]
+    },
+    {
+      "test": "tests/browser-host-bridge-network.py",
+      "boundary": "real Chrome module Worker + production WASM + authenticated cross-origin loopback HTTP/CORS + real TCP USB/IP",
+      "checks": [
+        "native Worker fetch receiver and raw module imports",
+        "guest EP0 descriptor",
+        "binary bulk echo including NUL and high bytes",
+        "Pause with pending IN closes external socket",
+        "immediate reconnect re-enumerates same core",
+        "Worker termination aborts long poll and releases import"
+      ]
+    },
+    {
+      "test": "tests/host.mjs",
+      "boundary": "existing independent host with production WASM and real loopback sockets",
+      "checks": [
+        "guest USB/IP enumeration and control transfer",
+        "exclusive import, unlink and oversized URB rejection",
+        "binary ARM UART echo"
+      ]
+    }
+  ],
+  "primary_references": {
+    "usbip_protocol": "https://docs.kernel.org/usb/usbip_protocol.html",
+    "chrome_local_network_access": "https://developer.chrome.com/blog/local-network-access",
+    "windows_client": "https://github.com/vadimgrn/usbip-win2"
+  },
+  "separately_recorded_original_rom_evidence": "usb-original-bridge-r22.json",
+  "limitations": [
+    "No vhci_hcd/usbip_core or /lib/modules in this environment; OS enumeration, HP driver binding and Conn3x are unverified.",
+    "The generated-guest browser test uses a local secure origin; public HTTPS-origin Local Network Access permission UI is not covered.",
+    "A permanently lost session-creation reply or one exceeding its eight-second deadline leaves an unknown identity to expire under the 35-second server lease.",
+    "Original HP48gII/HP49g+ GET_CONFIGURATION NAK is retained; descriptor/configuration and bulk results are recorded separately."
+  ]
+}

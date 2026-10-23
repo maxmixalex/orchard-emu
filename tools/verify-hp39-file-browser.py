@@ -154,9 +154,8 @@ def main():
                 page.add_init_script(OBSERVE)
                 stage('open-rom')
                 page.goto(f'http://127.0.0.1:{server.server_port}/')
-                with page.expect_file_chooser() as picker:
-                    page.get_by_role('button', name='Open ROM', exact=True).click()
-                picker.value.set_files(str(args.rom.resolve()))
+                # Standard file-input/local-copy path; native picker permission UI is separate.
+                page.locator('#rom').set_input_files(str(args.rom.resolve()))
                 page.wait_for_function('window.__hp39Transfer.snapshot?.loaded&&window.__hp39Transfer.snapshot?.running')
                 snapshot = page.evaluate('window.__hp39Transfer.snapshot')
                 assert (snapshot['model'], snapshot['width'], snapshot['height']) == (1, 131, 64), snapshot
@@ -178,7 +177,7 @@ def main():
                     page.get_by_role('button', name='Choose file', exact=True).click()
                 picker.value.set_files(str(args.archive.resolve()) if args.archive else [str((args.package/name).resolve()) for name in FILES])
                 page.get_by_role('button', name='Host selected files', exact=True).click()
-                page.get_by_role('button', name='Close', exact=True).click()
+                page.get_by_role('button', name='Close sidebar', exact=True).click()
                 keys(page, (6,))
                 wait_transfer(page, "window.__hp39Transfer.events.some(e=>e.type==='file-transfer-status'&&e.phase==='serving'&&e.name==='HP39DIR.000')")
                 wait_ticks(page, 30000000)
@@ -190,7 +189,7 @@ def main():
                 report['hosted_object_bytes'] = expected_total
                 page.get_by_role('button', name='Connections', exact=True).click()
                 page.get_by_role('button', name='Stop file server', exact=True).click()
-                page.get_by_role('button', name='Close', exact=True).click()
+                page.get_by_role('button', name='Close sidebar', exact=True).click()
                 stage('calculator-send')
                 keys(page, (38,))  # SEND.
                 wait_ticks(page, 3000000)
@@ -199,7 +198,7 @@ def main():
                 page.screenshot(path=str(args.output/'send-now-menu.png'))
                 page.get_by_role('button', name='Connections', exact=True).click()
                 page.get_by_role('button', name='Receive from calculator', exact=True).click()
-                page.get_by_role('button', name='Close', exact=True).click()
+                page.get_by_role('button', name='Close sidebar', exact=True).click()
                 keys(page, (6,))
                 wait_transfer(page, "window.__hp39Transfer.events.filter(e=>e.type==='file-transfer-received').length===3")
                 wait_ticks(page, 120000000)
@@ -241,7 +240,7 @@ def main():
                 page.screenshot(path=str(args.output/'downloads.png'))
                 page.get_by_role('button', name='Stop file server', exact=True).click()
                 page.get_by_role('button', name='Disconnect USB', exact=True).click()
-                page.get_by_role('button', name='Close', exact=True).click()
+                page.get_by_role('button', name='Close sidebar', exact=True).click()
                 stage('home-arithmetic')
                 keys(page, (48,))  # HOME.
                 wait_ticks(page, 10000000)
@@ -267,9 +266,8 @@ def main():
                     restored.add_init_script(OBSERVE)
                     try:
                         restored.goto(f'http://127.0.0.1:{server.server_port}/')
-                        with restored.expect_file_chooser() as picker:
-                            restored.get_by_role('button', name='Open ROM', exact=True).click()
-                        picker.value.set_files(str(args.rom.resolve()))
+                        # Standard file-input/local-copy path; native picker permission UI is separate.
+                        restored.locator('#rom').set_input_files(str(args.rom.resolve()))
                         restored.wait_for_function('window.__hp39Transfer.snapshot?.loaded&&window.__hp39Transfer.snapshot?.running')
                         wait_ticks(restored, 50000000); keys(restored, (40,)); wait_ticks(restored, 70000000)
                         keys(restored, (49,)); wait_ticks(restored, 20000000)
@@ -281,7 +279,7 @@ def main():
                             restored.get_by_role('button', name='Choose file', exact=True).click()
                         picker.value.set_files(str(archive_path.resolve()))
                         restored.get_by_role('button', name='Host selected files', exact=True).click()
-                        restored.get_by_role('button', name='Close', exact=True).click(); keys(restored, (6,))
+                        restored.get_by_role('button', name='Close sidebar', exact=True).click(); keys(restored, (6,))
                         wait_transfer(restored, "window.__hp39Transfer.events.some(e=>e.type==='file-transfer-status'&&e.phase==='serving'&&e.name==='HP39DIR.000')")
                         wait_ticks(restored, 30000000); keys(restored, (6,))
                         returned_total = len(downloads['H39ROMUS.000']) + len(downloads['LIB275L0.000'])

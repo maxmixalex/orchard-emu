@@ -156,6 +156,11 @@ little-endian uint32, including the configured flag:
 | 4891 | Pending reload bit mask, low five bits | 4 |
 | 4895 | Start of RAM payload | Model dependent |
 
+This table describes the historical v4 layout. Current v5 exports keep all
+these clock/PWM offsets and place a 76-byte [SPI/reset extension](sessions.md)
+at 4895; their RAM payload starts at 4971. A v4 import preserves every clock
+field above exactly and initializes only the new SPI/reset fields.
+
 The RAM payload started at 4070 in v1, 4122 in v2, and 4831 in v3. CRC checks,
 ROM/model identity checks, memory bounds and two-phase atomic import remain in
 force. New fields reject an invalid phase, configured flag, over-wide count or

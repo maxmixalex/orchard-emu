@@ -116,9 +116,8 @@ def main():
                 page.add_init_script(helper.OBSERVE)
                 page.goto(f'http://127.0.0.1:{server.server_port}/')
                 stage('cold-boot-from-picker')
-                with page.expect_file_chooser() as picker:
-                    page.get_by_role('button', name='Open ROM', exact=True).click()
-                picker.value.set_files(str(args.rom.resolve()))
+                # Standard file-input/local-copy path; native picker permission UI is separate.
+                page.locator('#rom').set_input_files(str(args.rom.resolve()))
                 page.wait_for_function('window.__transferProbe.snapshot?.loaded===true')
                 helper.verify_model(page, model)
                 cold_boot(page)
@@ -151,7 +150,7 @@ def main():
                 saved = args.output/'saved.ord'
                 pending.value.save_as(saved)
                 report['save'] = session_metadata(saved)
-                assert report['save']['model'] == 5 and report['save']['checkpoint_version'] == 4
+                assert report['save']['model'] == 5 and report['save']['checkpoint_version'] == 5
                 page.wait_for_function('window.__transferProbe.snapshot?.running===false')
                 saved_frame = frame(page)
                 page.get_by_role('button', name='Resume', exact=True).click()
@@ -194,9 +193,8 @@ def main():
                     previous = helper.model_identity(args.legacy_rom)
                     legacy = session_metadata(args.legacy_session)
                     assert legacy['checkpoint_version'] == 1 and legacy['model'] == previous['id']
-                    with page.expect_file_chooser() as picker:
-                        page.get_by_role('button', name='Open ROM', exact=True).click()
-                    picker.value.set_files(str(args.legacy_rom.resolve()))
+                    # Standard file-input/local-copy path; native picker permission UI is separate.
+                    page.locator('#rom').set_input_files(str(args.legacy_rom.resolve()))
                     page.get_by_role('dialog').get_by_role('button', name='Open ROM', exact=True).click()
                     page.wait_for_function('id=>window.__transferProbe.snapshot?.loaded&&window.__transferProbe.snapshot?.model===id', arg=previous['id'])
                     before = page.evaluate('window.__transferProbe.events.length')
@@ -211,7 +209,7 @@ def main():
                     converted = args.output/'legacy-resaved.ord'
                     pending.value.save_as(converted)
                     report['legacy_session'] = {'input':legacy, 'resaved':session_metadata(converted)}
-                    assert report['legacy_session']['resaved']['checkpoint_version'] == 4
+                    assert report['legacy_session']['resaved']['checkpoint_version'] == 5
                     page.screenshot(path=str(args.output/'legacy-restored.png'))
 
                 report['worker_observation'] = page.evaluate('window.__transferProbe')

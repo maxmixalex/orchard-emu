@@ -5,7 +5,7 @@ export const AUTO_SIGNAL_PREFIX='orchard:autosave-signal:v2:';
 const conflict=()=>new Error('Another tab updated this save. Reload the ROM before saving automatically.');
 function validate(record,hash){
   if(!record)return null;
-  if(record.version!==2||record.romHash!==hash||![1,4,5].includes(record.model)||
+  if(record.version!==2||record.romHash!==hash||![1,2,4,5].includes(record.model)||
      typeof record.token!=='string'||record.token.length>100||!Number.isFinite(record.savedAt)||
      !(record.file instanceof Uint8Array)||!record.file.length||record.file.length>MAX_SESSION_BYTES)
     throw new Error('Damaged local save.');

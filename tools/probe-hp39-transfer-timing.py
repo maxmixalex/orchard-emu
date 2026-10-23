@@ -136,9 +136,8 @@ def main():
                 page.add_init_script(OBSERVE)
                 page.goto(f'http://127.0.0.1:{server.server_port}/')
                 stage('open-rom')
-                with page.expect_file_chooser() as picker:
-                    page.get_by_role('button',name='Open ROM',exact=True).click()
-                picker.value.set_files(str(args.rom.resolve()))
+                # Standard file-input/local-copy path; native picker permission UI is separate.
+                page.locator('#rom').set_input_files(str(args.rom.resolve()))
                 wait('window.__hp39Timing.snapshot?.loaded&&window.__hp39Timing.snapshot?.running',label='rom-load')
                 assert observe()['snapshot']['model']==1
                 ticks(50000000);keys((40,));ticks(70000000)
@@ -153,7 +152,7 @@ def main():
                 picker.value.set_files(str(args.archive.resolve()))
                 if args.protocol=='wire':page.get_by_label('Calculator transfer menu',exact=True).select_option('wire')
                 page.get_by_role('button',name='Upload through Wire' if args.protocol=='wire' else 'Host selected files',exact=True).click()
-                page.get_by_role('button',name='Close',exact=True).click()
+                page.get_by_role('button',name='Close sidebar',exact=True).click()
                 if args.protocol=='disk':
                     stage('request-directory');keys((6,))
                     wait("window.__hp39Timing.events.some(e=>e.type==='file-transfer-status'&&e.phase==='serving'&&e.name==='HP39DIR.000')",label='directory-upload')
@@ -175,13 +174,13 @@ def main():
                 page.get_by_role('button',name='Connections',exact=True).click()
                 page.screenshot(path=str(args.output/'completed-transfer-ui.png'))
                 if args.protocol=='disk':page.get_by_role('button',name='Stop file server',exact=True).click()
-                page.get_by_role('button',name='Close',exact=True).click()
+                page.get_by_role('button',name='Close sidebar',exact=True).click()
                 if args.roundtrip:
                     stage('calculator-send');keys((38,));ticks(3000000);keys((44,44,6));ticks(3000000)
                     page.get_by_role('button',name='Connections',exact=True).click()
                     page.get_by_label('Calculator transfer menu',exact=True).select_option('disk')
                     page.get_by_role('button',name='Receive from calculator',exact=True).click()
-                    page.get_by_role('button',name='Close',exact=True).click();keys((6,))
+                    page.get_by_role('button',name='Close sidebar',exact=True).click();keys((6,))
                     wait("window.__hp39Timing.events.filter(e=>e.type==='file-transfer-received').length===3",label='roundtrip-send')
                     ticks(12000000);page.screenshot(path=str(args.output/'after-send.png'))
                     page.get_by_role('button',name='Connections',exact=True).click()
@@ -208,10 +207,10 @@ def main():
                     report['aplet_file_equal']=True;report['library_body_equal']=True;report['library_alias_preserved']=True
                     report['downloaded_zip_sha256']=sha(path.read_bytes());stage('roundtrip-verified')
                     page.get_by_role('button',name='Stop file server',exact=True).click()
-                    page.get_by_role('button',name='Close',exact=True).click()
+                    page.get_by_role('button',name='Close sidebar',exact=True).click()
                 page.get_by_role('button',name='Connections',exact=True).click()
                 page.get_by_role('button',name='Disconnect USB',exact=True).click()
-                page.get_by_role('button',name='Close',exact=True).click()
+                page.get_by_role('button',name='Close sidebar',exact=True).click()
                 with page.expect_download() as pending:
                     page.get_by_role('button',name='Save',exact=True).click()
                 pending.value.save_as(args.output/'installed.ord')

@@ -4,11 +4,13 @@ import {Alert,Button,Group,Pagination,Stack,Table,Text,TextInput} from '@mantine
 import {useTranslation} from 'react-i18next';
 import {createSDImage,sdImageName,validateSDSize} from './sd-card.js';
 import {listSDDirectory,readSDFile,addSDFiles,createSDDirectory,renameSDEntry,deleteSDEntry} from './sd-filesystem.js';
+import {DirectoryCardControls} from './DirectoryCardControls.jsx';
 
 // A draft owns its image bytes. Mounted SD media stays exclusively in the Worker.
-export function SDCardFiles({disabled,download,onInsert,onBack}){
+export function SDCardFiles({disabled,insertDisabled=false,download,onInsert,onBack,initialDraft=null}){
   const {t}=useTranslation(),imageInput=useRef(null),filesInput=useRef(null),epoch=useRef(0);
-  const [image,setImage]=useState(createSDImage),[imageName,setImageName]=useState('orchard-sd.img');
+  const [image,setImage]=useState(()=>initialDraft?.bytes||createSDImage()),[imageName,setImageName]=useState(initialDraft?.name||'orchard-sd.img');
+  const [association,setAssociation]=useState(initialDraft?.association||null);
   const [path,setPath]=useState('/'),[page,setPage]=useState(1),[folder,setFolder]=useState('');
   const [selected,setSelected]=useState([]),[reading,setReading]=useState(false),[failure,setFailure]=useState(null);
   const [editing,setEditing]=useState(null);
@@ -27,7 +29,7 @@ export function SDCardFiles({disabled,download,onInsert,onBack}){
       validateSDSize(file.size);const bytes=new Uint8Array(await file.arrayBuffer());
       listSDDirectory(bytes);
       if(token!==epoch.current)return;
-      setImage(bytes);setImageName(sdImageName(file.name));changePath('/');
+      setImage(bytes);setImageName(sdImageName(file.name));setAssociation(null);changePath('/');
     }catch(error){if(token===epoch.current)problem(error);}
     finally{if(token===epoch.current)setReading(false);}
   }
@@ -51,8 +53,10 @@ export function SDCardFiles({disabled,download,onInsert,onBack}){
     <TextInput label={t('sdDraftImageName')} value={imageName} onChange={e=>setImageName(e.currentTarget.value)} disabled={locked}/>
     <Group gap="xs">
       <Button variant="default" disabled={locked} onClick={()=>{imageInput.current.value='';imageInput.current.click();}}>{t('sdDraftOpen')}</Button>
-      <Button variant="subtle" disabled={locked} onClick={()=>action(()=>{setImage(createSDImage());setImageName('orchard-sd.img');changePath('/');})}>{t('sdDraftBlank')}</Button>
+      <Button variant="subtle" disabled={locked} onClick={()=>action(()=>{setImage(createSDImage());setImageName('orchard-sd.img');setAssociation(null);changePath('/');})}>{t('sdDraftBlank')}</Button>
     </Group>
+    <DirectoryCardControls image={image} association={association} disabled={locked} onBusy={setReading} onAssociation={setAssociation}
+      onDraft={draft=>{setImage(draft.bytes);setImageName(draft.name);setAssociation(draft.association);changePath('/');}}/>
     <Text size="sm" role="status">{t('sdDraftSpace',{size:directory.bytes/1024/1024,free:directory.freeBytes.toLocaleString()})}</Text>
     <Group justify="space-between">
       <Text component="code" size="sm" style={{overflowWrap:'anywhere'}}>{path}</Text>
@@ -105,7 +109,7 @@ export function SDCardFiles({disabled,download,onInsert,onBack}){
         <Button variant="subtle" disabled={locked} onClick={()=>setSelected([])}>{t('cancel')}</Button></Group>
     </Stack>}
     <Group>
-      <Button disabled={locked} onClick={()=>onInsert(image,sdImageName(imageName))}>{t('sdDraftInsert')}</Button>
+      <Button disabled={locked||insertDisabled} onClick={()=>onInsert(image,sdImageName(imageName),association)}>{t('sdDraftInsert')}</Button>
       <Button variant="default" disabled={locked} onClick={()=>void save(image,sdImageName(imageName))}>{t('sdDraftDownload')}</Button>
       <Button variant="subtle" disabled={locked} onClick={onBack}>{t('sdDraftBack')}</Button>
     </Group>

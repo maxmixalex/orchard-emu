@@ -2,15 +2,21 @@
 import { Pacer } from './pacing.js';
 import { TaskScheduler } from './task-scheduler.js';
 import { VirtualUSB } from './virtual-usb.js';
+import { BrowserHostBridge } from './host-bridge-client.js';
+import { bridgeAddress,bridgeToken } from './host-bridge-protocol.js';
 import { FileTransfer } from './file-transfer.js';
 import {transferError,transferErrorDetails} from './transfer-errors.js';
 import { BuzzerStream } from './buzzer-worker.js';
+import { LCDFrames } from './lcd-frames.js';
 import { encodeSession, decodeSession, MAX_STATE } from './session.js';
 import { readSDState, validateSDSize } from './sd-card.js';
+import { listSDDirectory } from './sd-filesystem.js';
 import { setupHash, isPlayable, applySetup, TapQueue } from './hp48.js';
 let audience = 'debug';
-let romHash='', operation=0, busy=false, autoSaving=false, serial=false, usb, transfer, buzzer;
+let romHash='', operation=0, busy=false, autoSaving=false, serial=false, usb, transfer, buzzer, hostBridge=null;
+let hostBridgeCleanup=Promise.resolve();
 const pacer=new Pacer(), scheduler=new TaskScheduler();
+const lcdFrames=new LCDFrames();
 let requestedSpeed=1, transferUnlimited=false, transferMoving=false;
 let core, model = 4, generation = 0, preset = 'strict', running = false, loaded = false;
 let timer = null, lastFrame = 0, tick = 0, events = [], eventOverflow = false, frameView = 0;
@@ -35,7 +41,7 @@ function syncTick(s = state()) {
   if (next < tick) taps.clear(next);
   tick = next;
 }
-function resetClock() { tick=0;taps.clear(0);pacer.reset(performance.now()); }
+function resetClock() { tick=0;taps.clear(0);lcdFrames.reset();pacer.reset(performance.now()); }
 function transferBoosted() { return audience==='calculator'&&transferUnlimited&&transferMoving; }
 function configurePacing(force=false) {
   const speed=transferBoosted()?0:requestedSpeed;
@@ -54,7 +60,11 @@ function transferMessage(data) {
   }
   postMessage({generation,...data});
 }
-function pause() { transfer?.cancel(tick,transferError('transferPaused','File transfer cancelled because the calculator paused.'));buzzer?.clear();running = false; scheduler.cancel(timer); timer = null; taps.clear(tick); }
+function stopHostBridge(){const previous=hostBridge;hostBridge=null;
+  if(previous)hostBridgeCleanup=Promise.allSettled([hostBridgeCleanup,previous.stop()]).then(()=>{});
+  return hostBridgeCleanup;
+}
+function pause() { stopHostBridge();transfer?.cancel(tick,transferError('transferPaused','File transfer cancelled because the calculator paused.'));buzzer?.clear();running = false; scheduler.cancel(timer); timer = null; taps.clear(tick); }
 function sendUart() {
   const n = core.uart_receive();
   if(n){const bytes=new Uint8Array(core.memory.buffer,core.uart_output(),n).slice();
@@ -63,17 +73,16 @@ function sendUart() {
 }
 function snapshot() {
   const s = state(); syncTick(s);
-  const frameStatus = core.frame_view(frameView), width = core.profile(model,2), height = core.profile(model,3);
-  const annunciatorStatus = core.annunciators();
-  const annunciators = annunciatorStatus ? null : new Uint8Array(core.memory.buffer,core.annunciator_buffer(),6).slice();
-  const pixels = frameStatus ? null : new Uint8Array(core.memory.buffer,core.frame_buffer(),width*height).slice();
+  // Key/link/status messages must not expose another partially rewritten RAM
+  // image in the same LCD scan. Pause/stop/debug inspection remains immediate.
+  const frame=lcdFrames.read(core,model,frameView,tick,audience!=='calculator'||!running||s[28]!==0);
   sendUart();
-  const visible = {type:'snapshot',generation,width,height,pixels,running,loaded,model,tick,
-    sd:readSDState(core),stopped:s[28]!==0,frameStatus,annunciatorStatus,annunciators,pending:taps.pending,active:taps.active,
+  const visible = {type:'snapshot',generation,...frame,running,loaded,model,tick,
+    sd:readSDState(core),stopped:s[28]!==0,pending:taps.pending,active:taps.active,
     effectiveSpeed:pacer.speed,transferBoosted:transferBoosted()};
   if (audience === 'calculator') postMessage(visible);
   else postMessage({...visible,state:s,preset,frameView,
-    frameStatus,annunciatorStatus,annunciators,reason:errors[s[28]] || 'unknown stop',pending:taps.pending,active:taps.active,
+    reason:errors[s[28]] || 'unknown stop',pending:taps.pending,active:taps.active,
     events:events.slice(),eventOverflow,aliasReads:core.sram_alias_reads().toString(),
     aliasWrites:core.sram_alias_writes().toString(),lcdReads:core.lcd_probe68_reads().toString()});
   if(running){const packet=buzzer?.packet();if(packet)postMessage({type:'buzzer',generation,...packet},[packet.edges.buffer]);}
@@ -103,15 +112,20 @@ function pump() {
       if (status) syncTick(); else tick += budget;
       if(audience==='calculator')pacer.consume(budget);
       usb?.poll(tick);
+      hostBridge?.poll(tick);
       sendUart();
       if(transfer?.pending)transfer.poll(tick);
       if (status) {pause();break;}
+      // Observe after servicing the links. This never waits for a display
+      // deadline or changes the next key/UART/USB scheduling boundary.
+      if(audience==='calculator')lcdFrames.read(core,model,frameView,tick);
     } while (performance.now()<end);
     if (!running || performance.now()-lastFrame >= (audience==='calculator'?33:50)) snapshot();
     schedule();
   } catch (error) { fail(error); }
 }
 function fail(error) {
+  stopHostBridge();
   transfer?.cancel(tick,'File transfer cancelled because the calculator stopped.');
   buzzer?.clear();
   busy=false;autoSaving=false;running=false;scheduler.cancel(timer);timer=null;
@@ -141,6 +155,9 @@ self.onmessage=({data})=>{
       postMessage({type:'created',generation,flash:core.profile(model,0),ram:core.profile(model,1)});snapshot();return;
     }
     if(data.generation!==generation) return;
+    if(hostBridge?.active&&['serial-connect','usb-connect','usb-send','usb-read','uart'].includes(data.type)){
+      postMessage({type:'host-bridge-conflict',generation});return;
+    }
     if(data.type==='load') {
       pause();loaded=false;busy=true;const job=++operation;
       if(!(data.rom instanceof ArrayBuffer) || data.rom.byteLength!==core.profile(model,0)) throw new Error('A complete physical NOR of the selected capacity is required.');
@@ -155,8 +172,9 @@ self.onmessage=({data})=>{
         resetClock();events=[];eventOverflow=false;applySetup(core,model,preset);loaded=true;romHash=digest;busy=false;
         postMessage({type:'loaded',generation});snapshot();
       }).catch(error=>{if(token===generation&&job===operation)fail(error);});
-    } else if(['sd-insert','sd-export','sd-eject'].includes(data.type)) {
+    } else if(['sd-insert','sd-export','sd-edit','sd-eject'].includes(data.type)) {
       try {
+        if(hostBridge?.active)throw Object.assign(new Error(),{code:'hostBridgeBusy'});
         if(!loaded||busy||!core.profile(model,4))throw new Error('This calculator has no available SD card slot.');
         if(transfer?.active)throw new Error('Finish the current file transfer first.');
         const card=readSDState(core);
@@ -168,19 +186,25 @@ self.onmessage=({data})=>{
           new Uint8Array(core.memory.buffer,buffer,data.bytes.length).set(data.bytes);
           if(core.sd_insert(data.bytes.length,Number(data.writeProtected)))throw new Error('Unable to insert this SD card.');
           postMessage({type:'sd-complete',generation,action:'insert',name:data.name});
-        } else if(data.type==='sd-export'){
+        } else if(data.type==='sd-export'||data.type==='sd-edit'){
           if(!card?.present)throw new Error('Insert a card first.');
           const buffer=core.sd_image_buffer();if(!buffer)throw new Error('The SD card image is unavailable.');
           const bytes=new Uint8Array(core.memory.buffer,buffer,card.bytes).slice();
-          postMessage({type:'sd-exported',generation,bytes},[bytes.buffer]);
+          if(data.type==='sd-edit'){
+            // Validate before ejecting. Export + eject is synchronous within
+            // one Worker turn, so the guest cannot change the copied card.
+            listSDDirectory(bytes);
+            if(core.sd_eject())throw new Error('Unable to eject this SD card.');
+          }
+          postMessage({type:data.type==='sd-edit'?'sd-edited':'sd-exported',generation,bytes},[bytes.buffer]);
         } else {
           if(core.sd_eject())throw new Error('Unable to eject this SD card.');
           postMessage({type:'sd-complete',generation,action:'eject'});
         }
         snapshot();
-      } catch(error){postMessage({type:'sd-error',generation,message:error.message});}
+      } catch(error){postMessage({type:'sd-error',generation,message:error.message,code:error.code});}
     } else if(data.type==='checkpoint-auto') {
-      if(!loaded || busy || autoSaving || taps.pending || usb?.job || transfer?.active){postMessage({type:'checkpoint-skipped',generation,request:data.request});return;}
+      if(!loaded || busy || autoSaving || taps.pending || usb?.job || transfer?.active || hostBridge?.active){postMessage({type:'checkpoint-skipped',generation,request:data.request});return;}
       autoSaving=true;const token=generation,job=operation,request=data.request;
       const length=core.checkpoint_size();
       if(!length||length>MAX_STATE||core.checkpoint_save())throw new Error('Unable to save this calculator state.');
@@ -235,9 +259,22 @@ self.onmessage=({data})=>{
       }
     }
     else if(data.type==='tap-sequence' && loaded && running && isPlayable(model,preset)) {taps.pushMany(data.scans);snapshot();}
+    else if(data.type==='system-chord' && loaded && running && !busy && !transfer?.active && !hostBridge?.active && isPlayable(model,preset)) {taps.systemChord(data.action,tick);snapshot();}
+    else if(data.type==='host-bridge-start') {
+      if(hostBridge?.active)return;
+      try{
+        bridgeAddress(data.address);bridgeToken(data.token);
+        if(!loaded||busy||!running)throw Object.assign(Error('Calculator is not running'),{code:'hostBridgeNotReady'});
+        transfer?.cancel(tick,transferError('hostBridgeBusy','The local device connection owns USB.'));transfer?.resetUsb(tick);usb.disconnect();serial=false;postMessage({type:'links-reset',generation});
+        const waitFor=stopHostBridge(),owner=generation,request=data.request,bridge=new BrowserHostBridge(core,{tick:()=>tick,waitFor,notify:status=>postMessage({type:'host-bridge-status',generation:owner,request,...status})});hostBridge=bridge;
+        void bridge.start(data.address,data.token).catch(error=>{if(hostBridge===bridge)bridge.stop(error.code??'hostBridgeNetwork');});
+      }catch(error){postMessage({type:'host-bridge-status',generation,request:data.request,active:false,ready:false,attached:false,phase:'error',usbipPort:null,errorCode:error.code??'hostBridgeNetwork'});}
+    }
+    else if(data.type==='host-bridge-stop') {stopHostBridge();}
     else if(data.type==='file-transfer-start') {
       if(Number.isSafeInteger(data.request)&&data.request<=transfer?.lastRequest)return;
       try {
+        if(hostBridge?.active)throw transferError('hostBridgeBusy','Disconnect the local device before using the internal transfer connection.');
         if(!loaded||busy||!running)throw transferError('calculatorNotReady','Resume the calculator before starting a file transfer.');
         if(data.transport==='serial'&&!serial)throw transferError('connectFirst','Connect serial before starting a file transfer.');
         transfer.start(data,tick);

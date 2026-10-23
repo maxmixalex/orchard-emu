@@ -5,8 +5,8 @@ export const SETTINGS_KEY = 'orchard:preferences:v1';
 export const AUTO_PREFIX = 'orchard:autosave:v1:';
 export const DEFAULTS = Object.freeze({ version:1, view:'immersive', zoom:100,
   pauseOnBlur:true, pauseOnHidden:true, speed:1, transferUnlimited:false,
-  sound:true, volume:0.35, autosave:false, interval:30, mappings:{} });
-const CODE = /^(?:(?:Ctrl|Alt|Meta|Shift)\+)*(?:Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter)|F(?:[1-9]|1[0-2])|Enter|Escape|Backspace|Delete|Space|Period|Comma|Slash|Minus|Equal|Tab|Backquote|CapsLock|BracketLeft|BracketRight|Backslash|Semicolon|Quote|PrintScreen|ScrollLock|Pause|NumLock|ContextMenu|Insert|Home|End|PageUp|PageDown|Arrow(?:Up|Down|Left|Right))$/;
+  sound:true, volume:0.35, rememberROM:true, autosave:false, interval:30, mappings:{} });
+const CODE = /^(?:(?:Ctrl|Alt|Meta|Shift)\+)*(?:Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter|Equal|Comma)|Intl(?:Backslash|Yen|Ro)|F(?:[1-9]|1[0-2])|Enter|Escape|Backspace|Delete|Space|Period|Comma|Slash|Minus|Equal|Tab|Backquote|CapsLock|BracketLeft|BracketRight|Backslash|Semicolon|Quote|PrintScreen|ScrollLock|Pause|NumLock|ContextMenu|Insert|Home|End|PageUp|PageDown|Arrow(?:Up|Down|Left|Right))$/;
 export function validBinding(code, sequence) {
   return typeof code==='string' && code.length<=80 && CODE.test(code) &&
     Array.isArray(sequence) && sequence.length<=8 && sequence.every(s=>Number.isInteger(s)&&KEYS.has(s));
@@ -18,7 +18,7 @@ export function validatePreferences(value) {
     if(typeof value[k]!=='boolean')throw new Error('Invalid settings.'); p[k]=value[k];
   }
   // Optional v1 additions preserve settings exported before these controls existed.
-  for(const k of ['transferUnlimited','sound'])if(value[k]!==undefined){
+  for(const k of ['transferUnlimited','sound','rememberROM'])if(value[k]!==undefined){
     if(typeof value[k]!=='boolean')throw new Error('Invalid settings.');p[k]=value[k];
   }
   if(value.volume!==undefined){
@@ -50,7 +50,7 @@ export function keyCode(event) {
   const full=(code?code+'+':'')+event.code;
   return CODE.test(full)?full:null;
 }
-export function defaultBindings(model) {
+export function defaultBindings(model,layout) {
   const map={};
   for(const [label,scan] of keyRows(model).flat())if(/^\d$/.test(label)){map['Digit'+label]=[scan];map['Numpad'+label]=[scan];}
   Object.assign(map,{Enter:[6],NumpadEnter:[6],Backspace:[0],Escape:[56],Period:[20],NumpadDecimal:[20],
@@ -60,14 +60,52 @@ export function defaultBindings(model) {
   // HP39g+ printed alpha legends, pinned hp-calcs-svg resolved_design.json.
   if(model===1||model===2){const alpha=[28,21,14,7,29,22,15,8,1,30,23,16,9,2,57,24,17,10,3,25,18,11,4,26,19,12];
     for(let i=0;i<26;i++){const code='Key'+String.fromCharCode(65+i);map[code]=[58,alpha[i]];}}
-  if(model===5){
-    // HP49g+ printed alpha legends; A-F are the six menu keys.
+  if(model===4||model===5){
+    // HP48gII/HP49g+ alpha positions; A-F are the six menu keys.
     const alpha=[35,36,37,38,39,40,41,46,47,48,49,50,28,21,14,7,29,22,15,8,1,30,23,16,9,2];
     for(let i=0;i<26;i++)map['Key'+String.fromCharCode(65+i)]=[57,alpha[i]];
   }
+  // An explicit layout is a preview of known, unmodified printable keys.
+  // getLayoutMap does not reveal Shift/AltGraph characters. Never infer a US
+  // punctuation or number row from an unknown layout; captured events fill it.
+  if(layout!==undefined){
+    for(const code of Object.keys(map))if(isWritingCode(code.split('+').at(-1)))delete map[code];
+    for(const [code,key] of Object.entries(layout??{})){
+      if(!validBinding(code,[])||code.includes('+')||!isWritingCode(code))continue;
+      const sequence=characterBinding(model,key);
+      if(sequence){map[code]=sequence;if(/^[a-z]$/i.test(key))map['Shift+'+code]=[...sequence];}
+    }
+  }
   return map;
 }
-export function bindings(p,model){return {...defaultBindings(model),...(p.mappings[String(model)]||{})};}
+const isWritingCode=code=>/^(?:Key|Digit|Intl)/.test(code)||['Period','Comma','Slash','Minus','Equal','Backquote','BracketLeft','BracketRight','Backslash','Semicolon','Quote'].includes(code);
+function characterBinding(model,key){
+  if(typeof key!=='string'||key.length!==1)return null;
+  if(/^[0-9]$/.test(key))return [keyRows(model).flat().find(([label])=>label===key)[1]];
+  if(/^[a-z]$/i.test(key))return defaultBindings(model)['Key'+key.toUpperCase()]??null;
+  const scans={'+':5,'-':4,'−':4,'*':3,'×':3,'/':2,'÷':2,'.':20};
+  if(Object.hasOwn(scans,key))return [scans[key]];
+  return key===' '?(model===1||model===2?[58,5]:[13]):null;
+}
+export function bindings(p,model,layout){return {...defaultBindings(model,layout),...(p.mappings[String(model)]||{})};}
+// Explicit user bindings remain physical and model-specific. Default printable
+// input follows the OS-resolved character, including AZERTY digits and AltGraph.
+// This works even when Keyboard Map is unavailable or denied in the browser.
+export function resolveKeyBinding(p,model,event){
+  const code=keyCode(event);if(!code)return null;
+  const custom=p.mappings?.[String(model)]??{};
+  if(Object.hasOwn(custom,code))return custom[code];
+  const altGraph=event.getModifierState?.('AltGraph')===true;
+  if(event.metaKey||((event.ctrlKey||event.altKey)&&!altGraph))return null;
+  if(typeof event.key==='string'){
+    if(event.key==='Dead'||event.key==='Process'||event.key==='Unidentified'||event.key==='')return null;
+    if(event.code==='NumpadDecimal'&&(event.key==='.'||event.key===','))return [20];
+    if(event.key.length===1)return characterBinding(model,event.key);
+    // A numpad digit with Num Lock off must not unexpectedly type a number.
+    if(isWritingCode(event.code)||/^Numpad(?:[0-9]|Decimal|Comma|Equal)$/.test(event.code))return null;
+  }
+  return defaultBindings(model)[code]??null;
+}
 export function sessionName(model,now=new Date()) {
   const slug={1:'hp39gplus',2:'hp39gs',3:'hp40gs',4:'hp48gii',5:'hp49gplus',6:'hp50g'}[model];
   if(!slug||!Number.isFinite(now.getTime()))throw new Error('Invalid session identity.');

@@ -33,28 +33,37 @@ battery-backed storage or continuation of an external USB host connection.
 
 The C API is `orchard_checkpoint_size/save/load`. The core format uses an
 explicit little-endian field stream, not `memcpy` of a C struct. Native and
-WASM share the schema. A 32-byte header contains `ORCHST01`, version 4, exact
+WASM share the schema. A 32-byte header contains `ORCHST01`, version 5, exact
 length, model, ROM CRC32, physical SRAM size and a payload CRC32. The body
 contains explicitly enumerated architectural scalars, active SRAM and the
-4 KiB internal SRAM. Without a card, 256 KiB machines produce **271,135 bytes**
-before the small browser envelope; 512 KiB machines produce **533,279 bytes**.
+4 KiB internal SRAM. Without a card, 256 KiB machines produce **271,211 bytes**
+before the small browser envelope; 512 KiB machines produce **533,355 bytes**.
 An inserted card adds its complete image length. Version 2 added 52 bytes of
 SDI state; version 3 added 709 bytes for media metadata and controller/FIFO/
 partial-transfer state, followed by the card image. Version 4 appends 64 scalar
 bytes for fractional PCLK phase, MPLL setup history, active PWM compares and
-pending reload values. RAM begins at byte 4895, after that extension. Exports
-always use version 4; the browser envelope remains version 1. The loader
-continues to accept exact version-1/2/3 files. Legacy length, checksum, model
+pending reload values. Version 5 appends **76 bytes**: two 36-byte SPI channel
+states and a 4-byte watchdog reset-pulse countdown. RAM begins at byte 4971.
+Exports always use version 5; the browser envelope remains version 1. The loader
+continues to accept exact version-1/2/3/4 files. Legacy length, checksum, model
 and field validation still apply.
 
-Old formats did not record the new clock/PWM state. Their migration preserves
+Versions 1–3 did not record the clock/PWM state. Their migration preserves
 existing registers, counters and RAM, initializes PCLK phase and pending
 reloads to zero, takes active compares from the old TCMPB buffers, and infers
 MPLL configuration only when the saved word differs from its reset value.
 The old first partial timer cycle can therefore differ; old files remain
 usable without a claim of cycle-for-cycle equivalence to the old timer model.
-New v4 sessions preserve those states exactly. The complete layout and the
+Version 4 and later preserve those states exactly. The complete clock layout and the
 same-reset-value PLL ambiguity are documented in [runtime clocks](clock-ratios.md).
+
+Versions 1–4 have no SPI or held-reset fields. Their imports initialize both
+SPI channels to the documented idle register values and set the new countdown
+to zero. Existing WDT registers/count/phase are preserved: a live older timer
+can expire and execute the real reset-vector path. An older saved diagnostic
+`status=14` remains stopped; import does not erase the historical failure.
+Version 5 can resume a partly shifted SPI byte or any of the 128 reset-hold
+edges exactly. See [SPI](spi.md) and [watchdog reset](watchdog-reset.md).
 
 The browser envelope (`ORCHARD1`) adds versioned JSON metadata with the exact
 ROM SHA-256, model, compatibility configuration, display mode and state SHA-256.
@@ -63,7 +72,8 @@ provide integrity and identity, **not a signature or authentication**. Input
 is still untrusted: core import stages small scalar state, checks booleans,
 enums, queue cursors/counts, ADC/sample bounds, endpoint indices and other
 index-bearing fields, card geometry, protocol state, bound media capacity,
-PCLK phase and PWM reload invariants, and only then mutates the machine. Malformed data is
+PCLK phase, PWM reload invariants, SPI register/shift ranges and READY/busy
+consistency, and the reset-pulse bound, and only then mutates the machine. Malformed data is
 rejected without partial replacement. Buffers overlapping the machine and
 incorrect/truncated/extra lengths are refused. The matched original ROM must
 already be loaded.
@@ -90,8 +100,10 @@ external RAM, circular UART queues and partly consumed USB FIFOs. They reject
 wrong ROMs, damaged/truncated files, every changed header byte, bad versions,
 noncanonical booleans and invalid queue cursors even with a repaired checksum.
 The suite includes independent bitwise verification of both CRC fields on all
-six models, all three legacy-version imports, in-flight SDI continuation,
-nonzero PCLK phase, buffered PWM reload and Power_OFF save/wake. Browser-envelope and
+six models, all four legacy-version imports, in-flight SDI/SPI continuation,
+nonzero PCLK phase, buffered PWM reload, held WDT reset and Power_OFF save/wake.
+The v4 migration independently checks that nonzero phases and active/pending
+PWM latches survive without the older reconstruction. Browser-envelope and
 production Worker tests cover save/import/continued execution, exact ROM
 binding, corrupted payloads and stale-generation isolation.
 

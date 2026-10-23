@@ -1,6 +1,80 @@
 # Validation
 
-## r21 transfer settings, FN layout, idle power, Note and peripheral clocks (2026-10-23)
+## r22 keyboard, local files, LCD publication and factory-test continuation (2026-10-23)
+
+The browser now has model-isolated keyboard editing with layout-aware defaults,
+a persistent Connections/SD sidebar, independently controlled local ROM recall,
+and recursive directory SD preparation with explicit write-back. LCD publications
+follow observed completed scans. Held ON/F4 and ON/F3 controls use the original
+firmware's factory-test entry and exit paths, with SPI and watchdog reset support.
+
+| Area | Evidence and boundary |
+| --- | --- |
+| Keyboard settings | [Keyboard documentation](keyboard-settings.md) records mapped/custom highlights, calculator-side badges and target selection, independent model drafts, OS-resolved character dispatch, layout-change/capture fallback, and 1360×940 / 390×844 Chrome layout checks. The controlled layout source is a UI/input-routing fixture, not a physical-keyboard survey. |
+| ROM memory | [ROM storage](rom-storage.md) separates original-file handles from labelled browser-local copies, startup permission queries from explicit permission requests, and ROM recall from calculator-state autosave. Maintained unit tests cover canceled automatic reads and explicit Open independence; real IndexedDB/OPFS reload tests are separate from stock-ROM production probes. |
+| Persistent sidebar and directory SD | [Directory SD evidence](evidence/sd-directory-r22.json) records recursive import, name/capacity previews, real browser directory handles and the file-input fallback, atomic export/eject ownership, conflict preservation and additive write-back. Native-picker permission UI is not automated. The original-ROM card workflow and its tested WASM identity are recorded separately from the fixture. |
+| LCD publication | [LCD evidence](evidence/lcd-publication-r22.json) compares 278 publication requests per original ROM: same-scan image changes fall from 6/4/11/7 to zero, with byte-identical final guest checkpoints on the recorded build. Synthetic browser bursts verify one animation-frame paint, genuine white frames, PNG and recording consistency. This does not establish physical panel response or a CPU speedup. |
+| Self-test entry and exit | [SPI/watchdog evidence](evidence/spi-watchdog-r22.json) records the original four firmware version pages, normal exit and `1+1=2`, using physical keys and unchanged NOR/RAM. The 39gs/48gII/49g+ use the modeled watchdog reset; 39g+ uses its distinct path. No claim is made that every factory diagnostic passes. |
+| Local device bridge | [Host mode](host-mode.md) separates real Chrome Worker/HTTP/USB-IP generated-guest checks, [original-ROM Node-module object transfers](evidence/usb-original-bridge-r22.json), and [original HP49g+ production-browser transfers](evidence/browser-local-devices-r22.json). Controlled real HTTP delays verify that reconnect waits for old DELETE and that Stop retrieves and deletes an already allocated session before opening the next one. OS attachment, HP driver binding and unmodified Conn3x are separate gates. |
+
+Checkpoint v5 adds both SPI channels and the remaining watchdog reset pulse,
+while preserving complete SD media and previous clock/PWM state. Versions 1–4
+remain importable with explicit legacy-state boundaries. The new target set
+contains 21 native/reference/sanitizer suites. Each record below or linked above
+retains its own core and frontend identity; a component result on an earlier
+build is not silently relabelled as a final production pass.
+
+The final integrated production WASM is SHA-256
+`51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189`.
+
+### Final core and SD checks
+
+Release, retained-reference and ASan/UBSan each pass **21/21 suites**. Native
+and WASM each pass **1,166,060 default assertions** plus **33,849 functional
+clock assertions**, or **1,199,909 per host**. The separate quarantined
+physical-read WASM checks add 217,824 assertions outside that total. The
+independent Unicorn corpus passes **17,075 cases**, with zero mismatches or
+skips. Clang static analysis covers **48 C files** with zero diagnostics.
+Restored local build files initially lacked execution permission for one
+reference and two sanitizer targets; after restoring those files' execution
+bits the affected gates passed. Leak detection remained enabled.
+
+The final 32 MiB directory-card workflow uses this production WASM and the
+rebuilt native replay tool. Original HP49g+ recalls root and nested objects
+as 42, writes TEST without changing them, and resumes a **34,087,787-byte v5
+checkpoint** containing the whole card and 32 staged sector bytes identically
+on native/WASM. HP48gII FILES, return to HOME and arithmetic also pass, with
+no SD slot. The prepared and stock-written images match the previously
+independently checked FAT images byte for byte; mtools extraction and
+`fsck.fat -n` results therefore apply to the same final image identities.
+
+The actual HP49g+ production browser completes seven SD stages: empty/card FILES,
+stock write/recall, whole-card manual restore, atomic eject-to-edit, draft
+hide/reopen and exact-byte reinsertion, automatic ROM reopen plus whole-card
+autosave restoration, and read-only import. There are no page errors. The
+[directory record](evidence/sd-directory-r22.json) binds all **47 tested browser
+assets**, distinguishes the 16 MiB browser card from the 32 MiB native/WASM
+workflow, and records the initial Activity-retention failure and verified fix.
+The recalled 42 and narrow sidebar layout were visually inspected; stock
+screenshots remain private.
+
+The original HP39gs production-page ROM-recall and self-test toolbar/Escape+F4
+paths also pass, with visually checked `1+1=2`. The original HP49g+ live-device
+workflow drives stock FLAGS/SERVER through the production page and Worker,
+then runs Kermit SEND/GET/FINISH through authenticated HTTP and a real user-space
+USB/IP peer. All 15 object bytes return exactly. Another real tab retains focus
+during transfer, sidebar hide/reopen preserves the connection, and disconnect
+is followed by visually checked `1+1=2`. Its [separate record](evidence/browser-local-devices-r22.json)
+binds the assets actually served; this is not an OS-driver or Conn3x witness.
+The [r22 release record](evidence/release-validation-r22.json) pins the final
+47-asset build, source identities and complete local gates. Source and packaged
+host tests, all eleven actual-Chromium component scripts, production Worker and
+stopped-core recovery, the Go receiver, Pages contract and strict documentation
+build all pass. GitHub Build, merge, Pages and live-site checks remain separate
+revision-specific evidence in the release pull request; local passes do not
+imply deployment.
+
+## Historical r21 transfer settings, FN layout, idle power, Note and peripheral clocks (2026-10-23)
 
 The [r21 release record](evidence/release-validation-r21.json) identifies all
 **43 production assets**, the final source hashes and local acceptance gates.

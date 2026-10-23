@@ -18,7 +18,9 @@ try{
  const frame={width:2,height:1,frameStatus:0,pixels:new Uint8Array([0,255])};
  assert(recordingFormat());assert(recordingName(1,codec).endsWith('.webm'));
  const recording=new LCDRecorder(frame);assert.equal(live,1);
- recording.update({...frame,frameStatus:1});assert.equal(recording.frame,frame,'Invalid frames must retain the last display');
+ recording.update({...frame,frameStatus:1,pixels:null});
+ assert.deepEqual([...recording.frame.pixels],[0,0],'Unavailable frames must match the live empty screen, not retain old ink');
+ recording.update(frame);assert.equal(recording.frame,frame,'A recovered valid frame is recorded immediately');
  const p=recording.stop();assert.equal(recording.stop(),p);const r=await p;assert.equal(r.width,8);assert.equal(r.height,4);assert.equal(r.blob.size,10);assert.equal(live,0);
  codec='video/mp4';assert.equal(recordingFormat(),'video/mp4');assert(recordingName(4,codec).endsWith('.mp4'));
  const limited=new LCDRecorder(frame,{maxBytes:1024});limited.recorder.emit(1024);assert.equal((await limited.finished).reason,'limit');assert.equal(live,0);

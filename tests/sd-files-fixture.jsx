@@ -26,7 +26,10 @@ window.__ackInsert=()=>{
 };
 function Fixture(){
   const state=useSyncExternalStore(controller.subscribe,controller.getSnapshot),[open,setOpen]=useState(true);
-  return <MantineProvider><Button onClick={()=>setOpen(true)}>Open SD dialog</Button>
-    {open&&<SDCard controller={controller} state={state} onClose={()=>setOpen(false)}/>}</MantineProvider>;
+  return <MantineProvider><Button onClick={()=>setOpen(true)}>Open SD sidebar</Button>
+    <aside aria-label="SD tools" hidden={!open} style={{width:'100%',maxWidth:560,boxSizing:'border-box'}}>
+      <Button onClick={()=>setOpen(false)}>Close</Button>
+      <SDCard controller={controller} state={state} onClose={()=>setOpen(false)}/>
+    </aside></MantineProvider>;
 }
 createRoot(document.getElementById('root')).render(<Fixture/>);

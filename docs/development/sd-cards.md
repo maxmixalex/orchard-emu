@@ -1,5 +1,10 @@
 # SD cards and FILES
 
+The r22 [local-directory workflow](directory-sd.md) adds recursive folder import,
+reviewed 8.3 name mapping, 16/32 MiB drafts, and explicit directory write-back.
+The SD tools now remain in a sidebar. A mounted card can be copied and ejected
+into the editor in one Worker turn before any host filesystem edit.
+
 The [r21 SD file record](evidence/sd-files-r21.json) covers draft rename/delete,
 namespace validation, independent FAT tools and final-production original-ROM
 workflows. HP49g+ reads the edited root and nested objects, writes its own object,
@@ -23,7 +28,7 @@ manager with a host implementation.
    port **3:SD**. Use the stock COPY, STO and RCL operations to manage objects.
 4. Finish guest file operations before **Export card image** or **Eject card**.
    Export downloads the entire current image. A modified card prompts before
-   ejection; closing the card dialog leaves it inserted.
+   ejection; hiding the SD sidebar leaves it inserted.
 
 The generated empty card has one FAT16 partition, starting at sector 1, two
 FATs, 512-byte sectors and two sectors per cluster. It has no volume label:
@@ -74,25 +79,37 @@ reject writes, and the volume root cannot be renamed or deleted.
 **Download draft image** exports the entire prepared card. **Insert prepared
 card** passes it through the normal controller insertion path, including the
 selected read-only setting. The calculator then reads and writes it through
-the emulated SD controller. Drafts are not automatic saves: download or insert
-the draft before closing the dialog. Closing it or starting a new blank draft
-discards its unsaved contents. Once inserted, the existing session and automatic
-save behavior includes the complete card.
+the emulated SD controller. Hiding the sidebar or switching its tabs preserves
+the draft. Drafts are not automatic saves: download or insert it before leaving
+the page, replacing the calculator session, choosing a new blank draft, or
+discarding it with the back button. Once inserted, the existing session and
+automatic save behavior includes the complete card.
 
 Insertion takes an independent `File` snapshot, then the controller reads its
 own bytes and sends a structured-cloned Worker message. The Worker copies that
 message into its SD storage; it never takes ownership of the draft's buffer.
 If reading or inserting fails, the draft remains available for download or
-retry. Closing during a pending draft-file read discards that read's result.
+retry. Hiding the sidebar also keeps a pending draft-file read; replacing its
+calculator generation or unmounting the editor discards that read's result.
 Once **Insert prepared card** has been pressed, the controller owns that
-insertion operation, and closing the dialog does not cancel it. A later model
+insertion operation, and hiding the sidebar does not cancel it. A later model
 generation or controller disposal invalidates an unfinished insertion read.
 
 The host file editor is unavailable while a card is inserted. To prepare a new
-version of an existing guest card, finish guest operations, export and eject it,
-then open that exported image as a draft. This avoids editing media behind the
-calculator's cached filesystem state. Merely opening the card dialog never
-alters inserted media.
+version of an existing guest card, finish guest operations and choose **Eject
+to edit / sync**. The Worker copies and validates the FAT16 image before ejecting
+it, without a guest instruction between those operations. A validation or
+ejection failure leaves the mounted card available. The returned draft preserves
+its image name, write-protect choice and current-session directory association.
+Ordinary export/eject/open-image remains available. Merely opening the SD sidebar
+never alters inserted media.
+
+For a local folder, choose **Choose local folder** inside the draft. Review the
+recursive path-to-alias preview and select 16 or 32 MiB before **Use this folder
+as the draft**. Direct-access browsers retain the directory handle for explicit
+**Re-read folder** and **Preview write-back** actions. See the
+[directory guide](directory-sd.md) for conflict behavior, browser fallback,
+permission boundaries and the distinction from an operating-system mount.
 
 ### Filesystem bounds and atomic changes
 
@@ -146,8 +163,10 @@ arbitrary extensions, target-name review, exact single-file and whole-image
 downloads, duplicate-batch rollback, corrupt-image and local-read failures,
 file/folder rename with exact collision rollback, delete confirmation/cancel,
 nonempty-folder rejection, opening a prepared image, failed-insertion retry,
-read-only insertion parameters, unmounting during a
-pending read, both languages and a 390-pixel viewport. Original-system SD
+read-only insertion parameters, sidebar hiding during a pending read,
+generation cancellation, both languages and a 390-pixel viewport. The local-device
+guard also disables live-card actions during connection and attachment without
+disabling a separate draft, then restores the controls on disconnect. Original-system SD
 acceptance remains a separate test.
 
 `node tests/sd-files-controller.mjs` checks the production controller's ownership
@@ -156,6 +175,14 @@ the source image and immutable File survive edits to the sender or receiver's
 buffer; read-only state survives retry; an old generation, disposed controller,
 or model without an SD slot cannot send a late insertion. These tests do not
 pretend that a mocked Worker acknowledgement is original-system acceptance.
+The r22 extension also checks directory-association ownership, successful
+eject-to-edit handoff, rejection without losing the mounted card, and cancellation
+on a new generation, controller disposal or Worker failure.
+Local-device guards reject insertion before reading its source, retain mounted
+media through rejected export/edit/eject commands, recheck delayed file reads
+and dirty-card confirmation, and release pending state for a successful retry.
+The actual-WASM Worker test independently verifies that rejected commands
+leave media bytes and card status unchanged.
 
 For independent r20 checking, Ubuntu's mtools 4.0.43 listed the prepared card's
 root and subdirectory and extracted all three generated test files byte for

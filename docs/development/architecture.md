@@ -157,10 +157,20 @@ artwork.
 and four divider settings, countdown/reload and interrupt 9. WTDAT writes do
 not silently initialize WTCNT. Illegal register widths/offsets remain visible.
 The watchdog consumes the shared PCLK stream, while physical PLL settling and
-board clock calibration remain open. A watchdog reset request produces
-`ORCHARD_UNIMPLEMENTED_RESET`, not a
-fake cold reset that erases external SRAM. Directed tests cover the supported
-register/countdown behavior. See [validation](validation.md).
+board clock calibration remain open. A watchdog reset request now propagates
+through the CPU and on-chip reset domains, holds instruction issue for 128
+reset-domain PCLK edges, and executes the actual reset vector. External SRAM,
+NOR bytes, SD media, RTC calendar/oscillator and physical board inputs remain
+powered. `GSTATUS2.WDTRST` records the cause; GSTATUS3/4 clear, unlike a
+Power_OFF wake. The USB controller resets while its physical connection stays
+present. Legacy `ORCHARD_UNIMPLEMENTED_RESET` checkpoints keep their stopped
+meaning. See [reset domains and tests](watchdog-reset.md).
+
+The two [SPI channels](spi.md) now expose their documented low-byte registers,
+PCLK-derived master shift timing, sampled GPIO input and completion interrupts.
+This is a disconnected peripheral subset; it provides no invented slave
+response or factory-test result. DMA, externally clocked slave transfers and
+multi-master arbitration remain unsupported.
 
 ## Explicit external GPIO inputs
 

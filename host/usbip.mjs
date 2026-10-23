@@ -24,7 +24,7 @@ export function submitReply(result){
  const b=Buffer.alloc(48);b.writeUInt32BE(3);b.writeUInt32BE(result.seq,4);b.writeInt32BE(result.status,20);b.writeUInt32BE(result.length,24);b.writeInt32BE(-1,32);
  return result.direction===1?Buffer.concat([b,Buffer.from(result.data)]):b;
 }
-export function createUSBIPServer(device,{onRelease=()=>device.detach()}={}){
+export function createUSBIPServer(device,{onRelease=()=>device.detach(),onAttach=()=>{}}={}){
  let owner=null;const sockets=new Set();
  const server=net.createServer(socket=>{
   if(sockets.size>=MAX_CLIENTS){socket.destroy();return;}sockets.add(socket);socket.setNoDelay(true);socket.setTimeout(10000);
@@ -50,7 +50,7 @@ export function createUSBIPServer(device,{onRelease=()=>device.detach()}={}){
       if(command!==0x8003){socket.destroy();return;}if(buffer.length<40)return;
       const id=buffer.subarray(8,40),nul=id.indexOf(0);
       if(nul<0||id.subarray(0,nul).toString('ascii')!==BUSID||id.subarray(nul).some(b=>b)||owner||!info){end(operation(3,1));return;}
-      buffer=buffer.subarray(40);owner=socket;attached=true;socket.setTimeout(0);write(Buffer.concat([operation(3),info.record]));continue;
+      buffer=buffer.subarray(40);owner=socket;attached=true;socket.setTimeout(0);write(Buffer.concat([operation(3),info.record]));onAttach();continue;
      }
      if(buffer.length<48)return;
      const command=buffer.readUInt32BE(0),seq=buffer.readUInt32BE(4),id=buffer.readUInt32BE(8),direction=buffer.readUInt32BE(12),ep=buffer.readUInt32BE(16);
@@ -71,5 +71,5 @@ export function createUSBIPServer(device,{onRelease=()=>device.detach()}={}){
    }catch{socket.destroy();}
   });
  });
- return {server,get attached(){return owner!==null;},listen(port=3240){if(!Number.isInteger(port)||port<0||port>65535)throw Error('Invalid USB/IP port');return new Promise((resolve,reject)=>{const fail=e=>reject(e);server.once('error',fail);server.listen(port,'127.0.0.1',()=>{server.off('error',fail);resolve(server.address().port);});});},close(){for(const s of sockets)s.destroy();return new Promise(resolve=>server.close(resolve));}};
+ return {server,get attached(){return owner!==null;},detachClient(){const previous=owner;owner=null;previous?.destroy();},listen(port=3240){if(!Number.isInteger(port)||port<0||port>65535)throw Error('Invalid USB/IP port');return new Promise((resolve,reject)=>{const fail=e=>reject(e);server.once('error',fail);server.listen(port,'127.0.0.1',()=>{server.off('error',fail);resolve(server.address().port);});});},close(){for(const s of sockets)s.destroy();return new Promise(resolve=>server.close(resolve));}};
 }

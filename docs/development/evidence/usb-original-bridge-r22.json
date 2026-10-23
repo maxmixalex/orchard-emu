@@ -1,0 +1,752 @@
+{
+  "schema": 1,
+  "date_utc": "2026-10-23",
+  "base_commit": "2ae6512e1cdb8efc3dd0633b8d5914ced3f11342",
+  "scope": "Original complete ROMs, BrowserHostBridge module running in Node beside the same production WASM core, real HTTP and USB/IP sockets, original descriptors and Kermit object roundtrip. The production Chrome Worker and an operating-system USB/IP driver are separate gates.",
+  "production_wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+  "production_sources_sha256": {
+    "host/bridge.mjs": "ff9197b965bab8980063632d146fece4cadddad2047bc444fd6414be33346c18",
+    "host/usbip.mjs": "abaddeb6feba190527094c3aa5a120aa408ebbfd7b995259f3e83e159fb586a0",
+    "web/host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+    "web/host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+    "web/usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+    "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+    "web/kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+    "web/hp48.js": "bd684d892870ab30a33f9cc2db28c76b8996306e2d3eabdc8dfc539060b0bf8c",
+    "src/usb.c": "b792a08459cb9274ae88269a0155bf29bbd6b41266aa6a3139f419b51cd76dd3",
+    "tests/usb.c": "8adb59d82569451b6d9b111aa8d45df1b7e9da8fdc7717ca445b37e073dbdf80"
+  },
+  "sources_stable_during_bulk_runs": true,
+  "private_probe_sha256": "e94ddca35978df0716d84fe0459490769e9e8e91c9a0952ef0cfa0614e98001c",
+  "private_source_binding_wrapper_sha256": "c1b5271c98a65779c5ddb134312d6f7e3ebc43ca9873e22f275737d7597568ed",
+  "private_readonly_trace_source_sha256": "ef58c5f34d84735d5b3ec40b6473e8c2e5625029053603e7d50a6ac34000ede1",
+  "conditions": {
+    "cold_boot": true,
+    "preset_by_model": {
+      "4": "hp48-home",
+      "5": "hp49-home"
+    },
+    "physical_key_hold_ticks": 1500000,
+    "physical_key_gap_ticks": 1500000,
+    "core_poll_slice_ticks": 1024,
+    "http_bind": "127.0.0.1",
+    "usbip_bind": "127.0.0.1",
+    "bulk_setup_commands": [
+      "CF(-33)",
+      "CF(-78)",
+      "SF(-35)",
+      "SERVER"
+    ],
+    "control_diagnostic_setup_commands": [
+      "SERVER"
+    ],
+    "get_configuration_deadline_virtual_ticks": 60000000,
+    "guest_patches": false,
+    "os_driver_attachment_tested": false,
+    "production_browser_tested": false,
+    "conn3x_tested": false
+  },
+  "usb_core_changed_for_counterexample": false,
+  "directed_regression": {
+    "native_assertions": 54175,
+    "wasm_assertions": 54175,
+    "reference_assertions": 54175,
+    "asan_ubsan_lsan_assertions": 54175,
+    "leak_detection_enabled": true,
+    "failures": 0,
+    "added_assertions": 110,
+    "cases": [
+      "Unarmed nonempty final IN packet remains NAK without consuming FIFO",
+      "Later explicit IN_PKT_RDY publishes the exact byte once",
+      "New SETUP abandons the old packet and recovers",
+      "Two request numbers and arbitrary response values avoid firmware-specific handling"
+    ]
+  },
+  "original_roms": [
+    {
+      "model": 4,
+      "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+      "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+      "device_descriptor": "12011001ff000008f0032101000101020001",
+      "configuration_descriptor": "0902200001010080190904000002ff0000000705810240000007050302400000",
+      "info": {
+        "vendor": 1008,
+        "product": 289,
+        "manufacturer": "HP Company",
+        "name": "HPx9G+ Device",
+        "endpoints": [
+          {
+            "address": 129,
+            "type": 2,
+            "maxPacket": 64
+          },
+          {
+            "address": 3,
+            "type": 2,
+            "maxPacket": 64
+          }
+        ]
+      },
+      "descriptor_urb_status": 0,
+      "configuration_descriptor_urb_status": 0,
+      "set_configuration_urb_status": 0,
+      "bulk": {
+        "send": "complete",
+        "get": "complete",
+        "name": "OR22B",
+        "source_bytes": 15,
+        "source_sha256": "b40a705f97657cdc0aa45ba42fe511d90d667e44f5c3b35f4226afbebf38db9a",
+        "received_sha256": "1a0ade1c2dc89c03a5a07d4bc5928c1c0bcc7fe8cb3851e68326f375240f55af",
+        "source_header": "HPHP49-C",
+        "received_header": "HPHP49-B",
+        "object_bytes_equal": true,
+        "packets": [
+          {
+            "tick": 377790976,
+            "type": "N",
+            "sequence": 0,
+            "length": 0
+          },
+          {
+            "tick": 379904512,
+            "type": "Y",
+            "sequence": 0,
+            "length": 8
+          },
+          {
+            "tick": 383001088,
+            "type": "Y",
+            "sequence": 1,
+            "length": 5
+          },
+          {
+            "tick": 385409536,
+            "type": "Y",
+            "sequence": 2,
+            "length": 0
+          },
+          {
+            "tick": 387572224,
+            "type": "Y",
+            "sequence": 3,
+            "length": 0
+          },
+          {
+            "tick": 389489152,
+            "type": "Y",
+            "sequence": 4,
+            "length": 0
+          },
+          {
+            "tick": 390865408,
+            "type": "Y",
+            "sequence": 0,
+            "length": 8
+          },
+          {
+            "tick": 393765376,
+            "type": "S",
+            "sequence": 0,
+            "length": 8
+          },
+          {
+            "tick": 396861952,
+            "type": "F",
+            "sequence": 1,
+            "length": 5
+          },
+          {
+            "tick": 399712768,
+            "type": "D",
+            "sequence": 2,
+            "length": 22
+          },
+          {
+            "tick": 401924608,
+            "type": "Z",
+            "sequence": 3,
+            "length": 0
+          },
+          {
+            "tick": 404038144,
+            "type": "B",
+            "sequence": 4,
+            "length": 0
+          }
+        ],
+        "transfers": [
+          {
+            "tick": 329523712,
+            "active": true,
+            "phase": "negotiating",
+            "direction": "send",
+            "name": "OR22B",
+            "transferred": 0,
+            "total": 15
+          },
+          {
+            "tick": 379904512,
+            "active": true,
+            "phase": "sending",
+            "direction": "send",
+            "name": "OR22B",
+            "transferred": 0,
+            "total": 15
+          },
+          {
+            "tick": 383001088,
+            "active": true,
+            "phase": "sending",
+            "direction": "send",
+            "name": "OR22B",
+            "transferred": 0,
+            "total": 15
+          },
+          {
+            "tick": 385409536,
+            "active": true,
+            "phase": "sending",
+            "direction": "send",
+            "name": "OR22B",
+            "transferred": 15,
+            "total": 15
+          },
+          {
+            "tick": 389489152,
+            "active": false,
+            "phase": "complete",
+            "direction": "send",
+            "name": "OR22B",
+            "transferred": 15,
+            "total": 15
+          },
+          {
+            "tick": 389489152,
+            "active": true,
+            "phase": "negotiating",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 0
+          },
+          {
+            "tick": 390865408,
+            "active": true,
+            "phase": "receiving",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 0
+          },
+          {
+            "tick": 393765376,
+            "active": true,
+            "phase": "receiving",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 0
+          },
+          {
+            "tick": 396861952,
+            "active": true,
+            "phase": "receiving",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 0
+          },
+          {
+            "tick": 399712768,
+            "active": true,
+            "phase": "receiving",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 15
+          },
+          {
+            "tick": 405120512,
+            "active": false,
+            "phase": "complete",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 15
+          }
+        ]
+      },
+      "core_status": 0,
+      "model_name": "HP48gII",
+      "control_diagnostic": {
+        "get_configuration": {
+          "status": -110,
+          "length": 0,
+          "hex": "",
+          "unresolved": true
+        },
+        "new_setup_recovery": {
+          "status": 0,
+          "descriptor_bytes_equal": true
+        },
+        "core_status": 0
+      },
+      "readonly_instrumentation": {
+        "wasm_sha256": "692c5b789e1c5d40fc3777a87bc0857756008a08199130655c1964a5552aeda7",
+        "mmio_records": 136,
+        "ep0_reads_writes": [
+          {
+            "tick": 230672268,
+            "pc": "0x0000c2f0",
+            "register": "0x52000184",
+            "operation": "read",
+            "value": 1,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230672290,
+            "pc": "0x0000c2c8",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 128,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230672296,
+            "pc": "0x0000c2c8",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 8,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230672302,
+            "pc": "0x0000c2c8",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 0,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230672308,
+            "pc": "0x0000c2c8",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 0,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230672314,
+            "pc": "0x0000c2c8",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 0,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230672320,
+            "pc": "0x0000c2c8",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 0,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230672326,
+            "pc": "0x0000c2c8",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 1,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230672332,
+            "pc": "0x0000c2c8",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 0,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230672346,
+            "pc": "0x0000c54c",
+            "register": "0x520001c0",
+            "operation": "write",
+            "value": 1,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230672349,
+            "pc": "0x0000c558",
+            "register": "0x52000184",
+            "operation": "write",
+            "value": 73,
+            "csr0_before": 1,
+            "csr0_after": 8
+          }
+        ],
+        "in_packet_ready_written": false,
+        "auto_set_enabled": false,
+        "final_tx_fifo_bytes": 1,
+        "final_csr0": 8
+      }
+    },
+    {
+      "model": 5,
+      "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+      "device_descriptor": "12011001ff000008f0032101000101020001",
+      "configuration_descriptor": "0902200001010080190904000002ff0000000705810240000007050302400000",
+      "info": {
+        "vendor": 1008,
+        "product": 289,
+        "manufacturer": "HP Company",
+        "name": "HPx9G+ Device",
+        "endpoints": [
+          {
+            "address": 129,
+            "type": 2,
+            "maxPacket": 64
+          },
+          {
+            "address": 3,
+            "type": 2,
+            "maxPacket": 64
+          }
+        ]
+      },
+      "descriptor_urb_status": 0,
+      "configuration_descriptor_urb_status": 0,
+      "set_configuration_urb_status": 0,
+      "bulk": {
+        "send": "complete",
+        "get": "complete",
+        "name": "OR22B",
+        "source_bytes": 15,
+        "source_sha256": "b40a705f97657cdc0aa45ba42fe511d90d667e44f5c3b35f4226afbebf38db9a",
+        "received_sha256": "b40a705f97657cdc0aa45ba42fe511d90d667e44f5c3b35f4226afbebf38db9a",
+        "source_header": "HPHP49-C",
+        "received_header": "HPHP49-C",
+        "object_bytes_equal": true,
+        "packets": [
+          {
+            "tick": 377594368,
+            "type": "N",
+            "sequence": 0,
+            "length": 0
+          },
+          {
+            "tick": 379658752,
+            "type": "Y",
+            "sequence": 0,
+            "length": 8
+          },
+          {
+            "tick": 382755328,
+            "type": "Y",
+            "sequence": 1,
+            "length": 5
+          },
+          {
+            "tick": 385311232,
+            "type": "Y",
+            "sequence": 2,
+            "length": 0
+          },
+          {
+            "tick": 387768832,
+            "type": "Y",
+            "sequence": 3,
+            "length": 0
+          },
+          {
+            "tick": 389833216,
+            "type": "Y",
+            "sequence": 4,
+            "length": 0
+          },
+          {
+            "tick": 391258624,
+            "type": "Y",
+            "sequence": 0,
+            "length": 8
+          },
+          {
+            "tick": 393912832,
+            "type": "S",
+            "sequence": 0,
+            "length": 8
+          },
+          {
+            "tick": 396567040,
+            "type": "F",
+            "sequence": 1,
+            "length": 5
+          },
+          {
+            "tick": 398926336,
+            "type": "D",
+            "sequence": 2,
+            "length": 22
+          },
+          {
+            "tick": 400990720,
+            "type": "Z",
+            "sequence": 3,
+            "length": 0
+          },
+          {
+            "tick": 402907648,
+            "type": "B",
+            "sequence": 4,
+            "length": 0
+          }
+        ],
+        "transfers": [
+          {
+            "tick": 329425408,
+            "active": true,
+            "phase": "negotiating",
+            "direction": "send",
+            "name": "OR22B",
+            "transferred": 0,
+            "total": 15
+          },
+          {
+            "tick": 379658752,
+            "active": true,
+            "phase": "sending",
+            "direction": "send",
+            "name": "OR22B",
+            "transferred": 0,
+            "total": 15
+          },
+          {
+            "tick": 382755328,
+            "active": true,
+            "phase": "sending",
+            "direction": "send",
+            "name": "OR22B",
+            "transferred": 0,
+            "total": 15
+          },
+          {
+            "tick": 385311232,
+            "active": true,
+            "phase": "sending",
+            "direction": "send",
+            "name": "OR22B",
+            "transferred": 15,
+            "total": 15
+          },
+          {
+            "tick": 389833216,
+            "active": false,
+            "phase": "complete",
+            "direction": "send",
+            "name": "OR22B",
+            "transferred": 15,
+            "total": 15
+          },
+          {
+            "tick": 389833216,
+            "active": true,
+            "phase": "negotiating",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 0
+          },
+          {
+            "tick": 391258624,
+            "active": true,
+            "phase": "receiving",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 0
+          },
+          {
+            "tick": 393912832,
+            "active": true,
+            "phase": "receiving",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 0
+          },
+          {
+            "tick": 396567040,
+            "active": true,
+            "phase": "receiving",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 0
+          },
+          {
+            "tick": 398926336,
+            "active": true,
+            "phase": "receiving",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 15
+          },
+          {
+            "tick": 404186624,
+            "active": false,
+            "phase": "complete",
+            "direction": "receive",
+            "name": "OR22B",
+            "transferred": 15
+          }
+        ]
+      },
+      "core_status": 0,
+      "model_name": "HP49g+",
+      "control_diagnostic": {
+        "get_configuration": {
+          "status": -110,
+          "length": 0,
+          "hex": "",
+          "unresolved": true
+        },
+        "new_setup_recovery": {
+          "status": 0,
+          "descriptor_bytes_equal": true
+        },
+        "core_status": 0
+      },
+      "readonly_instrumentation": {
+        "wasm_sha256": "692c5b789e1c5d40fc3777a87bc0857756008a08199130655c1964a5552aeda7",
+        "mmio_records": 138,
+        "ep0_reads_writes": [
+          {
+            "tick": 230623116,
+            "pc": "0x0000e21c",
+            "register": "0x52000184",
+            "operation": "read",
+            "value": 1,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230623138,
+            "pc": "0x0000e1f4",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 128,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230623144,
+            "pc": "0x0000e1f4",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 8,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230623150,
+            "pc": "0x0000e1f4",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 0,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230623156,
+            "pc": "0x0000e1f4",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 0,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230623162,
+            "pc": "0x0000e1f4",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 0,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230623168,
+            "pc": "0x0000e1f4",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 0,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230623174,
+            "pc": "0x0000e1f4",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 1,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230623180,
+            "pc": "0x0000e1f4",
+            "register": "0x520001c0",
+            "operation": "read",
+            "value": 0,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230623194,
+            "pc": "0x0000e478",
+            "register": "0x520001c0",
+            "operation": "write",
+            "value": 1,
+            "csr0_before": 1,
+            "csr0_after": 1
+          },
+          {
+            "tick": 230623197,
+            "pc": "0x0000e484",
+            "register": "0x52000184",
+            "operation": "write",
+            "value": 73,
+            "csr0_before": 1,
+            "csr0_after": 8
+          }
+        ],
+        "in_packet_ready_written": false,
+        "auto_set_enabled": false,
+        "final_tx_fifo_bytes": 1,
+        "final_csr0": 8
+      }
+    }
+  ],
+  "manuals": [
+    {
+      "title": "Samsung S3C2410A revision 1.0 (2004)",
+      "url": "https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf",
+      "sections": [
+        "13-12",
+        "13-13",
+        "13-15"
+      ]
+    },
+    {
+      "title": "Samsung S3C2410X revision 1.2 (2003)",
+      "url": "https://dtsheet.com/doc/424485/samsung-s3c2410x",
+      "sections": [
+        "13-12",
+        "13-13",
+        "13-15"
+      ]
+    }
+  ],
+  "unresolved": "Both original systems write FIFO=1 then CSR0=0x49, leaving DATA_END without IN_PKT_RDY. GET_CONFIGURATION NAKs until -110; a fresh SETUP recovers. Available manuals do not establish an implicit DATA_END arm. This is not a proven firmware bug or proof of all undocumented silicon behavior."
+}

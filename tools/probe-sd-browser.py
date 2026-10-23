@@ -54,14 +54,19 @@ def main():
     page=None;browser=None;playwright=None;errors=[]
     def stage(name): report['stages'].append(name);print('STAGE',name,flush=True)
     def snapshot(): return page.evaluate('window.__transferProbe.snapshot')
-    def close_card(): page.get_by_role('dialog',name='SD card',exact=True).get_by_role('button',name='Close',exact=True).click()
+    def close_card():
+        page.get_by_role('button',name='Close sidebar',exact=True).click()
+        expect(page.locator('#device-sidebar')).to_be_hidden()
     def keys(scans):
         for scan in scans:
             h.physical_keys(page,(scan,));hp49.settle(page,4000000)
-    def card(): page.get_by_role('button',name='SD card',exact=True).click()
+    def card():
+        page.get_by_role('button',name='SD card',exact=True).click()
+        expect(page.locator('#device-sidebar')).to_be_visible()
+        expect(page.locator('#device-sidebar').get_by_role('tab',name='SD card',exact=True)).to_have_attribute('aria-selected','true')
     def eject():
         dirty=snapshot()['sd']['dirty']
-        page.get_by_role('dialog',name='SD card',exact=True).get_by_role('button',name='Eject card',exact=True).click()
+        page.locator('#device-sidebar').get_by_role('button',name='Eject card',exact=True).click()
         if dirty:
             page.get_by_role('dialog',name='Eject card',exact=True).get_by_role('button',name='Eject card',exact=True).click()
             page.get_by_role('dialog',name='Eject card',exact=True).wait_for(state='hidden')
@@ -118,7 +123,7 @@ def main():
         with page.expect_download() as pending: page.get_by_role('button',name='Save',exact=True).click()
         saved=args.output/'with-card.ord';pending.value.save_as(saved)
         report['session']=hp49.session_metadata(saved)
-        assert report['session']['checkpoint_version']==4 and report['session']['checkpoint_bytes']>16*1024*1024
+        assert report['session']['checkpoint_version']==5 and report['session']['checkpoint_bytes']>16*1024*1024
         page.wait_for_function('!window.__transferProbe.snapshot.running');saved_frame=hp49.frame(page)
         card();eject();close_card()
         page.locator('#session-file').set_input_files(str(saved.resolve()))
@@ -127,6 +132,19 @@ def main():
         assert hp49.frame(page)==saved_frame,'Full displayed LCD must restore exactly'
         card();after=exported('card-restored.img');assert h.sha(after.read_bytes())==first_hash;close_card()
         report['card_image_sha256']=first_hash;report['manual_session_media_exact']=True
+
+        stage('atomic-eject-to-edit-and-persistent-sidebar-draft')
+        card();page.get_by_role('button',name='Eject to edit / sync',exact=True).click()
+        page.wait_for_function('!window.__transferProbe.snapshot.sd.present')
+        editor=page.get_by_test_id('sd-file-editor')
+        expect(editor.get_by_role('cell',name='TEST',exact=True)).to_be_visible()
+        close_card();card()
+        expect(editor.get_by_role('cell',name='TEST',exact=True)).to_be_visible()
+        page.get_by_role('button',name='Insert prepared card',exact=True).click()
+        page.wait_for_function('window.__transferProbe.snapshot.sd.present')
+        edited=exported('card-after-edit.img');assert h.sha(edited.read_bytes())==first_hash;close_card()
+        report['atomic_edit_preserves_media']=True
+        report['hidden_sidebar_retains_draft']=True
 
         stage('automatic-save-with-media-and-reload')
         page.get_by_role('button',name='Settings',exact=True).click()
@@ -142,12 +160,22 @@ def main():
           return {bytes:r.file.length,model:r.model,version:r.version};
         }''',model['rom_sha256'])
         assert report['automatic_save']['bytes']>16*1024*1024
-        page.reload();expect(page.get_by_role('button',name='Open ROM',exact=True)).to_be_enabled()
-        page.locator('#rom').set_input_files(str(args.rom.resolve()))
+        # Standard file input stores a labelled browser-local ROM copy. Reload
+        # must let that automatic read finish; selecting the same ROM again
+        # races it and can turn the restore prompt into a replacement prompt.
+        report['remembered_rom']=page.evaluate('''async model=>{
+          const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('orchard-roms',1);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
+          const r=await new Promise((resolve,reject)=>{const tx=db.transaction('roms'),q=tx.objectStore('roms').get(model);tx.oncomplete=()=>resolve(q.result);tx.onabort=()=>reject(tx.error);});db.close();
+          return r?{model:r.model,hash:r.hash,kind:r.kind}:null;
+        }''',model['id'])
+        assert report['remembered_rom']=={'model':model['id'],'hash':model['rom_sha256'],'kind':'copy'}
+        page.reload()
+        page.wait_for_function('window.__transferProbe.snapshot?.loaded===true')
         page.get_by_role('dialog',name='Restore local save?',exact=True).get_by_role('button',name='Restore',exact=True).click()
         page.wait_for_function('window.__transferProbe.snapshot?.sd?.present&&!window.__transferProbe.snapshot.running')
         card();restored=exported('card-after-reload.img');assert h.sha(restored.read_bytes())==first_hash
         report['automatic_session_media_exact']=True
+        report['automatic_rom_reopen']=True
 
         stage('read-only-import')
         eject()

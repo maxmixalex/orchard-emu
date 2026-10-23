@@ -140,6 +140,39 @@ static void control(void) {
     wr(0x184,72);CHECK(orchard_usb_in(&m,0,0,true,data,sizeof(data),&length,&pid)==ORCHARD_USB_ACK);
     bus();setup(128,1);wr(0x184,32);CHECK(orchard_usb_in(&m,0,0,true,data,sizeof(data),&length,&pid)==ORCHARD_USB_STALL);
     CHECK(rd(0x184)&4);wr(0x184,0);CHECK(!(rd(0x184)&4));
+    /* A nonempty last control-IN packet still needs IN_PKT_RDY. DATA_END
+       and SERVICED_OUT alone must not invent an ACK or consume the FIFO.
+       Samsung S3C2410A and S3C2410X both specify MCU arming at 13-12/13.
+       Use arbitrary payload and requests, not an original-ROM special case. */
+    for(unsigned request=8;request<=10;request+=2){
+        bus();const uint8_t request_bytes[]={128,(uint8_t)request,0,0,0,0,1,0};
+        CHECK(orchard_usb_out(&m,0,0,true,0,request_bytes,8)==ORCHARD_USB_ACK);
+        wr(0x178,0);
+        for(unsigned i=0;i<8;++i)CHECK(rd(0x1c0)==request_bytes[i]);
+        wr(0x1c0,0x73);wr(0x184,0x49);
+        CHECK(rd(0x184)==8&&m.soc.usb.ep[0].tx_count==1);
+        for(unsigned retry=0;retry<3;++retry){
+            CHECK(orchard_usb_in(&m,0,0,true,data,sizeof(data),&length,&pid)==ORCHARD_USB_NAK);
+            CHECK(length==0&&m.soc.usb.in_packets==0&&m.soc.usb.ep[0].tx_count==1);
+        }
+        if(request==8){
+            /* Late explicit arming makes that exact byte available once. */
+            wr(0x184,2);
+            CHECK(orchard_usb_in(&m,0,0,false,data,sizeof(data),&length,&pid)==ORCHARD_USB_ACK);
+            CHECK(length==1&&data[0]==0x73&&pid==1&&m.soc.usb.in_packets==0);
+            CHECK(orchard_usb_in(&m,0,0,true,data,sizeof(data),&length,&pid)==ORCHARD_USB_ACK);
+            CHECK(length==1&&data[0]==0x73&&m.soc.usb.in_packets==1);
+            CHECK(orchard_usb_out(&m,0,0,false,1,NULL,0)==ORCHARD_USB_ACK);
+        }else{
+            /* A new SETUP abandons the unarmed FIFO and recovers normally. */
+            setup(128,1);CHECK(m.soc.usb.ep[0].tx_count==0);
+            wr(0x1c0,0x2b);wr(0x184,10);
+            CHECK(orchard_usb_in(&m,0,0,true,data,sizeof(data),&length,&pid)==ORCHARD_USB_ACK);
+            CHECK(length==1&&data[0]==0x2b&&pid==1);
+            CHECK(orchard_usb_out(&m,0,0,false,1,NULL,0)==ORCHARD_USB_ACK);
+        }
+        CHECK(m.soc.usb.phase==0&&rd(0x184)==0&&m.stop.status==ORCHARD_OK);
+    }
     orchard_reset(&m);CHECK(!m.soc.usb.connected&&m.soc.usb.setups==0);
 }
 static void bulk(void) {

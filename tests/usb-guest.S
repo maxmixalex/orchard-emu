@@ -59,6 +59,11 @@ irq:
  mov r10,#0
  b ack
 endpoint:
+#ifdef ORCHARD_BRIDGE_TEST
+ ldr r1,[r0,#8]
+ tst r1,#1
+ beq bulk_echo
+#endif
  mov r1,#0
  str r1,[r0,#0x38]
  ldr r4,[r0,#0x44]
@@ -83,6 +88,10 @@ endpoint:
  beq configure
  cmp r3,#8
  beq get_configuration
+#ifdef ORCHARD_BRIDGE_TEST
+ cmp r3,#0x5a
+ beq watchdog_test_reset
+#endif
  cmp r3,#6
  bne stall
  cmp r2,#1
@@ -110,6 +119,29 @@ address:
  b no_data
 configure:
  mov r10,r5
+#ifdef ORCHARD_BRIDGE_TEST
+ /* This test-only build configures real bulk FIFOs and interrupts. */
+ mov r1,#1
+ str r1,[r0,#0x38]
+ mov r1,#8
+ str r1,[r0,#0x40]
+ mov r1,#32
+ str r1,[r0,#0x48]
+ mov r1,#64
+ str r1,[r0,#0x44]
+ mov r1,#3
+ str r1,[r0,#0x38]
+ mov r1,#8
+ str r1,[r0,#0x40]
+ mov r1,#0
+ str r1,[r0,#0x48]
+ mov r1,#128
+ str r1,[r0,#0x50]
+ mov r1,#11
+ str r1,[r0,#0x1c]
+ mov r1,#0
+ str r1,[r0,#0x38]
+#endif
 no_data:
  mov r7,#0
  mov r6,#0
@@ -145,12 +177,54 @@ arm_packet:
 ack:
  mov r1,#1
  str r1,[r0,#8]
+ack_irq:
  ldr r0,=0x4a000000
  mov r1,#0x02000000
  str r1,[r0]
  str r1,[r0,#16]
  ldmia sp!,{r0-r5,lr}
  subs pc,lr,#4
+#ifdef ORCHARD_BRIDGE_TEST
+/* EP3 OUT -> EP1 IN, preserving binary data and zero-length packets. */
+bulk_echo:
+ mov r1,#1
+ str r1,[r0,#0x38]
+ ldr r1,[r0,#0x44]
+ tst r1,#1
+ bne bulk_ack
+ mov r1,#3
+ str r1,[r0,#0x38]
+ ldr r1,[r0,#0x50]
+ tst r1,#1
+ beq bulk_ack
+ ldr r2,[r0,#0x58]
+bulk_copy:
+ cmp r2,#0
+ beq bulk_ready
+ ldr r1,[r0,#0x8c]
+ str r1,[r0,#0x84]
+ subs r2,r2,#1
+ bne bulk_copy
+bulk_ready:
+ mov r1,#0
+ str r1,[r0,#0x50]
+ mov r1,#1
+ str r1,[r0,#0x38]
+ str r1,[r0,#0x44]
+bulk_ack:
+ mov r1,#10
+ str r1,[r0,#8]
+ b ack_irq
+/* A vendor request makes the guest itself trigger the real WDT reset. */
+watchdog_test_reset:
+ ldr r0,=0x53000000
+ mov r1,#1
+ str r1,[r0,#4]
+ str r1,[r0,#8]
+ mov r1,#0x21
+ str r1,[r0]
+ b .
+#endif
 .ltorg
 .balign 4
 device_descriptor:

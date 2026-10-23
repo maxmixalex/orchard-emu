@@ -45,6 +45,23 @@ with sync_playwright() as p:
  page.evaluate('window.__keypad=document.querySelector(".traditional-geometry")')
  page.locator('#calculator').focus();page.keyboard.press('1')
  assert page.evaluate('window.__messages.some(m=>m.type==="tap-sequence"&&m.scans.length===1&&m.scans[0]===26)')
+ # Physical simultaneous system keys use the held-key Worker command, including
+ # the user's Escape+F4 gesture; they must not become two isolated taps.
+ page.keyboard.down('Escape');page.keyboard.press('F4');page.keyboard.up('Escape')
+ assert page.evaluate('window.__messages.some(m=>m.type==="system-chord"&&m.action==="self-test")')
+ page.keyboard.down('Escape');page.keyboard.press('F3');page.keyboard.up('Escape')
+ assert page.evaluate('window.__messages.some(m=>m.type==="system-chord"&&m.action==="warm-restart")')
+ # A desktop USB client can take focus while the explicit bridge is active.
+ # The stored pause preference resumes after disconnect; input is released in
+ # both cases. This checks the actual App lifecycle wiring, not a helper copy.
+ before=page.evaluate('window.__messages.length')
+ page.evaluate('()=>{const c=window.__controller;c.patch({hostBridge:{active:true},prefs:{...c.state.prefs,pauseOnBlur:true}});window.dispatchEvent(new Event("blur"))}')
+ departed=page.evaluate('(n)=>window.__messages.slice(n).map(m=>m.type)',before)
+ assert 'release' in departed and 'pause' not in departed,departed
+ before=page.evaluate('window.__messages.length')
+ page.evaluate('()=>{window.__controller.patch({hostBridge:{active:false}});window.dispatchEvent(new Event("blur"))}')
+ departed=page.evaluate('(n)=>window.__messages.slice(n).map(m=>m.type)',before)
+ assert 'release' in departed and 'pause' in departed,departed
  view('immersive')
  assert page.locator('.traditional-key[data-scan="26"]').get_attribute('aria-disabled')=='true'
  view('traditional')
@@ -72,7 +89,11 @@ with sync_playwright() as p:
  page.get_by_role('button',name='Apply',exact=True).click()
  page.get_by_role('button',name='设置',exact=True).wait_for()
  assert page.locator('html').get_attribute('lang')=='zh-CN'
+ # The settings keyboard has its own metadata request; race scenarios above
+ # still defer only the calculator display requests, preserving their indices.
+ page.evaluate('window.__deferManifest=false')
  page.get_by_role('button',name='设置',exact=True).click();page.get_by_role('tab',name='键盘',exact=True).click()
+ page.locator('.mapping-calculator .traditional-key').first.wait_for()
  page.locator('button[data-code="KeyA"]').click()
  assert page.get_by_label('PC 按键',exact=True).input_value()=='KeyA'
  assert page.get_by_role('dialog').inner_text().count('ALPHA')>=1
@@ -81,6 +102,7 @@ with sync_playwright() as p:
  page.get_by_role('button',name='添加按键').click()
  page.screenshot(path=str(ROOT/'build/ui-keyboard-zh.png'))
  page.get_by_role('button',name='取消',exact=True).click()
+ page.evaluate('window.__deferManifest=true')
  assert 'Shift+KeyA' not in page.evaluate('window.__controller.state.prefs.mappings[1] || {}')
  # Native legends are independently derived from the pinned skin manifest.
  assert page.locator('.traditional-key[data-scan="28"] .key-shift').text_content()=='CHARS'
@@ -100,7 +122,7 @@ with sync_playwright() as p:
  page.evaluate('()=>{const c=window.__controller;c.receive({...c.last,pixels:null,frameStatus:1})}')
  assert canvas_pixels()['pixels']==background*(131*64)
  page.wait_for_timeout(250);assert page.locator('.traditional-key[data-scan="28"]').bounding_box()['y'] < 750;page.screenshot(path=str(ROOT/'build/ui-traditional-zh.png'))
- page.get_by_role('button',name='连接',exact=True).click();page.get_by_role('button',name='关闭',exact=True).click()
+ page.get_by_role('button',name='连接',exact=True).click();page.get_by_role('button',name='收起侧栏',exact=True).click()
  # The file UI uses the production controller. Packet/stock validation is a
  # separate Worker test; this fixture only supplies explicit protocol events.
  select_model(4);resolve_manifest(5);keys_ready('hp48gii')
@@ -138,8 +160,8 @@ with sync_playwright() as p:
  assert page.get_by_role('button',name='按名称取回对象',exact=True).is_enabled()
  for name in ['接收计算器文件','读取计算器目录','退出计算器 SERVER']:
   assert page.get_by_role('button',name=name,exact=True).count()==1
- assert '选择有线串口和二进制文件' in page.get_by_role('dialog').inner_text()
- assert 'SF(-78)' in page.get_by_role('dialog').inner_text()
+ assert '选择有线串口和二进制文件' in page.locator('#device-sidebar').inner_text()
+ assert 'SF(-78)' in page.locator('#device-sidebar').inner_text()
  page.locator('[data-testid="transfer-file"]').set_input_files({'name':'SERIAL.hp','mimeType':'application/octet-stream','buffer':b'HPHP49-C\x00\xff\r\n'})
  page.get_by_label('计算器内文件名',exact=True).fill('SERIAL')
  page.get_by_role('button',name='上传到计算器',exact=True).click()
@@ -149,7 +171,7 @@ with sync_playwright() as p:
  page.get_by_role('button',name='按名称取回对象',exact=True).click()
  page.wait_for_function('()=>{const m=window.__messages.filter(m=>m.type==="file-transfer-start").at(-1);return m.mode==="get"&&m.transport==="serial"&&m.name==="SERIAL"}')
  page.get_by_role('button',name='取消传输',exact=True).click()
- page.get_by_role('button',name='关闭',exact=True).click()
+ page.get_by_role('button',name='收起侧栏',exact=True).click()
  page.get_by_role('button',name='连接',exact=True).click()
  assert page.get_by_role('combobox',name='连接类型',exact=True).input_value()=='串口'
  assert page.get_by_role('button',name='接收计算器文件',exact=True).is_enabled()
@@ -189,13 +211,13 @@ with sync_playwright() as p:
  assert page.get_by_label('计算器内文件名 · BAD.hp',exact=True).is_enabled()
  page.get_by_role('button',name='移除 BAD.hp',exact=True).click()
  assert page.get_by_label('计算器内文件名',exact=True).input_value()=='GOOD.hp'
- page.get_by_role('button',name='关闭',exact=True).click()
+ page.get_by_role('button',name='收起侧栏',exact=True).click()
  # HP39 presents a disk server, with immutable package basenames and the
  # calculator's original RECV/SEND → Disk drive workflow.
  select_model(1);resolve_manifest(6);keys_ready('hp39gplus')
  page.evaluate("""()=>window.__controller.patch({loaded:true,running:false,busy:false,serial:true,usb:true,usbReady:true})""")
  page.get_by_role('button',name='连接',exact=True).click()
- assert 'Disk drive' in page.get_by_role('dialog').inner_text()
+ assert 'Disk drive' in page.locator('#device-sidebar').inner_text()
  assert page.get_by_role('button',name='按名称取回对象',exact=True).count()==0
  assert page.get_by_label('计算器内文件名',exact=True).count()==0
  hp39_program=b'HP39AscD 4 TEST\nDISP 1;"Hello";'
@@ -211,10 +233,10 @@ with sync_playwright() as p:
  assert page.get_by_role('button',name='提供所选文件',exact=True).is_disabled()
  page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:true,phase:"serving",transferred:12,total:42})}')
  assert page.get_by_text('文件服务就绪，请在计算器中选择文件',exact=True).count()==1
- # The real calculator remains accessible with the connection dialog closed;
+ # The real calculator remains accessible with the connection sidebar closed;
  # slow sub-4-KiB transfers must keep a visible, exact progress summary there.
  page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:true,phase:"sending",name:"LIB275L.000",transferred:256,total:1489,hostedTransferred:7629,hostedTotal:8862,filesCompleted:1,filesTotal:2})}')
- page.get_by_role('button',name='关闭',exact=True).click()
+ page.get_by_role('button',name='收起侧栏',exact=True).click()
  summary=page.get_by_test_id('transfer-summary')
  assert 'LIB275L.000' in summary.inner_text()
  assert '256 / 1,489 字节' in summary.inner_text()
@@ -262,11 +284,11 @@ with sync_playwright() as p:
  assert {f['name']:bytes(f['bytes']) for f in restored}['HP39DIR.000']==hp39_directory
  page.get_by_role('button',name='停止文件服务',exact=True).click()
  page.screenshot(path=str(ROOT/'build/ui-hp39-files-zh.png'))
- # Native Wire keeps the next calculator action visible outside the dialog,
+ # Native Wire keeps the next calculator action visible outside the sidebar,
  # and a complete library ACK advances to the original aplet bytes only once.
  hp39_aplet=b'HP39BinB\x04TESTopaque-body'
  hp39_note=b'HP39BinC\x04NOTEopaque-note'
- page.get_by_role('button',name='关闭',exact=True).click()
+ page.get_by_role('button',name='收起侧栏',exact=True).click()
  page.get_by_role('button',name='设置',exact=True).click()
  page.get_by_role('tab',name='传输',exact=True).click()
  unlimited=page.get_by_role('switch',name='传输时不限速',exact=False)
@@ -286,7 +308,7 @@ with sync_playwright() as p:
  page.get_by_role('button',name='通过 Wire 上传',exact=True).click()
  page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).protocol==="hp39-wire"')
  assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name')=='LIB'
- page.get_by_role('button',name='关闭',exact=True).click()
+ page.get_by_role('button',name='收起侧栏',exact=True).click()
  summary=page.get_by_test_id('transfer-summary')
  assert 'RECV → HP39/40 (Wire)' in summary.inner_text() and 'LIB' in summary.inner_text()
  page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:true,phase:"sending",transferred:0,total:14,effectiveSpeed:0,transferBoosted:true})}')
@@ -326,8 +348,8 @@ with sync_playwright() as p:
  page.get_by_role('button',name='通过 Wire 上传',exact=True).click()
  page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name==="AGAIN.unknown"')
  # The Settings tab remains usable during a transfer. Applying its draft
- # immediately configures the Worker; the connection dialog has no duplicate.
- page.get_by_role('button',name='关闭',exact=True).click()
+ # immediately configures the Worker; the connection sidebar has no duplicate.
+ page.get_by_role('button',name='收起侧栏',exact=True).click()
  page.get_by_role('button',name='设置',exact=True).click()
  page.get_by_role('tab',name='传输',exact=True).click()
  page.get_by_role('switch',name='传输时不限速',exact=False).uncheck()
@@ -340,7 +362,7 @@ with sync_playwright() as p:
   assert instruction in recovery,recovery
  page.get_by_label('计算器传输菜单',exact=True).select_option('disk')
  assert page.get_by_role('button',name='接收计算器文件',exact=True).is_enabled()
- page.get_by_role('button',name='关闭',exact=True).click()
+ page.get_by_role('button',name='收起侧栏',exact=True).click()
  recovery=page.get_by_test_id('transfer-summary').inner_text()
  for instruction in ('ON 键','等接收画面退出','重新打开 RECV'):
   assert instruction in recovery,recovery
@@ -355,11 +377,11 @@ with sync_playwright() as p:
  page.get_by_role('button',name='连接',exact=True).click()
  page.get_by_label('计算器传输菜单',exact=True).select_option('wire')
  assert 'HP39/40 (USB)' in page.get_by_label('计算器传输菜单',exact=True).inner_text()
- assert 'RECV → HP39/40 (USB)' in page.get_by_role('dialog').inner_text()
+ assert 'RECV → HP39/40 (USB)' in page.locator('#device-sidebar').inner_text()
  page.get_by_test_id('transfer-file').set_input_files({'name':'LIB.gs','mimeType':'application/octet-stream','buffer':hp39_library})
  page.get_by_role('button',name='通过 Wire 上传',exact=True).click()
  page.wait_for_function('window.__controller.state.transfer?.active')
- page.get_by_role('button',name='关闭',exact=True).click()
+ page.get_by_role('button',name='收起侧栏',exact=True).click()
  assert 'RECV → HP39/40 (USB)' in page.get_by_test_id('transfer-summary').inner_text()
  page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"error",error:"USB interrupted"})}')
  assert 'RECV → HP39/40 (USB)' in page.get_by_test_id('transfer-summary').inner_text()
@@ -368,8 +390,8 @@ with sync_playwright() as p:
  page.get_by_role('combobox',name='连接类型',exact=True).click()
  page.get_by_role('option',name='串口',exact=True).click()
  assert 'HP39/40 (Ser)' in page.get_by_label('计算器传输菜单',exact=True).inner_text()
- assert 'RECV → HP39/40 (Ser)' in page.get_by_role('dialog').inner_text()
- page.get_by_role('button',name='关闭',exact=True).click()
+ assert 'RECV → HP39/40 (Ser)' in page.locator('#device-sidebar').inner_text()
+ page.get_by_role('button',name='收起侧栏',exact=True).click()
  # Unmount also invalidates an outstanding load and removes frame/resize work.
  select_model(4);page.wait_for_function('window.__manifestRequests.length===9')
  page.evaluate('window.__unmount()');resolve_manifest(8)

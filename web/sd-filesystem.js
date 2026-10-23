@@ -102,7 +102,7 @@ class Volume {
       need(next===0||next===0xfff7||next>=0xfff8||(next>=2&&next<0xfff0&&next<=clusterCount+1),'Invalid FAT chain target.');
       if(!next&&c<0xfff0)this.freeClusters++;
     }
-    this.nodes=new Map();this.used=new Uint8Array(clusterCount+2);this.entries=0;
+    this.nodes=new Map();this.used=new Uint8Array(clusterCount+2);this.entries=0;this.nextFree=2;
     const root={name:'/',path:'/',type:'directory',cluster:0,chain:[],parent:0};
     this.nodes.set('/',root);this.directory(root,0);
     for(let c=2;c<=clusterCount+1;c++)
@@ -183,12 +183,13 @@ class Volume {
   get(path,type){const node=this.nodes.get(pathKey(path));if(!node||node.type!==type)fail('path',`No such ${type} on the card.`);return node;}
   allocate(count){
     const chain=[];
-    for(let c=2;chain.length<count&&c<=this.clusterCount+1&&c<0xfff0;c++)if(!this.fat(c))chain.push(c);
+    for(let c=this.nextFree;chain.length<count&&c<=this.clusterCount+1&&c<0xfff0;c++)if(!this.fat(c))chain.push(c);
     if(chain.length!==count)fail('full','There is not enough free space on this card.');
     for(let i=0;i<chain.length;i++){
       this.setFat(chain[i],chain[i+1]??0xffff);
       this.image.fill(0,this.offset(chain[i]),this.offset(chain[i])+this.clusterBytes);
     }
+    if(chain.length)this.nextFree=chain.at(-1)+1;
     return chain;
   }
   freeSlot(node){
@@ -217,12 +218,61 @@ export function listSDDirectory(image,path='/'){
     freeBytes:volume.freeClusters*volume.clusterBytes,clusterBytes:volume.clusterBytes,partitionStart:volume.partitionStart};
 }
 export function readSDFile(image,path){
-  const volume=new Volume(image),node=volume.get(path,'file'),bytes=new Uint8Array(node.size);
+  const volume=new Volume(image),node=volume.get(path,'file');
+  return fileBytes(volume,node);
+}
+function fileBytes(volume,node){
+  const bytes=new Uint8Array(node.size),image=volume.image;
   for(let i=0;i<node.chain.length;i++){
     const offset=volume.offset(node.chain[i]),length=Math.min(volume.clusterBytes,node.size-i*volume.clusterBytes);
     bytes.set(image.subarray(offset,offset+length),i*volume.clusterBytes);
   }
   return bytes;
+}
+// Read the complete unmounted card with one filesystem validation, rather than
+// re-parsing the FAT for every file during a directory export.
+export function readSDTree(image){
+  const volume=new Volume(image);
+  return [...volume.nodes.values()].filter(node=>node.path!=='/').map(node=>({
+    ...publicEntry(node),...(node.type==='file'?{bytes:fileBytes(volume,node)}:{})
+  }));
+}
+// Import a complete directory snapshot transactionally. Every entry has a
+// relative 8.3 path; parents can appear in any order. A failure returns no copy
+// and never mutates the caller's image or any source file's bytes.
+export function addSDTree(image,path,entries){
+  byteArray(image);
+  if(!Array.isArray(entries)||entries.length>MAX_ENTRIES)fail('limit','The directory contains too many entries.');
+  const base=pathKey(path),prepared=entries.map(entry=>{
+    if(typeof entry?.path!=='string'||entry.path.startsWith('/')||entry.path.length>4096)fail('path','Invalid relative card path.');
+    const parts=entry.path.split('/').map(validateSDName),type=entry.type;
+    if(!['directory','file'].includes(type))fail('input','Invalid directory entry type.');
+    const depth=(base==='/'?0:base.slice(1).split('/').length)+parts.length-(type==='file'?1:0);
+    if(depth>MAX_DEPTH)fail('limit','Directory nesting exceeds 32 levels.');
+    if(type==='file'&&(!(entry.bytes instanceof Uint8Array)||!(entry.bytes.buffer instanceof ArrayBuffer)||entry.bytes.length>image.length))
+      fail('input','A selected file is too large or could not be read.');
+    return {...entry,type,parts,path:(base==='/'?'':base)+'/'+parts.join('/')};
+  }).sort((a,b)=>a.parts.length-b.parts.length||(a.path<b.path?-1:a.path>b.path?1:0));
+  const copy=new Uint8Array(image),volume=new Volume(copy),names=new Map();
+  writable(volume.get(base,'directory'));
+  for(const entry of prepared){
+    const parent=volume.get(entry.path.slice(0,entry.path.lastIndexOf('/'))||'/','directory'),name=entry.parts.at(-1);
+    writable(parent);
+    if(!names.has(parent.path))names.set(parent.path,new Set(parent.children.flatMap(entryNames)));
+    const siblings=names.get(parent.path);
+    if(siblings.has(name))fail('duplicate','A file or folder with that name already exists.',{name});
+    siblings.add(name);
+    const slot=volume.freeSlot(parent),directory=entry.type==='directory';
+    const chain=volume.allocate(directory?1:Math.ceil(entry.bytes.length/volume.clusterBytes)),cluster=chain[0]??0;
+    if(directory){
+      const offset=volume.offset(cluster);
+      volume.entry(offset,'.',16,cluster,0);volume.entry(offset+32,'..',16,parent.cluster,0);
+    }else for(let i=0;i<chain.length;i++)copy.set(entry.bytes.subarray(i*volume.clusterBytes,(i+1)*volume.clusterBytes),volume.offset(chain[i]));
+    volume.entry(slot,name,directory?16:32,cluster,directory?0:entry.bytes.length);
+    const node={name,path:entry.path,type:entry.type,cluster,chain,children:[],parent:parent.cluster};
+    volume.nodes.set(entry.path,node);parent.children.push(node);
+  }
+  new Volume(copy);return copy;
 }
 export function addSDFiles(image,path,files){
   byteArray(image);

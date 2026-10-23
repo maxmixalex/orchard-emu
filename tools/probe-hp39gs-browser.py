@@ -135,9 +135,8 @@ def main():
                     for name,digest in assets.items():
                         assert manifest['assets'][name]==digest,'Published asset differs from the tested build: '+name
                 stage('cold-boot-from-picker')
-                with page.expect_file_chooser() as picker:
-                    page.get_by_role('button', name='Open ROM', exact=True).click()
-                picker.value.set_files(str(args.rom.resolve()))
+                # Standard file-input/local-copy path; native picker permission UI is separate.
+                page.locator('#rom').set_input_files(str(args.rom.resolve()))
                 page.wait_for_function('window.__transferProbe.snapshot?.loaded===true')
                 helper.verify_model(page, model)
                 cold_boot(page)
@@ -170,7 +169,7 @@ def main():
                 saved = args.output/'saved.ord'
                 pending.value.save_as(saved)
                 report['save'] = session_metadata(saved)
-                assert report['save']['model'] == 2 and report['save']['preset'] == 'hp39gs-home' and report['save']['checkpoint_version'] == 4
+                assert report['save']['model'] == 2 and report['save']['preset'] == 'hp39gs-home' and report['save']['checkpoint_version'] == 5
                 page.wait_for_function('window.__transferProbe.snapshot?.running===false')
                 saved_frame = frame(page)
                 page.get_by_role('button', name='Resume', exact=True).click()

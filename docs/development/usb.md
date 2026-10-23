@@ -2,9 +2,12 @@
 
 ## Scope and evidence
 
-The later [file-transfer client](file-transfer.md) adds a stock HP48gII object
-roundtrip through this packet interface. The bootloader/control evidence below
-retains its original scope and unresolved GET_CONFIGURATION counterexample.
+The later [file-transfer client](file-transfer.md) adds original-ROM object
+roundtrips through this packet interface. The r22 [live USB/IP relay](host-mode.md)
+also carries real control and bulk transactions to the same running core.
+The bootloader evidence below retains its original scope; the
+GET_CONFIGURATION counterexample is now also reproduced on the complete
+HP48gII and HP49g+ systems, as detailed below.
 
 This continuation reconciles the locally validated `a9e03bd` patch onto
 remote `80a1466`; issue #1 records its resulting CI/Pages acceptance. The production C
@@ -78,7 +81,8 @@ WASM exports the corresponding functions, a bounded 64-byte packet buffer,
 received length/PID, and a pure 44-word USB snapshot. The existing CPU and
 LCD/ADC snapshot layouts are unchanged. The native CLI reports USB state;
 `probe-rom.mjs` v6 compares it with WASM without side-effecting MMIO reads.
-The browser workbench has not acquired a USB UI: these are core/research APIs.
+The browser's internal USB host, file-transfer client and optional local relay
+share these APIs; the relay does not run a second calculator core.
 
 `orchard-usb-session`, built only with testing enabled and not installed,
 replays text commands through the public API. Limits are 4,096 commands,
@@ -149,6 +153,76 @@ The tool verifies the admitted boot-region hash, preserves source and constructe
 backing identities separately, records executable hashes and conditions, and
 refuses to overwrite an existing report. No firmware enters the source tree.
 
+## r22 original-ROM relay and EP0 investigation
+
+[The source-bound r22 report](evidence/usb-original-bridge-r22.json) records a
+separate integration witness using the production `BrowserHostBridge` module
+inside Node, real loopback HTTP and USB/IP sockets, and the final production
+WASM `51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189`.
+The original HP48gII and HP49g+ ROMs cold-booted independently. Physical key
+input entered `CF(-33)`, `CF(-78)`, `SF(-35)` and `SERVER` for binary USB
+transfer. No firmware, RAM, MMIO register or return value was patched.
+
+This witness exercises the browser bridge module and its same-core pump in
+Node. It does not by itself test browser network permissions, a production
+page's Worker, an operating-system USB/IP driver or Conn3x. Production-browser
+and host-driver evidence must retain their separate scope.
+
+| Operation | HP48gII | HP49g+ |
+| --- | --- | --- |
+| Guest device and configuration descriptors through USB/IP | Exact guest bytes | Exact guest bytes |
+| VID / PID; bulk endpoints | `03f0:0121`; IN `81`, OUT `03`, 64 bytes | Same guest values |
+| SET_CONFIGURATION status | Complete, URB status `0` | Complete, URB status `0` |
+| Kermit SEND of `OR22B`, an integer 42 object | Complete, 15 bytes | Complete, 15 bytes |
+| GET of the same stored object | Complete; all 7 object-body bytes equal | Complete; all 15 file bytes equal |
+| Binary file header on GET | `HPHP49-C` becomes `HPHP49-B` | Remains `HPHP49-C` |
+| Final emulator stop status | `0` | `0` |
+
+The sender waits for the firmware's complete initial Kermit response before
+its first bulk OUT. USB NAK remains pending; a timed-out IN URB is retried as a
+new request. Application writes are reported accepted only after their actual
+USB/IP OUT completion. The relay neither interprets the object nor substitutes
+its bytes for the calculator's GET response.
+
+### Why GET_CONFIGURATION remains unresolved
+
+A separate control-only run sends GET_CONFIGURATION after SET_CONFIGURATION.
+Both original systems leave one response byte in EP0, keep CSR0 at `0x08`, and
+return NAK throughout the five-second virtual URB deadline. The relay reports
+`-110` with zero transferred bytes. A fresh GET_DESCRIPTOR SETUP then succeeds
+and returns the exact original descriptor; the core remains at status `0`.
+
+Read-only MMIO instrumentation isolates the following original firmware writes.
+The instrumented build has its own identity in the report and is not confused
+with the production WASM used for the transport results above.
+
+| Original system | FIFO write PC and value | CSR0 write PC and value |
+| --- | --- | --- |
+| HP48gII | `0x0000c54c`: response `1` | `0x0000c558`: `0x49` |
+| HP49g+ | `0x0000e478`: response `1` | `0x0000e484`: `0x49` |
+
+The guest reads CSR0 as `1`, preserves its low status bits, and combines
+SERVICED_OUT_PKT_RDY with DATA_END. It does not set IN_PKT_RDY before the
+deadline. This is not a packet discarded by the bridge or a slow HTTP response.
+Both the [S3C2410A manual, chapter 13-12/13](https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf)
+and the [S3C2410X revision 1.2 manual, chapter 13-12/13](https://dtsheet.com/doc/424485/samsung-s3c2410x)
+assign IN_PKT_RDY to MCU software and describe a final IN packet with that bit
+and DATA_END set together. AUTO_SET is disabled in the observed configuration;
+in any case the response is shorter than MAXP.
+
+These sources and traces do not justify auto-arming a nonempty packet from
+DATA_END alone. The r22 investigation therefore leaves `src/usb.c` unchanged.
+It also does not establish a firmware defect or prove every undocumented
+silicon behavior. Resolving that distinction needs an original-device USB/MMIO
+trace or an authoritative controller clarification.
+
+The ROM-free USB regression now explicitly checks that an unarmed last packet
+continues to NAK without consuming its FIFO, that later MCU IN_PKT_RDY arming
+releases the exact byte once, and that a new SETUP discards the abandoned packet
+and recovers. Two request numbers and arbitrary payload values avoid encoding
+a special response for GET_CONFIGURATION or a particular firmware. The USB
+suite passes **54,175 assertions on native and WASM**.
+
 ## Bulk validation and remaining limits
 
 An original ROM-free ARM guest handles USB reset and endpoint interrupts,
@@ -168,7 +242,8 @@ state is generated. `sof` supplies a frame number explicitly, not wall time.
 The packet API models a complete valid OUT transaction, not a separately lost
 OUT-handshake ACK or every retry of a completed control status stage.
 
-Host-OS device enumeration, Conn3x interoperability, stock object/file transfer,
-firmware installation, and canonical calculator hardware acceptance are separate
-open gates. The newer [conditional HP48gII HOME witness](startup.md) is a
-disconnected-USB operating-system run, not additional USB protocol evidence.
+Host-OS device enumeration, Conn3x interoperability, firmware installation and
+canonical calculator hardware acceptance remain separate open gates. Original
+object/file-transfer evidence is documented above and in the
+[file-transfer client](file-transfer.md). The [conditional HP48gII HOME witness](startup.md)
+alone is a disconnected-USB operating-system run, not additional USB evidence.

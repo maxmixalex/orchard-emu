@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Only the emulated LCD is captured. Never request a microphone or desktop stream.
-import {frameRGBA,captureName} from './capture.js';
+import {frameRGBA,captureName,displayFrame} from './capture.js';
 const FORMATS=['video/webm;codecs=vp8','video/webm','video/mp4'];
 export function recordingFormat(Recorder=globalThis.MediaRecorder){
   return typeof Recorder?.isTypeSupported==='function'?FORMATS.find(type=>Recorder.isTypeSupported(type)):undefined;
@@ -12,7 +12,7 @@ export class LCDRecorder {
   constructor(frame,{scale=4,fps=30,background=[194,208,202],maxBytes=64*1024*1024,onProgress=()=>{}}={}){
     if(![1,4].includes(scale)||!Number.isInteger(fps)||fps<1||fps>60||!Number.isSafeInteger(maxBytes)||maxBytes<1024)throw Error('Invalid recording settings');
     const type=recordingFormat();if(!type)throw Error('LCD recording is not supported by this browser');
-    this.width=frame?.width;this.height=frame?.height;
+    frame=displayFrame(frame);this.width=frame.width;this.height=frame.height;
     this.background=background;this.frame=frame;this.last=null;this.chunks=[];this.bytes=0;this.reason='stop';this.settled=false;this.stopping=false;
     const rgba=frameRGBA(frame,background);
     this.native=document.createElement('canvas');this.native.width=this.width;this.native.height=this.height;
@@ -45,9 +45,7 @@ export class LCDRecorder {
   update(frame,background=this.background){
     if(this.stopping||this.settled)return;
     if(frame?.width!==this.width||frame?.height!==this.height){this.stop('model');return;}
-    // Temporary unavailable frames retain the last good screen, not a black flash.
-    if(frame.frameStatus||!(frame.pixels instanceof Uint8Array))return;
-    this.frame=frame;this.background=background;
+    this.frame=displayFrame(frame);this.background=background;
   }
   paint(){
     const signature=this.background.join(',');

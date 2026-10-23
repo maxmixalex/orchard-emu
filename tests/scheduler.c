@@ -185,7 +185,7 @@ EXPORT("regression") unsigned regression(void) {
     guest_mmio(0x51000008,3,true);put(a->ram+8,0xeafffffe);
     a->soc.tcntb[0]=7;
     *b=*a;compare(67);CHECK((a->soc.srcpnd&(1u<<10))!=0);
-    /* Exact stop tick at watchdog/invalid LCD boundaries; no skipped faults. */
+    /* Exact watchdog reset/invalid LCD boundaries; no skipped transitions. */
     init();a->soc.wtcon=33;a->soc.wtcnt=2;*b=*a;compare(100);
     init();a->soc.lcd[0]=1;*b=*a;compare(100);
     /* Budget partition and sleeping CPU preserve every oscillator transition. */

@@ -113,6 +113,12 @@ jobs:
           build/browser-venv/bin/python tests/browser-landscape.py
           build/browser-venv/bin/python tests/buzzer-browser.py
           build/browser-venv/bin/python tests/browser-sd-files.py
+          build/browser-venv/bin/python tests/browser-keyboard.py
+          build/browser-venv/bin/python tests/browser-lcd.py
+          build/browser-venv/bin/python tests/browser-sd-directory.py
+          build/browser-venv/bin/python tests/rom-storage-browser.py
+          build/browser-venv/bin/python tests/browser-host-bridge.py
+          build/browser-venv/bin/python tests/browser-host-bridge-network.py
           build/browser-venv/bin/python tests/browser-worker.py
           build/browser-venv/bin/python tests/browser-stop-recovery.py
           build/browser-venv/bin/python tests/browser-stop-recovery.py --diagnostic-trace
@@ -135,6 +141,12 @@ jobs:
             build/test-capture.png
             build/landscape/
             build/buzzer-browser.json
+            build/keyboard-r22-*.png
+            build/lcd-browser/
+            build/rom-storage-browser.json
+            build/host-bridge-r22-mobile.png
+            build-r22/directory-sd/browser-result.json
+            build-r22/directory-sd/directory-mobile*.png
             build-r20/sd-files/browser-result.json
             build-r20/sd-files/browser-mobile.png
             build-r20/sd-files/browser-mobile-zh.png
@@ -146,6 +158,7 @@ jobs:
           npm run build:host
           ORCHARD_HOST_ROOT=build/host-package npm run test:host
           node build/host-package/host/run.mjs --help
+          node build/host-package/host/bridge.mjs --help
       - name: Independent CPU differential (developer-only dependency)
         run: |
           npm run build:oracle

@@ -64,10 +64,11 @@ export function applySetup(core, model, preset) {
 export class TapQueue {
   constructor(change, hold = 2000000, gap = 2000000) {
     this.change = change; this.hold = hold; this.gap = gap; this.queue = []; this.active = null; this.readyAt = 0;
+    this.chord=null;this.held=new Set();
   }
   push(scan) {
     if (!KEYS.has(scan)) throw new Error('Unknown physical key');
-    if (this.queue.length + (this.active !== null ? 1 : 0) >= 32) throw new Error('Key queue full; wait for the pending taps.');
+    if (this.pending >= 32) throw new Error('Key queue full; wait for the pending taps.');
     this.queue.push(scan);
   }
   pushMany(scans) {
@@ -76,21 +77,39 @@ export class TapQueue {
     this.queue.push(...scans);
   }
   update(tick) {
+    if(this.chord){
+      while(this.chord.length&&tick>=this.chord[0].at){const step=this.chord.shift();this.contact(step.scan,step.down,tick);}
+      this.active=this.held.size?[...this.held][0]:null;
+      if(!this.chord.length){this.chord=null;this.readyAt=tick+this.gap;}
+      return;
+    }
     if (this.active !== null && tick >= this.releaseAt) {
-      this.change(this.active, false, tick); this.active = null; this.readyAt = tick + this.gap;
+      this.contact(this.active, false, tick); this.active = null; this.readyAt = tick + this.gap;
     }
     if (this.active === null && this.queue.length && tick >= this.readyAt) {
-      this.active = this.queue.shift(); this.change(this.active, true, tick); this.releaseAt = tick + this.hold;
+      this.active = this.queue.shift(); this.contact(this.active, true, tick); this.releaseAt = tick + this.hold;
     }
   }
   boundary(tick) {
+    if(this.chord)return Math.max(tick,this.chord[0].at);
     if (this.active !== null) return this.releaseAt;
     return this.queue.length ? Math.max(tick, this.readyAt) : Infinity;
   }
   clear(tick) {
     this.queue.length = 0;
-    if (this.active !== null) this.change(this.active, false, tick);
+    for(const scan of this.held)this.contact(scan,false,tick);
+    this.chord=null;
     this.active = null; this.readyAt = tick;
   }
-  get pending() { return this.queue.length + (this.active !== null ? 1 : 0); }
+  contact(scan,down,tick){this.change(scan,down,tick);if(down)this.held.add(scan);else this.held.delete(scan);}
+  systemChord(action,tick){
+    const second={'self-test':38,'warm-restart':37}[action];
+    if(second===undefined||!Number.isSafeInteger(tick)||tick<0)throw new Error('Invalid system key combination');
+    this.clear(tick);
+    // Physical contacts overlap. These are functional-clock dwell times,
+    // independent of browser keyboard repeat, wall time and Unlimited speed.
+    this.chord=[{at:tick,scan:56,down:true},{at:tick+1500000,scan:second,down:true},
+      {at:tick+3000000,scan:second,down:false},{at:tick+3600000,scan:56,down:false}];
+  }
+  get pending() { return this.queue.length + (this.chord||this.active!==null?1:0); }
 }

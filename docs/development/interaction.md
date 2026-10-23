@@ -17,19 +17,27 @@ skin paths remain vectors. User zoom can deliberately exceed the workspace.
 Help is available on focus/hover/click at the question button. License notices
 wrap rather than forcing horizontal page scrolling.
 
-Key bindings use physical browser `KeyboardEvent.code` with explicit modifiers,
-are stored separately by calculator model, and may contain up to eight
+Custom key bindings use physical browser `KeyboardEvent.code` with explicit
+modifiers, are stored separately by calculator model, and may contain up to eight
 sequential physical calculator taps. Mapping changes are atomic; an invalid or
 full input queue never accepts half of a macro. Repeated keydown/IME events and
 input in modal/form controls do not enter the calculator. Browser-reserved
 shortcuts may not be delivered to a page.
 
-HP39g+ letter defaults follow the pinned artwork's printed alpha legends:
-`KeyA` sends ALPHA then VARS. The original D1.55 guest was observed drawing A
+Without an override, letter, digit and arithmetic defaults follow the
+OS-resolved `KeyboardEvent.key`, rather than assuming a QWERTY physical position.
+The wider editor highlights assigned PC keys, shows their bindings on a
+clickable calculator keypad, and reads layout labels when the browser allows.
+A capture field identifies keys when layout access is unavailable. See
+[keyboard settings](keyboard-settings.md) for modifier and international-key
+limits, per-model drafts and Apply/Cancel behavior.
+
+HP39g+/HP39gs letter defaults follow the pinned artwork's printed alpha legends:
+the resolved character `a` sends ALPHA then VARS. The original D1.55 guest was observed drawing A
 in its command line from this sequence. These are literal switches, not text
 injection: an already-active guest Alpha/Shift state can change their meaning.
-The HP48 letter layout is not silently assumed identical; custom sequences
-can be configured for it. No guest memory is edited to enter text.
+HP48gII/HP49g+ have their own defaults, including the six FN positions for A–F.
+No guest memory is edited to enter text.
 
 Shortening taps without testing caused a real regression: HP39g+ read `7*8`
 as `78` at 600,000 down / 360,000 released ticks. Several other short pairs

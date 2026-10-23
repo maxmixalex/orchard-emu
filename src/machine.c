@@ -33,7 +33,7 @@ const char *orchard_status_string(orchard_status s) {
         "unimplemented MMIO", "unimplemented NOR command", "unpredictable ARM operation",
         "UART host queue full", "big-endian mode not implemented", "unsupported LCD mode",
         "physical memory outside implemented banks",
-        "watchdog reset requested; reset propagation not implemented",
+        "legacy watchdog reset diagnostic stop",
         "contradictory external GPIO drives",
         "unresolved ADC input or conversion data",
         "unsupported USB operation or FIFO state"
@@ -66,18 +66,22 @@ void orchard_reset(orchard_machine *m) {
     m->nor_sequence = 0; m->nor_id_mode = false;
     o_buzzer_reset(m);
 }
-void o_power_wake(orchard_machine *m, uint32_t sources) {
-    /* Samsung S3C2410A 7-14..17: Power_OFF resumes at the reset vector.
-       External SRAM and the RTC remain powered; GSTATUS3/4 are retention
-       registers. Keep host board drives and the physical key positions,
-       rather than calling the host's destructive cold-reset operation. */
+static void retained_reset(orchard_machine *m, uint32_t sources, bool watchdog) {
+    /* Samsung 7-14..17, 9-28, 17-1/5, 18-1/3. Both paths restart the CPU
+       through its reset vector, without destroying external SRAM or media.
+       WDT does not remove power: its domains differ from Power_OFF wake. */
     o_soc old = m->soc;
     uint64_t instructions=m->cpu.instructions, exceptions=m->cpu.exceptions;
     o_cpu_reset(&m->cpu);
     m->cpu.instructions=instructions; m->cpu.exceptions=exceptions;
     o_soc_reset(&m->soc);
     o_soc *s=&m->soc;
-    s->rtc=old.rtc;
+    if(watchdog) {
+        /* The independently powered oscillator/calendar continue. CPU-side
+           RTC controls return to their documented reset values. */
+        o_copy(s->rtc.reg+12,old.rtc.reg+12,7);
+        s->rtc.phase=old.rtc.phase;s->rtc.divider=old.rtc.divider;
+    } else s->rtc=old.rtc;
     o_copy(s->gpio_input_known,old.gpio_input_known,sizeof s->gpio_input_known);
     o_copy(s->gpio_input_levels,old.gpio_input_levels,sizeof s->gpio_input_levels);
     o_copy(s->gpio_bias_known,old.gpio_bias_known,sizeof s->gpio_bias_known);
@@ -87,17 +91,26 @@ void o_power_wake(orchard_machine *m, uint32_t sources) {
     s->keyboard_switches=old.keyboard_switches; s->keyboard_direct=old.keyboard_direct;
     s->lcd_probe68_idle_zero=old.lcd_probe68_idle_zero;
     s->lcd_probe68_reads=old.lcd_probe68_reads;
-    s->gpio[0xb4/4]=old.gpio[0xb4/4]|2u; /* OFFRST; the register table puts it at bit 1. */
-    s->gpio[0xb8/4]=old.gpio[0xb8/4]; s->gpio[0xbc/4]=old.gpio[0xbc/4];
-    s->srcpnd=sources&15u;
-    s->gpio[0xa8/4]=sources&0xfff0u&~old.gpio[0xa4/4];
+    s->gpio[0xb4/4]=old.gpio[0xb4/4]|(watchdog?4u:2u);
+    if(watchdog) {
+        /* GSTATUS3/4 are explicitly cleared by watchdog reset. They retain
+           their values only across Power_OFF. IRQ+RESET cannot run an IRQ
+           handler while the CPU/interrupt controller are held in reset. */
+        s->wtreset=128u;
+    } else {
+        s->gpio[0xb8/4]=old.gpio[0xb8/4];s->gpio[0xbc/4]=old.gpio[0xbc/4];
+        s->srcpnd=sources&15u;
+        s->gpio[0xa8/4]=sources&0xfff0u&~old.gpio[0xa4/4];
+        o_zero(m->boot_sram,sizeof m->boot_sram);
+        m->nor_sequence=0;m->nor_id_mode=false;
+    }
     s->usb.connected=old.usb.connected;
-    o_zero(m->boot_sram,sizeof m->boot_sram);
     o_zero(m->translations,sizeof m->translations);
     m->quiet_left=m->deferred_ticks=m->power_wake=0;
-    m->nor_sequence=0; m->nor_id_mode=false;
     o_buzzer_reset(m);
 }
+void o_power_wake(orchard_machine *m, uint32_t sources) { retained_reset(m,sources,false); }
+void o_watchdog_system_reset(orchard_machine *m) { retained_reset(m,0,true); }
 orchard_status orchard_load_rom(orchard_machine *m, const void *bytes, size_t length) {
     if (!m || !bytes) return ORCHARD_BAD_ARGUMENT;
     if (length != m->profile->flash_bytes) return ORCHARD_BAD_ROM_SIZE;
@@ -178,6 +191,7 @@ static orchard_stop run(orchard_machine *m, uint32_t budget, bool scheduled, enu
         /* Divider/CPU-mode changes by an instruction apply to the next quantum.
            No slot advances RTC/PWM/LCD or skips the instruction interpreter. */
         for (unsigned slot = 0; slot < slots && m->stop.status == ORCHARD_OK; ++slot) {
+            if (m->soc.wtreset) break; /* Internal reset pulse holds the CPU. */
             if (m->soc.clock[3] & 8u) break; /* Only the always-on wake logic runs. */
             uint32_t pending = m->soc.srcpnd & ~m->soc.intmsk;
             if (pending) m->cpu.sleeping = false;

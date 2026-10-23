@@ -23,10 +23,23 @@ and receives typed files. The [complete ROM dump package](development/hp39gs-rom
 has produced the user's 1 MiB HP39gs capture, checked against all 64 supplied
 block hashes. Its original acquisition metadata is preserved separately.
 
-The latest browser adds [immersive landscape](development/landscape.md),
+The current browser adds a wider, model-specific
+[keyboard editor](development/keyboard-settings.md) with mapped-key highlights,
+system-layout labels and a clickable calculator keypad. Connections and SD share
+a persistent sidebar. [Local ROM recall](development/rom-storage.md) retains an
+original-file handle where supported or a labelled browser-local copy, while
+[directory SD cards](development/directory-sd.md) provide recursive import and
+explicit conflict-aware write-back after ejection. The
+[LCD presentation cache](development/lcd.md#host-presentation-synchronized-to-the-scan-counter)
+publishes at observed completed scans to reduce partial-redraw flicker.
+The optional [local device bridge](development/host-mode.md) connects that same
+Worker to a loopback USB/IP helper. Original HP49g+ completes an exact object
+round trip through the production Chrome page; OS USB/IP attachment, HP driver
+binding and unmodified Conn3x remain separate gates.
+
+[Immersive landscape](development/landscape.md),
 [firmware-driven sound](development/buzzer.md), optional transfer-only Unlimited,
-per-file Retry/Skip and file selection without extension filters. The SD dialog
-can prepare files and directories in an unmounted FAT16 image before insertion.
+per-file Retry/Skip and file selection without extension filters remain available.
 
 The [browser workbench](development/web.md) now exposes the setup and a
 functional keypad. Production Window/Worker tests and original-ROM

@@ -100,6 +100,13 @@ typedef struct {
     uint8_t fifo[64], write_block[512];
 } o_sdi;
 
+/* Two independent S3C2410A SPI channels; remaining counts PCLK edges to the
+ * next half-clock transition. There is no attached external SPI device. */
+typedef struct {
+    uint32_t control,status,pin,prescaler,tx,rx;
+    uint32_t remaining,half,shift;
+} o_spi;
+
 /* Host optimization state only. Exact input comparison, not a hash or a
  * hardware debounce filter. It must never replace architectural EINT state. */
 typedef struct {
@@ -117,6 +124,7 @@ typedef struct {
     o_adc adc;
     o_usb usb;
     o_sdi sdi;
+    o_spi spi[2];
     uint32_t gpio_input_known[8], gpio_input_levels[8];
     uint32_t gpio_bias_known[8], gpio_bias_levels[8];
     bool lcd_probe68_idle_zero;
@@ -133,6 +141,7 @@ typedef struct {
     uint32_t pclk_phase, mpll_configured;
     uint32_t active_compare[4], pending_count[5], pending_compare[4], reload_pending;
     uint32_t wtcon, wtdat, wtcnt, wtphase;
+    uint32_t wtreset; /* Remaining internal reset pulse, in reset-domain PCLK edges. */
     o_queue rx, tx;
     o_rtc rtc;
 } o_soc;
@@ -219,9 +228,14 @@ bool o_store(orchard_machine *m, uint32_t address, unsigned width, bool user, ui
 void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool fetch);
 void o_soc_reset(o_soc *s);
 void o_soc_tick(orchard_machine *m);
+void o_spi_reset(o_spi *s);
+void o_spi_tick(orchard_machine *m);
+bool o_spi_register(orchard_machine *m, uint32_t address, unsigned width,
+                    uint32_t *value, bool write);
 bool o_pclk_ratio(const o_soc *s, uint32_t *num, uint32_t *den);
 uint32_t o_pclk_advance(o_soc *s, uint32_t reference_ticks);
 void o_power_wake(orchard_machine *m, uint32_t sources);
+void o_watchdog_system_reset(orchard_machine *m);
 void o_buzzer_reset(orchard_machine *m);
 void o_buzzer_observe(orchard_machine *m);
 void o_schedule_plan(orchard_machine *m);

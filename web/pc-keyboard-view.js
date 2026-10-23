@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // ANSI 104-key geometry in key units. Codes describe physical keys, not text.
-import {PC_DISPLAY} from './pc-keyboard.js';
+import {bindingCode,keyLabel} from './pc-keyboard.js';
 const keys=[];
 const add=(id,token,x,y,w=1,h=1)=>keys.push(Object.freeze({id,token,x,y,w,h}));
 const row=(y,items)=>{let x=0;for(const item of items){const [id,token,w]=typeof item==='string'?[item,item,1]:item;add(id,token,x,y,w);x+=w;}};
@@ -18,22 +18,32 @@ add('NumpadAdd','NumpadAdd',22,2.5,1,2);add('NumpadEnter','NumpadEnter',22,4.5,1
 add('Numpad0','Numpad0',19,5.5,2);add('NumpadDecimal','NumpadDecimal',21,5.5);
 export const PC_KEYS=Object.freeze(keys);
 export const PC_SIZE=Object.freeze({width:23,height:6.5});
-const DISPLAY={...PC_DISPLAY,PrintScreen:'PrtSc',ScrollLock:'Scroll',Pause:'Pause',NumLock:'Num',ContextMenu:'Menu','{Meta}':'Win / ⌘'};
 export class PCKeyboardView {
   constructor(host,choose){
     this.host=host;this.buttons=[];host.classList.add('pc-physical');
     for(const key of PC_KEYS){
       const b=document.createElement('button');b.type='button';b.className='pc-physical-key';b.dataset.code=key.id;b.dataset.token=key.token;
-      b.textContent=DISPLAY[key.token]||key.token;
+      b.textContent=keyLabel(key.token);
       b.setAttribute('aria-label',key.id);b.setAttribute('aria-pressed','false');
       const unit=(n,d)=>`${n/d*100}%`;
       Object.assign(b.style,{left:unit(key.x,23),top:unit(key.y,6.5),width:`calc(${unit(key.w,23)} - 4px)`,height:`calc(${unit(key.h,6.5)} - 4px)`});
+      const group=key.x>=19?'numpad':key.x>=15.5?'navigation':'main';b.dataset.group=group;
+      b.style.setProperty('--pc-small-x',group==='main'?key.x:group==='numpad'?key.x-11.5:key.x-15.5);
+      b.style.setProperty('--pc-small-y',group==='main'?key.y:group==='numpad'?key.y+6:key.y+7.5);
+      b.style.setProperty('--pc-w',key.w);b.style.setProperty('--pc-h',key.h);
       b.addEventListener('click',()=>choose(key.token));this.buttons.push(b);host.append(b);
     }
   }
-  update(selected,modifiers=[]){
+  update(selected,modifiers=[],{layout={},map={},custom={},related=[],describe=()=>''}={}){
     for(const b of this.buttons){const token=b.dataset.token,modifier=token.startsWith('{'),pressed=modifier?modifiers.includes(token.slice(1,-1)):token===selected;
-      b.classList.toggle('pc-selected',pressed&&!modifier);b.classList.toggle('pc-modifier',pressed&&modifier);b.setAttribute('aria-pressed',String(pressed));}
+      const code=bindingCode(token,modifiers),sequence=map[code]??[],label=keyLabel(token,layout),assigned=!modifier&&sequence.length>0;
+      const other=!modifier&&Object.entries(map).some(([key,steps])=>key!==code&&key.split('+').at(-1)===token&&steps.length>0);
+      b.textContent=label;b.classList.toggle('pc-unknown',label===token&&/^(?:Key|Digit|Intl|Bracket|Backquote|Backslash|Semicolon|Quote|Minus|Equal|Comma|Period|Slash)/.test(token));
+      b.classList.toggle('pc-mapped',assigned);b.classList.toggle('pc-custom',assigned&&Object.hasOwn(custom,code));b.classList.toggle('pc-has-other',other);
+      b.classList.toggle('pc-related',related.includes(token));b.dataset.mapped=String(assigned);b.dataset.binding=code;
+      b.classList.toggle('pc-selected',pressed&&!modifier);b.classList.toggle('pc-modifier',pressed&&modifier);b.setAttribute('aria-pressed',String(pressed));
+      const detail=modifier?'':describe(sequence,code),title=[label,modifier?null:code,detail].filter(Boolean).join(' · ');b.title=title;b.setAttribute('aria-label',title);
+    }
   }
   destroy(){this.host.replaceChildren();this.host.classList.remove('pc-physical');this.buttons=[];}
 }
