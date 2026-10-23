@@ -252,6 +252,7 @@ orchard_status orchard_checkpoint_load(orchard_machine *m, const void *buffer, s
     m->sd_bytes=s.sd_bytes; m->sd_write_protected=s.sd_write_protected; m->sd_dirty=s.sd_dirty;
     m->quiet_left=m->deferred_ticks=0;
     m->idle_write_enabled=false;
+    m->power_wake=0;
     o_zero(m->translations,sizeof m->translations);
     o_buzzer_reset(m);
     return ORCHARD_OK;

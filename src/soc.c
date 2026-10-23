@@ -40,10 +40,17 @@ void o_soc_reset(o_soc *s) {
 static unsigned timer_shift(unsigned channel) { return channel ? 4u * channel + 4u : 0; }
 void o_soc_tick(orchard_machine *m) {
     o_soc *s = &m->soc;
+    bool power_off=(s->clock[3]&8u)!=0;
+    m->power_wake=0;
     o_eint_tick(m);
     if (m->stop.status != ORCHARD_OK) return;
     o_rtc_tick(m);
     if (m->stop.status != ORCHARD_OK) return;
+    if (power_off) {
+        m->cpu.sleeping=true;
+        if (m->power_wake) o_power_wake(m,m->power_wake);
+        return;
+    }
     o_usb_tick(m);
     if (s->sdi.remaining || s->sdi.data_remaining || s->sdi.interrupt_mask) o_sdi_tick(m);
     o_adc_tick(m);
@@ -165,6 +172,11 @@ bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
     if (o_rtc_register(m, address, width, value, false)) return true;
     if (uart_register(m, address, width, value, false)) return true;
     if (width == 4 && !(address & 3u)) {
+        /* These NOR-booting boards expose no NAND medium. The bounded
+           controller subset retains only the disabled NFCONF=0 state;
+           startup/suspend may read it before disabling unused peripherals.
+           NAND command/address/data and enabled modes remain unsupported. */
+        if (address == 0x4e000000u) { *value = 0; return true; }
         if (o_watchdog_register(s, address, value, false)) return true;
         if (o_gpio_register(m, address, value, false)) return true;
         if (m->stop.status != ORCHARD_OK) return false;
@@ -205,6 +217,9 @@ bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t
     if (uart_register(m, address, width, &value, true)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
     if (width == 4 && !(address & 3u)) {
+        /* S3C2410A 6-6: NFCONF bit 15 enables the NAND controller. A zero
+           write disables this unused block; it is not a NAND transaction. */
+        if (address == 0x4e000000u && value == 0) return true;
         if (o_watchdog_register(s, address, &value, true)) return true;
         if (o_gpio_register(m, address, &value, true)) return true;
         if (m->stop.status != ORCHARD_OK) return false;
@@ -220,6 +235,7 @@ bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t
                their original register-only semantics. */
             if (m->idle_write_enabled && address == 0x4c00000cu && (value & 4u))
                 m->cpu.sleeping = true;
+            if (address == 0x4c00000cu && (value & 8u)) m->cpu.sleeping = true;
             return true;
         }
         if (address >= 0x51000000u && address <= 0x51000040u && timer_register(m, address, &value, true)) return true;

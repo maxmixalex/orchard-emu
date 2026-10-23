@@ -22,6 +22,7 @@ void o_schedule_plan(orchard_machine *m) {
     /* The RTC oscillator remains running even with its calendar held reset. */
     uint32_t n = s->rtc.phase < O_FUNCTIONAL_TIMEBASE_HZ ?
         (O_FUNCTIONAL_TIMEBASE_HZ - s->rtc.phase + 32767u) / 32768u : 1u;
+    if (s->clock[3]&8u) { m->quiet_left=n>0?n-1u:0; return; }
     if ((s->clock[3] & 0x200u) && s->sdi.remaining) bound(&n, s->sdi.remaining);
     if ((s->clock[3] & 0x200u) && s->sdi.data_remaining) bound(&n, s->sdi.data_remaining);
     if (s->adc.remaining && !(s->adc.con & 4u)) bound(&n, s->adc.remaining);
@@ -45,6 +46,7 @@ void o_schedule_sync(orchard_machine *m) {
     o_soc *s = &m->soc;
     /* plan() guarantees none of these additions reaches a transition. */
     s->rtc.phase += n * 32768u;
+    if (s->clock[3]&8u) return;
     if ((s->clock[3] & 0x200u) && s->sdi.remaining) s->sdi.remaining -= n;
     if ((s->clock[3] & 0x200u) && s->sdi.data_remaining) s->sdi.data_remaining -= n;
     if (s->adc.remaining && !(s->adc.con & 4u)) s->adc.remaining -= n;

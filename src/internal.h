@@ -154,6 +154,7 @@ struct orchard_machine {
     const orchard_profile *profile;
     uint32_t quiet_left, deferred_ticks; /* Host-only, flushed at public boundaries. */
     bool idle_write_enabled; /* Host-only policy scope; never saved in a checkpoint. */
+    uint32_t power_wake; /* Transient wake requests; consumed within one SoC tick. */
     o_translation translations[O_TRANSLATIONS];
     o_buzzer buzzer;
     o_cpu cpu;
@@ -215,6 +216,7 @@ bool o_store(orchard_machine *m, uint32_t address, unsigned width, bool user, ui
 void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool fetch);
 void o_soc_reset(o_soc *s);
 void o_soc_tick(orchard_machine *m);
+void o_power_wake(orchard_machine *m, uint32_t sources);
 void o_buzzer_reset(orchard_machine *m);
 void o_buzzer_observe(orchard_machine *m);
 void o_buzzer_timer_write(orchard_machine *m);

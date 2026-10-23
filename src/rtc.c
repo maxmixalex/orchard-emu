@@ -71,7 +71,8 @@ void o_rtc_clock(orchard_machine *m) {
     static const unsigned fields[6] = {12, 13, 14, 15, 17, 18};
     for (unsigned bit = 0; bit < 6; ++bit)
         if ((alarm & (1u << bit)) && rtc->reg[5 + bit] != rtc->reg[fields[bit]]) return;
-    m->soc.srcpnd |= 1u << 30;
+    if (m->soc.clock[3]&8u) m->power_wake|=1u<<30;
+    else m->soc.srcpnd |= 1u << 30;
 }
 void o_rtc_tick(orchard_machine *m) {
     o_rtc *rtc = &m->soc.rtc;

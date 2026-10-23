@@ -45,9 +45,17 @@ void o_gpio_sample(const orchard_machine *m, unsigned port, uint32_t *known,
     *known = s->gpio_input_known[port];
     *levels = s->gpio_input_levels[port];
     *conflicts = 0;
-    uint32_t weak_only = s->gpio_bias_known[port] & ~*known;
+    /* Samsung S3C2410A chapter 9: GPxUP=0 enables the weak pull-up on
+       every port B..H, not only the attached keyboard's matrix port. A
+       strong external drive wins; opposed weak biases remain unresolved.
+       Keep the matrix's connected-net resolution below authoritative. */
+    static const unsigned pins[8] = {0,11,16,16,16,8,16,11};
+    uint32_t internal_up = port ? ~s->gpio[port * 4 + 2] & ((1u << pins[port]) - 1u) : 0;
+    uint32_t weak_high = internal_up | (s->gpio_bias_known[port] & s->gpio_bias_levels[port]);
+    uint32_t weak_low = s->gpio_bias_known[port] & ~s->gpio_bias_levels[port];
+    uint32_t weak_only = (weak_high ^ weak_low) & ~*known;
     *known |= weak_only;
-    *levels |= s->gpio_bias_levels[port] & weak_only;
+    *levels |= weak_high & weak_only;
     if (!s->keyboard_attached) return;
     if (port == ORCHARD_GPIO_F) {
         *conflicts = (s->gpio_input_levels[port] ^ s->keyboard_direct) & s->gpio_input_known[port] & 0x71u;
@@ -127,6 +135,7 @@ void o_eint_tick(orchard_machine *m) {
            Edge sources do NOT reassert until another actual transition. */
         s->srcpnd |= s->eint_cache.level_sources & 15u;
         s->gpio[0xa8 / 4] |= s->eint_cache.level_sources & ~15u;
+        if (s->clock[3]&8u) m->power_wake|=s->eint_cache.level_sources&0xffffu;
         eint_pending(s);
         return;
     }
@@ -158,6 +167,7 @@ void o_eint_tick(orchard_machine *m) {
             bool triggered = mode == 0 ? !high : mode == 1 ? high :
                 changed && (mode >= 6 || (mode >= 4 ? high : !high));
             if (triggered) {
+                if ((s->clock[3]&8u) && line<16) m->power_wake|=bit;
                 if (mode <= 1) level_sources |= bit;
                 if (line < 4) s->srcpnd |= bit;
                 else s->gpio[0xa8 / 4] |= bit;
