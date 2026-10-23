@@ -32,8 +32,8 @@ and the host-OS USB/IP bridge still need their own device-level evidence.
 Deliver [hp39gs-rom-dump-v1.zip](../downloads/hp39gs-rom-dump-v1.zip) directly.
 It contains the independent Windows receiver and all four original calculator
 files, corresponding source and licenses. The entire package has been rebuilt
-byte-for-byte, with SHA-256
-`eeebe4ac2e9abf537fb25ecda40e441f3da0f52f30f36f3ea6a85ac0a84d1300`.
+byte-for-byte; its current identity is recorded in the
+[SHA-256 checksum](../downloads/hp39gs-rom-dump-v1.zip.sha256).
 One launch reads every 16 KiB block twice and writes a complete 1 MiB image
 plus its JSON. START opens the aplet; ENTER launches the reader. USB disconnect
 returns to the OS after the receiver reports completion. No separate return

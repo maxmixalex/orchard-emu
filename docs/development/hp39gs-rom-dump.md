@@ -98,8 +98,8 @@ ROM、安装后的 checkpoint 与原始回传字节不随代码或文档发布�
 ### r18 完整包重建与最终回放
 
 r18 只使用分发 ZIP 内的源码及外部编译器，离线重新生成了整个包，结果逐字节
-相同：**1,045,637 字节**，SHA-256 为
-`eeebe4ac2e9abf537fb25ecda40e441f3da0f52f30f36f3ea6a85ac0a84d1300`。
+相同。当前分发包的 SHA-256 见 [校验文件](../downloads/hp39gs-rom-dump-v1.zip.sha256)，
+精确字节数与重建记录见 [r18 独立复核记录](evidence/hp39-romstream-revalidation-r18.json)。
 计算器目录中的四个文件也分别与本次用户上传的旧 ROM Stream ZIP 比对一致。
 接收器协议测试、包检查及 25 个负例、Linux/Windows Go vet 均已通过。
 

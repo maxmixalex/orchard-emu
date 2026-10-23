@@ -4,9 +4,9 @@
   "scope": "Recovery of the interrupted r17 implementation; fresh independent source-only reconstruction and maintained receiver/package checks.",
   "package": {
     "path": "docs/downloads/hp39gs-rom-dump-v1.zip",
-    "bytes": 1045637,
-    "sha256": "eeebe4ac2e9abf537fb25ecda40e441f3da0f52f30f36f3ea6a85ac0a84d1300",
-    "source_only_rebuild_sha256": "eeebe4ac2e9abf537fb25ecda40e441f3da0f52f30f36f3ea6a85ac0a84d1300",
+    "bytes": 1046118,
+    "sha256": "f21b775a89ac6f3ce513abdb70181627c87c6088fdeeeff1fa6bebe0a5bf9ce1",
+    "source_only_rebuild_sha256": "f21b775a89ac6f3ce513abdb70181627c87c6088fdeeeff1fa6bebe0a5bf9ce1",
     "whole_archive_byte_equal": true
   },
   "source_rebuild": {
@@ -89,5 +89,17 @@
     "private_report_sha256": "b392ab4f8a217c4c251dacfcafd18ccd338f3abd74776bef28c2390c7371954b"
   },
   "initial_candidate_stock_wasm_sha256": "123be1b96339b4f9e211fe51c4bc36e90a0862606ab270ad3267ec520d078daf",
-  "performance_sample": false
+  "performance_sample": false,
+  "package_documentation_refresh": {
+    "reason": "Synchronize the standalone README with the r18 documentation after CI detected drift; use external checksum/evidence links for the archive identity to avoid a self-referential package hash.",
+    "changed_archive_entries": [
+      "README-zh.md",
+      "SHA256SUMS",
+      "manifest.json"
+    ],
+    "unchanged_archive_entries": 47,
+    "all_calculator_files_and_windows_receiver_byte_equal": true,
+    "source_only_rebuild_repeated_offline": true,
+    "stock_execution_repeated_for_documentation_refresh": false
+  }
 }

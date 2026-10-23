@@ -191,7 +191,7 @@
       "final-check.log": "b97b6734eb558e60a40b1f6a94887b86a086d9beebfa9402f99c410cecd07bb6",
       "final-test-wasm.log": "7c4f1f236f689a5608b533136d0bf4cbd234a2df133473413b47ea7f2bc89033",
       "final-test-trace.log": "5d53a741d818eac9a68e59a5226721c4d66a7ca2b28ccf09d4ba0bcb9dbbdf5b",
-      "final-test-tools.log": "5ee6868cbeae74686786fadbf1e59292fcf3c6f902ee2c3672d23f97d489c97d",
+      "final-test-tools.log": "fb56df9c5e7656805274f7754e308bdfdbfed208ba2f3c9c185ffdbe7d7babd1",
       "final-test-web.log": "b56f4817a8d6a285db62436d7904097a356507535bff682c5030798c5310a04c",
       "final-test-skins.log": "4ad1dc5298414ca062a9f485d5ed574d6644a847db72ac94ef9a385b460cec81",
       "final-test-pages.log": "3332d91c94e8c3a5a6debd07316aa882ee53b85af6338c318add9529955db8b7"
@@ -632,10 +632,18 @@
   },
   "download_package": {
     "file": "hp39gs-rom-dump-v1.zip",
-    "bytes": 1045637,
-    "sha256": "eeebe4ac2e9abf537fb25ecda40e441f3da0f52f30f36f3ea6a85ac0a84d1300",
+    "bytes": 1046118,
+    "sha256": "f21b775a89ac6f3ce513abdb70181627c87c6088fdeeeff1fa6bebe0a5bf9ce1",
     "whole_source_only_rebuild_byte_equal": true,
-    "preliminary_return_or_short_probe_required": false
+    "preliminary_return_or_short_probe_required": false,
+    "documentation_sync": {
+      "initial_ci_run": "https://github.com/maxmixalex/orchard-emu/actions/runs/39897284391",
+      "initial_failure": "Standalone README did not match the final r18 documentation.",
+      "package_test": "5 tests passed, including the existing 25 negative cases",
+      "tools_suite_rerun": "passed",
+      "unchanged_calculator_and_receiver_bytes": true,
+      "whole_source_only_rebuild_repeated": true
+    }
   },
   "documentation": {
     "strict_build": "passed",
@@ -645,7 +653,7 @@
     "strict_builder": "zensical 0.0.67",
     "markdown_pages": 42,
     "assembled_assets": 37,
-    "strict_log_sha256": "9176b49e29a95edd097a3d2f1572ae71af93b1a09b2a34aa0f3bf2c85cbf18b5",
+    "strict_log_sha256": "b0fa95585acf69059a94dcb29a8af2012412875f813116c75e37aed09ce24760",
     "assembly_scope": "Local precommit assembly; deployed commit identity is verified separately after GitHub Build/Pages."
   },
   "boundaries": {
