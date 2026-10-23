@@ -5,15 +5,15 @@
  */
 #include "internal.h"
 #define HEADER 32u
-#define VERSION 2u
-#define SDI_BYTES 52u
+#define VERSION 3u
 static const uint8_t magic[8] = {'O','R','C','H','S','T','0','1'};
 typedef struct {
     o_cpu cpu;
     o_soc soc;
     uint64_t ticks, reads, writes;
     uint32_t nor, decode, sequence, status, pc, instruction, address, detail;
-    bool id_mode;
+    uint32_t sd_bytes;
+    bool id_mode, sd_write_protected, sd_dirty;
 } saved;
 typedef struct { uint8_t *out; const uint8_t *in; size_t pos; bool ok; } codec;
 static uint64_t scalar(codec *c, uint64_t v, unsigned width) {
@@ -75,12 +75,25 @@ static void fields(codec *c, saved *s, unsigned version) {
     bytes(c,d->rtc.reg,19); U32(d->rtc.phase); U32(d->rtc.divider); U32(d->rtc.tick_count);
     if (version >= 2u) {
         o_sdi *sd=&d->sdi;
+        if(c->in) o_sdi_reset(sd);
         U32(sd->control); U32(sd->prescaler); U32(sd->argument); U32(sd->command); U32(sd->status);
         U32(sd->data_timer); U32(sd->block_size); U32(sd->data_control); U32(sd->data_status);
         U32(sd->interrupt_mask); U32(sd->remaining); U32(sd->response_remaining); U32(sd->phase);
     } else if(c->in) o_sdi_reset(&d->sdi);
+    if (version >= 3u) {
+        o_sdi *sd=&d->sdi;
+        A32(sd->response,4); A32(sd->pending_response,4); U32(sd->response_index);
+        U32(sd->fifo_head); U32(sd->fifo_count); U32(sd->data_remaining); U32(sd->data_event);
+        U32(sd->transfer_kind); U32(sd->transfer_left); U32(sd->transfer_offset); U32(sd->transfer_total);
+        U32(sd->card_state); U32(sd->card_rca); U32(sd->card_block_size); U32(sd->card_bus_width); U32(sd->last_command);
+        U32(sd->erase_start); U32(sd->erase_end); U32(sd->write_count);
+        U64(sd->commands); U64(sd->read_blocks); U64(sd->written_blocks);
+        BOOL(sd->response_valid); BOOL(sd->app_command); BOOL(sd->multi_block);
+        bytes(c,sd->fifo,64); bytes(c,sd->write_block,512);
+        U32(s->sd_bytes); BOOL(s->sd_write_protected); BOOL(s->sd_dirty);
+    }
 }
-static size_t scalar_size(void) { saved s; o_zero(&s,sizeof s); codec c={0}; fields(&c,&s,VERSION); return c.pos; }
+static size_t scalar_size(unsigned version) { saved s; o_zero(&s,sizeof s); codec c={0}; fields(&c,&s,version); return c.pos; }
 /* Reflected CRC-32 (polynomial 0xedb88320), advanced eight bits at once.
  * Generated from the same bit recurrence as the independent test reference.
  * Recompute both ROM and payload checksums on every call: no stale hash cache.
@@ -127,16 +140,17 @@ static uint32_t crc(const uint8_t *p, size_t n) {
 }
 static uint32_t word(const uint8_t *p) { return o_read_le(p,4); }
 static void put(uint8_t *p, uint32_t v) { for(unsigned i=0;i<4;i++) p[i]=(uint8_t)(v>>(i*8u)); }
-static bool overlap(const void *p, size_t n, const orchard_machine *m) {
-    uintptr_t a=(uintptr_t)p,b=(uintptr_t)m;
-    return a<=b ? b-a<n : a-b<sizeof(*m);
+static bool overlap(const void *p, size_t n, const void *q, size_t z) {
+    uintptr_t a=(uintptr_t)p,b=(uintptr_t)q;
+    return n&&z&&(a<=b ? b-a<n : a-b<z);
 }
 size_t orchard_checkpoint_size(const orchard_machine *m) {
-    return m&&m->profile&&m->loaded ? HEADER+scalar_size()+m->profile->ram_bytes+O_BOOT_SRAM_SIZE : 0;
+    return m&&m->profile&&m->loaded ? HEADER+scalar_size(VERSION)+m->profile->ram_bytes+O_BOOT_SRAM_SIZE+m->sd_bytes : 0;
 }
 orchard_status orchard_checkpoint_save(const orchard_machine *m, void *buffer, size_t length) {
     size_t required=orchard_checkpoint_size(m);
-    if(!required||!buffer||length!=required||overlap(buffer,length,m)||m->deferred_ticks)
+    if(!required||!buffer||length!=required||overlap(buffer,length,m,sizeof(*m))||
+       overlap(buffer,length,m->sd_storage,m->sd_capacity)||m->deferred_ticks)
         return ORCHARD_BAD_ARGUMENT;
     uint8_t *out=buffer;
     saved s; o_zero(&s,sizeof s); s.cpu=m->cpu; s.soc=m->soc;
@@ -144,9 +158,11 @@ orchard_status orchard_checkpoint_save(const orchard_machine *m, void *buffer, s
     s.nor=m->nor_device; s.decode=m->sram_decode; s.sequence=m->nor_sequence; s.id_mode=m->nor_id_mode;
     s.status=m->stop.status; s.pc=m->stop.pc; s.instruction=m->stop.instruction;
     s.address=m->stop.address; s.detail=m->stop.detail;
+    s.sd_bytes=m->sd_bytes; s.sd_write_protected=m->sd_write_protected; s.sd_dirty=m->sd_dirty;
     codec c={.out=out,.pos=HEADER,.ok=true}; fields(&c,&s,VERSION);
     o_copy(out+c.pos,m->ram,m->profile->ram_bytes);c.pos+=m->profile->ram_bytes;
-    o_copy(out+c.pos,m->boot_sram,O_BOOT_SRAM_SIZE);
+    o_copy(out+c.pos,m->boot_sram,O_BOOT_SRAM_SIZE);c.pos+=O_BOOT_SRAM_SIZE;
+    if(m->sd_bytes) o_copy(out+c.pos,m->sd_storage,m->sd_bytes);
     o_copy(out,magic,8);put(out+8,VERSION);put(out+12,(uint32_t)length);
     put(out+16,m->profile->id);put(out+20,crc(m->flash,m->profile->flash_bytes));
     put(out+24,m->profile->ram_bytes);put(out+28,crc(out+HEADER,length-HEADER));
@@ -172,33 +188,68 @@ static bool valid(const saved *s, const orchard_machine *m) {
     if(sd->control&~0x1du||sd->prescaler>255||sd->command&~0x1fffu||sd->status&~0x1fffu||
        sd->data_timer>65535||sd->block_size>4095||sd->data_control&~0x3fffffu||
        sd->data_status&~0x7ffu||sd->interrupt_mask&~0x3ffdfu||sd->phase>2||
-       sd->remaining>32768||sd->response_remaining>32768||
-       ((sd->data_control&0xb000u) && !(sd->data_control&0x4000u))||
+       sd->remaining>69632||sd->response_remaining>32768||
+       ((sd->data_control&0x8000u) && !(sd->data_control&0x4000u))||
        ((sd->remaining!=0)!=(sd->phase!=0))||((sd->status&0x100u)!=0)!=(sd->phase!=0)||
        (sd->response_remaining && sd->phase!=1))return false;
+    if(sd->fifo_head>=64||sd->fifo_count>64||sd->write_count>=512||
+       sd->response_index>63||sd->last_command>63||sd->card_state>8||sd->card_rca!=1||
+       sd->card_block_size!=512||(sd->card_bus_width!=1&&sd->card_bus_width!=4)||
+       sd->data_event>4||sd->transfer_kind>4||sd->data_remaining>33554432u||
+       ((sd->data_remaining!=0)!=(sd->data_event!=0))||sd->transfer_left>sd->transfer_total||
+       (s->sd_bytes&&(!m->profile->sd_slot||!o_sd_size_valid(s->sd_bytes)))||
+       (!s->sd_bytes&&(s->sd_write_protected||s->sd_dirty||sd->transfer_kind||sd->transfer_left))||
+       (sd->erase_start&511u)||(sd->erase_end&511u)||
+       (s->sd_bytes&&(sd->erase_start>=s->sd_bytes||sd->erase_end>=s->sd_bytes)))return false;
+    if(sd->transfer_offset>s->sd_bytes && sd->transfer_kind<3u)return false;
+    /* A partial TX block starts at an aligned media sector. This relation
+       prevents a repaired-CRC input from underflowing offset-512 at commit. */
+    if(sd->transfer_kind==2u ? sd->write_count!=(sd->transfer_offset&511u) : sd->write_count!=0)return false;
+    /* A pending write can start later through SDIDCON, before DATA_WRITE. */
+    if(sd->transfer_kind==2u&&s->sd_write_protected)return false;
+    uint32_t limit=sd->transfer_kind==3u?8u:sd->transfer_kind==4u?64u:s->sd_bytes;
+    if(sd->transfer_kind&&(sd->transfer_offset>limit||sd->transfer_left>limit-sd->transfer_offset))return false;
+    if((sd->data_event==2u&&(!sd->transfer_left||sd->transfer_kind==0u||sd->transfer_kind==2u))||
+       (sd->data_event==3u&&(!sd->transfer_left||sd->transfer_kind!=2u)))return false;
     return true;
 }
-orchard_status orchard_checkpoint_load(orchard_machine *m, const void *buffer, size_t length) {
-    size_t required=orchard_checkpoint_size(m);
-    if(!required||!buffer||length<HEADER||overlap(buffer,length,m))return ORCHARD_BAD_ARGUMENT;
+static bool decode(const orchard_machine *m, const void *buffer, size_t length, saved *s, size_t *offset) {
+    if(!m||!m->profile||!m->loaded||!buffer||length<HEADER||
+       overlap(buffer,length,m,sizeof(*m)))return false;
     const uint8_t *in=buffer;
     unsigned version=word(in+8);
-    if((version!=1u&&version!=VERSION)||length!=required-(version==1u?SDI_BYTES:0u))
-        return ORCHARD_BAD_ARGUMENT;
-    for(unsigned i=0;i<8;i++)if(in[i]!=magic[i])return ORCHARD_BAD_ARGUMENT;
+    if(version<1u||version>VERSION)return false;
+    size_t base=HEADER+scalar_size(version)+m->profile->ram_bytes+O_BOOT_SRAM_SIZE;
+    if(length<base||length-base>ORCHARD_SD_MAX_BYTES)return false;
+    for(unsigned i=0;i<8;i++)if(in[i]!=magic[i])return false;
     if(word(in+12)!=length||word(in+16)!=m->profile->id||
         word(in+24)!=m->profile->ram_bytes||word(in+28)!=crc(in+HEADER,length-HEADER)||
-        word(in+20)!=crc(m->flash,m->profile->flash_bytes))return ORCHARD_BAD_ARGUMENT;
-    saved s; o_zero(&s,sizeof s); codec c={.in=in,.pos=HEADER,.ok=true};fields(&c,&s,version);
-    if(!c.ok||!valid(&s,m))return ORCHARD_BAD_ARGUMENT;
+        word(in+20)!=crc(m->flash,m->profile->flash_bytes))return false;
+    o_zero(s,sizeof(*s)); codec c={.in=in,.pos=HEADER,.ok=true};fields(&c,s,version);
+    if(!c.ok||length!=base+s->sd_bytes||!valid(s,m))return false;
+    *offset=c.pos; return true;
+}
+orchard_status orchard_checkpoint_sd_size(const orchard_machine *m, const void *buffer, size_t length, size_t *required) {
+    saved s; size_t offset;
+    if(!required||!decode(m,buffer,length,&s,&offset))return ORCHARD_BAD_ARGUMENT;
+    *required=s.sd_bytes; return ORCHARD_OK;
+}
+orchard_status orchard_checkpoint_load(orchard_machine *m, const void *buffer, size_t length) {
+    saved s; size_t offset;
+    if(!decode(m,buffer,length,&s,&offset)||
+       (s.sd_bytes&&(!m->sd_storage||s.sd_bytes>m->sd_capacity))||
+       overlap(buffer,length,m->sd_storage,m->sd_capacity))return ORCHARD_BAD_ARGUMENT;
+    const uint8_t *in=buffer;
     /* Validation complete. There are no fallible operations beyond this point. */
     m->cpu=s.cpu;m->soc=s.soc;m->ticks=s.ticks;
     m->sram_alias_reads=s.reads;m->sram_alias_writes=s.writes;
     m->nor_device=(orchard_nor_device)s.nor;m->sram_decode=(orchard_sram_decode)s.decode;
     m->nor_sequence=s.sequence;m->nor_id_mode=s.id_mode;
     m->stop=(orchard_stop){(orchard_status)s.status,s.pc,s.instruction,s.address,s.detail};
-    o_copy(m->ram,in+c.pos,m->profile->ram_bytes);c.pos+=m->profile->ram_bytes;
-    o_copy(m->boot_sram,in+c.pos,O_BOOT_SRAM_SIZE);
+    o_copy(m->ram,in+offset,m->profile->ram_bytes);offset+=m->profile->ram_bytes;
+    o_copy(m->boot_sram,in+offset,O_BOOT_SRAM_SIZE);offset+=O_BOOT_SRAM_SIZE;
+    if(s.sd_bytes)o_copy(m->sd_storage,in+offset,s.sd_bytes);
+    m->sd_bytes=s.sd_bytes; m->sd_write_protected=s.sd_write_protected; m->sd_dirty=s.sd_dirty;
     m->quiet_left=m->deferred_ticks=0;
     m->idle_write_enabled=false;
     o_zero(m->translations,sizeof m->translations);

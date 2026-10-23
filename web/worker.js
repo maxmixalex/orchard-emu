@@ -3,7 +3,8 @@ import { Pacer } from './pacing.js';
 import { TaskScheduler } from './task-scheduler.js';
 import { VirtualUSB } from './virtual-usb.js';
 import { FileTransfer } from './file-transfer.js';
-import { encodeSession, decodeSession } from './session.js';
+import { encodeSession, decodeSession, MAX_STATE } from './session.js';
+import { readSDState, validateSDSize } from './sd-card.js';
 import { setupHash, isPlayable, applySetup, TapQueue } from './hp48.js';
 let audience = 'debug';
 let romHash='', operation=0, busy=false, autoSaving=false, serial=false, usb, transfer;
@@ -47,7 +48,7 @@ function snapshot() {
   const pixels = frameStatus ? null : new Uint8Array(core.memory.buffer,core.frame_buffer(),width*height).slice();
   sendUart();
   const visible = {type:'snapshot',generation,width,height,pixels,running,loaded,model,tick,
-    stopped:s[28]!==0,frameStatus,annunciatorStatus,annunciators,pending:taps.pending,active:taps.active};
+    sd:readSDState(core),stopped:s[28]!==0,frameStatus,annunciatorStatus,annunciators,pending:taps.pending,active:taps.active};
   if (audience === 'calculator') postMessage(visible);
   else postMessage({...visible,state:s,preset,frameView,
     frameStatus,annunciatorStatus,annunciators,reason:errors[s[28]] || 'unknown stop',pending:taps.pending,active:taps.active,
@@ -129,11 +130,35 @@ self.onmessage=({data})=>{
         resetClock();events=[];eventOverflow=false;applySetup(core,model,preset);loaded=true;romHash=digest;busy=false;
         postMessage({type:'loaded',generation});snapshot();
       }).catch(error=>{if(token===generation&&job===operation)fail(error);});
+    } else if(['sd-insert','sd-export','sd-eject'].includes(data.type)) {
+      try {
+        if(!loaded||busy||!core.profile(model,4))throw new Error('This calculator has no available SD card slot.');
+        if(transfer?.active)throw new Error('Finish the current file transfer first.');
+        const card=readSDState(core);
+        if(data.type==='sd-insert'){
+          if(card?.present)throw new Error('Eject the current card before inserting another.');
+          if(!(data.bytes instanceof Uint8Array)||typeof data.writeProtected!=='boolean')throw new Error('Invalid SD card image.');
+          validateSDSize(data.bytes.length);
+          const buffer=core.sd_buffer(data.bytes.length);if(!buffer)throw new Error('Unable to allocate SD card storage.');
+          new Uint8Array(core.memory.buffer,buffer,data.bytes.length).set(data.bytes);
+          if(core.sd_insert(data.bytes.length,Number(data.writeProtected)))throw new Error('Unable to insert this SD card.');
+          postMessage({type:'sd-complete',generation,action:'insert',name:data.name});
+        } else if(data.type==='sd-export'){
+          if(!card?.present)throw new Error('Insert a card first.');
+          const buffer=core.sd_image_buffer();if(!buffer)throw new Error('The SD card image is unavailable.');
+          const bytes=new Uint8Array(core.memory.buffer,buffer,card.bytes).slice();
+          postMessage({type:'sd-exported',generation,bytes},[bytes.buffer]);
+        } else {
+          if(core.sd_eject())throw new Error('Unable to eject this SD card.');
+          postMessage({type:'sd-complete',generation,action:'eject'});
+        }
+        snapshot();
+      } catch(error){postMessage({type:'sd-error',generation,message:error.message});}
     } else if(data.type==='checkpoint-auto') {
       if(!loaded || busy || autoSaving || taps.pending || usb?.job || transfer?.active){postMessage({type:'checkpoint-skipped',generation,request:data.request});return;}
       autoSaving=true;const token=generation,job=operation,request=data.request;
       const length=core.checkpoint_size();
-      if(!length||length>600000||core.checkpoint_save())throw new Error('Unable to save this calculator state.');
+      if(!length||length>MAX_STATE||core.checkpoint_save())throw new Error('Unable to save this calculator state.');
       const bytes=new Uint8Array(core.memory.buffer,core.checkpoint_buffer(),length).slice();
       encodeSession({model,romHash,preset,frameView,state:bytes}).then(file=>{
         if(token!==generation||job!==operation)return;autoSaving=false;
@@ -142,7 +167,7 @@ self.onmessage=({data})=>{
     } else if(data.type==='checkpoint-save' && loaded && !busy) {
       pause();autoSaving=false;busy=true;const token=generation,job=++operation;
       const length=core.checkpoint_size();
-      if(!length||length>600000||core.checkpoint_save())throw new Error('Unable to save this calculator state.');
+      if(!length||length>MAX_STATE||core.checkpoint_save())throw new Error('Unable to save this calculator state.');
       const bytes=new Uint8Array(core.memory.buffer,core.checkpoint_buffer(),length).slice();
       encodeSession({model,romHash,preset,frameView,state:bytes}).then(file=>{
         if(token!==generation||job!==operation)return;
@@ -154,8 +179,10 @@ self.onmessage=({data})=>{
         if(token!==generation||job!==operation)return;
         if(saved.model!==model||saved.romHash!==romHash||saved.preset!==preset)
           throw new Error('This session belongs to a different ROM or calculator. Open its original ROM first.');
-        if(saved.state.length<32||saved.state.length>core.checkpoint_size())throw new Error('This session version is not supported.');
-        new Uint8Array(core.memory.buffer,core.checkpoint_buffer(),saved.state.length).set(saved.state);
+        if(saved.state.length<32||saved.state.length>MAX_STATE)throw new Error('This session version is not supported.');
+        const buffer=core.checkpoint_buffer(saved.state.length);
+        if(!buffer)throw new Error('Not enough memory to restore this session.');
+        new Uint8Array(core.memory.buffer,buffer,saved.state.length).set(saved.state);
         if(core.checkpoint_load(saved.state.length))throw new Error('The session is damaged or incompatible. Your current calculator was not replaced.');
         // Session files created here have no held keys. Also release all inputs
         // on import from a native host; never resurrect a stuck physical key.
@@ -171,7 +198,7 @@ self.onmessage=({data})=>{
     } else if(data.type==='pause') {pause();snapshot();}
     else if(data.type==='run' && loaded && !busy) {if(!running && state()[28]===0){pacer.reset(performance.now());running=true;schedule();snapshot();}}
     else if(data.type==='step' && loaded && !busy) {pause();core.run(1);snapshot();}
-    else if(data.type==='reset' && loaded) {++operation;busy=false;autoSaving=false;pause();usb?.resetLocal();serial=false;postMessage({type:'links-reset',generation});core.reset();resetClock();events=[];eventOverflow=false;applySetup(core,model,preset);snapshot();}
+    else if(data.type==='reset' && loaded) {++operation;busy=false;autoSaving=false;pause();usb?.resetLocal();serial=false;postMessage({type:'links-reset',generation});core.reset();resetClock();events=[];eventOverflow=false;applySetup(core,model,preset);if(core.profile(model,4))core.sd_reconnect();snapshot();}
     else if(data.type==='configure') {
       if(data.speed!==undefined)pacer.setSpeed(data.speed,performance.now());
       if(data.hold!==undefined||data.gap!==undefined){

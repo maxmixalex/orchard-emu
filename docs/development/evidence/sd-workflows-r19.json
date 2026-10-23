@@ -1,0 +1,569 @@
+{
+  "schema": "orchard-sd-workflows-r19-v1",
+  "date_utc": "2026-10-23",
+  "passed": true,
+  "production_wasm_sha256": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+  "witness_tool": "tools/verify-sd-workflows.mjs",
+  "witness_tool_sha256": "7b59255bf87b0291446922a493f0739918db502c06ed93df4d7034851d022e0f",
+  "native_replay_sha256": "7e00690d47498ba777a83346854a34715246b7907a7a578af623264917038a1b",
+  "private_report_sha256": "65e333b67eec0731a804cc30597285007a52d5aa1a3aa9c5a6ea8d2acc7d6520",
+  "rom_sha256": {
+    "hp49gplus": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+    "hp48gii": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937"
+  },
+  "privacy": "Only source identities, numerical observations and artifact digests are published. ROM, RAM, raw LCD, checkpoint and card bytes remain private.",
+  "method": {
+    "original_full_nor": true,
+    "cold_boots": {
+      "hp49gplus": 2,
+      "hp48gii": 1
+    },
+    "physical_keyboard_input": true,
+    "guest_ram_or_code_patches": false,
+    "host_injected_calculator_files": false,
+    "host_work": "Insert/export the raw card and parse its FAT16 contents independently; stock Filer creates and recalls TEST.",
+    "timing_claim": false,
+    "canonical_hardware_boot_claim": false
+  },
+  "original_failures": {
+    "empty_slot_fifo": {
+      "baseline_wasm_sha256": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f",
+      "legacy_checkpoint_sha256": "351b2ea3893a4c5b9d673e0cd2ab28f25f797230d5955432ba33df344f01b7e5",
+      "legacy_checkpoint_version": 2,
+      "tick": 164020296,
+      "status": 7,
+      "status_name": "ORCHARD_UNIMPLEMENTED_MMIO",
+      "pc": "0x00020040",
+      "instruction": "0xe580e000",
+      "address": "0x5a00003c",
+      "detail": 0,
+      "cause": "Original FILES initializes the controller FIFO even when no card is present.",
+      "fix": "Model the valid SDIDAT/FIFO access independently of card presence."
+    },
+    "strict_sram_decode": {
+      "tick": 184936627,
+      "pc": 260116,
+      "opcode": 3851620356,
+      "dfsr": 8,
+      "far": 134742016,
+      "physical_ram_bytes": 524288,
+      "instruction": "LDR r1,[r3,#4]",
+      "r3": "0x0807fffc",
+      "fault_address": "0x08080000",
+      "comparison": "Same original-ROM no-card FILES checkpoint and UP key: exact-bounds decode faults; explicit bank-1 mirror navigates and returns to the identical HOME frame.",
+      "fix_scope": "hp49-home board preset selects existing low-address bank-1 wrapping; physical SRAM remains 524288 bytes and strict core initialization remains exact-bounds.",
+      "hardware_limit": "This is a declared board-decode hypothesis. Teardown supports the SRAM capacity, not a measurement of address wiring on every board revision."
+    }
+  },
+  "stock_acceptance": {
+    "hp49gplus": {
+      "no_card_files_navigation": true,
+      "no_card_return_frame_equals_cold_home": true,
+      "card_image_bytes": 16777216,
+      "filesystem": "MBR/FAT16, two FAT copies",
+      "home_object": "42 stored as TEST using the original keyboard and ROM",
+      "stock_copy_to_port_3": true,
+      "export": {
+        "image_sha256": "d78cb56e1126e124dd9b52035ca21e276377d417f6b8dea4f3490cdb67caad52",
+        "file": "TEST",
+        "file_bytes": 15,
+        "file_sha256": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42",
+        "filesystem": "FAT16",
+        "fat_copies_equal": true,
+        "writes_before_copy": 0,
+        "writes_after_copy": 7
+      },
+      "same_instance_sd_directory_entered_and_recalled": true,
+      "fresh_cold_boot_card_reimport": true,
+      "fresh_filer_test_file_bytes": 15,
+      "fresh_rcl_visual_value": "42",
+      "visual_review": "Original LCDs show TEST INTG 15 on the card and 42 in a fresh HOME with no TEST variable; raw LCDs are private."
+    },
+    "hp48gii": {
+      "cold_boot": true,
+      "files_navigation": true,
+      "returned_home": true,
+      "sd_slot": false,
+      "card_rejected": true,
+      "return_frame_equals_cold_home": true,
+      "after_files_one_plus_one_visual_result": "2"
+    },
+    "hp50g": {
+      "original_rom_workflow_tested": false,
+      "core_model_6_sd_regression": true
+    }
+  },
+  "native_wasm_continuation": {
+    "checkpoint_bytes": 17310431,
+    "version": 3,
+    "partial_sector_bytes": 4,
+    "delta_ticks": 100000,
+    "before_sha256": "d6d31fca353464db3c78041ceb7ba21fe56e2798aa3dfa3f6b3cf59b1b23eb95",
+    "after_sha256": "3b6d05d83c9a9cc2b9d97cab19b9f7b2a4699602755d70043573b9e4a5c16d58",
+    "native_wasm_equal": true,
+    "full_card_included": true
+  },
+  "checkpoint_contract": {
+    "version": 3,
+    "accepted_legacy_versions": [
+      1,
+      2
+    ],
+    "whole_card_and_partial_sector_serialized": true,
+    "host_owned_bounded_storage": true,
+    "core_dynamic_allocation": false,
+    "reset_preserves_inserted_card": true,
+    "validate_before_atomic_commit": true
+  },
+  "targeted_regression": {
+    "test": "tests/sdi.c",
+    "native_checks": 12566,
+    "native_failures": 0,
+    "scope": "Models 5/6 card state; FIFO/clock gating; reference equality; active RX/TX snapshots; partial-sector rejection; atomic media import; ejection; reset; read-only media.",
+    "full_release_reference_sanitizer_and_wasm_gates": "Recorded separately in the r19 release validation record."
+  },
+  "independent_reviews": [
+    {
+      "reviewer": "hp39_transfer agent",
+      "files": [
+        "src/sdi.c",
+        "src/checkpoint.c",
+        "tests/sdi.c"
+      ],
+      "finding": "A CRC-repaired checkpoint could queue a dormant CARD_WRITE while write_protected was true; later SDIDCON could start it.",
+      "ordinary_original_rom_path": "Unreachable through accepted commands; a malformed imported protocol state was required.",
+      "fix": "Reject all pending/active CARD_WRITE states on protected media during decode, and independently prevent that transfer at controller data_start.",
+      "regression": "A valid protected-card checkpoint with only transfer_kind changed and CRC repaired is rejected by size-query and load; query output and full current checkpoint stay identical. A direct dormant controller state also times out without a write.",
+      "fix_independently_reviewed": true,
+      "remaining_blockers_reported": 0
+    },
+    {
+      "reviewer": "performance/core agent",
+      "files": [
+        "app/wasm.c",
+        "web/sd-card.js",
+        "tests/sd-card.mjs"
+      ],
+      "finding": "Rejected create(model) cleared the wrapper SD-binding flag while the old live machine and inserted card remained valid.",
+      "fix": "Clear the binding flag only after model initialization succeeds; retain the current card on rejected create.",
+      "regression": "Mounted-image invalid-create/export/checkpoint preservation is covered by tests/sd-card.mjs.",
+      "formatter_correction": "CHS partition endpoints now match the BPB geometry and LBA extent; generated root has no optional label entry that stock Filer treats as a file."
+    }
+  ],
+  "retained_non_final_runs": [
+    {
+      "private_report_sha256": "bebc8884ae0ecf50d31393754469862319346bc92a953ea5375fd9e6a587a93e",
+      "wasm_sha256": "669669cf870493b2cdfdd82b94de2f79cdbb10be464b06ed88fba7a19c56c499",
+      "result": "Failed at native replay process launch with EPERM after successful original-ROM COPY; no native/WASM comparison was claimed for this attempt.",
+      "resolution": "Run the same local native helper in the approved execution environment."
+    },
+    {
+      "private_report_sha256": "cade3542594a6f731a55f9012258e8c36a9f10f8cf8b7ba930b9dc685ab954ec",
+      "wasm_sha256": "669669cf870493b2cdfdd82b94de2f79cdbb10be464b06ed88fba7a19c56c499",
+      "result": "Script passed including exact partial-write continuation, exported FAT file, fresh cold-boot RCL 42 and HP48 workflow. Visual review found an intermediate same-instance directory screenshot taken before navigation settled.",
+      "resolution": "Final tool adds a guest-time gap after UP and verifies SD reads before labeling directory entry. Final core additionally closes the independent malformed-checkpoint write-protection finding.",
+      "final_production_acceptance": false
+    }
+  ],
+  "stages": [
+    {
+      "name": "hp49-home",
+      "machine": "hp49",
+      "tick": 160000000,
+      "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 0,
+        "present": false,
+        "writeProtected": false,
+        "dirty": false,
+        "cardState": 0,
+        "lastCommand": 0,
+        "commands": 0,
+        "readBlocks": 0,
+        "writtenBlocks": 0
+      },
+      "sram_alias_reads": "0",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp49-files-no-card",
+      "machine": "hp49",
+      "tick": 184800000,
+      "frame_sha256": "bdcc263a4a0d43f220fff1a48a8b366a5f6919edeb3b7503c09b0037bdb94ba6",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 0,
+        "present": false,
+        "writeProtected": false,
+        "dirty": false,
+        "cardState": 0,
+        "lastCommand": 0,
+        "commands": 0,
+        "readBlocks": 0,
+        "writtenBlocks": 0
+      },
+      "sram_alias_reads": "0",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp49-files-no-card-up",
+      "machine": "hp49",
+      "tick": 192200000,
+      "frame_sha256": "31cf57c318cbfb06a581d75873c34022d61b634d36578fe4657087cafad090fd",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 0,
+        "present": false,
+        "writeProtected": false,
+        "dirty": false,
+        "cardState": 0,
+        "lastCommand": 0,
+        "commands": 0,
+        "readBlocks": 0,
+        "writtenBlocks": 0
+      },
+      "sram_alias_reads": "1",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp49-files-no-card-return",
+      "machine": "hp49",
+      "tick": 199600000,
+      "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 0,
+        "present": false,
+        "writeProtected": false,
+        "dirty": false,
+        "cardState": 0,
+        "lastCommand": 0,
+        "commands": 0,
+        "readBlocks": 0,
+        "writtenBlocks": 0
+      },
+      "sram_alias_reads": "3",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp49-files-with-card",
+      "machine": "hp49",
+      "tick": 224400000,
+      "frame_sha256": "a9c21ad46dab1b83bbb67af2c91e42d2f7f141d043826ddde32dc43ea850deed",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 16777216,
+        "present": true,
+        "writeProtected": false,
+        "dirty": false,
+        "cardState": 3,
+        "lastCommand": 7,
+        "commands": 298,
+        "readBlocks": 66,
+        "writtenBlocks": 0
+      },
+      "sram_alias_reads": "3",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp49-created-test-42",
+      "machine": "hp49",
+      "tick": 270600000,
+      "frame_sha256": "a1a514e8d87df70a4be85073d28061d0fdd13b435f46ffe1af67cc8ff4ab2d5b",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 16777216,
+        "present": true,
+        "writeProtected": false,
+        "dirty": false,
+        "cardState": 3,
+        "lastCommand": 7,
+        "commands": 298,
+        "readBlocks": 66,
+        "writtenBlocks": 0
+      },
+      "sram_alias_reads": "5",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp49-home-test-selected",
+      "machine": "hp49",
+      "tick": 297800000,
+      "frame_sha256": "8a343bd812857475a0e31fae2dd96bd2fb21316be4ffdce08a031ba9e58f7014",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 16777216,
+        "present": true,
+        "writeProtected": false,
+        "dirty": false,
+        "cardState": 3,
+        "lastCommand": 7,
+        "commands": 373,
+        "readBlocks": 66,
+        "writtenBlocks": 0
+      },
+      "sram_alias_reads": "8",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp49-copy-destination-sd",
+      "machine": "hp49",
+      "tick": 312600000,
+      "frame_sha256": "526d0eb490e4fbd6a1e7dbbbf3ba6f168cfcfe6e333ff01c25ab8cf09649f238",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 16777216,
+        "present": true,
+        "writeProtected": false,
+        "dirty": false,
+        "cardState": 3,
+        "lastCommand": 7,
+        "commands": 448,
+        "readBlocks": 66,
+        "writtenBlocks": 0
+      },
+      "sram_alias_reads": "9",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp49-copy-complete",
+      "machine": "hp49",
+      "tick": 330000000,
+      "frame_sha256": "cd3dc82364b582abd7b2dc78c892014049f20d31e985bdae276b63ca114ce246",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 16777216,
+        "present": true,
+        "writeProtected": false,
+        "dirty": true,
+        "cardState": 3,
+        "lastCommand": 7,
+        "commands": 967,
+        "readBlocks": 232,
+        "writtenBlocks": 7
+      },
+      "sram_alias_reads": "12",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp49-sd-test-selected",
+      "machine": "hp49",
+      "tick": 369200000,
+      "frame_sha256": "ee501906210e9dd2f91a20eb3c445163e006cead9579fb831794092af98a3311",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 16777216,
+        "present": true,
+        "writeProtected": false,
+        "dirty": true,
+        "cardState": 3,
+        "lastCommand": 7,
+        "commands": 1354,
+        "readBlocks": 334,
+        "writtenBlocks": 9
+      },
+      "sram_alias_reads": "14",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp49-sd-recalled-42",
+      "machine": "hp49",
+      "tick": 389000000,
+      "frame_sha256": "a6264d8850d44be94b23205730d647fe353d2f349188f6c4c0b4fabdb391d416",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 16777216,
+        "present": true,
+        "writeProtected": false,
+        "dirty": true,
+        "cardState": 3,
+        "lastCommand": 7,
+        "commands": 1393,
+        "readBlocks": 345,
+        "writtenBlocks": 11
+      },
+      "sram_alias_reads": "14",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp49-fresh-home",
+      "machine": "hp49-fresh",
+      "tick": 160000000,
+      "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 0,
+        "present": false,
+        "writeProtected": false,
+        "dirty": false,
+        "cardState": 0,
+        "lastCommand": 0,
+        "commands": 0,
+        "readBlocks": 0,
+        "writtenBlocks": 0
+      },
+      "sram_alias_reads": "0",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp49-fresh-sd-test",
+      "machine": "hp49-fresh",
+      "tick": 204600000,
+      "frame_sha256": "01733b6a07d0703ab003dd04e8ed8d5c01dd842621b815f8b0c1ec5595ef44fa",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 16777216,
+        "present": true,
+        "writeProtected": false,
+        "dirty": true,
+        "cardState": 3,
+        "lastCommand": 7,
+        "commands": 610,
+        "readBlocks": 168,
+        "writtenBlocks": 2
+      },
+      "sram_alias_reads": "2",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp49-fresh-recalled-42",
+      "machine": "hp49-fresh",
+      "tick": 224400000,
+      "frame_sha256": "e01013055e51a5d9a50820786b7ba3eb821eb74dfc614949dda98a4d22dc5b97",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": {
+        "bytes": 16777216,
+        "present": true,
+        "writeProtected": false,
+        "dirty": true,
+        "cardState": 3,
+        "lastCommand": 7,
+        "commands": 649,
+        "readBlocks": 179,
+        "writtenBlocks": 4
+      },
+      "sram_alias_reads": "2",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp48-home",
+      "machine": "hp48",
+      "tick": 160000000,
+      "frame_sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": null,
+      "sram_alias_reads": "1",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp48-files",
+      "machine": "hp48",
+      "tick": 184800000,
+      "frame_sha256": "913cf167763953fb952d182d075ab89df5ebfa0c0dafdc5a33d0456ced3835a3",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": null,
+      "sram_alias_reads": "1",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp48-files-up",
+      "machine": "hp48",
+      "tick": 192200000,
+      "frame_sha256": "3f623da8b6c4d0326194be9974eef39b48e9cd81a478b8f1e60a8318167268b2",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": null,
+      "sram_alias_reads": "3",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp48-files-return",
+      "machine": "hp48",
+      "tick": 199600000,
+      "frame_sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": null,
+      "sram_alias_reads": "7",
+      "sram_alias_writes": "0"
+    },
+    {
+      "name": "hp48-after-files-one-plus-one",
+      "machine": "hp48",
+      "tick": 214200000,
+      "frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+      "stop": 0,
+      "dfsr": 0,
+      "far": 0,
+      "sd": null,
+      "sram_alias_reads": "7",
+      "sram_alias_writes": "0"
+    }
+  ],
+  "source_sha256": {
+    "src/sdi.c": "42f8d4d09eb1e4b4c73ee6161153211323daa6882a2560eea0066cdfe704f9c9",
+    "src/checkpoint.c": "cff1f463889544546ee369cd5ed49c16cd27d4d50e10192d6fec268719dd0262",
+    "src/internal.h": "1536760a9e77d03a9e7b01c8006c3915e5ac50873def77f1f4f6bcea93bc6435",
+    "src/scheduler.c": "5399b3c4fe0edf36cc9434679aca7ee0c12b8dfbf4b2ff3383bf7fa6dc8c7ddb",
+    "src/soc.c": "83bd240d8989a61bd9c4e7ab09009f1f417a07b19d133939cf38a40dc4038468",
+    "include/orchard/orchard.h": "92596bc33b719aaf40e8915438c2dd89978d8bd44a565670f33fc9939a063740",
+    "tests/sdi.c": "41baa226335197f7b95126c67291c421f8c5ba32db7078528c54c6921defac04",
+    "tests/checkpoint.c": "61f1b8549508a9c7bb3c014de532b9f092157069ef1d31b892dfc8b284934c6b",
+    "tools/checkpoint-replay.c": "04681c234c082b30d0c90884425658c77d1c09ad89b6087bf253d38e4f0a31ff",
+    "tools/checkpoint-equivalence.mjs": "ed7c5b655656e2f5216bf30104e6c562eee692da3767a431ec08a95fbcb5c0f3",
+    "tests/checkpoint-equivalence.mjs": "5333e37b6b914795d1b893de37dc6fb167aa0dd630b4c85fb14f3ef7877a8474",
+    "app/wasm.c": "82debd2c161cf07ec6128e92ae5fbdd72e84b1a327c01a0f1d40255b6d0b3745",
+    "web/hp48.js": "60041c0c6695f433ceaa1f79e00a77103eba55ea527f88dfbe20e94e24801e50",
+    "web/sd-card.js": "d364546b1353b5986d4d6e1b496b0b0c92ce76ffaa356813d6c4fca9b5b2daf6"
+  },
+  "limits": [
+    "SDSC 1, 2, 4, 8, 16 or 32 MiB, 512-byte sectors; no SDHC/SDXC, SDI DMA or electrical/cycle timing calibration.",
+    "FIFO backpressure is functional and clocked; this is not a bit-level SD bus validation.",
+    "Original-system evidence covers the admitted 49g+ and 48gII full NOR hashes only. HP50g remains core-profile coverage without its own stock full-NOR workflow.",
+    "HP48gII has no slot and rejects card insertion; no artificial SD port is added to its board.",
+    "The SRAM mirror is an explicit board preset assumption and is not generalized to every hardware revision.",
+    "Browser UI/Worker/file-picker/IndexedDB lifecycle acceptance is recorded separately by the production-browser witness."
+  ],
+  "primary_references": [
+    "https://pdfstore-manualsonline.prod.a.ki/pdfres_02/af/4c/af4c636f-a045-4652-865a-9643aaa6c16d.pdf",
+    "https://users.ece.utexas.edu/~valvano/EE345M/SD_Physical_Layer_Spec.pdf",
+    "https://h10032.www1.hp.com/ctg/Manual/bpia5323.pdf",
+    "https://pc.watch.impress.co.jp/docs/2004/0405/pda33.htm",
+    "https://github.com/c3d/db48x-from-newrpl/blob/063bd8e1ee9b641701a11488cd2a02dd540d87cf/firmware/sys/target_50g/sddriver.c"
+  ]
+}

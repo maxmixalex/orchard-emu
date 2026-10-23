@@ -9,6 +9,7 @@ host-side Saturn replacement or firmware patch.
 HOME and evaluate `1+2=3` and `7*8=56`.** [HP49g+](docs/development/hp49-startup.md)
 also runs original-OS symbolic algebra, graphing, menus and
 [native ARM programs that return to HOME](docs/development/hp49-native.md).
+Its original FILES manager can read and write an [emulated SD card](docs/development/sd-cards.md).
 HP39g+ uses a separately selected
 1 MiB NOR and exact SRAM, not the HP48gII mirroring hypothesis. LCD `+0x68`,
 component identification, panel interpretation and pad/ADC conditions remain
@@ -43,6 +44,12 @@ before entering calculations. **Save** exports the paused machine to a timestamp
 Resume, to continue without another cold boot. Automatic local saves are off
 by default and can be enabled in **Settings → Storage**; loading the same ROM
 then offers to restore its saved state. See [saved sessions](docs/development/sessions.md).
+
+On HP49g+, **SD card** creates a 16 MiB FAT16 card or imports a 1–32 MiB
+raw image; the original calculator accesses it as port 3. Export the image
+for a separate card backup. Manual and automatic sessions include the whole
+inserted card. HP48gII has no SD slot; HP50g still requires its own full-ROM
+acceptance before it can join the supported calculator catalog.
 
 [Performance and benchmarks](docs/development/performance.md) ·
 [Browser usage](docs/development/web.md) ·
@@ -112,8 +119,12 @@ the selected files, preserving their original names and aliases. Calculator
 HP39 ZIP directly, or download received objects as a reusable ZIP. The fixed
 catalog entry point is restored when the stock SEND omits it, while original
 directory aliases and object bytes are preserved. Raw data retains
-UART and USB packets. Original-ROM HP39 file-transfer and ZIP round-trip
-verification is for HP39g+; HP39gs/40gs still await their own ROM execution.
+UART and USB packets. **Wire** provides a faster HP39g+ upload route: choose
+**RECV → HP39/40 (Wire)** for each object, sending required libraries before
+the aplet. Reverse downloads still use **SEND → Disk drive**. Original-ROM HP39
+file-transfer and ZIP round-trip
+verification uses the complete HP39g+ NOR; HP39gs/40gs still await acceptance
+with their own complete original NOR images.
 Browser connections are internal to the emulator and do not create desktop
 USB or serial devices. See
 [file transfer](docs/development/file-transfer.md),
@@ -121,12 +132,14 @@ USB or serial devices. See
 and [the infrared assessment](docs/development/infrared.md).
 
 The [HP39gs full ROM capture package](docs/development/hp39gs-rom-dump.md)
-reuses the exact calculator program from the user's successful hpclang HP39g+
-capture. Its Windows receiver reads each 16 KiB block twice and compares every
-byte, producing a complete 1 MiB image in one launch. The package includes the
-rebuilt receiver, matching calculator files, complete corresponding source and
-licenses. HP39gs hardware execution awaits the returned image; a separate short
-probe is not required. The older ARM-return package remains historical.
+now includes a revised reader with visible block progress, bounded USB waits,
+safe temporary mappings and explicit recovery messages. Its Windows receiver
+reads each 16 KiB block twice and compares every byte, producing a complete
+1 MiB image in one launch. The package includes the rebuilt receiver, matching
+calculator files, complete corresponding source and licenses. Emulator checks
+cover the original HP39g+ full NOR and a separately identified HP39gs original-OS
+fixture; physical HP39gs extraction still awaits hardware validation. A separate
+short probe is not required. The older ARM-return package remains historical.
 The [HP49g+ capture package](docs/development/flash-capture.md) has now produced
 the user's 2 MiB image used by the new model's startup and transfer validation.
 

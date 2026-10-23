@@ -1,4 +1,4 @@
-# HP39/40 文件服务与格式
+# HP39/40 文件服务、Wire 上传与格式
 
 ## 浏览器文件服务
 
@@ -16,6 +16,20 @@ APLET、库、程序和笔记保持各自的 HP39 typed 封装。它通过原有
 APLET 内部的运行时依赖由原系统请求，用户需同时选入其配套库；预检的引用
 检查针对目录文件，不把封装识别提升为内部对象解析。
 
+需要更快安装二进制 aplet 和库时，在 **计算器传输菜单** 中改选
+**HP39/40 (Wire) — 快速上传**，仍选择同一个完整 ZIP，再点击 **通过 Wire 上传**。
+浏览器先上传库；对当前显示的每一个文件，在计算器选择
+**RECV → HP39/40 (Wire)**。一个文件收到最后的结束确认后，浏览器才会等待下一个
+文件的 RECV。目录仅用于本机预检和选取原包内容，不作为 Wire 对象发送；
+对象原始字节不会转换或改写。此模式发送所选包中的所有对象，不能像 Disk drive
+那样只在计算器目录中选一个 aplet 并按需索取依赖。
+
+Wire 当前只开放二进制 `B/C/D/H` 对象上传；ASCII 文件请使用 Disk drive。
+实际原版系统见证覆盖 `B` aplet 和 `H` 库，`C/D` 的格式准入与协议单元测试
+不替代它们各自的原版对象运行验证。Wire 上传取消后停止发送后续字节；若计算器
+仍停在 RECV，请按计算器 **ON** 退出再试。已经完成的文件仍在计算器中。
+当前没有验证向计算器发送 CAN 的远程取消流程，因此界面直接给出这个恢复步骤。
+
 反向传输使用 **接收计算器文件**，然后在计算器选择 **SEND → Disk drive…**。
 每个文件只在完整 EOF、事务结束及最终 ACK 写入成功后出现下载按钮。
 服务持续运行，可响应后续目录/对象请求；完成后点击 **停止文件服务**。
@@ -31,7 +45,9 @@ APLET 内部的运行时依赖由原系统请求，用户需同时选入其配�
 | HP39g+ USB，Disk drive… | 主机 Kermit server / 计算器 client | 原版 D1.55 目录、APLET 和依赖库上传、SEND 回收与文件比较 |
 | HP39gs / HP40gs USB 或串口，Disk drive… | 同一有限内存服务器 | 协议与适配器回归；各机型仍需完整 ROM 启动见证 |
 | HP39g+ 串口 | 不开放文件能力 | 此机型没有 39gs/40gs 的有线串口；保留原始数据诊断 |
-| HP39/40 (Wire) | 独立的旧传输路径 | 当前文件服务使用 Disk drive，不把两者混同 |
+| HP39g+ USB，HP39/40 (Wire) | 原生分块上传，逐块及 EOT 确认 | 原版 D1.55 在 Normal 下安装原 ZIP 的库与 aplet，再经 Disk drive SEND 回收核对 |
+| HP39gs / HP40gs USB 或串口，HP39/40 (Wire) | 同一有界发送器 | 尚无各机型完整原 ROM 或真机端到端见证 |
+| HP39/40 (Wire) 下载 | 尚未开放 | 从计算器下载仍选择 SEND → Disk drive… |
 
 每次选择最多 16 个对象及其两个目录文件、总共 8 MiB、每文件最多 2 MiB。自动目录计入总字节
 上限。主机 basename 限制为 64 个 ASCII 字节，拒绝
@@ -107,7 +123,7 @@ HP 官方教程要求保留 aplet 配套目录，尤其不能随意更名 `HP39D
 与 `HP39/40` 的另一路传输入口。[3] hpclang 的原始 USB 安装流程同样由
 计算器先取目录，再在用户选中 aplet 后请求 aplet 和配套库。[9]
 
-本轮用未修改的 HP39g+ D1.55 完整镜像，从冷启动原始 APLET 菜单走
+r17 用未修改的 HP39g+ D1.55 完整镜像，从冷启动原始 APLET 菜单走
 RECV → Disk drive，依次完成四个真实请求：
 
 | 文件 | 字节数 | 作用 |
@@ -154,7 +170,7 @@ USB 连接，最后停止服务、断开 USB，物理按 HOME、`1+1`、ENTER，
 保存输入/结果、生产资产、私有报告和截图的哈希，不包含 ROM、会话或原始
 协议捕获。
 
-后续 ZIP 验证直接选择用户原始发布压缩包，仍完成上述 8,862 字节对象上传和
+r18 ZIP 验证直接选择用户原始发布压缩包，仍完成上述 8,862 字节对象上传和
 三文件回收；所有返回文件也与该包的 `test/` 对照导出逐字节相同。点击
 **下载完整包**后，以独立的 Python ZIP 读取器核对 CRC、目录入口和全部返回字节。
 在无既有 RAM 或保存状态的新浏览器上下文中，同一完整 ROM 冷启动，原版 RECV
@@ -180,6 +196,114 @@ CHROMIUM=/path/to/chrome python3 tools/verify-hp39-file-browser.py \
 工具通过普通页面控件操作，旁观 Worker 状态；不会注入 ACK、对象或键盘
 消息。它拒绝覆盖输出目录，并在结束时再次核对生产资产和输入文件未变化。
 这是一项功能验证，执行时长不能当作模拟性能或实机传输速度基准。
+
+## r19：正常速度的等待、进度与 Wire 路径
+
+本轮先在此前发布的 `5fb9626e…` WASM 和 r18 前端上复现用户的操作，
+使用完整原 ROM 冷启动、真实 ZIP 文件选择器和默认 **Normal (1×)**。
+从 Disk drive 目录选中 aplet 到 8,862 字节对象全部确认，实测等待
+**108.147 秒**。这次没有停机：guest ticks 随墙钟前进，最终安装成功。
+但旧界面直到文件累计超过 4 KiB 才更新；首个 aplet 的第一次进度
+出现前有 **40.069 秒**没有新进度，小于 4 KiB 的库更没有中间更新。
+连接弹窗关闭后也没有持续显示状态。这些因素共同造成“像冻结”的体验。
+
+现在传输状态会显示在计算器上方，连接弹窗内外都能看到当前文件、精确字节、
+已耗时和等待提示；变化中的进度最多每 250 ms 通知一次，最终状态立即通知。
+接收文件还不知道总长时显示已收到的字节。墙钟只用于这些显示和消息限频，
+协议超时仍按 guest ticks 计算；没有提高默认速度或添加额外核心执行预算。
+
+### Disk drive 的等待放大
+
+同一目录检查点、同一 1,024 quantum 普通 slice 的诊断，记录到七次
+重传前各约 7.9 秒的 peer NAK 等待，合计约 55.5 个 guest 秒。
+这说明等待并非全部来自 CPU 执行太慢；第一处包或确认丢失的固件/USB
+内部原因仍未完全定位，不能把缩短重试说成根治全部丢包。
+
+HP39 文件服务器的发送侧现在启用有界自适应超时：从一 guest 秒开始，
+用未重传包的往返时间和波动估计后续超时；重传后指数退避，上限为协商值，
+重传包或隐式确认不会污染往返时间样本。HP48/49 默认策略和 HP39 接收侧
+不变。Kermit 官方文档也区分动态超时与包间暂停。[12]
+
+诊断中保留了所有候选，未挑选或删除失败样本：
+
+| 同一目录检查点实验 | 对象确认所需 guest 秒 | 重传次数 | 处理 |
+| --- | ---: | ---: | --- |
+| 原策略 | 95.258 | 7 | 保留基线 |
+| 每个完整包回复前暂停 50 ms | 265.925 | 28 | 拒绝，未进入产品 |
+| USB OUT 片段之间间隔 1 ms | 110.175 | 9 | 拒绝，未进入产品 |
+| 一秒起始超时与退避 | 50.008 | 9 | 支持采用有界发送超时策略 |
+
+这些是固定 guest 状态的诊断结果，**不是墙钟速度比较**。最后一行的实验
+采用固定一秒基值，产品进一步加入干净 ACK 的往返时间估计，并以协商超时为上限；
+不能把该实验的 50.008 秒标为最终产品的 Normal 实测。
+
+**最终生产验收**另以 `eb79a3bc…` WASM 和最终前端，从完整原 ROM 冷启动，
+仍经真实文件选择器选择原 ZIP，走原来的 Disk drive 菜单。在其他代理暂停
+重任务的窗口内，选中 aplet 到两个对象共 8,862 字节全部确认的墙钟时间为
+**49.887 秒**；此前发布版本的对应样本是 108.147 秒。
+首个 aplet 进度在发送开始后 **0.388 秒**出现，aplet 和小库分别有 96、17 次
+中间进度通知。截图确认连接弹窗关闭后仍显示文件、进度条、字节和已耗时；
+安装后 APLET 列表出现 `H39 ROM USB`，HOME 的 `1+1` 为 `2`。
+所有速度配置均为 1，没有页面/Worker 错误或诊断停机，运行前后资产哈希不变。
+这是单次最终产品交互验证，不把它与诊断 guest 秒混用，也不声称稳定的 CPU
+提速倍数。完整阶段与资产身份保存在 [r19 传输证据](evidence/hp39-transfer-r19.json)。
+
+### 原生 Wire 上传的完整验证
+
+`web/hp39-wire.js` 是原创、有限重试的发送器。原版 39g+ 的 RECV → Wire
+请求字符为 `D`，实际接受 128 / 1,024 字节分块及 HP 的反射式 CRC-16
+（多项式 `0x8408`、初值零、发送时高字节在前）。块序号和反码、逐块 ACK、
+最后 EOT 的 ACK 均由原版系统生成。NAK 校验和模式和 `C` CRC 模式另有
+独立单元测试；此处原 ROM 见证只证明实际请求的 `D` 路径。作者的 HP
+XMODEM 文档提供握手含义的交叉参考，其 48GX/49G 结果不代替我们的 39g+ 见证。[13]
+
+在其他三个代理暂停编译和原 ROM 运行的协调隔离窗口内，真实生产页面从同一
+完整 ROM 冷启动，默认 Normal，直接选择用户原始 ZIP。先传 1,489 字节库，
+再传 7,373 字节 aplet：
+
+| Normal 浏览器窗口 | 实测墙钟秒 | 计时边界 |
+| --- | ---: | --- |
+| Wire 库上传 | 1.043 | 确认该文件的 RECV 到最终 ACK 被页面观察到 |
+| Wire aplet 上传 | 9.634 | 同上 |
+| 两对象完整安装上传 | **13.138** | 首次确认库的 RECV 到两对象均确认，包含再次选择 RECV 的 UI 操作 |
+| 后续 Disk drive 回传并验证 ZIP | **184.716** | 点击计算器 SEND 到实际下载 ZIP 的字节检查完成 |
+
+这是一次指定环境的交互计时样本，含 UI 操作及观察开销，不是物理计算器速度
+或普遍吞吐保证；协调暂停其他代理重任务也不等于独占整个宿主系统。
+它与旧 Disk drive 基线使用不同菜单/协议，不能宣称是 CPU 提速倍数。
+**Wire 加快的是上传；当前 stock SEND → Disk drive 回传仍明显较慢。**
+
+此次回传确认整份 aplet 与原始输入逐字节相同；库的 1,468 字节对象体相同，
+原系统仍按 `LIB275L` 别名导出，得到原来那份 1,484 字节库封装。实际下载
+ZIP 包含三份原系统返回文件及补齐的 `HP39DIR.CUR`，CRC 和每个文件字节
+由独立 Python ZIP 读取器检查。APLET 列表显示 `H39 ROM USB`，最后 HOME
+的 `1+1` 显示 `2`；没有运行 ROM stream aplet，没有对象注入、原厂代码改写、
+页面错误或 Worker 错误。
+
+完整 Wire 往返对应中间生产 WASM `25ceecb4…`，原始报告和所有相关资产哈希
+单独保存在 [r19 传输证据](evidence/hp39-transfer-r19.json)。后续最终生产构建
+不能冒用这份报告的版本身份；上述最终 Disk drive 验证在该证据内另列。
+两次运行的 Worker 与七个 USB/传输模块具有相同哈希；WASM 和 UI bundle
+的不同身份仍分别保留。旧 r17/r18 证据原样保留。
+
+原版 **SEND → HP39/40 (Wire)** 并非当前发送器的反向操作：诊断中它先发送
+`HP39BinI` 协商对象，再反转方向等待 `D`。本轮没有实现这一双向会话，
+因此不提供 Wire 下载，也不声称完整替代 Conn3x 的所有操作。
+浏览器内部 USB 也不等于桌面系统枚举的真实 USB 设备；此处没有实机 USB、
+外部 Conn3x、39gs 或 40gs 完整 ROM 的新增通过声明。
+
+复现 Normal 计时与完整回收：
+
+```sh
+CHROMIUM=/path/to/chrome python3 tools/probe-hp39-transfer-timing.py \
+  --rom /private/39g+.bin --archive /private/hp39gplus-romstream.zip \
+  --dist dist --expected-wasm <SHA-256-of-dist-orchard.wasm> \
+  --protocol wire --roundtrip --output /private/new-hp39-wire-result
+```
+
+改用 `--protocol disk` 可重放目录模式；去掉 `--roundtrip` 只验证上传、
+原版 APLET 列表与后续按键。工具旁观 Worker，验证所有速度配置始终为 1，
+并核对运行前后资产哈希；完整结果与心跳不因等待过久而删减。
 
 ## 39gs 完整 ROM 提取包
 
@@ -213,3 +337,5 @@ CHROMIUM=/path/to/chrome python3 tools/verify-hp39-file-browser.py \
 9. 用户 hpclang 项目：[HP39g+ 原始 USB 安装序列](https://github.com/maxmixalex/hpclang/blob/53856bc7/tests/e2e/sequences/hp39gplus-stock-usb-run.seq)，固定功能提交。用于核对菜单、客户端角色和按需依赖请求，不复制其协议实现。
 10. PKWARE：[APPNOTE 6.3.10](https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT)，ZIP 本地头、中央目录、CRC-32、stored 与 DEFLATE 方法的格式规范。
 11. WHATWG：[Compression Standard](https://compression.spec.whatwg.org/)，浏览器原生 `DecompressionStream('deflate-raw')` 接口。
+12. Kermit Project：[C-Kermit 10 Command Reference](https://www.kermitproject.org/ck10commandref.html)，`SET SEND TIMEOUT` 的动态超时与 `SET SEND PAUSE` 的包间暂停；本模块未复制 C-Kermit 实现。用户 hpclang 的 [stock USB 传输说明](https://github.com/maxmixalex/hpclang/blob/261dba7cc5b208828f7a907c2071d24c3b0d94ea/docs/development/stock-usb-transport.md) 提供候选设置，本轮按上表独立保留否定结果。
+13. xmodem-proto 作者：[0.9.0 协议说明](https://docs.rs/xmodem-proto/0.9.0/xmodem_proto/index.html)，HP 握手 `D`、标准 `C` 与 NAK 的区别；其自述仿真 49G/48GX 结果只作交叉参考，不构成 HP39 验证，也未复制其状态机实现。

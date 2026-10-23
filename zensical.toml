@@ -30,6 +30,7 @@ nav = [
     "development/usb.md",
     "development/virtual-link.md",
     "development/file-transfer.md",
+    "development/sd-cards.md",
     "development/stock-serial-validation.md",
     "development/infrared.md",
     "development/web.md",

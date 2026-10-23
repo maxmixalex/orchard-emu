@@ -73,6 +73,26 @@ function pair(payload,{partial=1000,dropAck=false,duplicate=false,damage=false}=
 for(const size of [0,1,63,64,65,4096,32768])pair(Uint8Array.from({length:size},(_,i)=>(i*73)&255),{partial:size%2?1:7});
 pair(Uint8Array.from({length:5000},(_,i)=>i&255),{dropAck:true,duplicate:true,damage:true});
 
+// HP39 sender recovery starts in one guest second and backs off after loss.
+// Acknowledgements of retried packets cannot inflate the next packet's RTT;
+// clean slow ACKs can. Other Kermit clients retain the negotiated timeout.
+for(const adaptiveSendTimeout of [false,true]){
+  const sent=[],s=new KermitSession({hz:1000,adaptiveSendTimeout,write:b=>{sent.push(b.slice());return b.length;}});
+  const peer=PARAMETERS.slice();peer[1]=42; // receiver advertises ten seconds
+  s.start({mode:'send',name:'A',bytes:bytes('first second')},0);
+  s.receive(packet(0,'Y',peer),100);s.poll(100);
+  assert.equal(s.deadline,adaptiveSendTimeout?1100:10100);
+  if(adaptiveSendTimeout){
+    s.poll(1100);s.poll(1101);assert.equal(s.retries,1);assert.equal(s.deadline,3100);
+    const before=s.baseTimeout;s.receive(packet(1,'Y'),3000);s.poll(3000);
+    assert.equal(s.baseTimeout,before,'Ignore ambiguous RTT after retransmission');
+    assert.equal(s.deadline,4000,'A new packet returns to the clean RTT estimate');
+    s.receive(packet(2,'Y'),3800);s.poll(3800);
+    assert(s.baseTimeout>1000&&s.baseTimeout<=10000,'A clean slower ACK adjusts the next packet timeout');
+  }else{s.poll(1100);assert.equal(sent.length,2,'Default clients must not acquire HP39 early retries');}
+  s.cancel();
+}
+
 // Lost final ACK: receiver lingers and re-ACKs B without redelivering a file.
 const received=[],out=[],s=new KermitSession({hz:1000,write:b=>{out.push(b.slice());return b.length;},file:f=>received.push(f)});
 s.start({mode:'receive'},0);

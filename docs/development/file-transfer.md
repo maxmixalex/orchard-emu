@@ -24,7 +24,7 @@ five operations and same-connection reuse. Raw serial diagnostics remain separat
 HP39 typed files and catalogs use the separate calculator-client workflow
 implemented by `web/hp39-transfer.js`; they never pass through the HP48/49
 object client. Physical USB, host OS enumeration, Conn3x/Conn4x
-interoperability, XMODEM, flash installation and complete remote file management
+interoperability, HP48/49 XMODEM, flash installation and complete remote file management
 remain separate gates.
 
 ## Protocol and limits
@@ -450,4 +450,63 @@ that downloaded package through stock RECV after a fresh cold boot in a separate
 browser context. The restored aplet and library total 8,857 bytes; their object
 bytes are preserved, and the APLET list shows `H39 ROM USB` again.
 See [HP39 files](hp39-files.md) for exact scope and the separate 39gs/40gs
-model-validation boundary. The older HP39/40 (Wire) entry is a different path.
+model-validation boundary.
+
+## HP39/40 native Wire upload and visible progress
+
+The Files panel now also offers **HP39/40 (Wire) — fast upload**. Select the same
+complete ZIP, choose **Upload through Wire**, and select **RECV → HP39/40 (Wire)**
+on the calculator for each displayed file. Libraries are sent first. The next
+file waits for a fresh receiver handshake, and an item is complete only after
+the final EOT ACK. This path uploads all selected binary objects; Disk drive
+remains the choice for calculator-side catalog selection and all downloads.
+Original catalog preflight, dependency references and input bytes are preserved.
+
+The new bounded `hp39-wire.js` sender accepts binary B/C/D/H typed files; actual
+stock-ROM acceptance here covers the original B aplet and H library. Original
+HP39g+ RECV requests HP CRC with `D` and acknowledges 128/1024-byte blocks.
+The full browser witness cold-boots the admitted D1.55 ROM, selects the original
+ZIP and runs at Normal (1×). From confirming RECV for the first library to both
+objects being acknowledged took **13.1376 seconds**, including selecting the
+second RECV. Other agents paused their heavy tasks for that window; this is a
+single host/UI timing sample, not a dedicated-host or physical-speed guarantee.
+
+The same stock calculator then returned its aplet, library and catalog through
+**SEND → Disk drive…**. The whole aplet is equal to the input; the library's
+1,468-byte body is equal and its stock `LIB275L` alias is preserved. An actual
+downloaded ZIP was checked independently for CRC and exact files. That reverse
+SEND/download/verification window still took **184.7162 seconds**: native Wire
+improves the upload path, not every transfer direction. APLET listing and the
+subsequent HOME `1+1=2` were visually checked. The full round trip is pinned to
+the intermediate `25ceecb4…` production WASM in the [r19 evidence](evidence/hp39-transfer-r19.json),
+with any final-build validation recorded separately.
+
+Current Wire cancellation stops host output. If the calculator remains in RECV,
+the UI tells the user to press calculator **ON** before retrying; already complete
+files remain installed. No unverified remote CAN cancellation is implied.
+Stock **SEND → Wire** begins a separate HP39BinI negotiation and reverses roles;
+that session is not implemented as a native download. This is therefore a useful
+internal upload workflow, not full Conn3x or desktop USB-device interoperability.
+
+Progress remains visible above the calculator while Connections is closed:
+current file, exact bytes, elapsed time and an idle hint. Updates are limited to
+one per 250 ms while bytes change; completion is immediate. Unknown receive
+totals still show received bytes. The previous 4 KiB-only threshold concealed
+40 seconds of progress in the reproduced old Normal upload and every intermediate
+update for its small library. HP39's Kermit sender additionally starts with a
+one-guest-second adaptive reply timeout, measures only clean ACK round trips and
+backs off on loss up to the negotiated timeout. HP48/49 defaults, HP39 receive
+timeouts and core execution budget are unchanged. The evidence keeps the old
+108.147-second Normal Disk drive upload, exact-state timeout experiments and
+rejected pacing candidates separate from actual final-source browser validation.
+
+The final `eb79a3bc…` production build then passed a separate cold original-ROM
+Normal Disk drive upload of the same ZIP. From selecting the aplet to both
+original objects being acknowledged took **49.8874 seconds**. The first aplet
+progress update arrived after **0.3884 seconds**, with 96 intermediate updates
+for the aplet and 17 for its small library. Screenshots confirm visible progress
+outside Connections, `H39 ROM USB` in the installed APLET list and HOME `1+1=2`.
+All recorded speed configurations are 1, no page/Worker errors or diagnostic stop
+occurred, and the recorded assets were unchanged during the run. This was another
+coordinated quiet window and a single interaction sample. Its final-build identity
+does not replace the earlier complete Wire/SEND/ZIP round-trip identity.

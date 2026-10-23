@@ -1,19 +1,59 @@
 // SPDX-License-Identifier: MIT
-import React,{useRef,useState} from 'react';
-import {Button,Group,Progress,Stack,Text,TextInput} from '@mantine/core';
+import React,{useEffect,useRef,useState} from 'react';
+import {Button,Group,NativeSelect,Progress,Stack,Text,TextInput} from '@mantine/core';
 import {useTranslation} from 'react-i18next';
 import {transferCapabilities} from './file-transfer.js';
 
 const size=n=>new Intl.NumberFormat(undefined,{maximumFractionDigits:1}).format(n/1024)+' KiB';
+const number=n=>new Intl.NumberFormat().format(Math.max(0,Math.floor(n||0)));
+export function TransferStatus({state,compact=false,onOpen}){
+  const {t}=useTranslation(),transfer=state.transfer,batch=state.uploadBatch;
+  const [wall,setWall]=useState(Date.now);
+  const active=Boolean(transfer?.active||batch?.active),moving=active&&transfer?.phase!=='serving';
+  useEffect(()=>{
+    setWall(Date.now());if(!moving)return;
+    const timer=setInterval(()=>setWall(Date.now()),1000);return()=>clearInterval(timer);
+  },[moving,transfer?.request,transfer?.name]);
+  const wireRecovery=transfer?.protocol==='hp39-wire'&&['cancelled','error'].includes(transfer.phase);
+  if(!transfer||compact&&(!active&&!['error','complete'].includes(transfer.phase)&&!wireRecovery))return null;
+  const complete=transfer.phase==='serving'&&transfer.hostedTotal>0&&transfer.hostedTransferred>=transfer.hostedTotal;
+  const elapsed=Math.max(0,Math.floor((wall-(transfer.fileStartedAt??transfer.startedAt??wall))/1000));
+  const idle=Math.max(0,Math.floor((wall-(transfer.progressAt??wall))/1000));
+  const total=batch?.active?batch.total:transfer.total,transferred=batch?.active?batch.transferred:transfer.transferred;
+  const progress=total?Math.min(100,100*(transferred||0)/total):0;
+  return <Stack gap={4} role="status" aria-live="polite" data-testid={compact?'transfer-summary':'transfer-status'}
+    style={compact?{padding:'6px 20px',background:'#eef7f3',flexShrink:0}:undefined}>
+    <Group justify="space-between" gap="xs" wrap="nowrap">
+      <Text size="sm" c={complete?'teal':undefined} style={{overflowWrap:'anywhere',minWidth:0}}>
+        {t(complete?'fileTransfer39Uploaded':transfer.protocol==='hp39-wire'&&transfer.phase==='negotiating'?'fileTransferWireNext':'transferPhase_'+transfer.phase)}{transfer.name&&transfer.phase!=='serving'?` · ${transfer.name}`:''}
+      </Text>
+      {compact&&<Button variant="subtle" size="compact-xs" onClick={onOpen} style={{flexShrink:0}}>{t('fileTransferDetails')}</Button>}
+    </Group>
+    {(compact||!batch)&&total>0&&<><Progress value={progress} aria-label={t('transferProgress')}/>
+      <Text size="xs" c="dimmed">{t('fileTransferBytes',{transferred:number(transferred),total:number(total)})}</Text></>}
+    {!total&&transfer.phase==='receiving'&&<Text size="xs" c="dimmed">{t('fileTransferReceivedBytes',{transferred:number(transferred)})}</Text>}
+    {!compact&&transfer.hostedTotal>0&&transfer.phase!=='serving'&&<Text size="xs" c="dimmed">
+      {t('fileTransfer39Overall',{completed:transfer.filesCompleted||0,count:transfer.filesTotal||0,
+        transferred:number(transfer.hostedTransferred),total:number(transfer.hostedTotal)})}
+    </Text>}
+    {moving&&<Text size="xs" c="dimmed" aria-live="off">{t('fileTransferElapsed',{seconds:elapsed})}
+      {idle>=5?' · '+t('fileTransferWaiting',{seconds:idle}):''}</Text>}
+    {transfer.error&&<Text size="sm" c="red" style={{overflowWrap:'anywhere'}}>{transfer.error}</Text>}
+    {wireRecovery&&<Text size="xs">{t('fileTransferWireRecovery')}</Text>}
+  </Stack>;
+}
 export function FileTransfer({controller,state,transport}){
   const {t}=useTranslation(),input=useRef(null),[files,setFiles]=useState([]),[name,setName]=useState('');
+  const [protocol,setProtocol]=useState(()=>state.transfer?.protocol==='hp39-wire'?'wire':'disk');
   const file=files[0]?.file,multiple=files.length>1,batch=state.uploadBatch;
   const transfer=state.transfer,active=Boolean(transfer?.active||batch?.active),connected=transport==='usb'?state.usbReady:state.serial;
   const capabilities=transferCapabilities(state.model.id,transport),supported=capabilities.send,hp39=capabilities.serve;
+  const wire=hp39&&protocol==='wire';
   const available=supported&&connected&&state.ready&&state.loaded&&!state.busy&&!state.stopped&&!active;
-  const progress=transfer?.total?Math.min(100,100*transfer.transferred/transfer.total):0;
   return <Stack gap="sm">
-    <Text size="sm" c="dimmed">{t(hp39?'fileTransfer39Help':!supported?'fileTransferUnavailable':transport==='serial'?'fileTransferSerialHelp':'fileTransferHelp')}</Text>
+    {hp39&&<NativeSelect label={t('fileTransferMode')} value={protocol} onChange={e=>setProtocol(e.currentTarget.value)} disabled={active}
+      data={[{value:'disk',label:t('fileTransferDisk')},{value:'wire',label:t('fileTransferWire')}]}/>}
+    <Text size="sm" c="dimmed">{t(wire?'fileTransferWireHelp':hp39?'fileTransfer39Help':!supported?'fileTransferUnavailable':transport==='serial'?'fileTransferSerialHelp':'fileTransferHelp')}</Text>
     {supported&&<>
       <Group align="end"><Button variant="default" disabled={active} onClick={()=>{input.current.value='';input.current.click();}}>{t('chooseTransferFile')}</Button>
         <Text size="sm" style={{overflowWrap:'anywhere',flex:1,minWidth:100}}>{multiple?t('selectedTransferFiles',{count:files.length}):file?`${file.name} (${size(file.size)})`:t('noTransferFile')}</Text></Group>
@@ -30,21 +70,17 @@ export function FileTransfer({controller,state,transport}){
           onClick={()=>setFiles(current=>current.filter((_,i)=>i!==index))}>{t('removeUploadFile')}</Button>
       </Group>)}</Stack>}
       {!hp39&&<TextInput label={t(multiple?'retrieveObjectName':'calculatorFileName')} value={name} onChange={e=>setName(e.currentTarget.value)} maxLength={64} disabled={active}/>}
-      <Group><Button disabled={!available||!file} onClick={()=>hp39?controller.startHp39Server(transport,files):multiple?controller.startUploadBatch(transport,files):controller.startTransfer('send',transport,{file,name})}>{t(hp39?'hostHp39Files':'uploadFile')}</Button>
-        {capabilities.receive&&<Button variant="light" disabled={!available} onClick={()=>controller.startTransfer('receive',transport)}>{t(hp39?'receiveHp39Files':'receiveFiles')}</Button>}
+      <Group><Button disabled={!available||!file} onClick={()=>hp39?controller.startHp39Server(transport,files,{protocol}):multiple?controller.startUploadBatch(transport,files):controller.startTransfer('send',transport,{file,name})}>{t(wire?'uploadHp39Wire':hp39?'hostHp39Files':'uploadFile')}</Button>
+        {capabilities.receive&&!wire&&<Button variant="light" disabled={!available} onClick={()=>controller.startTransfer('receive',transport)}>{t(hp39?'receiveHp39Files':'receiveFiles')}</Button>}
         {capabilities.get&&<Button variant="light" disabled={!available||!name.trim()} onClick={()=>controller.startTransfer('get',transport,{name})}>{t('getNamedFile')}</Button>}
-        {active&&<Button color="red" variant="light" onClick={()=>controller.cancelTransfer()}>{t(hp39?'stopHp39Server':'cancelTransfer')}</Button>}</Group>
+        {active&&<Button color="red" variant="light" onClick={()=>controller.cancelTransfer()}>{t(hp39&&!wire?'stopHp39Server':'cancelTransfer')}</Button>}</Group>
       {(capabilities.directory||capabilities.finish)&&<Group>
         {capabilities.directory&&<Button variant="subtle" disabled={!available} onClick={()=>controller.startTransfer('directory',transport)}>{t('listCalculatorFiles')}</Button>}
         {capabilities.finish&&<Button variant="subtle" disabled={!available} onClick={()=>controller.startTransfer('finish',transport)}>{t('finishCalculatorServer')}</Button>}
       </Group>}
       {!connected&&<Text size="xs" c="dimmed">{t('fileConnectFirst')}</Text>}
     </>}
-    {transfer&&<Stack gap={4} role="status" aria-live="polite">
-      <Text size="sm">{t('transferPhase_'+transfer.phase)}{!batch&&transfer.name?` · ${transfer.name}`:''}</Text>
-      {!batch&&transfer.total>0&&<><Progress value={progress} aria-label={t('transferProgress')}/><Text size="xs" c="dimmed">{size(transfer.transferred||0)} / {size(transfer.total)}</Text></>}
-      {transfer.error&&<Text size="sm" c="red" style={{overflowWrap:'anywhere'}}>{transfer.error}</Text>}
-    </Stack>}
+    <TransferStatus state={state}/>
     {batch&&<Stack gap="xs" data-testid="upload-batch">
       <Text size="sm">{t('uploadBatchProgress',{completed:batch.completed,count:batch.items.length})}</Text>
       <Progress value={batch.total?100*batch.transferred/batch.total:0} aria-label={t('transferProgress')}/>

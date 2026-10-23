@@ -1,6 +1,71 @@
 # Continuation handoff
 
-## Current continuation from d199afd (2026-10-23)
+## Current r19 continuation from eb1e18b (2026-10-23)
+
+The latest user report supplies four concrete targets: slow or apparently
+stalled HP39g+ reception, HP49g+ FILES failure, SD media on models with a slot,
+and the HP39gs reader's invisible progress / failed extraction. Three agents
+work on transfer/protocol, controller/FILES and reader/acquisition, with
+cross-reviews of the WASM media adapter, receiver and asynchronous saves.
+
+HP39g+ now has a direct Wire upload mode, using the stock `HP39/40 (Wire)`
+receiver over internal USB. Whole-package validation and library-first ordering
+precede the first send; each object still requires another stock RECV selection.
+The unchanged user ZIP completed both uploads in 13.138 seconds in one
+coordinated Normal-speed browser observation. Stock SEND then exported the
+aplet and library back for byte/body/alias verification and a ZIP download.
+That reverse Kermit leg took 184.716 seconds and is not advertised as fast.
+The precise assets, windows and limits belong to the transfer evidence; these
+times are not CPU benchmarks or physical-link claims. Transfer bytes and waiting
+time remain visible with the connection panel closed. Cancel stops the sender;
+if the calculator remains in RECV, the UI tells the user to press ON.
+
+HP49g+ FILES had two independent blockers: ordinary empty-slot SDIDAT access,
+then a stock read one word beyond the 512 KiB SRAM boundary. The HOME preset
+now declares the existing bank-1 mirror decode with unchanged physical
+capacity. Strict core defaults remain exact-range. The [SD implementation](sd-cards.md)
+adds bounded SDSC PIO, actual image reads/writes and complete media checkpoints.
+The stock OS creates TEST=42, copies it into port 3, recalls it and produces
+the corresponding FAT16 file; the exported bytes are independently parsed.
+HP48gII no-card FILES navigation is also covered. It has no physical SD slot.
+The HP50g controller profile does not substitute for its missing full-NOR
+acceptance.
+
+The browser creates a 16 MiB FAT16 card, imports 1–32 MiB raw images and exports
+or ejects inserted media. Version-3 manual sessions and binary IndexedDB
+autosaves include the full card. Legacy session versions 1/2 and small
+localStorage saves remain readable. Writer-token transactions, stale-generation
+checks and explicit replacement confirmation protect the previous complete
+save. No ROM is persisted. Invalid model creation also preserves the current
+card binding.
+
+Deliver the complete [HP39gs ROMstream v2 package](hp39gs-rom-dump.md), with
+source and a Windows receiver. It repairs the old reader instead of claiming
+unchanged reuse: visible progress, safe lower L1 slots and private L2 mapping,
+already-connected-cable handling, bounded control transfers and explicit exit
+paths. The final program reads all 64 blocks twice, returns to HOME for `1+1=2`
+and permits stock USB reuse on the original HP39g+ NOR and on a separate
+39gs 2.22 original-OS fixture. The latter combines the official updater with
+a generic boot fixture; it is not a full physical HP39gs capture or canonical
+39gs boot. The user's physical full-image run remains the next acquisition
+step, with no preliminary short probe requested.
+
+The CPU execution policy, Normal pacer, functional clock and physical-key dwell
+are unchanged. The withdrawn performance candidates remain disabled. This
+round advances controller, transfer, persistence and model-acquisition roadmap
+items; it does not claim faster HOME arithmetic or APLET execution.
+
+The current validation and public evidence separate final-core runs, the
+earlier Wire timing asset identity, original NORs, the derived 39gs fixture,
+and physical hardware still awaiting observation. Preserve failed trials and
+their causes. Do not publish ROMs, standalone SDK tools, private checkpoints,
+card images or private stock-OS LCD captures. The reader's own progress/error
+screens are a documented public example; its licensed calculator objects and
+corresponding sources belong only in the separate reader download.
+Verify the actual PR, merged Build, Pages deployment
+and live assets before reporting publication.
+
+## Previous continuation from d199afd (2026-10-23)
 
 The user supplied both earlier conversations, the existing hpclang HP39g+
 ROMstream package and a complete 2 MiB HP49g+ capture. The latest instruction

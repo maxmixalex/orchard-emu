@@ -1,0 +1,556 @@
+{
+  "schema": "orchard-release-validation-r19",
+  "validated_on": "2026-10-23",
+  "scope": "Final local artifact, fresh original-system workflows and regression gates. GitHub PR Build, merged Build, Pages deployment and live revision are separately observed and recorded in the release PR; a local pass is not a deployment claim.",
+  "main_base_revision": "eb1e18bca9ed2595e9d016859a4d92b3f53000fa",
+  "production_wasm": {
+    "bytes": 120723,
+    "sha256": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+    "experimental_physical_reads_enabled": false,
+    "quiet_loop_enabled": false,
+    "cold_rollback_candidate_enabled": false
+  },
+  "production_asset_count": 39,
+  "production_assets": {
+    "LICENSE": {
+      "bytes": 1077,
+      "sha256": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f"
+    },
+    "README.txt": {
+      "bytes": 3009,
+      "sha256": "333ef03dc75d8a7564f076c24494322a1a7218cdcc775b6a76f1a02483a43fbd"
+    },
+    "calculator.css": {
+      "bytes": 244680,
+      "sha256": "bf13f9ec0840a54132650be17ffcd60c250b390c20aeb8a8606d0d7211f3f71a"
+    },
+    "calculator.js": {
+      "bytes": 661193,
+      "sha256": "951ad5dd0b5a7e1499281d01491673c228df7cb5b06883dae45cf38c3f8657ed"
+    },
+    "catalog.js": {
+      "bytes": 1428,
+      "sha256": "42dd61ebc3f95f88048a75a76ebf19fe7bbb8e3057445bfc799da7eab56f8875"
+    },
+    "debug.html": {
+      "bytes": 7778,
+      "sha256": "cde0f1bfe988408c6341b9fe39e737676fd2a35001ed0e8d21aaa5cfe4aae24f"
+    },
+    "file-transfer.js": {
+      "bytes": 8195,
+      "sha256": "1e0af1f5c6a849c1bc749a0e25e790aa3c155fe971e46e6ccd220d26fcaa41bd"
+    },
+    "hp39-archive.js": {
+      "bytes": 9086,
+      "sha256": "d671f01d2333f52f7c3d3cebf699c85ab2e72d56d823da1de1a91ed28c621bb1"
+    },
+    "hp39-files.js": {
+      "bytes": 8881,
+      "sha256": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b"
+    },
+    "hp39-transfer.js": {
+      "bytes": 10391,
+      "sha256": "a7ec8c0b53041d9365cdf3a64470301a3b060197ec245a774081148b5dc84716"
+    },
+    "hp39-wire.js": {
+      "bytes": 5257,
+      "sha256": "ac4406698535c384bccb745693c93fe79f77cea2b36b45afb8e927b2798107ea"
+    },
+    "hp48.js": {
+      "bytes": 5057,
+      "sha256": "60041c0c6695f433ceaa1f79e00a77103eba55ea527f88dfbe20e94e24801e50"
+    },
+    "index.html": {
+      "bytes": 386,
+      "sha256": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282"
+    },
+    "kermit.js": {
+      "bytes": 21065,
+      "sha256": "4539d26c37c91fd4555c85804876d34182038ad176a63a657988699a12748d57"
+    },
+    "licenses/frontend.txt": {
+      "bytes": 28034,
+      "sha256": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd"
+    },
+    "licenses/hp-calcs-svg/LICENSE.txt": {
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "licenses/hp-calcs-svg/NOTICE.txt": {
+      "bytes": 1280,
+      "sha256": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868"
+    },
+    "licenses/hp-calcs-svg/README.md": {
+      "bytes": 567,
+      "sha256": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c"
+    },
+    "lifecycle.js": {
+      "bytes": 1258,
+      "sha256": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013"
+    },
+    "main.js": {
+      "bytes": 12914,
+      "sha256": "3c4f3be40bd1944cef23a37be452765e951ba1e04db40c813d9d795ce194b07d"
+    },
+    "orchard.wasm": {
+      "bytes": 120723,
+      "sha256": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f"
+    },
+    "pacing.js": {
+      "bytes": 1274,
+      "sha256": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952"
+    },
+    "preferences.js": {
+      "bytes": 6848,
+      "sha256": "073c0d07c2e7deac6b607b00f65bf67866d7234285dcafc685942ca62bfdc8af"
+    },
+    "sd-card.js": {
+      "bytes": 2543,
+      "sha256": "d364546b1353b5986d4d6e1b496b0b0c92ce76ffaa356813d6c4fca9b5b2daf6"
+    },
+    "serve.mjs": {
+      "bytes": 1689,
+      "sha256": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7"
+    },
+    "session.js": {
+      "bytes": 2491,
+      "sha256": "e19f3b64aa5d61e2505d38aac38849bda295361bfa55f05fa6aa325864319de5"
+    },
+    "skin.js": {
+      "bytes": 5232,
+      "sha256": "94c541faa00c201e986aa00b0032f2fb90b59ea276fb9ccc017f8da3c1a82102"
+    },
+    "skins/hp39gplus.svg": {
+      "bytes": 117738,
+      "sha256": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26"
+    },
+    "skins/hp39gs.svg": {
+      "bytes": 117582,
+      "sha256": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458"
+    },
+    "skins/hp40gs.svg": {
+      "bytes": 116791,
+      "sha256": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2"
+    },
+    "skins/hp48gii.svg": {
+      "bytes": 160533,
+      "sha256": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f"
+    },
+    "skins/hp49gplus.svg": {
+      "bytes": 160313,
+      "sha256": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71"
+    },
+    "skins/hp50g-blue.svg": {
+      "bytes": 160256,
+      "sha256": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e"
+    },
+    "skins/hp50g.svg": {
+      "bytes": 159981,
+      "sha256": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433"
+    },
+    "skins/manifest.json": {
+      "bytes": 98457,
+      "sha256": "0f5a784541d7bd9a6cfe0956b7640880e511f576c1bed06bbb85c50cfec8644d"
+    },
+    "style.css": {
+      "bytes": 10997,
+      "sha256": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86"
+    },
+    "task-scheduler.js": {
+      "bytes": 2145,
+      "sha256": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7"
+    },
+    "virtual-usb.js": {
+      "bytes": 7099,
+      "sha256": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373"
+    },
+    "worker.js": {
+      "bytes": 17688,
+      "sha256": "73b0c4eec19703194138f726567bc455aadc5fd1208f088a5b85be408eb5a21f"
+    }
+  },
+  "unchanged_cpu_and_normal_pacer_sources": {
+    "src/cpu.c": "a743894494e43e8537a2d8dbdcdc058917dbf5ba8561230e72c7ffcd272c4fe0",
+    "src/thumb.c": "a61494ca691c83a83e0453bfb683feae1a897bcd67f3cf5484c5a79269a4cbcc",
+    "src/mmu.c": "a0f79da446162b996e212d10a144edd5243b61266f1dbb2ef810e5a5640184aa",
+    "src/bus.c": "c6ddad9928bbdf956b2b1e4ceb2ffedc692a8913496827e2d43a65701fd868c5",
+    "web/pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952"
+  },
+  "physical_key_dwell_changed": false,
+  "emulator_cpu_speedup_claim": false,
+  "native_and_static_analysis": {
+    "schema": "orchard-core-final-gates-r19-v1",
+    "wasm_sha256": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+    "sd_evidence_source_identities_current": true,
+    "compiler": "Ubuntu clang 18.1.3",
+    "main_native_build": {
+      "passed": true,
+      "log_sha256": "84a546af463ce068b66648226ab95afedc6637892bf2d351943a0816264890a4"
+    },
+    "native": {
+      "release": {
+        "tests": 16,
+        "failed": 0,
+        "seconds": 7.89,
+        "log_sha256": "dd0fec9d52f9303dceeda1b12348785d175391bf61360b896a018ae7ac236ec6"
+      },
+      "reference": {
+        "tests": 16,
+        "failed": 0,
+        "seconds": 7.88,
+        "log_sha256": "8825c305aaf7d8568f2864fcda09e4745fd352a8893b7e673006495f0e1386be"
+      },
+      "sanitize": {
+        "tests": 16,
+        "failed": 0,
+        "seconds": 41.06,
+        "log_sha256": "fea91a4790f5ceeff57ce589d6004f075d8dacfca6f6bfecf88c38df68be0503",
+        "asan_options": "detect_leaks=1:halt_on_error=1",
+        "ubsan_options": "halt_on_error=1:print_stacktrace=1",
+        "environment": "Approved unsandboxed local execution; executable mode repaired within same process; earlier sandbox/permission failures retained."
+      }
+    },
+    "static_analysis": {
+      "sources": 41,
+      "reports": 41,
+      "diagnostics": 0,
+      "log": "build-r19/gates/r19-final-analyze.log",
+      "sha256": "6f99b3f3499f33b1f845381724770f3438bf3051fcf29e923dd4d45354392d30",
+      "source_sha256": {
+        "src/adc.c": "d66e9ead11ee9c182010cb2274a4e1ac22555731b19dc5524c9269eca9ee305e",
+        "src/bus.c": "c6ddad9928bbdf956b2b1e4ceb2ffedc692a8913496827e2d43a65701fd868c5",
+        "src/checkpoint.c": "cff1f463889544546ee369cd5ed49c16cd27d4d50e10192d6fec268719dd0262",
+        "src/cpu.c": "a743894494e43e8537a2d8dbdcdc058917dbf5ba8561230e72c7ffcd272c4fe0",
+        "src/gpio.c": "9a69cdac1ba8e6e5614b6c98f508e180a8640dd9716f719345cc73323bd73183",
+        "src/interrupt.c": "afd5a1f7e5b33c9e0e81ed3280b298a87befc596f428294aaebe26c83a6ad732",
+        "src/keyboard.c": "1ef3172d77549349f872d18587a90857543ffd991563340f418654c5852fbae1",
+        "src/lcd.c": "5381691535feff023a83ada867b1eeb85c1eded3347cf9c8a8787cdf598da0eb",
+        "src/machine.c": "fc5b06cd0b7846ff13eecee0f955377d1a08defb1f1eed08adca681824490d76",
+        "src/mmu.c": "a0f79da446162b996e212d10a144edd5243b61266f1dbb2ef810e5a5640184aa",
+        "src/nor.c": "082080cc3e2476a4cb38dc3051a972b4085a89f259070097006c05eff523ac62",
+        "src/rtc.c": "71390036072e4b35d61728eb88b21b36bf8b214ff4b8a413a027033e0a97f026",
+        "src/scheduler.c": "5399b3c4fe0edf36cc9434679aca7ee0c12b8dfbf4b2ff3383bf7fa6dc8c7ddb",
+        "src/sdi.c": "42f8d4d09eb1e4b4c73ee6161153211323daa6882a2560eea0066cdfe704f9c9",
+        "src/soc.c": "83bd240d8989a61bd9c4e7ab09009f1f417a07b19d133939cf38a40dc4038468",
+        "src/sram.c": "a5c7f61524389155f93053f7a398c93333dd79ef07dcbc5773a0a6169ec2f582",
+        "src/thumb.c": "a61494ca691c83a83e0453bfb683feae1a897bcd67f3cf5484c5a79269a4cbcc",
+        "src/usb.c": "b792a08459cb9274ae88269a0155bf29bbd6b41266aa6a3139f419b51cd76dd3",
+        "src/watchdog.c": "02627d413523e4feb6b392c2dea372e2ce5e903002843c030c42303cc8ee49ee",
+        "app/main.c": "6719b1e5dae8ee0a3644ecbd608f94587c43b278f4b97e27d5700c6c061d9141",
+        "tests/arm-block-profile.c": "4f8e061eddd76394f76dad2ed690e771cb8596c5f3a57f4a6ca975867a973ab8",
+        "tests/checkpoint.c": "61f1b8549508a9c7bb3c014de532b9f092157069ef1d31b892dfc8b284934c6b",
+        "tests/clock-domains.c": "a519a2f4f0303dd7f5eac654e515b00c274dcd83191d34253454cabbb9871da6",
+        "tests/cpu-transactions.c": "db4af2d04f6347eec93c4257f30948ed3484803653bf5d9617082a6105b321d5",
+        "tests/execution.c": "df71572ebf119bfbbc0d539f1b757b00c1aee618aa0e1770ed4db6969309e54b",
+        "tests/lcd-adc.c": "a4dfa28101a1765aa2aad14d25a56638f468782dbd2bf9457606ffbfa7d7163a",
+        "tests/lcd-input.c": "91c923673e8ebee1da48018b03c17dcc0fb806a14790eef5bddaa0b9637a0098",
+        "tests/memory.c": "687286d00d77504542674784e22bbc40a812a5f3f1b0fad5bca39b1bfb768c8f",
+        "tests/nor-bus.c": "3d7b5f3c55cd099c304ff2c8fc98af41661254b43e2d29b58a8a6ec33a65ef5d",
+        "tests/performance.c": "35c12c9b13c8e0faaa5ba3a91a4e75dfca59fa1cb6db86349f6e318e2e194ce3",
+        "tests/physical-read.c": "f5e4eea28b6ee1fb653873e54fa6f630e9855eee4a9637b52d095606d25c41ee",
+        "tests/regression.c": "2749b3cf8465d4f0cbe22bdd345cce008b5e6b329b8a6d5f0e5c74bf053dffb4",
+        "tests/scheduler.c": "002c4fd4630fe21f154e13c8bae7758ca53644ffe15b68c1133232b6e58d56d8",
+        "tests/sdi.c": "41baa226335197f7b95126c67291c421f8c5ba32db7078528c54c6921defac04",
+        "tests/segments-nor.c": "8aab8e7ee745eb83ea63e92868fe84f2f57087c26445d6bac2fbd3ec3f82f01a",
+        "tests/usb.c": "41cf74d9e115ec69ffad09759511b220c08af3a53367a8596bd73407f7a4c09f",
+        "tools/probe-gpio-window.c": "fbb6eb997cac72e80109d3264230dcfd62ded175fc6e0b55c1f735a7fd58a040",
+        "tools/usb-session.c": "7f322526d15d3257966cd651a72f6d844c48310957faa0f7abb1a14a6e92d782",
+        "tools/cpu-oracle.c": "bd340791dc9ddcc3cc31d360fe403731de1db4873b07c0adf0101d987c41c6ba",
+        "tools/checkpoint-replay.c": "04681c234c082b30d0c90884425658c77d1c09ad89b6087bf253d38e4f0a31ff",
+        "tools/cpu-throughput.c": "f9c99dc8ce493cb5b98d4f1b4ac1fe1a587b2ed3a97aef8383f4c263e5bc9899"
+      }
+    }
+  },
+  "native_wasm": {
+    "default_assertions_per_host": 1151590,
+    "functional_clock_assertions_per_host": 32949,
+    "experimental_wasm_only_assertions_excluded_from_default_total": 217824,
+    "sdi_assertions_per_host": 12566,
+    "checkpoint_assertions_per_host": 1129,
+    "log_sha256": "059a9a52a1e8f870157d8b6de7408efdc36cd0127506798137f06efcf8e18222"
+  },
+  "independent_cpu_differential": {
+    "schema": "orchard-cpu-differential-v1",
+    "unicorn": "2.1.4",
+    "cpu_model": "TI925T",
+    "target_scope": "defined shared ARMv4T instruction subset",
+    "seed": "0x9202410",
+    "samples": 1000,
+    "cases": 17075,
+    "transport_rejections": 12,
+    "groups": {
+      "arm-alu-0": 1267,
+      "arm-alu-1": 1389,
+      "arm-alu-2": 1344,
+      "arm-block": 1000,
+      "arm-branch": 1000,
+      "arm-half-signed": 1500,
+      "arm-memory": 1000,
+      "arm-swap": 500,
+      "branch-exchange": 60,
+      "multiply": 1000,
+      "pc-immediate": 15,
+      "thumb-alu": 2000,
+      "thumb-block": 1000,
+      "thumb-branch": 1000,
+      "thumb-memory": 1500,
+      "thumb-shift-immediate": 1000,
+      "thumb-stack": 500
+    },
+    "corpus_sha256": "85710d4d9963872cb74fa052ae982ecccb6f31611e3b16e1ed854ee94bb4c81f",
+    "native_sha256": "b8040f11b65e510af874505a61965b755a231a1b8b598082630ffb5fcd353736",
+    "test_wasm_sha256": "6b8e0b4317634a4c4ca354c40bb75ce7dd125f47c1c0085fd163029dacbe2af7",
+    "native_wasm_equal": true,
+    "unicorn_equal": true,
+    "mismatches": 0,
+    "skipped": 0,
+    "arm920t_full_conformance": false,
+    "firmware_used": false
+  },
+  "command_gates": {
+    "build": {
+      "passed": true,
+      "private_log_sha256": "dba1eaff7ebc2bd83a22e0454182ae53a71b7c75c6235dd2efe9e364a9035d0e"
+    },
+    "check": {
+      "passed": true,
+      "private_log_sha256": "71407334b1704fdc2983d42a1c958709aea0a7d5a225a37787e680a77b1ccbb1"
+    },
+    "tools": {
+      "passed": true,
+      "private_log_sha256": "11248b36645716c4b3c2e3b8557ad33e14e3879d7241acf7f65b5adbb19402cb"
+    },
+    "trace": {
+      "passed": true,
+      "private_log_sha256": "18146752ad133a3b0638b35fa6a2dc598208d9b4ca0ade2b3ea1b1f1dec68de3"
+    },
+    "web": {
+      "passed": true,
+      "private_log_sha256": "b56f4817a8d6a285db62436d7904097a356507535bff682c5030798c5310a04c"
+    },
+    "skins": {
+      "passed": true,
+      "private_log_sha256": "4ad1dc5298414ca062a9f485d5ed574d6644a847db72ac94ef9a385b460cec81"
+    },
+    "calculator": {
+      "passed": true,
+      "private_log_sha256": "12a5f564fb3e0ee9bd737b8864bfb578ce0ba36dc9e65ab45991a3b702bd0c41"
+    },
+    "pages": {
+      "passed": true,
+      "private_log_sha256": "46112022d81212c6031e6584d4ecf4ae97ee1001733dfd849d9e469b57d542e0"
+    },
+    "timer-receiver": {
+      "passed": true,
+      "private_log_sha256": "cd45eebe19bb6dcc8578da44676f086482f00851d5a7b6be410283f46a02271a"
+    },
+    "wasm": {
+      "passed": true,
+      "private_log_sha256": "059a9a52a1e8f870157d8b6de7408efdc36cd0127506798137f06efcf8e18222"
+    },
+    "host": {
+      "passed": true,
+      "private_log_sha256": "b8e1c71e97f37b7f5089bdaf61d9fd0aedf451b6b505b0e4b4277f4cf25574e2"
+    },
+    "host-build": {
+      "passed": true,
+      "private_log_sha256": "2ed7827113910d1c9e55e980e66e9713f02ec48dee94b5932f6b740d3eab897e"
+    },
+    "host-package": {
+      "passed": true,
+      "private_log_sha256": "b8e1c71e97f37b7f5089bdaf61d9fd0aedf451b6b505b0e4b4277f4cf25574e2"
+    },
+    "oracle-build": {
+      "passed": true,
+      "private_log_sha256": "108ff85821b3f2c2bb85d8ff22bd061fc58c919042129b5dd43a8b6ab8b02f22"
+    },
+    "oracle": {
+      "passed": true,
+      "private_log_sha256": "2fe7000c6bfbe28d84150e40bf72f7236314368d4406c1efc40b7219883f769c"
+    }
+  },
+  "original_hp49_production_browser_sd": {
+    "passed": true,
+    "performance_sample": false,
+    "rom_ram_patches": false,
+    "browser_version": "156.0.8078.47",
+    "model": {
+      "id": 5,
+      "name": "hp49gplus",
+      "width": 131,
+      "height": 80,
+      "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab"
+    },
+    "stages": [
+      "cold-boot-and-empty-slot-files",
+      "create-card-and-stock-files",
+      "stock-file-copy-to-card-and-recall",
+      "export-image-and-complete-session",
+      "automatic-save-with-media-and-reload",
+      "read-only-import"
+    ],
+    "stock_file": {
+      "name": "TEST",
+      "bytes": 15,
+      "sha256": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42"
+    },
+    "session": {
+      "schema": 1,
+      "model": 5,
+      "romHash": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "preset": "hp49-home",
+      "frameView": 1,
+      "stateHash": "db3f7dac570228b6020a45b0bee3abca0290812052a60d115fa64906511a42ac",
+      "checkpoint_version": 3,
+      "checkpoint_bytes": 17310431,
+      "file_sha256": "122763ecfd780c2e41384858456dc9ca59d824b5414ff37c5ddb3364ea560aa9"
+    },
+    "automatic_save": {
+      "bytes": 17310656,
+      "model": 5,
+      "version": 2
+    },
+    "manual_session_media_exact": true,
+    "automatic_session_media_exact": true,
+    "read_only_import": {
+      "bytes": 16777216,
+      "present": true,
+      "writeProtected": true,
+      "dirty": false,
+      "cardState": 0,
+      "lastCommand": 7,
+      "commands": 1393,
+      "readBlocks": 345,
+      "writtenBlocks": 11
+    },
+    "card_image_sha256": "24c38520b6f0906fe01675dab37f83fd53fabced8995323eae36beb99914fe88",
+    "page_errors": [],
+    "private_report_sha256": "b317a2f181f5319d88d4120bf08921a52499c27868956c759b46c26e747d2ae0",
+    "tool": "tools/probe-sd-browser.py",
+    "tool_sha256": "c821218230b7516cd0f79e4acd3f61e532401171a9c82dee429df182a6b78fd2",
+    "production_wasm_sha256": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+    "whole_assets_equal_before_after": true,
+    "stock_keys_only": true,
+    "manual_review": [
+      "FILES lists TEST INTG 15",
+      "HOME shows recalled 42",
+      "390px SD modal is contained and readable"
+    ],
+    "screenshots_sha256": {
+      "files-no-card.png": "fdf7d9b3e411c10a2fc73c871c78e767e274379f177d709293664e463718df3c",
+      "files-with-card.png": "a34a99d6b471d8d0dba0499be224560bbe52a065fec9656a48c5757cc07b1979",
+      "sd-mobile.png": "899380662c117e958678c77de9c46c88c83bc2d084ae502c3a5e881527545d49",
+      "sd-stock-recalled-42.png": "9322299429654b99e1e80e5337fa81ef497dd1a65564e47658146baefe76b93f",
+      "sd-stock-test-file.png": "62f29406165cd0ad54be01d2f492f5cc9ccb980e2bd50af0648d0353c2dff80a"
+    },
+    "raw_images_sessions_and_media_published": false
+  },
+  "related_evidence": {
+    "sd-workflows-r19.json": {
+      "bytes": 20205,
+      "sha256": "5874efa7352c09f37768615ee4a3336d8aecd188fec564adc5dc0f12172bc530"
+    },
+    "hp39-transfer-r19.json": {
+      "bytes": 25778,
+      "sha256": "2910033d92f97810363e0ed1ea45aafc1b9aa98365b2d11cf8a1b708a62e4b0d"
+    },
+    "frontend-validation-r19.json": {
+      "bytes": 8987,
+      "sha256": "035c9686b098c220553ca82ab3779988b2347845734b12a1a08e597555880f99"
+    },
+    "hp39-romstream-r19.json": {
+      "bytes": 26129,
+      "sha256": "206162650d00c66421e058cd94a5f50af25ead8473c8866d07d95ceda8b7d3d6"
+    }
+  },
+  "downloads": {
+    "hp39gs-rom-dump-v2.zip": {
+      "bytes": 1068508,
+      "sha256": "32d568fbfec7fc9d233e30d0c073e236a7d10eabb8ff7a39501d18678985ec28"
+    },
+    "hp39gs-rom-dump-v2.zip.sha256": {
+      "bytes": 89,
+      "sha256": "d869dec2845673e26d285f7c354f8b4109110237747d2a4821483daf0249f4d9"
+    }
+  },
+  "sd_browser_trials_preserved": [
+    {
+      "trial": 1,
+      "passed": false,
+      "private_report_sha256": "df0e326fb6cc901833c3f86fb6abc5f4ae05db26a3f21adabfd32db888c8ba85",
+      "wasm_sha256": "99985665d8b0b7eb68f62b44c50b09d17c27f739c41018a2db898686c517c535",
+      "disposition": "Before the declared SRAM mirror fix: stock FILES navigation exposed the real boundary data abort."
+    },
+    {
+      "trial": 2,
+      "passed": false,
+      "private_report_sha256": "3c774e00d8fb0003bfec308641fb465667443e727987ea1bbf240657f0a79087",
+      "wasm_sha256": "99985665d8b0b7eb68f62b44c50b09d17c27f739c41018a2db898686c517c535",
+      "disposition": "Before the declared SRAM mirror fix: ordinary FILES still exposed the boundary data abort."
+    },
+    {
+      "trial": 3,
+      "passed": false,
+      "private_report_sha256": "01a92f11b9626f2027a0c0e5ae2139e946592d2058eb9b8f231083ee41fc091e",
+      "wasm_sha256": "25ceecb48e5df39ba3ff574b2d9e65c59c9659b6a32c576c37d150ba736486e7",
+      "disposition": "A concurrent frontend build omitted the newly introduced Wire module; module-load failure, before the final asset freeze."
+    },
+    {
+      "trial": 4,
+      "passed": false,
+      "private_report_sha256": "6515e99670bd1180d1f2496e3a7c384a550e0078643301432a6b648c95925367",
+      "wasm_sha256": "25ceecb48e5df39ba3ff574b2d9e65c59c9659b6a32c576c37d150ba736486e7",
+      "disposition": "The harness selected the hidden ROM picker during reload before Open ROM became ready; completed SD/session stages retained."
+    },
+    {
+      "trial": 5,
+      "passed": false,
+      "private_report_sha256": "60d18e8a2f96e60e3158286b5d8a4c7459a70b3963004f6d22f6c09029e4d367",
+      "wasm_sha256": "669669cf870493b2cdfdd82b94de2f79cdbb10be464b06ed88fba7a19c56c499",
+      "disposition": "The harness used an unscoped Close locator while a confirmation dialog was fading; completed file/session stages retained."
+    },
+    {
+      "trial": 6,
+      "passed": true,
+      "private_report_sha256": "5f481d923728aaafca760c04c3b5afea20753570af34017dffcdc7af4f876e27",
+      "wasm_sha256": "669669cf870493b2cdfdd82b94de2f79cdbb10be464b06ed88fba7a19c56c499",
+      "disposition": "Full workflow passed on the preceding 669669 core. Its SD directory screenshot was sampled while the Filer was still drawing; final run waits for settling."
+    },
+    {
+      "trial": 7,
+      "passed": true,
+      "private_report_sha256": "b317a2f181f5319d88d4120bf08921a52499c27868956c759b46c26e747d2ae0",
+      "wasm_sha256": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+      "disposition": "Final frozen core and complete production assets: all six stages pass, displayed TEST entry and recalled 42 visually reviewed."
+    }
+  ],
+  "validation_environment_notes": [
+    "Earlier restricted execution denied LeakSanitizer proc traversal. Final ASan/UBSan/LSan run passes all 16 suites with detect_leaks=1 in the approved environment.",
+    "An earlier clock check used a stale native binary expecting checkpoint v2. The complete native build was rebuilt; final native and WASM clock checks pass v3.",
+    "A transient execution-service disconnect interrupted later evidence-writing commands. Previously completed logs and frozen artifact identities were checked after recovery; interrupted operations were resumed without relabeling failures."
+  ],
+  "boundaries": [
+    "HP49g+ HOME selects an explicit bank-1 SRAM mirror; physical capacity remains 512 KiB. Strict core defaults remain exact-range. This is not universal physical wiring proof.",
+    "Old checkpoints retain their original SRAM decode. New ROM startup or Restart applies the revised preset.",
+    "SDSC media is bounded to 1/2/4/8/16/32 MiB and PIO; SDHC/SDXC, DMA and physical SD timing calibration are not implemented.",
+    "HP48gII has no SD slot. HP50g controller tests do not establish original-ROM acceptance.",
+    "Wire timings use the independently identified earlier 25ceecb4 core; final Disk timing uses eb79a3bc. Reverse stock SEND remains Kermit and is still slower.",
+    "HP39gs reader execution uses original OS 2.22 in an explicitly derived boot fixture. Physical HP39gs full-NOR capture, native bootloader acceptance and Windows HID hardware I/O remain unverified.",
+    "No private firmware, checkpoint, user object, card image or stock-OS screenshot is included in this public record."
+  ],
+  "documentation": {
+    "passed": true,
+    "markdown_pages": 43,
+    "renderer": "Zensical 0.0.67",
+    "strict_render": true,
+    "render_issues": 0,
+    "assembled_production_assets": 39,
+    "all_assembled_assets_exact": true,
+    "revision_note": "This local precommit assembly uses the base HEAD. CI and final local assembly stamp the exact resulting commit; runtime assets are separately pinned above.",
+    "log_sha256": {
+      "docs-links": "ef7fc3c192dd7d83dbf3a732c708e1cd4119cef2f4cb652d20418c9def6b68bc",
+      "docs-render": "42a56c9aaa48185923b5171e53a2cfb4e653bd91af378c0f10a1cd7a2cf445f4",
+      "docs-assemble": "6ffd3f8fa43e6309a08373272840d86a27993cce27ec4a0e1e6d803853a521cc"
+    }
+  }
+}

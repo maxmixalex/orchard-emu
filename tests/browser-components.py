@@ -211,7 +211,20 @@ with sync_playwright() as p:
  assert page.get_by_role('button',name='提供所选文件',exact=True).is_disabled()
  page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:true,phase:"serving",transferred:12,total:42})}')
  assert page.get_by_text('文件服务就绪，请在计算器中选择文件',exact=True).count()==1
+ # The real calculator remains accessible with the connection dialog closed;
+ # slow sub-4-KiB transfers must keep a visible, exact progress summary there.
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:true,phase:"sending",name:"LIB275L.000",transferred:256,total:1489,hostedTransferred:7629,hostedTotal:8862,filesCompleted:1,filesTotal:2})}')
+ page.get_by_role('button',name='关闭',exact=True).click()
+ summary=page.get_by_test_id('transfer-summary')
+ assert 'LIB275L.000' in summary.inner_text()
+ assert '256 / 1,489 字节' in summary.inner_text()
+ for width in [320,1360]:
+  page.set_viewport_size({'width':width,'height':940})
+  assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth'),width
+ summary.get_by_role('button',name='传输详情',exact=True).click()
+ assert page.get_by_test_id('transfer-status').get_by_text('已上传 1 / 2 个对象 · 7,629 / 8,862 字节',exact=True).count()==1
  page.get_by_role('button',name='停止文件服务',exact=True).click()
+ assert page.get_by_test_id('transfer-summary').count()==0
  count=page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").length')
  page.locator('[data-testid="transfer-file"]').set_input_files([
   {'name':'TEST.000','mimeType':'application/octet-stream','buffer':hp39_program},
@@ -249,7 +262,36 @@ with sync_playwright() as p:
  assert {f['name']:bytes(f['bytes']) for f in restored}['HP39DIR.000']==hp39_directory
  page.get_by_role('button',name='停止文件服务',exact=True).click()
  page.screenshot(path=str(ROOT/'build/ui-hp39-files-zh.png'))
+ # Native Wire keeps the next calculator action visible outside the dialog,
+ # and a complete library ACK advances to the original aplet bytes only once.
+ hp39_aplet=b'HP39BinB\x04TESTopaque-body'
+ page.get_by_label('计算器传输菜单',exact=True).select_option('wire')
+ assert page.get_by_role('button',name='接收计算器文件',exact=True).count()==0
+ page.locator('[data-testid="transfer-file"]').set_input_files([
+  {'name':'APLET.000','mimeType':'application/octet-stream','buffer':hp39_aplet},
+  {'name':'LIB.000','mimeType':'application/octet-stream','buffer':hp39_library}])
+ page.get_by_role('button',name='通过 Wire 上传',exact=True).click()
+ page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).protocol==="hp39-wire"')
+ assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name')=='LIB.000'
  page.get_by_role('button',name='关闭',exact=True).click()
+ summary=page.get_by_test_id('transfer-summary')
+ assert 'RECV → HP39/40 (Wire)' in summary.inner_text() and 'LIB.000' in summary.inner_text()
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"complete",transferred:14,total:14})}')
+ page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name==="APLET.000"')
+ assert page.evaluate('Array.from(window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).bytes)')==list(hp39_aplet)
+ assert 'APLET.000' in summary.inner_text()
+ for width in [320,1360]:
+  page.set_viewport_size({'width':width,'height':940})
+  assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth'),width
+ summary.get_by_role('button',name='传输详情',exact=True).click()
+ assert page.get_by_label('计算器传输菜单',exact=True).input_value()=='wire'
+ assert page.get_by_test_id('upload-batch').get_by_text('已上传',exact=True).count()==1
+ page.get_by_role('button',name='取消传输',exact=True).click()
+ assert 'ON 键退出' in page.get_by_test_id('transfer-status').inner_text()
+ page.get_by_label('计算器传输菜单',exact=True).select_option('disk')
+ assert page.get_by_role('button',name='接收计算器文件',exact=True).is_enabled()
+ page.get_by_role('button',name='关闭',exact=True).click()
+ assert 'ON 键退出' in page.get_by_test_id('transfer-summary').inner_text()
  for width in [320,390,720,1360]:
   page.set_viewport_size({'width':width,'height':900})
   page.wait_for_timeout(100)

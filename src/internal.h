@@ -85,11 +85,19 @@ typedef struct {
     uint64_t resets, setups, in_packets, out_packets;
 } o_usb;
 
-/* S3C2410A SDI controller with an empty card slot. No storage is synthesized. */
+/* S3C2410A SDI controller and functional SDSC protocol. Storage is host-owned. */
 typedef struct {
     uint32_t control, prescaler, argument, command, status;
     uint32_t data_timer, block_size, data_control, data_status, interrupt_mask;
     uint32_t remaining, response_remaining, phase;
+    uint32_t response[4], pending_response[4], response_index;
+    uint32_t fifo_head, fifo_count, data_remaining, data_event;
+    uint32_t transfer_kind, transfer_left, transfer_offset, transfer_total;
+    uint32_t card_state, card_rca, card_block_size, card_bus_width, last_command;
+    uint32_t erase_start, erase_end, write_count;
+    uint64_t commands, read_blocks, written_blocks;
+    bool response_valid, app_command, multi_block;
+    uint8_t fifo[64], write_block[512];
 } o_sdi;
 
 /* Host optimization state only. Exact input comparison, not a hash or a
@@ -149,6 +157,10 @@ struct orchard_machine {
     unsigned nor_sequence;
     bool nor_id_mode;
     orchard_stop stop;
+    uint8_t *sd_storage; /* Host allocation, never serialized. */
+    size_t sd_capacity;
+    uint32_t sd_bytes;
+    bool sd_write_protected, sd_dirty;
     uint8_t flash[O_FLASH_MAX];
     uint8_t ram[O_RAM_MAX];
     uint8_t boot_sram[O_BOOT_SRAM_SIZE];
@@ -218,6 +230,7 @@ void o_sdi_reset(o_sdi *s);
 void o_sdi_tick(orchard_machine *m);
 bool o_sdi_register(orchard_machine *m, uint32_t address, unsigned width,
                     uint32_t *value, bool write);
+bool o_sd_size_valid(size_t bytes);
 void o_adc_reset(o_adc *a);
 void o_adc_tick(orchard_machine *m);
 bool o_adc_register(orchard_machine *m, uint32_t address, unsigned width,

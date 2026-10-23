@@ -109,6 +109,7 @@ jobs:
           python3 -m venv build/browser-venv
           build/browser-venv/bin/pip install -r tools/requirements-browser.txt
           build/browser-venv/bin/python tests/browser-components.py
+          build/browser-venv/bin/python tests/sd-storage-browser.py
           build/browser-venv/bin/python tests/browser-worker.py
           build/browser-venv/bin/python tests/browser-stop-recovery.py
           build/browser-venv/bin/python tests/browser-stop-recovery.py --diagnostic-trace

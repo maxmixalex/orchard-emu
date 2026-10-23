@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import {Hp39FileServer,prepareHp39Files} from './hp39-transfer.js';
+import {Hp39WireSender,validateHp39WireFile} from './hp39-wire.js';
 import {inspectHp39File,validateHp39Filename} from './hp39-files.js';
 import { KermitSession, MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename, validateReceiveBudget } from './kermit.js';
 export { MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename };
@@ -22,8 +23,8 @@ export function validateUpload(model, name, bytes) {
   return bytes;
 }
 export class FileTransfer {
-  constructor({core, usb, model, notify}) {
-    this.core=core;this.usb=usb;this.model=model;this.notify=notify;this.session=null;this.lastRequest=0;this.usbReady=false;
+  constructor({core, usb, model, notify, now=()=>performance.now()}) {
+    this.core=core;this.usb=usb;this.model=model;this.notify=notify;this.now=now;this.session=null;this.lastRequest=0;this.usbReady=false;
   }
   get active() {return Boolean(this.session?.active);}
   get pending() {return Boolean(this.session?.pending);}
@@ -33,22 +34,30 @@ export class FileTransfer {
     if (!Number.isSafeInteger(data.request)||data.request<=this.lastRequest) throw new Error('Stale file-transfer request.');
     if (!['serial','usb'].includes(data.transport)) throw new Error('Select a file-transfer connection.');
     if (!transferCapabilities(this.model,data.transport)[data.mode]) throw new Error('This file operation is not available for the selected calculator and connection.');
+    if(data.protocol!==undefined&&data.protocol!=='hp39-wire')throw Error('Invalid file-transfer protocol.');
+    const wire=data.protocol==='hp39-wire';
+    if(wire&&(!isHp39(this.model)||data.mode!=='send'))throw Error('Wire upload requires an HP39/40 calculator.');
     const receiveBudget=validateReceiveBudget(data.receiveBudget);
     if (data.mode==='send') validateUpload(this.model,data.name,data.bytes);
+    if(wire)validateHp39WireFile(data.name,data.bytes);
     if (data.mode==='get') validateFilename(data.name);
     if(data.mode==='serve')prepareHp39Files(data.files);
     if (data.transport==='usb') {this.usb.endpoint(true);this.usb.endpoint(false);}
-    this.lastRequest=data.request;this.request=data.request;this.currentTransport=data.transport;this.lastProgress=null;this.writeAfter=-Infinity;
-    if(data.transport==='usb'&&!this.usbReady){this.writeAfter=Infinity;this.readyDeadline=tick+30*this.core.timebase_hz();}
+    this.lastRequest=data.request;this.request=data.request;this.currentTransport=data.transport;this.lastProgress=null;this.writeAfter=-Infinity;this.wire=wire;
+    if(data.transport==='usb'&&!wire&&!this.usbReady){this.writeAfter=Infinity;this.readyDeadline=tick+30*this.core.timebase_hz();}
     const status=state=>{
-      if(data.transport==='usb'&&(['error','cancelled'].includes(state.phase)||state.phase==='complete'&&['finish','receive'].includes(data.mode)))this.usbReady=false;
-      // Publish phase transitions and useful byte increments, not one React
-      // update for every 80-byte protocol packet.
-      const previous=this.lastProgress;
-      if (previous&&state.active&&state.phase===previous.phase&&state.name===previous.name&&state.transferred-previous.transferred<4096)return;
-      this.lastProgress={...state};this.notify({type:'file-transfer-status',request:this.request,transport:this.currentTransport,...state});
+      if(data.transport==='usb'&&(['error','cancelled'].includes(state.phase)||state.phase==='complete'&&(wire||['finish','receive'].includes(data.mode))))this.usbReady=false;
+      // Keep slow, small HP39 files visibly moving. A 4 KiB-only threshold
+      // hid every progress update for libraries and tens of seconds for aplets.
+      // Wall time limits UI messages only; protocol time remains guest ticks.
+      const previous=this.lastProgress,now=this.now();
+      if(previous&&state.active&&state.phase===previous.phase&&state.name===previous.name){
+        if(state.transferred===previous.transferred)return;
+        if(now-this.progressAt<250&&state.transferred!==state.total)return;
+      }
+      this.progressAt=now;this.lastProgress={...state};this.notify({type:'file-transfer-status',request:this.request,transport:this.currentTransport,...state});
     };
-    const Session=isHp39(this.model)?Hp39FileServer:KermitSession;
+    const Session=wire?Hp39WireSender:isHp39(this.model)?Hp39FileServer:KermitSession;
     this.session=new Session({hz:this.core.timebase_hz(),write:bytes=>this.write(bytes),notify:status,receiveBudget,
       end:data.transport==='usb'?13:null,
       onPacket:p=>{
@@ -62,7 +71,7 @@ export class FileTransfer {
       },
       file:({name,bytes})=>this.notify({type:'file-transfer-received',request:this.request,name,bytes}),
       listing:text=>this.notify({type:'file-transfer-listing',request:this.request,text})});
-    this.session.start(isHp39(this.model)?{files:data.mode==='send'?[{name:data.name,bytes:data.bytes}]:data.files||[]}:{mode:data.mode,name:data.name,bytes:data.bytes},tick);
+    this.session.start(wire?{name:data.name,bytes:data.bytes}:isHp39(this.model)?{files:data.mode==='send'?[{name:data.name,bytes:data.bytes}]:data.files||[]}:{mode:data.mode,name:data.name,bytes:data.bytes},tick);
   }
   write(bytes) {
     if (this.currentTransport==='serial') {
@@ -83,7 +92,7 @@ export class FileTransfer {
     if (!this.pending)return;
     try {
       if (this.currentTransport==='usb') {
-        if(this.active&&!this.usbReady&&tick>=this.readyDeadline)throw new Error(isHp39(this.model)?'Choose Disk drive in the calculator Send/Receive menu, then reconnect USB.':'The calculator did not enter USB file-transfer mode. Start SERVER or SEND on the calculator and reconnect.');
+        if(this.active&&!this.wire&&!this.usbReady&&tick>=this.readyDeadline)throw new Error(isHp39(this.model)?'Choose Disk drive in the calculator Send/Receive menu, then reconnect USB.':'The calculator did not enter USB file-transfer mode. Start SERVER or SEND on the calculator and reconnect.');
         // One IN transaction per original Worker slice, independent of the
         // display. NAK is ordinary backpressure, never a successful file read.
         const incoming=this.usb.read();

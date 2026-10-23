@@ -7,6 +7,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"runtime"
 	"syscall"
 	"time"
@@ -237,17 +238,17 @@ func createFile(path string, access uint32, flags uint32) (uintptr, error) {
 	return h, nil
 }
 
-func queryDevice(path string) (product string, caps hidpCaps, ok bool) {
+func queryDevice(path string) (product string, caps hidpCaps, why string, ok bool) {
 	h, err := createFile(path, 0, 0)
 	if err != nil {
-		return "", caps, false
+		return "", caps, "", false
 	}
 	defer procCloseHandle.Call(h)
 
 	attr := hiddAttributes{Size: uint32(unsafe.Sizeof(hiddAttributes{}))}
 	r, _, _ := procHidDGetAttributes.Call(h, uintptr(unsafe.Pointer(&attr)))
 	if r == 0 || attr.VendorID != vidHP || attr.ProductID != pidHP39 {
-		return "", caps, false
+		return "", caps, "", false
 	}
 
 	name := make([]uint16, 128)
@@ -257,43 +258,48 @@ func queryDevice(path string) (product string, caps hidpCaps, ok bool) {
 		uintptr(len(name)*2),
 	)
 	if r == 0 {
-		return "", caps, false
+		return "", caps, "HP 03f0:0121 HID was found, but Windows could not read its product string", false
 	}
 	product = syscall.UTF16ToString(name)
 	if product != streamerProduct {
-		return "", caps, false
+		return product, caps, fmt.Sprintf("HP USB device is %q, expected %q; start the new H39 ROM V2 aplet", product, streamerProduct), false
 	}
 
 	var preparsed uintptr
 	r, _, _ = procHidDGetPreparsedData.Call(h, uintptr(unsafe.Pointer(&preparsed)))
 	if r == 0 || preparsed == 0 {
-		return "", caps, false
+		return product, caps, "reader product found, but Windows could not read its HID descriptor", false
 	}
 	defer procHidDFreePreparsedData.Call(preparsed)
 
 	status, _, _ := procHidPGetCaps.Call(preparsed, uintptr(unsafe.Pointer(&caps)))
 	if uint32(status) != hidpSuccess {
-		return "", caps, false
+		return product, caps, "reader product found, but Windows could not parse its HID report capabilities", false
 	}
 	if caps.UsagePage != usagePage || caps.Usage != usage {
-		return "", caps, false
+		return product, caps, "reader product found, but HID usage page/usage differs from ffab/0200", false
 	}
 	if caps.InputReportByteLength != 65 || caps.OutputReportByteLength != 65 {
-		return "", caps, false
+		return product, caps, "reader product found, but HID reports are not 65-byte Windows reports", false
 	}
-	return product, caps, true
+	return product, caps, "", true
 }
 
-func openStreamer(timeout time.Duration) (reportDevice, error) {
+func openStreamer(timeout time.Duration, progress io.Writer) (reportDevice, error) {
 	deadline := time.Now().Add(timeout)
 	var lastErr error
+	started := time.Now()
+	nextStatus := started
 	for time.Now().Before(deadline) {
 		paths, err := enumerateHIDPaths()
 		if err != nil {
 			lastErr = err
 		} else {
 			for _, path := range paths {
-				product, caps, ok := queryDevice(path)
+				product, caps, why, ok := queryDevice(path)
+				if why != "" {
+					lastErr = fmt.Errorf("%s", why)
+				}
 				if !ok {
 					continue
 				}
@@ -310,12 +316,20 @@ func openStreamer(timeout time.Duration) (reportDevice, error) {
 				}, nil
 			}
 		}
+		if !time.Now().Before(nextStatus) {
+			fmt.Fprintf(progress, "Waiting for reader HID: %s elapsed", time.Since(started).Round(time.Second))
+			if lastErr != nil {
+				fmt.Fprintf(progress, "; %v", lastErr)
+			}
+			fmt.Fprintln(progress)
+			nextStatus = time.Now().Add(5 * time.Second)
+		}
 		time.Sleep(250 * time.Millisecond)
 	}
 	if lastErr != nil {
-		return nil, fmt.Errorf("HP39g+ ROM Stream HID device not available: %w", lastErr)
+		return nil, fmt.Errorf("HP39 ROM Stream V2 HID device not available: %w", lastErr)
 	}
-	return nil, fmt.Errorf("HP39g+ ROM Stream HID device not found. Close Conn3x/HP Connectivity Kit, launch the aplet with USB unplugged, then plug the cable in")
+	return nil, fmt.Errorf("HP39 ROM Stream V2 HID device not found. If the calculator shows PLUG USB, connect the cable; if ENUMERATING, Windows has not completed HID enumeration; if an E-code is visible, report that code. Verify the running aplet title is H39 ROM V2, close Conn3x/HP Connectivity Kit, unplug and retry")
 }
 
 func (d *windowsHID) Product() string {

@@ -16,12 +16,13 @@ workflows now have separate functional evidence; see [HP49 startup](hp49-startup
 The original acquisition sidecar is retained unchanged: its earlier false flags
 are not silently rewritten or treated as current execution results.
 
-For HP39gs, the [complete ROMstream package](hp39gs-rom-dump.md) reuses the
-user's proven hpclang HP39g+ ARM reader, byte-for-byte. The receiver reads the
-full 1 MiB in one launch and independently repeats every block. The aplet,
-launcher and payload have been rebuilt from pinned sources, and the unchanged
-program has also completed a full dump/return on the original HP39g+ OS inside
-Orchard. The target HP39gs image and physical run remain pending; a separate
+For HP39gs, the [complete ROMstream v2 package](hp39gs-rom-dump.md) repairs the
+hpclang-based reader's LCD, mapping, cable-startup and bounded USB exit paths.
+The receiver reads the full 1 MiB in one launch and independently repeats every
+block. The revised program completes full dump/return/stock-USB-reuse checks
+on the original HP39g+ NOR and a separate official-39gs-2.22-derived fixture.
+The latter's generic boot area is not an acquired HP39gs NOR and is not admitted
+to the user catalog. The target physical full image and run remain pending; a separate
 return or short-memory probe is not the next user step. Existing HP39g+/HP48gII
 inputs need not be supplied again.
 

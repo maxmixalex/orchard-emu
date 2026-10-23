@@ -38,7 +38,7 @@ func sampleBlock(block, generation int, changed bool) []byte {
 	return b
 }
 func (d *fakeDevice) WriteReport(p []byte) error {
-	if len(p) != 64 || !bytes.Equal(p[1:5], []byte{1, 'H', '3', '9'}) {
+	if len(p) != 64 || !bytes.Equal(p[1:5], []byte{protocolVersion, 'H', '3', '9'}) {
 		return errors.New("bad command")
 	}
 	d.commands = append(d.commands, p[0])
@@ -78,14 +78,15 @@ func (d *fakeDevice) ReadReport(time.Duration) ([]byte, error) {
 	b := make([]byte, 64)
 	switch d.mode {
 	case "info":
-		copy(b, []byte{'I', 1, 'H', '3', '9', 'R', 'O', 'M'})
+		copy(b, []byte{'I', protocolVersion, 'H', '3', '9', 'R', 'O', 'M'})
 		put32(b, 8, flashBytes)
 		put32(b, 12, blockBytes)
 		put32(b, 16, dataBytes)
+		put32(b, 20, readerRevision)
 	case "data":
 		if d.pos == blockBytes {
 			b[0] = 'C'
-			b[1] = 1
+			b[1] = protocolVersion
 			b[2] = byte(d.block)
 			put32(b, 4, uint32(d.block*blockBytes))
 			put32(b, 8, blockBytes)
@@ -111,7 +112,7 @@ func (d *fakeDevice) ReadReport(time.Duration) ([]byte, error) {
 			d.pos += n
 		}
 	case "end":
-		copy(b, []byte{'E', 1, 'H', '3', '9', 'R', 'O', 'M'})
+		copy(b, []byte{'E', protocolVersion, 'H', '3', '9', 'R', 'O', 'M'})
 		put32(b, 8, flashBytes)
 		put32(b, 16, passWord)
 		var sum uint32
@@ -177,7 +178,7 @@ func TestRejectMalformedAndUnstableStreams(t *testing.T) {
 		}, "short report"},
 		{"info-version", func(d *fakeDevice, p []byte) []byte {
 			if p[0] == 'I' {
-				p[1] = 2
+				p[1] = protocolVersion + 1
 			}
 			return p
 		}, "INFO"},
@@ -219,7 +220,7 @@ func TestRejectMalformedAndUnstableStreams(t *testing.T) {
 		}, "retry limit"},
 		{"checkpoint-version", func(d *fakeDevice, p []byte) []byte {
 			if p[0] == 'C' {
-				p[1] = 2
+				p[1] = protocolVersion + 1
 			}
 			return p
 		}, "retry limit"},
@@ -281,6 +282,45 @@ func TestRejectMalformedAndUnstableStreams(t *testing.T) {
 				t.Fatalf("got %v, want %s", err, tt.want)
 			}
 		})
+	}
+}
+
+func TestDeviceErrorsAndRevisionAreActionable(t *testing.T) {
+	for code, want := range map[byte]string{1: "E03 CABLE LOST", 2: "CANCELLED", 3: "E04 USB TIMEOUT", 4: "E05 USB RESET", 5: "E06 PROTOCOL", 6: "E07 USB CLOCK"} {
+		t.Run(want, func(t *testing.T) {
+			d := &fakeDevice{mutation: func(d *fakeDevice, p []byte) []byte {
+				if p[0] == 'D' {
+					p[0] = '!'
+					p[1] = protocolVersion
+					p[2] = code
+					p[3] = 0
+					p[4] = 1
+				}
+				return p
+			}}
+			_, err := receiveImage(d, io.Discard)
+			if err == nil || !strings.Contains(err.Error(), want) || !strings.Contains(err.Error(), "block 1/64 read 1") {
+				t.Fatalf("unhelpful device error: %v", err)
+			}
+		})
+	}
+	d := &fakeDevice{mutation: func(d *fakeDevice, p []byte) []byte {
+		if p[0] == 'I' {
+			put32(p, 20, 1)
+		}
+		return p
+	}}
+	if _, err := receiveImage(d, io.Discard); err == nil || !strings.Contains(err.Error(), "install H39 ROM V2") {
+		t.Fatalf("legacy reader accepted: %v", err)
+	}
+	var progress bytes.Buffer
+	if _, err := receiveImage(&fakeDevice{}, &progress); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"Requesting reader version", "reading pass 1/2", "reading pass 2/2", "1048576/1048576 bytes verified"} {
+		if !strings.Contains(progress.String(), want) {
+			t.Fatalf("missing phase %q", want)
+		}
 	}
 }
 

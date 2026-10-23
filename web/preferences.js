@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { KEYS, keyRows } from './hp48.js';
-import { MAX_SESSION_BYTES } from './session.js';
+import { MAX_LEGACY_SESSION_BYTES } from './session.js';
 export const SETTINGS_KEY = 'orchard:preferences:v1';
 export const AUTO_PREFIX = 'orchard:autosave:v1:';
 export const DEFAULTS = Object.freeze({ version:1, view:'immersive', zoom:100,
@@ -67,12 +67,12 @@ export function sessionName(model,now=new Date()) {
   return `${slug}-${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.ord`;
 }
 export function toBase64(bytes) {
-  if(!(bytes instanceof Uint8Array)||bytes.length>MAX_SESSION_BYTES)throw new Error('Invalid saved session.');
+  if(!(bytes instanceof Uint8Array)||bytes.length>MAX_LEGACY_SESSION_BYTES)throw new Error('Invalid saved session.');
   let text='';for(let i=0;i<bytes.length;i+=8192)text+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(text);
 }
 export function fromBase64(text){
-  if(typeof text!=='string'||text.length>Math.ceil(MAX_SESSION_BYTES/3)*4||text.length%4||!/^[A-Za-z0-9+/]*={0,2}$/.test(text))throw new Error('Damaged local save.');
-  const raw=atob(text);if(raw.length>MAX_SESSION_BYTES)throw new Error('Local save too large.');
+  if(typeof text!=='string'||text.length>Math.ceil(MAX_LEGACY_SESSION_BYTES/3)*4||text.length%4||!/^[A-Za-z0-9+/]*={0,2}$/.test(text))throw new Error('Damaged local save.');
+  const raw=atob(text);if(raw.length>MAX_LEGACY_SESSION_BYTES)throw new Error('Local save too large.');
   return Uint8Array.from(raw,c=>c.charCodeAt(0));
 }
 export function autoKey(hash) {if(!/^[a-f0-9]{64}$/.test(hash))throw new Error('Invalid ROM identity.');return AUTO_PREFIX+hash;}
@@ -91,6 +91,9 @@ export function writeAuto(storage,hash,model,file,expectedToken,token,now=Date.n
   const current=readAuto(storage,hash);
   if((current?.token??null)!==expectedToken)throw new Error('Another tab updated this save. Reload the ROM before saving automatically.');
   if(typeof token!=='string'||token.length>100)throw new Error('Invalid save token.');
-  storage.setItem(autoKey(hash),JSON.stringify({version:1,romHash:hash,model,token,savedAt:now,data:toBase64(file)}));
+  if(file?.length>MAX_LEGACY_SESSION_BYTES)throw new Error('SD card automatic saves require IndexedDB. Export a session file to keep this state.');
+  const text=JSON.stringify({version:1,romHash:hash,model,token,savedAt:now,data:toBase64(file)});
+  if(text.length>850000)throw new Error('SD card automatic saves require IndexedDB. Export a session file to keep this state.');
+  storage.setItem(autoKey(hash),text);
   return token;
 }

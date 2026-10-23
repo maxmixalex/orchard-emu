@@ -1,0 +1,612 @@
+{
+  "schema": "orchard-hp39-romstream-r19-v1",
+  "scope": "Complete V2 capture and restoration, executed inside original HP39 OSes in Orchard; physical hardware and native Windows HID I/O remain untested.",
+  "hardware_validated": false,
+  "windows_hid_driver_execution_verified": false,
+  "target_native_bootloader_verified": false,
+  "final_wasm_sha256": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+  "user_report": "Physical HP39gs ran the previous aplet without visible progress and could not capture a ROM.",
+  "diagnosis": {
+    "proven_legacy_behavior": [
+      "Legacy prepare_usb_clock disables LCDEN and does not enable it during capture.",
+      "A cable already connected at launch returns silently before HID startup.",
+      "Legacy EP0 IN waits do not service ON, removal, reset or a replacement SETUP."
+    ],
+    "original_39gs_222_execution": {
+      "legacy_aplet_sha256": "3669fb2c2ae1f755bd542c8373a469d49165f2769affdce5435e649010c62455",
+      "legacy_entry_pc": "0x0803e0d0",
+      "l1_words_0xa0_to_0xa4_at_entry": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "usb_wait_lcdcon1": "0x00005420",
+      "connected_launch_returns_to_stock_pc": "0x0001207c",
+      "connected_launch_lcdcon1": "0x00005421",
+      "method": "Read-only native trace after normal original-OS USB install and START/ENTER; no RAM injection."
+    },
+    "not_proven": "The framebuffer overlaps legacy L1 slots 0xa0..0xa4, but START cleared them on the observed entry path. That overlap is not asserted to explain the user hardware failure.",
+    "remaining_physical_unknown": "The exact failing stage on the user HP39gs, its original bootloader/platform state and its Windows HID driver/cable behavior have not been observed."
+  },
+  "calculator_release": {
+    "revision": 2,
+    "aplet_name": "H39 ROM V2",
+    "usb_product": "HP39 ROM Stream V2",
+    "payload": {
+      "bytes": 9364,
+      "sha256": "71e93a0b334c41537d7e36a7d9b76397294d900095fa2137f76056ba8f08a83e"
+    },
+    "aplet": {
+      "bytes": 10344,
+      "sha256": "298732caeba57a240acf135f1260c6f1cf1899e024fb734f3b4d2c4f92cadcc1"
+    },
+    "launcher": {
+      "bytes": 1489,
+      "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1",
+      "unchanged_39_specific_library": true
+    },
+    "physical_read_range": "0x00000000..0x000fffff",
+    "virtual_read_range": "0x01100000..0x011fffff",
+    "section_descriptor": "0x00000c12",
+    "temporary_l1_slots": [
+      "0x11",
+      "0x12"
+    ],
+    "private_allocation_bytes": 12288,
+    "private_l2_alignment_and_bytes": 1024,
+    "peripheral_pages": 6,
+    "read_only_nor_program": true,
+    "screen_progress_and_errors": true,
+    "source_sha256": {
+      "rom-stream-entry.S": "49376654f9317a7901134618db040911065b12041582e78d6f9b1b0bac0d0c47",
+      "rom-stream-wrap.py": "a5a24271892704a6faaf36d4af3a1f3f058853c648243cc4fe3b4922ea96301e",
+      "rom-stream.c": "2691ba2beb330109a0d784bfb1ebf9a031fdf1ebed5d56f00391f4b93018dfca",
+      "rom-stream.ld": "6e91fb74994f5ea4155608d642163efbee46c4e469c3dedecdd172bafdcc0bd8"
+    }
+  },
+  "fixtures": {
+    "hp39gs_222": {
+      "kind": "official-39gs-2.22-update-with-generic-50g-bootloader",
+      "updater": {
+        "bytes": 995328,
+        "sha256": "6e56e35054c06931ef8091403c1fcbde7743a7342e12aaf6082b0257dbe9d7b3",
+        "source": "https://www.hpcalc.org/hp39/pc/hp39gs222.zip",
+        "archive_member": "HP39GS_2.22/hp39gs_v2.22.bin"
+      },
+      "bootloader": {
+        "bytes": 16384,
+        "sha256": "dfa544617039e1bff0f62b9f51a943e57ff756d12bb81478de7aec41a5b73a28",
+        "source": "https://www.hpcalc.org/hp49/pc/rom/hp-arm-models-bootloader.zip",
+        "file": "boot-50g.bin"
+      },
+      "derived_nor": {
+        "bytes": 1048576,
+        "sha256": "894fdb3d1ddfa63f06df0b1db5c573423f2cae3eb51bb4e41eac97676e888761"
+      },
+      "construction": "Fill 1 MiB with 0xff; copy the 16 KiB 50g bootloader at 0; copy the 995328-byte updater at 0x4000; replace its first 16 header bytes at 0x4000 with ASCII Kinposhcopyright for this loader. Remaining updater bytes unchanged.",
+      "construction_byte_equality_rechecked": true,
+      "original_full_39gs_nor": false,
+      "native_39gs_bootloader_verified": false,
+      "firmware_published": false,
+      "external_inputs": "Research board setup uses explicit keyboard, NOR-select, GPIO cable/bias and ADC inputs; not a confirmed physical 39gs board model."
+    },
+    "hp39gplus": {
+      "bytes": 1048576,
+      "sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "kind": "user-corresponding-original-full-nor",
+      "firmware_published": false
+    }
+  },
+  "normal_usb_installation": {
+    "hp39gs": {
+      "model": 2,
+      "rom_sha256": "894fdb3d1ddfa63f06df0b1db5c573423f2cae3eb51bb4e41eac97676e888761",
+      "starting_checkpoint_sha256": "55ff13c03764c0297156411d15e29bb5aaae4af0b52b56e135b280626e9da741",
+      "wasm_sha256": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+      "normal_os_usb_install": true,
+      "guest_memory_patched": false,
+      "inputs": [
+        {
+          "name": "HP39DIR.CUR",
+          "bytes": 31,
+          "sha256": "542dda3d8ae6257461c7836962e390dfa7898f6c20759b650d927f73b9718d41"
+        },
+        {
+          "name": "HP39DIR.000",
+          "bytes": 66,
+          "sha256": "beb1906b4946b4b1b454bf9833416885bf7b9cae46d3e527d23824d9d173532a"
+        },
+        {
+          "name": "HPGCC000.000",
+          "bytes": 10344,
+          "sha256": "298732caeba57a240acf135f1260c6f1cf1899e024fb734f3b4d2c4f92cadcc1"
+        },
+        {
+          "name": "LIB275L.000",
+          "bytes": 1489,
+          "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+        }
+      ],
+      "complete": true,
+      "final_tick": 1039357504,
+      "ready_checkpoint_sha256": "cb3e8df12e9cbf62279b3fba67c472ee3082d14c43586db8d01362b51205c262",
+      "test_log_sha256": "9f3645ec2775affccda655114427e1ad6cc200ca5dd7fa199252435302fd4ce2"
+    },
+    "hp39gplus": {
+      "model": 1,
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "starting_checkpoint_sha256": "3407ca336232b3822d9debc0c11d9acc2cd6ba912ccfb6741b94f67ff07d7598",
+      "wasm_sha256": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+      "normal_os_usb_install": true,
+      "guest_memory_patched": false,
+      "inputs": [
+        {
+          "name": "HP39DIR.CUR",
+          "bytes": 31,
+          "sha256": "542dda3d8ae6257461c7836962e390dfa7898f6c20759b650d927f73b9718d41"
+        },
+        {
+          "name": "HP39DIR.000",
+          "bytes": 66,
+          "sha256": "beb1906b4946b4b1b454bf9833416885bf7b9cae46d3e527d23824d9d173532a"
+        },
+        {
+          "name": "HPGCC000.000",
+          "bytes": 10344,
+          "sha256": "298732caeba57a240acf135f1260c6f1cf1899e024fb734f3b4d2c4f92cadcc1"
+        },
+        {
+          "name": "LIB275L.000",
+          "bytes": 1489,
+          "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+        }
+      ],
+      "complete": true,
+      "final_tick": 1418202432,
+      "ready_checkpoint_sha256": "8c466c58baf7ff83e00ba74c42a65e6561e0d4b07f8a2f39d372f3b0e674770d",
+      "test_log_sha256": "08a5b42ec79392a3a9514f42044da72c05229346237137c1f43e85ecec2ffcac"
+    }
+  },
+  "full_capture_and_return": {
+    "hp39gs": {
+      "schema": "orchard-hp39-romstream-stock-v2",
+      "model": "hp39gs",
+      "fixture_kind": "official-39gs-2.22-update-with-generic-50g-bootloader",
+      "hardware_validated": false,
+      "rom_sha256": "894fdb3d1ddfa63f06df0b1db5c573423f2cae3eb51bb4e41eac97676e888761",
+      "wasm_sha256": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+      "starting_checkpoint_sha256": "cb3e8df12e9cbf62279b3fba67c472ee3082d14c43586db8d01362b51205c262",
+      "guest_memory_patched": false,
+      "physical_key_launch": true,
+      "usb_hid_identity": {
+        "vendor": 1008,
+        "product": 289,
+        "manufacturer": "hpclang",
+        "name": "HP39 ROM Stream V2",
+        "endpoints": [
+          {
+            "address": 129,
+            "type": 3,
+            "maxPacket": 64
+          },
+          {
+            "address": 2,
+            "type": 3,
+            "maxPacket": 64
+          }
+        ]
+      },
+      "read_reports": 37634,
+      "write_reports": 131,
+      "returned_to_stock_os": true,
+      "arithmetic_after_return_verified": true,
+      "external_cable_input": {
+        "port": "F",
+        "known_mask": "0x8e",
+        "connected_levels": "0x02",
+        "disconnected_levels": "0x00"
+      },
+      "waiting_lcd_sha256": "59704edb9722237e560d80224c6d1e68f7dc68d527a44329e92be2a952994fef",
+      "host_ready_lcd_sha256": "e677c2e8f0aa5a8bd1565a13151625aad1f70362f373d66ad38ccbfdbc8eeb0e",
+      "before_finish_checkpoint_sha256": "2af7f66db91d88ee37d421d26a97ea0a4374fc58642b8b26af0db05febdfb7cb",
+      "before_finish_host": {
+        "address": 7,
+        "next_out_pid": 0
+      },
+      "saved_lcd_sha256": "9b17f444222c9be3501a75278d80c48e9a17681d9b3ef9002a91dbc1dc6d990b",
+      "after_return_lcd_sha256": "cbfb1472d296cd0c16a90ce8162dd49ace1faba2a9b7a8a76e6ac18a6c5a0338",
+      "home_lcd_sha256": "9316be3639ac154e9783ccb02f9cdd7478940e8ffdc65290e97f79ee915b7ee7",
+      "arithmetic_lcd_sha256": "abf32ffc5e2fdcfc17172a5351eb6aac13d44a1b432d683f5a1f0c8e2a26844c",
+      "stock_usb_after_return": {
+        "vendor": 1008,
+        "product": 289,
+        "manufacturer": "HP Company",
+        "name": "HPx9G+ Device",
+        "endpoints": [
+          {
+            "address": 129,
+            "type": 2,
+            "maxPacket": 64
+          },
+          {
+            "address": 3,
+            "type": 2,
+            "maxPacket": 64
+          }
+        ]
+      },
+      "final_cpu_stop": 0,
+      "final_tick": 1559799008,
+      "full_image_byte_comparison_verified": true,
+      "installed_aplet_sha256": "298732caeba57a240acf135f1260c6f1cf1899e024fb734f3b4d2c4f92cadcc1",
+      "stock_test_client_aplet_build_id_embedded": false,
+      "aplet_identity_evidence": "Normal-USB install input hash and source rebuild pin; the Go test binary leaves its optional release build-ID string empty.",
+      "capture": {
+        "bytes": 1048576,
+        "sha256": "894fdb3d1ddfa63f06df0b1db5c573423f2cae3eb51bb4e41eac97676e888761",
+        "byte_sum32": "0x0688fb33",
+        "read_passes_per_block": 2,
+        "independent_block_reads_equal": true,
+        "transport_retries": 0,
+        "protocol": "H39ROM-HID/2",
+        "calculator_aplet_sha256": "",
+        "calculator_reader_revision": 2,
+        "authenticated_hardware_provenance": false,
+        "physical_mapping_verified": false,
+        "boot_verified": false,
+        "catalog_admitted": false
+      },
+      "test_log_sha256": "ba58cfb96a6f56f0fb7866514cd5d5a6d0f9e050ca77e92476987deaee2a6aff"
+    },
+    "hp39gplus": {
+      "schema": "orchard-hp39-romstream-stock-v2",
+      "model": "hp39gplus",
+      "fixture_kind": "original-full-nor",
+      "hardware_validated": false,
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "wasm_sha256": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+      "starting_checkpoint_sha256": "8c466c58baf7ff83e00ba74c42a65e6561e0d4b07f8a2f39d372f3b0e674770d",
+      "guest_memory_patched": false,
+      "physical_key_launch": true,
+      "usb_hid_identity": {
+        "vendor": 1008,
+        "product": 289,
+        "manufacturer": "hpclang",
+        "name": "HP39 ROM Stream V2",
+        "endpoints": [
+          {
+            "address": 129,
+            "type": 3,
+            "maxPacket": 64
+          },
+          {
+            "address": 2,
+            "type": 3,
+            "maxPacket": 64
+          }
+        ]
+      },
+      "read_reports": 37634,
+      "write_reports": 131,
+      "returned_to_stock_os": true,
+      "arithmetic_after_return_verified": true,
+      "external_cable_input": {
+        "port": "F",
+        "known_mask": "0x8e",
+        "connected_levels": "0x02",
+        "disconnected_levels": "0x00"
+      },
+      "waiting_lcd_sha256": "59704edb9722237e560d80224c6d1e68f7dc68d527a44329e92be2a952994fef",
+      "host_ready_lcd_sha256": "e677c2e8f0aa5a8bd1565a13151625aad1f70362f373d66ad38ccbfdbc8eeb0e",
+      "before_finish_checkpoint_sha256": "2f81532bde74da782b99f724cb86e6ba1c55dba40a900ac8cbb43cf205236168",
+      "before_finish_host": {
+        "address": 7,
+        "next_out_pid": 0
+      },
+      "saved_lcd_sha256": "9b17f444222c9be3501a75278d80c48e9a17681d9b3ef9002a91dbc1dc6d990b",
+      "after_return_lcd_sha256": "cbfb1472d296cd0c16a90ce8162dd49ace1faba2a9b7a8a76e6ac18a6c5a0338",
+      "home_lcd_sha256": "9316be3639ac154e9783ccb02f9cdd7478940e8ffdc65290e97f79ee915b7ee7",
+      "arithmetic_lcd_sha256": "abf32ffc5e2fdcfc17172a5351eb6aac13d44a1b432d683f5a1f0c8e2a26844c",
+      "stock_usb_after_return": {
+        "vendor": 1008,
+        "product": 289,
+        "manufacturer": "HP Company",
+        "name": "HPx9G+ Device",
+        "endpoints": [
+          {
+            "address": 129,
+            "type": 2,
+            "maxPacket": 64
+          },
+          {
+            "address": 3,
+            "type": 2,
+            "maxPacket": 64
+          }
+        ]
+      },
+      "final_cpu_stop": 0,
+      "final_tick": 1934643936,
+      "full_image_byte_comparison_verified": true,
+      "installed_aplet_sha256": "298732caeba57a240acf135f1260c6f1cf1899e024fb734f3b4d2c4f92cadcc1",
+      "stock_test_client_aplet_build_id_embedded": false,
+      "aplet_identity_evidence": "Normal-USB install input hash and source rebuild pin; the Go test binary leaves its optional release build-ID string empty.",
+      "capture": {
+        "bytes": 1048576,
+        "sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+        "byte_sum32": "0x07738ec6",
+        "read_passes_per_block": 2,
+        "independent_block_reads_equal": true,
+        "transport_retries": 0,
+        "protocol": "H39ROM-HID/2",
+        "calculator_aplet_sha256": "",
+        "calculator_reader_revision": 2,
+        "authenticated_hardware_provenance": false,
+        "physical_mapping_verified": false,
+        "boot_verified": false,
+        "catalog_admitted": false
+      },
+      "test_log_sha256": "4e28f4c81bda1e0c752dfd1b1777c0d0163defddc66f834c4910c0285d8bf7bc"
+    }
+  },
+  "exit_boundaries": {
+    "schema": "orchard-hp39-romstream-boundaries-v1",
+    "model": "hp39gs",
+    "fixture": "official-39gs-2.22-update-with-generic-50g-bootloader",
+    "rom_sha256": "894fdb3d1ddfa63f06df0b1db5c573423f2cae3eb51bb4e41eac97676e888761",
+    "wasm_sha256": "eb79a3bc45e8cbdda32dbe82d36ca13ba1ebef28b8b2ce91099706f79a2cca0f",
+    "starting_checkpoint_sha256": "cb3e8df12e9cbf62279b3fba67c472ee3082d14c43586db8d01362b51205c262",
+    "hardware_validated": false,
+    "guest_memory_patched": false,
+    "cases": [
+      {
+        "scenario": "connected-launch",
+        "frames": {
+          "launched": "5d8dcf1fa8194013c60a7f399826d437e3cf9fb8a7d648eaa0b3d86b98ff7f28",
+          "unplugged": "59704edb9722237e560d80224c6d1e68f7dc68d527a44329e92be2a952994fef",
+          "cancelled": "8f73cdc69a087693c929faea63d0d1f1a7d3040f06a59865e0380e5bbc0de5bb",
+          "home-one-plus-one": "abf32ffc5e2fdcfc17172a5351eb6aac13d44a1b432d683f5a1f0c8e2a26844c"
+        },
+        "returned_to_stock_os": true,
+        "arithmetic_after_return_verified": true,
+        "starting_checkpoint_sha256": "cb3e8df12e9cbf62279b3fba67c472ee3082d14c43586db8d01362b51205c262",
+        "final_stop": 0,
+        "final_tick": 1160191680
+      },
+      {
+        "scenario": "ep0-host-stops",
+        "frames": {
+          "launched": "59704edb9722237e560d80224c6d1e68f7dc68d527a44329e92be2a952994fef",
+          "cancelled-with-control-pending": "8f73cdc69a087693c929faea63d0d1f1a7d3040f06a59865e0380e5bbc0de5bb",
+          "home-one-plus-one": "abf32ffc5e2fdcfc17172a5351eb6aac13d44a1b432d683f5a1f0c8e2a26844c"
+        },
+        "returned_to_stock_os": true,
+        "arithmetic_after_return_verified": true,
+        "starting_checkpoint_sha256": "cb3e8df12e9cbf62279b3fba67c472ee3082d14c43586db8d01362b51205c262",
+        "final_stop": 0,
+        "final_tick": 1161807504
+      },
+      {
+        "scenario": "reset-during-read",
+        "frames": {
+          "launched": "59704edb9722237e560d80224c6d1e68f7dc68d527a44329e92be2a952994fef",
+          "reading": "a479812225178edecd6eec287a2b64d172114933bfb0b589c25e31c650aac084",
+          "error": "b672c12e0f3b0fbf0265c8c4708a9f6d20799dfe08197b8aac4066da35236b7a",
+          "home-one-plus-one": "abf32ffc5e2fdcfc17172a5351eb6aac13d44a1b432d683f5a1f0c8e2a26844c"
+        },
+        "returned_to_stock_os": true,
+        "arithmetic_after_return_verified": true,
+        "starting_checkpoint_sha256": "cb3e8df12e9cbf62279b3fba67c472ee3082d14c43586db8d01362b51205c262",
+        "final_stop": 0,
+        "final_tick": 1160191680
+      },
+      {
+        "scenario": "unplug-during-read",
+        "frames": {
+          "launched": "59704edb9722237e560d80224c6d1e68f7dc68d527a44329e92be2a952994fef",
+          "reading": "a479812225178edecd6eec287a2b64d172114933bfb0b589c25e31c650aac084",
+          "error": "2d15445f5ce03b498c199adeab0abcb8d590dfa70b66f6c68c2a5403f580c67f",
+          "home-one-plus-one": "abf32ffc5e2fdcfc17172a5351eb6aac13d44a1b432d683f5a1f0c8e2a26844c"
+        },
+        "returned_to_stock_os": true,
+        "arithmetic_after_return_verified": true,
+        "starting_checkpoint_sha256": "cb3e8df12e9cbf62279b3fba67c472ee3082d14c43586db8d01362b51205c262",
+        "final_stop": 0,
+        "final_tick": 1164191680
+      },
+      {
+        "scenario": "host-read-timeout",
+        "frames": {
+          "launched": "59704edb9722237e560d80224c6d1e68f7dc68d527a44329e92be2a952994fef",
+          "reading": "a479812225178edecd6eec287a2b64d172114933bfb0b589c25e31c650aac084",
+          "error": "af215a3fab933aed3d094596d80f37c38d93a3622bc2ca3d420c3385817c56a9",
+          "home-one-plus-one": "abf32ffc5e2fdcfc17172a5351eb6aac13d44a1b432d683f5a1f0c8e2a26844c"
+        },
+        "returned_to_stock_os": true,
+        "arithmetic_after_return_verified": true,
+        "starting_checkpoint_sha256": "cb3e8df12e9cbf62279b3fba67c472ee3082d14c43586db8d01362b51205c262",
+        "final_stop": 0,
+        "final_tick": 1374191680
+      },
+      {
+        "scenario": "invalid-finish",
+        "frames": {
+          "error": "95c7d428a279f0a8f1ec74a9cf96f7ec6062089996856308089d389682224619",
+          "home-one-plus-one": "abf32ffc5e2fdcfc17172a5351eb6aac13d44a1b432d683f5a1f0c8e2a26844c"
+        },
+        "returned_to_stock_os": true,
+        "arithmetic_after_return_verified": true,
+        "starting_checkpoint_sha256": "2af7f66db91d88ee37d421d26a97ea0a4374fc58642b8b26af0db05febdfb7cb",
+        "error_report_prefix": [
+          33,
+          2,
+          5,
+          63,
+          2
+        ],
+        "final_stop": 0,
+        "final_tick": 1507089408
+      }
+    ]
+  },
+  "visible_lcd_evidence": {
+    "bytes": 16542,
+    "sha256": "bff3efa388989b5bd0cee0b14e0ff3893e09494f9288a2e555e14664520542c5",
+    "file": "hp39-romstream-r19-lcd.png",
+    "source": "Actual final-release LCD frames from the derived HP39gs original-OS run; no generated mockups.",
+    "visually_reviewed": true
+  },
+  "independent_source_review": {
+    "reviewer": "performance sibling agent",
+    "findings": "Checked original SP/CPSR restoration, callee-saved registers, private aligned L2 and stack separation, cache/TLB publication, async EP0 and reset handling. Pool overflow guard and own USB IRQ25 cleanup were adopted. Final last-block clamp independently reviewed.",
+    "production_core_changes_for_reader": false
+  },
+  "download_package": {
+    "file": "hp39gs-rom-dump-v2.zip",
+    "bytes": 1068508,
+    "sha256": "32d568fbfec7fc9d233e30d0c073e236a7d10eabb8ff7a39501d18678985ec28",
+    "files": 55,
+    "calculator_bytes_unchanged": false,
+    "calculator_reader_revision": 2,
+    "full_flash_reader": true,
+    "flash_bytes": 1048576,
+    "read_passes_per_block": 2,
+    "hardware_validated": false,
+    "windows_receiver": {
+      "machine": "amd64",
+      "format": "PE32+",
+      "bytes": 1820160,
+      "sha256": "824e76e7d112c265bf9dc6ff40aad8bf25bf95fce4c0f11510a7a14587bd1424"
+    },
+    "source_rebuild": {
+      "arm_payload_byte_equal": true,
+      "aplet_byte_equal": true,
+      "template_byte_equal": true,
+      "launcher_byte_equal": true
+    }
+  },
+  "source_only_rebuild": {
+    "bytes": 1068508,
+    "sha256": "32d568fbfec7fc9d233e30d0c073e236a7d10eabb8ff7a39501d18678985ec28",
+    "entire_zip_byte_equal": true,
+    "published_calculator_objects_and_receiver_executable_removed_before_build": true,
+    "source": "Only sources, references, README and licenses extracted from the final V2 ZIP; external ATfE/HPTools/Go/native C compiler.",
+    "network_used": false,
+    "GOPROXY": "off",
+    "GOSUMDB": "off",
+    "toolchain": {
+      "arm": "clang version 22.1.0",
+      "go": "go version go1.22.2 linux/amd64",
+      "hptools": "3.0.8 with pdo 20190426 patch"
+    }
+  },
+  "checks": {
+    "receiver_protocol_unit_tests": {
+      "passed": true,
+      "top_level_tests": 5,
+      "nested_negative_cases": 22,
+      "log_sha256": "bd1e7b12bddf1f7e079819d7052e1eb8dc419fa1535feae246e1bda6464a2ac2"
+    },
+    "go_vet_linux_amd64": {
+      "passed": true
+    },
+    "go_vet_windows_amd64": {
+      "passed": true
+    },
+    "windows_amd64_build": {
+      "bytes": 1820160,
+      "sha256": "824e76e7d112c265bf9dc6ff40aad8bf25bf95fce4c0f11510a7a14587bd1424",
+      "passed": true
+    },
+    "package_tests": {
+      "passed": true,
+      "top_level_tests": 5,
+      "rehashed_tampering_false_scope_and_boundary_cases": 34,
+      "log_sha256": "2354797716035cc2d9383b6a9c71cb8b43dd4ba42c5724cb0fc8d5663753b866"
+    },
+    "payload_unresolved_symbols": 0,
+    "payload_arm_relocations": 0,
+    "firmware_or_installed_checkpoint_in_package": false,
+    "linux_amd64_build": {
+      "passed": true,
+      "bytes": 1671303,
+      "sha256": "b9b2b54123a7eac0103c3fe46d2fb0e4c7e1f9894a079847a1ce2d6d47e38503"
+    }
+  },
+  "source_files": {
+    "tools/hp39-romstream/calculator/rom-stream-entry.S": {
+      "bytes": 5064,
+      "sha256": "49376654f9317a7901134618db040911065b12041582e78d6f9b1b0bac0d0c47"
+    },
+    "tools/hp39-romstream/calculator/rom-stream-wrap.py": {
+      "bytes": 1436,
+      "sha256": "a5a24271892704a6faaf36d4af3a1f3f058853c648243cc4fe3b4922ea96301e"
+    },
+    "tools/hp39-romstream/calculator/rom-stream.c": {
+      "bytes": 31045,
+      "sha256": "2691ba2beb330109a0d784bfb1ebf9a031fdf1ebed5d56f00391f4b93018dfca"
+    },
+    "tools/hp39-romstream/calculator/rom-stream.ld": {
+      "bytes": 525,
+      "sha256": "6e91fb74994f5ea4155608d642163efbee46c4e469c3dedecdd172bafdcc0bd8"
+    },
+    "tools/hp39-romstream/receiver/go.mod": {
+      "bytes": 48,
+      "sha256": "178beefc71409928f3f523da23cd026a86652c7e2c156e79fe02eaebb55a632d"
+    },
+    "tools/hp39-romstream/receiver/hid_other.go": {
+      "bytes": 296,
+      "sha256": "349e5c2e6b01e4b162e33e6b9750a19b0101b98b74f9c6608718f7fe15b30f7a"
+    },
+    "tools/hp39-romstream/receiver/hid_windows.go": {
+      "bytes": 12841,
+      "sha256": "031f8a2c19237c98904251878a254ded7388531a703ae4a86d132ffe6a9494d2"
+    },
+    "tools/hp39-romstream/receiver/main.go": {
+      "bytes": 12728,
+      "sha256": "fc64f47998957141189ef483722f10a83ee4853b3e424d4643a12ed3e85bb67f"
+    },
+    "tools/hp39-romstream/receiver/protocol_test.go": {
+      "bytes": 9786,
+      "sha256": "b14e4ebc2c24c6303b1d24bd1f956d7ba440abb21d6b2e5fb27dd99ed6f57b84"
+    },
+    "tools/hp39-romstream/receiver/stock_test.go": {
+      "bytes": 3511,
+      "sha256": "1a59ed27099320fab2c7ccd7d6b38d6c4f60682e29afd61d2c488d8f1af3d06e"
+    },
+    "tools/hp39-romstream/upstream.json": {
+      "bytes": 3502,
+      "sha256": "b567ca6c21e28fa22c30e6a84e3d64057b4c608c95d77d85bcccc81ea2ccb1f7"
+    },
+    "tools/package-hp39-romstream.py": {
+      "bytes": 19455,
+      "sha256": "53eb6f238789b7c56c55d6f218a8b833161aff9611595daacae762ed95e090f0"
+    },
+    "tests/hp39-romstream-package.py": {
+      "bytes": 7738,
+      "sha256": "980f85f58b349c9afb022372864d252e9e5bd438b9d1bc1f4a3d6d425119a46d"
+    },
+    "tools/test-hp39-romstream-stock.mjs": {
+      "bytes": 7377,
+      "sha256": "31efd39af6a7e02a5528b177c80906eeacacc77e2484633799f29be9ea6f17bb"
+    },
+    "tools/test-hp39-romstream-boundaries.mjs": {
+      "bytes": 7747,
+      "sha256": "52190a0ce5f641387493047e9b6dfc24596cfa15b29b476b484b5d1f97f36f3c"
+    },
+    "licenses/hp39-romstream/NOTICE.md": {
+      "bytes": 1900,
+      "sha256": "8014e2434aeeab3871095610b68ed5a721d11fd11331b09a466bb99fc117240b"
+    }
+  },
+  "reproduction": {
+    "build_package": "python3 tools/package-hp39-romstream.py build --upstream <PINNED-HPCLANG> --sdk <PINNED-HPGCC39> --atfe <ATfE-22.1.0> --hptools <HPTools-3.0.8-pdo20190426> --go <Go-1.22.2> <NEW-OUTPUT-ZIP>",
+    "verify_package": "python3 tools/package-hp39-romstream.py verify docs/downloads/hp39gs-rom-dump-v2.zip",
+    "unit_tests": "cd tools/hp39-romstream/receiver && go test -count=1 ./...",
+    "full_capture": "Set ORCHARD_STOCK_ROOT, ORCHARD_STOCK_MODEL, ORCHARD_STOCK_FIXTURE, ORCHARD_STOCK_ROM, ORCHARD_STOCK_CHECKPOINT and ORCHARD_STOCK_OUTPUT; run go test -ldflags=-X=orchard.local/hp39-rom-receiver.calculatorApletSHA=298732caeba57a240acf135f1260c6f1cf1899e024fb734f3b4d2c4f92cadcc1 -count=1 -run TestStockOSFullCapture -v in tools/hp39-romstream/receiver.",
+    "boundaries": "ORCHARD_STOCK_FIXTURE=<fixture> node tools/test-hp39-romstream-boundaries.mjs <ROM> <NORMAL-INSTALL-CHECKPOINT> <PRIVATE-OUTPUT> hp39gs <FULL-CAPTURE-OUTPUT>",
+    "source_only_rebuild": "Extract final ZIP; remove calculator/, hp39-rom-receiver.exe, dump-hp39gs.cmd, manifest.json and SHA256SUMS; build offline with package defaults for bundled third-party sources and the same external compiler versions; compare complete ZIP bytes."
+  }
+}

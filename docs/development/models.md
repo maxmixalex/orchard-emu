@@ -32,8 +32,10 @@ clock setup, LCD wiring, peripheral availability and behavior must be pinned
 per hardware revision. The current table deliberately does not invent those
 values. All six profiles use the same provisional peripheral implementation.
 A SoC UART channel is not proof that the calculator exposes a physical serial
-connector. The SDI controller now models an empty slot; `sd_slot=true` still
-does not imply card media, a filesystem or successful SD data transfers.
+connector. The SDI controller now models an empty slot and optional bounded
+SDSC media. [SD card workflows](sd-cards.md) have independent HP49g+ stock
+evidence; the shared HP50g profile still requires its own complete NOR and
+stock acceptance. HP48gII has no SD slot.
 
 ## Promotion rule
 

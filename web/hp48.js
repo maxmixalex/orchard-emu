@@ -43,7 +43,7 @@ export function applySetup(core, model, preset) {
     ['keyboard_attach',1], ['nor_select',2], ['gpio_inputs',5,0x8e,0],
     ['adc_input',0,1,1023], ['lcd_probe68',1],
   ] : preset === 'hp49-home' ? [
-    ['keyboard_attach',1], ['nor_select',1],
+    ['keyboard_attach',1], ['nor_select',1], ['sram_select',1],
     ['gpio_inputs',3,0xcc7f,0], ['gpio_inputs',4,0xc000,0xc000],
     ['gpio_inputs',5,0x8e,0], ['gpio_inputs',6,1,0],
     ['gpio_bias',6,0xf800,0xf800], ['adc_input',0,1,1023], ['adc_input',7,1,512], ['lcd_probe68',1],

@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	protocolVersion = 1
+	protocolVersion = 2
 	flashBytes      = 0x100000
 	blockBytes      = 0x4000
 	dataBytes       = 56
@@ -26,8 +26,25 @@ const (
 	passWord        = 0x50415353
 	readTimeout     = 5 * time.Second
 	maxBlockRetries = 3
-	streamerProduct = "HP39g+ ROM Stream"
+	streamerProduct = "HP39 ROM Stream V2"
+	readerRevision  = 2
 )
+
+// Filled by the deterministic package builder after the calculator is built.
+// A local test build leaves this empty rather than asserting an unrelated hash.
+var calculatorApletSHA string
+
+func calculatorError(p []byte) error {
+	if len(p) != 64 || p[0] != '!' || p[1] != protocolVersion {
+		return nil
+	}
+	names := map[byte]string{1: "E03 CABLE LOST", 2: "CANCELLED", 3: "E04 USB TIMEOUT", 4: "E05 USB RESET", 5: "E06 PROTOCOL", 6: "E07 USB CLOCK"}
+	name := names[p[2]]
+	if name == "" {
+		name = fmt.Sprintf("unknown code %d", p[2])
+	}
+	return fmt.Errorf("calculator %s, block %d/64 read %d; unplug USB and inspect the calculator screen", name, int(p[3])+1, p[4])
+}
 
 type reportDevice interface {
 	WriteReport([]byte) error
@@ -95,6 +112,9 @@ func readBlock(dev reportDevice, block int) ([]byte, bool, error) {
 		if len(p) != 64 {
 			return nil, false, fmt.Errorf("short report: %d bytes", len(p))
 		}
+		if err := calculatorError(p); err != nil {
+			return nil, false, err
+		}
 		switch p[0] {
 		case 'D':
 			n := int(p[1])
@@ -120,10 +140,11 @@ func readBlock(dev reportDevice, block int) ([]byte, bool, error) {
 	return nil, false, errors.New("checkpoint absent within report limit")
 }
 
-// The unchanged calculator payload re-reads volatile NOR on each R command.
+// The calculator re-reads volatile NOR on each R command.
 // Two equal, independently checksummed reads of every block are required.
 // This is one launch with two reads per block, not two independent OS boots.
 func receiveImage(dev reportDevice, progress io.Writer) (*capture, error) {
+	fmt.Fprintln(progress, "Connected. Requesting reader version and full-ROM geometry...")
 	if err := dev.WriteReport(command('?', 0, 0)); err != nil {
 		return nil, fmt.Errorf("INFO request: %w", err)
 	}
@@ -131,12 +152,20 @@ func receiveImage(dev reportDevice, progress io.Writer) (*capture, error) {
 	if err != nil {
 		return nil, fmt.Errorf("INFO read: %w", err)
 	}
-	if len(info) != 64 || !bytes.Equal(info[:8], []byte{'I', 1, 'H', '3', '9', 'R', 'O', 'M'}) {
+	if err := calculatorError(info); err != nil {
+		return nil, err
+	}
+	if len(info) != 64 || !bytes.Equal(info[:8], []byte{'I', protocolVersion, 'H', '3', '9', 'R', 'O', 'M'}) {
 		return nil, errors.New("unexpected INFO report")
+	}
+	if get32(info, 20) != readerRevision {
+		return nil, errors.New("reader revision mismatch: install H39 ROM V2 from this package")
 	}
 	if get32(info, 8) != flashBytes || get32(info, 12) != blockBytes || get32(info, 16) != dataBytes {
 		return nil, errors.New("protocol geometry mismatch")
 	}
+	fmt.Fprintln(progress, "Reader V2 ready: 1 MiB, 64 blocks, two independent reads per block. Starting...")
+	started := time.Now()
 	if err := dev.WriteReport(command('S', 0, 0)); err != nil {
 		return nil, fmt.Errorf("START: %w", err)
 	}
@@ -146,6 +175,7 @@ func receiveImage(dev reportDevice, progress io.Writer) (*capture, error) {
 		retries := 0
 		var first []byte
 		for pass := 0; pass < 2; {
+			fmt.Fprintf(progress, "Block %02d/64: reading pass %d/2...\n", block+1, pass+1)
 			data, valid, err := readBlock(dev, block)
 			if err != nil {
 				return nil, fmt.Errorf("block %02d pass %d: %w", block, pass+1, err)
@@ -179,7 +209,7 @@ func receiveImage(dev reportDevice, progress io.Writer) (*capture, error) {
 			if err := dev.WriteReport(command('A', byte(block), uint32(base))); err != nil {
 				return nil, err
 			}
-			fmt.Fprintf(progress, "Block %02d/64: two reads equal\n", block+1)
+			fmt.Fprintf(progress, "Block %02d/64: two reads equal; %d/%d bytes verified; elapsed %s\n", block+1, (block+1)*blockBytes, flashBytes, time.Since(started).Round(time.Second))
 			pass++
 		}
 	}
@@ -187,7 +217,10 @@ func receiveImage(dev reportDevice, progress io.Writer) (*capture, error) {
 	if err != nil {
 		return nil, fmt.Errorf("END read: %w", err)
 	}
-	if len(end) != 64 || !bytes.Equal(end[:8], []byte{'E', 1, 'H', '3', '9', 'R', 'O', 'M'}) ||
+	if err := calculatorError(end); err != nil {
+		return nil, err
+	}
+	if len(end) != 64 || !bytes.Equal(end[:8], []byte{'E', protocolVersion, 'H', '3', '9', 'R', 'O', 'M'}) ||
 		get32(end, 8) != flashBytes || get32(end, 12) != result.Sum || get32(end, 16) != passWord {
 		return nil, errors.New("END summary mismatch")
 	}
@@ -197,15 +230,16 @@ func receiveImage(dev reportDevice, progress io.Writer) (*capture, error) {
 func captureManifest(result *capture, model, version string, compared bool) map[string]any {
 	return map[string]any{
 		"schema": "orchard-hp39-rom-capture-v1", "model": model, "stock_rom_version_user_reported": version,
-		"protocol": "H39ROM-HID/1", "bytes": len(result.Image), "sha256": digest(result.Image),
+		"protocol": "H39ROM-HID/2", "bytes": len(result.Image), "sha256": digest(result.Image),
 		"byte_sum32": fmt.Sprintf("0x%08x", result.Sum), "blocks": result.Blocks,
 		"read_passes_per_block": 2, "independent_block_reads_equal": true,
 		"separate_capture_compared": compared, "transport_retries": result.Retries,
 		"address_space":     "uncached ARM section alias to physical NOR 0x00000000..0x000fffff",
 		"boot_region_bytes": 16384, "boot_region_sha256": digest(result.Image[:16384]),
 		"vid": "03f0", "pid": "0121", "usb_product": streamerProduct,
-		"calculator_source_commit":          "e240c58c2e9dd3ac4d18002ed9a93d2c7cc67900",
-		"calculator_aplet_sha256":           "3669fb2c2ae1f755bd542c8373a469d49165f2769affdce5435e649010c62455",
+		"calculator_upstream_base_commit":   "e240c58c2e9dd3ac4d18002ed9a93d2c7cc67900",
+		"calculator_aplet_sha256":           calculatorApletSHA,
+		"calculator_reader_revision":        readerRevision,
 		"model_identity_source":             "user selection; HID identity does not distinguish 39g+ and 39gs",
 		"authenticated_hardware_provenance": false, "physical_mapping_verified": false,
 		"boot_verified": false, "catalog_admitted": false,
@@ -277,8 +311,9 @@ func run() (retErr error) {
 			os.Remove(output + ".json")
 		}
 	}()
-	fmt.Println("Waiting for HP39g+ ROM Stream (shared 39g+/39gs payload)...")
-	dev, err := openStreamer(wait)
+	fmt.Println("H39 ROM V2: launch the new aplet, then follow its USB prompt. Close HP Connectivity Kit/Conn3x before the HID step.")
+	fmt.Printf("Waiting up to %s for %s...\n", wait, streamerProduct)
+	dev, err := openStreamer(wait, os.Stdout)
 	if err != nil {
 		return err
 	}
@@ -303,6 +338,7 @@ func run() (retErr error) {
 	if prior != nil && !bytes.Equal(prior, result.Image) {
 		return errors.New("new capture differs from separate previous capture")
 	}
+	fmt.Fprintln(os.Stdout, "All 64 blocks verified. Writing and syncing the complete ROM and JSON...")
 	metadata, err := json.MarshalIndent(captureManifest(result, model, version, prior != nil), "", "  ")
 	if err != nil {
 		return err
