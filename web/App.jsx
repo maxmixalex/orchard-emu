@@ -82,7 +82,7 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
  useEffect(()=>{ensureKeypadRef.current?.();view.current?.setEnabled(enabled&&prefs.view!=='traditional');keypad.current?.setEnabled(enabled&&prefs.view==='traditional');window.dispatchEvent(new Event('resize'));},[enabled,prefs.view,prefs.zoom]);
  return <main id="workspace" ref={workspace}><section id="calculator" ref={host} tabIndex={0} data-view={prefs.view}>
   <div className="calculator-stage" ref={stage} id="skin-stage">
-   <div className="skin-screen"><div className="skin-content"><img className="skin-image" alt={model.name} hidden/>
+   <div className="skin-screen"><div className="skin-content"><img className="skin-image" alt={model.name} hidden/><svg className="skin-keys skin-screen-keys"/>
     <div className="glass-overlay"><Indicators/><canvas id="lcd" width="131" height={model.id>=5?80:64}/></div></div></div>
    <div className="skin-keyboard"><div className="skin-content"><img className="skin-keyboard-image" alt="" aria-hidden="true" hidden/><svg className="skin-keys"/></div></div>
   </div>
@@ -113,7 +113,7 @@ function Settings({controller,state,onClose}){
  const {t}=useTranslation(),small=useMediaQuery('(max-width: 48em)');const [draft,setDraft]=useState(()=>validatePreferences(state.prefs)),[language,setLanguage]=useState(i18n.resolvedLanguage);
  const set=(k,v)=>setDraft(p=>({...p,[k]:v}));
  return <Modal opened trapFocus={!state.dialog} onClose={onClose} title={t('settings')} size="xl" fullScreen={small} closeButtonProps={{'aria-label':t('close')}}>
-  <Tabs defaultValue="general" keepMounted={false}><Tabs.List>{['general','keyboard','storage'].map(k=><Tabs.Tab key={k} value={k}>{t(k)}</Tabs.Tab>)}</Tabs.List>
+  <Tabs defaultValue="general" keepMounted={false}><Tabs.List>{['general','keyboard','transferSettings','storage'].map(k=><Tabs.Tab key={k} value={k}>{t(k)}</Tabs.Tab>)}</Tabs.List>
    <Tabs.Panel value="general" pt="md"><Stack><Select allowDeselect={false} label={t('language')} value={language} onChange={setLanguage} data={[{value:'zh',label:'简体中文'},{value:'en',label:'English'}]}/>
     <Select allowDeselect={false} label={t('view')} value={draft.view} onChange={v=>set('view',v)} data={['immersive','immersive-landscape','traditional'].map(k=>({value:k,label:t(k==='immersive-landscape'?'immersiveLandscape':k)}))}/>
     <div><Text size="sm">{t('size')} · {draft.zoom}%</Text><Slider min={50} max={180} step={5} value={draft.zoom} onChange={v=>set('zoom',v)} thumbLabel={t('size')}/></div>
@@ -123,6 +123,9 @@ function Settings({controller,state,onClose}){
     <div><Text size="sm">{t('volume')} · {Math.round(draft.volume*100)}%</Text><Slider min={0} max={100} step={5} value={Math.round(draft.volume*100)} disabled={!draft.sound} onChange={v=>set('volume',v/100)} thumbLabel={t('volume')}/></div>
    </Stack></Tabs.Panel>
    <Tabs.Panel value="keyboard" pt="md"><MappingEditor model={state.model} draft={draft} onChange={setDraft}/></Tabs.Panel>
+   <Tabs.Panel value="transferSettings" pt="md"><Stack>
+    <Switch label={t('fileTransferUnlimited')} description={t('fileTransferUnlimitedHelp')} checked={draft.transferUnlimited} onChange={e=>set('transferUnlimited',e.currentTarget.checked)}/>
+   </Stack></Tabs.Panel>
    <Tabs.Panel value="storage" pt="md"><Stack><Switch label={t('autosave')} checked={draft.autosave} onChange={e=>set('autosave',e.currentTarget.checked)}/><Select allowDeselect={false} label={t('interval')} value={String(draft.interval)} onChange={v=>set('interval',Number(v))} data={[15,30,60,120].map(v=>({value:String(v),label:t('seconds',{count:v})}))}/><Text size="sm" c="dimmed">{t('storagePrivacy')}</Text><Button variant="light" color="red" onClick={()=>controller.clearSaves()}>{t('deleteSaves')}</Button></Stack></Tabs.Panel>
   </Tabs><Group justify="flex-end" mt="lg"><Button variant="default" onClick={onClose}>{t('cancel')}</Button><Button onClick={()=>{controller.setPreferences(draft);void i18n.changeLanguage(language);try{controller.storage?.setItem(LANG_KEY,language);}catch{}onClose();}}>{t('apply')}</Button></Group>
  </Modal>;

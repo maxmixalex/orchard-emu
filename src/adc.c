@@ -34,8 +34,8 @@ static bool start(orchard_machine *m, uint32_t control, uint32_t address) {
     if ((control & 0x4000u) && divisor == 1) {
         o_stop(m, ORCHARD_UNIMPLEMENTED_MMIO, address, control); return false;
     }
-    /* Sample-and-hold at start; later stimulus changes affect the next sample.
-       A quantum supplies one provisional PCLK, not a modeled PLL clock tree. */
+    /* Sample-and-hold at start; later stimuli affect the next sample.
+       remaining is measured in the shared functional PCLK domain. */
     a->sample = a->inputs[channel];
     a->remaining = 5u * divisor;
     a->con &= ~0x8000u;

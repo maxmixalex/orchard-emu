@@ -9,6 +9,8 @@ backwards compatible. Keep the exported backup. To resume later, open the same o
 ROM and choose **Restore**, then **Resume**. Optional automatic local saves
 are described below; the ROM is never persisted.
 Restoring a saved HOME session avoids repeating cold boot and its prompts.
+If a session was saved after the firmware powered off, Resume continues that
+powered-off state; use the calculator's ON key to wake it.
 Restart still clears the current RAM and preserves an inserted SD card; it
 does not delete exported files. Restore replaces the current RAM and card.
 
@@ -31,17 +33,28 @@ battery-backed storage or continuation of an external USB host connection.
 
 The C API is `orchard_checkpoint_size/save/load`. The core format uses an
 explicit little-endian field stream, not `memcpy` of a C struct. Native and
-WASM share the schema. A 32-byte header contains `ORCHST01`, version 3, exact
+WASM share the schema. A 32-byte header contains `ORCHST01`, version 4, exact
 length, model, ROM CRC32, physical SRAM size and a payload CRC32. The body
 contains explicitly enumerated architectural scalars, active SRAM and the
-4 KiB internal SRAM. Without a card, 256 KiB machines produce **271,071 bytes**
-before the small browser envelope; 512 KiB machines produce **533,215 bytes**.
+4 KiB internal SRAM. Without a card, 256 KiB machines produce **271,135 bytes**
+before the small browser envelope; 512 KiB machines produce **533,279 bytes**.
 An inserted card adds its complete image length. Version 2 added 52 bytes of
-SDI state; version 3 adds 709 bytes for media metadata and controller/FIFO/
-partial-transfer state, followed by the card image. The loader accepts exact
-version-1/2 files and resets the fields absent from those versions. Exports
-always use version 3; the browser envelope remains version 1. Legacy length,
-checksum, model and field validation still apply.
+SDI state; version 3 added 709 bytes for media metadata and controller/FIFO/
+partial-transfer state, followed by the card image. Version 4 appends 64 scalar
+bytes for fractional PCLK phase, MPLL setup history, active PWM compares and
+pending reload values. RAM begins at byte 4895, after that extension. Exports
+always use version 4; the browser envelope remains version 1. The loader
+continues to accept exact version-1/2/3 files. Legacy length, checksum, model
+and field validation still apply.
+
+Old formats did not record the new clock/PWM state. Their migration preserves
+existing registers, counters and RAM, initializes PCLK phase and pending
+reloads to zero, takes active compares from the old TCMPB buffers, and infers
+MPLL configuration only when the saved word differs from its reset value.
+The old first partial timer cycle can therefore differ; old files remain
+usable without a claim of cycle-for-cycle equivalence to the old timer model.
+New v4 sessions preserve those states exactly. The complete layout and the
+same-reset-value PLL ambiguity are documented in [runtime clocks](clock-ratios.md).
 
 The browser envelope (`ORCHARD1`) adds versioned JSON metadata with the exact
 ROM SHA-256, model, compatibility configuration, display mode and state SHA-256.
@@ -49,8 +62,8 @@ Its metadata and payload lengths are bounded before decoding. These checks
 provide integrity and identity, **not a signature or authentication**. Input
 is still untrusted: core import stages small scalar state, checks booleans,
 enums, queue cursors/counts, ADC/sample bounds, endpoint indices and other
-index-bearing fields, card geometry, protocol state and bound media capacity,
-and only then mutates the machine. Malformed data is
+index-bearing fields, card geometry, protocol state, bound media capacity,
+PCLK phase and PWM reload invariants, and only then mutates the machine. Malformed data is
 rejected without partial replacement. Buffers overlapping the machine and
 incorrect/truncated/extra lengths are refused. The matched original ROM must
 already be loaded.
@@ -77,7 +90,8 @@ external RAM, circular UART queues and partly consumed USB FIFOs. They reject
 wrong ROMs, damaged/truncated files, every changed header byte, bad versions,
 noncanonical booleans and invalid queue cursors even with a repaired checksum.
 The suite includes independent bitwise verification of both CRC fields on all
-six models, legacy-version import, and in-flight SDI timing continuation. Browser-envelope and
+six models, all three legacy-version imports, in-flight SDI continuation,
+nonzero PCLK phase, buffered PWM reload and Power_OFF save/wake. Browser-envelope and
 production Worker tests cover save/import/continued execution, exact ROM
 binding, corrupted payloads and stale-generation isolation.
 
@@ -107,6 +121,12 @@ resumes execution and exports a version-2 replacement. These use normal UI
 controls and do not inject guest memory. The r19 [SD card workflow](sd-cards.md)
 extends the production-page test to version 3 and complete media preservation.
 See [HP49 startup](hp49-startup.md).
+
+The r21 [power witness](power-management.md) adds four original-ROM inactivity
+shutdowns, exact powered-off v4 round trips and ON resume with the previous
+calculation retained. A genuine r20 HP39gs v3 session also imports, completes
+physical SHIFT/ON and ON resume, and accepts new arithmetic. These runtime
+checks are recorded separately from the earlier browser-session witnesses.
 
 Layout and lifecycle component tests cover narrow viewports separately. Neither
 checkpoint identity nor one desktop browser run proves long-term browser-storage
@@ -162,8 +182,8 @@ does not guarantee locking between agents; the
 The current implementation uses a byte-table form of the same reflected CRC32
 recurrence. It still reads and validates the complete NOR and serialized payload
 on every operation; no stale identity cache is introduced. That checksum optimization preserved the then-current format and compared
-byte-for-byte with its predecessor. The later SDI extension described above is
-an explicit version change, independent of the checksum implementation.
+byte-for-byte with its predecessor. The later SDI and clock/PWM extensions
+described above are explicit version changes, independent of the checksum implementation.
 An interleaved local benchmark reduced core save/import times by roughly a third;
 see [the validation record](validation.md#faster-checkpoints-unchanged-format).
 This reduces the synchronous Worker copy/checksum interval, not every source of

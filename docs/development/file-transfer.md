@@ -84,7 +84,9 @@ selected file's content; an unfamiliar suffix does not bypass or fail them.
 
 ### Optional transfer speed
 
-**Use Unlimited during transfers** is off by default. When enabled, the Worker
+**Settings → Transfer → Use Unlimited during transfers** is off by default.
+The switch follows Settings' Apply/Cancel behavior and remains available during
+a transfer; it is not duplicated in the connection panel. When enabled, the Worker
 temporarily selects Unlimited only while sending, receiving or processing an
 active data operation. Waiting for a calculator RECV command, choosing from an
 HP39 disk directory and waiting between Wire files retain the selected speed.
@@ -509,9 +511,26 @@ The Files panel now also offers **HP39/40 (Wire) — fast upload**. Select the s
 complete ZIP, choose **Upload through Wire**, and select **RECV → HP39/40 (Wire)**
 on the calculator for each displayed file. Libraries are sent first. The next
 file waits for a fresh receiver handshake, and an item is complete only after
-the final EOT ACK. This path uploads all selected binary objects; Disk drive
+the final EOT ACK. This path uploads all selected supported objects; Disk drive
 remains the choice for calculator-side catalog selection and all downloads.
-Original catalog preflight, dependency references and input bytes are preserved.
+Original catalog preflight, dependency references and binary input bytes are preserved.
+
+ASCII `HP39AscC` Notes are now packed as binary Saturn strings before Wire
+upload. Open their catalog with **SHIFT, 0 (NOTEPAD)** and choose the matching
+RECV menu there. The source file is unchanged; text follows the original OS's
+whitespace, CRLF and HP character-escape rules, retaining original high bytes.
+The queue counts the actual prepared Wire length and retains it for retries.
+Cold original-ROM 39g+ and 39gs witnesses open the installed Note in EDIT,
+export it through Disk SEND, compare every resulting character/escape, and
+repack the export to the same binary object. See the [Note evidence](evidence/hp39-note-wire-r21.json)
+and `tools/verify-hp39-note-wire.mjs`. ASCII aplets/programs/libraries still use
+Disk drive; this does not implement a general program compiler.
+
+Both full original-ROM workflows also pass with the integrated shared-PCLK and
+idle-power core `e41ae110…`: Wire installation, EDIT, exact 426-byte stock
+export, binary repacking and HOME `1+1=2`, with no final stop or data fault.
+This functional integration witness is recorded separately from the fixed-core
+ACK-recovery timing comparison below.
 
 The exact receiver menu is model-specific: HP39g+ shows **HP39/40 (Wire)**;
 HP39gs shows **HP39/40 (USB)** on USB and **HP39/40 (Ser)** on serial. The UI's
@@ -566,7 +585,7 @@ cover user speed changes, disabling the option during data transfer, cancel whil
 boosted, pause, reset, model changes, local read/format failures and stale events.
 Those fixture-based cases are distinct from the original-ROM actions above.
 
-The new bounded `hp39-wire.js` sender accepts binary B/C/D/H typed files; actual
+The r19 bounded `hp39-wire.js` sender accepted binary B/C/D/H typed files; actual
 stock-ROM acceptance here covers the original B aplet and H library. Original
 HP39g+ RECV requests HP CRC with `D` and acknowledges 128/1024-byte blocks.
 The full browser witness cold-boots the admitted D1.55 ROM, selects the original
@@ -599,10 +618,35 @@ totals still show received bytes. The previous 4 KiB-only threshold concealed
 40 seconds of progress in the reproduced old Normal upload and every intermediate
 update for its small library. HP39's Kermit sender additionally starts with a
 one-guest-second adaptive reply timeout, measures only clean ACK round trips and
-backs off on loss up to the negotiated timeout. HP48/49 defaults, HP39 receive
-timeouts and core execution budget are unchanged. The evidence keeps the old
+backs off on loss up to the negotiated timeout. HP48/49 defaults and the core
+execution budget are unchanged. The historical r19 evidence keeps the old
 108.147-second Normal Disk drive upload, exact-state timeout experiments and
 rejected pacing candidates separate from actual final-source browser validation.
+
+The r21 packet trace also isolates reverse SEND's long waits. The original
+39gs sent S0, the host emitted a valid Y0 one ordinary slice later, but the
+calculator repeated S0 about 7.83 guest seconds later; an identical pattern
+occurred for a data ACK. Sequence numbers and checksums were valid. This shows
+the sender did not act on an already emitted ACK; it does not establish which
+guest interrupt or application step lost that notification.
+
+HP39 receive children now retain and repeat that exact ACK after one guest
+second without the next packet, with bounded exponential backoff to the
+negotiated timeout and the original retry count/overall deadline. This is the
+receiver-timeout action in the Kermit Protocol Manual's receive state table
+(section 6, page 37). The timer starts after the full ACK has been written;
+advancing to the next packet removes an unsent old retry. The final B ACK is
+retained by the file server only within the existing final-ACK grace period,
+and a new command supersedes it. Bytes are not committed a second time.
+No inter-packet delay or extra guest execution is introduced.
+
+For the same small Note and fixed core, the traced 39gs Disk SEND session
+fell from 18.7209 to 8.0269 guest seconds; its previously reproduced eight-second
+gaps became roughly one-second ACK recoveries. The no-loss 39g+ session
+remained 3.2911 guest seconds. These are deterministic protocol witnesses, not
+browser wall-time benchmarks or a universal speedup claim. The dedicated
+large-Note witness also exercises original-ROM Kermit sequence wrap. Generic
+HP48/49 Kermit sessions do not enable this HP39 retry policy.
 
 The final `eb79a3bc…` production build then passed a separate cold original-ROM
 Normal Disk drive upload of the same ZIP. From selecting the aplet to both

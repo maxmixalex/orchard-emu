@@ -9,7 +9,7 @@ import shutil
 MODELS = ('hp39gplus', 'hp39gs', 'hp40gs', 'hp48gii', 'hp49gplus', 'hp50g', 'hp50g-blue')
 ASSETS = {
     'index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js',
-    'lifecycle.js', 'debug.html', 'calculator.js', 'session.js', 'calculator.css', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js', 'kermit.js', 'file-transfer.js', 'hp39-files.js', 'hp39-transfer.js', 'hp39-archive.js', 'hp39-wire.js', 'sd-card.js', 'sd-filesystem.js', 'buzzer-worker.js', 'buzzer-audio.js', 'orchard.wasm', 'LICENSE', 'serve.mjs', 'README.txt',
+    'lifecycle.js', 'debug.html', 'calculator.js', 'session.js', 'calculator.css', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js', 'kermit.js', 'file-transfer.js', 'hp39-files.js', 'hp39-transfer.js', 'hp39-archive.js', 'hp39-wire.js', 'transfer-errors.js', 'sd-card.js', 'sd-filesystem.js', 'buzzer-worker.js', 'buzzer-audio.js', 'orchard.wasm', 'LICENSE', 'serve.mjs', 'README.txt',
     'licenses/frontend.txt', 'skins/manifest.json', 'licenses/hp-calcs-svg/LICENSE.txt',
     'licenses/hp-calcs-svg/NOTICE.txt', 'licenses/hp-calcs-svg/README.md',
 } | {f'skins/{model}.svg' for model in MODELS}

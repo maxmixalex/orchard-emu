@@ -80,18 +80,21 @@ def shapes(model):
         xs,ys=coords[::2],coords[1::2];x,y=min(xs),min(ys);w,h=max(xs)-x,max(ys)-y
     else: x,y,w,h,_=screen['screen']
     glass=[x*sx,y*sy,w*sx,h*sy]
-    # A landscape skin is the original art cut at the lowest painted bezel edge.
-    # Both pinned bezel paths use paired M/C coordinates and reach their lowest
-    # control point at a curve endpoint; half the stroke belongs to the top piece.
-    bezel=screen['bezel']
-    if re.search(r'[AaHhVvLlQqSsTt]',bezel): raise ValueError('Unexpected bezel curve')
-    coords=list(map(float,re.findall(r'-?\d+(?:\.\d+)?',bezel)))
-    bezel_sy=1
-    if screen.get('bezel_transform'):
-        match=re.fullmatch(r'scale\(([\d.]+) ([\d.]+)\)',screen['bezel_transform'])
-        if not match: raise ValueError('Unexpected bezel transform')
-        bezel_sy=float(match[2])
-    split_y=(max(coords[1::2])+float(screen.get('bezel_stroke_width',0))/2)*bezel_sy*sy
+    # Keep all six soft keys with the display. Read their actual painted lower
+    # edge, including the pinned SVG's nested scales and stroke, then leave a
+    # small case margin below the row. The keyboard below the cut is unchanged.
+    soft_bottom=[]
+    scale_pattern=r'scale\(([\d.]+) ([\d.]+)\)'
+    for n in range(1,7):
+        group=ids[f'F{n}'];shape=next(iter(group))
+        if shape.tag!=NS+'rect': raise ValueError('Unexpected soft-key shape')
+        tr=transform(group)
+        if re.sub(scale_pattern,'',tr).strip(): raise ValueError('Unexpected soft-key transform')
+        key_sy=1
+        for _,factor in re.findall(scale_pattern,tr): key_sy*=float(factor)
+        soft_bottom.append((float(shape.get('y'))+float(shape.get('height'))+
+                            float(shape.get('stroke-width',0))/2)*key_sy)
+    split_y=max(soft_bottom)+12
     view_box=list(map(float,root.get('viewBox').split()))
     if not glass[1]+glass[3]<split_y<view_box[3]: raise ValueError('Invalid skin split')
     shutil.copyfile(svg,OUT/f'{model}.svg')

@@ -3,13 +3,63 @@
 // owns no clock, file access or calculator memory. See hp39-files.md for the
 // original-ROM witness and the distinction from Disk drive's Kermit server.
 import {inspectHp39File,validateHp39Filename} from './hp39-files.js';
+import {transferError,transferErrorDetails} from './transfer-errors.js';
+
+// HP character translation codes, documented by HP (AUR appendix J) and
+// emitted by stock HP39 Note SEND. Values are character bytes, not Unicode.
+const noteEscapes=new Map([
+  ...['<)','x-','.V','v/','.S','GS','|>','pi','.d','<=','>=','=/','Ga','->','<-','|v',
+    '|^','Gg','Gd','Ge','Gn','Gh','Gl','Gr','Gs','Gt','Gw','GD','PI','GW','[]','oo'].map((key,i)=>[key,128+i]),
+  ['<<',171],['^o',176],['Gm',181],['>>',187],['.x',215],['O/',216],['Gb',223],[':-',247]
+]);
+function noteText(input,start){
+  // The stock ASCII Note reader skips the whitespace after the counted name.
+  // An intentional leading blank/newline can be represented by \032 / \010.
+  while([32,9,13,10].includes(input[start]))start++;
+  const output=new Uint8Array(input.length-start);let count=0;
+  for(let i=start;i<input.length;i++){
+    let byte=input[i];
+    if(byte===13&&input[i+1]===10){byte=10;i++;}
+    else if(byte===92){
+      if(input[i+1]===92)i++;
+      else{
+        const token=String.fromCharCode(input[i+1]??0,input[i+2]??0),translated=noteEscapes.get(token);
+        if(translated!==undefined){byte=translated;i+=2;}
+        else if(input[i+1]>=48&&input[i+1]<=57&&input[i+2]>=48&&input[i+2]<=57&&input[i+3]>=48&&input[i+3]<=57){
+          const value=(input[i+1]-48)*100+(input[i+2]-48)*10+input[i+3]-48;
+          if(value<=255){byte=value;i+=3;}
+        }
+      }
+    }
+    output[count++]=byte;
+  }
+  return output.subarray(0,count);
+}
 
 export function validateHp39WireFile(name,bytes){
   validateHp39Filename(name);
   const info=inspectHp39File(bytes);
-  if(info.encoding!=='binary'||!['B','C','D','H'].includes(info.kind))
-    throw Error('Wire upload accepts binary HP39 aplets, libraries, notes and programs. Use Disk drive for this file.');
+  if(!(info.kind==='C'||info.encoding==='binary'&&['B','D','H'].includes(info.kind)))
+    throw transferError('hp39WireType','Wire upload accepts HP39 notes and binary aplets, libraries and programs. Use Disk drive for this file.');
   return info;
+}
+/** Wire carries binary objects even when Disk drive accepts an ASCII Note.
+ * C is a Saturn character string (prolog 02A2C); its five-nibble size includes
+ * the size field itself. This is deliberately not an ASCII program compiler.
+ * Keep calculator-charset bytes intact: a UTF-8 roundtrip corrupts legacy notes.
+ */
+export function prepareHp39WireFile(name,input){
+  const info=validateHp39WireFile(name,input);
+  if(info.encoding==='binary')return {bytes:input,info,noteConverted:false,sourceBytes:input.length};
+  const body=noteText(input,info.payloadOffset),nibbles=5+2*body.length;
+  if(nibbles>0xfffff)throw transferError('hp39NoteSize','This note exceeds the 524285-byte Saturn string limit.');
+  const bytes=new Uint8Array(14+info.titleBytes+body.length);
+  bytes.set([72,80,51,57,66,105,110,67,info.titleBytes]);
+  bytes.set(input.subarray(info.payloadOffset-info.titleBytes,info.payloadOffset),9);
+  const offset=9+info.titleBytes;
+  bytes.set([0x2c,0x2a,(nibbles&15)<<4,(nibbles>>>4)&255,nibbles>>>12],offset);
+  bytes.set(body,offset+5);
+  return {bytes,info:inspectHp39File(bytes),noteConverted:true,sourceBytes:input.length};
 }
 export function hp39WireCrc(bytes,hp=true){
   let value=0;
@@ -37,11 +87,13 @@ export class Hp39WireSender {
   }
   get pending(){return this.active||this.queue.length>0;}
   status(phase,error){this.phase=phase;this.notify({active:this.active,phase,protocol:'hp39-wire',direction:'send',
-    name:this.name,transferred:this.transferred,total:this.total,...(error?{error}:{})});}
+    name:this.name,objectKind:this.objectKind,...(this.noteConverted?{noteConverted:true,sourceBytes:this.sourceBytes}:{}),
+    transferred:this.transferred,total:this.total,...(error?transferErrorDetails(error):{})});}
   start({name,bytes},now){
-    if(this.active)throw Error('An HP39 Wire upload is already running.');
-    validateHp39WireFile(name,bytes);
-    this.name=name;this.bytes=bytes;this.total=bytes.length;this.transferred=0;this.sequence=1;
+    if(this.active)throw transferError('wireRunning','An HP39 Wire upload is already running.');
+    const prepared=prepareHp39WireFile(name,bytes);
+    this.objectKind=prepared.info.kind;this.noteConverted=prepared.noteConverted;this.sourceBytes=prepared.sourceBytes;
+    this.name=name;this.bytes=prepared.bytes;this.total=this.bytes.length;this.transferred=0;this.sequence=1;
     this.now=now;this.end=now+300*this.hz;this.deadline=now+120*this.hz;
     this.active=true;this.stage='handshake';this.queue=[];this.retries=0;this.cancelled=false;this.status('negotiating');
   }
@@ -58,7 +110,7 @@ export class Hp39WireSender {
     this.enqueue(this.last);
   }
   retry(){
-    if(++this.retries>8)throw Error('Wire upload timed out. Reopen the calculator’s matching wired RECV mode and try again.');
+    if(++this.retries>8)throw transferError('wireRetryTimeout','Wire upload timed out. Reopen the calculator’s matching wired RECV mode and try again.');
     this.enqueue(this.last);
   }
   receive(bytes,now){
@@ -76,7 +128,7 @@ export class Hp39WireSender {
           if([21,67,68].includes(byte)){this.check=byte;this.next();this.status('sending');}
           continue;
         }
-        if(byte===24){this.cancelled=true;throw Error('The calculator cancelled the Wire upload.');}
+        if(byte===24){this.cancelled=true;throw transferError('wireCancelledByCalculator','The calculator cancelled the Wire upload.');}
         // An ACK for a partially written block cannot acknowledge that block.
         if(this.queue.length)continue;
         if(byte===21)this.retry();
@@ -85,15 +137,15 @@ export class Hp39WireSender {
           else{this.transferred=this.nextOffset;this.sequence=(this.sequence+1)&255;this.status('sending');this.next();}
         }
       }
-    }catch(error){this.fail(error.message);}
+    }catch(error){this.fail(error);}
   }
   poll(now){
     this.now=now;
     try{
       if(this.active){
-        if(now>=this.end)throw Error('Wire upload reached its five-minute virtual-time limit.');
+        if(now>=this.end)throw transferError('wireDuration','Wire upload reached its five-minute virtual-time limit.');
         if(now>=this.deadline){
-          if(this.stage==='handshake')throw Error('Choose the calculator’s matching wired RECV mode for this file.');
+          if(this.stage==='handshake')throw transferError('wireChooseReceiver','Choose the calculator’s matching wired RECV mode for this file.');
           this.retry();
         }
       }
@@ -102,9 +154,9 @@ export class Hp39WireSender {
       if(!Number.isInteger(accepted)||accepted<0||accepted>left.length)throw Error('Invalid HP39 Wire transport acceptance.');
       item.offset+=accepted;
       if(item.offset===item.bytes.length){this.queue.shift();this.deadline=now+10*this.hz;}
-    }catch(error){this.fail(error.message);}
+    }catch(error){this.fail(error);}
   }
-  cancel(message='Wire upload cancelled.'){
+  cancel(message=transferError('wireCancelled','Wire upload cancelled.')){
     this.queue=[];this.active=false;this.cancelled=true;this.status('cancelled',message);
   }
   fail(message){this.queue=[];this.active=false;this.status('error',message);}

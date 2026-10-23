@@ -8,6 +8,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {Pacer} from '../web/pacing.js';
 import {FileTransfer} from '../web/file-transfer.js';
+import {transferError,transferErrorDetails} from '../web/transfer-errors.js';
 import {BuzzerStream} from '../web/buzzer-worker.js';
 import {packet,PARAMETERS} from '../web/kermit.js';
 import {TapQueue,HP48_ROM,isPlayable,setupHash,applySetup} from '../web/hp48.js';
@@ -31,7 +32,7 @@ function fixture({model=4}={}){
     disconnect(){this.connected=false;}endpoint(){if(!this.connected)throw Error('Connect USB first.');return {maxPacket:64};}
     send(bytes){writes.push(bytes.slice());return {result:0,status:'ACK',accepted:bytes.length};}
     read(){return incoming.length?{result:0,bytes:incoming.shift()}:{result:1,status:'NAK',bytes:new Uint8Array()};}}
-  const scope={readSDState,validateSDSize,MAX_STATE,Pacer,FileTransfer,BuzzerStream,TaskScheduler:Scheduler,VirtualUSB:USB,TapQueue,HP48_ROM,isPlayable,setupHash,applySetup,
+  const scope={transferError,transferErrorDetails,readSDState,validateSDSize,MAX_STATE,Pacer,FileTransfer,BuzzerStream,TaskScheduler:Scheduler,VirtualUSB:USB,TapQueue,HP48_ROM,isPlayable,setupHash,applySetup,
     Uint8Array,Uint32Array,ArrayBuffer,performance:{now:()=>++wall},self:{},postMessage:d=>output.push(d),initialCore:core,
     encodeSession:async()=>new Uint8Array(32),decodeSession:async()=>({model:4,romHash:HP48_ROM,preset:'hp48-home',frameView:1,state:new Uint8Array(32)})};
   const context=vm.createContext(scope);vm.runInContext(source+'\ncore=initialCore;',context);
@@ -52,6 +53,7 @@ for(const extra of [{mode:'send',name:'ROM',bytes:new Uint8Array(16)},{mode:'unk
 {
   const f=fixture();f.send({type:'usb-connect',connected:false});start(f);assert.equal(final(f,1).phase,'error');assert(f.inspect().running);
   f.send({type:'pause'});start(f,2);assert.equal(final(f,2).phase,'error');
+  assert.equal(final(f,2).errorCode,'calculatorNotReady','Worker catch retains the translatable code');
 }
 for(const transport of ['usb','serial'])for(const action of ['pause','reset','create','checkpoint-load','disconnect']){
   const f=fixture();start(f,1,{transport,mode:transport==='usb'?'receive':'get',name:'OBJECT'});assert(f.inspect().active);

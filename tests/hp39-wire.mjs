@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import assert from 'node:assert/strict';
-import {Hp39WireSender,hp39WireCrc,hp39WireBlock,validateHp39WireFile} from '../web/hp39-wire.js';
+import {Hp39WireSender,hp39WireCrc,hp39WireBlock,validateHp39WireFile,prepareHp39WireFile} from '../web/hp39-wire.js';
 import {FileTransfer} from '../web/file-transfer.js';
 const text=s=>Uint8Array.from(s,c=>c.charCodeAt(0));
 assert.equal(hp39WireCrc(text('123456789')),0x2189,'CRC-16/KERMIT independent check value');
@@ -9,6 +9,47 @@ assert.deepEqual(hp39WireBlock(255,new Uint8Array(128),68),Uint8Array.from([1,25
 assert.equal(hp39WireBlock(1,new Uint8Array(128).fill(1),21).at(-1),128);
 for(const bad of [text('HP39AscD 1 Pabc'),text('HP39BinI\x00abc'),text('HPHP49-Cabc')])assert.throws(()=>validateHp39WireFile('A.000',bad));
 function payload(size){const p=Uint8Array.from({length:size},(_,i)=>(i*73)&255);p.set(text('HP39BinB\x01A'));return p;}
+
+// Independently witnessed by stock 39gs Wire install -> EDIT -> Disk SEND.
+// The complete wire string, rather than an encoding helper, fixes both nibble
+// order and the self-inclusive Saturn size field in this regression vector.
+{
+  const source=text('HP39AscC 11 Wire Binary\nWire note test.\nSecond line: 0123456789.\n'),before=source.slice();
+  const expected=Uint8Array.from(Buffer.from('4850333942696e430b576972652042696e6172792c2a70050057697265206e6f746520746573742e0a5365636f6e64206c696e653a20303132333435363738392e0a','hex'));
+  const prepared=prepareHp39WireFile('NOTE.unknown',source);
+  assert.deepEqual(prepared.bytes,expected);assert.deepEqual(source,before,'Source file must remain unchanged');
+  assert.equal(prepared.noteConverted,true);assert.equal(prepared.sourceBytes,source.length);
+  const exported=text('HP39AscC 11 Wire BinaryWire note test.\r\nSecond line: 0123456789.\r\n');
+  assert.deepEqual(prepareHp39WireFile('NOTE',exported).bytes,expected,'Stock export has no title newline');
+  assert.deepEqual(prepareHp39WireFile('NOTE',text('HP39AscC 11 Wire Binary\r\nWire note test.\r\nSecond line: 0123456789.\r\n')).bytes,expected);
+  const pass=prepareHp39WireFile('NOTE',expected);assert.equal(pass.bytes,expected);assert.equal(pass.noteConverted,false);
+  const states=[],sender=new Hp39WireSender({hz:1000,write:b=>b.length,notify:s=>states.push(s)});
+  sender.start({name:'NOTE',bytes:source},0);
+  assert.deepEqual(sender.bytes,expected);assert.equal(sender.total,expected.length);
+  assert.equal(states[0].objectKind,'C');assert.equal(states[0].noteConverted,true);
+}
+// Preserve calculator charset bytes, backslashes, trailing blanks and the
+// empty string. Conversion never interprets Note text as a program or UTF-8.
+{
+  const body=text('A\xe9\x80\xff\\123\rB\n \t');
+  const prepared=prepareHp39WireFile('NOTE',text('HP39AscC 1 \xe9A\xe9\x80\xff\\\\123\rB\n \t'));
+  assert.equal(prepared.bytes[9],0xe9);assert.deepEqual(prepared.bytes.subarray(15),body);
+  assert.deepEqual(prepareHp39WireFile('NOTE',text('HP39AscC 0 \n')).bytes,text('HP39BinC\0\x2c\x2a\x50\0\0'));
+  const prefix=text('HP39AscC 0 '),max=new Uint8Array(prefix.length+524285);max.set(prefix);max.fill(65,prefix.length);
+  const packed=prepareHp39WireFile('NOTE',max).bytes;
+  assert.deepEqual(packed.subarray(9,14),Uint8Array.of(0x2c,0x2a,0xf0,0xff,0xff));
+  const oversized=new Uint8Array(max.length+1);oversized.set(max);oversized[oversized.length-1]=65;
+  assert.throws(()=>prepareHp39WireFile('NOTE',oversized),error=>error.errorCode==='hp39NoteSize');
+}
+// Stock 39gs Disk import's stored string was independently read from a private
+// unmodified-guest checkpoint. Leading whitespace is skipped, CRLF alone is
+// collapsed, valid translations decode once, and unknown escapes stay literal.
+{
+  const input=text('HP39AscC 8 Esc Note \t\r\n\nA\\000|\\010|\\013|\\032|\\065|\\128|\\159|\\255|\\256|\\999|\\12|\\foo|\\Ga|\\->|\\\\END\n\rTAIL');
+  const expected=text('A\0|\n|\r| |A|\x80|\x9f|\xff|\\256|\\999|\\12|\\foo|\x8c|\x8d|\\END\n\rTAIL');
+  assert.deepEqual(prepareHp39WireFile('NOTE',input).bytes.subarray(22),expected);
+  assert.deepEqual(prepareHp39WireFile('NOTE',text('HP39AscC 1 N\n\\032\\010A\r\nB\n\rC')).bytes.subarray(15),text(' \nA\nB\n\rC'));
+}
 
 function transfer(size,check,{dropAck=false,rejectBlock=false}={}){
   const original=payload(size),received=[],states=[],fragments=[],controls=[];

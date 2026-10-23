@@ -116,7 +116,7 @@ generated profiles.
 
 `tests/lcd-input.c` checks generic pull-up resolution and the reduced GPEDAT
 read. `tests/regression.c` checks the bounded disabled NAND subset and saved
-status register patterns. The native Release suite passes 18/18 tests; the
+status register patterns. The idle-only native Release milestone passed 18/18 tests; the
 power test contains 836 assertions after the SD-retention additions.
 
 All four available original ROMs completed the corrected natural inactivity
@@ -143,6 +143,44 @@ SHIFT/ON then entered Power_OFF, an off-session round-trip preserved it, ON
 restored the `1+1=2` screen, and new input produced `7*8=56`. The old session was
 created by the old core naturally; it was not a newly generated session with
 its version number changed.
+
+### Shared-PCLK follow-up and v4
+
+The later r21 [shared PCLK/PWM implementation](clock-ratios.md) adds checkpoint
+v4. All four original-ROM power tests were repeated on WASM SHA-256
+`e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6`:
+
+| ROM | Power_OFF observed at tick | Seconds after pre-idle capture | Full off/restore/ON/arithmetic flow |
+| --- | ---: | ---: | --- |
+| HP39g+ | 3,764,000,000 | 301 | Passed |
+| HP39gs | 3,764,000,000 | 301 | Passed |
+| HP48gII USB revision | 3,812,000,000 | 300 | Passed |
+| HP49g+ | 3,824,000,000 | 301 | Passed |
+
+The earlier 75-second HP39g+ interval belonged to the old one-PCLK-per-reference
+approximation. Register-derived PCLK now puts all four observed firmware
+inactivity boundaries near five functional minutes. This remains a functional
+time result, not a physical timeout calibration. All four screens again
+matched exactly after ON, remained blank/frozen through ten off seconds, and
+displayed new `56` after restored `2`; the new private montage was inspected.
+The genuine r20 HP39gs v3 session also completed the same manual off/ON test
+after import into v4. The new native suite passes **19/19**, including 2,452
+independent PWM/clock assertions and the unchanged 836 power assertions.
+
+### Final production build
+
+All four natural inactivity workflows and the genuine r20 v3 manual off/ON
+workflow were repeated against the frozen production WASM SHA-256
+`36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108`.
+Every workflow passed. The observed power-off boundaries were again
+3,764,000,000 ticks for HP39g+ and HP39gs, 3,812,000,000 for HP48gII, and
+3,824,000,000 for HP49g+. Every captured CPU state, clock snapshot, LCD hash
+and powered-off v4 checkpoint matched its earlier `e41ae110…` run exactly.
+The new private four-model montage was also inspected: blank while off,
+retained `1+1=2` after ON, then `7*8=56` with history preserved. The historical
+v3 import likewise retained `2` and produced new `56` after its off-session
+round-trip. The [metadata record](evidence/idle-power-r21.json) keeps these
+final-production results separate from both preceding build identities.
 
 ## Reproducing the original-ROM witness
 

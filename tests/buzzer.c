@@ -42,16 +42,17 @@ EXPORT("regression") unsigned regression(void){
  init();pwm(6,3,0x8000);run(6);
  CHECK(drain()==1&&edges[0].tick==6&&edges[0].level==1);
  write32(0x51000028,1);CHECK(drain()==0); /* A buffer write cannot cut a pulse short. */
- run(6);CHECK(drain()==1&&edges[0].tick==12&&edges[0].level==0);
- run(8);CHECK(drain()==0);run(2);CHECK(drain()==1&&edges[0].tick==22&&edges[0].level==1);
+ run(6);CHECK(drain()==0&&a.soc.count[2]==0&&(a.soc.reload_pending&4));
+ run(2);CHECK(drain()==1&&edges[0].tick==14&&edges[0].level==0);
+ run(8);CHECK(drain()==0);run(2);CHECK(drain()==1&&edges[0].tick==24&&edges[0].level==1);
  write32(0x51000008,0xd000);CHECK(drain()==1&&edges[0].level==0); /* Invert live. */
  write32(0x51000008,0x4000);run(400);CHECK(drain()==0); /* Stop holds output. */
  write32(0x51000008,0);CHECK(drain()==1&&edges[0].level==1); /* Invert stopped. */
  init();pwm(4,2,0);run(8);
  CHECK(drain()==1&&edges[0].tick==4&&edges[0].level==1);
  CHECK(a.soc.count[2]==0&&!(a.soc.tcon&0x1000));run(100);CHECK(drain()==0);
- init();write32(0x51000000,2u<<8);write32(0x51000004,1u<<8);pwm(8,4,0x8000);run(192);
- CHECK(drain()==4);CHECK(edges[0].tick==48&&edges[1].tick==96&&edges[2].tick==144&&edges[3].tick==192);
+ init();write32(0x51000000,2u<<8);write32(0x51000004,1u<<8);pwm(8,4,0x8000);run(216);
+ CHECK(drain()==4);CHECK(edges[0].tick==48&&edges[1].tick==108&&edges[2].tick==156&&edges[3].tick==216);
  /* Clock-gated output holds, GPIO remains independent of the PWM block. */
  write32(0x4c00000c,a.soc.clock[3]&~0x100u);run(192);CHECK(drain()==0);
  write32(0x56000010,0x10);write32(0x56000014,4);CHECK(drain()==1&&edges[0].level==1);

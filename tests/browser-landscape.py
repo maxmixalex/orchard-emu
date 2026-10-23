@@ -32,9 +32,10 @@ with sync_playwright() as p:
  def pixels():return page.locator('#lcd').evaluate('(c)=>c.toDataURL()')
  def geometry():
   return page.evaluate("""()=>{const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom}};
-   const stage=document.querySelector('#skin-stage'),screen=document.querySelector('.skin-screen'),keyboard=document.querySelector('.skin-keyboard'),m=document.querySelector('.skin-keys').getScreenCTM();
+   const stage=document.querySelector('#skin-stage'),screen=document.querySelector('.skin-screen'),keyboard=document.querySelector('.skin-keyboard'),
+    m=document.querySelector('.skin-keyboard .skin-keys').getScreenCTM(),s=document.querySelector('.skin-screen-keys').getScreenCTM();
    return {stage:rect(stage),screen:rect(screen),keyboard:rect(keyboard),glass:rect(document.querySelector('.glass-overlay')),canvas:rect(document.querySelector('#lcd')),
-    matrix:[m.a,m.b,m.c,m.d,m.e,m.f],keys:[...document.querySelectorAll('.skin-key')].map(rect),
+    matrix:[m.a,m.b,m.c,m.d,m.e,m.f],screenMatrix:[s.a,s.b,s.c,s.d,s.e,s.f],keys:[...document.querySelectorAll('.skin-key')].map(e=>({scan:Number(e.dataset.scan),...rect(e)})),
     outerWidth:document.documentElement.scrollWidth,viewport:innerWidth,workspace:rect(document.querySelector('#workspace'))};}""")
  def check_landscape(spec):
   g=geometry();screen,keypad=g['screen'],g['keyboard'];scale=screen['w']/spec['viewBox'][2]
@@ -43,7 +44,14 @@ with sync_playwright() as p:
   assert abs(keypad['h']-(spec['viewBox'][3]-spec['splitY'])*scale)<.1,g
   a,b,c,d,e,f=g['matrix'];assert abs(a-scale)<.0001 and abs(a-d)<.0001 and b==0 and c==0,g
   assert abs(e-keypad['x'])<.1 and abs(f-(keypad['y']-spec['splitY']*scale))<.1,g
-  assert len(g['keys'])==51 and all(k['y']>=keypad['y']-.1 and k['bottom']<=keypad['bottom']+.1 and k['x']>=keypad['x']-.1 and k['right']<=keypad['right']+.1 for k in g['keys']),g
+  a,b,c,d,e,f=g['screenMatrix'];assert abs(a-scale)<.0001 and abs(a-d)<.0001 and b==0 and c==0,g
+  assert abs(e-screen['x'])<.1 and abs(f-screen['y'])<.1,g
+  soft=[k for k in g['keys'] if 35<=k['scan']<=40];regular=[k for k in g['keys'] if not 35<=k['scan']<=40]
+  def inside(k,pane):return k['y']>=pane['y']-.1 and k['bottom']<=pane['bottom']+.1 and k['x']>=pane['x']-.1 and k['right']<=pane['right']+.1
+  assert len(soft)==6 and len(regular)==45 and len({k['scan'] for k in g['keys']})==51,g
+  assert all(inside(k,screen) and k['y']>g['canvas']['bottom'] for k in soft),g
+  assert all(inside(k,keypad) for k in regular),g
+  assert page.locator('.skin-screen .skin-key').count()==6 and page.locator('.skin-keyboard .skin-key').count()==45
   assert g['canvas']['x']>=screen['x'] and g['canvas']['right']<=screen['right'] and g['canvas']['bottom']<screen['bottom'],g
   assert g['outerWidth']<=g['viewport'],g
   assert page.locator('#lcd').count()==1 and page.locator('.skin-key').count()==51
@@ -59,29 +67,34 @@ with sync_playwright() as p:
   page.wait_for_function('(name)=>document.querySelector(".skin-image")?.alt===name&&document.querySelectorAll(".skin-key").length===51',arg=model['name'])
   page.wait_for_function('[...document.querySelectorAll(".skin-image,.skin-keyboard-image")].every(i=>i.complete&&i.naturalWidth>0)')
   frame();slug=page.locator('#skin-stage').get_attribute('data-model');spec=manifest['models'][slug];before=pixels()
-  page.evaluate('window.__lcd=document.querySelector("#lcd");window.__key=document.querySelector(".skin-key[data-scan=\\"26\\"]")')
+  page.evaluate('window.__lcd=document.querySelector("#lcd");window.__key=document.querySelector(".skin-key[data-scan=\\"26\\"]");window.__softKey=document.querySelector(".skin-key[data-scan=\\"40\\"]")')
   for width,height in [(1360,940),(1360,500),(844,390),(390,844)]:
    page.set_viewport_size({'width':width,'height':height});view('immersive-landscape');g=check_landscape(spec)
    assert g['stage']['h']<=g['workspace']['h']+.1 and g['stage']['w']<=g['workspace']['w']+.1,g
    assert pixels()==before
    if (width,height) in [(1360,940),(844,390)]:page.screenshot(path=str(OUT/f'{slug}-{width}x{height}.png'))
   page.set_viewport_size({'width':1360,'height':940});view('immersive-landscape');check_landscape(spec)
-  page.evaluate('window.__messages.length=0');page.locator('.skin-key[data-scan="26"]').click()
-  assert page.evaluate('window.__messages.filter(m=>m.type==="tap-sequence").length')==1
-  assert page.evaluate('window.__messages.find(m=>m.type==="tap-sequence").scans[0]')==26
-  assert page.locator('#calculator').evaluate('(e)=>document.activeElement===e')
-  page.evaluate('window.__messages.length=0');page.locator('.skin-key[data-scan="26"]').focus();page.keyboard.press('Enter')
-  assert page.evaluate('window.__messages.filter(m=>m.type==="tap-sequence").length')==1
+  for scan in [35,36,37,38,39,40,26]:
+   page.evaluate('window.__messages.length=0');page.locator(f'.skin-key[data-scan="{scan}"]').click()
+   assert page.evaluate('window.__messages.filter(m=>m.type==="tap-sequence").map(m=>m.scans)')==[[scan]]
+   assert page.locator('#calculator').evaluate('(e)=>document.activeElement===e')
+  for scan in [40,26]:
+   page.evaluate('window.__messages.length=0');page.locator(f'.skin-key[data-scan="{scan}"]').focus();page.keyboard.press('Enter')
+   assert page.evaluate('window.__messages.filter(m=>m.type==="tap-sequence").map(m=>m.scans)')==[[scan]]
   for mode in ['immersive','traditional','immersive-landscape']:
    view(mode);assert pixels()==before
-   assert page.evaluate('window.__lcd===document.querySelector("#lcd")&&window.__key===document.querySelector(".skin-key[data-scan=\\"26\\"]")')
+   assert page.evaluate('window.__lcd===document.querySelector("#lcd")&&window.__key===document.querySelector(".skin-key[data-scan=\\"26\\"]")&&window.__softKey===document.querySelector(".skin-key[data-scan=\\"40\\"]")')
+   if mode=='immersive':
+    g=geometry();a=g['stage']
+    assert all(k['x']>=a['x']-.1 and k['right']<=a['right']+.1 and k['y']>=a['y']-.1 and k['bottom']<=a['bottom']+.1 for k in g['keys']),g
+    assert abs(g['matrix'][5]-g['screenMatrix'][5])<.1,g
   for zoom in [50,180]:
    view('immersive-landscape',zoom);g=check_landscape(spec);assert pixels()==before
    assert g['stage']['x']>=g['workspace']['x']-.1,g
   page.locator('#workspace').evaluate('(e)=>e.scrollLeft=e.scrollWidth');settled()
   g=geometry();assert g['stage']['right']<=g['workspace']['right']+.1,g
   page.locator('#workspace').evaluate('(e)=>e.scrollLeft=0')
-  view('immersive-landscape');results.append({'model':model['name'],'splitY':spec['splitY'],'keys':51,'viewports':4})
+  view('immersive-landscape');results.append({'model':model['name'],'splitY':spec['splitY'],'screenKeys':6,'keyboardKeys':45,'viewports':4})
  # The public selector persists layout and audio preferences through Apply.
  page.get_by_role('button',name='Settings',exact=True).click()
  page.get_by_role('combobox',name='Appearance',exact=True).click();page.get_by_role('option',name='Immersive (landscape)',exact=True).click()
@@ -89,10 +102,20 @@ with sync_playwright() as p:
  page.get_by_role('switch',name='Firmware buzzer').uncheck()
  # Mantine hides the thumb when disabled; the underlying slider remains inert.
  assert page.locator('[role="slider"][aria-label="Volume"]').get_attribute('aria-disabled')=='true'
+ page.get_by_role('tab',name='Transfer',exact=True).click()
+ assert not page.get_by_role('switch',name='Use Unlimited during transfers',exact=False).is_checked()
+ page.get_by_role('switch',name='Use Unlimited during transfers',exact=False).check()
  page.get_by_role('button',name='Apply',exact=True).click()
  page.get_by_role('dialog',name='Settings',exact=True).wait_for(state='hidden')
  assert page.evaluate('window.__controller.state.prefs.view')=='immersive-landscape'
  assert page.evaluate('window.__controller.state.prefs.sound') is False
+ assert page.evaluate('window.__controller.state.prefs.transferUnlimited') is True
+ # Transfer preferences share the Settings draft: Cancel must leave the saved
+ # value and the Worker's active configuration unchanged.
+ page.get_by_role('button',name='Settings',exact=True).click();page.get_by_role('tab',name='Transfer',exact=True).click()
+ page.get_by_role('switch',name='Use Unlimited during transfers',exact=False).uncheck()
+ page.get_by_role('button',name='Cancel',exact=True).click()
+ assert page.evaluate('window.__controller.state.prefs.transferUnlimited') is True
  # Captured gestures unlock audio once per event and remove listeners on unmount.
  page.evaluate('''window.__audioUnlocks=0;window.__gestures=[];window.__controller.unlockAudio=()=>window.__audioUnlocks++;
   window.__observeGesture=e=>window.__gestures.push(e.type);

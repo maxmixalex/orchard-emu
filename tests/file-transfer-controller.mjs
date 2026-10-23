@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {CalculatorController} from '../web/controller.js';
 import {MAX_FILE_BYTES,MAX_UPLOAD_FILES,MAX_UPLOAD_BYTES,MAX_RECEIVE_FILES,MAX_LISTING_BYTES} from '../web/file-transfer.js';
 import {CALCULATORS} from '../web/catalog.js';
+import {transferError,transferErrorDetails} from '../web/transfer-errors.js';
 
 function fixture(){
   const sent=[],downloads=[];
@@ -12,6 +13,53 @@ function fixture(){
   return {c,sent,downloads,emit};
 }
 const file=(name='TEST',bytes=Uint8Array.from([...new TextEncoder().encode('HPHP49-C'),0,1,127,128,255]))=>({name,size:bytes.length,arrayBuffer:async()=>bytes.slice().buffer});
+
+// Note packing changes the transmitted length. A local read error followed by
+// retry must update the queue's byte totals once, while a later remote failure
+// reuses the same packed bytes without reading or converting the file again.
+{
+ const {c,sent,emit}=fixture();c.patch({model:CALCULATORS.find(m=>m.id===2)});
+ const source=new TextEncoder().encode('HP39AscC 4 Note\r\nLine one.\r\nLine two.\r\n');
+ let reads=0;const first={...file('note.unknown',source),arrayBuffer:async()=>{if(++reads===1)throw Error('Temporary read failure');return source.slice().buffer;}};
+ await c.startHp39Server('usb',[{file:first},{file:file('second',source)}],{protocol:'wire'});
+ assert(c.state.uploadBatch.recoverable);assert.equal(c.state.uploadBatch.items[0].phase,'error');
+ assert(!sent.some(m=>m.type==='file-transfer-start'));
+ await c.retryUploadFile();
+ const packed=sent.at(-1).bytes.slice(),packedSize=packed.length;
+ assert.notEqual(packedSize,source.length);assert.equal(String.fromCharCode(...packed.subarray(0,8)),'HP39BinC');
+ assert.equal(c.state.transfer.objectKind,'C');assert.equal(c.state.transfer.noteConverted,true);
+ assert.equal(c.state.transfer.sourceBytes,source.length);assert.equal(c.state.transfer.total,packedSize);
+ assert.equal(c.state.uploadBatch.total,2*packedSize);assert.equal(c.state.uploadBatch.items[0].size,packedSize);
+ emit({type:'file-transfer-status',request:c.transferRequest,active:false,phase:'error',error:'Remote cancellation',errorCode:'wireCancelledByCalculator'});
+ await c.retryUploadFile();assert.equal(reads,2);assert.deepEqual(sent.at(-1).bytes,packed);
+ emit({type:'file-transfer-status',request:c.transferRequest,active:false,phase:'complete',transferred:packedSize,total:packedSize});
+ assert.equal(c.state.transfer.name,'second');assert.equal(c.state.transfer.errorCode,null);
+ emit({type:'file-transfer-status',request:c.transferRequest,active:false,phase:'complete',transferred:packedSize,total:packedSize});
+ assert.equal(c.state.uploadBatch.transferred,2*packedSize);assert.equal(c.state.uploadBatch.completed,2);
+ assert.equal(c.uploadQueue,null);c.dispose();
+}
+
+// Local validation and Worker errors retain the same translatable identity.
+// A retry/new file must clear the old error rather than render its stale code.
+{
+ const error=transferError('fileChanged','Original diagnostic',{name:'NOTE.data'});
+ const details=transferErrorDetails(error);
+ assert.deepEqual(details,{error:'Original diagnostic',errorCode:'fileChanged',errorValues:{name:'NOTE.data'}});
+ assert.deepEqual(transferErrorDetails(details),details);
+ assert.deepEqual(transferErrorDetails('Unknown diagnostic'),{error:'Unknown diagnostic',errorCode:null,errorValues:null});
+ const {c,emit}=fixture();c.patch({model:CALCULATORS.find(m=>m.id===1)});
+ const bytes=new TextEncoder().encode('HP39BinH\x03Lib\x00\x01');
+ await c.startHp39Server('usb',[{file:file('LIB.data',bytes)},{file:file('NEXT.data',bytes)}],{protocol:'wire'});
+ emit({type:'file-transfer-status',request:c.transferRequest,active:false,phase:'error',...details});
+ assert.equal(c.state.transfer.errorCode,'fileChanged');assert.equal(c.state.uploadBatch.items[0].errorCode,'fileChanged');
+ assert.deepEqual(c.state.transfer.errorValues,{name:'NOTE.data'});
+ await c.retryUploadFile();assert.equal(c.state.transfer.errorCode,null);assert.equal(c.state.uploadBatch.items[0].errorCode,null);
+ emit({type:'file-transfer-status',request:c.transferRequest,active:false,phase:'error',error:'New unknown diagnostic'});
+ assert.equal(c.state.transfer.errorCode,null);assert.equal(c.state.transfer.error,'New unknown diagnostic');
+ c.skipUploadFile();assert.equal(c.state.transfer.name,'NEXT.data');assert.equal(c.state.transfer.errorCode,null);
+ emit({type:'file-transfer-status',request:c.transferRequest,active:false,phase:'complete',transferred:bytes.length,total:bytes.length});
+ assert.equal(c.state.transfer.errorCode,null);assert.equal(c.state.transfer.error,null);c.dispose();
+}
 
 // A synchronous Worker post failure must seal the new Wire request without
 // discarding its bytes or leaving the entire queue active and unusable.

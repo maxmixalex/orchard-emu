@@ -1,0 +1,329 @@
+{
+  "schema": "orchard-frontend-validation-r21",
+  "date": "2026-10-23",
+  "passed": true,
+  "scope": "Real Chromium component, layout/input, IndexedDB and Web Audio verification. The calculator component fixtures use synthetic frames and mocked Worker acknowledgements; they do not execute a ROM or establish stock-firmware compatibility.",
+  "browser": "Google Chrome for Testing 156.0.8078.47",
+  "production_worker_tested_here": false,
+  "original_rom_executed_here": false,
+  "gate_runs": [
+    {
+      "name": "audio-stock",
+      "script": "tests/buzzer-browser.py",
+      "exit_code": 0,
+      "passed": true,
+      "script_sha256": "52be1d485842255c91142be6366a6ff2bf6ab41d87025c3b5113e7abdfb73587",
+      "log": "audio-stock.log",
+      "log_sha256": "6de225876bca8aab43f0cb8b37a50b1f857a08db77df143838100fd772dcd313"
+    },
+    {
+      "name": "audio-synthetic",
+      "script": "tests/buzzer-browser.py",
+      "exit_code": 0,
+      "passed": true,
+      "script_sha256": "52be1d485842255c91142be6366a6ff2bf6ab41d87025c3b5113e7abdfb73587",
+      "log": "audio-synthetic.log",
+      "log_sha256": "1139486a9d0c15715d726cd9a0ddd16b18a5485b76e2e6f8258f2ec4fe797321"
+    },
+    {
+      "name": "components",
+      "script": "tests/browser-components.py",
+      "exit_code": 0,
+      "passed": true,
+      "script_sha256": "bf342d87aab8a1bdab42de0c525b2b4b603180bcfcbe88e5e6af4e326ef3a162",
+      "log": "components.log",
+      "log_sha256": "9997eea3b97bc500f1177940b72b245c2bc16b4577b45095b6432101374f7c7c"
+    },
+    {
+      "name": "landscape",
+      "script": "tests/browser-landscape.py",
+      "exit_code": 0,
+      "passed": true,
+      "script_sha256": "576a75df440cd97f5d761b257191edf8ce51b6e58335b57467348e49f2a24b35",
+      "log": "landscape.log",
+      "log_sha256": "c06c6cadec7508e2bb8b5ecdd14801dc72dfbae856b695cf1182adb1d4e57323"
+    },
+    {
+      "name": "sd-files",
+      "script": "tests/browser-sd-files.py",
+      "exit_code": 0,
+      "passed": true,
+      "script_sha256": "99eb527d5b34fae30d2baa27b61db438ab459a3329f2f3452365374a8d46171f",
+      "log": "sd-files.log",
+      "log_sha256": "d4b64da3dc4928bf9f95af647fc7e291033312c4480993e1a3b8a57160843f5e"
+    },
+    {
+      "name": "storage",
+      "script": "tests/sd-storage-browser.py",
+      "exit_code": 0,
+      "passed": true,
+      "script_sha256": "a8a9545b5df49df99eb5fda584b28816f88b05eabd2ab6e0314efb0c53c12918",
+      "log": "storage.log",
+      "log_sha256": "a5359262c6b476ca63bb025487266b1331006289a21d19afe0551e279409eaf3"
+    }
+  ],
+  "gate_log_directory": "build-r21/browser-release",
+  "gate_summary_sha256": "9c0b420598e7adbaf17aff78ddb0b749d4ab8bed18d2bbbcea816240ded12b8e",
+  "source_sha256": {
+    "web/App.jsx": "0ccd6110df9615578ba586d7a5ccaf9367a4c4dab74c7e20adc10345bc5e4641",
+    "web/FileTransfer.jsx": "0823e4bbe6b10d32db883619edfc26362e2adb01036896abafc693ad2d8dbe6e",
+    "web/SDCardFiles.jsx": "cb57648e0f615e47b3bb2d0814df441a533fc1608c296e1c976124bd08e4367a",
+    "web/controller.js": "8dec1d50e49c70f273a0337c8e97f67322236d84342cbe62f0c6aae61e33e018",
+    "web/i18n.js": "34a725ecf3bbba06bb94ad71fe037d85703a25c3c7c1157cd889ef8bcb46cec4",
+    "web/react.css": "716a82cbfb254352a2fe40167b9e4e3da05ac1155b42a8bc49c1300237f04b75",
+    "web/skin.js": "b63ffb7b17bcb971d283daea4672f93dfb84ad9fc79fa09aa0bd2dce7b7416d0",
+    "web/preferences.js": "b0a59a7f237b859da6953e86ee0a8500df1a0a126b4e97ee62083066f2870b0d",
+    "web/autosave.js": "8fdb4444bf1922d92f0923752d88f1ac7da627c4c81d408b2f509d3d298858cd",
+    "web/session.js": "c4dd1c9e78b1b2d95236f62450d45df10b9eeb1829c36bb7f521f19bafec2dcd",
+    "web/sd-filesystem.js": "cd30d88aa7c29dd480acb9d8c1fe7bb260a6f2ae01914c27dabc0cdfb4b7f856",
+    "web/sd-card.js": "7919d30f9802a350f0cfdf344dd735ac742031fd981f0e85627552b97b14498e",
+    "web/buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+    "web/buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+    "web/transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+    "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+    "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+    "web/hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+    "web/file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+    "web/kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+    "tests/ui-fixture.jsx": "32d2b7d8366aca5a1c7d34b45b248d2d576e0328a0ecc6b25a4cc678b3cd1e55",
+    "tests/sd-files-fixture.jsx": "ae85fd34312692be4d1d23a77a6905bf32d8156f2c0dd9187e6159a092492215",
+    "tools/build-skins.py": "50f490a41a3a84d3aa7455a6f5af767ec0883764274c47aaa2bb9527c0b59b2d"
+  },
+  "build_asset_sha256": {
+    "dist/skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+    "dist/skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+    "dist/skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+    "dist/skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+    "dist/skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+    "dist/skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+    "dist/skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+    "dist/skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433"
+  },
+  "fixture_bundle_sha256": {
+    "build/ui-fixture.js": "f499b20024db7e7da941764a8d1f534259aa5448b9cedeb93375998fa4b1b18d",
+    "build/ui-fixture.css": "64f289a91b9eb3a7bc37139dfd8b19260d08c7c2e358cd4178dc6cb1843c99dd",
+    "build/landscape/fixture.js": "f499b20024db7e7da941764a8d1f534259aa5448b9cedeb93375998fa4b1b18d",
+    "build/landscape/fixture.css": "64f289a91b9eb3a7bc37139dfd8b19260d08c7c2e358cd4178dc6cb1843c99dd",
+    "build-r20/sd-files/ui-fixture.js": "568ef897dfb2b772d263e4f2be6b644fc46848f1deae22936e57b2d6f6547467",
+    "build-r20/sd-files/ui-fixture.css": "e4abd67a36f5c29e672445e63b3e37c4e46bf12c417b56bc9930dce36dcee294"
+  },
+  "components": {
+    "passed": true,
+    "checks": [
+      "Lazy keypad/model/view races retain the latest model and dispose old subscriptions.",
+      "Physical keyboard input, key legends and active indicators agree with the skin manifest.",
+      "Synthetic full canvas RGBA, changed/blank frames and PNG download are exact.",
+      "English/Chinese settings apply and cancel preserve draft semantics.",
+      "Settings Transfer tab can configure transfer Unlimited during active work; Connections has no duplicate switch.",
+      "File chooser accepts arbitrary suffixes and preserves exact bytes.",
+      "Upload batches retain completed files and queued files after failure, support retry/skip, and clear stale error identities.",
+      "Specific Wire cancellation and unknown technical errors have localized main text with collapsed original diagnostics.",
+      "HP39g+ Wire and HP39gs USB/Ser hints use their own stock menu names.",
+      "HP39 catalog/ZIP receive and download preserve object bytes and directory aliases.",
+      "Unmounting removes frame subscriptions and leaves no uncaught page errors."
+    ]
+  },
+  "landscape": {
+    "passed": true,
+    "models": [
+      {
+        "model": "HP 39g+",
+        "splitY": 581.25,
+        "screenKeys": 6,
+        "keyboardKeys": 45,
+        "viewports": 4
+      },
+      {
+        "model": "HP 39gs",
+        "splitY": 581.25,
+        "screenKeys": 6,
+        "keyboardKeys": 45,
+        "viewports": 4
+      },
+      {
+        "model": "HP 48gII",
+        "splitY": 581.1250002992098,
+        "screenKeys": 6,
+        "keyboardKeys": 45,
+        "viewports": 4
+      },
+      {
+        "model": "HP 49g+",
+        "splitY": 581.2000002992493,
+        "screenKeys": 6,
+        "keyboardKeys": 45,
+        "viewports": 4
+      }
+    ],
+    "viewports": [
+      [
+        1360,
+        940
+      ],
+      [
+        1360,
+        500
+      ],
+      [
+        844,
+        390
+      ],
+      [
+        390,
+        844
+      ]
+    ],
+    "zoom_percent": [
+      50,
+      100,
+      180
+    ],
+    "screen_side_soft_keys": 6,
+    "keyboard_side_keys": 45,
+    "total_unique_keys": 51,
+    "checks": [
+      "Unchanged source artwork is clipped at the measured line below FN; transforms and hit areas agree.",
+      "Pointer clicks on all six FN keys and a regular key emit one expected scan each.",
+      "Enter activation works on both panels.",
+      "One LCD and the same key nodes persist across all three appearances; synthetic pixels remain exact.",
+      "The workspace fits at normal zoom and remains scrollable at large zoom.",
+      "Audio preferences apply, gesture listeners unlock once per event, and unmount removes them."
+    ]
+  },
+  "indexeddb": {
+    "passed": true,
+    "bytes": 17277216,
+    "concurrentWinners": 1,
+    "legacyMigration": true,
+    "staleGeneration": true,
+    "reloadAndClear": true,
+    "scope": "Actual browser IndexedDB and reload, not an in-memory database mock. The bytes are generated, not a calculator checkpoint."
+  },
+  "sd_files": {
+    "passed": true,
+    "checks": [
+      "all SD chooser inputs accept arbitrary suffixes",
+      "editable short names validate without truncation; arbitrary and empty file bytes round-trip",
+      "duplicate in later batch member keeps complete draft byte-exact",
+      "new directory and nested file survive navigation and full-image download",
+      "renames preserve payload/directory contents; collision rolls back exact image",
+      "delete confirmation/cancel works; nonempty folders rejected; files and empty folders deleted",
+      "malformed image and file-read failure visibly preserve current draft",
+      "download failure is visible; reopening an arbitrary-suffix image preserves nested contents",
+      "390px viewport and both language controls render without horizontal overflow",
+      "failed File read and Worker rejection retain exact draft and support retry",
+      "production insertion sends exact image/read-only state; mounted card has no host file editor",
+      "closing during pending file read cannot mutate a new draft; no uncaught page errors"
+    ],
+    "browser": "156.0.8078.47",
+    "card_sha256": "6148457422c9004e8e1b7a6780440e0ef84c566681dcc6ad710efed09f516fd0",
+    "file_sha256": "691c6525cd62d4b73ac4126403ba5edc5fa887f1f26883dea4f01a3006bad12d",
+    "errors": [],
+    "scope": "Actual File chooser, downloads, React/controller and complete generated card-byte comparisons; Worker insertion is explicitly acknowledged by the fixture. Original-ROM SD tests remain separate."
+  },
+  "audio": {
+    "synthetic": {
+      "buffers": 1,
+      "nonzero": 419,
+      "peak": 0.994601309299469,
+      "sampleRate": 44100,
+      "state": "running",
+      "scheduled": 1,
+      "afterPause": 0,
+      "disposed": true,
+      "original_rom_trace": false
+    },
+    "original_trace_playback": {
+      "buffers": 148,
+      "nonzero": 8940,
+      "peak": 0.9962429404258728,
+      "sampleRate": 44100,
+      "state": "running",
+      "scheduled": 30,
+      "afterPause": 0,
+      "disposed": true,
+      "original_rom_trace": true
+    },
+    "trace_identity": {
+      "report_sha256": "ddff74fc619d478fba3317138e9412b789a7aedbb9d420c260b9e431104186b8",
+      "schema": "orchard-stock-buzzer-v2",
+      "model": 5,
+      "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "observed_wasm_sha256": "e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6",
+      "command": "440 .2 BEEP"
+    },
+    "checks": [
+      "No AudioContext exists before a user gesture.",
+      "The real AudioContext reaches running and receives nonzero PCM.",
+      "Pause/reset cancels every queued source; dispose completes."
+    ],
+    "scope": "Replay of already-observed firmware edges into the real browser audio path. This is not a new ROM execution, a physical speaker measurement or a device-wide browser compatibility claim."
+  },
+  "visual_review": {
+    "passed": true,
+    "reviewed": [
+      {
+        "file": "build/landscape/hp39gplus-1360x940.png",
+        "sha256": "1e63915ba202a7d4d9f96e385b39a1451a5b462564ce632ffe7a1718c98ca2c1",
+        "observation": "HP39g+ desktop: six complete FN keys sit below the LCD in the left panel; all other keys are in the right panel."
+      },
+      {
+        "file": "build/landscape/hp49gplus-844x390.png",
+        "sha256": "6969a0cebf959e191410090f64f3bfef26d8c0ee3f56c5630d037af4b1301440",
+        "observation": "HP49g+ landscape phone: both panels remain visible with FN keys on the screen side and no horizontal page overflow."
+      },
+      {
+        "file": "build-r21/browser-release/settings-transfer-zh-cjk.png",
+        "sha256": "a44d0a8a33e935e167d4f1ce55db6309d7f2cf6cf3f3139ed533b6b87f59414a",
+        "observation": "The Chinese Transfer tab contains its own checked transfer Unlimited switch, explanatory text and Apply/Cancel controls."
+      },
+      {
+        "file": "build-r21/browser-release/wire-warning-zh-cjk.png",
+        "sha256": "8b60894851ee39ee314793ee7ba2bc0b6e9a554cdd3049878af298b1d04d5685",
+        "observation": "The specific calculator-cancelled Wire warning is rendered in Chinese; Technical details is collapsed and recovery instructions remain visible."
+      },
+      {
+        "file": "build-r21/browser-release/wire-unknown-warning-zh-cjk.png",
+        "sha256": "e006dfa1efabfeace5335669976490059fabad84cfbd3e493cb14fd25825d7fa",
+        "observation": "The unknown-error fallback is rendered in Chinese in both summary and failed batch row; the previous error identity does not remain."
+      },
+      {
+        "file": "build-r20/sd-files/browser-mobile-zh.png",
+        "sha256": "5d9afbe2aa37dae9af6dd825cc2c2c69576704e53a96c7b9d8354a546e84fd21",
+        "observation": "The Chinese 390px SD draft shows Download/Rename/Delete controls, directory navigation and name input without horizontal overflow."
+      }
+    ],
+    "cjk_environment": {
+      "reason": "This minimal Linux image has no system CJK font; the initial browser assertions passed but screenshots showed missing glyphs.",
+      "resolution": "Load the official pinned Noto font into only the test page; no product files, system fonts, global browser trust or settings are modified.",
+      "font": {
+        "source": "https://raw.githubusercontent.com/notofonts/noto-cjk/165c01b46ea533872e002e0785ff17e44f6d97d8/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf",
+        "commit": "165c01b46ea533872e002e0785ff17e44f6d97d8",
+        "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+        "bytes": 16437364,
+        "scope": "Task-local browser verification only; not bundled or installed"
+      },
+      "components_private_copy_sha256": "c0d85b5399f0806922e084d6700f968b466663f2d792a529af6aa26d1948b2e7",
+      "components_log_sha256": "9997eea3b97bc500f1177940b72b245c2bc16b4577b45095b6432101374f7c7c",
+      "sd_files_log_sha256": "d4b64da3dc4928bf9f95af647fc7e291033312c4480993e1a3b8a57160843f5e",
+      "private_copy_changes": [
+        "Resolve the repository root from the private harness location.",
+        "Inject the task-local font for text and native form controls.",
+        "Capture settings and both warning states after their existing assertions and a 250ms visual settle."
+      ],
+      "maintained_component_test_passed_again": true,
+      "maintained_sd_test_with_existing_font_option_passed_again": true
+    }
+  },
+  "publication_excludes": [
+    "ROMs and capture sidecars",
+    "Checkpoints and card-image bytes",
+    "Recorded audio and stock LCD pixel data",
+    "Test-only font, screenshots and private logs"
+  ],
+  "remaining_gates_owned_by_root": [
+    "Production HTTP Worker and stop/trace recovery",
+    "Original-ROM production browser and SD workflows",
+    "Final build, GitHub CI and deployed-site verification"
+  ]
+}

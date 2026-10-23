@@ -8,7 +8,8 @@ const LANDSCAPE_GAP=24;
 export class SkinView {
   constructor(stage, tap) {
     this.stage=stage;this.tap=tap;this.epoch=0;this.enabled=false;this.appliedEnabled=null;this.buttons=[];this.lastActive=-1;this.lastSegments='';this.rgb=[194,208,202];
-    this.image=stage.querySelector('.skin-image');this.keyboardImage=stage.querySelector('.skin-keyboard-image');this.hits=stage.querySelector('.skin-keys');
+    this.image=stage.querySelector('.skin-image');this.keyboardImage=stage.querySelector('.skin-keyboard-image');
+    this.screenHits=stage.querySelector('.skin-screen-keys');this.hits=stage.querySelector('.skin-keyboard .skin-keys')??stage.querySelector('.skin-keys');
     this.spec=null;this.landscape=false;
     this.glass=stage.querySelector('.glass-overlay');this.indicators=stage.querySelectorAll('[data-segment]');
     this.manifest=fetch(new URL('skins/manifest.json',import.meta.url)).then(r=>{
@@ -18,7 +19,7 @@ export class SkinView {
     this.manifest.catch(()=>{});
   }
   async show(model,blue=false) {
-    const token=++this.epoch;this.buttons=[];this.appliedEnabled=null;this.lastActive=-1;this.lastSegments='';this.hits.replaceChildren();this.image.hidden=true;
+    const token=++this.epoch;this.buttons=[];this.appliedEnabled=null;this.lastActive=-1;this.lastSegments='';this.hits.replaceChildren();this.screenHits?.replaceChildren();this.image.hidden=true;
     this.glass.hidden=true;if(this.keyboardImage)this.keyboardImage.hidden=true;
     const manifest=await this.manifest;
     if(token!==this.epoch)return;
@@ -27,7 +28,7 @@ export class SkinView {
     const [vx,vy,width,height]=spec.viewBox;
     if(vx!==0||vy!==0||width<=0||height<=0)throw new Error('Unsupported skin coordinates');
     if(!Number.isFinite(spec.splitY)||spec.splitY<=spec.glass[1]+spec.glass[3]||spec.splitY>=height)throw new Error('Invalid skin split');
-    this.spec=spec;this.setLayout(this.landscape);this.hits.setAttribute('viewBox',spec.viewBox.join(' '));
+    this.spec=spec;this.setLayout(this.landscape);this.hits.setAttribute('viewBox',spec.viewBox.join(' '));this.screenHits?.setAttribute('viewBox',spec.viewBox.join(' '));
     const imageURL=new URL(`skins/${slug}.svg`,import.meta.url);
     this.image.src=imageURL;this.image.alt=spec.name;
     if(this.keyboardImage){this.keyboardImage.src=imageURL;this.keyboardImage.hidden=false;}
@@ -51,14 +52,16 @@ export class SkinView {
       const activate=()=>{if(this.enabled){this.tap(key.scan);this.stage.closest('#calculator').focus({preventScroll:true});}};
       group.addEventListener('click',activate);
       group.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();activate();}});
-      this.hits.append(group);this.buttons.push(group);
+      // Keep soft keys beside their LCD labels in both immersive appearances.
+      // The debug workbench has one SVG and continues to receive all 51 keys.
+      (this.screenHits&&key.scan>=35&&key.scan<=40?this.screenHits:this.hits).append(group);this.buttons.push(group);
     }
     this.appliedEnabled=null;
     this.setEnabled(this.enabled);
   }
   setLayout(landscape) {
     this.landscape=Boolean(landscape&&this.keyboardImage);
-    const [,,width,height]=this.spec?.viewBox??[0,0,665,1340],split=this.spec?.splitY??506.575;
+    const [,,width,height]=this.spec?.viewBox??[0,0,665,1340],split=this.spec?.splitY??581.25;
     const bounds=this.landscape?[width*2+LANDSCAPE_GAP,Math.max(split,height-split)]:[width,height];
     this.stage.dataset.layout=this.landscape?'landscape':'portrait';
     this.stage.style.aspectRatio=bounds.join('/');

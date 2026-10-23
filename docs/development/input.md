@@ -29,6 +29,13 @@ produce `ORCHARD_GPIO_CONTENTION`. Unknown alternate-function producers and
 floating nets remain unresolved. The simple passive-network ghosting model
 has directed tests, but no six-board diode/analog-timing survey is claimed.
 
+Register-controlled internal pull-ups also apply to unconnected input pads on
+ports B–H, using each port's actual pin width. They are weak contributions:
+an external strong drive wins, while opposing weak biases remain unresolved.
+This resolves the original-ROM shutdown reads of E14/E15 when the guest has
+enabled those pull-ups; no new strong drive is added to a model preset. See
+[the inactivity failure and fix](power-management.md).
+
 GPG0 is not supplied by the keyboard. Some columns have their internal pull-up
 disabled at reset. The model does not invent external bias resistors for them.
 Explicit `gpio_inputs` are **strong test drives**, not weak pull-ups. Their use
@@ -54,8 +61,12 @@ host-injected IRQ exception.
 Unknown pads do not fabricate edges. Function changes invalidate affected
 pads' edge history, not another port's history. Active level sources reassert
 after acknowledgment. Enabled EXTINT2 digital filters stop explicitly; filter
-clocking, debounce, power-off wakeup and subcycle electrical transitions remain
-open. Sampled edge history is reset on attachment and cold reset.
+clocking, debounce and subcycle electrical transitions remain open. Sampled
+edge history is reset on attachment and cold reset. In Power_OFF, EINT0–15
+can trigger the retained reset-vector wake path even when their interrupt
+mask is set; EINT16–23 do not wake this domain. Physical key positions and
+external board drives survive that wake reset. RTC calendar-alarm wakeup is
+separate from these sampled GPIO events; see [power management](power-management.md).
 
 The ROM-free circuit guest in `tests/circuit-wasm.mjs` executes from SRAM,
 programs GPIO/EINT itself, waits in WFI, and handles press/release interrupts

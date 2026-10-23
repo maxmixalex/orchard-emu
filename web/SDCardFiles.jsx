@@ -3,7 +3,7 @@ import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {Alert,Button,Group,Pagination,Stack,Table,Text,TextInput} from '@mantine/core';
 import {useTranslation} from 'react-i18next';
 import {createSDImage,sdImageName,validateSDSize} from './sd-card.js';
-import {listSDDirectory,readSDFile,addSDFiles,createSDDirectory} from './sd-filesystem.js';
+import {listSDDirectory,readSDFile,addSDFiles,createSDDirectory,renameSDEntry,deleteSDEntry} from './sd-filesystem.js';
 
 // A draft owns its image bytes. Mounted SD media stays exclusively in the Worker.
 export function SDCardFiles({disabled,download,onInsert,onBack}){
@@ -11,12 +11,15 @@ export function SDCardFiles({disabled,download,onInsert,onBack}){
   const [image,setImage]=useState(createSDImage),[imageName,setImageName]=useState('orchard-sd.img');
   const [path,setPath]=useState('/'),[page,setPage]=useState(1),[folder,setFolder]=useState('');
   const [selected,setSelected]=useState([]),[reading,setReading]=useState(false),[failure,setFailure]=useState(null);
+  const [editing,setEditing]=useState(null);
   useEffect(()=>()=>{++epoch.current;},[]);
   const directory=useMemo(()=>listSDDirectory(image,path),[image,path]);
   const locked=disabled||reading,rows=directory.entries.slice((page-1)*50,page*50);
   const problem=error=>setFailure({code:error.code||'input',details:error.details||{}});
   const action=operation=>{setFailure(null);try{operation();}catch(error){problem(error);}};
-  const changePath=next=>{setPath(next);setPage(1);setSelected([]);setFailure(null);};
+  const changePath=next=>{setPath(next);setPage(1);setSelected([]);setEditing(null);setFailure(null);};
+  const changeImage=next=>{setImage(next);setEditing(null);setPage(1);};
+  const edit=(mode,entry)=>{setFailure(null);setEditing({mode,entry,name:entry.name});};
   async function openImage(file){
     if(!file||locked)return;
     const token=++epoch.current;setReading(true);setFailure(null);
@@ -62,22 +65,43 @@ export function SDCardFiles({disabled,download,onInsert,onBack}){
           <Table.Td>{entry.type==='directory'?<Button variant="subtle" size="compact-sm" disabled={locked} onClick={()=>changePath(entry.path)} aria-label={t('sdDraftOpenFolder',{name:entry.name})}>{entry.name}/</Button>:entry.name}
             {entry.hasLongName&&<Text size="xs" c="dimmed">{t('sdDraftAlias')}</Text>}</Table.Td>
           <Table.Td>{entry.type==='file'?entry.size.toLocaleString():'—'}</Table.Td>
-          <Table.Td>{entry.type==='file'&&<Button size="compact-sm" variant="default" disabled={locked} aria-label={t('sdDraftDownloadFile',{name:entry.name})}
-            onClick={()=>action(()=>{void save(readSDFile(image,entry.path),entry.name);})}>{t('downloadFile')}</Button>}</Table.Td>
+          <Table.Td><Group gap={6}>
+            {entry.type==='file'&&<Button size="compact-sm" variant="default" disabled={locked} aria-label={t('sdDraftDownloadFile',{name:entry.name})}
+              onClick={()=>action(()=>{void save(readSDFile(image,entry.path),entry.name);})}>{t('downloadFile')}</Button>}
+            <Button size="compact-sm" variant="subtle" disabled={locked||entry.readOnly} aria-label={t('sdDraftRenameEntry',{name:entry.name})}
+              onClick={()=>edit('rename',entry)}>{t('sdDraftRename')}</Button>
+            <Button size="compact-sm" variant="subtle" color="red" disabled={locked||entry.readOnly} aria-label={t('sdDraftDeleteEntry',{name:entry.name})}
+              onClick={()=>edit('delete',entry)}>{t('sdDraftDelete')}</Button>
+          </Group></Table.Td>
         </Table.Tr>)}</Table.Tbody>
       </Table>
     </Table.ScrollContainer>:<Text c="dimmed" size="sm">{t('sdDraftNoFiles')}</Text>}
     {directory.entries.length>50&&<Pagination total={Math.ceil(directory.entries.length/50)} value={page} onChange={setPage} disabled={locked} size="sm"/>}
+    {editing&&<Stack gap="xs" data-testid="sd-entry-action">
+      {editing.mode==='rename'?<>
+        <Text size="sm" fw={600}>{t('sdDraftRenameEntry',{name:editing.entry.name})}</Text>
+        {editing.entry.hasLongName&&<Text size="sm">{t('sdDraftRenameLong')}</Text>}
+        <TextInput label={t('sdDraftNewName')} value={editing.name} disabled={locked}
+          onChange={e=>{const name=e.currentTarget.value;setEditing(value=>({...value,name}));}}/>
+        <Group><Button disabled={locked||!editing.name} onClick={()=>action(()=>changeImage(renameSDEntry(image,editing.entry.path,editing.name)))}>{t('sdDraftApplyRename')}</Button>
+          <Button variant="subtle" disabled={locked} onClick={()=>setEditing(null)}>{t('cancel')}</Button></Group>
+      </>:<>
+        <Text size="sm" fw={600}>{t('sdDraftConfirmDelete',{name:editing.entry.name})}</Text>
+        <Text size="sm" c="dimmed">{t('sdDraftDeleteHelp')}</Text>
+        <Group><Button color="red" disabled={locked} onClick={()=>action(()=>changeImage(deleteSDEntry(image,editing.entry.path)))}>{t('sdDraftDelete')}</Button>
+          <Button variant="subtle" disabled={locked} onClick={()=>setEditing(null)}>{t('cancel')}</Button></Group>
+      </>}
+    </Stack>}
     <Group align="end" gap="xs">
       <TextInput label={t('sdDraftFolderName')} value={folder} onChange={e=>setFolder(e.currentTarget.value)} disabled={locked} style={{flex:'1 1 180px'}}/>
-      <Button variant="default" disabled={locked||!folder} onClick={()=>action(()=>{setImage(createSDDirectory(image,path,folder));setFolder('');setPage(1);})}>{t('sdDraftMakeFolder')}</Button>
+      <Button variant="default" disabled={locked||!folder} onClick={()=>action(()=>{changeImage(createSDDirectory(image,path,folder));setFolder('');})}>{t('sdDraftMakeFolder')}</Button>
     </Group>
     <Button variant="default" disabled={locked} onClick={()=>{filesInput.current.value='';filesInput.current.click();}}>{reading?t('loading'):t('sdDraftChooseFiles')}</Button>
     <Text size="xs" c="dimmed">{t('sdDraftNamesHelp')}</Text>
     {selected.length>0&&<Stack gap="xs">
       {selected.map((file,index)=><TextInput key={index} label={t('sdDraftTargetName',{name:file.source})} value={file.name} disabled={locked}
         onChange={e=>{const value=e.currentTarget.value;setSelected(list=>list.map((item,i)=>i===index?{...item,name:value}:item));}}/>)}
-      <Group><Button disabled={locked} onClick={()=>action(()=>{setImage(addSDFiles(image,path,selected));setSelected([]);setPage(1);})}>{t('sdDraftAddFiles',{count:selected.length})}</Button>
+      <Group><Button disabled={locked} onClick={()=>action(()=>{changeImage(addSDFiles(image,path,selected));setSelected([]);})}>{t('sdDraftAddFiles',{count:selected.length})}</Button>
         <Button variant="subtle" disabled={locked} onClick={()=>setSelected([])}>{t('cancel')}</Button></Group>
     </Stack>}
     <Group>

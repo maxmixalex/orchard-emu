@@ -1,6 +1,83 @@
 # Validation
 
-## r20 original HP39gs, transfer recovery, sound and SD files (2026-10-23)
+## r21 transfer settings, FN layout, idle power, Note and peripheral clocks (2026-10-23)
+
+The [r21 release record](evidence/release-validation-r21.json) identifies all
+**43 production assets**, the final source hashes and local acceptance gates.
+The production WASM is **133,810 bytes**, SHA-256
+`36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108`.
+Earlier idle-only and PCLK-preview results retain their original build identities
+in the detailed records. GitHub Build, merge, Pages and live-browser acceptance
+are recorded separately for their exact revisions in the release PR.
+
+### Requested behavior and original-system checks
+
+| Area | Final result and evidence |
+| --- | --- |
+| Transfer settings | **Settings → Transfer** owns the transfer Unlimited switch, with Apply/Cancel semantics. It can be changed during transfer. Waiting for stock RECV, error, cancellation and completion restore the selected speed. Connections has no duplicate setting. |
+| Immersive landscape | The cut is below all six FN soft keys. They remain with the LCD; the right piece contains the other 45 keys. The same LCD node and all 51 unique input regions survive appearance changes. Four models, four viewports and 50/100/180% zoom pass actual browser geometry and input checks. |
+| Natural inactivity | Original HP39g+, HP39gs, HP48gII and HP49g+ all naturally power off about 300–301 functional seconds after arithmetic. CPU instructions remain frozen for another ten seconds; an off-state v4 checkpoint round-trips exactly; ON restores the prior screen and `7*8=56` works. A real older v3 session also imports and completes manual OFF/ON. [Power evidence](evidence/idle-power-r21.json). |
+| Buzzer | Original HP49g+ `440 .2 BEEP` produces 88 cycles / 176 edges from Timer2. The modeled 12 MHz reference and guest PCLK configuration give approximately **434.028 Hz**, with 0.201567 seconds between first and last edges. Actual Chromium AudioContext playback produces nonzero PCM and clears on pause. [Buzzer evidence](evidence/buzzer-r21.json). |
+| Note over Wire | Cold original HP39g+ and HP39gs receive a 321-byte packed Note from a 420-byte ASCII source, open it in EDIT, then return a 426-byte stock ASCII export. Title, lines, high bytes, all 40 HP escape symbols, literal backslash and repacked binary agree; HOME calculates `1+1=2`. Separate earlier identified long-Note runs cross Kermit sequence 63→0. [Note evidence](evidence/hp39-note-wire-r21.json). |
+| Transfer recovery and language | Queue retry/skip retains other items; local read retry reconverts the latest bytes and applies the size limit after conversion. Typed errors cross Worker/controller boundaries and have English/Chinese main messages; raw diagnostics are collapsed. Independent review checks 38 error keys, ACK ordering/backpressure and bounded retry. [Transfer review](evidence/transfer-review-r21.json). |
+| SD file management | The unmounted FAT16 draft can rename files and populated folders, delete files and empty folders, retire associated long-name entries, and reuse freed clusters. The edited image is accepted by original HP49g+: root and nested objects recall as 42, stock FILES writes TEST, and a partial-sector v4 checkpoint continues byte-identically on native and WASM. Independent tools validate the final exported image and all three object bytes. Original HP48gII FILES and HOME also pass. [SD evidence](evidence/sd-files-r21.json). |
+| Native ROMstream continuation | Fresh original HP39gs cold boot and normal stock Disk installation run the existing V2 reader. All 64 × 16 KiB blocks pass double reads with zero retries; the complete 1 MiB equals the input NOR. Progress screens, FINISH/unplug, HOME `1+1=2` and stock USB reuse pass on the final core. [Native continuation](evidence/native-continuation-r21.json). |
+
+The inactivity failure reached real GPIO pull-up, disabled-NAND and
+CLKCON.Power_OFF behavior. The core now resolves board pull-ups, supports the
+bounded disabled NAND probe, stops nonretained domains, and wakes through the
+reset vector while retaining external SRAM and other declared retained state.
+Saved SPSR mode bits may contain inactive patterns; active CPSR and exception
+return validation remain enforced. No ROM/RAM patch or Saturn interception is
+used. The original four NOR images remain the admitted inputs.
+
+Buzzer work corrects the shared peripheral-clock path: MPLLCON/CLKSLOW/CLKDIVN
+drive PCLK edges consumed by all five PWM timers, watchdog, ADC and SDI. PWM
+reload and active compare state now survive checkpoints. Checkpoint v4 adds
+64 bytes of clock/PWM state and accepts v1–v3; older formats cannot reconstruct
+write history or an unrecorded partial cycle. PLL settling, switching phase,
+prescaler details and physical frequency calibration retain documented bounds.
+The audio observer does not change guest state or apply a pitch multiplier.
+
+### Final regression and browser gates
+
+Release, retained-reference and ASan/UBSan each pass **19/19 suites**. Native
+and WASM each pass **1,159,939 default core assertions** plus **33,849 functional
+clock assertions**, or **1,193,788 per host**. The additional 217,824 quarantined
+physical-read WASM assertions are outside that total. Clang analysis covers
+**45 C files**, with zero diagnostics. The independent Unicorn 2.1.4 corpus
+passes **17,075 cases**, zero mismatches and zero skips; its CPU scope is
+separate from later peripheral-clock tests. [Independent core review](evidence/core-review-r21.json).
+
+ROM-free browser checks cover the production components, binary IndexedDB,
+six FN keys, error localization, real AudioContext scheduling and 12 SD draft
+workflows. The FAT editor has 220 parsing/mutation/rejection checks, and the
+controller has 27 ownership/cancellation checks. Four independently checked
+host images and the final stock-written image pass external FAT tools.
+Production HTTP Worker, ordinary stop recovery, diagnostic trace recovery and
+timer receiver checks also pass. [Frontend scope](evidence/frontend-validation-r21.json).
+
+The final production HP39gs browser run uses the actual ROM picker and Worker,
+visually displays `1+1=2` and `7*8=56`, exports/restores a v4 session exactly,
+and returns from APLET in immersive landscape. All ten observed loaded
+execution assets match the expected build; there are no page errors or upload
+requests. These original-ROM results are recorded separately from synthetic
+component fixtures.
+
+Syntax, tools, trace, web, skins, calculator, protocol, sessions, Pages contracts,
+loopback host and packaged host gates pass. The Go receiver passes tests, vet
+and a Windows x64 build. Strict Zensical 0.0.67 documentation and local Pages
+assembly cover 47 documentation pages and all 43 emulator assets. Known local
+toolchain/launch failures and their successful reruns remain in the release
+record, with no source or permission workaround attributed to product behavior.
+
+Remaining work includes physical clock/audio calibration, UART2/IrDA,
+SDHC/SDXC/DMA, FAT long-name creation, original HP40gs/HP50g admission and the
+remaining native application regression matrix. SD capacity remains bounded
+to 1/2/4/8/16/32 MiB SDSC; HP48gII has no SD slot. ROMs, sidecars, checkpoints,
+card images and stock-OS pixels remain excluded from publication.
+
+## Historical r20 original HP39gs, transfer recovery, sound and SD files (2026-10-23)
 
 The [r20 release record](evidence/release-validation-r20.json) identifies all
 **42 production assets**, source identities and local gates. The production

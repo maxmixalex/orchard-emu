@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // HP39 transport envelopes only. Never execute or certify the contained object.
 // Format evidence and byte/charset limits: docs/development/hp39-files.md.
+import {transferError} from './transfer-errors.js';
 export const MAX_HP39_FILE_BYTES = 2 * 1024 * 1024;
 export const MAX_HP39_BUNDLE_BYTES = 16 * 1024 * 1024;
 export const MAX_HP39_DIRECTORY_ENTRIES = 256;
@@ -12,14 +13,14 @@ const latin1 = bytes => Array.from(bytes, byte => String.fromCharCode(byte)).joi
 function bytesOf(input) {
   if (!(input instanceof Uint8Array)) throw new TypeError('HP39 input must be a Uint8Array.');
   if (input.length < 8 || input.length > MAX_HP39_FILE_BYTES)
-    throw new Error('HP39 input must contain 8 bytes to 2 MiB.');
+    throw transferError('hp39FileSize','HP39 input must contain 8 bytes to 2 MiB.');
   return input;
 }
 
 function header(input) {
   const bytes = bytesOf(input), magic = latin1(bytes.subarray(0, 8));
   if (!/^HP39(?:Bin|Asc)[A-K]$/.test(magic))
-    throw new Error('Expected an HP39Bin/HP39Asc typed file, not an HP48/49 object or ROM.');
+    throw transferError('hp39FileType','Expected an HP39Bin/HP39Asc typed file, not an HP48/49 object or ROM.');
   return { bytes, magic, encoding: magic.slice(4, 7) === 'Bin' ? 'binary' : 'ascii', kind: magic[7] };
 }
 
@@ -49,7 +50,7 @@ function counted(bytes, offset, field) {
 export function validateHp39Filename(name) {
   if (typeof name !== 'string' || !/^[A-Za-z0-9_][A-Za-z0-9_.-]{0,254}$/.test(name) || name.endsWith('.') ||
       /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/i.test(name))
-    throw new Error('HP39 file name must be a local ASCII basename without paths or reserved device names.');
+    throw transferError('hp39Filename','HP39 file name must be a local ASCII basename without paths or reserved device names.');
   return name;
 }
 

@@ -266,13 +266,19 @@ with sync_playwright() as p:
  # and a complete library ACK advances to the original aplet bytes only once.
  hp39_aplet=b'HP39BinB\x04TESTopaque-body'
  hp39_note=b'HP39BinC\x04NOTEopaque-note'
+ page.get_by_role('button',name='关闭',exact=True).click()
+ page.get_by_role('button',name='设置',exact=True).click()
+ page.get_by_role('tab',name='传输',exact=True).click()
+ unlimited=page.get_by_role('switch',name='传输时不限速',exact=False)
+ assert not unlimited.is_checked()
+ unlimited.check()
+ page.get_by_role('button',name='应用',exact=True).click()
+ assert page.evaluate('window.__messages.filter(m=>m.type==="configure").at(-1).transferUnlimited')
+ page.get_by_role('button',name='连接',exact=True).click()
  page.get_by_label('计算器传输菜单',exact=True).select_option('wire')
  assert page.get_by_role('button',name='接收计算器文件',exact=True).count()==0
  assert page.get_by_test_id('transfer-file').get_attribute('accept') is None
- unlimited=page.get_by_label('传输时不限速',exact=False)
- assert not unlimited.is_checked()
- unlimited.check()
- assert page.evaluate('window.__messages.filter(m=>m.type==="configure").at(-1).transferUnlimited')
+ assert page.get_by_role('switch',name='传输时不限速',exact=False).count()==0
  page.locator('[data-testid="transfer-file"]').set_input_files([
   {'name':'APLET.blob','mimeType':'application/octet-stream','buffer':hp39_aplet},
   {'name':'LIB','mimeType':'application/octet-stream','buffer':hp39_library},
@@ -289,8 +295,11 @@ with sync_playwright() as p:
  page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name==="APLET.blob"')
  assert page.evaluate('Array.from(window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).bytes)')==list(hp39_aplet)
  assert 'APLET.blob' in summary.inner_text() and '正在不限速传输' not in summary.inner_text()
- page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"error",transferred:3,total:25,error:"Guest RECV interrupted",effectiveSpeed:1,transferBoosted:false})}')
- assert 'Guest RECV interrupted' in summary.inner_text() and 'RECV' in summary.inner_text()
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"error",transferred:3,total:25,error:"Guest RECV interrupted",errorCode:"wireCancelledByCalculator",effectiveSpeed:1,transferBoosted:false})}')
+ assert '计算器取消了此次 Wire 上传' in summary.inner_text() and 'RECV' in summary.inner_text()
+ assert 'Guest RECV interrupted' not in summary.inner_text()
+ summary.locator('summary').click()
+ assert 'Guest RECV interrupted' in summary.inner_text()
  assert page.evaluate('window.__controller.state.uploadBatch.items.map(i=>i.phase)')==['complete','error','queued']
  for width in [320,1360]:
   page.set_viewport_size({'width':width,'height':940})
@@ -303,6 +312,9 @@ with sync_playwright() as p:
  assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start"&&m.name==="LIB").length')==1
  assert page.evaluate('Array.from(window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).bytes)')==list(hp39_aplet)
  page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"error",transferred:0,total:25,error:"Guest RECV interrupted again",effectiveSpeed:1,transferBoosted:false})}')
+ assert '文件传输未能完成。请检查所选文件与连接后重试。' in page.get_by_test_id('transfer-status').inner_text()
+ assert 'Guest RECV interrupted again' not in page.get_by_test_id('transfer-status').inner_text()
+ assert '计算器取消了此次 Wire 上传' not in page.get_by_test_id('transfer-status').inner_text()
  page.get_by_role('button',name='跳过此文件',exact=True).click()
  page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name==="NOTE.zip"')
  assert page.evaluate('Array.from(window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).bytes)')==list(hp39_note)
@@ -313,11 +325,15 @@ with sync_playwright() as p:
  page.get_by_test_id('transfer-file').set_input_files({'name':'AGAIN.unknown','mimeType':'application/octet-stream','buffer':hp39_aplet})
  page.get_by_role('button',name='通过 Wire 上传',exact=True).click()
  page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name==="AGAIN.unknown"')
- # The option remains usable during the transfer; the Worker owns immediate
- # pacing restoration (verified separately with the real Worker module).
- unlimited=page.get_by_label('传输时不限速',exact=False)
- unlimited.uncheck()
+ # The Settings tab remains usable during a transfer. Applying its draft
+ # immediately configures the Worker; the connection dialog has no duplicate.
+ page.get_by_role('button',name='关闭',exact=True).click()
+ page.get_by_role('button',name='设置',exact=True).click()
+ page.get_by_role('tab',name='传输',exact=True).click()
+ page.get_by_role('switch',name='传输时不限速',exact=False).uncheck()
+ page.get_by_role('button',name='应用',exact=True).click()
  assert not page.evaluate('window.__messages.filter(m=>m.type==="configure").at(-1).transferUnlimited')
+ page.get_by_test_id('transfer-summary').get_by_role('button',name='传输详情',exact=True).click()
  page.get_by_role('button',name='取消传输',exact=True).click()
  recovery=page.get_by_test_id('transfer-status').inner_text()
  for instruction in ('ON 键','等接收画面退出','重新打开 RECV'):

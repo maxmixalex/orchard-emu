@@ -33,6 +33,34 @@ static void init(unsigned model){
  a.sram_alias_reads=77;a.sram_alias_writes=12;
 }
 static void export_to(uint8_t *p,size_t n){CHECK(orchard_checkpoint_save(&a,p,n)==ORCHARD_OK);}
+static void legacy_pwm(void){
+ init(5);a.soc.clock[1]=0x43012;a.soc.clock[4]=0;a.soc.clock[5]=3;
+ a.soc.mpll_configured=1;a.soc.pclk_phase=7;
+ a.soc.tcon=0x9000;a.soc.tcntb[2]=7;a.soc.tcmpb[2]=4;
+ a.soc.count[2]=0;a.soc.phase[2]=1;a.soc.active_compare[2]=1;
+ a.soc.pending_count[2]=5;a.soc.pending_compare[2]=2;a.soc.reload_pending=4;
+ size_t n=orchard_checkpoint_size(&a),ram_offset=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE;
+ export_to(original,n);
+ for(unsigned version=1;version<=3;version++){
+  size_t removed=64+(version<3?709:0)+(version==1?52:0),legacy_n=n-removed;
+  o_copy(actual,original,ram_offset-removed);
+  o_copy(actual+ram_offset-removed,original+ram_offset,n-ram_offset);
+  put(actual+8,version);put(actual+12,(uint32_t)legacy_n);
+  put(actual+28,crc(actual+32,legacy_n-32));
+  CHECK(orchard_checkpoint_load(&a,actual,legacy_n)==ORCHARD_OK);
+  CHECK(a.soc.count[2]==0&&a.soc.phase[2]==1&&a.soc.tcntb[2]==7&&a.soc.tcmpb[2]==4);
+  CHECK(a.soc.active_compare[2]==4&&!a.soc.reload_pending&&!a.soc.pending_count[2]&&!a.soc.pending_compare[2]);
+  CHECK(!a.soc.pclk_phase&&a.soc.mpll_configured==1&&a.soc.clock[1]==0x43012&&a.soc.clock[5]==3);
+  CHECK(equal(a.ram,original+ram_offset,a.profile->ram_bytes));
+ }
+ /* A legacy format cannot distinguish a reset MPLL word from software
+    writing the same value. Migration explicitly chooses unconfigured. */
+ a.soc.clock[1]=0x5c080;a.soc.mpll_configured=1;export_to(original,n);
+ o_copy(actual,original,ram_offset-64);o_copy(actual+ram_offset-64,original+ram_offset,n-ram_offset);
+ put(actual+8,3);put(actual+12,(uint32_t)n-64);put(actual+28,crc(actual+32,n-64-32));
+ CHECK(orchard_checkpoint_load(&a,actual,n-64)==ORCHARD_OK);
+ CHECK(!a.soc.mpll_configured&&a.soc.clock[1]==0x5c080);
+}
 EXPORT("regression") unsigned regression(void){
  checks=failures=first=0;
  CHECK(orchard_checkpoint_size(NULL)==0);
@@ -73,18 +101,18 @@ EXPORT("regression") unsigned regression(void){
   original[256]=2;put(original+28,crc(original+32,n-32));
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
   original[256]=0;
-  size_t head=n-ram_bytes-O_BOOT_SRAM_SIZE-709-52-31-1032-8;
+  size_t head=n-ram_bytes-O_BOOT_SRAM_SIZE-64-709-52-31-1032-8;
   CHECK(o_read_le(original+head,4)==1020);
   put(original+head,0xffffffffu);put(original+28,crc(original+32,n-32));
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
   put(original+head,1020);put(original+28,crc(original+32,n-32));
   export_to(actual,n);CHECK(equal(expected,actual,n));
-  /* Genuine legacy wire images lack v3 FIFO/media state. v1 also lacks the
-     original 52 controller bytes. Preserve every old byte during migration. */
+  /* Legacy wire images lack v4 PCLK/PWM state. v1/v2 also lack v3 FIFO/media
+     state; v1 lacks the original 52 SDI bytes. Preserve every legacy byte. */
   export_to(original,n);
   size_t ram_offset=n-ram_bytes-O_BOOT_SRAM_SIZE;
-  for(unsigned version=1;version<=2;version++){
-   size_t removed=709+(version==1?52:0),legacy_n=n-removed;
+  for(unsigned version=1;version<=3;version++){
+   size_t removed=64+(version<3?709:0)+(version==1?52:0),legacy_n=n-removed;
    o_copy(actual,original,ram_offset-removed);
    o_copy(actual+ram_offset-removed,original+ram_offset,n-ram_offset);
    put(actual+8,version);put(actual+12,(uint32_t)legacy_n);
@@ -97,20 +125,20 @@ EXPORT("regression") unsigned regression(void){
    export_to(actual,n);CHECK(equal(original,actual,n));
   }
   /* Correct-CRC, invalid SD phase must be rejected atomically. */
-  put(original+ram_offset-709-4,3);put(original+28,crc(original+32,n-32));
+  put(original+ram_offset-64-709-4,3);put(original+28,crc(original+32,n-32));
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
   export_to(original,n);CHECK(equal(original,actual,n));
   /* DMA remains unsupported. Repaired CRCs cannot bypass that restriction. */
   const uint32_t active_data_modes[]={0x8000,0x9001,0xa001,0xbfff};
   for(unsigned i=0;i<sizeof active_data_modes/sizeof active_data_modes[0];i++) {
-   put(original+ram_offset-709-52+7*4,active_data_modes[i]);
+   put(original+ram_offset-64-709-52+7*4,active_data_modes[i]);
    put(original+28,crc(original+32,n-32));
    CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
    export_to(original,n);CHECK(equal(original,actual,n));
   }
   const uint32_t bad_extension[][2]={{36,64},{40,65},{48,5},{52,1},{68,99},{72,0},{76,513},{80,3},{96,512}};
   for(unsigned i=0;i<sizeof bad_extension/sizeof bad_extension[0];i++) {
-   put(original+ram_offset-709+bad_extension[i][0],bad_extension[i][1]);
+   put(original+ram_offset-64-709+bad_extension[i][0],bad_extension[i][1]);
    put(original+28,crc(original+32,n-32));
    CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
    export_to(original,n);CHECK(equal(original,actual,n));
@@ -120,7 +148,18 @@ EXPORT("regression") unsigned regression(void){
   a.soc.sdi.data_control=0;
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_OK);
   export_to(actual,n);CHECK(equal(original,actual,n));
+  /* A repaired CRC cannot inject an invalid PCLK fraction, over-wide PWM
+     latch, unknown PLL history, or a pending reload before terminal count. */
+  a.soc.count[0]=1;export_to(original,n);export_to(actual,n);
+  const uint32_t bad_clock_pwm[][2]={{0,1},{4,2},{8,65536},{24,65536},{44,65536},{60,32},{60,1}};
+  for(unsigned i=0;i<sizeof bad_clock_pwm/sizeof bad_clock_pwm[0];i++){
+   put(original+ram_offset-64+bad_clock_pwm[i][0],bad_clock_pwm[i][1]);
+   put(original+28,crc(original+32,n-32));
+   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
+   export_to(original,n);CHECK(equal(original,actual,n));
+  }
  }
+ legacy_pwm();
  return failures;
 }
 EXPORT("checks") unsigned get_checks(void){return checks;}

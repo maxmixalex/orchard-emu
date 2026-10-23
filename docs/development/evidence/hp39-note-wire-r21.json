@@ -1,0 +1,1068 @@
+{
+  "schema": "orchard-hp39-note-wire-r21-v1",
+  "scope": {
+    "cold_original_full_roms": true,
+    "transport": "emulated USB",
+    "guest_memory_patched": false,
+    "roms_or_checkpoints_redistributed": false,
+    "private_lcds_or_returned_files_redistributed": false,
+    "physical_hardware_validated": false,
+    "host_wall_time_benchmark": false,
+    "excluded": [
+      "HP39gs serial",
+      "HP40gs",
+      "ASCII program/aplet/library compilation",
+      "Wire reverse I negotiation"
+    ]
+  },
+  "reproducer": "tools/verify-hp39-note-wire.mjs MODEL ORIGINAL-ROM NEW-PRIVATE-DIRECTORY [--large]",
+  "reproducer_current_sha256": "6e7ba9aec3bc61e38c250bdb85674c5169791e943c98a02b2b11376141ffb403",
+  "note_format": {
+    "wire_encoding": "HP39BinC; one-byte title length; original title bytes; Saturn string prolog 0x02a2c and 5-nibble size 5+2*text_bytes",
+    "source_ascii_rules": [
+      "Skip unescaped leading space, tab, CR, LF after counted title",
+      "CRLF becomes LF; lone CR and LFCR remain",
+      "HP two-character, decimal 000..255 and double-backslash escapes decode once",
+      "Unknown and out-of-range escapes stay literal",
+      "Original high bytes stay in the calculator charset"
+    ],
+    "all_40_standard_symbol_translations_roundtripped": true,
+    "maximum_encoded_text_bytes": 524285,
+    "calculator_free_memory_still_applies": true
+  },
+  "ack_recovery": {
+    "evidence": "Valid Y0 followed by repeated original S0 after 7.829504 guest seconds; valid Y7 followed by repeated D7 after 7.866368 seconds. No sequence or checksum error. Trace alone does not identify the guest notification/interrupt that lost the acknowledgement.",
+    "policy": "HP39 receive only: repeat exact most recent ACK after one guest second without advancement; exponential backoff bounded by negotiated timeout, existing retry count and total deadline; final B ACK repeats only inside existing final grace period; next packet/command removes an unsent prior retry.",
+    "generic_hp48_hp49_defaults_unchanged": true,
+    "inter_packet_delay_added": false,
+    "extra_guest_execution_added": false,
+    "note_timing_boundary": "First Disk SEND request through final directory B acknowledgement; excludes post-completion final-ACK grace activity",
+    "baseline": [
+      {
+        "label": "same-small-note-before-ack-recovery",
+        "model": 1,
+        "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+        "wasm_sha256": "9121607afc0517f6c170c8e2c7f606a88461f0f7a3b2ad5729812f271bf08108",
+        "source": {
+          "bytes": 420,
+          "sha256": "42634f68f6f8c1aca519c6e36f902e1b50b317b123cd65e86408236358662594"
+        },
+        "wire_object": {
+          "bytes": 321,
+          "sha256": "b904693354265255ccc8b2fe7cdb767ffa51e393227eeb5acf20591f293274b1"
+        },
+        "wire": {
+          "start_tick": 163409600,
+          "end_tick": 226875328,
+          "acknowledged_bytes": 321,
+          "transport_bytes_out": 400,
+          "transport_bytes_in": 5,
+          "check": 68
+        },
+        "received": [
+          {
+            "tick": 480781440,
+            "name": "ORCHARDN.000",
+            "bytes": 426,
+            "sha256": "2422dc4fc9d40ad8c691822225016a8b8044f515ca4bd4f467cec1a7d00b2335"
+          },
+          {
+            "tick": 485999744,
+            "name": "HP39DIR.000",
+            "bytes": 41,
+            "sha256": "9914e29d356e4f231fa6cdb6db9f28588ce11dd9d4d8d7ee65df8654d0f7623c"
+          }
+        ],
+        "passed": true,
+        "note_equal": true,
+        "title_equal": true,
+        "high_bytes_equal": true,
+        "literal_backslash_equal": true,
+        "stock_export_repacked_equal": true,
+        "arithmetic_after_transfer": true,
+        "arithmetic_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "editor_frame_sha256": "b9ebbb42683a9fdc923f3731d1f54a926f60114fb71b4d1a4fddde6b324e1d85",
+        "final_stop": 0,
+        "final_dfsr": 0,
+        "reverse_send": {
+          "guest_seconds_first_request_to_directory_commit": 3.291136,
+          "packets_through_commit": 56,
+          "data_sequence_wraps": 0,
+          "max_packet_gap_guest_seconds": 0.563882667,
+          "host_ack_repeats": [],
+          "gaps_over_five_guest_seconds": []
+        },
+        "source_sha256_at_run": {
+          "web/hp48.js": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+          "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+          "web/file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+          "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+          "web/hp39-transfer.js": "2cbeb87ee56a8ee58dd2b0f16322a24cd15afaaa1471534aed3bdf1df73e8ddc",
+          "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+          "web/kermit.js": "948cdea0c1856c241985ab6f9173ad08e325e2a7b899ea950688c281324f48d7"
+        },
+        "tool_sha256_at_run": "5306f23cb177eb6eecd0e4ba15b42b7cb0404ce9215e17d775a574b011bb4c17",
+        "private_raw_report_sha256": "7a43591dfa08df97f3bd52cd93999c8c78439bbc4263c1cbbdea16820fe59302"
+      },
+      {
+        "label": "same-small-note-before-ack-recovery",
+        "model": 2,
+        "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+        "wasm_sha256": "9121607afc0517f6c170c8e2c7f606a88461f0f7a3b2ad5729812f271bf08108",
+        "source": {
+          "bytes": 420,
+          "sha256": "42634f68f6f8c1aca519c6e36f902e1b50b317b123cd65e86408236358662594"
+        },
+        "wire_object": {
+          "bytes": 321,
+          "sha256": "b904693354265255ccc8b2fe7cdb767ffa51e393227eeb5acf20591f293274b1"
+        },
+        "wire": {
+          "start_tick": 163409600,
+          "end_tick": 225114048,
+          "acknowledged_bytes": 321,
+          "transport_bytes_out": 400,
+          "transport_bytes_in": 5,
+          "check": 68
+        },
+        "received": [
+          {
+            "tick": 667610496,
+            "name": "ORCHARDN.000",
+            "bytes": 426,
+            "sha256": "2422dc4fc9d40ad8c691822225016a8b8044f515ca4bd4f467cec1a7d00b2335"
+          },
+          {
+            "tick": 672468352,
+            "name": "HP39DIR.000",
+            "bytes": 41,
+            "sha256": "9914e29d356e4f231fa6cdb6db9f28588ce11dd9d4d8d7ee65df8654d0f7623c"
+          }
+        ],
+        "passed": true,
+        "note_equal": true,
+        "title_equal": true,
+        "high_bytes_equal": true,
+        "literal_backslash_equal": true,
+        "stock_export_repacked_equal": true,
+        "arithmetic_after_transfer": true,
+        "arithmetic_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "editor_frame_sha256": "b9ebbb42683a9fdc923f3731d1f54a926f60114fb71b4d1a4fddde6b324e1d85",
+        "final_stop": 0,
+        "final_dfsr": 0,
+        "reverse_send": {
+          "guest_seconds_first_request_to_directory_commit": 18.720864,
+          "packets_through_commit": 60,
+          "data_sequence_wraps": 0,
+          "max_packet_gap_guest_seconds": 7.866368,
+          "host_ack_repeats": [],
+          "gaps_over_five_guest_seconds": [
+            {
+              "preceding": {
+                "direction": "host-to-calculator",
+                "type": "Y",
+                "sequence": 0
+              },
+              "following": {
+                "direction": "calculator-to-host",
+                "type": "S",
+                "sequence": 0
+              },
+              "gap_guest_seconds": 7.829504
+            },
+            {
+              "preceding": {
+                "direction": "host-to-calculator",
+                "type": "Y",
+                "sequence": 7
+              },
+              "following": {
+                "direction": "calculator-to-host",
+                "type": "D",
+                "sequence": 7
+              },
+              "gap_guest_seconds": 7.866368
+            }
+          ]
+        },
+        "source_sha256_at_run": {
+          "web/hp48.js": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+          "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+          "web/file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+          "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+          "web/hp39-transfer.js": "2cbeb87ee56a8ee58dd2b0f16322a24cd15afaaa1471534aed3bdf1df73e8ddc",
+          "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+          "web/kermit.js": "948cdea0c1856c241985ab6f9173ad08e325e2a7b899ea950688c281324f48d7"
+        },
+        "tool_sha256_at_run": "5306f23cb177eb6eecd0e4ba15b42b7cb0404ce9215e17d775a574b011bb4c17",
+        "private_raw_report_sha256": "165b9d17697e88d360165ae98c28871489548934c798d9b343c06f0802f49d71"
+      }
+    ]
+  },
+  "runs": [
+    {
+      "label": "small-with-bounded-ack-recovery",
+      "model": 1,
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "wasm_sha256": "9121607afc0517f6c170c8e2c7f606a88461f0f7a3b2ad5729812f271bf08108",
+      "source": {
+        "bytes": 420,
+        "sha256": "42634f68f6f8c1aca519c6e36f902e1b50b317b123cd65e86408236358662594"
+      },
+      "wire_object": {
+        "bytes": 321,
+        "sha256": "b904693354265255ccc8b2fe7cdb767ffa51e393227eeb5acf20591f293274b1"
+      },
+      "wire": {
+        "start_tick": 163409600,
+        "end_tick": 226875328,
+        "acknowledged_bytes": 321,
+        "transport_bytes_out": 400,
+        "transport_bytes_in": 5,
+        "check": 68
+      },
+      "received": [
+        {
+          "tick": 480781440,
+          "name": "ORCHARDN.000",
+          "bytes": 426,
+          "sha256": "2422dc4fc9d40ad8c691822225016a8b8044f515ca4bd4f467cec1a7d00b2335"
+        },
+        {
+          "tick": 485999744,
+          "name": "HP39DIR.000",
+          "bytes": 41,
+          "sha256": "9914e29d356e4f231fa6cdb6db9f28588ce11dd9d4d8d7ee65df8654d0f7623c"
+        }
+      ],
+      "passed": true,
+      "note_equal": true,
+      "title_equal": true,
+      "high_bytes_equal": true,
+      "literal_backslash_equal": true,
+      "stock_export_repacked_equal": true,
+      "arithmetic_after_transfer": true,
+      "arithmetic_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+      "editor_frame_sha256": "b9ebbb42683a9fdc923f3731d1f54a926f60114fb71b4d1a4fddde6b324e1d85",
+      "final_stop": 0,
+      "final_dfsr": 0,
+      "reverse_send": {
+        "guest_seconds_first_request_to_directory_commit": 3.291136,
+        "packets_through_commit": 56,
+        "data_sequence_wraps": 0,
+        "max_packet_gap_guest_seconds": 0.563882667,
+        "host_ack_repeats": [],
+        "gaps_over_five_guest_seconds": []
+      },
+      "source_sha256_at_run": {
+        "web/hp48.js": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+        "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "web/file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+        "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+        "web/hp39-transfer.js": "71d5bf9533ff3696384cf86cd7cc8ab42defe54127f615df1dc92a0aa89a1ece",
+        "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+        "web/kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3"
+      },
+      "tool_sha256_at_run": "5306f23cb177eb6eecd0e4ba15b42b7cb0404ce9215e17d775a574b011bb4c17",
+      "private_raw_report_sha256": "6fe1cd9ed0fe2a862fdd42c89c099cfade7edd1b41180f7ece878310f28ce4b2"
+    },
+    {
+      "label": "small-with-bounded-ack-recovery",
+      "model": 2,
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "wasm_sha256": "9121607afc0517f6c170c8e2c7f606a88461f0f7a3b2ad5729812f271bf08108",
+      "source": {
+        "bytes": 420,
+        "sha256": "42634f68f6f8c1aca519c6e36f902e1b50b317b123cd65e86408236358662594"
+      },
+      "wire_object": {
+        "bytes": 321,
+        "sha256": "b904693354265255ccc8b2fe7cdb767ffa51e393227eeb5acf20591f293274b1"
+      },
+      "wire": {
+        "start_tick": 163409600,
+        "end_tick": 225114048,
+        "acknowledged_bytes": 321,
+        "transport_bytes_out": 400,
+        "transport_bytes_in": 5,
+        "check": 68
+      },
+      "received": [
+        {
+          "tick": 515149184,
+          "name": "ORCHARDN.000",
+          "bytes": 426,
+          "sha256": "2422dc4fc9d40ad8c691822225016a8b8044f515ca4bd4f467cec1a7d00b2335"
+        },
+        {
+          "tick": 544140672,
+          "name": "HP39DIR.000",
+          "bytes": 41,
+          "sha256": "9914e29d356e4f231fa6cdb6db9f28588ce11dd9d4d8d7ee65df8654d0f7623c"
+        }
+      ],
+      "passed": true,
+      "note_equal": true,
+      "title_equal": true,
+      "high_bytes_equal": true,
+      "literal_backslash_equal": true,
+      "stock_export_repacked_equal": true,
+      "arithmetic_after_transfer": true,
+      "arithmetic_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+      "editor_frame_sha256": "b9ebbb42683a9fdc923f3731d1f54a926f60114fb71b4d1a4fddde6b324e1d85",
+      "final_stop": 0,
+      "final_dfsr": 0,
+      "reverse_send": {
+        "guest_seconds_first_request_to_directory_commit": 8.026890667,
+        "packets_through_commit": 61,
+        "data_sequence_wraps": 0,
+        "max_packet_gap_guest_seconds": 1.000106667,
+        "host_ack_repeats": [
+          {
+            "sequence": 0,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 2,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 3,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 9,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 3,
+            "gap_guest_seconds": 1.000106667
+          }
+        ],
+        "gaps_over_five_guest_seconds": []
+      },
+      "source_sha256_at_run": {
+        "web/hp48.js": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+        "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "web/file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+        "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+        "web/hp39-transfer.js": "71d5bf9533ff3696384cf86cd7cc8ab42defe54127f615df1dc92a0aa89a1ece",
+        "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+        "web/kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3"
+      },
+      "tool_sha256_at_run": "5306f23cb177eb6eecd0e4ba15b42b7cb0404ce9215e17d775a574b011bb4c17",
+      "private_raw_report_sha256": "77a7c2eaa7bf82928ba5eee2f8c29472211d62126e26428d80559eac0a65e469"
+    },
+    {
+      "label": "large-with-sequence-wrap",
+      "model": 1,
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "wasm_sha256": "9121607afc0517f6c170c8e2c7f606a88461f0f7a3b2ad5729812f271bf08108",
+      "source": {
+        "bytes": 8388,
+        "sha256": "ea9239a9965cef2f55e3c31262dd67155d11923cf2367c471ff84785c6289317"
+      },
+      "wire_object": {
+        "bytes": 8193,
+        "sha256": "9b881361dd8281620f7800e05359b55d6d9ca4eccf14ce79fb07ebbc4ced8f7d"
+      },
+      "wire": {
+        "start_tick": 163409600,
+        "end_tick": 255137728,
+        "acknowledged_bytes": 8193,
+        "transport_bytes_out": 8366,
+        "transport_bytes_in": 11,
+        "check": 68
+      },
+      "received": [
+        {
+          "tick": 944104576,
+          "name": "ORCHARDN.000",
+          "bytes": 8394,
+          "sha256": "83e3e9785ef805003f13534df1bf0d64bb0983e5e61d14347c8df5b11d28f708"
+        },
+        {
+          "tick": 949322880,
+          "name": "HP39DIR.000",
+          "bytes": 41,
+          "sha256": "9914e29d356e4f231fa6cdb6db9f28588ce11dd9d4d8d7ee65df8654d0f7623c"
+        }
+      ],
+      "passed": true,
+      "note_equal": true,
+      "title_equal": true,
+      "high_bytes_equal": true,
+      "literal_backslash_equal": true,
+      "stock_export_repacked_equal": true,
+      "arithmetic_after_transfer": true,
+      "arithmetic_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+      "editor_frame_sha256": "bc1b173efcbcce42251700129518fda7ad9b0f88384da0008a433ea02ba1c8b6",
+      "final_stop": 0,
+      "final_dfsr": 0,
+      "reverse_send": {
+        "guest_seconds_first_request_to_directory_commit": 39.546197333,
+        "packets_through_commit": 287,
+        "data_sequence_wraps": 1,
+        "max_packet_gap_guest_seconds": 1.176917333,
+        "host_ack_repeats": [
+          {
+            "sequence": 1,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 7,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 12,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 19,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 23,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 26,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 31,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 32,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 54,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 56,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 14,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 15,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 17,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 21,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 30,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 31,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 34,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 47,
+            "gap_guest_seconds": 1.000106667
+          }
+        ],
+        "gaps_over_five_guest_seconds": []
+      },
+      "source_sha256_at_run": {
+        "web/hp48.js": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+        "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "web/file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+        "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+        "web/hp39-transfer.js": "71d5bf9533ff3696384cf86cd7cc8ab42defe54127f615df1dc92a0aa89a1ece",
+        "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+        "web/kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3"
+      },
+      "tool_sha256_at_run": "ebb72a0b3a431f9930ef31d42607ce26f69e4fddfde51e26c6ed2ee419ca93e6",
+      "private_raw_report_sha256": "ad98bc57c0fc0f8e359183d1fff41224c8e863884f07f1e5c748bde1bf1eb61a"
+    },
+    {
+      "label": "large-with-sequence-wrap",
+      "model": 2,
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "wasm_sha256": "9121607afc0517f6c170c8e2c7f606a88461f0f7a3b2ad5729812f271bf08108",
+      "source": {
+        "bytes": 8388,
+        "sha256": "ea9239a9965cef2f55e3c31262dd67155d11923cf2367c471ff84785c6289317"
+      },
+      "wire_object": {
+        "bytes": 8193,
+        "sha256": "9b881361dd8281620f7800e05359b55d6d9ca4eccf14ce79fb07ebbc4ced8f7d"
+      },
+      "wire": {
+        "start_tick": 163409600,
+        "end_tick": 240236480,
+        "acknowledged_bytes": 8193,
+        "transport_bytes_out": 8366,
+        "transport_bytes_in": 11,
+        "check": 68
+      },
+      "received": [
+        {
+          "tick": 1004940672,
+          "name": "ORCHARDN.000",
+          "bytes": 8394,
+          "sha256": "83e3e9785ef805003f13534df1bf0d64bb0983e5e61d14347c8df5b11d28f708"
+        },
+        {
+          "tick": 1009790336,
+          "name": "HP39DIR.000",
+          "bytes": 41,
+          "sha256": "9914e29d356e4f231fa6cdb6db9f28588ce11dd9d4d8d7ee65df8654d0f7623c"
+        }
+      ],
+      "passed": true,
+      "note_equal": true,
+      "title_equal": true,
+      "high_bytes_equal": true,
+      "literal_backslash_equal": true,
+      "stock_export_repacked_equal": true,
+      "arithmetic_after_transfer": true,
+      "arithmetic_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+      "editor_frame_sha256": "bc1b173efcbcce42251700129518fda7ad9b0f88384da0008a433ea02ba1c8b6",
+      "final_stop": 0,
+      "final_dfsr": 0,
+      "reverse_send": {
+        "guest_seconds_first_request_to_directory_commit": 45.570826667,
+        "packets_through_commit": 295,
+        "data_sequence_wraps": 1,
+        "max_packet_gap_guest_seconds": 1.049258667,
+        "host_ack_repeats": [
+          {
+            "sequence": 1,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 8,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 9,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 11,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 12,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 13,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 18,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 44,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 46,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 47,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 48,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 53,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 54,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 55,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 59,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 9,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 10,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 21,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 22,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 32,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 35,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 36,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 39,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 40,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 46,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 48,
+            "gap_guest_seconds": 1.000106667
+          },
+          {
+            "sequence": 50,
+            "gap_guest_seconds": 1.000106667
+          }
+        ],
+        "gaps_over_five_guest_seconds": []
+      },
+      "source_sha256_at_run": {
+        "web/hp48.js": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+        "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "web/file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+        "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+        "web/hp39-transfer.js": "71d5bf9533ff3696384cf86cd7cc8ab42defe54127f615df1dc92a0aa89a1ece",
+        "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+        "web/kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3"
+      },
+      "tool_sha256_at_run": "ebb72a0b3a431f9930ef31d42607ce26f69e4fddfde51e26c6ed2ee419ca93e6",
+      "private_raw_report_sha256": "3b0e8c9a73bc07bab12b349116c96cbe2b29ee4997f28eee294c2b601981dd25"
+    }
+  ],
+  "protocol_regressions": [
+    "independent 66-byte binary Note vector from original OS install/edit/export",
+    "source bytes preserved; arbitrary extension; raw high bytes; all standard escapes; unknown and out-of-range escape handling",
+    "empty Note and 20-bit length overflow boundary",
+    "changed Wire length and aggregate byte totals after local-read retry; remote retry reuses packed bytes",
+    "per-file error metadata survives Worker/controller; retry/next-file clears prior translation",
+    "lost S/D/B ACKs recover before sender retransmission, exactly one file committed",
+    "partial write starts ACK timer only on complete frame; next packet/command supersedes unsent stale ACK",
+    "bounded silent peer and cancellation/reset isolation; original final-ACK grace expiry",
+    "generic Kermit checksum corruption, lost ACK, duplicate data and sequence wrap tests",
+    "Blocked final ACK expires without late output, even if transport never accepted its first byte"
+  ],
+  "primary_sources": [
+    "https://www.hpcalc.org/details/634",
+    "https://www.hpcalc.org/hp38/utils/xfer.zip",
+    "https://h10032.www1.hp.com/ctg/Manual/c02836298.pdf",
+    "https://www.kermitproject.org/kproto.pdf"
+  ],
+  "post_witness_changes": [
+    {
+      "change": "Added an explicit large-witness assertion for the sequence 63 to 0 already observed in both private packet traces.",
+      "verification": "Both recorded large runs contain one original calculator DATA sequence wrap."
+    },
+    {
+      "change": "Discard a final ACK retry still completely unwritten at grace expiry, even when its write-completion timer is infinite.",
+      "verification": "tests/hp39-transfer.mjs: blocked final ACK expires without later output; next-command supersession, cancellation, bounded silent peer and lost S/D/B ACK cases pass."
+    },
+    {
+      "change": "Reapply aggregate 8 MiB limit if retrying a local-read failure yields a slightly larger packed Note.",
+      "verification": "Controller Note conversion/retry byte-total regressions pass."
+    }
+  ],
+  "final_source_sha256": {
+    "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+    "web/hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+    "web/kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+    "web/controller.js": "8dec1d50e49c70f273a0337c8e97f67322236d84342cbe62f0c6aae61e33e018",
+    "web/file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+    "web/transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+    "tools/verify-hp39-note-wire.mjs": "6e7ba9aec3bc61e38c250bdb85674c5169791e943c98a02b2b11376141ffb403"
+  },
+  "combined_core_validation": {
+    "purpose": "Functional integration with shared PCLK and idle-power changes, kept separate from same-core ACK timing before/after comparison.",
+    "wasm_sha256": "e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6",
+    "cold_original_full_roms": true,
+    "guest_memory_patched": false,
+    "runs": [
+      {
+        "label": "small-note-with-shared-pclk-and-idle-power-core",
+        "model": 1,
+        "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+        "wasm_sha256": "e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6",
+        "source": {
+          "bytes": 420,
+          "sha256": "42634f68f6f8c1aca519c6e36f902e1b50b317b123cd65e86408236358662594"
+        },
+        "wire_object": {
+          "bytes": 321,
+          "sha256": "b904693354265255ccc8b2fe7cdb767ffa51e393227eeb5acf20591f293274b1"
+        },
+        "wire": {
+          "start_tick": 163409600,
+          "end_tick": 169711552,
+          "acknowledged_bytes": 321,
+          "transport_bytes_out": 400,
+          "transport_bytes_in": 5,
+          "check": 68
+        },
+        "received": [
+          {
+            "tick": 422012032,
+            "name": "ORCHARDN.000",
+            "bytes": 426,
+            "sha256": "2422dc4fc9d40ad8c691822225016a8b8044f515ca4bd4f467cec1a7d00b2335"
+          },
+          {
+            "tick": 438961280,
+            "name": "HP39DIR.000",
+            "bytes": 41,
+            "sha256": "9914e29d356e4f231fa6cdb6db9f28588ce11dd9d4d8d7ee65df8654d0f7623c"
+          }
+        ],
+        "passed": true,
+        "note_equal": true,
+        "title_equal": true,
+        "high_bytes_equal": true,
+        "literal_backslash_equal": true,
+        "stock_export_repacked_equal": true,
+        "arithmetic_after_transfer": true,
+        "arithmetic_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "editor_frame_sha256": "bc1b173efcbcce42251700129518fda7ad9b0f88384da0008a433ea02ba1c8b6",
+        "final_stop": 0,
+        "final_dfsr": 0,
+        "reverse_send": {
+          "guest_seconds_first_request_to_directory_commit": 4.147882667,
+          "packets_through_commit": 57,
+          "data_sequence_wraps": 0,
+          "max_packet_gap_guest_seconds": 1.000106667,
+          "host_ack_repeats": [
+            {
+              "sequence": 2,
+              "gap_guest_seconds": 1.000106667
+            }
+          ],
+          "gaps_over_five_guest_seconds": []
+        },
+        "source_sha256_at_run": {
+          "web/hp48.js": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+          "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+          "web/file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+          "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+          "web/hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+          "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+          "web/kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3"
+        },
+        "tool_sha256_at_run": "6e7ba9aec3bc61e38c250bdb85674c5169791e943c98a02b2b11376141ffb403",
+        "private_raw_report_sha256": "5042a7c6882ad24ef0a7c1248b6a6f0fe99650e1ddbed147641bdf74ef21ca55"
+      },
+      {
+        "label": "small-note-with-shared-pclk-and-idle-power-core",
+        "model": 2,
+        "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+        "wasm_sha256": "e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6",
+        "source": {
+          "bytes": 420,
+          "sha256": "42634f68f6f8c1aca519c6e36f902e1b50b317b123cd65e86408236358662594"
+        },
+        "wire_object": {
+          "bytes": 321,
+          "sha256": "b904693354265255ccc8b2fe7cdb767ffa51e393227eeb5acf20591f293274b1"
+        },
+        "wire": {
+          "start_tick": 163409600,
+          "end_tick": 204724160,
+          "acknowledged_bytes": 321,
+          "transport_bytes_out": 400,
+          "transport_bytes_in": 5,
+          "check": 68
+        },
+        "received": [
+          {
+            "tick": 481840512,
+            "name": "ORCHARDN.000",
+            "bytes": 426,
+            "sha256": "2422dc4fc9d40ad8c691822225016a8b8044f515ca4bd4f467cec1a7d00b2335"
+          },
+          {
+            "tick": 486370688,
+            "name": "HP39DIR.000",
+            "bytes": 41,
+            "sha256": "9914e29d356e4f231fa6cdb6db9f28588ce11dd9d4d8d7ee65df8654d0f7623c"
+          }
+        ],
+        "passed": true,
+        "note_equal": true,
+        "title_equal": true,
+        "high_bytes_equal": true,
+        "literal_backslash_equal": true,
+        "stock_export_repacked_equal": true,
+        "arithmetic_after_transfer": true,
+        "arithmetic_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "editor_frame_sha256": "bc1b173efcbcce42251700129518fda7ad9b0f88384da0008a433ea02ba1c8b6",
+        "final_stop": 0,
+        "final_dfsr": 0,
+        "reverse_send": {
+          "guest_seconds_first_request_to_directory_commit": 4.903008,
+          "packets_through_commit": 58,
+          "data_sequence_wraps": 0,
+          "max_packet_gap_guest_seconds": 1.000106667,
+          "host_ack_repeats": [
+            {
+              "sequence": 0,
+              "gap_guest_seconds": 1.000106667
+            },
+            {
+              "sequence": 2,
+              "gap_guest_seconds": 1.000106667
+            }
+          ],
+          "gaps_over_five_guest_seconds": []
+        },
+        "source_sha256_at_run": {
+          "web/hp48.js": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+          "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+          "web/file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+          "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+          "web/hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+          "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+          "web/kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3"
+        },
+        "tool_sha256_at_run": "6e7ba9aec3bc61e38c250bdb85674c5169791e943c98a02b2b11376141ffb403",
+        "private_raw_report_sha256": "542dd3922139c542abc970f6d20107afbf88b32d8316196ba566fe7728254746"
+      }
+    ]
+  },
+  "final_production": {
+    "purpose": "Cold original-ROM Note integration repeated with the exact frozen production WASM; historical same-core ACK comparisons and combined-core preview are preserved separately.",
+    "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+    "passed": true,
+    "cold_original_full_roms": true,
+    "transport": "emulated USB",
+    "guest_memory_patched": false,
+    "physical_hardware_validated": false,
+    "host_wall_time_benchmark": false,
+    "workflow": [
+      "Cold boot original full ROM",
+      "Upload original ASCII Note through the production Wire sender and its binary conversion",
+      "Open the Note in the original editor",
+      "Return Note and directory through original Disk SEND",
+      "Compare the returned Note and reimported binary object",
+      "Return to HOME and calculate 1+1 = 2"
+    ],
+    "runs": [
+      {
+        "label": "small-note-final-production-cold-boot",
+        "model": 1,
+        "preset": "hp39-home",
+        "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+        "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+        "cold_boot": true,
+        "large": false,
+        "source": {
+          "bytes": 420,
+          "sha256": "42634f68f6f8c1aca519c6e36f902e1b50b317b123cd65e86408236358662594"
+        },
+        "wire_object": {
+          "bytes": 321,
+          "sha256": "b904693354265255ccc8b2fe7cdb767ffa51e393227eeb5acf20591f293274b1"
+        },
+        "production_sender_conversion": {
+          "protocol": "hp39-wire",
+          "transport": "usb",
+          "input_name": "NOTE.any-suffix",
+          "object_kind": "C",
+          "note_converted": true,
+          "source_bytes": 420,
+          "wire_bytes": 321,
+          "acknowledged_bytes": 321,
+          "phase": "complete"
+        },
+        "wire": {
+          "start_tick": 163409600,
+          "end_tick": 169711552,
+          "acknowledged_bytes": 321,
+          "transport_bytes_out": 400,
+          "transport_bytes_in": 5,
+          "check": 68
+        },
+        "received": [
+          {
+            "tick": 422012032,
+            "name": "ORCHARDN.000",
+            "bytes": 426,
+            "sha256": "2422dc4fc9d40ad8c691822225016a8b8044f515ca4bd4f467cec1a7d00b2335"
+          },
+          {
+            "tick": 438961280,
+            "name": "HP39DIR.000",
+            "bytes": 41,
+            "sha256": "9914e29d356e4f231fa6cdb6db9f28588ce11dd9d4d8d7ee65df8654d0f7623c"
+          }
+        ],
+        "passed": true,
+        "note_equal": true,
+        "title_equal": true,
+        "high_bytes_equal": true,
+        "literal_backslash_equal": true,
+        "stock_export_repacked_equal": true,
+        "arithmetic_after_transfer": true,
+        "comparison_basis": "Stock Disk SEND output equals the independently expected mode-3 ASCII representation byte for byte; repacking it produces the original binary Wire object.",
+        "editor_frame_sha256": "bc1b173efcbcce42251700129518fda7ad9b0f88384da0008a433ea02ba1c8b6",
+        "arithmetic_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "arithmetic": "1+1 = 2 after transfer and return to HOME",
+        "visual_review": "Original Note editor and final arithmetic captures inspected privately",
+        "final_tick": 512961280,
+        "final_stop": 0,
+        "final_dfsr": 0,
+        "final_far": 0,
+        "all_captured_stop_and_dfsr_zero": true,
+        "data_sequence_wraps": 0,
+        "source_sha256_at_run": {
+          "web/hp48.js": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+          "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+          "web/file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+          "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+          "web/hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+          "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+          "web/kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3"
+        },
+        "tool_sha256_at_run": "6e7ba9aec3bc61e38c250bdb85674c5169791e943c98a02b2b11376141ffb403",
+        "private_raw_report_sha256": "508688e3216b8f895f671f15f0e80d9026880854ae86e9b6e764db8ae85de25a",
+        "matches_combined_core_metadata": {
+          "wasm_sha256_compared": "e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6",
+          "source_and_wire_objects": true,
+          "wire_acknowledgements_and_ticks": true,
+          "returned_files_and_ticks": true,
+          "comparison_results": true,
+          "editor_and_arithmetic_frame_hashes": true
+        }
+      },
+      {
+        "label": "small-note-final-production-cold-boot",
+        "model": 2,
+        "preset": "hp39gs-home",
+        "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+        "wasm_sha256": "36fe5da8630af83946503c76eab63f8dbb64274162b22eb06fd50f5a0d222108",
+        "cold_boot": true,
+        "large": false,
+        "source": {
+          "bytes": 420,
+          "sha256": "42634f68f6f8c1aca519c6e36f902e1b50b317b123cd65e86408236358662594"
+        },
+        "wire_object": {
+          "bytes": 321,
+          "sha256": "b904693354265255ccc8b2fe7cdb767ffa51e393227eeb5acf20591f293274b1"
+        },
+        "production_sender_conversion": {
+          "protocol": "hp39-wire",
+          "transport": "usb",
+          "input_name": "NOTE.any-suffix",
+          "object_kind": "C",
+          "note_converted": true,
+          "source_bytes": 420,
+          "wire_bytes": 321,
+          "acknowledged_bytes": 321,
+          "phase": "complete"
+        },
+        "wire": {
+          "start_tick": 163409600,
+          "end_tick": 204724160,
+          "acknowledged_bytes": 321,
+          "transport_bytes_out": 400,
+          "transport_bytes_in": 5,
+          "check": 68
+        },
+        "received": [
+          {
+            "tick": 481840512,
+            "name": "ORCHARDN.000",
+            "bytes": 426,
+            "sha256": "2422dc4fc9d40ad8c691822225016a8b8044f515ca4bd4f467cec1a7d00b2335"
+          },
+          {
+            "tick": 486370688,
+            "name": "HP39DIR.000",
+            "bytes": 41,
+            "sha256": "9914e29d356e4f231fa6cdb6db9f28588ce11dd9d4d8d7ee65df8654d0f7623c"
+          }
+        ],
+        "passed": true,
+        "note_equal": true,
+        "title_equal": true,
+        "high_bytes_equal": true,
+        "literal_backslash_equal": true,
+        "stock_export_repacked_equal": true,
+        "arithmetic_after_transfer": true,
+        "comparison_basis": "Stock Disk SEND output equals the independently expected mode-3 ASCII representation byte for byte; repacking it produces the original binary Wire object.",
+        "editor_frame_sha256": "bc1b173efcbcce42251700129518fda7ad9b0f88384da0008a433ea02ba1c8b6",
+        "arithmetic_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+        "arithmetic": "1+1 = 2 after transfer and return to HOME",
+        "visual_review": "Original Note editor and final arithmetic captures inspected privately",
+        "final_tick": 560370688,
+        "final_stop": 0,
+        "final_dfsr": 0,
+        "final_far": 0,
+        "all_captured_stop_and_dfsr_zero": true,
+        "data_sequence_wraps": 0,
+        "source_sha256_at_run": {
+          "web/hp48.js": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+          "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+          "web/file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+          "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+          "web/hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+          "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+          "web/kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3"
+        },
+        "tool_sha256_at_run": "6e7ba9aec3bc61e38c250bdb85674c5169791e943c98a02b2b11376141ffb403",
+        "private_raw_report_sha256": "62254d4db9bca202d8ef53f3cda7bcc7d1aa518ed13f79ce3b1d6302b33d6beb",
+        "matches_combined_core_metadata": {
+          "wasm_sha256_compared": "e41ae1105644be0ea617db5456acf0d535fa4c8912b5b1b942d8b115c7afe5c6",
+          "source_and_wire_objects": true,
+          "wire_acknowledgements_and_ticks": true,
+          "returned_files_and_ticks": true,
+          "comparison_results": true,
+          "editor_and_arithmetic_frame_hashes": true
+        }
+      }
+    ],
+    "publication_excludes": [
+      "ROM or RAM bytes",
+      "Raw packet payloads",
+      "LCD pixels",
+      "Private returned file contents",
+      "Private checkpoints",
+      "Private absolute paths"
+    ]
+  }
+}

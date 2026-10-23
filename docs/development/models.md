@@ -1,8 +1,8 @@
 # Model profiles
 
 These are physical configurations, starting from the existing hpclang
-platform/fixture research. They are not claims that Orchard currently boots
-these machines. The 48gII target is explicitly the **second-generation USB
+platform/fixture research. A profile alone is not boot acceptance; the final
+column separately records each original-ROM result. The 48gII target is explicitly the **second-generation USB
 revision**, not every product carrying that name.
 
 | ID | Slug | Model | NOR | SRAM | Visible LCD | SD slot in target hardware | Orchard stock boot |
@@ -30,7 +30,9 @@ and 50g have different native bootloaders even when using a common OS update.
 Exact flash JEDEC IDs/command families, board straps, GPIO matrix, crystal and
 clock setup, LCD wiring, peripheral availability and behavior must be pinned
 per hardware revision. The current table deliberately does not invent those
-values. All six profiles use the same provisional peripheral implementation.
+values. All six profiles use the same bounded peripheral implementation,
+including [shared functional PCLK](clock-ratios.md); the 12M input convention
+does not establish a physical crystal frequency for every board.
 A SoC UART channel is not proof that the calculator exposes a physical serial
 connector. The SDI controller now models an empty slot and optional bounded
 SDSC media. [SD card workflows](sd-cards.md) have independent HP49g+ stock
@@ -55,7 +57,8 @@ acceptance remains open; its physical SRAM capacity is still 256 KiB. HP39g+
 now also reaches HOME and performs calculations under its separately declared
 [startup conditions](hp39-startup.md), retaining its physical 256 KiB SRAM
 decode. See [boot research](boot-research.md).
-HP49g+ now reaches stock HOME with its exact 512 KiB SRAM, performs arithmetic,
+HP49g+ now reaches stock HOME with a fixed physical 512 KiB SRAM and the
+declared bank-1 mirror decode, performs arithmetic,
 CAS factorization, graph display and USB file round trips under its own
 [startup conditions](hp49-startup.md). HP40gs NOR capacity is corrected to
 2 MiB using HP's 2007 specification sheet, not inherited from the HP39gs sibling.
@@ -63,6 +66,13 @@ The user's complete HP39gs capture independently reaches HOME and APLET with
 exact 256 KiB SRAM, supports browser sessions and installs/runs the native V2
 reader; see [HP39gs startup](hp39gs-startup.md). HP40gs and HP50g stock/UI
 promotion gates remain open; supplied update packages are not full physical dumps.
+
+The four admitted original ROMs also complete their own inactivity shutdown,
+off-state checkpoint restore and ON resume with the prior calculation retained.
+With the shared PCLK model their observed inactivity boundaries are 300–301
+functional seconds after the pre-idle operation. See [power management](power-management.md)
+for the exact builds and limits. Generated HP40gs/HP50g power tests do not
+extend this original-ROM acceptance to those models.
 
 ## HP49g+ acquisition and model identity
 

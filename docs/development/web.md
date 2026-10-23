@@ -8,12 +8,14 @@ shows Open ROM, Pause/Resume, Restart, Save/Restore, Connections and Settings;
 CPU registers, boot presets and implementation counters stay in the workbench.
 The viewport-filling workspace switches between immersive outlined skin,
 [immersive landscape](landscape.md) and traditional LCD/HTML keys in Settings.
-Landscape places the display-cover piece on the left and keyboard on the right.
-Help is a
-question-button tooltip; confirmations and errors use native modal dialogs.
+Landscape splits below the six FN keys, keeping them with the display on the
+left and the remaining keyboard on the right. Help is a question-button tooltip;
+confirmations and errors use Mantine modal dialogs.
 
 Settings configure scale, blur/background policies, speed, model-specific
-physical-key sequences, firmware sound/volume and optional IndexedDB autosave. See
+physical-key sequences, firmware sound/volume and optional IndexedDB autosave.
+The separate **Transfer** tab contains the transfer-only Unlimited switch,
+using the same Apply/Cancel draft behavior as the other settings. See
 [interaction and clock boundaries](interaction.md) and [sessions](sessions.md).
 Normal is paced to the existing functional timebase; it is not a measured
 ARM920T instruction/clock calibration. Other rates are explicit.
@@ -21,21 +23,32 @@ ARM920T instruction/clock calibration. Other rates are explicit.
 Connections provides HP48gII USB/serial object transfers, HP49g+ USB object
 transfers, and the separate HP39/40 Disk drive file host. Object workflows include
 upload, named GET, calculator-initiated SEND/Receive, directory, FINISH and bounded
-upload batches. HP39/40 uses the calculator's APLET RECV/SEND menus: the browser
-serves typed aplets, libraries and catalogs, and offers received files for explicit
-local download. Original HP39g+ USB installation/export and original HP39gs
-Disk installation/native-reader return are exercised; HP40gs still needs its
+upload batches. HP39/40 uses the appropriate stock catalog's RECV/SEND menus:
+APLET for aplets, or **SHIFT → 0 (NOTEPAD)** for Notes. The browser serves typed
+objects and catalogs, and offers received files for explicit local download.
+Direct Wire upload converts `HP39AscC` ASCII Notes into binary string objects accepted by
+the calculator. Original HP39g+ and HP39gs Note installation/EDIT/export pass,
+alongside the earlier aplet/library and native-reader workflows; HP40gs still needs its
 full-ROM acceptance. File selection has no extension filter, recoverable
 batch errors offer Retry/Skip, and the optional **Unlimited during transfers**
 switch restores the user's chosen speed while waiting for the next RECV and
-on completion or interruption. See [file transfer](file-transfer.md).
+on completion or interruption. Transfer failures carry stable translated
+messages; unknown errors have a translated summary and collapsed technical
+details. See [file transfer](file-transfer.md).
 
 The HP49g+ [SD dialog](sd-cards.md) prepares files and folders in an unmounted
-FAT16 image, inserts the resulting card and exports its contents. It never
+FAT16 image, including file/folder rename and deletion of files or empty
+folders, inserts the resulting card and exports its contents. It never
 edits a mounted guest filesystem behind the calculator's cache. Manual and
 automatic saves retain the whole card. [Firmware sound](buzzer.md) follows
-GPIO/Timer2 output and starts after a user gesture; physical pitch calibration
-is still a separate clock-model task.
+GPIO/Timer2 output and starts after a user gesture. PWM, watchdog, ADC and SDI
+now share the register-derived PCLK; physical board and speaker calibration
+remain separate from this functional clock model.
+
+All four admitted ROMs complete their normal inactivity shutdown and ON wakeup.
+The [power model](power-management.md) preserves SRAM and external card contents,
+so a blank powered-off screen can be resumed with ON. Host **Restart** remains
+the separate cold-reset action that clears calculator RAM.
 
 The Raw data tab retains UART0 and USB packet diagnostics. The USB host reads
 actual guest descriptors. These internal connections do not create an operating

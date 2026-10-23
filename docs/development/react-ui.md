@@ -20,10 +20,19 @@ The traditional keypad now includes Shift, right-Shift where applicable and
 Alpha legends derived from the pinned artwork's resolved design metadata.
 The outlined SVGs remain unchanged and carry separate Apache-2.0 attribution.
 The immersive views do not display a duplicate HTML keypad. The new
-[landscape appearance](landscape.md) clips the original skin into screen and
-keyboard pieces, preserving one live canvas and one set of physical hotspots.
+[landscape appearance](landscape.md) clips the original skin below the six FN
+keys, keeping the screen and those keys in the left piece. The remaining
+keyboard is on the right, with one live canvas and one set of physical hotspots.
 Settings also controls [firmware sound](buzzer.md) and volume; global gesture
 listeners unlock Web Audio and have matching unmount cleanup.
+
+**Settings → Transfer** contains the optional Unlimited-during-transfers
+switch. It shares the settings draft's Apply/Cancel behavior and may be changed
+during a transfer. The selected normal speed still applies while the protocol
+waits for a new stock RECV selection and after completion, cancellation or error.
+Transfer failures retain stable error codes and interpolation values through
+the Worker, controller and per-file queue. The UI translates known errors;
+unknown diagnostics use a translated summary with collapsed technical details.
 
 The mapping editor displays a clickable PC keyboard through
 react-simple-keyboard. It selects physical `KeyboardEvent.code` names rather
@@ -59,8 +68,9 @@ The [SD card dialog](sd-cards.md) creates/imports/exports/ejects a card image
 for the supported HP49g+ system, with write protection and guest block counters.
 Both manual and automatic sessions retain its entire contents.
 Its file-preparation mode operates on a separate unmounted image with explicit
-8.3 destination names. Filesystem edits return a new image only after the full
-operation succeeds; a mounted card remains exclusively owned by the Worker.
+8.3 destination names. It supports file/folder rename and confirmed deletion
+of files or empty folders. Filesystem edits return a new image only after the
+full operation succeeds; a mounted card remains exclusively owned by the Worker.
 
 ## Verification boundaries
 
