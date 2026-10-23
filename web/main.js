@@ -33,6 +33,7 @@ function controls(){
   $('model').disabled=$('preset').disabled=!ready;
   $('preset').querySelector('[value="hp48-home"]').disabled=$('model').value!=='4';
   $('preset').querySelector('[value="hp39-home"]').disabled=$('model').value!=='1';
+  $('preset').querySelector('[value="hp39gs-home"]').disabled=$('model').value!=='2';
   $('preset').querySelector('[value="hp49-home"]').disabled=$('model').value!=='5';
   $('finish').disabled=$('model').value!=='6';
   $('rom').disabled=!ready||!machineReady||busy;
@@ -55,8 +56,9 @@ function recreate(){
   skin.show(Number($('model').value),$('finish').value==='blue').then(()=>{if(skinToken===generation&&current)draw(current.pixels,current.width,current.height);}).catch(e=>{if(skinToken===generation)error(`Skin unavailable: ${e.message}. Use the text keypad below.`);});
   $('setup-note').textContent=experiment?'Explicit experiment: SST39VF1601, 256 KiB SRAM with bank1 mirroring, weak GPIO bias, ADC codes 1023/512, counted LCD +0x68 idle-zero, packed-LSB view. Changing setup clears RAM.':'Strict mode does not assume missing hardware behavior. Changing setup cold-resets the machine; RAM is not saved.';
   if($('preset').value==='hp39-home')$('setup-note').textContent='HP39g+ D1.55 experiment: 1 MiB SST39VF800A hypothesis, exact 256 KiB SRAM (no mirroring), F-pad input, AIN0=1023, counted LCD +0x68 hypothesis. Not measured board defaults.';
+  if($('preset').value==='hp39gs-home')$('setup-note').textContent='HP39gs complete hardware capture: 1 MiB SST39VF800A hypothesis, exact 256 KiB SRAM (no mirroring), declared D/F/G inputs and G bias, ADC codes 1023/512, counted LCD +0x68 hypothesis. No ROM modification.';
   if($('preset').value==='hp49-home')$('setup-note').textContent='HP49g+ hardware capture: fixed 512 KiB SRAM with explicit bank1 address mirroring, an initially empty SD slot, E-pad inputs and other declared board conditions. No ROM modification.';
-  $('boot-help').textContent=$('preset').value==='hp39-home'?'HP39g+: press Run. At Memory Clear press F6 (OK), then wait for HOME before entering a calculation.':['hp48-home','hp49-home'].includes($('preset').value)?'HP48gII / HP49g+: press Run. At Try To Recover Memory? press F6 (NO), then F6 (OK) at Memory Clear. Wait for HOME.':'Select an explicit experimental setup for an available model, or use strict mode for hardware debugging. A skin is not a support claim.';
+  $('boot-help').textContent=['hp39-home','hp39gs-home'].includes($('preset').value)?'HP39g+ / HP39gs: press Run. At Memory Clear press F6 (OK), then wait for HOME before entering a calculation.':['hp48-home','hp49-home'].includes($('preset').value)?'HP48gII / HP49g+: press Run. At Try To Recover Memory? press F6 (NO), then F6 (OK) at Memory Clear. Wait for HOME.':'Select an explicit experimental setup for an available model, or use strict mode for hardware debugging. A skin is not a support claim.';
   $('view').value=experiment?'1':'0';$('machine-title').textContent=$('model').selectedOptions[0].textContent;
   for(const button of keyButtons.values())button.setAttribute('aria-pressed','false');
   controls();message('create',{model:Number($('model').value),preset:$('preset').value});

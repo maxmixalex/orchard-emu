@@ -1,0 +1,630 @@
+{
+  "schema": "orchard-frontend-validation-v3",
+  "round": "r20",
+  "passed": true,
+  "performance_sample": false,
+  "original_firmware_used": false,
+  "scope": "Browser component, storage, layout, Web Audio, generated-guest Worker and diagnostic replay gates. This record contains metadata and hashes only.",
+  "production_wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+  "production_calculator_sha256": "e01728750c5dcb210788e2f9392e7a3b484c72283b26061e5d265a3882897c93",
+  "production_root_asset_sha256": {
+    "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+    "README.txt": "c10c784ae3baa4d3cd0e72bc2c4c34f77bd915a4abb094271d872567561d4bcc",
+    "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+    "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+    "calculator.css": "9fb7696f044d124d245d17fcc983fa74cb92f5e6c204a5eddbc44a54246dfca9",
+    "calculator.js": "e01728750c5dcb210788e2f9392e7a3b484c72283b26061e5d265a3882897c93",
+    "catalog.js": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8",
+    "debug.html": "134082d0e77b5fae7486ce9783610edaa448a7060fe95d19ae1d27d79b54682b",
+    "file-transfer.js": "1e0af1f5c6a849c1bc749a0e25e790aa3c155fe971e46e6ccd220d26fcaa41bd",
+    "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+    "hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+    "hp39-transfer.js": "c5c5a037255e1291a7b1584305e1c6b7e3624f6f8a185ede50813320fbc4877b",
+    "hp39-wire.js": "21b7151da97eeef57634742e9365d7fb682c57f46ffaee09e0e488ae4ec77299",
+    "hp48.js": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+    "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+    "kermit.js": "ca158a32e2d5ec94c74e9393482fe6e65a3ce649a7992ae65762a95793ac7352",
+    "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+    "main.js": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35",
+    "orchard.wasm": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+    "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+    "preferences.js": "b0a59a7f237b859da6953e86ee0a8500df1a0a126b4e97ee62083066f2870b0d",
+    "sd-card.js": "7919d30f9802a350f0cfdf344dd735ac742031fd981f0e85627552b97b14498e",
+    "sd-filesystem.js": "36653f9499ac9479f1ce123172650f874028d63319246239c87cbeafe7f332af",
+    "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+    "session.js": "c4dd1c9e78b1b2d95236f62450d45df10b9eeb1829c36bb7f521f19bafec2dcd",
+    "skin.js": "985ca2b5f24e91c5f29ef3f9ef688137afc2cc4db9e79b15dd88bd4f9bd3ef25",
+    "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+    "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+    "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+    "worker.js": "e6bd8b75b5486712a5b2b64ba5ee71a052eed218f4d0c8d876edab5db42dce42"
+  },
+  "source_evidence_sha256": {
+    "earlier_browser_gate_log": "5871972075f3965ebb9637851cdd8a5313a7a42300f5a1759f5bc0e43842eaf2",
+    "landscape_results": "052d077b7557c324acf359c0816aa360545dd05bd1552b003aa21a556092b587",
+    "final_http_worker_report": "ff666e72cffad3490175451e7bd90c44ba43a9b7bf5c82198dbaa3d0a3ecd7ec",
+    "diagnostic_stop_recovery_report": "ec3e8f1d1c62fc9963b176f5baf93d0a3a7e58b6ed5da84d973ace7ccf0b71a2",
+    "trace_audio_fix_report": "550521bb8ec9acf9a35ff5b1daadeb6799d19e8963819c84ff30cb747934e1eb",
+    "final_component_wording_log": "9997eea3b97bc500f1177940b72b245c2bc16b4577b45095b6432101374f7c7c"
+  },
+  "checks": [
+    {
+      "name": "components",
+      "command": [
+        "python3",
+        "tests/browser-components.py"
+      ],
+      "test_source_sha256": "35a5c8aaa97714cf58ca04934fcc6dc0a8f742ab21ac580265443740a127989f",
+      "passed": true,
+      "evidence": "earlier_component_batch",
+      "original_firmware_used": false
+    },
+    {
+      "name": "binary-storage",
+      "command": [
+        "python3",
+        "tests/sd-storage-browser.py"
+      ],
+      "test_source_sha256": "a8a9545b5df49df99eb5fda584b28816f88b05eabd2ab6e0314efb0c53c12918",
+      "passed": true,
+      "evidence": "earlier_component_batch",
+      "original_firmware_used": false
+    },
+    {
+      "name": "landscape",
+      "command": [
+        "python3",
+        "tests/browser-landscape.py"
+      ],
+      "test_source_sha256": "ab0db300821ab3a372d017cd59e47ccecf0d15299e59d73a5c95ef244689e1ae",
+      "passed": true,
+      "evidence": "earlier_component_batch",
+      "original_firmware_used": false
+    },
+    {
+      "name": "web-audio",
+      "command": [
+        "python3",
+        "tests/buzzer-browser.py"
+      ],
+      "test_source_sha256": "52be1d485842255c91142be6366a6ff2bf6ab41d87025c3b5113e7abdfb73587",
+      "passed": true,
+      "evidence": "earlier_component_batch",
+      "original_firmware_used": false
+    },
+    {
+      "name": "sd-file-editor",
+      "command": [
+        "python3",
+        "tests/browser-sd-files.py"
+      ],
+      "test_source_sha256": "31a637049210a038439fe6f15feb5136aba5b5bcfb8e5fa9d88421c5ad3b8aac",
+      "passed": true,
+      "evidence": "earlier_component_batch",
+      "original_firmware_used": false
+    },
+    {
+      "name": "http-worker-final-production",
+      "command": [
+        "python3",
+        "tests/browser-worker.py"
+      ],
+      "test_source_sha256": "f4dbb79c955bc42c0b831121a4f8871b4a015c03428cf08d8b71c4be358b5554",
+      "exit_code": 0,
+      "passed": true,
+      "elapsed_seconds": 7.298307705998013,
+      "log_sha256": "ff666e72cffad3490175451e7bd90c44ba43a9b7bf5c82198dbaa3d0a3ecd7ec",
+      "report_sha256": "ff666e72cffad3490175451e7bd90c44ba43a9b7bf5c82198dbaa3d0a3ecd7ec",
+      "original_firmware_used": false
+    },
+    {
+      "name": "stop-recovery",
+      "command": [
+        "python3",
+        "tests/browser-stop-recovery.py"
+      ],
+      "test_source_sha256": "d64335e614bf6a573e49850d777029901250a970da109552b4df96949997444c",
+      "passed": true,
+      "evidence": "earlier_browser_gate_log",
+      "instrumented": false,
+      "original_firmware_used": false
+    },
+    {
+      "name": "diagnostic-stop-recovery",
+      "command": [
+        "python3",
+        "tests/browser-stop-recovery.py",
+        "--diagnostic-trace"
+      ],
+      "test_source_sha256": "d64335e614bf6a573e49850d777029901250a970da109552b4df96949997444c",
+      "passed": true,
+      "exit_code": 0,
+      "report_sha256": "ec3e8f1d1c62fc9963b176f5baf93d0a3a7e58b6ed5da84d973ace7ccf0b71a2",
+      "instrumented": true,
+      "original_firmware_used": false
+    },
+    {
+      "name": "core-trace-unit",
+      "command": [
+        "npm",
+        "run",
+        "test:trace"
+      ],
+      "test_source_sha256": "588ea64d477c5a788a5ef4c34ea7bf376b558a2fe039e21fad50f7c16d677f98",
+      "passed": true,
+      "exit_code": 0,
+      "log_sha256": "78c9e3916d16469db799f7d742b2c3b13bd89c347f2d29049138762775a5dfa2",
+      "instrumented": true,
+      "original_firmware_used": false
+    },
+    {
+      "name": "components-final-recovery-wording",
+      "command": [
+        "python3",
+        "tests/browser-components.py"
+      ],
+      "test_source_sha256": "b124e538a5bdda97e4fefb6cc7dd00d77b391905ee6ee6b9a4fba4c6c18f1785",
+      "i18n_source_sha256": "247853ab4a4773bdacbdab37e342b1097cbd63dbb51872290cc8b464f92da177",
+      "passed": true,
+      "log_sha256": "9997eea3b97bc500f1177940b72b245c2bc16b4577b45095b6432101374f7c7c",
+      "original_firmware_used": false,
+      "scope": "Complete offline React/Mantine/controller component suite using the final source wording; both modal status and persistent summary require ON, waiting for receive-screen exit, and reopening RECV. This fixture is not the production HTTP page or original-ROM execution."
+    }
+  ],
+  "earlier_component_batch": {
+    "command": [
+      "npm",
+      "run",
+      "test:components"
+    ],
+    "scripts": [
+      "tests/browser-components.py",
+      "tests/sd-storage-browser.py",
+      "tests/browser-landscape.py",
+      "tests/buzzer-browser.py",
+      "tests/browser-sd-files.py"
+    ],
+    "passed": true,
+    "script_count": 5,
+    "evidence": "All five scripts reached their success assertions in the sequential component batch; the same log subsequently records HTTP Worker and normal stop recovery passes.",
+    "original_firmware_used": false,
+    "stock_acceptance_claimed": false
+  },
+  "components": {
+    "passed": true,
+    "framework": "Real React/Mantine components with a Worker double",
+    "original_firmware_used": false,
+    "cases": [
+      "Lazy keypad load, model/view races, reuse and unmount",
+      "Exact full-canvas RGBA, changed frames and blank frames",
+      "Bilingual Apply/Cancel, keyboard mappings, modifier selection and printed legends",
+      "PNG download and transfer upload/cancel/stale-result/download/raw-access exclusion",
+      "Batch names, ordering, partial failure and full preflight",
+      "HP39 disk catalogs, preserved names, preflight, serve, cancel and download",
+      "Wire retry, skip, arbitrary suffixes and transfer Unlimited controls",
+      "Model-specific USB, serial and Wire recovery guidance",
+      "Four viewport widths"
+    ]
+  },
+  "binary_storage": {
+    "passed": true,
+    "framework": "Real Chromium IndexedDB transactions without a mock IndexedDB",
+    "original_firmware_used": false,
+    "synthetic_bytes": 17277216,
+    "legacy_migration": true,
+    "concurrent_winners": 1,
+    "stale_generation_rejected": true,
+    "reload_and_clear": true
+  },
+  "landscape": {
+    "passed": true,
+    "original_firmware_used": false,
+    "real_worker_used": false,
+    "fixture": "Synthetic LCD frames and the production artwork/manifest in a component fixture",
+    "models": [
+      {
+        "model": "HP 39g+",
+        "splitY": 506.575,
+        "keys": 51,
+        "viewports": 4
+      },
+      {
+        "model": "HP 39gs",
+        "splitY": 506.575,
+        "keys": 51,
+        "viewports": 4
+      },
+      {
+        "model": "HP 48gII",
+        "splitY": 496.0889659403088,
+        "keys": 51,
+        "viewports": 4
+      },
+      {
+        "model": "HP 49g+",
+        "splitY": 496.1134484436865,
+        "keys": 51,
+        "viewports": 4
+      }
+    ],
+    "viewport_dimensions": [
+      [
+        1360,
+        940
+      ],
+      [
+        1360,
+        500
+      ],
+      [
+        844,
+        390
+      ],
+      [
+        390,
+        844
+      ]
+    ],
+    "zoom_percent": [
+      50,
+      100,
+      180
+    ],
+    "screen_left_keyboard_right": true,
+    "crop_at_manifest_split_y": true,
+    "keys_per_model": 51,
+    "unique_canvas_and_key_elements": true,
+    "pixels_and_element_identity_survive_view_switch": true,
+    "pointer_focus_and_keyboard_activation": true,
+    "audio_preference_apply_and_gesture_listener_cleanup": true,
+    "horizontal_overflow_rejected": true,
+    "skin_manifest_sha256": "65b8003f55ab1896e20b96302140554c7e79018af611e70b912be05837bad4fb"
+  },
+  "web_audio": {
+    "passed": true,
+    "original_firmware_used": false,
+    "original_rom_trace": false,
+    "fixture": "Generated alternating electrical-level packets delivered to the production Web Audio adapter",
+    "audio_context_created_only_after_user_gesture": true,
+    "buffers": 1,
+    "nonzero_samples": 419,
+    "peak": 0.994601309299469,
+    "sample_rate": 44100,
+    "context_state": "running",
+    "scheduled_sources": 1,
+    "sources_after_pause": 0,
+    "disposed": true,
+    "physical_audibility_claimed": false
+  },
+  "sd_file_editor": {
+    "passed": true,
+    "original_firmware_used": false,
+    "real_worker_used": false,
+    "framework": "Real Chromium file chooser/download and production controller, with explicit Worker acknowledgements",
+    "checks": [
+      "all SD chooser inputs accept arbitrary suffixes",
+      "editable short names validate without truncation; arbitrary and empty file bytes round-trip",
+      "duplicate in later batch member keeps complete draft byte-exact",
+      "new directory and nested file survive navigation and full-image download",
+      "malformed image and file-read failure visibly preserve current draft",
+      "download failure is visible; reopening an arbitrary-suffix image preserves nested contents",
+      "390px viewport and both language controls render without horizontal overflow",
+      "failed File read and Worker rejection retain exact draft and support retry",
+      "production insertion sends exact image/read-only state; mounted card has no host file editor",
+      "closing during pending file read cannot mutate a new draft; no uncaught page errors"
+    ],
+    "browser": "156.0.8078.47",
+    "synthetic_card_sha256": "6a4b6002747e1be8a47a802dcacffd3b7fc646fdefd8606190136820634edcb3",
+    "synthetic_file_sha256": "691c6525cd62d4b73ac4126403ba5edc5fa887f1f26883dea4f01a3006bad12d",
+    "page_errors": []
+  },
+  "earlier_http_worker": {
+    "passed": true,
+    "transport": "HTTP production modules",
+    "original_firmware_used": false,
+    "fixture": "Generated ARM loop; the model cases do not establish stock-ROM compatibility or expand the public model list.",
+    "worker_cases": 12,
+    "models": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "audiences": [
+      "calculator",
+      "debug"
+    ],
+    "rates": [
+      0.5,
+      2,
+      0,
+      1
+    ],
+    "run_pause_step_reset_checkpoint": true,
+    "window_native_timer_checks": [
+      {
+        "label": "default browser timers",
+        "delayed": true,
+        "cancelled": true,
+        "immediateTasks": 24,
+        "shutdown": true
+      },
+      {
+        "label": "explicit native timers",
+        "delayed": true,
+        "cancelled": true,
+        "immediateTasks": 24,
+        "shutdown": true
+      }
+    ],
+    "worker_native_timer_checks": [
+      {
+        "label": "default browser timers",
+        "delayed": true,
+        "cancelled": true,
+        "immediateTasks": 24,
+        "shutdown": true
+      },
+      {
+        "label": "explicit native timers",
+        "delayed": true,
+        "cancelled": true,
+        "immediateTasks": 24,
+        "shutdown": true
+      }
+    ],
+    "production_settings_ui": {
+      "settings": true,
+      "physicalKeys": 104
+    },
+    "page_errors": []
+  },
+  "http_worker": {
+    "passed": true,
+    "transport": "HTTP production modules",
+    "original_firmware_used": false,
+    "fixture": "Generated ARM loop; the model cases do not establish stock-ROM compatibility or expand the public model list.",
+    "worker_cases": 12,
+    "models": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "audiences": [
+      "calculator",
+      "debug"
+    ],
+    "rates": [
+      0.5,
+      2,
+      0,
+      1
+    ],
+    "run_pause_step_reset_checkpoint": true,
+    "window_native_timer_checks": [
+      {
+        "label": "default browser timers",
+        "delayed": true,
+        "cancelled": true,
+        "immediateTasks": 24,
+        "shutdown": true
+      },
+      {
+        "label": "explicit native timers",
+        "delayed": true,
+        "cancelled": true,
+        "immediateTasks": 24,
+        "shutdown": true
+      }
+    ],
+    "worker_native_timer_checks": [
+      {
+        "label": "default browser timers",
+        "delayed": true,
+        "cancelled": true,
+        "immediateTasks": 24,
+        "shutdown": true
+      },
+      {
+        "label": "explicit native timers",
+        "delayed": true,
+        "cancelled": true,
+        "immediateTasks": 24,
+        "shutdown": true
+      }
+    ],
+    "production_settings_ui": {
+      "settings": true,
+      "physicalKeys": 104
+    },
+    "page_errors": []
+  },
+  "stop_recovery": {
+    "passed": true,
+    "instrumented": false,
+    "production_worker": true,
+    "original_rom_reproduced": false,
+    "guest": "Generated strict-mode diagnostic stop fixture",
+    "stop": {
+      "code": 9,
+      "pc": "00000010",
+      "instruction": "e7f000f0",
+      "address": "00000010",
+      "detail": "e7f000f0"
+    },
+    "ticks": "2",
+    "session_bytes": 271293,
+    "session_sha256": "4c60d35202da7bdbf7e7bdd5f85a5356466d7d7a9d1844d5acf9444eb7d53665",
+    "checkpoint_sha256": "94b1ad09bc04a9086359f8487ca6f3fe8379d0dfb4a2b9fb55b6217d868da9af",
+    "worker_save_ack": {
+      "worker": 1,
+      "generation": 2,
+      "command_seq": 17,
+      "saved_marker_seq": 18,
+      "snapshot_seq": 19
+    },
+    "screenshot_failure_preserves_observation": true,
+    "original_observation_preserved": true,
+    "no_unstopped_capture": true,
+    "page_errors": [],
+    "worker_errors": []
+  },
+  "diagnostic_stop_recovery": {
+    "passed": true,
+    "instrumented": true,
+    "original_rom_reproduced": false,
+    "same_generated_stop_checkpoint_as_uninstrumented": true,
+    "immediate_stop_replay": {
+      "passed": true,
+      "model": 1,
+      "calls": 7,
+      "run_calls": 1,
+      "every_call_result_equal": true,
+      "complete_checkpoint_equal": true,
+      "same_wasm": true,
+      "start_tick": 0,
+      "end_tick": 2,
+      "stop": [
+        9,
+        16,
+        3891265776,
+        16,
+        3891265776
+      ],
+      "wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+      "initial_sha256": "e6b5a83e97b77144560e7ed96bdea0bf8c15bf89849a8af47fe2d658d5c2d606",
+      "final_sha256": "94b1ad09bc04a9086359f8487ca6f3fe8379d0dfb4a2b9fb55b6217d868da9af"
+    },
+    "active_timeout_replay": {
+      "passed": true,
+      "model": 1,
+      "calls": 51961,
+      "run_calls": 25958,
+      "every_call_result_equal": true,
+      "complete_checkpoint_equal": true,
+      "same_wasm": true,
+      "start_tick": 0,
+      "end_tick": 26580992,
+      "stop": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+      "initial_sha256": "7be0b1d3249a112b7b44a9e6afe5a6fcb6b4a5108578c9af43c51bc468092d82",
+      "final_sha256": "afdad9a5587197b101dbf6eaacd60eaf2ea357640fb0fc40420472014aafc7eb"
+    },
+    "active_timeout_controls": {
+      "complete_checkpoint_equal": true,
+      "original_observation_preserved": true,
+      "missing_pause_ack_rejected": true,
+      "changed_generation_rejected": true
+    },
+    "page_errors": [],
+    "worker_errors": []
+  },
+  "resolved_diagnostic_harness_failure": {
+    "initial_passed": false,
+    "resolved": true,
+    "original_firmware_used": false,
+    "initial_observation": {
+      "trace_complete": false,
+      "call_count": 7,
+      "reason": "core-stop",
+      "runtime_complete": true,
+      "runtime_event_count": 7,
+      "replay_passed": false
+    },
+    "cause": "The opt-in core trace observer allowlist did not include the new host-only buzzer exports, so calls to them made the trace incomplete.",
+    "changed_files": [
+      "tools/browser-core-trace.mjs",
+      "tests/browser-core-trace.mjs"
+    ],
+    "trace_tool_sha256": "dba7dc11a7b049d6ca33dfabee3f668c8181c923ea814160c77d246a09758f63",
+    "host_only_exports": [
+      "buzzer_enable",
+      "buzzer_clear",
+      "buzzer_drain",
+      "buzzer_snapshot"
+    ],
+    "fix": "Explicitly exclude only the four existing host audio observer/control exports from guest replay. Unknown API calls still reject the trace.",
+    "red_control": "The added real-GPIO audio regression failed with complete=false before the allowlist correction and passed afterwards.",
+    "red_control_log_sha256": "b54382b8497d28afb43f11c71387a546537e70fa576c0e588b08cb647e448a21",
+    "guest_runtime_or_core_changed": false,
+    "verification": {
+      "passed": true,
+      "generated_guest": true,
+      "original_rom_reproduced": false,
+      "call_results_equal": true,
+      "complete_checkpoint_equal": true,
+      "exact_key_ticks": true,
+      "immutable_stop_capture": true,
+      "held_key_stop_preserved": true,
+      "release_changes_checkpoint": true,
+      "held_key_calls": 3,
+      "held_key_run_calls": 1,
+      "idle_stop_replay": true,
+      "clocked_stop_replay": true,
+      "host_audio_calls_excluded": true,
+      "host_audio_checkpoint_equal": true,
+      "audio_waveform_levels": [
+        0,
+        1,
+        0
+      ],
+      "audio_replay_checkpoint_equal": true,
+      "unknown_audio_api_rejected": true,
+      "isolated_epochs": true,
+      "negative_checks": 16,
+      "wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+      "calls": 7,
+      "run_calls": 2,
+      "stop": [
+        9,
+        16,
+        3891265776,
+        16,
+        3891265776
+      ]
+    }
+  },
+  "production_asset_scope": {
+    "description": "The listed top-level production assets were hashed before and after the final HTTP Worker run. This is not the recursive release manifest.",
+    "listed_top_level_files": 30,
+    "listed_root_assets_unchanged_during_final_worker": true,
+    "subdirectory_files_included_in_root_map": false,
+    "excluded_release_metadata": [
+      "revision.txt",
+      "asset-manifest.json"
+    ],
+    "skin_manifest_hash_scope": "The separate skin manifest hash was read when assembling this evidence; it is not a before/after comparison of all artwork files.",
+    "final_text_change": "Recovery guidance text was adjusted after the earlier component batch. The final production HTTP Worker and the complete offline component suite have now been rerun. Other earlier component and original-ROM flows retain their own recorded identities.",
+    "earlier_batch_asset_limit": "Per-script production bundle hashes were not recorded in the earlier aggregate log; this record does not attribute the final calculator bundle hash to all earlier component checks.",
+    "complete_release_manifest_recorded_separately": true
+  },
+  "original_rom_evidence": "Original-ROM acceptance is recorded separately, including hp39-transfer-r20.json. These frontend fixtures and generated guests do not establish new stock compatibility.",
+  "published_payloads": {
+    "roms": false,
+    "checkpoints": false,
+    "screenshots": false,
+    "audio_recordings": false,
+    "private_filesystem_paths": false
+  },
+  "first_ci_component_failure": {
+    "run": "https://github.com/maxmixalex/orchard-emu/actions/runs/39928730793",
+    "head_sha": "95df502a46d5bf814db9988e6797121a6d87e86c",
+    "test": "tests/browser-components.py",
+    "old_assertion": "ON 键退出",
+    "cause": "The final recovery help inserted the required wait instruction, while two component assertions still expected the old adjacent words.",
+    "fix": "Both assertions now check all three recovery instructions; no runtime, core or protocol change.",
+    "local_full_component_rerun_passed": true,
+    "full_ci_rerun_required": true
+  }
+}

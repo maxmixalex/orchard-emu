@@ -3,12 +3,14 @@ import { Pacer } from './pacing.js';
 import { TaskScheduler } from './task-scheduler.js';
 import { VirtualUSB } from './virtual-usb.js';
 import { FileTransfer } from './file-transfer.js';
+import { BuzzerStream } from './buzzer-worker.js';
 import { encodeSession, decodeSession, MAX_STATE } from './session.js';
 import { readSDState, validateSDSize } from './sd-card.js';
 import { setupHash, isPlayable, applySetup, TapQueue } from './hp48.js';
 let audience = 'debug';
-let romHash='', operation=0, busy=false, autoSaving=false, serial=false, usb, transfer;
+let romHash='', operation=0, busy=false, autoSaving=false, serial=false, usb, transfer, buzzer;
 const pacer=new Pacer(), scheduler=new TaskScheduler();
+let requestedSpeed=1, transferUnlimited=false, transferMoving=false;
 let core, model = 4, generation = 0, preset = 'strict', running = false, loaded = false;
 let timer = null, lastFrame = 0, tick = 0, events = [], eventOverflow = false, frameView = 0;
 const errors = ['ready','bad argument','full-NOR size mismatch','not a full ARM NOR image',
@@ -33,7 +35,25 @@ function syncTick(s = state()) {
   tick = next;
 }
 function resetClock() { tick=0;taps.clear(0);pacer.reset(performance.now()); }
-function pause() { transfer?.cancel(tick,'File transfer cancelled because the calculator paused.');running = false; scheduler.cancel(timer); timer = null; taps.clear(tick); }
+function transferBoosted() { return audience==='calculator'&&transferUnlimited&&transferMoving; }
+function configurePacing(force=false) {
+  const speed=transferBoosted()?0:requestedSpeed;
+  if(force||pacer.speed!==speed)pacer.setSpeed(speed,performance.now());
+}
+function transferMessage(data) {
+  if(data.type==='file-transfer-status'){
+    // Waiting for a human to choose RECV or a catalog entry must not consume
+    // the handshake deadline at Unlimited. Restore before posting a terminal
+    // status so a busy main thread cannot leave the calculator accelerated.
+    if(data.request===transfer?.request||!transfer?.active){
+      transferMoving=Boolean(data.active&&['sending','receiving','listing','finishing'].includes(data.phase));
+      configurePacing();
+    }
+    data={...data,effectiveSpeed:pacer.speed,transferBoosted:transferBoosted()};
+  }
+  postMessage({generation,...data});
+}
+function pause() { transfer?.cancel(tick,'File transfer cancelled because the calculator paused.');buzzer?.clear();running = false; scheduler.cancel(timer); timer = null; taps.clear(tick); }
 function sendUart() {
   const n = core.uart_receive();
   if(n){const bytes=new Uint8Array(core.memory.buffer,core.uart_output(),n).slice();
@@ -48,12 +68,14 @@ function snapshot() {
   const pixels = frameStatus ? null : new Uint8Array(core.memory.buffer,core.frame_buffer(),width*height).slice();
   sendUart();
   const visible = {type:'snapshot',generation,width,height,pixels,running,loaded,model,tick,
-    sd:readSDState(core),stopped:s[28]!==0,frameStatus,annunciatorStatus,annunciators,pending:taps.pending,active:taps.active};
+    sd:readSDState(core),stopped:s[28]!==0,frameStatus,annunciatorStatus,annunciators,pending:taps.pending,active:taps.active,
+    effectiveSpeed:pacer.speed,transferBoosted:transferBoosted()};
   if (audience === 'calculator') postMessage(visible);
   else postMessage({...visible,state:s,preset,frameView,
     frameStatus,annunciatorStatus,annunciators,reason:errors[s[28]] || 'unknown stop',pending:taps.pending,active:taps.active,
     events:events.slice(),eventOverflow,aliasReads:core.sram_alias_reads().toString(),
     aliasWrites:core.sram_alias_writes().toString(),lcdReads:core.lcd_probe68_reads().toString()});
+  if(running){const packet=buzzer?.packet();if(packet)postMessage({type:'buzzer',generation,...packet},[packet.edges.buffer]);}
   lastFrame = performance.now();
 }
 function schedule() { if (running && timer === null) timer = scheduler.schedule(pump, audience==='calculator'?pacer.delay():0); }
@@ -90,6 +112,7 @@ function pump() {
 }
 function fail(error) {
   transfer?.cancel(tick,'File transfer cancelled because the calculator stopped.');
+  buzzer?.clear();
   busy=false;autoSaving=false;running=false;scheduler.cancel(timer);timer=null;
   try { taps.clear(tick); } catch { /* Original error takes precedence. */ }
   postMessage({type:'error',generation,message:error instanceof Error?error.message:String(error)});
@@ -104,15 +127,16 @@ self.onmessage=({data})=>{
       if (data.audience !== undefined && !['debug','calculator'].includes(data.audience)) throw new Error('Invalid audience');
       generation=data.generation;model=data.model;preset=data.preset;audience=data.audience||'debug';
       loaded=false;resetClock();events=[];eventOverflow=false;frameView=0;autoSaving=false;serial=false;
-      pacer.setSpeed(audience==='calculator'?1:0,performance.now());
+      requestedSpeed=audience==='calculator'?1:0;transferUnlimited=false;transferMoving=false;configurePacing(true);
       // The HP39 debounce path needs a longer dwell: a shorter trial lost
       // multiply. Debug keeps its historical 2M/2M deterministic schedule.
       taps.hold=audience==='calculator'?(model===1?1500000:600000):2000000;
       taps.gap=audience==='calculator'?(model===1?600000:360000):2000000;
       if(core.create(model)) throw new Error('Machine initialization failed');
+      buzzer=new BuzzerStream(core);
       applySetup(core,model,preset);frameView=isPlayable(model,preset)?1:0;
       usb=new VirtualUSB(core,core.timebase_hz(),data=>postMessage({type:'usb-status',generation,...data}));
-      transfer=new FileTransfer({core,usb,model,notify:data=>postMessage({generation,...data})});
+      transfer=new FileTransfer({core,usb,model,notify:transferMessage});
       postMessage({type:'created',generation,flash:core.profile(model,0),ram:core.profile(model,1)});snapshot();return;
     }
     if(data.generation!==generation) return;
@@ -196,11 +220,14 @@ self.onmessage=({data})=>{
         postMessage({type:'checkpoint-restored',generation});snapshot();
       }).catch(error=>{if(token===generation&&job===operation)fail(error);});
     } else if(data.type==='pause') {pause();snapshot();}
-    else if(data.type==='run' && loaded && !busy) {if(!running && state()[28]===0){pacer.reset(performance.now());running=true;schedule();snapshot();}}
+    else if(data.type==='run' && loaded && !busy) {if(!running && state()[28]===0){buzzer?.clear();pacer.reset(performance.now());running=true;schedule();snapshot();}}
     else if(data.type==='step' && loaded && !busy) {pause();core.run(1);snapshot();}
     else if(data.type==='reset' && loaded) {++operation;busy=false;autoSaving=false;pause();usb?.resetLocal();serial=false;postMessage({type:'links-reset',generation});core.reset();resetClock();events=[];eventOverflow=false;applySetup(core,model,preset);if(core.profile(model,4))core.sd_reconnect();snapshot();}
     else if(data.type==='configure') {
-      if(data.speed!==undefined)pacer.setSpeed(data.speed,performance.now());
+      if(data.speed!==undefined){if(![0,0.5,1,2].includes(data.speed))throw new Error('Invalid speed');requestedSpeed=data.speed;}
+      if(data.transferUnlimited!==undefined){if(typeof data.transferUnlimited!=='boolean')throw new Error('Invalid transfer speed setting');transferUnlimited=data.transferUnlimited;}
+      if(data.speed!==undefined||data.transferUnlimited!==undefined)configurePacing(true);
+      if(data.sound!==undefined)buzzer?.configure(data.sound);
       if(data.hold!==undefined||data.gap!==undefined){
         if(!Number.isInteger(data.hold)||!Number.isInteger(data.gap)||data.hold<120000||data.hold>2400000||data.gap<120000||data.gap>2400000)throw new Error('Invalid key timing');
         taps.clear(tick);taps.hold=data.hold;taps.gap=data.gap;
@@ -213,7 +240,7 @@ self.onmessage=({data})=>{
         if(!loaded||busy||!running)throw new Error('Resume the calculator before starting a file transfer.');
         if(data.transport==='serial'&&!serial)throw new Error('Connect serial before starting a file transfer.');
         transfer.start(data,tick);
-      } catch(error) {postMessage({type:'file-transfer-status',generation,request:data.request,transport:data.transport,active:false,phase:'error',error:error.message});}
+      } catch(error) {transferMessage({type:'file-transfer-status',request:data.request,transport:data.transport,active:false,phase:'error',error:error.message});}
     }
     else if(data.type==='file-transfer-cancel') {transfer?.cancel(tick,'File transfer cancelled.',data.request);}
     else if(data.type==='serial-connect' && loaded) {if(!data.connected&&transfer?.transport==='serial')transfer.cancel(tick,'Serial disconnected.');serial=Boolean(data.connected);postMessage({type:'serial-status',generation,connected:serial});}

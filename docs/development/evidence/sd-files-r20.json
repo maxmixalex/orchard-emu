@@ -1,0 +1,1346 @@
+{
+  "schema": "orchard-sd-files-r20",
+  "date": "2026-10-23",
+  "passed": true,
+  "production_wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+  "source_sha256": {
+    "web/sd-filesystem.js": "36653f9499ac9479f1ce123172650f874028d63319246239c87cbeafe7f332af",
+    "web/SDCardFiles.jsx": "0ae72d779088afbba409376e00941b0b6f91222fd561c56c7e44f86b1156183b",
+    "web/SDCard.jsx": "1c6d137ba7728147d57484068d3d1a9caad7a9a12e5b104871cebfd8c82df13c",
+    "web/sd-card.js": "7919d30f9802a350f0cfdf344dd735ac742031fd981f0e85627552b97b14498e",
+    "tests/sd-filesystem.mjs": "ecedd66b64e0c7d8b27e3dbb19618b6e7dbf47e8629583ad293fd98324041924",
+    "tests/sd-files-controller.mjs": "c75990daa0289abd5a6313981c2963b0636137b3896581ed5019122f28a37d70",
+    "tests/browser-sd-files.py": "31a637049210a038439fe6f15feb5136aba5b5bcfb8e5fa9d88421c5ad3b8aac",
+    "tools/verify-sd-workflows.mjs": "d985b3213196a7a18b7047cbaa372ff16d7107e32416ab329f310c7261a2dac4"
+  },
+  "scope": {
+    "editing": "offline unmounted FAT16 draft only",
+    "operations": [
+      "browse directories",
+      "extract exact file bytes",
+      "create 8.3 folders",
+      "add arbitrary-suffix files with explicit editable short names",
+      "download complete image",
+      "insert complete image with read-only choice"
+    ],
+    "mounted_card_owner": "emulator Worker only",
+    "transactional_failure": "original complete draft retained",
+    "overwrite": false,
+    "short_name_truncation": false,
+    "long_name_records": "preserved; display and address through existing short aliases"
+  },
+  "rom_free_filesystem": {
+    "checks": 129,
+    "card_sha256": "343265010689a334d0facc32c489324ab15802fb3ccfb795a315554519974792",
+    "answer_sha256": "b155f516f321b2fc2e7952dcc397b2151b88c47bf0456b2c973e1013f0104841",
+    "independent_raw_parser": true,
+    "source_unchanged": true,
+    "scope": "ROM-free FAT16 parsing, transactional mutation and rejection; no guest execution claim"
+  },
+  "controller": {
+    "checks": 27,
+    "passed": true,
+    "cases": [
+      "exact File image/read-only insertion",
+      "failed insertion retains draft and permits retry",
+      "asynchronous file-read failure",
+      "generation and disposal cancellation",
+      "no-slot rejection"
+    ],
+    "test": "tests/sd-files-controller.mjs"
+  },
+  "real_chromium_draft_workflows": {
+    "checks": [
+      "all SD chooser inputs accept arbitrary suffixes",
+      "editable short names validate without truncation; arbitrary and empty file bytes round-trip",
+      "duplicate in later batch member keeps complete draft byte-exact",
+      "new directory and nested file survive navigation and full-image download",
+      "malformed image and file-read failure visibly preserve current draft",
+      "download failure is visible; reopening an arbitrary-suffix image preserves nested contents",
+      "390px viewport and both language controls render without horizontal overflow",
+      "failed File read and Worker rejection retain exact draft and support retry",
+      "production insertion sends exact image/read-only state; mounted card has no host file editor",
+      "closing during pending file read cannot mutate a new draft; no uncaught page errors"
+    ],
+    "browser": "156.0.8078.47",
+    "card_sha256": "6a4b6002747e1be8a47a802dcacffd3b7fc646fdefd8606190136820634edcb3",
+    "file_sha256": "691c6525cd62d4b73ac4126403ba5edc5fa887f1f26883dea4f01a3006bad12d",
+    "errors": []
+  },
+  "independent_filesystem_tools": {
+    "fsck_fat": "4.2",
+    "mtools": "4.0.43",
+    "prepared_image_commands": 6,
+    "stock_exported_image_commands": 3,
+    "all_exit_codes": 0,
+    "prepared_report": {
+      "name": "independent-tools.json",
+      "sha256": "6f7271581c35744fd3992fc9028205f418b1f807db8b569374cc05ea11669725"
+    },
+    "stock_exported_report": {
+      "name": "stock-exported-independent.json",
+      "sha256": "91ce575c1cfeeff6c7d87cb8b273660ad9880ad1da2bff444d5d5e9a59a678e8"
+    },
+    "stock_exported_image_sha256": "3342da8af8db9cfe75a4a683e520f783b33b323dc33c71bf450dc09b97077050",
+    "stock_exported_comparison": "same image bytes as final production run; root ANSWER and PROGRAMS/NESTED retained, guest TEST added; changed sectors 2, 66, 130 and 168 only",
+    "formatter_fix": "unlabelled root uses BPB NO NAME padding; imported images are not relabelled"
+  },
+  "original_system_workflows": {
+    "schema": "orchard-sd-stock-workflows-v1",
+    "wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+    "tool_sha256": "d985b3213196a7a18b7047cbaa372ff16d7107e32416ab329f310c7261a2dac4",
+    "native_sha256": "d946d06a6607fe473b68bfb77b5f51a4d6186f01481257254be725baf6d13beb",
+    "roms": {
+      "hp49gplus": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "hp48gii": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937"
+    },
+    "physical_input_only": true,
+    "guest_memory_patched": false,
+    "card_image_bytes": 16777216,
+    "sram_decode": "explicit nGCS1 low-address mirror; physical capacity unchanged",
+    "canonical_hardware_boot": false,
+    "stages": [
+      {
+        "name": "hp49-home",
+        "machine": "hp49",
+        "tick": 160000000,
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 0,
+          "present": false,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 0,
+          "lastCommand": 0,
+          "commands": 0,
+          "readBlocks": 0,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "0",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-files-no-card",
+        "machine": "hp49",
+        "tick": 184800000,
+        "frame_sha256": "bdcc263a4a0d43f220fff1a48a8b366a5f6919edeb3b7503c09b0037bdb94ba6",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 0,
+          "present": false,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 0,
+          "lastCommand": 0,
+          "commands": 0,
+          "readBlocks": 0,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "0",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-files-no-card-up",
+        "machine": "hp49",
+        "tick": 192200000,
+        "frame_sha256": "31cf57c318cbfb06a581d75873c34022d61b634d36578fe4657087cafad090fd",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 0,
+          "present": false,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 0,
+          "lastCommand": 0,
+          "commands": 0,
+          "readBlocks": 0,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "1",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-files-no-card-return",
+        "machine": "hp49",
+        "tick": 199600000,
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 0,
+          "present": false,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 0,
+          "lastCommand": 0,
+          "commands": 0,
+          "readBlocks": 0,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "3",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-files-with-card",
+        "machine": "hp49",
+        "tick": 224400000,
+        "frame_sha256": "6373bb6cf844b5b8328325512cf935b70edbbf1ae79d124131063768cd4f182d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 298,
+          "readBlocks": 66,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "3",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-created-test-42",
+        "machine": "hp49",
+        "tick": 270600000,
+        "frame_sha256": "a1a514e8d87df70a4be85073d28061d0fdd13b435f46ffe1af67cc8ff4ab2d5b",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 298,
+          "readBlocks": 66,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "5",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-home-test-selected",
+        "machine": "hp49",
+        "tick": 297800000,
+        "frame_sha256": "8a343bd812857475a0e31fae2dd96bd2fb21316be4ffdce08a031ba9e58f7014",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 373,
+          "readBlocks": 66,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "8",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-copy-destination-sd",
+        "machine": "hp49",
+        "tick": 312600000,
+        "frame_sha256": "9f042632239686a8f0bea845ae871bfecd04463148b0472095ada0fdcb00d52d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 448,
+          "readBlocks": 66,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "9",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-copy-complete",
+        "machine": "hp49",
+        "tick": 330000000,
+        "frame_sha256": "cd3dc82364b582abd7b2dc78c892014049f20d31e985bdae276b63ca114ce246",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 967,
+          "readBlocks": 232,
+          "writtenBlocks": 7
+        },
+        "sram_alias_reads": "12",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-sd-answer-selected",
+        "machine": "hp49",
+        "tick": 371600000,
+        "frame_sha256": "0301d9120f8a135682d24157d01af05c2b71d9fea4c9472441d74e98a5da15df",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 1285,
+          "readBlocks": 309,
+          "writtenBlocks": 11
+        },
+        "sram_alias_reads": "14",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-sd-recalled-42",
+        "machine": "hp49",
+        "tick": 391400000,
+        "frame_sha256": "a6264d8850d44be94b23205730d647fe353d2f349188f6c4c0b4fabdb391d416",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 1324,
+          "readBlocks": 320,
+          "writtenBlocks": 13
+        },
+        "sram_alias_reads": "14",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-fresh-home",
+        "machine": "hp49-fresh",
+        "tick": 160000000,
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 0,
+          "present": false,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 0,
+          "lastCommand": 0,
+          "commands": 0,
+          "readBlocks": 0,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "0",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-fresh-sd-answer",
+        "machine": "hp49-fresh",
+        "tick": 207000000,
+        "frame_sha256": "27b339dfd51f6605cfdb79fe27eabe9159a34867f5327a9babaa18ba441bf7d3",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 541,
+          "readBlocks": 143,
+          "writtenBlocks": 4
+        },
+        "sram_alias_reads": "2",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-fresh-recalled-42",
+        "machine": "hp49-fresh",
+        "tick": 226800000,
+        "frame_sha256": "e01013055e51a5d9a50820786b7ba3eb821eb74dfc614949dda98a4d22dc5b97",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 580,
+          "readBlocks": 154,
+          "writtenBlocks": 6
+        },
+        "sram_alias_reads": "2",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-nested-home",
+        "machine": "hp49-nested",
+        "tick": 160000000,
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 0,
+          "present": false,
+          "writeProtected": false,
+          "dirty": false,
+          "cardState": 0,
+          "lastCommand": 0,
+          "commands": 0,
+          "readBlocks": 0,
+          "writtenBlocks": 0
+        },
+        "sram_alias_reads": "0",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-prepared-nested-directory",
+        "machine": "hp49-nested",
+        "tick": 222000000,
+        "frame_sha256": "2ae128468e6483864db8aeb5124dcbe4e3289eee4bbbcc482d7224af0ef712c2",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 601,
+          "readBlocks": 161,
+          "writtenBlocks": 6
+        },
+        "sram_alias_reads": "2",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp49-prepared-nested-recalled-42",
+        "machine": "hp49-nested",
+        "tick": 241800000,
+        "frame_sha256": "e01013055e51a5d9a50820786b7ba3eb821eb74dfc614949dda98a4d22dc5b97",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": {
+          "bytes": 16777216,
+          "present": true,
+          "writeProtected": false,
+          "dirty": true,
+          "cardState": 3,
+          "lastCommand": 7,
+          "commands": 649,
+          "readBlocks": 175,
+          "writtenBlocks": 8
+        },
+        "sram_alias_reads": "2",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp48-home",
+        "machine": "hp48",
+        "tick": 160000000,
+        "frame_sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": null,
+        "sram_alias_reads": "1",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp48-files",
+        "machine": "hp48",
+        "tick": 184800000,
+        "frame_sha256": "913cf167763953fb952d182d075ab89df5ebfa0c0dafdc5a33d0456ced3835a3",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": null,
+        "sram_alias_reads": "1",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp48-files-up",
+        "machine": "hp48",
+        "tick": 192200000,
+        "frame_sha256": "3f623da8b6c4d0326194be9974eef39b48e9cd81a478b8f1e60a8318167268b2",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": null,
+        "sram_alias_reads": "3",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp48-files-return",
+        "machine": "hp48",
+        "tick": 199600000,
+        "frame_sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": null,
+        "sram_alias_reads": "7",
+        "sram_alias_writes": "0"
+      },
+      {
+        "name": "hp48-after-files-one-plus-one",
+        "machine": "hp48",
+        "tick": 214200000,
+        "frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0,
+        "sd": null,
+        "sram_alias_reads": "7",
+        "sram_alias_writes": "0"
+      }
+    ],
+    "keys": [
+      {
+        "machine": "hp49",
+        "tick": 60000000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 60600000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 120000000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 120600000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 160000000,
+        "scan": 58,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 161200000,
+        "scan": 58,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 162400000,
+        "scan": 41,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 163600000,
+        "scan": 41,
+        "down": false
+      },
+      {
+        "machine": "strict-boundary-probe",
+        "tick": 184800000,
+        "scan": 42,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 184800000,
+        "scan": 42,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 186000000,
+        "scan": 42,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 192200000,
+        "scan": 56,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 193400000,
+        "scan": 56,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 199600000,
+        "scan": 58,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 200800000,
+        "scan": 58,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 202000000,
+        "scan": 41,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 203200000,
+        "scan": 41,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 224400000,
+        "scan": 56,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 225600000,
+        "scan": 56,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 231800000,
+        "scan": 25,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 233000000,
+        "scan": 25,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 234200000,
+        "scan": 19,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 235400000,
+        "scan": 19,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 236600000,
+        "scan": 49,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 237800000,
+        "scan": 49,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 239000000,
+        "scan": 57,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 240200000,
+        "scan": 57,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 241400000,
+        "scan": 8,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 242600000,
+        "scan": 8,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 243800000,
+        "scan": 57,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 245000000,
+        "scan": 57,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 246200000,
+        "scan": 39,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 247400000,
+        "scan": 39,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 248600000,
+        "scan": 57,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 249800000,
+        "scan": 57,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 251000000,
+        "scan": 15,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 252200000,
+        "scan": 15,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 253400000,
+        "scan": 57,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 254600000,
+        "scan": 57,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 255800000,
+        "scan": 8,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 257000000,
+        "scan": 8,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 258200000,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 259400000,
+        "scan": 6,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 270600000,
+        "scan": 58,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 271800000,
+        "scan": 58,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 273000000,
+        "scan": 41,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 274200000,
+        "scan": 41,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 285400000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 286600000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 297800000,
+        "scan": 36,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 299000000,
+        "scan": 36,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 310200000,
+        "scan": 42,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 311400000,
+        "scan": 42,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 312600000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 313800000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 332000000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 333200000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 339400000,
+        "scan": 42,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 340600000,
+        "scan": 42,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 346800000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 348000000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 369200000,
+        "scan": 44,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 370400000,
+        "scan": 44,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 371600000,
+        "scan": 38,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 372800000,
+        "scan": 38,
+        "down": false
+      },
+      {
+        "machine": "hp49",
+        "tick": 384000000,
+        "scan": 56,
+        "down": true
+      },
+      {
+        "machine": "hp49",
+        "tick": 385200000,
+        "scan": 56,
+        "down": false
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 60000000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 60600000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 120000000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 120600000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 160000000,
+        "scan": 58,
+        "down": true
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 161200000,
+        "scan": 58,
+        "down": false
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 162400000,
+        "scan": 41,
+        "down": true
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 163600000,
+        "scan": 41,
+        "down": false
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 184800000,
+        "scan": 42,
+        "down": true
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 186000000,
+        "scan": 42,
+        "down": false
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 187200000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 188400000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 204600000,
+        "scan": 44,
+        "down": true
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 205800000,
+        "scan": 44,
+        "down": false
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 207000000,
+        "scan": 38,
+        "down": true
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 208200000,
+        "scan": 38,
+        "down": false
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 219400000,
+        "scan": 56,
+        "down": true
+      },
+      {
+        "machine": "hp49-fresh",
+        "tick": 220600000,
+        "scan": 56,
+        "down": false
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 60000000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 60600000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 120000000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 120600000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 160000000,
+        "scan": 58,
+        "down": true
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 161200000,
+        "scan": 58,
+        "down": false
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 162400000,
+        "scan": 41,
+        "down": true
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 163600000,
+        "scan": 41,
+        "down": false
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 184800000,
+        "scan": 42,
+        "down": true
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 186000000,
+        "scan": 42,
+        "down": false
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 187200000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 188400000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 204600000,
+        "scan": 45,
+        "down": true
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 205800000,
+        "scan": 45,
+        "down": false
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 222000000,
+        "scan": 38,
+        "down": true
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 223200000,
+        "scan": 38,
+        "down": false
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 234400000,
+        "scan": 56,
+        "down": true
+      },
+      {
+        "machine": "hp49-nested",
+        "tick": 235600000,
+        "scan": 56,
+        "down": false
+      },
+      {
+        "machine": "hp48",
+        "tick": 60000000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp48",
+        "tick": 60600000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp48",
+        "tick": 120000000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "machine": "hp48",
+        "tick": 120600000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "machine": "hp48",
+        "tick": 160000000,
+        "scan": 58,
+        "down": true
+      },
+      {
+        "machine": "hp48",
+        "tick": 161200000,
+        "scan": 58,
+        "down": false
+      },
+      {
+        "machine": "hp48",
+        "tick": 162400000,
+        "scan": 41,
+        "down": true
+      },
+      {
+        "machine": "hp48",
+        "tick": 163600000,
+        "scan": 41,
+        "down": false
+      },
+      {
+        "machine": "hp48",
+        "tick": 184800000,
+        "scan": 42,
+        "down": true
+      },
+      {
+        "machine": "hp48",
+        "tick": 186000000,
+        "scan": 42,
+        "down": false
+      },
+      {
+        "machine": "hp48",
+        "tick": 192200000,
+        "scan": 56,
+        "down": true
+      },
+      {
+        "machine": "hp48",
+        "tick": 193400000,
+        "scan": 56,
+        "down": false
+      },
+      {
+        "machine": "hp48",
+        "tick": 199600000,
+        "scan": 26,
+        "down": true
+      },
+      {
+        "machine": "hp48",
+        "tick": 200800000,
+        "scan": 26,
+        "down": false
+      },
+      {
+        "machine": "hp48",
+        "tick": 202000000,
+        "scan": 5,
+        "down": true
+      },
+      {
+        "machine": "hp48",
+        "tick": 203200000,
+        "scan": 5,
+        "down": false
+      },
+      {
+        "machine": "hp48",
+        "tick": 204400000,
+        "scan": 26,
+        "down": true
+      },
+      {
+        "machine": "hp48",
+        "tick": 205600000,
+        "scan": 26,
+        "down": false
+      },
+      {
+        "machine": "hp48",
+        "tick": 206800000,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "machine": "hp48",
+        "tick": 208000000,
+        "scan": 6,
+        "down": false
+      }
+    ],
+    "passed": true,
+    "prepared_image": {
+      "sha256": "ae7ab76ab5490e6ff4b53bf278b0f05e43908572fd140781edaaaf8055158c3e",
+      "bytes": 16777216,
+      "expected_root_file": "ANSWER",
+      "expected_directory": "PROGRAMS",
+      "expected_nested_file": "NESTED",
+      "root_recalled": true,
+      "nested_recalled": true,
+      "guest_created_test": true,
+      "prepared_root_preserved": true
+    },
+    "strict_boundary_probe": {
+      "tick": 184936627,
+      "pc": 260116,
+      "opcode": 3851620356,
+      "dfsr": 8,
+      "far": 134742016,
+      "physical_ram_bytes": 524288
+    },
+    "continuation": {
+      "checkpoint_bytes": 17310431,
+      "version": 3,
+      "partial_sector_bytes": 92,
+      "delta_ticks": 100000,
+      "before_sha256": "4fdc254cfad12aed8aee410b0163da6865247795d1ad1b3638cf1418d58d3d9d",
+      "after_sha256": "eaee50a9f6085bf327c86f9c30b0a68278e187fc857ac48510d686040d2ea177",
+      "native_wasm_equal": true,
+      "full_card_included": true
+    },
+    "exported": {
+      "image_sha256": "3342da8af8db9cfe75a4a683e520f783b33b323dc33c71bf450dc09b97077050",
+      "file": "TEST",
+      "file_bytes": 15,
+      "file_sha256": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42",
+      "filesystem": "FAT16",
+      "fat_copies_equal": true,
+      "writes_before_copy": 0,
+      "writes_after_copy": 7
+    },
+    "fresh_card_reimport": true,
+    "hp48": {
+      "cold_boot": true,
+      "files_navigation": true,
+      "returned_home": true,
+      "sd_slot": false,
+      "card_rejected": true
+    }
+  },
+  "original_system_report": {
+    "name": "report.json",
+    "sha256": "8de6787da2e924b863dbf901cbfa44addc4e2abb2edfe0c6ed52a6e94a4e8ec5"
+  },
+  "boundaries": [
+    "1/2/4/8/16/32 MiB SDSC PIO; no SDHC, SDXC or DMA",
+    "FAT16 editor validates bounds, both FAT copies, cycles, cross-links, directory parents and LFN structure before mutation",
+    "8.3 destination names are explicit; no hidden extension filter or silent truncation",
+    "HP48gII has no SD slot; tested FILES and HOME operation, plus card rejection",
+    "HP50g controller coverage is not original full-ROM acceptance",
+    "Physical SD timing and board wiring have not been independently calibrated"
+  ],
+  "publication_excludes": [
+    "ROMs",
+    "original capture JSON",
+    "card images",
+    "checkpoints",
+    "stock-OS pixel data"
+  ]
+}

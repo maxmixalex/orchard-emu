@@ -23,10 +23,11 @@ export function createSDImage(){
   image[b+21]=0xf8;v.setUint16(b+22,fatSectors,true);v.setUint16(b+24,32,true);
   v.setUint16(b+26,64,true);v.setUint32(b+28,start,true);
   image[b+36]=0x80;image[b+38]=0x29;v.setUint32(b+39,0x4f524348,true);
-  put(b+43,'ORCHARD SD ');put(b+54,'FAT16   ');v.setUint16(b+510,0xaa55,true);
+  put(b+43,'NO NAME    ');put(b+54,'FAT16   ');v.setUint16(b+510,0xaa55,true);
   for(let f=0;f<2;f++){const o=(start+reserved+f*fatSectors)*sector;v.setUint16(o,0xfff8,true);v.setUint16(o+2,0xffff,true);}
-  // The BPB carries the volume label; keep the optional root label entry absent.
-  // The HP49g+ Filer otherwise displays that entry as a user file.
+  // Use FAT's no-label BPB text and leave the optional root label entry absent.
+  // HP49g+ Filer otherwise displays that entry as a user file; an unmatched
+  // BPB label would also be inconsistent to independent filesystem checkers.
   return image;
 }
 export function sdImageName(name='orchard-sd.img'){

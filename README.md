@@ -5,8 +5,11 @@ An original MIT-licensed ARM hardware emulator for HP 39g+, 39gs, 40gs,
 The ROM's ARM Saturn interpreter executes as guest software; there is no
 host-side Saturn replacement or firmware patch.
 
-**HP39g+ D1.55, HP48gII and the supplied HP49g+ complete ROM reach original
-HOME and evaluate `1+2=3` and `7*8=56`.** [HP49g+](docs/development/hp49-startup.md)
+**Four original full ROMs are admitted: HP39g+ D1.55, HP39gs 2.22, HP48gII
+and the supplied HP49g+.** They reach original HOME and evaluate arithmetic,
+including `7*8=56`. [HP39gs](docs/development/hp39gs-startup.md) now uses the
+user's own complete capture, including its native bootloader.
+[HP49g+](docs/development/hp49-startup.md)
 also runs original-OS symbolic algebra, graphing, menus and
 [native ARM programs that return to HOME](docs/development/hp49-native.md).
 Its original FILES manager can read and write an [emulated SD card](docs/development/sd-cards.md).
@@ -34,7 +37,7 @@ only Node.js 22+ is needed: extract it and run `node serve.mjs` in that folder.
 Do not use `file://`. No ROM is bundled or uploaded.
 
 The default page is a calculator: **Open ROM**, Pause/Resume, Restart and
-physical keys. It detects the three supported ROM identities and selects their
+physical keys. It detects the four supported ROM identities and selects their
 compatibility settings automatically. CPU counters, boot setup and internal
 research controls live in the separate **[developer workbench](https://maxmixalex.github.io/orchard-emu/emulator/debug.html)**.
 Both pages use the same optimized core, not different levels of emulation.
@@ -46,7 +49,11 @@ by default and can be enabled in **Settings → Storage**; loading the same ROM
 then offers to restore its saved state. See [saved sessions](docs/development/sessions.md).
 
 On HP49g+, **SD card** creates a 16 MiB FAT16 card or imports a 1–32 MiB
-raw image; the original calculator accesses it as port 3. Export the image
+raw image; the original calculator accesses it as port 3. **Prepare files**
+opens an unmounted FAT16 image for directory browsing, file extraction, folder
+creation and transactional file addition. Review the explicit 8.3 destination
+names, then insert the prepared image. File selection has no extension filter.
+Export the image
 for a separate card backup. Manual and automatic sessions include the whole
 inserted card. HP48gII has no SD slot; HP50g still requires its own full-ROM
 acceptance before it can join the supported calculator catalog.
@@ -98,18 +105,25 @@ in `licenses/hp-calcs-svg`; see [licensing](docs/development/licensing.md).
 
 ## Settings and connections
 
-Settings switches immersive/traditional view, scale, pause-on-focus/background,
+Settings switches immersive, **immersive landscape** and traditional view,
+scale, pause-on-focus/background,
 per-model key sequences and optional automatic local saves. Normal uses a
 fixed functional time rate instead of running clocks at maximum host speed;
 physical timing is still being refined. CPU research details stay in the
 developer workbench. Save exports `<model>-<yyyymmdd-hhmmss>.ord`; Restore also
 accepts earlier `.orchard` files. No ROM is stored or uploaded.
+Landscape splits the unchanged skin at the bottom of the screen cover, with
+the screen on the left and keyboard on the right. [Firmware sound](docs/development/buzzer.md)
+plays observed GPB2/Timer2 output through Web Audio, with mute and volume controls.
+The original HP49g+ `BEEP` path is verified; physical pitch/duration calibration
+remains open.
 
 Connections adds a Files tab for HP48gII USB/serial and HP49g+ USB object
 upload, named retrieval and explicit local download. Start Kermit SERVER with
 the matching connection selected. These supported links also provide Receive,
 directory and FINISH. The file chooser accepts up to 16 objects per batch
-(8 MiB total), validates them all before sending and shows each result. Serial
+(8 MiB total), checks their content and shows each result. Failed items can be
+retried or skipped without resending successful items. Serial
 and USB two-object batches, active SEND and connection reuse have original-ROM
 browser witnesses. HP39/40 uses its own disk-drive server: select typed files or
 an applet bundle, start serving, then choose **RECV → Disk drive** in the
@@ -122,9 +136,14 @@ directory aliases and object bytes are preserved. Raw data retains
 UART and USB packets. **Wire** provides a faster HP39g+ upload route: choose
 **RECV → HP39/40 (Wire)** for each object, sending required libraries before
 the aplet. Reverse downloads still use **SEND → Disk drive**. Original-ROM HP39
-file-transfer and ZIP round-trip
-verification uses the complete HP39g+ NOR; HP39gs/40gs still await acceptance
-with their own complete original NOR images.
+file-transfer and ZIP round-trip verification uses the complete HP39g+ NOR.
+HP39gs has its own original-ROM Disk installation and native-reader return
+witness; HP40gs still needs its complete original NOR. File choosers accept
+arbitrary filename extensions and identify the actual typed/ZIP content.
+The optional **Unlimited during transfers** switch accelerates active protocol
+work, then restores the selected speed. Waiting for the calculator's next RECV
+selection retains the selected speed. A Wire failure leaves the failed item
+available for Retry or Skip; return the calculator to RECV before retrying.
 Browser connections are internal to the emulator and do not create desktop
 USB or serial devices. See
 [file transfer](docs/development/file-transfer.md),
@@ -137,9 +156,14 @@ safe temporary mappings and explicit recovery messages. Its Windows receiver
 reads each 16 KiB block twice and compares every byte, producing a complete
 1 MiB image in one launch. The package includes the rebuilt receiver, matching
 calculator files, complete corresponding source and licenses. Emulator checks
-cover the original HP39g+ full NOR and a separately identified HP39gs original-OS
-fixture; physical HP39gs extraction still awaits hardware validation. A separate
-short probe is not required. The older ARM-return package remains historical.
+cover the original HP39g+ full NOR and the user's complete HP39gs capture.
+The received HP39gs image passes all 64 block hashes and repeated-read metadata;
+its unchanged bytes now cold-boot and complete the same full-reader/return/USB
+workflow. The earlier derived fixture is retained only as historical OS-level
+evidence: it combined the official 2.22 OS with a foreign generic boot area,
+and was never a physical full-ROM capture or catalog admission. See the exact
+[region comparison](docs/development/hp39gs-startup.md#earlier-derived-fixture).
+The older ARM-return package remains historical.
 The [HP49g+ capture package](docs/development/flash-capture.md) has now produced
 the user's 2 MiB image used by the new model's startup and transfer validation.
 

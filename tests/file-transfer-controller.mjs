@@ -13,6 +13,27 @@ function fixture(){
 }
 const file=(name='TEST',bytes=Uint8Array.from([...new TextEncoder().encode('HPHP49-C'),0,1,127,128,255]))=>({name,size:bytes.length,arrayBuffer:async()=>bytes.slice().buffer});
 
+// A synchronous Worker post failure must seal the new Wire request without
+// discarding its bytes or leaving the entire queue active and unusable.
+{
+ const {c,sent,emit}=fixture();c.patch({model:CALCULATORS.find(m=>m.id===1)});
+ const original=c.worker.postMessage;let failed=false;
+ c.worker.postMessage=data=>{
+   if(data.type==='file-transfer-start'&&!failed){failed=true;throw Error('Test Worker post failure');}
+   original(data);
+ };
+ const bytes=new TextEncoder().encode('HP39BinH\x03Lib\x00\x01');
+ await c.startHp39Server('usb',[{file:file('LIB.arbitrary',bytes)}],{protocol:'wire'});
+ assert.equal(c.state.transfer.active,false);assert.equal(c.state.transfer.phase,'error');
+ assert.equal(c.state.uploadBatch.active,false);assert.equal(c.state.uploadBatch.recoverable,true);
+ assert.equal(c.state.transfer.error,'Test Worker post failure');assert.deepEqual(c.uploadQueue.entries[0].bytes,bytes);
+ const old=c.transferRequest;await c.retryUploadFile();
+ assert(c.transferRequest>old);assert.equal(sent.at(-1).type,'file-transfer-start');
+ assert.deepEqual(sent.at(-1).bytes,bytes);
+ emit({type:'file-transfer-status',request:c.transferRequest,active:false,phase:'complete',transferred:bytes.length,total:bytes.length});
+ assert.equal(c.state.uploadBatch.completed,1);assert.equal(c.uploadQueue,null);c.dispose();
+}
+
 // Resume after a file picker blur, then send one bounded, unchanged byte array.
 for(const transport of ['usb','serial']){
  const {c,sent,emit}=fixture();await c.startTransfer('send',transport,{file:file()});

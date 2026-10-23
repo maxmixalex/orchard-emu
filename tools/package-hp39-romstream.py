@@ -26,6 +26,7 @@ PAYLOAD_OFFSET = 860
 APPLET_SHA = '298732caeba57a240acf135f1260c6f1cf1899e024fb734f3b4d2c4f92cadcc1'
 PAYLOAD_SHA = '71e93a0b334c41537d7e36a7d9b76397294d900095fa2137f76056ba8f08a83e'
 LAUNCHER_SHA = '88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1'
+TARGET_ROM_SHA = 'a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff'
 CALCULATOR = {
     'HPGCC000.000': (10344, APPLET_SHA),
     'LIB275L.000': (1489, LAUNCHER_SHA),
@@ -188,8 +189,10 @@ def build_files(upstream, sdk, atfe, hptools, go):
         'full_flash_reader': True, 'flash_bytes': 1048576, 'block_bytes': 16384,
         'read_passes_per_block': 2, 'hardware_validated': False,
         'target_stock_os_execution_verified': True,
-        'target_stock_os_fixture': 'official-39gs-2.22-update-with-generic-50g-bootloader',
-        'target_native_bootloader_verified': False,
+        'target_stock_os_fixture': 'original-full-39gs-nor',
+        'target_original_rom_sha256': TARGET_ROM_SHA,
+        'target_native_bootloader_verified': True,
+        'verification_scope': 'r20-original-rom-emulator-execution',
         'reference_stock_os_execution_verified_model': 'hp39gplus', 'firmware_included': False,
         'original_calculator_bytes_unchanged': False,
         'calculator_reader_revision': 2, 'calculator_source_sha256': CALCULATOR_SOURCES,
@@ -255,8 +258,10 @@ def verify(path):
             m['calculator_reader_revision'] == 2,
             'Wrong package scope or unsupported hardware claim')
     require(m['target_stock_os_execution_verified'] is True and
-            m['target_stock_os_fixture'] == 'official-39gs-2.22-update-with-generic-50g-bootloader' and
-            m['target_native_bootloader_verified'] is False and
+            m['target_stock_os_fixture'] == 'original-full-39gs-nor' and
+            m['target_original_rom_sha256'] == TARGET_ROM_SHA and
+            m['target_native_bootloader_verified'] is True and
+            m['verification_scope'] == 'r20-original-rom-emulator-execution' and
             m['reference_stock_os_execution_verified_model'] == 'hp39gplus', 'Unsupported stock OS execution claim')
     require(set(m['files']) == set(files) - {'manifest.json', 'SHA256SUMS'}, 'Incomplete package manifest')
     require(files['SHA256SUMS'] == ''.join(f'{digest(data)}  {name}\n' for name, data in sorted(files.items())
@@ -291,6 +296,10 @@ def verify(path):
     return {'file': path.name, 'bytes': path.stat().st_size, 'sha256': digest(path.read_bytes()), 'files': len(files),
             'calculator_bytes_unchanged': False, 'calculator_reader_revision': 2, 'full_flash_reader': True, 'flash_bytes': 1048576,
             'read_passes_per_block': 2, 'hardware_validated': False, 'windows_receiver': pe,
+            'target_stock_os_fixture': m['target_stock_os_fixture'],
+            'target_original_rom_sha256': m['target_original_rom_sha256'],
+            'target_native_bootloader_verified': m['target_native_bootloader_verified'],
+            'verification_scope': m['verification_scope'],
             'source_rebuild': m['source_rebuild']}
 
 

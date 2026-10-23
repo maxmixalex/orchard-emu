@@ -4,8 +4,11 @@ An original MIT ARM hardware emulator for the six HP Apples calculators.
 The C17 machine core is shared by native and WASM hosts, and executes the
 ROM's own ARM Saturn interpreter without a firmware patch.
 
-**Three original systems—HP39g+, HP48gII and HP49g+—reach HOME and evaluate
-`1+2=3` and `7*8=56` under explicit research conditions.** See [startup](development/startup.md)
+**Four original systems—HP39g+, HP39gs, HP48gII and HP49g+—reach HOME and
+perform arithmetic under explicit compatibility conditions.** The user's
+[complete HP39gs image](development/hp39gs-startup.md) now runs its own native
+bootloader, computes `1+1=2` and `7*8=56`, and completes native-reader return.
+See [startup](development/startup.md)
 for the immutable input, physical-key schedule and remaining SRAM/LCD/pad
 assumptions. This is not canonical physical-board or all-six-model acceptance.
 
@@ -16,9 +19,14 @@ also performs symbolic algebra and USB object workflows, and an existing
 [native ARM example](development/hp49-native.md) runs through stock ARMToolbox
 and returns to HOME for another calculation. The
 [HP39/40 disk-drive server](development/file-transfer.md) serves applet bundles
-and receives typed files. For the remaining HP39gs image, the
-[complete ROM dump package](development/hp39gs-rom-dump.md) reuses the existing
-hpclang reader and adds automatic per-block double reads in one launch.
+and receives typed files. The [complete ROM dump package](development/hp39gs-rom-dump.md)
+has produced the user's 1 MiB HP39gs capture, checked against all 64 supplied
+block hashes. Its original acquisition metadata is preserved separately.
+
+The latest browser adds [immersive landscape](development/landscape.md),
+[firmware-driven sound](development/buzzer.md), optional transfer-only Unlimited,
+per-file Retry/Skip and file selection without extension filters. The SD dialog
+can prepare files and directories in an unmounted FAT16 image before insertion.
 
 The [browser workbench](development/web.md) now exposes the setup and a
 functional keypad. Production Window/Worker tests and original-ROM

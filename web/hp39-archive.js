@@ -6,6 +6,9 @@ import {prepareHp39Files,MAX_HP39_HOST_FILES} from './hp39-transfer.js';
 import {MAX_FILE_BYTES,MAX_RECEIVE_BYTES} from './kermit.js';
 
 export const MAX_HP39_ARCHIVE_BYTES=32*1024*1024;
+// File-picker names and MIME types are hints, never format validation.
+export const isHp39Archive=bytes=>bytes instanceof Uint8Array&&bytes.length>=4&&
+  bytes[0]===80&&bytes[1]===75&&((bytes[2]===3&&bytes[3]===4)||(bytes[2]===5&&bytes[3]===6)||(bytes[2]===7&&bytes[3]===8));
 const MAX_ENTRIES=1024,encoder=new TextEncoder(),decoder=new TextDecoder('utf-8',{fatal:true});
 const crcTable=Uint32Array.from({length:256},(_,value)=>{
   for(let bit=0;bit<8;bit++)value=value&1?0xedb88320^(value>>>1):value>>>1;
@@ -52,7 +55,8 @@ function archiveEntries(bytes){
 }
 
 /** Read one explicit package. Prefer its calculator/ directory; otherwise its
- * root or unique HP39 catalog. Source/readme/executable entries are not opened. */
+ * root or unique HP39 catalog. A catalog selects only its named dependencies.
+ * Without a catalog, bounded root files are recognized by their typed header. */
 export async function readHp39Archive(bytes,{cancelled=()=>false}={}){
   const {entries,view,offset}=archiveEntries(bytes),files=[],visited=new Set();
   const check=()=>{if(cancelled())throw Error('HP39 package import cancelled.');};
@@ -116,9 +120,19 @@ export async function readHp39Archive(bytes,{cancelled=()=>false}={}){
   if(current)await visit('HP39DIR.CUR');
   else if(root)await visit('HP39DIR.000');
   else{
-    const loose=[...entries.values()].filter(f=>!f.directory&&!f.name.includes('/')&&/\.(?:000|apt|sys|hp39|prg|lib)$/i.test(f.name));
-    if(!loose.length)throw Error('No HP39 catalog or typed files were found in the ZIP package.');
-    for(const f of loose)await visit(f.name);
+    const loose=[...entries.values()].filter(f=>!f.directory&&!f.symlink&&!f.name.includes('/')&&f.length>=8&&f.length<=MAX_FILE_BYTES);
+    for(const f of loose){
+      if(visited.has(f.name.toUpperCase()))continue;
+      const data=await extract(f),prefix=Array.from(data.subarray(0,7),b=>String.fromCharCode(b)).join('');
+      if(prefix!=='HP39Bin'&&prefix!=='HP39Asc')continue;
+      // Recognized-but-damaged objects still fail; a different suffix cannot
+      // turn malformed HP39 content into an ignored README.
+      validateHp39Filename(f.name);const info=inspectHp39File(data);
+      if(visited.size>=MAX_HP39_HOST_FILES+2)throw Error('An HP39 package supports at most 16 objects and two directory files.');
+      visited.add(f.name.toUpperCase());files.push({name:f.name,bytes:data});
+      if(info.kind==='A')for(const reference of info.entries)await visit(reference.file);
+    }
+    if(!files.length)throw Error('No HP39 catalog or typed files were found in the ZIP package.');
   }
   check();return prepareHp39Files(files);
 }

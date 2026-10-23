@@ -4,10 +4,12 @@ const NS='http://www.w3.org/2000/svg';
 const SLUGS=['','hp39gplus','hp39gs','hp40gs','hp48gii','hp49gplus','hp50g'];
 const ATTRS=new Set(['d','x','y','width','height','rx','ry','cx','cy','r']);
 const NAMES=['I/O','Left shift','Right shift','Alpha','Battery','Busy'];
+const LANDSCAPE_GAP=24;
 export class SkinView {
   constructor(stage, tap) {
     this.stage=stage;this.tap=tap;this.epoch=0;this.enabled=false;this.appliedEnabled=null;this.buttons=[];this.lastActive=-1;this.lastSegments='';this.rgb=[194,208,202];
-    this.image=stage.querySelector('.skin-image');this.hits=stage.querySelector('.skin-keys');
+    this.image=stage.querySelector('.skin-image');this.keyboardImage=stage.querySelector('.skin-keyboard-image');this.hits=stage.querySelector('.skin-keys');
+    this.spec=null;this.landscape=false;
     this.glass=stage.querySelector('.glass-overlay');this.indicators=stage.querySelectorAll('[data-segment]');
     this.manifest=fetch(new URL('skins/manifest.json',import.meta.url)).then(r=>{
       if(!r.ok)throw new Error(`Skin metadata HTTP ${r.status}`);return r.json();
@@ -17,15 +19,18 @@ export class SkinView {
   }
   async show(model,blue=false) {
     const token=++this.epoch;this.buttons=[];this.appliedEnabled=null;this.lastActive=-1;this.lastSegments='';this.hits.replaceChildren();this.image.hidden=true;
-    this.glass.hidden=true;
+    this.glass.hidden=true;if(this.keyboardImage)this.keyboardImage.hidden=true;
     const manifest=await this.manifest;
     if(token!==this.epoch)return;
     const slug=model===6&&blue?'hp50g-blue':SLUGS[model], spec=manifest.models[slug];
     if(!spec||spec.keys.length!==51)throw new Error('Invalid skin geometry');
     const [vx,vy,width,height]=spec.viewBox;
     if(vx!==0||vy!==0||width<=0||height<=0)throw new Error('Unsupported skin coordinates');
-    this.stage.style.aspectRatio=`${width}/${height}`;this.hits.setAttribute('viewBox',spec.viewBox.join(' '));
-    this.image.src=new URL(`skins/${slug}.svg`,import.meta.url);this.image.alt=spec.name;
+    if(!Number.isFinite(spec.splitY)||spec.splitY<=spec.glass[1]+spec.glass[3]||spec.splitY>=height)throw new Error('Invalid skin split');
+    this.spec=spec;this.setLayout(this.landscape);this.hits.setAttribute('viewBox',spec.viewBox.join(' '));
+    const imageURL=new URL(`skins/${slug}.svg`,import.meta.url);
+    this.image.src=imageURL;this.image.alt=spec.name;
+    if(this.keyboardImage){this.keyboardImage.src=imageURL;this.keyboardImage.hidden=false;}
     this.image.hidden=false;this.stage.dataset.model=slug;
     const [x,y,w,h]=spec.glass;
     // Leave real glass around both the rectangular LCD body and separate segments.
@@ -51,6 +56,19 @@ export class SkinView {
     this.appliedEnabled=null;
     this.setEnabled(this.enabled);
   }
+  setLayout(landscape) {
+    this.landscape=Boolean(landscape&&this.keyboardImage);
+    const [,,width,height]=this.spec?.viewBox??[0,0,665,1340],split=this.spec?.splitY??506.575;
+    const bounds=this.landscape?[width*2+LANDSCAPE_GAP,Math.max(split,height-split)]:[width,height];
+    this.stage.dataset.layout=this.landscape?'landscape':'portrait';
+    this.stage.style.aspectRatio=bounds.join('/');
+    this.stage.style.setProperty('--skin-ratio',`${width}/${height}`);
+    this.stage.style.setProperty('--screen-ratio',`${width}/${split}`);
+    this.stage.style.setProperty('--keyboard-ratio',`${width}/${height-split}`);
+    this.stage.style.setProperty('--keyboard-shift',`${-split/height*100}%`);
+    this.stage.style.setProperty('--split-gap',`${LANDSCAPE_GAP/bounds[0]*100}%`);
+    return bounds;
+  }
   setEnabled(enabled) {
     this.enabled=enabled;
     if(this.appliedEnabled===enabled)return;
@@ -59,18 +77,18 @@ export class SkinView {
   }
   update(active,levels,status,model) {
     if(this.lastActive!==active){for(const key of this.buttons)key.setAttribute('aria-pressed',String(Number(key.dataset.scan)===active));this.lastActive=active;}
-    // Packed routing: 39g+/48gII Shift/Alpha transitions were checked against
+    // Packed routing: 39g+/39gs/48gII Shift/Alpha transitions were checked against
     // original guests; the remaining labels follow recorded reference routing.
     // A visible unavailable state is distinct from six known-off segments.
-    const mapped=model===1||model>=4,known=mapped&&status===0&&levels?.length===6;
+    const hp39=model===1||model===2,mapped=hp39||model>=4,known=mapped&&status===0&&levels?.length===6;
     const signature=`${model}:${known}:${Array.from(levels||[]).join(',')}`;
     if(this.lastSegments!==signature) for(const indicator of this.indicators){
       const i=Number(indicator.dataset.segment),level=known?levels[i]:0;
       indicator.style.opacity=String(level/255);
-      indicator.setAttribute('aria-label',`${model===1&&i===1?'Shift':NAMES[i]}: ${known?(level?'on':'off'):'unmapped'}`);
+      indicator.setAttribute('aria-label',`${hp39&&i===1?'Shift':NAMES[i]}: ${known?(level?'on':'off'):'unmapped'}`);
     }
     if(this.lastSegments!==signature)this.stage.querySelector('.annunciator-strip').dataset.known=String(known);
     this.lastSegments=signature;
-    return !mapped?'Status segments: mapping for this model is not yet verified.':status?`Status segments unavailable (LCD format ${status}).`:'Status segments: guest data · Shift/Alpha checked on 39g+ and 48gII; other routing remains provisional.';
+    return !mapped?'Status segments: mapping for this model is not yet verified.':status?`Status segments unavailable (LCD format ${status}).`:'Status segments: guest data · Shift/Alpha checked on 39g+, 39gs and 48gII; other routing remains provisional.';
   }
 }

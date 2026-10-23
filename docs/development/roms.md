@@ -5,14 +5,17 @@
 The loader accepts exact-capacity, little-endian **full physical NOR**, with a
 plausible ARM reset vector at offset zero. It does not patch, pad, mirror,
 decompress or insert a replacement bootloader. A plausible vector is not a
-model-authentication or boot-completion certificate. The two admitted inputs
-below have executed locally; their remaining stops are in [boot research](boot-research.md).
+model-authentication or boot-completion certificate. Four full images now have
+conditional original-system acceptance; their exact model-specific results are
+linked below. The updater inputs remain a separate class.
 
 | Model | Size | Format / acquisition | Orchard evidence |
 | --- | ---: | --- | --- |
-| HP39g+ | 1,048,576 bytes | User-uploaded `39g+.bin`; real-hardware D1.55 full NOR | Native/WASM early boot, not UI |
-| HP48gII USB revision | 2,097,152 bytes | Original author's public hardware-modification mirror, `48gii.bin` | Native/WASM early boot, not UI |
-| HP39gs | 995,328 bytes | Uploaded 2.22 updater member | Not a native full NOR; not booted |
+| HP39g+ | 1,048,576 bytes | User-uploaded `39g+.bin`; real-hardware D1.55 full NOR | [HOME, arithmetic, USB and native return](hp39-startup.md) |
+| HP39gs | 1,048,576 bytes | User-returned V2 complete double-read capture | [Own native boot, HOME, APLET, sessions and native return](hp39gs-startup.md) |
+| HP48gII USB revision | 2,097,152 bytes | Original author's public hardware-modification mirror, `48gii.bin` | [HOME, arithmetic, sessions and USB/serial](startup.md) |
+| HP49g+ | 2,097,152 bytes | User-returned full A/B capture | [HOME, CAS, plotting, files, SD and native return](hp49-startup.md) |
+| HP39gs updater | 995,328 bytes | Uploaded 2.22 updater member | Not a native full NOR |
 | HP40gs | 1,241,088 bytes | Uploaded 2.22 updater member | Not a native full NOR; not booted |
 | HP49g+/50g | 1,294,336 bytes | Uploaded shared 2.15 updater member | Not a native full NOR; not booted |
 
@@ -58,6 +61,23 @@ debugging ran on that job**. The dump is not committed, included in the site,
 or uploaded with production builds. Future acquisition is manual-only and
 restricted to this private repository.
 
+HP39gs complete-NOR SHA-256:
+
+```text
+a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff
+```
+
+HP49g+ complete-NOR SHA-256:
+
+```text
+3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab
+```
+
+Both are user-returned complete captures, with sidecars checked against all
+64 and 128 blocks respectively. Their original metadata is immutable;
+functional admission and remaining board assumptions are documented separately
+in [HP39gs startup](hp39gs-startup.md) and [HP49g+ startup](hp49-startup.md).
+
 ## Uploaded update identities
 
 | Archive member | SHA-256 |
@@ -69,8 +89,9 @@ restricted to this private repository.
 Their headers are respectively `KINPOHP39G+IMAGE`, `KINPOHP40G+IMAGE` and
 `KINPOUPDATEIMAGE`. They are not full native ARM reset images. Matching HP49g+/HP50g boot regions have now been acquired separately;
 their hashes and explicit boot-only probing are in [native ROM research](native-roms.md).
-HP39gs/HP40gs native boot areas remain an acquisition task; replacing them with another model's
-bootloader would be a noncanonical experiment, not full-dump acceptance.
+HP39gs now has its own captured native boot area as part of the complete NOR.
+HP40gs acquisition remains open; replacing a missing bootloader with another
+model's bytes is a noncanonical experiment, not full-dump acceptance.
 
 ## Input handling
 

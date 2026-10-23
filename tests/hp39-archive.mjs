@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {readHp39Archive,writeHp39Archive,zipCrc32} from '../web/hp39-archive.js';
+import {readHp39Archive,writeHp39Archive,isHp39Archive,zipCrc32} from '../web/hp39-archive.js';
 import {prepareHp39Files} from '../web/hp39-transfer.js';
 import {createHp39Directory,parseHp39Directory} from '../web/hp39-files.js';
 import {CalculatorController} from '../web/controller.js';
@@ -37,6 +37,7 @@ for(const deflate of [false,true])for(const streaming of [false,true]){
   assert.deepEqual(byName(roundtrip),byName(source));
 }
 const archived=writeHp39Archive(files);
+assert(isHp39Archive(archived));assert(!isHp39Archive(program));assert(!isHp39Archive(new Uint8Array()));
 assert.deepEqual(byName(await readHp39Archive(archived)),byName(source));
 const checked=JSON.parse(execFileSync('python3',['-c',`
 import io,json,sys,zipfile
@@ -55,6 +56,10 @@ assert.deepEqual(byName(await readHp39Archive(bundle)),byName(source));
 assert.deepEqual(byName(await readHp39Archive(zip(files))),byName(source),'Import stock export without CUR');
 assert.deepEqual(byName(await readHp39Archive(zip([{name:'ONE.000',bytes:program}]))),
   byName(prepareHp39Files([{name:'ONE.000',bytes:program}])));
+const arbitrary=[{name:'ONE.any-suffix',bytes:program},{name:'LIBRARY',bytes:library}];
+assert.deepEqual(byName(await readHp39Archive(zip([...arbitrary,{name:'README.bin',bytes:text('This is only a README, not an object.')}]))),
+  byName(prepareHp39Files(arbitrary)),'Loose ZIP entries are selected by typed content, not suffix');
+await assert.rejects(()=>readHp39Archive(zip([{name:'BROKEN.anything',bytes:text('HP39BinD\xffshort')}])) ,/Truncated/,'A malformed typed object cannot hide behind an unknown suffix');
 await assert.rejects(()=>readHp39Archive(zip([...source.map(f=>({...f,name:'one/'+f.name})),...source.map(f=>({...f,name:'two/'+f.name}))])),/several/);
 await assert.rejects(()=>readHp39Archive(zip([{name:'HP39DIR.000',bytes:files[2].bytes}])) ,/Missing/);
 await assert.rejects(()=>readHp39Archive(zip([...source,{name:'../escape',bytes:text('ignored')}])) ,/relative/);
@@ -75,6 +80,14 @@ function controller(){
   c.patch({model:{id:1},ready:true,loaded:true,running:true,usbReady:true});return {c,sent,downloads};
 }
 const browserFile=(name,bytes)=>({name,size:bytes.length,arrayBuffer:async()=>bytes.slice().buffer});
+for(const name of ['renamed.data','NO_EXTENSION']){
+  const {c,sent}=controller();await c.startHp39Server('usb',[{file:browserFile(name,bundle)}]);
+  assert.deepEqual(byName(sent.at(-1).files),byName(source),'ZIP content wins over the outer filename');c.dispose();
+}
+{
+  const {c,sent}=controller();await c.startHp39Server('usb',[{file:browserFile('ACTUAL_OBJECT.zip',program)}]);
+  assert.deepEqual(sent.at(-1).files[0].bytes,program,'A typed file named .zip is still a typed file');c.dispose();
+}
 {
   const {c,sent,downloads}=controller();
   await c.startHp39Server('usb',[{file:browserFile('中文 package(1).zip',bundle)}]);

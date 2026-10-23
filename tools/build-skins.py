@@ -80,8 +80,22 @@ def shapes(model):
         xs,ys=coords[::2],coords[1::2];x,y=min(xs),min(ys);w,h=max(xs)-x,max(ys)-y
     else: x,y,w,h,_=screen['screen']
     glass=[x*sx,y*sy,w*sx,h*sy]
+    # A landscape skin is the original art cut at the lowest painted bezel edge.
+    # Both pinned bezel paths use paired M/C coordinates and reach their lowest
+    # control point at a curve endpoint; half the stroke belongs to the top piece.
+    bezel=screen['bezel']
+    if re.search(r'[AaHhVvLlQqSsTt]',bezel): raise ValueError('Unexpected bezel curve')
+    coords=list(map(float,re.findall(r'-?\d+(?:\.\d+)?',bezel)))
+    bezel_sy=1
+    if screen.get('bezel_transform'):
+        match=re.fullmatch(r'scale\(([\d.]+) ([\d.]+)\)',screen['bezel_transform'])
+        if not match: raise ValueError('Unexpected bezel transform')
+        bezel_sy=float(match[2])
+    split_y=(max(coords[1::2])+float(screen.get('bezel_stroke_width',0))/2)*bezel_sy*sy
+    view_box=list(map(float,root.get('viewBox').split()))
+    if not glass[1]+glass[3]<split_y<view_box[3]: raise ValueError('Invalid skin split')
     shutil.copyfile(svg,OUT/f'{model}.svg')
-    return dict(name=design['metadata']['name'],viewBox=list(map(float,root.get('viewBox').split())),
+    return dict(name=design['metadata']['name'],viewBox=view_box,splitY=split_y,
                 glass=glass,background=screen.get('screen_fill',design['palette']['glass']),keys=hits)
 
 if __name__=='__main__':

@@ -1,0 +1,1673 @@
+{
+  "schema": "orchard-hp39gs-acceptance-r20-v1",
+  "date_utc": "2026-10-23",
+  "model": {
+    "id": 2,
+    "name": "hp39gs",
+    "os_version": "2.22",
+    "preset": "hp39gs-home"
+  },
+  "acceptance": {
+    "catalog_admitted": true,
+    "unchanged_original_bootloader_and_os_execute": true,
+    "kind": "conditional-functional-acceptance",
+    "canonical_hardware_boot": false,
+    "authenticated_hardware_provenance": false,
+    "guest_memory_patched": false,
+    "scope": "Original NOR cold boot, arithmetic, APLET/HOME, modifiers, portable continuation, tested production browser, normal USB installation, native ARM full capture and return, direct USB Wire upload and stock Disk SEND round trip."
+  },
+  "firmware_identity": {
+    "input_kind": "original-full-nor-dump",
+    "construction": null,
+    "bytes": 1048576,
+    "sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+    "boot_region_bytes": 16384,
+    "boot_region_sha256": "fb4a3862a2ba9cf57746f6275e1c56c23719874a323784ff758240de342554d3"
+  },
+  "acquisition_validation": {
+    "original_sidecar_sha256": "15c16b09ed89be0ee892bcf7b227d51bcb43f92003358667a9383b4e8d8102b6",
+    "original_sidecar_unchanged": true,
+    "contiguous_block_count": 64,
+    "block_bytes": 16384,
+    "indices_offsets_lengths_verified": true,
+    "all_block_hashes_verified": true,
+    "whole_image_hash_verified": true,
+    "boot_region_hash_verified": true,
+    "byte_sum32_verified": true,
+    "reported_double_reads_consistent": true,
+    "reported_retries_zero": true,
+    "physical_acquisition_reported_by_user": true,
+    "physical_device_cable_and_windows_driver_independently_observed": false,
+    "historical_sidecar_flags_not_rewritten": true,
+    "scope": "Local image/metadata consistency and the user-reported acquisition are distinct from new execution/admission decisions. Only the original sidecar hash and validation conclusions are published, not its raw contents or per-block records."
+  },
+  "earlier_derived_fixture": {
+    "bytes": 1048576,
+    "sha256": "894fdb3d1ddfa63f06df0b1db5c573423f2cae3eb51bb4e41eac97676e888761",
+    "construction": "Official HP39gs 2.22 updater OS payload, installed-NOR header conversion, publicly archived 50g/generic 16 KiB boot region and constructed tail backing.",
+    "physical_original_hp39gs_dump": false,
+    "catalog_admitted": false,
+    "region_comparison": [
+      {
+        "region": "boot",
+        "start_offset": 0,
+        "end_offset_exclusive": 16384,
+        "bytes": 16384,
+        "equal": false,
+        "different_bytes": 9221,
+        "original_sha256": "fb4a3862a2ba9cf57746f6275e1c56c23719874a323784ff758240de342554d3",
+        "derived_sha256": "dfa544617039e1bff0f62b9f51a943e57ff756d12bb81478de7aec41a5b73a28"
+      },
+      {
+        "region": "os",
+        "start_offset": 16384,
+        "end_offset_exclusive": 1011712,
+        "bytes": 995328,
+        "equal": true,
+        "different_bytes": 0,
+        "original_sha256": "e9f4f8058f5d3c7649f7f000882316f1cd1b704d14ac8439b43f49948264bd20",
+        "derived_sha256": "e9f4f8058f5d3c7649f7f000882316f1cd1b704d14ac8439b43f49948264bd20"
+      },
+      {
+        "region": "tail",
+        "start_offset": 1011712,
+        "end_offset_exclusive": 1048576,
+        "bytes": 36864,
+        "equal": false,
+        "different_bytes": 36835,
+        "original_sha256": "f88a51d6fff8c7e57c2a5f644cad975ee7f909331ce8e8c9fe3fee0db42be7fa",
+        "derived_sha256": "93c11643664e45d5c0698eb690c9162789f01ba58f36b09ba1bc9cd3b9d49603"
+      }
+    ],
+    "scope": "The identical installed OS bytes support the former OS/aplet execution witness only. The differing bootloader and tail do not validate original full-NOR boot or convert the old fixture into a physical capture."
+  },
+  "compatibility_setup": {
+    "nor_bytes": 1048576,
+    "sram_bytes": 262144,
+    "keyboard": "apples",
+    "nor_device": "sst39vf800a",
+    "nor_part_identity_is_hypothesis": true,
+    "sram_decode": "exact",
+    "sram_mirroring": false,
+    "gpio_inputs": [
+      {
+        "port": "D",
+        "known_mask": "0000cc7f",
+        "levels": "00000000"
+      },
+      {
+        "port": "F",
+        "known_mask": "0000008e",
+        "levels": "00000000"
+      },
+      {
+        "port": "G",
+        "known_mask": "00000001",
+        "levels": "00000000"
+      }
+    ],
+    "gpio_bias": [
+      {
+        "port": "G",
+        "known_mask": "0000f800",
+        "levels": "0000f800"
+      }
+    ],
+    "adc_inputs": [
+      {
+        "channel": 0,
+        "code": 1023
+      },
+      {
+        "channel": 7,
+        "code": 512
+      }
+    ],
+    "lcd_probe68": "idle-zero",
+    "lcd_read_behavior_counted_but_physically_unverified": true,
+    "frame_view": "packed-lsb",
+    "frame_width": 131,
+    "frame_height": 64,
+    "preset_restricted_to_exact_model_and_rom_hash": true
+  },
+  "cold_startup": {
+    "schema": "orchard-nor-probe-v8",
+    "model": "hp39gs",
+    "input_bytes": 1048576,
+    "input_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+    "input_kind": "full-nor-dump",
+    "construction": null,
+    "native_binary_sha256": "08f75f7b29d92fb9efe8c3d49ad4e35f20fe69c89ea9385e73f6a5bb0775d49e",
+    "wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+    "budget": 198000000,
+    "native_wasm_equal": true,
+    "native_replay_equal": true,
+    "wasm_replay_equal": true,
+    "boot_verified": false,
+    "frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+    "nonzero_pixels": 1445,
+    "uart_bytes": 0,
+    "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "startup_witness": {
+      "kind": "conditional-stock-home-arithmetic-and-aplet-return",
+      "displayed_history": [
+        "1+1",
+        "2"
+      ],
+      "verification": "Exact framebuffer hash of a visually inspected original-OS result; no OCR or synthetic pixels",
+      "canonical_hardware_boot": false,
+      "conditions": [
+        "SST39VF800A part identity on HP39gs remains an explicit hypothesis; SRAM decode is exact",
+        "idle-zero LCD +0x68 is counted and unverified",
+        "packed-lsb is a memory inspection view, not verified physical panel mapping",
+        "GPIO bias and ADC codes are explicit test inputs"
+      ]
+    },
+    "independent_native_runs": 2,
+    "independent_wasm_runs": 2,
+    "physical_key_events": [
+      {
+        "tick": 50000000,
+        "column": 5,
+        "row": 5,
+        "down": 1
+      },
+      {
+        "tick": 52000000,
+        "column": 5,
+        "row": 5,
+        "down": 0
+      },
+      {
+        "tick": 124000000,
+        "column": 3,
+        "row": 5,
+        "down": 1
+      },
+      {
+        "tick": 126000000,
+        "column": 3,
+        "row": 5,
+        "down": 0
+      },
+      {
+        "tick": 128000000,
+        "column": 0,
+        "row": 5,
+        "down": 1
+      },
+      {
+        "tick": 130000000,
+        "column": 0,
+        "row": 5,
+        "down": 0
+      },
+      {
+        "tick": 132000000,
+        "column": 3,
+        "row": 5,
+        "down": 1
+      },
+      {
+        "tick": 134000000,
+        "column": 3,
+        "row": 5,
+        "down": 0
+      },
+      {
+        "tick": 136000000,
+        "column": 0,
+        "row": 6,
+        "down": 1
+      },
+      {
+        "tick": 138000000,
+        "column": 0,
+        "row": 6,
+        "down": 0
+      },
+      {
+        "tick": 160000000,
+        "column": 7,
+        "row": 0,
+        "down": 1
+      },
+      {
+        "tick": 162000000,
+        "column": 7,
+        "row": 0,
+        "down": 0
+      },
+      {
+        "tick": 184000000,
+        "column": 6,
+        "row": 6,
+        "down": 1
+      },
+      {
+        "tick": 186000000,
+        "column": 6,
+        "row": 6,
+        "down": 0
+      }
+    ],
+    "result": {
+      "status": "budget-exhausted",
+      "ticks": "198000000",
+      "instructions": "197989465",
+      "exceptions": "415029",
+      "sleeping": false,
+      "stop": {
+        "code": 0,
+        "reason": "ready",
+        "pc": "00000000",
+        "instruction": "00000000",
+        "address": "00000000",
+        "detail": "00000000"
+      },
+      "frame_status": 0,
+      "fault_status": "00000000",
+      "fault_address": "00000000",
+      "key_events_applied": 14,
+      "peripherals": {
+        "lcd_control": 15207713,
+        "lcd_source_pending": 2,
+        "lcd_interrupt_pending": 0,
+        "lcd_interrupt_mask": 3,
+        "lcd_frames": "1781",
+        "adc_control": 49668,
+        "adc_data": 1023,
+        "adc_remaining": 0,
+        "adc_valid": true
+      },
+      "sram_alias_reads": "0",
+      "sram_alias_writes": "0",
+      "lcd_unverified_reads": "12",
+      "annunciators": {
+        "status": 0,
+        "levels": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "reported_result_digest": {
+      "sha256": "a90be26b682877424e675b8628989ee94917ab167f2c390748dd1bd666c4a533",
+      "serialization": "UTF-8 JSON, sorted object keys, no indentation or whitespace separators"
+    },
+    "status_interpretation": "budget-exhausted denotes the requested finite 198,000,000-tick run finishing; stop 0 denotes a ready CPU, not a diagnostic halt.",
+    "scope": "Cold reset of the unchanged original NOR; Memory Clear confirmation, HOME 1+1=2, APLET and HOME return. Canonical physical board calibration remains conditional."
+  },
+  "portable_continuation": {
+    "schema": "orchard-hp39gs-continuation-v1",
+    "model": 2,
+    "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+    "wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+    "saved_at": 160000000,
+    "checkpoint_bytes": 271071,
+    "checkpoint_version": 3,
+    "saved_sha256": "0bec8182c383721054a414bc655a8e7c74f89236411b11f27e76579ea3625817",
+    "final_frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+    "uninterrupted_and_restored_equal": true,
+    "native_wasm_resume_equal": true,
+    "native_wasm_resume_ticks": 50000,
+    "guest_memory_patched": false,
+    "canonical_hardware_boot": false,
+    "scope": "Original-ROM 1+1, saved state, physical APLET/HOME switches, exact serialized continuation and portable resume. Browser file-picker workflow is a separate witness."
+  },
+  "annunciators": {
+    "schema": "orchard-packed-segments-v1",
+    "preset": "hp39gs-home",
+    "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+    "wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+    "events": [
+      {
+        "tick": 50000000,
+        "scan": 40,
+        "down": 1
+      },
+      {
+        "tick": 53000000,
+        "scan": 40,
+        "down": 0
+      },
+      {
+        "tick": 160000000,
+        "scan": 59,
+        "down": 1
+      },
+      {
+        "tick": 162000000,
+        "scan": 59,
+        "down": 0
+      },
+      {
+        "tick": 165000000,
+        "scan": 59,
+        "down": 1
+      },
+      {
+        "tick": 167000000,
+        "scan": 59,
+        "down": 0
+      },
+      {
+        "tick": 170000000,
+        "scan": 58,
+        "down": 1
+      },
+      {
+        "tick": 172000000,
+        "scan": 58,
+        "down": 0
+      },
+      {
+        "tick": 175000000,
+        "scan": 58,
+        "down": 1
+      },
+      {
+        "tick": 177000000,
+        "scan": 58,
+        "down": 0
+      },
+      {
+        "tick": 180000000,
+        "scan": 58,
+        "down": 1
+      },
+      {
+        "tick": 182000000,
+        "scan": 58,
+        "down": 0
+      },
+      {
+        "tick": 185000000,
+        "scan": 58,
+        "down": 1
+      },
+      {
+        "tick": 187000000,
+        "scan": 58,
+        "down": 0
+      }
+    ],
+    "interpretation": "Packed x=131, rows 0..5; reference routing requires original firmware confirmation. No physical wiring certificate.",
+    "records": [
+      {
+        "name": "HOME baseline",
+        "tick": 160000000,
+        "status": 0,
+        "levels": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "cpu_stop": 0,
+        "fault_status": 0,
+        "fault_address": 0
+      },
+      {
+        "name": "key 59 down",
+        "tick": 162000000,
+        "status": 0,
+        "levels": [
+          0,
+          255,
+          0,
+          0,
+          0,
+          0
+        ],
+        "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "cpu_stop": 0,
+        "fault_status": 0,
+        "fault_address": 0
+      },
+      {
+        "name": "key 59 released",
+        "tick": 165000000,
+        "status": 0,
+        "levels": [
+          0,
+          255,
+          0,
+          0,
+          0,
+          0
+        ],
+        "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "cpu_stop": 0,
+        "fault_status": 0,
+        "fault_address": 0
+      },
+      {
+        "name": "key 59 down",
+        "tick": 167000000,
+        "status": 0,
+        "levels": [
+          0,
+          255,
+          0,
+          0,
+          0,
+          0
+        ],
+        "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "cpu_stop": 0,
+        "fault_status": 0,
+        "fault_address": 0
+      },
+      {
+        "name": "key 59 released",
+        "tick": 170000000,
+        "status": 0,
+        "levels": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "cpu_stop": 0,
+        "fault_status": 0,
+        "fault_address": 0
+      },
+      {
+        "name": "key 58 down",
+        "tick": 172000000,
+        "status": 0,
+        "levels": [
+          0,
+          0,
+          0,
+          255,
+          0,
+          0
+        ],
+        "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "cpu_stop": 0,
+        "fault_status": 0,
+        "fault_address": 0
+      },
+      {
+        "name": "key 58 released",
+        "tick": 175000000,
+        "status": 0,
+        "levels": [
+          0,
+          0,
+          0,
+          255,
+          0,
+          0
+        ],
+        "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "cpu_stop": 0,
+        "fault_status": 0,
+        "fault_address": 0
+      },
+      {
+        "name": "key 58 down",
+        "tick": 177000000,
+        "status": 0,
+        "levels": [
+          0,
+          0,
+          0,
+          255,
+          0,
+          0
+        ],
+        "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "cpu_stop": 0,
+        "fault_status": 0,
+        "fault_address": 0
+      },
+      {
+        "name": "key 58 released",
+        "tick": 180000000,
+        "status": 0,
+        "levels": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "cpu_stop": 0,
+        "fault_status": 0,
+        "fault_address": 0
+      },
+      {
+        "name": "key 58 down",
+        "tick": 182000000,
+        "status": 0,
+        "levels": [
+          0,
+          0,
+          0,
+          255,
+          0,
+          0
+        ],
+        "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "cpu_stop": 0,
+        "fault_status": 0,
+        "fault_address": 0
+      },
+      {
+        "name": "key 58 released",
+        "tick": 185000000,
+        "status": 0,
+        "levels": [
+          0,
+          0,
+          0,
+          255,
+          0,
+          0
+        ],
+        "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "cpu_stop": 0,
+        "fault_status": 0,
+        "fault_address": 0
+      },
+      {
+        "name": "key 58 down",
+        "tick": 187000000,
+        "status": 0,
+        "levels": [
+          0,
+          0,
+          0,
+          255,
+          0,
+          0
+        ],
+        "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "cpu_stop": 0,
+        "fault_status": 0,
+        "fault_address": 0
+      },
+      {
+        "name": "key 58 released",
+        "tick": 190000000,
+        "status": 0,
+        "levels": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "cpu_stop": 0,
+        "fault_status": 0,
+        "fault_address": 0
+      }
+    ],
+    "observed_segment_mapping": {
+      "shift": 1,
+      "alpha": 3
+    },
+    "scope": "Original-firmware response to physical modifier switches, including release and repeated toggles; this does not independently calibrate physical-panel wiring."
+  },
+  "browser": {
+    "schema": "orchard-hp39gs-browser-v1",
+    "passed": true,
+    "performance_sample": false,
+    "production_worker": true,
+    "model": {
+      "id": 2,
+      "name": "hp39gs",
+      "width": 131,
+      "height": 64,
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff"
+    },
+    "assets": {
+      "orchard.wasm": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+      "calculator.js": "648d8d65d224e6e6f46afb16d9fbfe80bb068f96dc1c5b303b13827c570f8f5a",
+      "worker.js": "e6bd8b75b5486712a5b2b64ba5ee71a052eed218f4d0c8d876edab5db42dce42",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "file-transfer.js": "1e0af1f5c6a849c1bc749a0e25e790aa3c155fe971e46e6ccd220d26fcaa41bd",
+      "kermit.js": "ca158a32e2d5ec94c74e9393482fe6e65a3ce649a7992ae65762a95793ac7352",
+      "hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+      "hp39-transfer.js": "c5c5a037255e1291a7b1584305e1c6b7e3624f6f8a185ede50813320fbc4877b"
+    },
+    "physical_startup_keys": [
+      40
+    ],
+    "tools": {
+      "probe-hp39gs-browser.py": "76aa6ad9564250cf9f86692b64cff6ef36207b4b751fda753abd2b8f2869a87d",
+      "probe-file-transfer-browser.py": "820d3b4b345a7ebc0b94af9fd6ef51ad7b66a5a9bd6c83b5e43cfc9019e11279"
+    },
+    "browser_version": "156.0.8078.47",
+    "stage": "complete",
+    "home_frame": {
+      "width": 131,
+      "height": 64,
+      "rgba_sha256": "9b4314e795f96a0ddd57f7e74969bcbac562c58b26d06ede2e700dcb3f6fc206"
+    },
+    "one_plus_one_frame": {
+      "width": 131,
+      "height": 64,
+      "rgba_sha256": "88877911de478ceed3c54769b786a3744486de01667137a5b7452a171e910886"
+    },
+    "one_plus_one_requires_visual_review": true,
+    "capture": {
+      "width": 524,
+      "height": 256,
+      "sha256": "3134900139771e1cff70b7a0be26f34b0e3cc3ff779be8f6bd8cb227fb1926b8"
+    },
+    "save": {
+      "schema": 1,
+      "model": 2,
+      "romHash": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "preset": "hp39gs-home",
+      "frameView": 1,
+      "stateHash": "cb6dcb0853ebdca2501d44bd6b53a50d928802f59960e2844b3a6f04ef6f028e",
+      "checkpoint_version": 3,
+      "checkpoint_bytes": 271071,
+      "file_sha256": "16524dd7a0f3af8b971f46eb8bb5403686a5be83800d1af8d162dd27ada275e3"
+    },
+    "seven_times_eight_requires_visual_review": true,
+    "saved_lcd_restored_exactly": true,
+    "narrow_layout": {
+      "x": 57.734375,
+      "y": 241,
+      "width": 274.53125,
+      "height": 484.84375
+    },
+    "landscape_aplet_frame": {
+      "width": 131,
+      "height": 64,
+      "rgba_sha256": "733eab2b2ab19b2618ef020d8ca253f0007ffa649cf5edc8a71a00f985bae845"
+    },
+    "home_after_landscape_aplet": {
+      "width": 131,
+      "height": 64,
+      "rgba_sha256": "88877911de478ceed3c54769b786a3744486de01667137a5b7452a171e910886"
+    },
+    "landscape_aplet_home_return": true,
+    "worker_observation": {
+      "events": [
+        {
+          "type": "checkpoint-restored",
+          "generation": 2
+        }
+      ],
+      "snapshot": {
+        "loaded": true,
+        "running": true,
+        "stopped": false,
+        "model": 2,
+        "width": 131,
+        "height": 64,
+        "pending": 0,
+        "active": null,
+        "ticks": 212719022
+      },
+      "snapshots": 596,
+      "errors": []
+    },
+    "page_errors": [],
+    "assets_scope": "Actual tested production assets. This browser run does not claim to cover a later UI bundle merely because the WASM digest is unchanged.",
+    "subsequent_ui_bundle": {
+      "calculator_js_sha256": "e01728750c5dcb210788e2f9392e7a3b484c72283b26061e5d265a3882897c93",
+      "change": "Two recovery-help text strings updated after this browser run.",
+      "same_as_tested_calculator_bundle": false,
+      "covered_by_this_browser_run": false,
+      "wasm_worker_and_transfer_module_digests_unchanged": true
+    },
+    "visual_review": {
+      "one_plus_one": {
+        "reviewed": true,
+        "observed_expression": "1+1",
+        "observed_result": "2",
+        "private_screenshot_sha256": "80dc7b080663efc0e68dbbb56a34bc101c080778bde825bbbf3a27c9cf690486"
+      },
+      "seven_times_eight": {
+        "reviewed": true,
+        "observed_expression": "7*8",
+        "observed_result": "56",
+        "private_screenshot_sha256": "2a7a8c16be73a3552e4d25aa4c979cf18d1091ed56e813b0bc8fe330a7823f13"
+      },
+      "landscape": {
+        "reviewed_by_parent": true,
+        "observed": "Display on the left, keypad on the right; restored HOME still shows 1+1=2.",
+        "private_screenshot_sha256": "61627c059b249008bf1204989806e96d16a3d4bf896b4da78e1d21022f756b4e"
+      },
+      "scope": "Post-run human-readable visual inspection of retained private screenshots. The original report requires_visual_review flags are retained unchanged; frame changes alone are not arithmetic proof."
+    }
+  },
+  "disk_install": {
+    "schema": "orchard-hp39gs-stock-install-v1",
+    "model": 2,
+    "preset": "hp39gs-home",
+    "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+    "wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+    "cold_boot": true,
+    "normal_os_usb_install": true,
+    "guest_memory_patched": false,
+    "inputs": [
+      {
+        "name": "HP39DIR.CUR",
+        "bytes": 31,
+        "sha256": "542dda3d8ae6257461c7836962e390dfa7898f6c20759b650d927f73b9718d41"
+      },
+      {
+        "name": "HP39DIR.000",
+        "bytes": 66,
+        "sha256": "beb1906b4946b4b1b454bf9833416885bf7b9cae46d3e527d23824d9d173532a"
+      },
+      {
+        "name": "HPGCC000.000",
+        "bytes": 10344,
+        "sha256": "298732caeba57a240acf135f1260c6f1cf1899e024fb734f3b4d2c4f92cadcc1"
+      },
+      {
+        "name": "LIB275L.000",
+        "bytes": 1489,
+        "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+      }
+    ],
+    "complete": true,
+    "final_tick": 1135124416,
+    "calculator_menu": "APLET → RECV → USB Disk drive…",
+    "served_order": [
+      "HP39DIR.CUR",
+      "HP39DIR.000",
+      "HPGCC000.000",
+      "LIB275L.000"
+    ],
+    "status_events": 19,
+    "completed_objects": 2,
+    "total_objects": 2,
+    "object_bytes_transferred": 11833,
+    "object_bytes_total": 11833,
+    "terminal_status": {
+      "type": "file-transfer-status",
+      "request": 1,
+      "transport": "usb",
+      "active": false,
+      "phase": "cancelled",
+      "direction": "serve",
+      "name": "LIB275L.000",
+      "transferred": 11833,
+      "total": 11833,
+      "hostedTransferred": 11833,
+      "hostedTotal": 11833,
+      "filesCompleted": 2,
+      "filesTotal": 2,
+      "error": "File transfer cancelled."
+    },
+    "terminal_status_interpretation": "The host service was deliberately cancelled after both selected objects completed. This is not a failed installation.",
+    "ready_checkpoint_sha256": "e7498f990cfef810d64908068a90ca101a1390c800409a814224ab952f94e252",
+    "handoff_to_native_witness_byte_hash_verified": true,
+    "source_module_digests_recorded_by_this_report": false,
+    "identity_scope": "This earlier cold Disk installation pins the original NOR and production WASM, but did not record host module digests. Do not silently attribute the later Wire run module digests to it."
+  },
+  "native_full_capture_and_return": {
+    "schema": "orchard-hp39-romstream-stock-v2",
+    "model": "hp39gs",
+    "fixture_kind": "original-full-nor",
+    "hardware_validated": false,
+    "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+    "wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+    "starting_checkpoint_sha256": "e7498f990cfef810d64908068a90ca101a1390c800409a814224ab952f94e252",
+    "guest_memory_patched": false,
+    "physical_key_launch": true,
+    "usb_hid_identity": {
+      "vendor": 1008,
+      "product": 289,
+      "manufacturer": "hpclang",
+      "name": "HP39 ROM Stream V2",
+      "endpoints": [
+        {
+          "address": 129,
+          "type": 3,
+          "maxPacket": 64
+        },
+        {
+          "address": 2,
+          "type": 3,
+          "maxPacket": 64
+        }
+      ]
+    },
+    "read_reports": 37634,
+    "write_reports": 131,
+    "returned_to_stock_os": true,
+    "arithmetic_after_return_verified": true,
+    "external_cable_input": {
+      "port": "F",
+      "known_mask": "0x8e",
+      "connected_levels": "0x02",
+      "disconnected_levels": "0x00"
+    },
+    "waiting_lcd_sha256": "59704edb9722237e560d80224c6d1e68f7dc68d527a44329e92be2a952994fef",
+    "host_ready_lcd_sha256": "e677c2e8f0aa5a8bd1565a13151625aad1f70362f373d66ad38ccbfdbc8eeb0e",
+    "before_finish_checkpoint_sha256": "98437851866e62f17c6cc69a837fd907e7bb28b9bb373835a1a6bffaba1667cb",
+    "before_finish_host": {
+      "address": 7,
+      "next_out_pid": 0
+    },
+    "saved_lcd_sha256": "9b17f444222c9be3501a75278d80c48e9a17681d9b3ef9002a91dbc1dc6d990b",
+    "after_return_lcd_sha256": "cbfb1472d296cd0c16a90ce8162dd49ace1faba2a9b7a8a76e6ac18a6c5a0338",
+    "home_lcd_sha256": "9316be3639ac154e9783ccb02f9cdd7478940e8ffdc65290e97f79ee915b7ee7",
+    "arithmetic_lcd_sha256": "abf32ffc5e2fdcfc17172a5351eb6aac13d44a1b432d683f5a1f0c8e2a26844c",
+    "stock_usb_after_return": {
+      "vendor": 1008,
+      "product": 289,
+      "manufacturer": "HP Company",
+      "name": "HPx9G+ Device",
+      "endpoints": [
+        {
+          "address": 129,
+          "type": 2,
+          "maxPacket": 64
+        },
+        {
+          "address": 3,
+          "type": 2,
+          "maxPacket": 64
+        }
+      ]
+    },
+    "final_cpu_stop": 0,
+    "final_tick": 1655565920,
+    "capture": {
+      "protocol": "H39ROM-HID/2",
+      "reader_revision": 2,
+      "bytes": 1048576,
+      "sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "boot_region_bytes": 16384,
+      "boot_region_sha256": "fb4a3862a2ba9cf57746f6275e1c56c23719874a323784ff758240de342554d3",
+      "byte_sum32": "0x05ff4453",
+      "blocks": 64,
+      "block_bytes": 16384,
+      "read_passes_per_block": 2,
+      "independent_block_reads_equal": true,
+      "transport_retries": 0,
+      "all_block_offsets_lengths_and_hashes_verified_against_input": true,
+      "full_image_byte_comparison_passed": true,
+      "receiver_test": "TestStockOSFullCapture",
+      "receiver_test_result": "PASS",
+      "scope": "A separate emulator execution of the installed native ARM reader and the real Go receiver. The test compares returned bytes against the original input. This is not another independently observed physical-device acquisition."
+    },
+    "return_path": "FINISH, then disconnect; stock OS return, physical HOME, 1+1=2, and reconnect to the original Disk client.",
+    "source_module_digests_recorded_by_this_report": false,
+    "host_timing_sample": false
+  },
+  "direct_usb_wire_roundtrip": {
+    "schema": "orchard-hp39gs-wire-stock-v1",
+    "model": 2,
+    "preset": "hp39gs-home",
+    "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+    "wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+    "cold_boot": true,
+    "guest_memory_patched": false,
+    "host_timing_sample": false,
+    "hardware_validated": false,
+    "roundtrip": true,
+    "calculator_upload_menu": "HP39/40 (USB)",
+    "calculator_download_menu": "USB Disk drive…",
+    "sources": {
+      "web/hp48.js": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+      "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "web/file-transfer.js": "1e0af1f5c6a849c1bc749a0e25e790aa3c155fe971e46e6ccd220d26fcaa41bd",
+      "web/hp39-wire.js": "21b7151da97eeef57634742e9365d7fb682c57f46ffaee09e0e488ae4ec77299",
+      "web/hp39-transfer.js": "c5c5a037255e1291a7b1584305e1c6b7e3624f6f8a185ede50813320fbc4877b",
+      "web/hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b"
+    },
+    "inputs": [
+      {
+        "name": "LIB275L.000",
+        "bytes": 1489,
+        "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1",
+        "kind": "H",
+        "wire": {
+          "start_tick": 159409600,
+          "end_tick": 223866560,
+          "acknowledged_bytes": 1489,
+          "transport_bytes_out": 1562,
+          "transport_bytes_in": 7,
+          "check": 68
+        }
+      },
+      {
+        "name": "HPGCC000.000",
+        "bytes": 10344,
+        "sha256": "298732caeba57a240acf135f1260c6f1cf1899e024fb734f3b4d2c4f92cadcc1",
+        "kind": "B",
+        "wire": {
+          "start_tick": 246866560,
+          "end_tick": 271928192,
+          "acknowledged_bytes": 10344,
+          "transport_bytes_out": 10424,
+          "transport_bytes_in": 13,
+          "check": 68
+        }
+      }
+    ],
+    "keys": [
+      {
+        "tick": 50000000,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "tick": 52000000,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "tick": 124000000,
+        "scan": 49,
+        "down": true
+      },
+      {
+        "tick": 126000000,
+        "scan": 49,
+        "down": false
+      },
+      {
+        "tick": 148000000,
+        "scan": 39,
+        "down": true
+      },
+      {
+        "tick": 150000000,
+        "scan": 39,
+        "down": false
+      },
+      {
+        "tick": 155000000,
+        "scan": 44,
+        "down": true
+      },
+      {
+        "tick": 157000000,
+        "scan": 44,
+        "down": false
+      },
+      {
+        "tick": 159409600,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "tick": 161409600,
+        "scan": 6,
+        "down": false
+      },
+      {
+        "tick": 235866560,
+        "scan": 39,
+        "down": true
+      },
+      {
+        "tick": 237866560,
+        "scan": 39,
+        "down": false
+      },
+      {
+        "tick": 242866560,
+        "scan": 44,
+        "down": true
+      },
+      {
+        "tick": 244866560,
+        "scan": 44,
+        "down": false
+      },
+      {
+        "tick": 246866560,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "tick": 248866560,
+        "scan": 6,
+        "down": false
+      },
+      {
+        "tick": 391928192,
+        "scan": 38,
+        "down": true
+      },
+      {
+        "tick": 393928192,
+        "scan": 38,
+        "down": false
+      },
+      {
+        "tick": 398928192,
+        "scan": 44,
+        "down": true
+      },
+      {
+        "tick": 400928192,
+        "scan": 44,
+        "down": false
+      },
+      {
+        "tick": 402928192,
+        "scan": 44,
+        "down": true
+      },
+      {
+        "tick": 404928192,
+        "scan": 44,
+        "down": false
+      },
+      {
+        "tick": 406928192,
+        "scan": 44,
+        "down": true
+      },
+      {
+        "tick": 408928192,
+        "scan": 44,
+        "down": false
+      },
+      {
+        "tick": 410928192,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "tick": 412928192,
+        "scan": 6,
+        "down": false
+      },
+      {
+        "tick": 417928192,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "tick": 419928192,
+        "scan": 6,
+        "down": false
+      },
+      {
+        "tick": 5296823424,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "tick": 5298823424,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "tick": 5316823424,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "tick": 5318823424,
+        "scan": 6,
+        "down": false
+      },
+      {
+        "tick": 5383257600,
+        "scan": 56,
+        "down": true
+      },
+      {
+        "tick": 5385257600,
+        "scan": 56,
+        "down": false
+      },
+      {
+        "tick": 5403257600,
+        "scan": 48,
+        "down": true
+      },
+      {
+        "tick": 5405257600,
+        "scan": 48,
+        "down": false
+      },
+      {
+        "tick": 5417257600,
+        "scan": 26,
+        "down": true
+      },
+      {
+        "tick": 5419257600,
+        "scan": 26,
+        "down": false
+      },
+      {
+        "tick": 5421257600,
+        "scan": 5,
+        "down": true
+      },
+      {
+        "tick": 5423257600,
+        "scan": 5,
+        "down": false
+      },
+      {
+        "tick": 5425257600,
+        "scan": 26,
+        "down": true
+      },
+      {
+        "tick": 5427257600,
+        "scan": 26,
+        "down": false
+      },
+      {
+        "tick": 5429257600,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "tick": 5431257600,
+        "scan": 6,
+        "down": false
+      }
+    ],
+    "usb": [
+      {
+        "tick": 159000000,
+        "connected": false,
+        "phase": "Disconnected"
+      },
+      {
+        "tick": 159000000,
+        "connected": true,
+        "phase": "Connecting…"
+      },
+      {
+        "tick": 159409600,
+        "connected": true,
+        "phase": "Connected",
+        "info": {
+          "vendor": 1008,
+          "product": 289,
+          "manufacturer": "HP Company",
+          "name": "HPx9G+ Device",
+          "endpoints": [
+            {
+              "address": 129,
+              "type": 2,
+              "maxPacket": 64
+            },
+            {
+              "address": 3,
+              "type": 2,
+              "maxPacket": 64
+            }
+          ]
+        }
+      },
+      {
+        "tick": 5294823424,
+        "connected": false,
+        "phase": "Disconnected"
+      },
+      {
+        "tick": 5322823424,
+        "connected": false,
+        "phase": "Disconnected"
+      },
+      {
+        "tick": 5322823424,
+        "connected": true,
+        "phase": "Connecting…"
+      },
+      {
+        "tick": 5323257600,
+        "connected": true,
+        "phase": "Connected",
+        "info": {
+          "vendor": 1008,
+          "product": 289,
+          "manufacturer": "hpclang",
+          "name": "HP39 ROM Stream V2",
+          "endpoints": [
+            {
+              "address": 129,
+              "type": 3,
+              "maxPacket": 64
+            },
+            {
+              "address": 2,
+              "type": 3,
+              "maxPacket": 64
+            }
+          ]
+        }
+      },
+      {
+        "tick": 5323257600,
+        "connected": false,
+        "phase": "Disconnected"
+      }
+    ],
+    "frames": [
+      {
+        "name": "memory-clear",
+        "tick": 50000000,
+        "sha256": "27c642f79508e9bedceffa8f7ab38ed25c0386461e16bad608939c1fdaf878c7",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "home",
+        "tick": 124000000,
+        "sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "receive-usb-menu",
+        "tick": 159000000,
+        "sha256": "c51edfcfadb5e71c3212bb7b4ada76951fc7bc3b6f85857746225448c90e8f8f",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "wire-complete-1",
+        "tick": 223866560,
+        "sha256": "5deab2df2e5aa5a0e0b39e3bc2af7636b648fd7ca04e3dabc09eefa304ffa10b",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "receive-usb-menu-2",
+        "tick": 246866560,
+        "sha256": "6a939467c52251d5942be8decfc457e3de314373b45255d3e2e48fce097d02a9",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "wire-complete-2",
+        "tick": 271928192,
+        "sha256": "bbb8b1a2ee83f19ba1b2d4f12cfeb11350c28135a8c6a76756cc2a118c710dba",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "installed-aplet",
+        "tick": 391928192,
+        "sha256": "dcd15436e32c34a297e3c9522b3bc687ef7fe83556d0161ff50ca1b65a3e7fb2",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "send-disk-menu",
+        "tick": 410928192,
+        "sha256": "659327694e4a7fe554ad319244e37916b67f80d5782144c922b44fbefa937ff1",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "send-name",
+        "tick": 417928192,
+        "sha256": "d0449c11d4178a20627b886ad771adfc1e9f7b8ebfd208ed42a13590334f1aa5",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "after-send",
+        "tick": 5294823424,
+        "sha256": "dcd15436e32c34a297e3c9522b3bc687ef7fe83556d0161ff50ca1b65a3e7fb2",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "aplet-before-enter",
+        "tick": 5316823424,
+        "sha256": "cbfb1472d296cd0c16a90ce8162dd49ace1faba2a9b7a8a76e6ac18a6c5a0338",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "waiting-for-usb",
+        "tick": 5322823424,
+        "sha256": "59704edb9722237e560d80224c6d1e68f7dc68d527a44329e92be2a952994fef",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "native-reader-connected",
+        "tick": 5323257600,
+        "sha256": "e677c2e8f0aa5a8bd1565a13151625aad1f70362f373d66ad38ccbfdbc8eeb0e",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "native-reader-cable-lost",
+        "tick": 5383257600,
+        "sha256": "b55b5ae57c5c40da11cec9a287d9f9d50bd91ea991720805e3cdb0340517b537",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "home-after-native-return",
+        "tick": 5417257600,
+        "sha256": "9316be3639ac154e9783ccb02f9cdd7478940e8ffdc65290e97f79ee915b7ee7",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "one-plus-one-after-return",
+        "tick": 5463257600,
+        "sha256": "abf32ffc5e2fdcfc17172a5351eb6aac13d44a1b432d683f5a1f0c8e2a26844c",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      }
+    ],
+    "received": [
+      {
+        "tick": 4816641280,
+        "name": "H39ROMV2.000",
+        "bytes": 10344,
+        "sha256": "298732caeba57a240acf135f1260c6f1cf1899e024fb734f3b4d2c4f92cadcc1"
+      },
+      {
+        "tick": 5277433088,
+        "name": "LIB275L0.000",
+        "bytes": 1484,
+        "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f"
+      },
+      {
+        "tick": 5282823424,
+        "name": "HP39DIR.000",
+        "bytes": 65,
+        "sha256": "f1e8ce5742a9ba6c0712abe474c95ca956a623adc1492e3608c5196d6d748d3d"
+      }
+    ],
+    "passed": true,
+    "installed_checkpoint_sha256": "be564e7bd7e274a28d1d906556c4ddc791c632d250101c71cc229d30039a4788",
+    "aplet_file_equal": true,
+    "library_body_equal": true,
+    "library_alias_preserved": true,
+    "ready_checkpoint_sha256": "9437106f86f9b33007bda86c89ed32a59ccbe51e535dcb0a0b933494813b5d5b",
+    "native_reader_usb": {
+      "vendor": 1008,
+      "product": 289,
+      "manufacturer": "hpclang",
+      "name": "HP39 ROM Stream V2",
+      "endpoints": [
+        {
+          "address": 129,
+          "type": 3,
+          "maxPacket": 64
+        },
+        {
+          "address": 2,
+          "type": 3,
+          "maxPacket": 64
+        }
+      ]
+    },
+    "arithmetic_frame_sha256": "abf32ffc5e2fdcfc17172a5351eb6aac13d44a1b432d683f5a1f0c8e2a26844c",
+    "native_reader_launched": true,
+    "native_exit": "E03 cable lost, physical ON acknowledgement",
+    "returned_home": true,
+    "arithmetic_after_return": true,
+    "tool_sha256": "66038c180f8e48d1bd5e8cf82279fa9d370d2cdbffee9c0dc7034bdff0027d2b",
+    "timebase_hz": 12000000,
+    "run_quantum_max_ticks": 8192,
+    "fresh_receiver_before_each_upload": true,
+    "physical_key_scan_encoding": "Matrix scan = column*7+row for scans below 56; ON=56, ALPHA=58, SHIFT=59.",
+    "wire_check": {
+      "received_byte": 68,
+      "character": "D",
+      "method": "CRC-16/KERMIT"
+    },
+    "wire_terminal_statuses": [
+      {
+        "tick": 223866560,
+        "type": "file-transfer-status",
+        "request": 1,
+        "transport": "usb",
+        "active": false,
+        "phase": "complete",
+        "protocol": "hp39-wire",
+        "direction": "send",
+        "name": "LIB275L.000",
+        "transferred": 1489,
+        "total": 1489
+      },
+      {
+        "tick": 271928192,
+        "type": "file-transfer-status",
+        "request": 2,
+        "transport": "usb",
+        "active": false,
+        "phase": "complete",
+        "protocol": "hp39-wire",
+        "direction": "send",
+        "name": "HPGCC000.000",
+        "transferred": 10344,
+        "total": 10344
+      }
+    ],
+    "wire_complete_includes_eot_ack": true,
+    "source_production_equality": {
+      "schema": "orchard-stock-source-production-equality-v1",
+      "report_sha256": "271b3f4cd5bec670e60e6f76eeee0e31422967b6bf45f155df95d976d2ca43ca",
+      "wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+      "all_equal": true,
+      "modules": {
+        "hp48.js": {
+          "source_sha256": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+          "production_sha256": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87"
+        },
+        "virtual-usb.js": {
+          "source_sha256": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+          "production_sha256": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373"
+        },
+        "file-transfer.js": {
+          "source_sha256": "1e0af1f5c6a849c1bc749a0e25e790aa3c155fe971e46e6ccd220d26fcaa41bd",
+          "production_sha256": "1e0af1f5c6a849c1bc749a0e25e790aa3c155fe971e46e6ccd220d26fcaa41bd"
+        },
+        "hp39-wire.js": {
+          "source_sha256": "21b7151da97eeef57634742e9365d7fb682c57f46ffaee09e0e488ae4ec77299",
+          "production_sha256": "21b7151da97eeef57634742e9365d7fb682c57f46ffaee09e0e488ae4ec77299"
+        },
+        "hp39-transfer.js": {
+          "source_sha256": "c5c5a037255e1291a7b1584305e1c6b7e3624f6f8a185ede50813320fbc4877b",
+          "production_sha256": "c5c5a037255e1291a7b1584305e1c6b7e3624f6f8a185ede50813320fbc4877b"
+        },
+        "hp39-files.js": {
+          "source_sha256": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b",
+          "production_sha256": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b"
+        },
+        "kermit.js": {
+          "source_sha256": "ca158a32e2d5ec94c74e9393482fe6e65a3ce649a7992ae65762a95793ac7352",
+          "production_sha256": "ca158a32e2d5ec94c74e9393482fe6e65a3ce649a7992ae65762a95793ac7352"
+        }
+      },
+      "scope": "Read-only equality check after completed original-ROM workflow; no artifact is rebuilt."
+    },
+    "source_production_equality_scope": "The Node witness imports production source modules. Each of the seven recorded source modules was compared byte-for-byte with the production dist module after the run. This is not a browser interaction witness.",
+    "library_export_semantics": "Stock SEND shortens/rebuilds the library header/title. The returned 1,484-byte library is not byte-identical as a whole to the 1,489-byte uploaded file; its payload is identical and its LIB275L alias is preserved.",
+    "returned_library_alias": "LIB275L",
+    "displayed_aplet_title": "H39 ROM V2",
+    "native_reader_full_capture_in_this_run": false,
+    "native_return_scope": "The Wire run launches the installed reader, then disconnects without a ROM read. Expected E03 CABLE LOST waits for physical ON acknowledgment before HOME arithmetic. The complete FINISH-based reader capture is the separate native witness.",
+    "final_cpu": {
+      "tick": 5463257600,
+      "stop": 0,
+      "fault_status": 0,
+      "fault_address": 0
+    },
+    "stock_send_virtual_elapsed": {
+      "service_start_tick": 417928192,
+      "all_three_files_received_tick": 5282823424,
+      "guest_seconds": 405.407936,
+      "wall_clock_or_performance_measurement": false
+    },
+    "service_teardown": "After all three objects were received and verified, the harness disconnected the USB service to launch the reader. Subsequent cancelled/USB connection changed notifications are intentional teardown, not a failed SEND."
+  },
+  "slow_stock_send_budget": {
+    "counterexample": {
+      "report_id": "wire-five-minute-counterexample",
+      "wasm_sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7",
+      "tool_sha256": "54707847aa99f11859aac7e47c80c57b5777b190b467bd337a2fa412f36c7b19",
+      "sources": {
+        "web/hp48.js": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87",
+        "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "web/file-transfer.js": "1e0af1f5c6a849c1bc749a0e25e790aa3c155fe971e46e6ccd220d26fcaa41bd",
+        "web/hp39-wire.js": "ac4406698535c384bccb745693c93fe79f77cea2b36b45afb8e927b2798107ea",
+        "web/hp39-transfer.js": "e0dc70e39bf86226896d0b818b356a86939cfc05c0e5c3cb4badd84a5fbefa6d",
+        "web/hp39-files.js": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b"
+      },
+      "wire_upload_completed": true,
+      "incomplete_object": {
+        "name": "H39ROMV2.000",
+        "received_bytes": 8381,
+        "expected_bytes": 10344,
+        "last_progress_tick": 3970743552
+      },
+      "failure_tick": 4078009600,
+      "error": "File transfer exceeded its five-minute virtual-time limit.",
+      "cpu_stop": 0,
+      "fault_status": 0,
+      "fault_address": 0,
+      "cause": "An HP39 child Kermit session inherited the generic 300-second duration even though the enclosing server allowed 900 guest seconds. The original OS was still making progress."
+    },
+    "correction": {
+      "child_duration_guest_seconds": "max(0, (server.end - now) / hz)",
+      "hp39_server_total_guest_seconds": 900,
+      "server_deadline_is_reset_by_child_or_progress": false,
+      "generic_kermit_default_guest_seconds": 300,
+      "packet_retry_limit": 4,
+      "packet_idle_deadlines_remain_enabled": true,
+      "guest_core_or_guest_instruction_timing_changed_for_this_fix": false,
+      "hp39_transfer_sha256": "c5c5a037255e1291a7b1584305e1c6b7e3624f6f8a185ede50813320fbc4877b",
+      "kermit_sha256": "ca158a32e2d5ec94c74e9393482fe6e65a3ce649a7992ae65762a95793ac7352",
+      "regression_source": "tests/hp39-transfer.mjs",
+      "regression_cases": [
+        "A progressing transfer crossing 300 guest seconds completes before 900 seconds.",
+        "A new child begun near 900 seconds cannot renew the original server deadline."
+      ]
+    },
+    "verified_original_rom_result": {
+      "report_id": "wire-roundtrip-final",
+      "passed": true,
+      "all_three_files_received": 3,
+      "stock_send_guest_seconds": 405.407936,
+      "aplet_file_equal": true,
+      "library_body_equal": true,
+      "library_alias_preserved": true
+    },
+    "remaining_boundary": "The original OS reverse SEND remains slow in virtual time. This fixes the premature total-duration failure and does not establish wall-clock throughput or cover serial/IrDA."
+  },
+  "boundaries": [
+    "No original ROM, raw acquisition sidecar, checkpoint contents, framebuffer bytes, screenshots or transferred object contents are included in this public record.",
+    "Local integrity checks and original-byte execution do not independently authenticate the reported physical acquisition or Windows HID path.",
+    "NOR part identification, LCD +0x68 behavior, packed display mapping, GPIO bias and analog inputs remain explicit compatibility conditions.",
+    "Browser workflow claims apply to its recorded calculator.js 648d8d65d224e6e6f46afb16d9fbfe80bb068f96dc1c5b303b13827c570f8f5a; a later recovery-help text bundle has a different identity.",
+    "Direct upload used the original 39gs HP39/40 (USB) receiver; stock reverse SEND used USB Disk drive. HP39/40 (Ser), IrDA and HP40gs were not exercised here.",
+    "The successful Wire/native workflow is separate from HP39g+ browser error-recovery evidence and does not inherit that model-specific coverage.",
+    "The native full-capture FINISH return and the Wire-run cable-loss/ON return are separate observed paths.",
+    "No wall-clock performance, physical CPU-clock accuracy, broad native-application compatibility or sustained power-behavior claim follows from these finite witnesses.",
+    "HP40gs and HP50g still require their own complete original NORs and independent acceptance."
+  ],
+  "provenance": {
+    "private_report_digests": {
+      "input-integrity": {
+        "schema": "orchard-hp39-rom-capture-v1",
+        "bytes": 1394,
+        "sha256": "b4618a27d4ab8a10e0c7e36631fd484bcc34517c76809271ec46bf19d9df6919"
+      },
+      "derived-comparison": {
+        "schema": "region-comparison-array",
+        "bytes": 1467,
+        "sha256": "d533091893f191d2cc25975cc07dd5f56ef974a4c61376bc6cbbbbd97a366d88"
+      },
+      "startup-production": {
+        "schema": "orchard-nor-probe-v8",
+        "bytes": 8898,
+        "sha256": "9c45b6afa8f431a1207b7baef035835e8afcf5d173c0f175233fa60a1c352e67"
+      },
+      "checkpoint-initial": {
+        "schema": "orchard-hp39gs-continuation-v1",
+        "bytes": 856,
+        "sha256": "82f218e60cb842ca17cda492eef966d44e07a9e7eb59ae853be1fcd06c2fa11d"
+      },
+      "segments-production": {
+        "schema": "orchard-packed-segments-v1",
+        "bytes": 11106,
+        "sha256": "bba7a1fbad5a76a7502f3eb5ea94c317707c76116368c29f62a6b98f331977eb"
+      },
+      "browser-production": {
+        "schema": "orchard-hp39gs-browser-v1",
+        "bytes": 3211,
+        "sha256": "33fe4d11ded04093fe040e884b70534eecb421dd5b0b1f2bc3ac82ebc0bc6724"
+      },
+      "install-cold-r20": {
+        "schema": "orchard-hp39gs-stock-install-v1",
+        "bytes": 7651,
+        "sha256": "a690b8ccc0c583880642c60f590d0e1aa15c7a35c9945025ec4332cfebe4cc1f"
+      },
+      "native-stock-execution": {
+        "schema": "orchard-hp39-romstream-stock-v2",
+        "bytes": 2178,
+        "sha256": "4fe4270e6889c28e31193eb28a04581d21fe34e61e63f22cdd51660dc71524d4"
+      },
+      "native-full-capture": {
+        "schema": "orchard-hp39-rom-capture-v1",
+        "bytes": 14827,
+        "sha256": "a922af516c469f892489fafe70d69ca98e3ce720f5d8d873c0ea7f820167ac4a"
+      },
+      "wire-roundtrip-final": {
+        "schema": "orchard-hp39gs-wire-stock-v1",
+        "bytes": 82205,
+        "sha256": "271b3f4cd5bec670e60e6f76eeee0e31422967b6bf45f155df95d976d2ca43ca"
+      },
+      "wire-source-production-equality": {
+        "schema": "orchard-stock-source-production-equality-v1",
+        "bytes": 1877,
+        "sha256": "47437d798b0879c4efd69b2fa5e25c636308e0524495b0012ac8e9ca7d5e943b"
+      },
+      "wire-five-minute-counterexample": {
+        "schema": "orchard-hp39gs-wire-stock-v1",
+        "bytes": 58633,
+        "sha256": "83fa286af92728d29ebf1cbb1a8001fd174f378ddb224186839f894c77855c70"
+      }
+    },
+    "native_test_log_sha256": "c2a8187e19d14765f4dd87bef18beee971042a14e1dc8441353fd4a75b579bac",
+    "policy": "Only artifact identities and result metadata are public. Source reports and binary/image artifacts remain private."
+  }
+}

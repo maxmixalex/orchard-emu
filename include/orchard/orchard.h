@@ -88,6 +88,22 @@ void orchard_reset(orchard_machine *m);
 /* Each call is bounded. A zero budget does nothing. Unsupported devices stop. */
 orchard_stop orchard_run(orchard_machine *m, uint32_t tick_budget);
 void orchard_get_state(const orchard_machine *m, orchard_state *state);
+/* Read-only GPB2 speaker observation (GPIO or Timer2/TOUT2). Edges carry the
+ * functional tick, not a measured ARM cycle. The bounded host queue never
+ * changes guest execution and is excluded from checkpoints. Overflow starts a
+ * new epoch; hosts must discard their old audio. Reset and successful restore
+ * also start a new epoch while preserving the enabled policy. */
+#define ORCHARD_BUZZER_CAPACITY 4096u
+typedef struct { uint64_t tick; uint32_t level; } orchard_buzzer_edge;
+typedef struct {
+    uint64_t tick;
+    uint32_t epoch, overflows, queued, timebase_hz;
+    bool enabled, level;
+} orchard_buzzer_state;
+orchard_status orchard_buzzer_enable(orchard_machine *m, bool enabled);
+void orchard_buzzer_clear(orchard_machine *m);
+void orchard_get_buzzer_state(const orchard_machine *m, orchard_buzzer_state *state);
+size_t orchard_buzzer_read(orchard_machine *m, orchard_buzzer_edge *edges, size_t capacity);
 /* Portable versioned state, excluding immutable NOR. Load the matching ROM first.
  * Save uses a non-overlapping buffer of exactly checkpoint_size bytes. Load
  * also accepts the bounded v1/v2 wire formats; export emits v3, including an

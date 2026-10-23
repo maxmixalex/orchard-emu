@@ -142,11 +142,20 @@ typedef struct {
 } o_translation;
 #define O_TRANSLATIONS 64u
 
+/* Optional host presentation only. The active PWM compare is reconstructed
+ * from TCMPB2 after restore; it cannot affect the guest counter or interrupts. */
+typedef struct {
+    orchard_buzzer_edge edges[ORCHARD_BUZZER_CAPACITY];
+    uint32_t head, count, epoch, overflows, compare;
+    bool enabled, level, pwm_level;
+} o_buzzer;
+
 struct orchard_machine {
     const orchard_profile *profile;
     uint32_t quiet_left, deferred_ticks; /* Host-only, flushed at public boundaries. */
     bool idle_write_enabled; /* Host-only policy scope; never saved in a checkpoint. */
     o_translation translations[O_TRANSLATIONS];
+    o_buzzer buzzer;
     o_cpu cpu;
     o_soc soc;
     uint64_t ticks;
@@ -206,6 +215,10 @@ bool o_store(orchard_machine *m, uint32_t address, unsigned width, bool user, ui
 void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool fetch);
 void o_soc_reset(o_soc *s);
 void o_soc_tick(orchard_machine *m);
+void o_buzzer_reset(orchard_machine *m);
+void o_buzzer_observe(orchard_machine *m);
+void o_buzzer_timer_write(orchard_machine *m);
+void o_buzzer_timer_tick(orchard_machine *m, bool reload);
 void o_schedule_plan(orchard_machine *m);
 void o_schedule_sync(orchard_machine *m);
 orchard_stop o_run_reference(orchard_machine *m, uint32_t budget);

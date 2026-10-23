@@ -55,15 +55,30 @@ export class Hp39FileServer {
     this.files=new Map(prepared.map(f=>[f.name.toUpperCase(),f]));
     this.total=prepared.filter(f=>inspectHp39File(f.bytes).kind!=='A').reduce((n,f)=>n+f.bytes.length,0);
     this.objectCount=prepared.filter(f=>inspectHp39File(f.bytes).kind!=='A').length;
-    this.transferred=0;this.served=new Set();this.received=0;this.receivedBytes=0;this.child=null;this.lastAck=null;this.queue=[];this.reader.reset();
+    this.transferred=0;this.served=new Set();this.received=0;this.receivedBytes=0;this.child=null;this.lastAck=null;this.infoAck=null;this.queue=[];this.reader.reset();
     this.peer=parameters(PARAMETERS);this.now=now;this.end=now+900*this.hz;this.active=true;this.mode='serve';this.lingerUntil=0;
     this.publishListing();this.status('serving');
   }
   frame(sequence,type,data=EMPTY){return packet(sequence,type,data,this.peer.end,this.peer.pad,this.peer.padding);}
   enqueue(bytes,sent=null){if(this.queue.length>=8)throw Error('HP39 output queue exceeded its limit.');this.queue.push({bytes,offset:0,sent});}
+  clearInfoAck(){
+    const ack=this.infoAck;this.infoAck=null;
+    // An accepted command supersedes an unsent retry. A partially transmitted
+    // packet must still finish before the child sends its next packet.
+    if(ack)this.queue=this.queue.filter(q=>q.bytes!==ack.bytes||q.offset>0);
+  }
+  sendInfoAck(ack){
+    if(this.queue.some(q=>q.bytes===ack.bytes))return;
+    ack.deadline=Infinity;
+    this.enqueue(ack.bytes,()=>{if(this.infoAck===ack)ack.deadline=this.now+ack.timeout;});
+  }
   publishListing(){this.listing([...this.files.values()].filter(f=>inspectHp39File(f.bytes).kind!=='A').map(f=>`${f.name} · ${inspectHp39File(f.bytes).title} · ${f.bytes.length} bytes`).join('\n'));}
   makeChild(mode,name='',bytes){
-    const child=new KermitSession({write:bytes=>this.queue.length?0:this.write(bytes),hz:this.hz,adaptiveSendTimeout:true,
+    // Stock HP39 SEND can make steady progress for more than five guest minutes.
+    // Share this server's existing total deadline instead of imposing the
+    // generic Kermit client's shorter default on each child transaction.
+    const child=new KermitSession({write:bytes=>this.queue.length?0:this.write(bytes),hz:this.hz,
+      duration:Math.max(0,(this.end-this.now)/this.hz),adaptiveSendTimeout:true,
       validateFile:file=>this.validateStore([...child.files.filter(f=>!f.screen),file]),notify:state=>{
       if(state.phase==='complete'){
         if(mode==='send'){
@@ -111,16 +126,26 @@ export class Hp39FileServer {
       if(this.child?.active){this.child.now=now;this.child.accept(p);continue;}
       if(this.repeatFinal(p,now))continue;
       if(p.type==='I'){
-        this.peer=parameters(p.data);this.enqueue(this.frame(p.sequence,'Y',PARAMETERS));
+        this.peer=parameters(p.data);
+        let ack=this.infoAck;
+        if(!ack||ack.sequence!==p.sequence||ack.data.length!==p.data.length||ack.data.some((b,i)=>b!==p.data[i])){
+          this.clearInfoAck();
+          ack=this.infoAck={sequence:p.sequence,data:p.data.slice(),bytes:this.frame(p.sequence,'Y',PARAMETERS),
+            timeout:this.hz,retries:0,deadline:Infinity};
+        }
+        this.sendInfoAck(ack);this.status('negotiating');
       }else if(p.type==='R'){
+        this.clearInfoAck();
         const name=validateHp39Filename(byteText(decodeData(p.data,{ctl:this.peer.ctl,binary:this.peer.binary,repeat:this.peer.repeat},256)));
         const f=this.files.get(name.toUpperCase());
         if(!f){this.enqueue(this.frame(p.sequence,'E',ascii('File not found')));continue;}
         this.makeChild('send',name,f.bytes);
       }else if(p.type==='S'){
+        this.clearInfoAck();
         if(p.sequence!==0){this.enqueue(this.frame(0,'N'));continue;}
         const child=this.makeChild('receive');child.accept(p);
       }else if(p.type==='G'){
+        this.clearInfoAck();
         const command=byteText(decodeData(p.data,{ctl:this.peer.ctl,binary:this.peer.binary,repeat:this.peer.repeat},256));
         if(command==='F'||command==='L'){
           const reply=this.frame(p.sequence,'Y');
@@ -137,15 +162,26 @@ export class Hp39FileServer {
     this.now=now;
     try{
       if(this.active&&now>=this.end)throw Error('The HP39 file server reached its 15-minute virtual-time limit.');
+      // The original HP39gs can consume a USB reply before its command client
+      // has enabled receive notifications. Init-Info has no child sender yet:
+      // retain its ACK until the following command, with the same bounded
+      // initial retry interval as the adaptive file sender. No guest time is
+      // inserted and successful exchanges incur no packet delay.
+      const ack=this.infoAck;
+      if(this.active&&ack&&now>=ack.deadline){
+        if(++ack.retries>4)throw Error('HP39 initialization timed out. Reopen the calculator Disk drive receiver and reconnect.');
+        ack.timeout=Math.min(this.peer.timeout*this.hz,ack.timeout*2);
+        this.sendInfoAck(ack);
+      }
       const q=this.queue[0];
       if(q){const left=q.bytes.subarray(q.offset),n=this.write(left);if(!Number.isInteger(n)||n<0||n>left.length)throw Error('Invalid HP39 transport acceptance.');q.offset+=n;if(q.offset===q.bytes.length){this.queue.shift();q.sent?.();}}
       else if(this.child?.pending)this.child.poll(now);
     }catch(error){this.fail(error.message);}
   }
   cancel(message='HP39 file server stopped.'){
-    const child=this.child;this.child=null;this.queue=[];this.lingerUntil=0;
+    const child=this.child;this.child=null;this.infoAck=null;this.queue=[];this.lingerUntil=0;
     if(child?.active){child.notify=()=>{};child.cancel(message);for(const q of child.queue)this.queue.push(q);}
     this.active=false;this.status('cancelled',message);
   }
-  fail(message){this.active=false;this.child=null;this.queue=[];this.lingerUntil=0;this.status('error',message);}
+  fail(message){this.active=false;this.child=null;this.infoAck=null;this.queue=[];this.lingerUntil=0;this.status('error',message);}
 }

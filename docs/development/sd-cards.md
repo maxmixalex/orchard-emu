@@ -1,5 +1,8 @@
 # SD cards and FILES
 
+The [r20 SD file record](evidence/sd-files-r20.json) covers the draft editor,
+independent FAT tools and original-system root/nested-file workflows.
+
 The calculator page provides an emulated SD card for HP49g+. The original
 firmware handles the filesystem through the modeled S3C2410 SDI controller.
 Orchard does not insert files into guest RAM or replace the calculator's file
@@ -9,8 +12,8 @@ manager with a host implementation.
 
 1. Open the admitted full HP49g+ ROM and finish the usual startup prompts.
 2. Open **SD card** in the toolbar. **Create 16 MiB card** inserts a new MBR /
-   FAT16 image. **Import card image** accepts a complete raw `.img`, `.bin` or
-   `.sd` file of 1, 2, 4, 8, 16 or 32 MiB. Select **Read only** before insertion
+   FAT16 image. **Import card image** accepts a complete raw image of 1, 2, 4,
+   8, 16 or 32 MiB, regardless of its filename extension. Select **Read only** before insertion
    to assert the card's write-protect input.
 3. Open the calculator's **FILES** with left shift, then APPS. The card is
    port **3:SD**. Use the stock COPY, STO and RCL operations to manage objects.
@@ -19,13 +22,124 @@ manager with a host implementation.
    ejection; closing the card dialog leaves it inserted.
 
 The generated empty card has one FAT16 partition, starting at sector 1, two
-FATs, 512-byte sectors and two sectors per cluster. Its volume label is in the
-BPB only: the tested HP49g+ Filer displays an optional root-directory volume
-label as if it were a user file, so Orchard leaves that optional entry absent.
+FATs, 512-byte sectors and two sectors per cluster. It has no volume label:
+the BPB contains FAT's `NO NAME    ` text and the optional root-directory label
+entry is absent. The tested HP49g+ Filer displays a root-directory volume label
+as if it were a user file. Keeping the BPB consistent with the empty root also
+allows independent filesystem checks to finish without a label warning.
 Imported images are not reformatted or repaired by the host.
 
 HP's [49g+ user's manual](https://h10032.www1.hp.com/ctg/Manual/bpia5323.pdf),
 chapter 18, documents SD storage as port 3 and its stock file operations.
+
+## Prepare and browse files before insertion
+
+With no card inserted, choose **Prepare card files**. This opens an independent
+16 MiB FAT16 draft. **Open image for editing** replaces the draft with a local
+image after its filesystem has passed validation. The local source file is
+never changed. The ordinary **Import card image** remains available for users
+who already have an image ready for the calculator.
+
+The draft browser lists folders and files, opens folders, downloads individual
+files, creates folders, and adds a batch of up to 128 selected files. Every
+selected file has an editable target name. File choosers accept any extension,
+and the filesystem writer preserves contents exactly, including empty files.
+The editor does not decide whether those bytes are a calculator object; the
+original calculator system makes that decision when the user opens a file.
+
+New names use FAT's short 8.3 format: 1–8 ASCII characters plus an optional
+1–3-character extension, stored in uppercase. A longer source filename remains
+visible for review and must be given a valid target name; it is never silently
+truncated. Existing long-name records are retained, while the browser displays
+their short aliases. Duplicate names, including case-only differences, reject
+the whole operation. Existing files are not overwritten. This first editor does
+not rename, delete, or create long file names.
+
+**Download draft image** exports the entire prepared card. **Insert prepared
+card** passes it through the normal controller insertion path, including the
+selected read-only setting. The calculator then reads and writes it through
+the emulated SD controller. Drafts are not automatic saves: download or insert
+the draft before closing the dialog. Closing it or starting a new blank draft
+discards its unsaved contents. Once inserted, the existing session and automatic
+save behavior includes the complete card.
+
+Insertion takes an independent `File` snapshot, then the controller reads its
+own bytes and sends a structured-cloned Worker message. The Worker copies that
+message into its SD storage; it never takes ownership of the draft's buffer.
+If reading or inserting fails, the draft remains available for download or
+retry. Closing during a pending draft-file read discards that read's result.
+Once **Insert prepared card** has been pressed, the controller owns that
+insertion operation, and closing the dialog does not cancel it. A later model
+generation or controller disposal invalidates an unfinished insertion read.
+
+The host file editor is unavailable while a card is inserted. To prepare a new
+version of an existing guest card, finish guest operations, export and eject it,
+then open that exported image as a draft. This avoids editing media behind the
+calculator's cached filesystem state. Merely opening the card dialog never
+alters inserted media.
+
+### Filesystem bounds and atomic changes
+
+`web/sd-filesystem.js` is original MIT code, implemented from the on-disk facts
+in Microsoft's [FAT specification, version 1.03](https://www.cs.fsu.edu/~cop4610t/assignments/project3/spec/fatspec.pdf).
+It supports one primary FAT16 partition or an unpartitioned FAT16 volume within
+the supported 1–32 MiB card sizes. The editor requires 512-byte sectors,
+power-of-two clusters up to 32 KiB, and the FAT16 data-cluster count range
+4,085–65,524. FAT12, FAT32, extended partitions and multiple partitions are
+outside this editor's scope; ordinary complete-image import remains independent
+of this filesystem browser.
+
+Validation checks partition and BPB bounds, FAT capacity and mirror agreement,
+directory entry layout, long-name alias checksums, directory parent links,
+file length and cluster-chain length. Cycles, cross-linked files/directories,
+out-of-range targets, truncated chains and unreferenced allocated clusters are
+rejected. Traversal stops beyond 32 folder levels or 16,384 live directory
+entries. The editor refuses inconsistent images rather than trying to repair
+or salvage them. Deleted entries remain available for allocation, and marked
+bad clusters are never allocated.
+
+Every write uses an independent `Uint8Array` work copy, including when a Node
+caller supplies a `Buffer`. The whole result is validated before it is returned.
+A full card, full fixed-size root directory, duplicate target, invalid name or
+later error in a batch leaves the source bytes unchanged. A subdirectory can
+grow by allocating another cluster; the FAT16 root directory has fixed capacity.
+Filesystem and local file-read failures appear in the draft without discarding
+the current image.
+
+### Offline editor verification
+
+`node tests/sd-filesystem.mjs` checks both successful and rejected operations,
+including fragmented files, nested-directory growth, FAT mirrors, malformed
+geometry, cycles, cross-links, long-name preservation, the directory-depth bound
+and byte-exact rollback after a later file exhausts capacity. Its second raw
+parser computes offsets independently to extract the written files. It also
+checks Buffer-backed input, where `Buffer.slice()` would otherwise share and
+mutate the source image.
+
+`python3 tests/browser-sd-files.py` runs a real Chromium file chooser and download
+flow with the production React components and controller. The fixture uses no
+ROM and explicitly acknowledges insertion in place of a Worker. It checks
+arbitrary extensions, target-name review, exact single-file and whole-image
+downloads, duplicate-batch rollback, corrupt-image and local-read failures,
+opening a prepared image, failed-insertion retry, read-only insertion parameters, unmounting during a
+pending read, both languages and a 390-pixel viewport. Original-system SD
+acceptance remains a separate test.
+
+`node tests/sd-files-controller.mjs` checks the production controller's ownership
+boundary using real `File` instances and structured-cloned outgoing messages:
+the source image and immutable File survive edits to the sender or receiver's
+buffer; read-only state survives retry; an old generation, disposed controller,
+or model without an SD slot cannot send a late insertion. These tests do not
+pretend that a mocked Worker acknowledgement is original-system acceptance.
+
+For independent r20 checking, Ubuntu's mtools 4.0.43 listed the prepared card's
+root and subdirectory and extracted all three generated test files byte for
+byte. dosfstools `fsck.fat` 4.2 completed a read-only check of that card's FAT16
+partition with exit status 0 and no repair requests. Generated images and tool
+logs stay in the ignored `build-r20/sd-files` directory. A second image written
+by mtools, including a three-record long filename and another subdirectory, was
+opened and extended by the editor without changing the input image or existing
+long name; `fsck.fat -n` also returned 0 for that result.
 
 ## Which models have a slot?
 

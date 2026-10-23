@@ -8,7 +8,7 @@ revision**, not every product carrying that name.
 | ID | Slug | Model | NOR | SRAM | Visible LCD | SD slot in target hardware | Orchard stock boot |
 | ---: | --- | --- | ---: | ---: | --- | --- | --- |
 | 1 | `hp39gplus` | HP 39g+ | 1 MiB | 256 KiB | 131 × 64 | No | Conditional HOME; hardware gate open |
-| 2 | `hp39gs` | HP 39gs | 1 MiB | 256 KiB | 131 × 64 | No | Unverified |
+| 2 | `hp39gs` | HP 39gs | 1 MiB | 256 KiB | 131 × 64 | No | Conditional HOME, APLET and native reader return; hardware gate open |
 | 3 | `hp40gs` | HP 40gs | 2 MiB | 256 KiB | 131 × 64 | No | Unverified |
 | 4 | `hp48gii` | HP 48gII, USB revision | 2 MiB | 256 KiB | 131 × 64 | No | Conditional HOME; hardware gate open |
 | 5 | `hp49gplus` | HP 49g+ | 2 MiB | 512 KiB | 131 × 80 | Yes | Conditional HOME, CAS, plot and USB files; hardware gate open |
@@ -59,8 +59,10 @@ HP49g+ now reaches stock HOME with its exact 512 KiB SRAM, performs arithmetic,
 CAS factorization, graph display and USB file round trips under its own
 [startup conditions](hp49-startup.md). HP40gs NOR capacity is corrected to
 2 MiB using HP's 2007 specification sheet, not inherited from the HP39gs sibling.
-HP39gs, HP40gs and HP50g stock/UI promotion gates remain open; supplied update
-packages are not full physical dumps.
+The user's complete HP39gs capture independently reaches HOME and APLET with
+exact 256 KiB SRAM, supports browser sessions and installs/runs the native V2
+reader; see [HP39gs startup](hp39gs-startup.md). HP40gs and HP50g stock/UI
+promotion gates remain open; supplied update packages are not full physical dumps.
 
 ## HP49g+ acquisition and model identity
 
@@ -73,9 +75,13 @@ This image is admitted to the webpage's HP49g+ catalog after the repeatable
 original-ROM workflows in [HP49g+ startup](hp49-startup.md); the input's
 `physical_mapping_verified=false` remains an open hardware claim.
 
-HP39gs has a separate [full-ROM dump package](hp39gs-rom-dump.md) reusing the
-hpclang ARM USB streamer. Its complete image still needs to be captured and
-verified. The Saturn ROMUPL39 program does not acquire the native ARM boot region.
+HP39gs now has a user-returned 1 MiB image from the
+[full-ROM dump package](hp39gs-rom-dump.md). Its full SHA-256 is
+`a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff`;
+all 64 block hashes match and the supplied metadata records two equal reads
+per block. Independent original-byte boot/continuation/USB/native-return
+evidence is recorded separately from that acquisition metadata. The Saturn
+ROMUPL39 program does not acquire the native ARM boot region.
 
 The local ROM inspector now recognizes a hash-pinned HP49g+ or HP50g boot
 prefix inside a full-size image and rejects a clearly mismatched model during

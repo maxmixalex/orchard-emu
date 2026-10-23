@@ -1,6 +1,85 @@
 # Continuation handoff
 
-## Current r19 continuation from eb1e18b (2026-10-23)
+## Current r20 continuation from f24ed9b (2026-10-23)
+
+The user requested optional unlimited-speed transfers, actual firmware sound,
+an immersive landscape split at the bottom of the screen cover, further SD
+support, extension-free file selection, and recovery after one failed Wire
+batch item. They also supplied a complete original HP39gs capture and asked
+what the former derived ROM represented. Work was split across independent
+transfer, audio, layout, SD, original-ROM, core-regression and review agents.
+
+All six feature areas now have implementation and focused checks. The transfer
+switch overrides host pacing only in active protocol phases; waiting for stock
+RECV, serving an idle directory, pause, cancellation, error and completion use
+the selected speed. Wire exposes Retry, Skip and replacement selection while
+retaining completed items. A delayed CAN from a canceled request cannot cancel
+the next request before its own D/C/NAK handshake. A CAN after that handshake
+still fails immediately. Real HP39g+ cancellation/retry/skip/reselection and
+stock SEND verification pass on the production core. Help explicitly asks the
+user to press ON and wait for reception to exit before reopening RECV.
+
+Typed HP39 files and ZIPs are recognized by contents, without chooser suffix
+filters. Object validation remains. HP39gs uses the stock menu name
+`HP39/40 (USB)` (or Ser for serial); HP39g+ uses Wire. Reverse Kermit still
+uses the stock Disk-drive path and remains slow. An Info-ACK retry handles a
+lost initial directory response without resetting the overall budget. Nested
+Kermit sessions use the outer service's remaining 15 minutes instead of
+prematurely applying a fresh five-minute cap.
+
+The original HP39gs image is admitted by full SHA-256
+`a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff`.
+Its own bootloader passes cold native/WASM replay, original browser arithmetic,
+sessions, APLET and segments. Fresh Disk-drive installation and V2 execution
+read all 64 blocks twice and return correctly; separate direct-USB installation,
+reverse SEND and native error return also pass. The old derived fixture combined
+official updater OS bytes with a generic 50g bootloader and a constructed tail.
+Its OS region exactly matches this original capture; it was never an original
+complete 39gs NOR or catalog admission. Keep its old evidence historical and
+keep the user's capture sidecar immutable.
+
+Firmware sound observes GPB2 GPIO / Timer2 TOUT2 into a bounded host queue and
+plays PCM after a browser gesture. It does not alter guest timers or checkpoint
+bytes. Pause, reset, restore, mute and disposal clear playback; Unlimited drops
+old audio rather than accumulating delay. Original HP49g+ BEEP and actual
+Chromium playback pass, but its 440 Hz / 0.2 s request currently yields about
+282.486 Hz / 0.30972 s on the functional clock. Physical pitch, duration and
+peripheral-clock calibration remain work, not completed hardware fidelity.
+
+Immersive landscape clips the existing artwork into two pieces, display left
+and keyboard right, with one LCD and the original 51 hit regions. Four admitted
+models, desktop/landscape-phone/portrait-phone viewports and multiple zoom levels
+have real browser geometry/input coverage. Original HP39gs APLET/HOME also works
+in this layout. Do not generate new artwork unless the user asks for it.
+
+SD preparation now supports browsing, extracting, creating short-name folders,
+adding arbitrary file bytes, exporting and inserting an unmounted FAT16 draft.
+New names are explicit 8.3 names; existing LFN records are preserved through
+their short aliases. Duplicate/malformed/full-image errors retain the previous
+complete draft. Mounted cards remain exclusively owned by the Worker. Real
+49g+ reads root and nested host-prepared objects, writes another object without
+changing them, and continues complete-card partial-write checkpoints identically
+on native and WASM. The 48gII has no SD slot; its FILES path remains checked.
+
+The final core is 123,871 bytes, SHA-256
+`1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7`.
+Normal pacing, ARM execution policy and guest physical-key timing are unchanged.
+The [r20 validation](validation.md) and public JSON records distinguish exact
+tested bundle versions, core results, original-ROM observations and synthetic
+component tests. The last UI-only update clarifies ON/reopen timing; it does
+not change the tested protocol modules. A prior recovery harness entered IrDA
+before the ROM had settled; keep that failed run distinct from the genuine
+stale-CAN fix. UART2 remains unsupported rather than returning fake empty data.
+
+Continue with physical-clock/audio calibration, reverse-transfer efficiency,
+FAT management extensions and missing original model captures using independent
+evidence. Do not publish ROMs, original sidecars, card images, checkpoints or
+stock-OS pixel data. V2's refreshed download contains unchanged calculator and
+receiver binaries plus current verification metadata. Verify PR Build, merged
+Build, Pages and live assets before claiming publication; the release PR owns
+those per-revision results.
+
+## Historical r19 continuation from eb1e18b (2026-10-23)
 
 The latest user report supplies four concrete targets: slow or apparently
 stalled HP39g+ reception, HP49g+ FILES failure, SD media on models with a slot,

@@ -16,22 +16,27 @@ workflows now have separate functional evidence; see [HP49 startup](hp49-startup
 The original acquisition sidecar is retained unchanged: its earlier false flags
 are not silently rewritten or treated as current execution results.
 
-For HP39gs, the [complete ROMstream v2 package](hp39gs-rom-dump.md) repairs the
-hpclang-based reader's LCD, mapping, cable-startup and bounded USB exit paths.
-The receiver reads the full 1 MiB in one launch and independently repeats every
-block. The revised program completes full dump/return/stock-USB-reuse checks
-on the original HP39g+ NOR and a separate official-39gs-2.22-derived fixture.
-The latter's generic boot area is not an acquired HP39gs NOR and is not admitted
-to the user catalog. The target physical full image and run remain pending; a separate
-return or short-memory probe is not the next user step. Existing HP39g+/HP48gII
-inputs need not be supplied again.
+The user's HP39gs full capture is also received: **1,048,576 bytes**, SHA-256
+`a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff`.
+All 64 block hashes match; the metadata records two equal reads and zero retries.
+Its native 16 KiB boot region has SHA-256
+`fb4a3862a2ba9cf57746f6275e1c56c23719874a323784ff758240de342554d3`.
+Unchanged native/WASM cold boots, browser arithmetic/sessions and the complete
+USB installation/native-reader/return workflow have separate evidence in
+[HP39gs startup](hp39gs-startup.md). The acquisition sidecar remains unchanged.
+
+The previous official-2.22-derived fixture combined that OS with a foreign
+generic boot region. It was not an acquired HP39gs NOR or a catalog input.
+The new image's 995,328-byte installed OS region exactly matches that old
+fixture, while its boot and tail differ; the exact comparison is retained in
+the model record. No repeat capture or preliminary short probe is required.
 
 ## Six-model inventory
 
 | Model | Verified material available locally | Remaining native input |
 | --- | --- | --- |
 | HP39g+ | Hardware-acquired 1 MiB D1.55 full NOR | No acquisition blocker for this fixture |
-| HP39gs | Official 2.22 updater; complete source-built ROMstream reader ready | Target physical capture and complete NOR still pending |
+| HP39gs | User-acquired 1 MiB full NOR from V2; original native boot region and original-byte functional validation | No acquisition blocker for this fixture; physical board assumptions remain explicit |
 | HP40gs | Official 2.22 updater, for a 2 MiB NOR machine | No independently verified native boot region or complete NOR found in this search |
 | HP48gII USB revision | Hardware-modification author's 2 MiB full-NOR mirror | No acquisition blocker for this fixture |
 | HP49g+ | User-acquired 2 MiB full NOR; original-byte functional validation | No acquisition blocker for this fixture; physical board assumptions remain explicit |
@@ -141,7 +146,8 @@ for actual execution results and the explicit GPIO conditions.
 The earlier archive search found no newly verified original 39gs/40gs native
 bytes or complete 49g+/50g dump. The later user-supplied 49g+ capture above
 supersedes the latter acquisition status. The located 39gs text attachment still could not be
-retrieved; the 39gs acquisition remains open. Searches for 40gs bootloader/dump
+retrieved; the user's later full HP39gs capture independently supersedes that
+acquisition blocker. Searches for 40gs bootloader/dump
 and the shared LCD offset did not produce an admissible new binary or a
 register definition.
 

@@ -9,6 +9,7 @@ const image=createSDImage(),v=new DataView(image.buffer);
 const start=v.getUint32(454,true),sectors=v.getUint32(458,true),b=start*512;
 assert.equal(image.length,16*1024*1024);assert.equal(v.getUint16(510,true),0xaa55);
 assert.equal(image[450],6);assert.equal(v.getUint16(b+510,true),0xaa55);
+assert.equal(new TextDecoder().decode(image.subarray(b+43,b+54)),'NO NAME    ','No-label BPB matches the empty root directory');
 const size=v.getUint16(b+11,true),cluster=image[b+13],reserved=v.getUint16(b+14,true),
   fats=image[b+16],rootEntries=v.getUint16(b+17,true),fatSize=v.getUint16(b+22,true);
 assert.equal((start+sectors)*size,image.length);assert.equal(v.getUint16(b+19,true),sectors);

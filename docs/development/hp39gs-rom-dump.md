@@ -1,5 +1,15 @@
 # HP39gs 完整 ROM 采集包 V2
 
+**2026-10-23 更新：用户已成功提取并返回完整 HP39gs ROM 与 JSON。**
+收到的 1,048,576 字节镜像通过全部 64 块哈希及双读记录校验，现已使用其原生
+bootloader 完成独立冷启动、浏览器运算/会话、USB 安装与完整原生提取/返回验证。
+详见 [HP39gs 原始完整 ROM 验证](https://maxmixalex.github.io/orchard-emu/development/hp39gs-startup/)。原采集 JSON 保持不变；
+下面 r19 的派生 OS fixture 与当时尚待真机回报的边界作为历史记录保留。
+
+r20 下载包更新了说明和验证清单：现在标明原始完整 39gs NOR 的模拟执行验证，
+不再以派生 fixture 作为当前验证身份。计算器程序、库和 Windows 接收器的二进制
+与 r19 V2 逐字节相同；`hardware_validated` 仍不表示本项目独立完成了物理硬件测量。
+
 [下载 hp39gs-rom-dump-v2.zip](../downloads/hp39gs-rom-dump-v2.zip) ·
 [SHA-256](../downloads/hp39gs-rom-dump-v2.zip.sha256)
 
@@ -10,8 +20,9 @@ V2 包含更新的 **H39 ROM V2** 计算器程序和 Windows 接收器。一次�
 
 用户反馈旧包在 HP39gs 上无进度、无法采集。源码和原厂 OS 执行已经证实旧程序会
 关闭 LCD，带线启动时会静默返回，控制端点等待也没有取消边界。V2 修复这些确定的
-问题，并重新实现临时映射、进度显示与错误退出。**物理 HP39gs 和 Windows 原生
-HID 驱动链路尚未实机验证**；下面明确区分原厂 OS 的模拟执行结果与真机结果。
+问题，并重新实现临时映射、进度显示与错误退出。r19 发布时物理 HP39gs 和 Windows
+原生 HID 链路尚待用户验证；本轮已收到用户成功提取的文件。这里仍明确区分
+用户返回的采集记录、原厂 OS 模拟执行和未独立测量的硬件条件。
 
 ## 直接使用
 

@@ -8,7 +8,7 @@
 .pc-physical-key:focus-visible{outline:2px solid #137b61;outline-offset:1px}
 #calculator[data-view=traditional]{background:#d8dcd9;border-color:#a9b5ad;padding:18px 22px;border-radius:24px}
 #calculator[data-view=traditional] .traditional-keypad{display:block;width:100%}
-#calculator[data-view=immersive] .traditional-keypad{display:none}
+#calculator:not([data-view=traditional]) .traditional-keypad{display:none}
 .traditional-geometry{display:block;width:100%;height:auto;overflow:visible}
 .traditional-geometry .traditional-key{display:inline;min-height:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;transform:none;cursor:pointer;fill:#f7f9f8;color:inherit}
 .traditional-geometry .key-outline{fill:#3d4543;stroke:#202926;stroke-width:1.4}

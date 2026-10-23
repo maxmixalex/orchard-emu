@@ -8,10 +8,16 @@ import { TapQueue } from '../dist/hp48.js';
 import { bindLifecycle } from '../dist/lifecycle.js';
 const defaults=()=>({...DEFAULTS,mappings:{}});
 assert.deepEqual(validatePreferences(defaults()),defaults());
+const legacy=defaults();delete legacy.transferUnlimited;delete legacy.sound;delete legacy.volume;
+assert.deepEqual(validatePreferences(legacy),defaults());
+assert.equal(validatePreferences({...defaults(),view:'immersive-landscape',transferUnlimited:true,sound:false,volume:0}).view,'immersive-landscape');
+assert.deepEqual(validatePreferences({...defaults(),mappings:{'2':{KeyA:[58,28]}}}).mappings,{'2':{KeyA:[58,28]}});
 assert.deepEqual(validatePreferences({...defaults(),mappings:{'5':{KeyA:[57,35]}}}).mappings,{'5':{KeyA:[57,35]}});
 for(const update of [{version:2},{zoom:NaN},{zoom:181},{zoom:0},{view:'hidden'},{speed:Infinity},{speed:3},{interval:1},{autosave:1},
+ {transferUnlimited:1},{sound:null},{volume:NaN},{volume:Infinity},{volume:'0.5'},{volume:-0.1},{volume:1.1},
  {mappings:[]},{mappings:{'6':{KeyA:[58]}}},{mappings:{'1':{KeyA:[55]}}},{mappings:{'1':{KeyA:Array(9).fill(6)}}}])assert.throws(()=>validatePreferences({...defaults(),...update}));
 assert.deepEqual(defaultBindings(1).KeyA,[58,28]);assert.equal(defaultBindings(4).KeyA,undefined);
+assert.deepEqual(defaultBindings(2),defaultBindings(1));
 assert.deepEqual(defaultBindings(5).KeyA,[57,35]);assert.deepEqual(defaultBindings(5).KeyZ,[57,2]);
 assert.deepEqual(bindings({...defaults(),mappings:{'1':{KeyA:[58,28],Enter:[]}}},1).Enter,[]);
 assert.equal(keyCode({code:'KeyA',shiftKey:false}), 'KeyA');assert.equal(keyCode({code:'KeyA',ctrlKey:true,shiftKey:true}),'Ctrl+Shift+KeyA');
@@ -28,6 +34,7 @@ const badStore={getItem:()=>{throw Error('blocked');}};assert.deepEqual(readPref
 const hash='a'.repeat(64);assert.equal(readAuto(store,hash),null);
 writeAuto(store,hash,1,data,null,'tab1:1',10);assert.deepEqual(readAuto(store,hash).file,data);
 const hp49hash='5'.repeat(64);writeAuto(store,hp49hash,5,data,null,'hp49:1',11);assert.equal(readAuto(store,hp49hash).model,5);
+const hp39gshash='2'.repeat(64);writeAuto(store,hp39gshash,2,data,null,'hp39gs:1',12);assert.equal(readAuto(store,hp39gshash).model,2);
 const before=store.getItem(autoKey(hash));assert.throws(()=>writeAuto(store,hash,1,data,null,'tab2:1'));assert.equal(store.getItem(autoKey(hash)),before);
 store.full=true;assert.throws(()=>writeAuto(store,hash,1,data,'tab1:1','tab1:2'));assert.equal(store.getItem(autoKey(hash)),before);store.full=false;
 writeAuto(store,hash,1,data,'tab1:1','tab2:2');assert.equal(readAuto(store,hash).token,'tab2:2');

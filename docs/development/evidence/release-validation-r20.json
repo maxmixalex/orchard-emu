@@ -1,0 +1,627 @@
+{
+  "schema": "orchard-release-validation-r20",
+  "date": "2026-10-23",
+  "base_revision": "f24ed9bfd3b006cd96ca6ce68a926a564322891c",
+  "scope": "local working tree acceptance; GitHub Build, merge, Pages and independent live verification are recorded for their exact revisions in the release PR",
+  "production": {
+    "asset_count": 42,
+    "assets": {
+      "LICENSE": {
+        "bytes": 1077,
+        "sha256": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f"
+      },
+      "README.txt": {
+        "bytes": 4015,
+        "sha256": "c10c784ae3baa4d3cd0e72bc2c4c34f77bd915a4abb094271d872567561d4bcc"
+      },
+      "buzzer-audio.js": {
+        "bytes": 6740,
+        "sha256": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e"
+      },
+      "buzzer-worker.js": {
+        "bytes": 1126,
+        "sha256": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591"
+      },
+      "calculator.css": {
+        "bytes": 245702,
+        "sha256": "9fb7696f044d124d245d17fcc983fa74cb92f5e6c204a5eddbc44a54246dfca9"
+      },
+      "calculator.js": {
+        "bytes": 713587,
+        "sha256": "e01728750c5dcb210788e2f9392e7a3b484c72283b26061e5d265a3882897c93"
+      },
+      "catalog.js": {
+        "bytes": 1614,
+        "sha256": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8"
+      },
+      "debug.html": {
+        "bytes": 7842,
+        "sha256": "134082d0e77b5fae7486ce9783610edaa448a7060fe95d19ae1d27d79b54682b"
+      },
+      "file-transfer.js": {
+        "bytes": 8195,
+        "sha256": "1e0af1f5c6a849c1bc749a0e25e790aa3c155fe971e46e6ccd220d26fcaa41bd"
+      },
+      "hp39-archive.js": {
+        "bytes": 10154,
+        "sha256": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a"
+      },
+      "hp39-files.js": {
+        "bytes": 8881,
+        "sha256": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b"
+      },
+      "hp39-transfer.js": {
+        "bytes": 12371,
+        "sha256": "c5c5a037255e1291a7b1584305e1c6b7e3624f6f8a185ede50813320fbc4877b"
+      },
+      "hp39-wire.js": {
+        "bytes": 5656,
+        "sha256": "21b7151da97eeef57634742e9365d7fb682c57f46ffaee09e0e488ae4ec77299"
+      },
+      "hp48.js": {
+        "bytes": 5498,
+        "sha256": "859526a05c55af05b260c0cf93163f9e962297f87a70502b37a758d854afff87"
+      },
+      "index.html": {
+        "bytes": 386,
+        "sha256": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282"
+      },
+      "kermit.js": {
+        "bytes": 21053,
+        "sha256": "ca158a32e2d5ec94c74e9393482fe6e65a3ce649a7992ae65762a95793ac7352"
+      },
+      "licenses/frontend.txt": {
+        "bytes": 28034,
+        "sha256": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd"
+      },
+      "licenses/hp-calcs-svg/LICENSE.txt": {
+        "bytes": 11358,
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      },
+      "licenses/hp-calcs-svg/NOTICE.txt": {
+        "bytes": 1280,
+        "sha256": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868"
+      },
+      "licenses/hp-calcs-svg/README.md": {
+        "bytes": 567,
+        "sha256": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c"
+      },
+      "lifecycle.js": {
+        "bytes": 1258,
+        "sha256": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013"
+      },
+      "main.js": {
+        "bytes": 13307,
+        "sha256": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35"
+      },
+      "orchard.wasm": {
+        "bytes": 123871,
+        "sha256": "1cffba4fb7bbdf9a8b203dfd999fc5071f1bb773f665c5699725484575916db7"
+      },
+      "pacing.js": {
+        "bytes": 1274,
+        "sha256": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952"
+      },
+      "preferences.js": {
+        "bytes": 7367,
+        "sha256": "b0a59a7f237b859da6953e86ee0a8500df1a0a126b4e97ee62083066f2870b0d"
+      },
+      "sd-card.js": {
+        "bytes": 2629,
+        "sha256": "7919d30f9802a350f0cfdf344dd735ac742031fd981f0e85627552b97b14498e"
+      },
+      "sd-filesystem.js": {
+        "bytes": 14007,
+        "sha256": "36653f9499ac9479f1ce123172650f874028d63319246239c87cbeafe7f332af"
+      },
+      "serve.mjs": {
+        "bytes": 1689,
+        "sha256": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7"
+      },
+      "session.js": {
+        "bytes": 2546,
+        "sha256": "c4dd1c9e78b1b2d95236f62450d45df10b9eeb1829c36bb7f521f19bafec2dcd"
+      },
+      "skin.js": {
+        "bytes": 6506,
+        "sha256": "985ca2b5f24e91c5f29ef3f9ef688137afc2cc4db9e79b15dd88bd4f9bd3ef25"
+      },
+      "skins/hp39gplus.svg": {
+        "bytes": 117738,
+        "sha256": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26"
+      },
+      "skins/hp39gs.svg": {
+        "bytes": 117582,
+        "sha256": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458"
+      },
+      "skins/hp40gs.svg": {
+        "bytes": 116791,
+        "sha256": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2"
+      },
+      "skins/hp48gii.svg": {
+        "bytes": 160533,
+        "sha256": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f"
+      },
+      "skins/hp49gplus.svg": {
+        "bytes": 160313,
+        "sha256": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71"
+      },
+      "skins/hp50g-blue.svg": {
+        "bytes": 160256,
+        "sha256": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e"
+      },
+      "skins/hp50g.svg": {
+        "bytes": 159981,
+        "sha256": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433"
+      },
+      "skins/manifest.json": {
+        "bytes": 98616,
+        "sha256": "65b8003f55ab1896e20b96302140554c7e79018af611e70b912be05837bad4fb"
+      },
+      "style.css": {
+        "bytes": 10997,
+        "sha256": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86"
+      },
+      "task-scheduler.js": {
+        "bytes": 2145,
+        "sha256": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7"
+      },
+      "virtual-usb.js": {
+        "bytes": 7099,
+        "sha256": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373"
+      },
+      "worker.js": {
+        "bytes": 19403,
+        "sha256": "e6bd8b75b5486712a5b2b64ba5ee71a052eed218f4d0c8d876edab5db42dce42"
+      }
+    },
+    "metadata_policy": "revision.txt and asset-manifest.json are regenerated for the assembled source commit; excluded from fixed payload identities"
+  },
+  "completed_local_gates": [
+    {
+      "name": "Release native",
+      "passed": true,
+      "detail": "17/17 suites"
+    },
+    {
+      "name": "Retained-reference native",
+      "passed": true,
+      "detail": "17/17 suites"
+    },
+    {
+      "name": "ASan + UBSan",
+      "passed": true,
+      "detail": "17/17 suites; 1,188,800 counted assertions"
+    },
+    {
+      "name": "Native + WASM default core",
+      "passed": true,
+      "detail": "1,155,851 assertions on each host"
+    },
+    {
+      "name": "Native + WASM functional clocks",
+      "passed": true,
+      "detail": "32,949 assertions on each host"
+    },
+    {
+      "name": "Experimental physical read",
+      "passed": true,
+      "detail": "217,824 additional WASM-only assertions; disabled by default"
+    },
+    {
+      "name": "Clang static analysis",
+      "passed": true,
+      "detail": "43 C files; zero diagnostics"
+    },
+    {
+      "name": "Unicorn 2.1.4",
+      "passed": true,
+      "detail": "17,075 cases; zero mismatches/skips"
+    },
+    {
+      "name": "Syntax and tools",
+      "passed": true,
+      "detail": "all npm check and test:tools gates"
+    },
+    {
+      "name": "Web and skins",
+      "passed": true,
+      "detail": "production entrypoints, lifecycle, seven pinned artworks, 51 keys each"
+    },
+    {
+      "name": "Calculator/frontend/continuation",
+      "passed": true,
+      "detail": "sessions, SD, preferences, ownership, Kermit, transfer queue, Worker pacing, recording"
+    },
+    {
+      "name": "Trace",
+      "passed": true,
+      "detail": "exact host-only audio observer exclusion and 16 negative controls"
+    },
+    {
+      "name": "Browser components",
+      "passed": true,
+      "detail": "five actual Chromium scripts; exact scope in frontend record"
+    },
+    {
+      "name": "Production HTTP Worker",
+      "passed": true,
+      "detail": "final e017 calculator bundle, six generated model guests and two audiences"
+    },
+    {
+      "name": "Host bridge and packaged host",
+      "passed": true,
+      "detail": "actual loopback USB/IP and UART with generated ARM guests; no OS driver attach claim"
+    },
+    {
+      "name": "Go receiver",
+      "passed": true,
+      "detail": "tests, vet and Windows x64 build"
+    },
+    {
+      "name": "Original systems",
+      "passed": true,
+      "detail": "39gs cold boot/arithmetic/session/Disk/full reader/Wire roundtrip; 39g+ retry/skip; 49g+ FILES/SD/BEEP; 48gII FILES"
+    },
+    {
+      "name": "Timer receiver",
+      "passed": true,
+      "detail": "delayed scheduling, cancellation, burst fallback and shutdown"
+    }
+  ],
+  "documentation_and_pages": {
+    "status": "passed",
+    "builder": "Zensical 0.0.67",
+    "strict": true,
+    "issues": 0,
+    "markdown_pages": 46,
+    "emulator_assets": 42,
+    "pages_contract_tests": "passed",
+    "assembled_revision": "f24ed9bfd3b006cd96ca6ce68a926a564322891c",
+    "revision_scope": "local base-revision working tree; regenerated again for committed Build artifact and live merge revision"
+  },
+  "core": {
+    "schema": "orchard-r20-independent-core-gates-v1",
+    "passed": true,
+    "tools": {
+      "clang": "18.1.3",
+      "cmake": "3.28.3",
+      "ninja": "1.11.1",
+      "node": "24.19.0",
+      "python": "3.12.14",
+      "unicorn": "2.1.4"
+    },
+    "sanitizer": {
+      "address": true,
+      "undefined_behavior": true,
+      "optimization": "O1",
+      "suites": 17,
+      "passed": 17,
+      "failed": 0,
+      "elapsed_seconds": 39.76,
+      "checks": 1188800,
+      "core_checks_without_clock": 1155851,
+      "clock_checks": 32949,
+      "buzzer_checks": 4261,
+      "reports": [
+        {
+          "test_id": 1,
+          "checks": 4261,
+          "failures": 0,
+          "first": 0
+        },
+        {
+          "test_id": 2,
+          "checks": 1129,
+          "failures": 0,
+          "first": 0
+        },
+        {
+          "test_id": 3,
+          "checks": 48561,
+          "failures": 0,
+          "first": 0
+        },
+        {
+          "test_id": 4,
+          "checks": 91277,
+          "failures": 0,
+          "first_failure": 0
+        },
+        {
+          "test_id": 5,
+          "checks": 456945,
+          "failures": 0,
+          "first_failure": 0
+        },
+        {
+          "test_id": 6,
+          "checks": 121078,
+          "failures": 0,
+          "first_failure": 0
+        },
+        {
+          "test_id": 7,
+          "checks": 102626,
+          "failures": 0,
+          "first_failure": 0,
+          "seed": 153101328
+        },
+        {
+          "test_id": 8,
+          "checks": 13017,
+          "failures": 0,
+          "first_failure": 0
+        },
+        {
+          "test_id": 9,
+          "checks": 4571,
+          "failures": 0,
+          "first_failure": 0
+        },
+        {
+          "test_id": 10,
+          "checks": 12566,
+          "failures": 0,
+          "first": 0
+        },
+        {
+          "test_id": 11,
+          "checks": 54065,
+          "failures": 0,
+          "first_failure": 0
+        },
+        {
+          "test_id": 12,
+          "checks": 1974,
+          "failures": 0,
+          "first_failure": 0
+        },
+        {
+          "test_id": 13,
+          "checks": 217824,
+          "failures": 0,
+          "first_failure": 0
+        },
+        {
+          "test_id": 14,
+          "checks": 24699,
+          "failures": 0,
+          "first_failure": 0
+        },
+        {
+          "test_id": 15,
+          "checks": 1258,
+          "failures": 0,
+          "first_failure": 0
+        },
+        {
+          "test_id": 16,
+          "checks": 32949,
+          "failures": 0,
+          "first_failure": 0
+        }
+      ]
+    },
+    "static_analysis": {
+      "sources": 43,
+      "complete_inventory_matches_ci": true,
+      "diagnostics": 0,
+      "report": "build-r20/analysis/summary.json"
+    },
+    "cpu_differential": {
+      "schema": "orchard-cpu-differential-v1",
+      "unicorn": "2.1.4",
+      "cpu_model": "TI925T",
+      "target_scope": "defined shared ARMv4T instruction subset",
+      "seed": "0x9202410",
+      "samples": 1000,
+      "cases": 17075,
+      "transport_rejections": 12,
+      "groups": {
+        "arm-alu-0": 1267,
+        "arm-alu-1": 1389,
+        "arm-alu-2": 1344,
+        "arm-block": 1000,
+        "arm-branch": 1000,
+        "arm-half-signed": 1500,
+        "arm-memory": 1000,
+        "arm-swap": 500,
+        "branch-exchange": 60,
+        "multiply": 1000,
+        "pc-immediate": 15,
+        "thumb-alu": 2000,
+        "thumb-block": 1000,
+        "thumb-branch": 1000,
+        "thumb-memory": 1500,
+        "thumb-shift-immediate": 1000,
+        "thumb-stack": 500
+      },
+      "corpus_sha256": "85710d4d9963872cb74fa052ae982ecccb6f31611e3b16e1ed854ee94bb4c81f",
+      "native_sha256": "9955dd8ef113da1248dc17e4428f2161d1eb5034f735cb28784ce9de1a19bd24",
+      "test_wasm_sha256": "7da8d2fdc15b527251317efaf2373a6389d51dca35da349fd380cacd5d2d781c",
+      "native_wasm_equal": true,
+      "unicorn_equal": true,
+      "mismatches": 0,
+      "skipped": 0,
+      "arm920t_full_conformance": false,
+      "firmware_used": false
+    },
+    "checkpoint_review": {
+      "serialized_version_unchanged": true,
+      "serialized_fields_unchanged": true,
+      "buzzer_host_queue_serialized": false,
+      "observer_reset_after_successful_load_only": true,
+      "existing_failed_load_validation_precedes_reset": true,
+      "repeated_previous_independent_noninterference_probe": false
+    },
+    "source_files_sha256": {
+      "CMakeLists.txt": "4f9efe985faabd63e7a1a112600e12cb142a7b618a84f1dc5dfe7fd2037a86de",
+      "app/wasm.c": "da3c967163ea174d1dc3d0ba408a041eaf21027140fffcb4d3c604fe7e12b7d7",
+      "include/orchard/orchard.h": "11ebbf18af4c484495f6301856f9ea1047bb2b5aef3afce7f34bbb06ea54376d",
+      "src/adc.c": "d66e9ead11ee9c182010cb2274a4e1ac22555731b19dc5524c9269eca9ee305e",
+      "src/bus.c": "c6ddad9928bbdf956b2b1e4ceb2ffedc692a8913496827e2d43a65701fd868c5",
+      "src/buzzer.c": "6bbad8365aff6dbc386e4598edc117d2ab05a2c50f5fea4cf3a109305c03ccee",
+      "src/checkpoint.c": "a6745e7247f58247caffa0fca30a7e1f5c388aff18884c96fbd0c88025fbcac3",
+      "src/cpu.c": "a743894494e43e8537a2d8dbdcdc058917dbf5ba8561230e72c7ffcd272c4fe0",
+      "src/gpio.c": "d7927050c48f9768a1bf239ab5d906b8f6a765b03b0ea02a38e837dc313340b8",
+      "src/internal.h": "0a995348b65b89a3f2e82a060299b014ea7cc16d46d54ec62372de5b2017e81a",
+      "src/interrupt.c": "afd5a1f7e5b33c9e0e81ed3280b298a87befc596f428294aaebe26c83a6ad732",
+      "src/keyboard.c": "1ef3172d77549349f872d18587a90857543ffd991563340f418654c5852fbae1",
+      "src/lcd.c": "5381691535feff023a83ada867b1eeb85c1eded3347cf9c8a8787cdf598da0eb",
+      "src/machine.c": "306d53003c219c0a7a4eb95ddadb3c29d03236535a9345863209b4b69fb72358",
+      "src/mmu.c": "a0f79da446162b996e212d10a144edd5243b61266f1dbb2ef810e5a5640184aa",
+      "src/nor.c": "082080cc3e2476a4cb38dc3051a972b4085a89f259070097006c05eff523ac62",
+      "src/rtc.c": "71390036072e4b35d61728eb88b21b36bf8b214ff4b8a413a027033e0a97f026",
+      "src/scheduler.c": "5399b3c4fe0edf36cc9434679aca7ee0c12b8dfbf4b2ff3383bf7fa6dc8c7ddb",
+      "src/sdi.c": "42f8d4d09eb1e4b4c73ee6161153211323daa6882a2560eea0066cdfe704f9c9",
+      "src/soc.c": "d30836f644fa1d802d5ed04e7915a74e65ac8299c3e6bf444da4355bd893e38e",
+      "src/sram.c": "a5c7f61524389155f93053f7a398c93333dd79ef07dcbc5773a0a6169ec2f582",
+      "src/thumb.c": "a61494ca691c83a83e0453bfb683feae1a897bcd67f3cf5484c5a79269a4cbcc",
+      "src/usb.c": "b792a08459cb9274ae88269a0155bf29bbd6b41266aa6a3139f419b51cd76dd3",
+      "src/watchdog.c": "02627d413523e4feb6b392c2dea372e2ce5e903002843c030c42303cc8ee49ee"
+    },
+    "firmware_used": false,
+    "boundaries": [
+      "Unicorn TI925T checks a defined shared ARMv4T subset, not full ARM920T board/MMU/cache conformance.",
+      "Release/reference, production WASM, stock ROM, UI and publication gates are owned by the root agent and are not claimed here."
+    ]
+  },
+  "public_evidence": {
+    "hp39gs-startup-r20.json": "ea5d9ae5ba4b0a146590fbd4a037c50476e3646c7d7d3d6d65c263f31295de37",
+    "hp39-transfer-r20.json": "6df2bca398380e97b89504690e118e104eba76ff48be31b390c9e173b15eaa22",
+    "sd-files-r20.json": "f38deafc26c514b574d4b0d54b849573c9b65b7f306dc5b0c8e2a37d494c4d8e",
+    "buzzer-r20.json": "95aa7f61c4553bf0d5199e3c2a0448a8a16c54a9dcf48c93ec1db84cba8ddbcb",
+    "frontend-validation-r20.json": "692770bda118fef3f03244343771190d4c151c59b356689124e6a52e3d942b5f"
+  },
+  "package_refreshes": {
+    "hp39gs-rom-dump-v2": {
+      "old_sha256": "32d568fbfec7fc9d233e30d0c073e236a7d10eabb8ff7a39501d18678985ec28",
+      "new_sha256": "94d41700fb8f6db8feb9448c3cedad994a78681dc5b06bbc7c34d79e74444ca2",
+      "changed_members": [
+        "README-zh.md",
+        "SHA256SUMS",
+        "manifest.json",
+        "tools/package-hp39-romstream.py"
+      ],
+      "calculator_and_receiver_binaries_byte_equal": true,
+      "reader_source_byte_equal": true,
+      "new_bytes": 1069100,
+      "verification": {
+        "file": "hp39gs-rom-dump-v2-refresh.zip",
+        "bytes": 1069100,
+        "sha256": "94d41700fb8f6db8feb9448c3cedad994a78681dc5b06bbc7c34d79e74444ca2",
+        "files": 55,
+        "calculator_bytes_unchanged": false,
+        "calculator_reader_revision": 2,
+        "full_flash_reader": true,
+        "flash_bytes": 1048576,
+        "read_passes_per_block": 2,
+        "hardware_validated": false,
+        "windows_receiver": {
+          "machine": "amd64",
+          "format": "PE32+",
+          "bytes": 1820160,
+          "sha256": "824e76e7d112c265bf9dc6ff40aad8bf25bf95fce4c0f11510a7a14587bd1424"
+        },
+        "target_stock_os_fixture": "original-full-39gs-nor",
+        "target_original_rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+        "target_native_bootloader_verified": true,
+        "verification_scope": "r20-original-rom-emulator-execution",
+        "source_rebuild": {
+          "arm_payload_byte_equal": true,
+          "aplet_byte_equal": true,
+          "template_byte_equal": true,
+          "launcher_byte_equal": true
+        }
+      }
+    },
+    "hp49gplus-flash-read-v1": {
+      "reason": "The packaged shared ROM identity helper now recognizes the original HP39gs full image and boot prefix. Calculator payloads and capture logic are byte-identical.",
+      "old_sha256": "a1ab9008a5c79c27f877fd503ec69b738613fb531f0801ee5030e1068003fe9a",
+      "new_sha256": "dfb2bba0c199255fc13add0a293ae50dde50c85f0c3375476aa4d81f42d7ea2c",
+      "changed_members": [
+        "hp49gplus-flash-read-v1/SHA256SUMS",
+        "hp49gplus-flash-read-v1/manifest.json",
+        "hp49gplus-flash-read-v1/tools/rom-inputs.mjs"
+      ]
+    }
+  },
+  "verification_log_sha256": {
+    "core-release.log": "3f2c9ec1150302b37a1889198fdbdfc2983747e9331ff627855072b332d5924f",
+    "core-reference.log": "602f94e1bb7bc4ca690fd836c0c0cd8264a0caeb179b6587974dcaddcfbc4628",
+    "core-gates-independent.json": "955b01457dd1d9f8d4670ac8bec235dcb8b89149f60a06e37da19f301d09906a",
+    "web-tools-final.log": "c02dcfa6e19262571a766a53beabb68d72f20ccb10830276700eb764fc595a90",
+    "wasm-gates-final-2.log": "bdca4d6954d17ce18b567fcc21291a5360df9bf9bb1f0b732b6a481bfbda3781",
+    "calculator-gates-final.log": "f8f9e813c54e563866a42b8a91903833002c613ff821bcd8c4e9466f20e1ded1",
+    "production-build-final.log": "dba1eaff7ebc2bd83a22e0454182ae53a71b7c75c6235dd2efe9e364a9035d0e",
+    "go-gates.log": "350dcbc064f8e8a8cb35d34082f5423fe140218219474820dd79d23bf93e2685",
+    "docs-strict-final.log": "ec51b4d3f556b86d7f12b95cc88aa309cd0373d9b4cab0f539f8b61a6c815419",
+    "pages-contract-final.log": "f9923a3d24075a1e4dc30816eca61bb426ed293095fdd1b0ccd505aef3ad6df9",
+    "pages-assembly-final.log": "d05b0a2ad0394a43890433af7ade5abbf1bdc452807a850cecfe4c82366cc81f",
+    "browser-components-final-copy.log": "9997eea3b97bc500f1177940b72b245c2bc16b4577b45095b6432101374f7c7c"
+  },
+  "failed_trials_and_resolution": [
+    {
+      "area": "Wire retry",
+      "finding": "Old CAN bytes after cancellation could terminate the next sender before its own handshake",
+      "resolution": "Bounded pre-handshake stale-control handling; independent unit tests and original-ROM retry/SEND comparison pass"
+    },
+    {
+      "area": "HP39gs reverse SEND",
+      "finding": "The inner generic 300-second limit stopped a still-progressing aplet at 8,381/10,344 bytes",
+      "resolution": "Child uses remaining outer 900-second deadline; exact original-ROM SEND completes; the overall limit is not extended"
+    },
+    {
+      "area": "HP39 Info ACK",
+      "finding": "At fine polling, a consumed initial Info ACK did not progress to the next request",
+      "resolution": "Bounded Info-ACK retry with partial-output ordering and unchanged total deadline; complete real-ROM Disk installation and full capture pass"
+    },
+    {
+      "area": "Recovery automation",
+      "finding": "Earlier retries opened the unsupported UART2/IrDA path while the ROM menu was not settled",
+      "resolution": "Separated ON, wait, APLET and RECV steps; same production core succeeds; no fake UART response added"
+    },
+    {
+      "area": "Diagnostic trace",
+      "finding": "New host-only audio exports were not recognized and caused incomplete diagnostic recordings",
+      "resolution": "Exactly four audio observers are excluded; real GPIO drain/clear does not change any guest checkpoint byte; unknown mutations remain rejected"
+    },
+    {
+      "area": "SD rollback review",
+      "finding": "Node Buffer.slice could alias a caller image during a failed edit",
+      "resolution": "Explicit Uint8Array copy; source/draft byte equality and late-batch failure tests pass"
+    },
+    {
+      "area": "Initial browser probe",
+      "finding": "Four million guest ticks did not settle the second arithmetic operation",
+      "resolution": "Final original-ROM browser probe uses the observed 30-million-tick settle and visually confirms 56; early report retained"
+    },
+    {
+      "area": "Local validation environment",
+      "finding": "First host/calculator launch lacked Clang PATH; first WASM launch pointed at stale default build without buzzer test binary; package rebuild initially used an incomplete source checkout",
+      "resolution": "Required toolchain PATH, fresh build-r20/gates-release and verified complete pinned source snapshot; all affected gates rerun successfully"
+    },
+    {
+      "area": "Archive synchronization",
+      "finding": "Old standalone helper/README differed from updated repository source",
+      "resolution": "Both archives rebuilt with their reproducible builders; calculator and receiver binaries compared byte-for-byte; new package gates pass"
+    },
+    {
+      "area": "First PR Build component check",
+      "finding": "Run 39928730793 passed core/WASM/protocol/storage gates, then rejected the old literal ON 键退出 after the final recovery-help wording added its wait instruction.",
+      "resolution": "Both modal and persistent-summary assertions now require ON, waiting for reception to exit and reopening RECV. The complete local component suite passes; the full PR Build must rerun before merge.",
+      "failed_head_sha": "95df502a46d5bf814db9988e6797121a6d87e86c",
+      "runtime_changed": false
+    }
+  ],
+  "boundaries": [
+    "No general ARM execution or HOME/APLET speedup claimed; optional transfer Unlimited changes host pacing only",
+    "Sound is audible from guest output, but current physical pitch/duration are not calibrated",
+    "Reverse HP39 Kermit SEND remains slow; each direct Wire object requires a fresh stock RECV",
+    "SD uses bounded SDSC PIO and an unmounted FAT16 8.3 editor; no SDHC/SDXC/DMA or LFN creation/rename/delete",
+    "HP40gs and HP50g original full-ROM admission is still pending",
+    "UART2/IrDA and NOR programming remain unsupported",
+    "Original ROM files, capture sidecars, checkpoints, card images and stock LCD pixel data are private and excluded"
+  ]
+}

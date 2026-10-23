@@ -53,8 +53,30 @@ transfer(2200,68,{dropAck:true,rejectBlock:true});
   s.start({name:'A',bytes:payload(11)},0);s.receive(Uint8Array.of(68),1);s.poll(1);
   for(let t=10001;t<120000&&s.active;t+=10000){s.poll(t);s.poll(t);}
   assert.equal(s.phase,'error');assert.equal(s.pending,false);
-  s.start({name:'A',bytes:payload(11)},0);s.receive(Uint8Array.of(24),1);assert.equal(s.phase,'error');
+  s.start({name:'A',bytes:payload(11)},0);s.receive(Uint8Array.of(68,24),1);assert.equal(s.phase,'error');
   s.start({name:'A',bytes:payload(11)},0);s.cancel();assert.equal(s.phase,'cancelled');assert.equal(s.pending,false);
+}
+// Original-ROM ON cancellation emits a tail of CAN bytes. A new attempt must
+// wait for its own handshake rather than fail immediately on the old tail;
+// fresh D/C/NAK is preserved even when it shares a packet with that tail.
+for(const check of [21,67,68]){
+  const sent=[],s=new Hp39WireSender({hz:1000,write:b=>{sent.push(b.slice());return b.length;}});
+  s.start({name:'A',bytes:payload(11)},0);s.receive(Uint8Array.of(check),1);s.poll(1);
+  s.receive(Uint8Array.of(24,24),2);assert.equal(s.phase,'error');assert.equal(sent.length,1);
+  s.start({name:'A',bytes:payload(11)},3);
+  for(let t=4;t<20;t++){s.receive(Uint8Array.of(24,6,4,24),t);s.poll(t);}
+  assert.equal(s.phase,'negotiating');assert.equal(sent.length,1);assert.equal(s.deadline,120003);
+  s.receive(Uint8Array.of(24,6,24,check),20);assert.equal(s.phase,'sending');s.poll(20);
+  assert.equal(sent.length,2);assert.equal(sent[1][1],1,'A retry starts its first object block');
+  s.receive(Uint8Array.of(6),21);s.poll(21);assert.deepEqual(sent.at(-1),Uint8Array.of(4));
+  s.receive(Uint8Array.of(6),22);assert.equal(s.phase,'complete');assert.equal(s.transferred,11);
+  s.start({name:'A',bytes:payload(11)},30);s.receive(Uint8Array.of(24,check,24),31);
+  assert.equal(s.phase,'error','CAN after the current handshake is still an immediate remote cancellation');
+}
+{
+  const s=new Hp39WireSender({hz:1000,write:b=>b.length});s.start({name:'A',bytes:payload(11)},0);
+  for(let t=1;t<120000;t+=1000){s.receive(Uint8Array.of(24,6,4),t);s.poll(t);}
+  s.poll(120000);assert.equal(s.phase,'error');assert.equal(s.pending,false,'Stale control traffic cannot extend the initial budget');
 }
 // The native handshake belongs to Wire, not the Kermit first-packet gate.
 {
@@ -67,5 +89,19 @@ transfer(2200,68,{dropAck:true,rejectBlock:true});
   f.poll(31002);assert.equal(sent[0][0],1);assert.equal(sent[0][1],1);
   f.cancel(31003);assert.equal(f.pending,false);assert.equal(events.at(-1).phase,'cancelled');
   assert.throws(()=>f.start({request:2,mode:'receive',transport:'usb',protocol:'hp39-wire'},32000));
+}
+// Exercise the same recovery through the real adapter with CANs remaining in
+// separate USB IN packets. No blanket drain may discard the following D.
+{
+  const incoming=[],sent=[],usb={endpoint:()=>({maxPacket:64}),read:()=>incoming.length?{result:0,bytes:incoming.shift()}:{result:1},
+    send:b=>{sent.push(b.slice());return{result:0,accepted:b.length};}};
+  const f=new FileTransfer({core:{timebase_hz:()=>1000},usb,model:1,notify:()=>{}});
+  const start=request=>f.start({request,mode:'send',transport:'usb',protocol:'hp39-wire',name:'A',bytes:payload(11)},request*100);
+  start(1);incoming.push(Uint8Array.of(68));f.poll(101);f.poll(102);
+  incoming.push(Uint8Array.of(24),Uint8Array.of(24,24),Uint8Array.of(6,24,68));f.poll(103);
+  assert.equal(f.session.phase,'error');const before=sent.length;start(2);f.poll(201);
+  assert.equal(f.session.phase,'negotiating');assert.equal(sent.length,before);
+  f.poll(202);assert.equal(f.session.phase,'sending');f.poll(203);
+  assert.equal(sent.length,before+1);assert.equal(sent.at(-1)[1],1);f.cancel(204);
 }
 console.log('HP39 Wire: independent CRC check values; D/C/NAK, 128/1024-byte blocks, exact payload/padding, fragmented/backpressured writes, sequence wrap, rejected block/lost ACK recovery, EOT completion, bounded waits and cancellation pass.');

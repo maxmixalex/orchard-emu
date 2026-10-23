@@ -55,6 +55,66 @@ function fixture(hostFiles=files){
  f.client.start({mode:'send',name:'LIB.000',bytes:library},f.now());f.pump();assert.equal(f.received.length,2);assert.deepEqual(f.received[1].bytes,library);
  f.server.cancel();assert.equal(f.server.active,false);assert.equal(f.server.pending,false);
 }
+// A steadily progressing stock SEND may exceed the generic Kermit five-minute
+// transaction default. It inherits the HP39 server's bounded fifteen minutes;
+// a late child cannot restart or extend that total service budget.
+{
+ let now=0;const ab=[],ba=[],received=[],states=[];
+ const payload=Uint8Array.from([...program,...text('A'.repeat(30000))]);
+ const server=new Hp39FileServer({hz:1000,write:b=>{ba.push(b.slice());return b.length;},
+   file:f=>received.push(f),notify:s=>states.push(s)});
+ const client=new KermitSession({hz:1000,duration:900,write:b=>{ab.push(b.slice());return b.length;}});
+ server.start({files:[]},0);client.start({mode:'send',name:'SLOW.000',bytes:payload},0);
+ while(client.active&&now<900000){
+   now+=1000;
+   while(ab.length)server.receive(ab.shift(),now);while(ba.length)client.receive(ba.shift(),now);
+   server.poll(now);client.poll(now);
+ }
+ assert(now>300000&&now<900000);assert.equal(client.phase,'complete');
+ assert.equal(received.length,1);assert.deepEqual(received[0].bytes,payload);
+ server.receive(packet(0,'S',PARAMETERS),899000);server.poll(899000);assert(server.active);
+ server.poll(900000);assert.equal(server.phase,'error');assert.match(states.at(-1).error,/15-minute/);
+ assert.equal(received.length,1,'The expired partial child must publish no file');
+}
+// A lost Init-Info ACK recovers before the client's ordinary five-second
+// timeout. The complete transaction still returns exactly one original file.
+{
+ let now=0,dropped=false;const ab=[],ba=[],received=[];
+ const server=new Hp39FileServer({hz:1000,write:b=>{const p=new PacketReader().feed(b)[0];
+  if(!dropped&&p?.type==='Y'&&p.sequence===0)dropped=true;else ba.push(b.slice());return b.length;}});
+ const client=new KermitSession({hz:1000,write:b=>{ab.push(b.slice());return b.length;},file:f=>received.push(f)});
+ server.start({files},0);client.start({mode:'get',name:'TEST.000'},0);
+ for(;now<5000&&client.active;now++){
+  while(ab.length)server.receive(ab.shift(),now);while(ba.length)client.receive(ba.shift(),now);
+  server.poll(now);client.poll(now);
+ }
+ assert(dropped&&now>=1000&&now<5000);assert.equal(client.phase,'complete');
+ assert.equal(server.infoAck,null);assert.equal(received.length,1);assert.deepEqual(received[0].bytes,program);
+}
+// Start the retry timer only after the complete ACK is written. A following
+// command removes an unsent old ACK, so it cannot poison the new child exchange.
+{
+ let allowance=0;const sent=[],server=new Hp39FileServer({hz:1000,write:b=>{
+  const n=Math.min(allowance,b.length);if(n)sent.push(b.slice(0,n));return n;}});
+ server.start({files},0);server.receive(packet(0,'I',PARAMETERS),0);
+ server.poll(5000);assert.equal(server.infoAck.deadline,Infinity);assert.equal(server.infoAck.retries,0);
+ allowance=1;server.poll(5001);assert.equal(server.infoAck.deadline,Infinity);
+ allowance=128;server.poll(5002);assert.equal(server.infoAck.deadline,6002);
+ allowance=0;server.poll(6002);assert.equal(server.infoAck.retries,1);assert.equal(server.queue.length,1);
+ server.receive(packet(0,'R',text('TEST.000')),6003);assert.equal(server.infoAck,null);assert.equal(server.queue.length,0);
+ allowance=128;server.poll(6004);assert.equal(new PacketReader().feed(sent.at(-1))[0].type,'S');
+}
+// A silent peer exhausts a bounded retry budget. Cancellation and a fresh
+// server cannot inherit or emit a former initialization ACK.
+{
+ const sent=[],server=new Hp39FileServer({hz:1000,write:b=>{sent.push(b.slice());return b.length;}});
+ server.start({files:[]},0);server.receive(packet(0,'I',PARAMETERS),0);server.poll(0);
+ while(server.active)server.poll(server.infoAck.deadline);
+ assert.equal(server.phase,'error');assert.equal(sent.length,5);assert.equal(server.infoAck,null);assert.equal(server.pending,false);
+ server.start({files:[]},40000);server.receive(packet(0,'I',PARAMETERS),40000);server.poll(40000);server.cancel();
+ const n=sent.length;server.poll(100000);assert.equal(sent.length,n);assert.equal(server.infoAck,null);
+ server.start({files:[]},100000);server.poll(200000);assert.equal(sent.length,n);
+}
 // FINISH has a bounded final-ACK grace period, keyed to the exact command.
 {
  let now=0,dropped=false;const ab=[],ba=[],status=[];
@@ -188,6 +248,69 @@ for(const transport of ['usb','serial']){
  c.cancelTransfer();assert.equal(c.state.uploadBatch.active,false);assert.equal(c.state.uploadBatch.items[0].phase,'complete');assert.equal(c.state.uploadBatch.items[1].phase,'cancelled');c.dispose();
  const invalid=controller();await invalid.c.startHp39Server('usb',[{file:browserFile('LIB.000',library)},{file:browserFile('TEST.000',program)}],{protocol:'wire'});
  assert.equal(invalid.c.state.transfer.phase,'error');assert(!invalid.sent.some(e=>e.type==='file-transfer-start'),'Unsupported ASCII files fail before sending the library');invalid.c.dispose();
+}
+// A failed Wire object retains its exact bytes and the later queue. Successful
+// objects are never resent by retry/skip, including late ACKs from old attempts.
+for(const recovery of ['retry','skip','replace']){
+ const {c,sent}=controller(),aplet=text('HP39BinB\x04TESTopaque-body'),note=text('HP39BinC\x04NOTEnote-body');
+ const emit=data=>c.receive({generation:c.generation,type:'file-transfer-status',request:c.transferRequest,...data});
+ const starts=()=>sent.filter(e=>e.type==='file-transfer-start');
+ await c.startHp39Server('usb',[{file:browserFile('A.any-suffix',aplet)},{file:browserFile('LIB',library)},{file:browserFile('NOTE.zip',note)}],{protocol:'wire'});
+ assert.equal(starts().at(-1).name,'LIB','Libraries are installed before dependent aplets');
+ emit({active:false,phase:'complete'});assert.equal(starts().at(-1).name,'A.any-suffix');
+ const failed=c.transferRequest;emit({active:false,phase:'error',error:'Calculator cancelled',transferred:4});
+ assert.equal(c.state.transfer.name,'A.any-suffix');assert(c.state.uploadBatch.recoverable);
+ assert.deepEqual(c.state.uploadBatch.items.map(i=>i.phase),['complete','error','queued']);
+ assert.deepEqual(c.uploadQueue.entries[1].bytes,aplet);assert.equal(c.uploadQueue.entries[0].bytes,undefined);
+ emit({request:failed,active:false,phase:'complete'});assert.equal(starts().length,2,'Old final ACK cannot advance an interrupted file');
+ if(recovery==='replace'){
+   c.cancelTransfer();assert.equal(c.uploadQueue,null);assert.equal(c.state.uploadBatch.recoverable,false);
+   await c.startHp39Server('usb',[{file:browserFile('NEW',note)}],{protocol:'wire'});
+   assert.equal(starts().at(-1).name,'NEW');c.dispose();continue;
+ }
+ if(recovery==='retry'){
+   await c.retryUploadFile();assert(starts().at(-1).request>failed);
+   assert.equal(starts().at(-1).name,'A.any-suffix');assert.deepEqual(starts().at(-1).bytes,aplet);
+   emit({request:failed,active:false,phase:'complete'});assert.equal(starts().at(-1).name,'A.any-suffix');
+   emit({active:false,phase:'complete'});
+ }else c.skipUploadFile();
+ assert.equal(starts().at(-1).name,'NOTE.zip','A typed file named .zip is not parsed as an archive');
+ assert.deepEqual(starts().at(-1).bytes,note);emit({active:false,phase:'complete'});
+ assert.equal(c.uploadQueue,null);assert.equal(c.state.uploadBatch.active,false);
+ assert.equal(c.state.uploadBatch.completed,recovery==='retry'?3:2);
+ assert.deepEqual(c.state.uploadBatch.items.map(i=>i.phase),['complete',recovery==='retry'?'complete':'skipped','complete']);
+ assert.equal(starts().filter(e=>e.name==='LIB').length,1);c.dispose();
+}
+// Preflight still checks the entire selection before the first transaction,
+// but a bad loose file has its own recoverable error instead of discarding good
+// objects. A later local read retry may recover; cancellation wins its await.
+for(const recovery of ['skip','retry','cancel-retry']){
+ const {c,sent}=controller(),aplet=text('HP39BinB\x04TESTopaque-body');let reads=0,release;
+ const bad=browserFile('BROKEN.unknown',aplet);
+ bad.arrayBuffer=async()=>{if(++reads===1)throw Error('Local read failed');
+   return recovery==='cancel-retry'?new Promise(resolve=>{release=resolve;}):aplet.slice().buffer;};
+ await c.startHp39Server('usb',[{file:browserFile('LIB.no-extension-needed',library)},{file:bad}],{protocol:'wire'});
+ assert.equal(c.state.transfer.name,'BROKEN.unknown');assert(c.state.uploadBatch.recoverable);
+ assert.match(c.state.transfer.error,/Local read failed/);assert(!sent.some(e=>e.type==='file-transfer-start'));
+ if(recovery==='skip')c.skipUploadFile();
+ else{
+   const retry=c.retryUploadFile();
+   if(recovery==='cancel-retry'){c.cancelTransfer();release(aplet.slice().buffer);await retry;
+     assert.equal(c.uploadQueue,null);assert(!sent.some(e=>e.type==='file-transfer-start'));c.dispose();continue;}
+   await retry;
+ }
+ assert.equal(sent.filter(e=>e.type==='file-transfer-start').at(-1).name,'LIB.no-extension-needed');
+ c.receive({type:'file-transfer-status',generation:c.generation,request:c.transferRequest,active:false,phase:'complete'});
+ if(recovery==='retry')assert.equal(sent.filter(e=>e.type==='file-transfer-start').at(-1).name,'BROKEN.unknown');
+ else assert.equal(c.uploadQueue,null);
+ c.dispose();
+}
+{
+ const {c,sent}=controller();
+ await c.startHp39Server('usb',[{file:browserFile('BROKEN.000',text('not hp39'))},{file:browserFile('LIB.custom',library)}],{protocol:'wire'});
+ assert(c.state.uploadBatch.recoverable);assert.match(c.state.transfer.error,/typed file/);
+ await c.retryUploadFile();assert(c.state.uploadBatch.recoverable);assert(!sent.some(e=>e.type==='file-transfer-start'));
+ c.skipUploadFile();assert.equal(sent.filter(e=>e.type==='file-transfer-start').at(-1).name,'LIB.custom');c.dispose();
 }
 {
  const {c,sent}=controller();let release;const slow=browserFile('TEST.000',program);slow.arrayBuffer=()=>new Promise(r=>release=r);
