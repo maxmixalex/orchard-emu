@@ -319,11 +319,15 @@ with sync_playwright() as p:
  unlimited.uncheck()
  assert not page.evaluate('window.__messages.filter(m=>m.type==="configure").at(-1).transferUnlimited')
  page.get_by_role('button',name='取消传输',exact=True).click()
- assert 'ON 键退出' in page.get_by_test_id('transfer-status').inner_text()
+ recovery=page.get_by_test_id('transfer-status').inner_text()
+ for instruction in ('ON 键','等接收画面退出','重新打开 RECV'):
+  assert instruction in recovery,recovery
  page.get_by_label('计算器传输菜单',exact=True).select_option('disk')
  assert page.get_by_role('button',name='接收计算器文件',exact=True).is_enabled()
  page.get_by_role('button',name='关闭',exact=True).click()
- assert 'ON 键退出' in page.get_by_test_id('transfer-summary').inner_text()
+ recovery=page.get_by_test_id('transfer-summary').inner_text()
+ for instruction in ('ON 键','等接收画面退出','重新打开 RECV'):
+  assert instruction in recovery,recovery
  for width in [320,390,720,1360]:
   page.set_viewport_size({'width':width,'height':900})
   page.wait_for_timeout(100)

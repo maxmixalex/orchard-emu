@@ -44,7 +44,8 @@
     "landscape_results": "052d077b7557c324acf359c0816aa360545dd05bd1552b003aa21a556092b587",
     "final_http_worker_report": "ff666e72cffad3490175451e7bd90c44ba43a9b7bf5c82198dbaa3d0a3ecd7ec",
     "diagnostic_stop_recovery_report": "ec3e8f1d1c62fc9963b176f5baf93d0a3a7e58b6ed5da84d973ace7ccf0b71a2",
-    "trace_audio_fix_report": "550521bb8ec9acf9a35ff5b1daadeb6799d19e8963819c84ff30cb747934e1eb"
+    "trace_audio_fix_report": "550521bb8ec9acf9a35ff5b1daadeb6799d19e8963819c84ff30cb747934e1eb",
+    "final_component_wording_log": "9997eea3b97bc500f1177940b72b245c2bc16b4577b45095b6432101374f7c7c"
   },
   "checks": [
     {
@@ -155,6 +156,19 @@
       "log_sha256": "78c9e3916d16469db799f7d742b2c3b13bd89c347f2d29049138762775a5dfa2",
       "instrumented": true,
       "original_firmware_used": false
+    },
+    {
+      "name": "components-final-recovery-wording",
+      "command": [
+        "python3",
+        "tests/browser-components.py"
+      ],
+      "test_source_sha256": "b124e538a5bdda97e4fefb6cc7dd00d77b391905ee6ee6b9a4fba4c6c18f1785",
+      "i18n_source_sha256": "247853ab4a4773bdacbdab37e342b1097cbd63dbb51872290cc8b464f92da177",
+      "passed": true,
+      "log_sha256": "9997eea3b97bc500f1177940b72b245c2bc16b4577b45095b6432101374f7c7c",
+      "original_firmware_used": false,
+      "scope": "Complete offline React/Mantine/controller component suite using the final source wording; both modal status and persistent summary require ON, waiting for receive-screen exit, and reopening RECV. This fixture is not the production HTTP page or original-ROM execution."
     }
   ],
   "earlier_component_batch": {
@@ -591,7 +605,7 @@
       "asset-manifest.json"
     ],
     "skin_manifest_hash_scope": "The separate skin manifest hash was read when assembling this evidence; it is not a before/after comparison of all artwork files.",
-    "final_text_change": "Recovery guidance text was adjusted after the earlier component batch. Only the final production HTTP Worker gate was rerun for this evidence; the earlier component and stock flows were not rerun.",
+    "final_text_change": "Recovery guidance text was adjusted after the earlier component batch. The final production HTTP Worker and the complete offline component suite have now been rerun. Other earlier component and original-ROM flows retain their own recorded identities.",
     "earlier_batch_asset_limit": "Per-script production bundle hashes were not recorded in the earlier aggregate log; this record does not attribute the final calculator bundle hash to all earlier component checks.",
     "complete_release_manifest_recorded_separately": true
   },
@@ -602,5 +616,15 @@
     "screenshots": false,
     "audio_recordings": false,
     "private_filesystem_paths": false
+  },
+  "first_ci_component_failure": {
+    "run": "https://github.com/maxmixalex/orchard-emu/actions/runs/39928730793",
+    "head_sha": "95df502a46d5bf814db9988e6797121a6d87e86c",
+    "test": "tests/browser-components.py",
+    "old_assertion": "ON 键退出",
+    "cause": "The final recovery help inserted the required wait instruction, while two component assertions still expected the old adjacent words.",
+    "fix": "Both assertions now check all three recovery instructions; no runtime, core or protocol change.",
+    "local_full_component_rerun_passed": true,
+    "full_ci_rerun_required": true
   }
 }

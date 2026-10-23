@@ -492,7 +492,7 @@
     "hp39-transfer-r20.json": "6df2bca398380e97b89504690e118e104eba76ff48be31b390c9e173b15eaa22",
     "sd-files-r20.json": "f38deafc26c514b574d4b0d54b849573c9b65b7f306dc5b0c8e2a37d494c4d8e",
     "buzzer-r20.json": "95aa7f61c4553bf0d5199e3c2a0448a8a16c54a9dcf48c93ec1db84cba8ddbcb",
-    "frontend-validation-r20.json": "819b5eb9e444b8974b487725217dc582c0ffc65f078a76272f035d265f375e80"
+    "frontend-validation-r20.json": "692770bda118fef3f03244343771190d4c151c59b356689124e6a52e3d942b5f"
   },
   "package_refreshes": {
     "hp39gs-rom-dump-v2": {
@@ -558,7 +558,8 @@
     "go-gates.log": "350dcbc064f8e8a8cb35d34082f5423fe140218219474820dd79d23bf93e2685",
     "docs-strict-final.log": "ec51b4d3f556b86d7f12b95cc88aa309cd0373d9b4cab0f539f8b61a6c815419",
     "pages-contract-final.log": "f9923a3d24075a1e4dc30816eca61bb426ed293095fdd1b0ccd505aef3ad6df9",
-    "pages-assembly-final.log": "d05b0a2ad0394a43890433af7ade5abbf1bdc452807a850cecfe4c82366cc81f"
+    "pages-assembly-final.log": "d05b0a2ad0394a43890433af7ade5abbf1bdc452807a850cecfe4c82366cc81f",
+    "browser-components-final-copy.log": "9997eea3b97bc500f1177940b72b245c2bc16b4577b45095b6432101374f7c7c"
   },
   "failed_trials_and_resolution": [
     {
@@ -605,6 +606,13 @@
       "area": "Archive synchronization",
       "finding": "Old standalone helper/README differed from updated repository source",
       "resolution": "Both archives rebuilt with their reproducible builders; calculator and receiver binaries compared byte-for-byte; new package gates pass"
+    },
+    {
+      "area": "First PR Build component check",
+      "finding": "Run 39928730793 passed core/WASM/protocol/storage gates, then rejected the old literal ON 键退出 after the final recovery-help wording added its wait instruction.",
+      "resolution": "Both modal and persistent-summary assertions now require ON, waiting for reception to exit and reopening RECV. The complete local component suite passes; the full PR Build must rerun before merge.",
+      "failed_head_sha": "95df502a46d5bf814db9988e6797121a6d87e86c",
+      "runtime_changed": false
     }
   ],
   "boundaries": [
