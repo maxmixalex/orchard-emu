@@ -28,8 +28,8 @@ Hardware sources used:
 - [HP GCC SDK `sys_playTone.c`](https://github.com/lobakkang/patched-hpgcc-1.1-sdk-for-hp39gs/blob/7fa1503912338ea0fdf1d39eb584770f4d121cd2/sources/hplib/sys/sys_playTone.c),
   revision `7fa1503912338ea0fdf1d39eb584770f4d121cd2`, identifies the calculator
   speaker on GPBDAT bit 2 using direct GPIO writes.
-- [hpclang sound engine](https://github.com/maxmixalex/hpclang/blob/e240c58c2e9dd3ac4d18002ed9a93d2c7cc67900/runtime/core/sound-engine.c),
-  revision `e240c58c2e9dd3ac4d18002ed9a93d2c7cc67900`, independently uses
+- [hpclang sound engine](https://github.com/maxmixalex/hpclang/blob/261dba7cc5b208828f7a907c2071d24c3b0d94ea/runtime/core/sound-engine.c),
+  revision `261dba7cc5b208828f7a907c2071d24c3b0d94ea`, independently uses
   Timer2, its count/compare registers and the GPB2 alternate function.
 
 These are register and wiring references. Orchard's MIT implementation is
