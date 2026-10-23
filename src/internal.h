@@ -117,12 +117,14 @@ typedef struct {
     o_rtc rtc;
 } o_soc;
 
-/* Host memoization, NOT guest TLB state. A hit revalidates both live table
- * words and the full translation context. Offsets survive machine relocation;
- * only side-effect-free, non-aliased physical table storage is admitted. */
+/* Host memoization, NOT guest TLB state. Live words/context are revalidated
+ * unless boot SRAM writes and CP15 changes are watched in this run scope.
+ * Offsets survive relocation; only side-effect-free, non-aliased table
+ * storage is admitted. No scope or memo field is checkpointed. */
 typedef struct {
     uint32_t virtual_page, physical_page, control, ttb, domain, access;
     uint32_t first_offset, first_word, second_offset, second_word;
+    uint32_t boot_epoch;
 } o_translation;
 #define O_TRANSLATIONS 64u
 
@@ -131,6 +133,8 @@ struct orchard_machine {
     uint32_t quiet_left, deferred_ticks; /* Host-only, flushed at public boundaries. */
     bool idle_write_enabled; /* Host-only policy scope; never saved in a checkpoint. */
     o_translation translations[O_TRANSLATIONS];
+    uint32_t boot_memo_epoch, boot_memo_active; /* Active is zero outside a run. */
+    uint32_t boot_memo_pages; /* Four watched 1 KiB pages, only in boot SRAM. */
     o_cpu cpu;
     o_soc soc;
     uint64_t ticks;
@@ -181,6 +185,8 @@ bool o_translate_reference(orchard_machine *m, uint32_t address, bool write, boo
                            bool user, uint32_t *physical);
 bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
                  bool user, uint32_t *physical);
+/* Start a fresh run scope, or invalidate its watched boot-SRAM descriptors. */
+void o_boot_memo_advance(orchard_machine *m);
 bool o_load(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t *value);
 bool o_store(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t value);
 void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool fetch);
