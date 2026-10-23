@@ -1,5 +1,11 @@
 # HP49g+ 原机 Flash 读取包
 
+> **2026-10-23 更新：已收到用户的完整 49g+ A/B 捕获。** 2 MiB 映像的
+> SHA-256 为 `3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab`。
+> 本轮已用原始字节完成冷启动、CAS、绘图和 USB 文件传输验证，见
+> [49g+ 支持记录](https://maxmixalex.github.io/orchard-emu/development/hp49-startup/)。无需重跑下面的短探针；下文保留原采集包
+> 的完整使用说明，供重新采集时参考。采集元数据与后续执行证据分别保存。
+
 这是 Orchard 的原始、开源读取程序包，目标是取得 **HP49g+ 的完整 2 MiB
 物理 NOR 内容，包括开头 16 KiB ARM boot 区**。它使用 HP 官方文档中的
 `PEEKARM`，不包含 ARM 机器码、刷机程序或固件。结果写到 SD 卡上的新目录；

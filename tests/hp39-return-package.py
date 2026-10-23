@@ -47,6 +47,8 @@ class ReturnPackageTest(unittest.TestCase):
         instructions = instructions.replace('](../downloads/', f']({repo}downloads/')
         instructions = instructions.replace('](hp39-native-prerequisites.md)',
                                             f']({repo}development/hp39-native-prerequisites.md)')
+        instructions = instructions.replace('](hp39gs-rom-dump.md)',
+                                            f']({repo}development/hp39gs-rom-dump.md)')
         self.assertEqual(self.files['README-zh.md'], instructions.encode())
         with zipfile.ZipFile(PUBLISHED) as archive:
             for entry in archive.infolist():

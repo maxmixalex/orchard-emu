@@ -95,8 +95,8 @@ for(const phase of ['error','cancelled','complete']){
  c.linksReset();assert.equal(c.received.size,0);assert.deepEqual(c.state.receivedFiles,[]);assert.equal(c.state.transfer,null);c.dispose();
 }
 // Unverified models reject uploads before reading local bytes on either link.
-for(const [model,transport] of [[1,'serial'],[1,'usb']]){
- const {c,sent}=fixture();c.patch({model:CALCULATORS.find(m=>m.id===model)});let read=false;
+for(const [model,transport] of [[6,'serial'],[6,'usb']]){
+ const {c,sent}=fixture();c.patch({model:{id:model}});let read=false;
  const upload={...file(),arrayBuffer:async()=>{read=true;return new ArrayBuffer(1);}};
  await c.startTransfer('send',transport,{file:upload});
  assert.equal(read,false);assert.equal(c.state.transfer.phase,'error');

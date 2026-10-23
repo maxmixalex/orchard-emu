@@ -11,7 +11,7 @@ if (physicalReads !== undefined && physicalReads !== '0' && physicalReads !== '1
   throw new Error('ORCHARD_EXPERIMENTAL_PHYSICAL_READS must be 0 or 1 (omit it for the default dispatch).');
 }
 await mkdir(out, { recursive: true });
-const sources = ['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'checkpoint', 'scheduler', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb'].map(name => `src/${name}.c`);
+const sources = ['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'checkpoint', 'scheduler', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb', 'sdi'].map(name => `src/${name}.c`);
 const args = [
   '--target=wasm32', '-std=c17', '-O3', '-flto', '-mbulk-memory', '-ffreestanding', '-nostdlib', '-fno-builtin',
   '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc',
@@ -23,7 +23,7 @@ const args = [
 const result = spawnSync(process.env.CLANG || 'clang', args, { cwd: root, stdio: 'inherit' });
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
-for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'session.js', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js', 'kermit.js', 'file-transfer.js']) {
+for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'session.js', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js', 'kermit.js', 'file-transfer.js', 'hp39-files.js', 'hp39-transfer.js']) {
   await copyFile(resolve(root, 'web', file), resolve(out, file));
 }
 await copyFile(resolve(root, "LICENSE"), resolve(out, "LICENSE"));
@@ -40,10 +40,10 @@ Open the localhost URL printed by the server (default port 8123).
 Do not open index.html with file://. No firmware is included.
 
 Open the calculator page and choose Open ROM. Its model and compatibility
-settings are selected automatically for the supported HP39g+ D1.55 and
-HP48gII complete ROMs. It starts when the page is visible and focused.
+settings are selected automatically for the supported HP39g+ D1.55,
+HP48gII and HP49g+ complete ROMs. It starts when the page is visible and focused.
 HP39g+: at Memory Clear press the top-right key (OK).
-HP48gII: at Try To Recover Memory press the top-right key (NO), then again
+HP48gII/HP49g+: at Try To Recover Memory press the top-right key (NO), then again
 at Memory Clear (OK). Wait for HOME before typing a calculation.
 
 Settings select immersive/traditional view, size, keyboard sequences, focus
@@ -51,15 +51,19 @@ policy and speed. Normal paces the functional clock; Unlimited accelerates
 both calculations and timers. Save exports <model>-YYYYMMDD-HHMMSS.ord.
 Restore accepts .ord and older .orchard files for the same ROM. Automatic
 localStorage saves are opt-in and do not store the ROM; keep exported backups.
-Connections > Files uploads HP48gII objects over internal USB or serial and retrieves
+Connections > Files uploads HP48gII objects over internal USB or serial,
+and HP49g+ objects over internal USB, and retrieves
 named objects for explicit local download. Start Kermit SERVER on the calculator
 with the matching connection and binary transfer selected. Both connections support
 Receive, directory and FINISH. Select up to 16 objects (8 MiB total) for a batch;
 all files are checked before sending and each result is shown separately.
-Raw data retains serial and USB packets. HP39 applets and complete Conn3x
-replacement remain in development.
+HP39/40 files use the separate Disk drive host: select aplet/library files,
+start serving, and use APLET > RECV > Disk drive on the calculator. Reverse
+SEND offers explicit local downloads. Stock USB transfer is verified on HP39g+;
+39gs/40gs still require their own full-ROM witnesses. Raw data retains serial
+and USB packets. Complete desktop Conn3x replacement remains separate.
 The browser connection does not create a device in the desktop operating system.
-The beta supports two tested firmware versions, not all six target models.
+The beta admits three tested complete firmware images.
 The developer workbench is debug.html. It retains strict hardware mode,
 research setup selectors, registers, counters, UART and diagnostics. Both
 interfaces share the same optimized ARM/WASM core, skin and input mapping.

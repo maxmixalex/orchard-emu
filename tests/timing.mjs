@@ -49,14 +49,14 @@ async function fixture(){
   keyboard_matrix:(col,row,down)=>{presses.push({scan:col*7+row,down,tick:clock});return 0;},
   keyboard_dedicated:(pin,down)=>{presses.push({pin,down,tick:clock});return 0;},
   rom_buffer:()=>1024,frame_buffer:()=>512,annunciator_buffer:()=>600,usb_snapshot:()=>768,
-  checkpoint_size:()=>16,checkpoint_buffer:()=>2048,checkpoint_load:()=>{setClock(1000);return 0;},timebase_hz:()=>12000000
+  checkpoint_size:()=>32,checkpoint_buffer:()=>2048,checkpoint_load:()=>{setClock(1000);return 0;},timebase_hz:()=>12000000
  },{get:(o,k)=>k in o?o[k]:()=>0});
  const schedule=fn=>{const id=++next;jobs.set(id,fn);return id;};
  class FakeScheduler{schedule(fn){return schedule(fn);}cancel(id){jobs.delete(id);}}
  class FakeUSB{poll(){}resetLocal(){}}
- const saved={model:4,romHash:HP48_ROM,preset:'hp48-home',frameView:1,state:new Uint8Array(16)};
+ const saved={model:4,romHash:HP48_ROM,preset:'hp48-home',frameView:1,state:new Uint8Array(32)};
  const scope={console,Pacer,FileTransfer,TaskScheduler:FakeScheduler,VirtualUSB:FakeUSB,TapQueue,isPlayable,setupHash,applySetup,
-  encodeSession:async()=>new Uint8Array(16),decodeSession:async()=>saved,Uint32Array,Uint8Array,ArrayBuffer,
+  encodeSession:async()=>new Uint8Array(32),decodeSession:async()=>saved,Uint32Array,Uint8Array,ArrayBuffer,
   setTimeout:schedule,clearTimeout:id=>jobs.delete(id),performance:{now:()=>++wall},
   crypto:{subtle:{digest:async()=>Uint8Array.from(HP48_ROM.match(/../g),b=>parseInt(b,16)).buffer}},
   self:{},postMessage:d=>output.push(d),initialCore:core};

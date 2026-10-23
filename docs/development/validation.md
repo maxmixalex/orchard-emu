@@ -1,5 +1,77 @@
 # Validation
 
+## HP49g+ and HP39/40 file-transfer continuation (2026-10-22)
+
+The [release validation record](evidence/release-validation-r17.json) identifies
+the frozen production assets and separates generated fixtures, original-ROM
+workflows, package checks and publication checks. These are local acceptance
+results for the continuation from `d199afd`; remote Build, Pages and deployed
+revision acceptance must be observed separately after publication.
+
+The core validation passes 16 Release, 16 retained-reference and 16 ASan/UBSan
+suites. Native and test-WASM runs pass **1,119,781 assertions per host**, plus
+**32,949 functional-clock checks per host**. The independent Unicorn corpus
+passes 17,075 cases with zero mismatches and zero skips; Clang static analysis
+reports no diagnostics across 41 native C sources. The
+[independent core review](evidence/core-review-r17.json) additionally checks
+256 scheduler/reference partitions and rejects a correct-CRC checkpoint that
+tries to import an unsupported active SDI data mode before changing the
+machine. Its 937 checkpoint assertions pass on native, reference, sanitizer
+and test-WASM builds.
+
+The final browser and host checks use the production WASM with SHA-256
+`5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f`.
+Chrome is version 156.0.8078.47. The final asset manifest in the evidence record
+also identifies the calculator bundle, Worker and transfer modules.
+
+| Validation layer | Executed scope and result |
+| --- | --- |
+| React components | Lazy keypad/view/model races, exact full-canvas pixels and PNG capture, English/Chinese settings, upload batches, HP39 catalog/serve/download controls and four viewport widths pass. This fixture supplies explicit Worker events. |
+| Production browser Worker | All 12 model/audience cases pass run, speed, pause, step, reset and checkpoint checks using generated ARM guests. The production UI passes 104 physical-key checks; page errors are empty. |
+| Stop recovery | Ordinary and diagnostic browser runs preserve the original observation, wait for Save acknowledgement and recover the exact stopped checkpoint. The diagnostic run also replays an active timeout through the same WASM with every call result and the complete checkpoint equal. These generated guests do not reproduce the historical unclassified original-ROM stop. |
+| Timer receiver | Delayed dispatch, cancellation, immediate-task fallback and shutdown pass. |
+| Standalone host | Source and rebuilt package tests pass real loopback TCP, USB/IP split headers, guest EP0 transactions, cancellation, limits and binary-safe ARM UART echo. The package contains the same frozen WASM. Kernel attachment, COM/PTY devices and Conn3x remain separate acceptance tasks. |
+| Documentation and Pages | Repository-pinned Zensical 0.0.67 strictly renders all 41 documentation pages without issues. Nine publication-contract tests and local assembly of all 36 emulator assets pass; assembled runtime bytes equal the frozen input. |
+
+Original-ROM evidence is maintained in the
+[HP49g+ support record](evidence/hp49-support-r17.json) and
+[HP39 file-transfer record](evidence/hp39-file-transfer-r17.json).
+HP49g+ has a fixed immutable-ROM startup, arithmetic, CAS, menus, graphing,
+native/WASM continuation and production-browser USB file workflows. Its
+browser lifecycle checks also cover exact LCD restore, PNG download, narrow
+viewports and import of an earlier HP48gII session. The HP39g+ Disk drive path
+uses the calculator as a Kermit client: the browser serves the original aplet
+and library, receives the calculator's SEND output and returns to HOME for
+arithmetic. Uploaded aliases and typed object bodies are checked independently
+of the calculator's rewritten file-header title. The
+[transfer review](evidence/transfer-review-r17.json) covers retained-download
+capacity before EOF acknowledgement, atomic batch preflight and bounded
+duplicate-final-ACK handling after actual timeout retransmissions.
+
+The [complete ROM-reader record](evidence/hp39-romstream-r17.json) and
+[independent package review](evidence/package-review-r17.json) cover reuse of
+the existing hpclang reader, the complete 1 MiB stream, independent reads,
+full archive rebuild and receiver failure handling. The new download includes
+the Windows receiver and corresponding calculator sources. The calculator
+aplet/SDK GPL sources stay in their independent download and notices; they are
+absent from the MIT core, WASM, frontend bundle and standalone host build.
+
+The Pages audit found and fixed two omitted runtime dependencies:
+`hp39-files.js` and `hp39-transfer.js`. All 36 production assets now match the
+strict allowlist; the nine Pages contract tests pass. The audited release
+inputs contain no calculator ROM, private checkpoint or font files. The
+release record retains download sizes/hashes and verifies final assembly
+without publishing private screenshots, object contents or bus traces.
+
+The functional support boundaries remain explicit: the HP49g+ SDI path models
+an empty slot, and its stock file route is USB; SD media and UART2/IrDA are not
+implemented. HP39gs and HP40gs share the implemented Disk drive host path but
+still need their own complete-ROM original-system acceptance. The 39gs reader
+has a complete original-HP39g+ emulator workflow; physical 39gs extraction and
+Windows HID hardware operation remain to be observed. None of these local
+results establishes physical clock timing or canonical board equivalence.
+The dated sections below retain the scope and counts of their earlier builds.
+
 ## Performance continuation from 83a2d38 (2026-10-20)
 
 The current [performance record](performance.md#physical-reads-and-worker-pacing-2026-10-20-from-83a2d38)

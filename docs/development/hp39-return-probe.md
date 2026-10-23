@@ -1,9 +1,13 @@
 # HP39gs ARM 入口与返回探针
 
+> **历史研究包。** 当前获取 39gs ROM 的入口是
+> [完整 ROMstream 读取包](hp39gs-rom-dump.md)：直接复用已经成功读取 39g+
+> 的程序，一次运行完成全量读取及逐块复读。无需先执行本页的返回探针。
+
 下载：[hp39gs-arm-return-v1.zip](../downloads/hp39gs-arm-return-v1.zip)。
 
 这份包用于你手上的 **HP39gs**：启动一个很小的 aplet，进入 ARM 后立即返回，
-成功返回后由原厂系统显示 **`ARM RETURN OK`**。它是完整 Flash 读取程序的前置
+成功返回后由原厂系统显示 **`ARM RETURN OK`**。它是早期为 Flash 读取准备的独立返回
 探针，**目前不读取 Flash**。包内已带可传输的程序与所需的 39 专用库，不需要
 你安装编译器。
 

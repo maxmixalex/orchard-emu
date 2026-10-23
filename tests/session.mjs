@@ -14,6 +14,9 @@ const state=Uint8Array.from({length:4096},(_,i)=>i%251);
 const meta={model:1,romHash:'a'.repeat(64),preset:'hp39-home',frameView:1,state};
 const encoded=await encodeSession(meta), decoded=await decodeSession(encoded.buffer);
 assert.deepEqual(decoded.state,state);assert.equal(decoded.romHash,meta.romHash);
+const hp49=await encodeSession({...meta,model:5,preset:'hp49-home'});
+assert.equal((await decodeSession(hp49.buffer)).preset,'hp49-home');
+await assert.rejects(encodeSession({...meta,model:4,preset:'hp49-home'}));
 for(const data of [null,new ArrayBuffer(0),new ArrayBuffer(MAX_SESSION_BYTES+1),encoded.buffer.slice(0,11),encoded.buffer.slice(0,-1)])await assert.rejects(decodeSession(data));
 for(const i of [0,8,11,14,encoded.length-1]){const bad=encoded.slice();bad[i]^=0xff;await assert.rejects(decodeSession(bad.buffer));}
 for(const update of [{model:7},{model:4},{preset:'unknown'},{romHash:'no'},{frameView:3},{state:new Uint8Array(600001)}])await assert.rejects(encodeSession({...meta,...update}));

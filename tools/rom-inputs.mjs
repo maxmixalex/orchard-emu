@@ -7,6 +7,8 @@ export const models = ['hp39gplus', 'hp39gs', 'hp40gs', 'hp48gii', 'hp49gplus', 
 export const capacities = [0x100000, 0x100000, 0x200000, 0x200000, 0x200000, 0x200000];
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const fixtures = [
+  ['3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab', 'full-nor-dump', [5], 0x200000, 'User HP49g+ complete A/B hardware capture'],
+  ['54191621b1a104157258fd6190597b53e92050dc3a3d111a2daf295fa7f83e5e', 'arm-boot-region', [5], 0x4000, 'User HP49g+ captured native boot region'],
   ['95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67', 'full-nor-dump', [1], 0x100000, 'HP39g+ D1.55 hardware dump'],
   ['4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937', 'full-nor-dump', [4], 0x200000, 'HP48gII USB-revision full-NOR mirror'],
   ['f46fbfbbd6442bf76bd412e89fc6d3c64850f742f35eca732e3e5b01cf3393c8', 'arm-boot-region', [5], 0x4000, 'HP49g+ archived native boot region'],

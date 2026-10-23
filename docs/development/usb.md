@@ -20,6 +20,25 @@ emulator implementation is copied or translated into this module.
 
 ## Implemented interface
 
+The HP39 ROM-stream continuation adds the older Samsung S3C2410X MAXP address
+at `0x5200018c` alongside the S3C2410A address `0x52000180`. Both select the
+existing indexed maximum-packet state. The 2003-04-28 S3C2410X revision table
+and chapter 13-19 explicitly specify `+18c`; the 2004 S3C2410A manual specifies
+`+180`. This is functional compatibility with both documented register layouts,
+not a measured assertion that one physical chip simultaneously aliases both.
+Source: [Samsung S3C2410X manual and revision history](https://www.sistemasorp.es/blog/S3C2410%20-%20datasheet.pdf).
+Byte/word access, reserved-bit masking, endpoint isolation and reset are covered
+by the shared native/WASM USB regression suite.
+
+The unchanged hpclang ROM-stream applet writes both locations. After ordinary
+HP39g+ stock-OS installation and physical key launch, its guest-generated Raw
+HID descriptors enumerate EP1 IN and EP2 OUT as 64-byte interrupt endpoints.
+The packet API then carries all 64 NOR blocks, each read twice, without a guest
+memory patch. All 1 MiB match the input NOR; FINISH and physical disconnect
+return to HOME and `1+1 = 2`. This uses explicit external GPF1 cable detection
+in the developer harness, because the packet API does not infer board wiring.
+See [the dump package and bounded witness](hp39gs-rom-dump.md).
+
 `src/usb.c` supplies byte/word MMIO at the device block, indexed endpoint
 state, five bounded FIFOs, EP0 control stages, and 64-byte single-buffer bulk
 endpoints. Endpoint 0 accepts MAXP 8 or 16; the implemented bulk path requires

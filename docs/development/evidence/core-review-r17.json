@@ -1,0 +1,100 @@
+{
+  "schema": "orchard-core-review-v1",
+  "scope": "Independent code review of the r17 SDI subset, checkpoint v1/v2 import and USB MAXP layout compatibility",
+  "source_sha256": {
+    "src/sdi.c": "acdeb0908bd05dd6585352dd7e3336d165bc196422f74c7480c0a95d3caedea8",
+    "src/scheduler.c": "24d02a1e3f48613d1fd157c2d411c0da289e3bee0987cbe8832f93aa2e49c2a3",
+    "src/soc.c": "202d45eb9baf863694962b23fbc0a2c6b1b85729adf2fda87faefa90f983be97",
+    "src/checkpoint.c": "d4e1803b080c16076ba8011b3468659de35f61366bf974c36c1caed4a77dc43a",
+    "src/usb.c": "b792a08459cb9274ae88269a0155bf29bbd6b41266aa6a3139f419b51cd76dd3",
+    "tests/sdi.c": "10c16e143b9831800f489a6bb8dacce7e798dc1c2943f45197ccbc13319442fc",
+    "tests/checkpoint.c": "46748762dce3e4f236fc0d9098ad0e49eb11fbddf1df1592b53ef596db3ea638",
+    "tests/usb.c": "41cf74d9e115ec69ffad09759511b220c08af3a53367a8596bd73407f7a4c09f"
+  },
+  "findings": [
+    {
+      "id": "checkpoint-active-sdi-data-mode",
+      "severity": "low",
+      "fixed": true,
+      "before": "A correct-CRC v2 checkpoint with SDIDCON=0x2001 imported successfully even though the same MMIO value is outside the empty-slot subset.",
+      "after": "Import rejects active busy/data/DMA modes before mutation, using the same boundary as register writes; STOP-by-force values remain importable.",
+      "negative_modes": [
+        "0x1001",
+        "0x2001",
+        "0x3001",
+        "0x8000",
+        "0xbfff"
+      ],
+      "positive_stop_mode": "0xf001",
+      "models_tested": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    }
+  ],
+  "targeted_checkpoint_tests": {
+    "native": {
+      "checks": 937,
+      "failures": 0,
+      "first": 0
+    },
+    "reference": {
+      "checks": 937,
+      "failures": 0,
+      "first": 0
+    },
+    "sanitize": {
+      "checks": 937,
+      "failures": 0,
+      "first": 0
+    },
+    "wasm": {
+      "checks": 937,
+      "failures": 0,
+      "first": 0
+    }
+  },
+  "scheduler_comparison": {
+    "partitions": 256,
+    "model": 5,
+    "seed": "0x6d2b79f5",
+    "same_complete_checkpoint": true,
+    "generated_guest_only": true,
+    "operations": [
+      "command start",
+      "prescaler selection",
+      "status W1C",
+      "interrupt mask",
+      "CLKCON gate",
+      "SRCPND/INTPND acknowledgement",
+      "data STOP-by-force"
+    ],
+    "comparison": "Optimized functional scheduling versus the per-tick reference implementation, not an external hardware oracle."
+  },
+  "manual_references": [
+    {
+      "url": "https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf",
+      "sections": [
+        "19-5 through 19-15",
+        "13-19"
+      ]
+    },
+    {
+      "url": "https://www.sistemasorp.es/blog/S3C2410%20-%20datasheet.pdf",
+      "sections": [
+        "MAXP revision entry dated 2003-04-28",
+        "13-19"
+      ]
+    }
+  ],
+  "limits": [
+    "This review does not validate populated SD media, DMA, FIFO data transfer or electrical clock timing.",
+    "Accepting the two vendor-documented MAXP layouts is functional compatibility, not proof that a physical chip aliases both addresses.",
+    "Stock-ROM and browser verification are recorded separately."
+  ],
+  "private_files_published": false
+}

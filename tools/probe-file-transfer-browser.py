@@ -26,6 +26,28 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE_WASM = '76db5cb395cca4fffec807a76d3e969bf4cd73842662e39e81e38de4110527d0'
 sha = lambda data: hashlib.sha256(data).hexdigest()
+MODELS = {
+    '4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937':
+        {'id': 4, 'name': 'hp48gii', 'width': 131, 'height': 64},
+    '3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab':
+        {'id': 5, 'name': 'hp49gplus', 'width': 131, 'height': 80},
+}
+ASSETS = ('orchard.wasm', 'calculator.js', 'worker.js', 'virtual-usb.js',
+          'file-transfer.js', 'kermit.js', 'hp39-files.js', 'hp39-transfer.js')
+
+
+def model_identity(path):
+    data = path.read_bytes()
+    digest = sha(data)
+    if len(data) != 2097152 or digest not in MODELS:
+        raise ValueError('Use an admitted complete HP48gII or HP49g+ NOR')
+    return {**MODELS[digest], 'rom_sha256': digest}
+
+
+def verify_model(page, model):
+    snapshot = page.evaluate('window.__transferProbe.snapshot')
+    assert snapshot['model'] == model['id'], snapshot
+    assert (snapshot['width'], snapshot['height']) == (model['width'], model['height']), snapshot
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -42,7 +64,8 @@ OBSERVE = r"""(() => {
       this.addEventListener('message',({data:d})=>{
         const p=window.__transferProbe;
         if(d.type==='snapshot'){
-          p.snapshot={loaded:d.loaded,running:d.running,stopped:d.stopped,model:d.model,pending:d.pending,active:d.active};
+          p.snapshot={loaded:d.loaded,running:d.running,stopped:d.stopped,model:d.model,width:d.width,height:d.height,pending:d.pending,active:d.active,
+            ticks:d.tick??(d.state?d.state[22]+d.state[23]*4294967296:null)};
           ++p.snapshots;
         }
         else if(d.type==='file-transfer-status'||d.type==='file-transfer-listing'||d.type==='usb-status'||d.type==='serial-status'||d.type==='checkpoint-restored'){
@@ -79,7 +102,7 @@ def physical_keys(page, scans):
 
 
 def active_send_keys(name):
-    """ALG SEND('NAME'), using the stock HP48gII physical keyboard."""
+    """ALG SEND('NAME'), using the stock HP48gII/HP49g+ physical keyboard."""
     if not re.fullmatch(r'[A-Z][A-Z0-9]{0,7}', name):
         raise ValueError('--active-send requires a 1–8 character uppercase alphanumeric name starting with a letter')
     alpha = dict(zip('ABCDEFGHIJKLMNOPQRSTUVWXYZ',
@@ -139,6 +162,7 @@ def main():
     if actual_wasm != expected_wasm:
         raise ValueError(f'Production WASM identity mismatch: expected {expected_wasm}, got {actual_wasm}')
     send_scans = active_send_keys(args.name) if args.active_send else None
+    model = model_identity(args.rom)
     args.output.mkdir()  # Preserve earlier success/failure evidence.
     source = args.upload.read_bytes()
     if len(source) < 9 or source[:7] not in (b'HPHP48-', b'HPHP49-'):
@@ -149,13 +173,13 @@ def main():
               'start_server_with_physical_ui': args.start_server,
               'server_commands': args.server_commands,
               'active_send': args.active_send,
-              'rom_sha256': sha(args.rom.read_bytes()),
+              'model': model,
+              'rom_sha256': model['rom_sha256'],
               'session_sha256': sha(args.session.read_bytes()),
               'upload_sha256': sha(source), 'upload_bytes': len(source),
               'source_header': source[:8].decode('ascii'),
-              'assets': {name: sha((ROOT/'dist'/name).read_bytes()) for name in
-                         ('orchard.wasm', 'calculator.js', 'worker.js',
-                          'virtual-usb.js', 'file-transfer.js', 'kermit.js')}}
+              'assets': {name: sha((ROOT/'dist'/name).read_bytes()) for name in ASSETS},
+              'tool_sha256': sha(Path(__file__).read_bytes())}
     def stage(name):
         report['stage'] = name
         print('STAGE', name, flush=True)
@@ -173,6 +197,7 @@ def main():
             browser = p.chromium.launch(executable_path=executable, headless=True,
                                        args=['--no-sandbox'])
             try:
+                report['browser_version'] = browser.version
                 page = browser.new_page(viewport={'width': 1360, 'height': 940}, locale='en-US')
                 page.set_default_timeout(30000)
                 errors = []
@@ -187,6 +212,7 @@ def main():
                 picker.value.set_files(str(args.rom.resolve()))
                 page.get_by_role('button', name='Restore', exact=True).wait_for(state='visible')
                 page.wait_for_function('window.__transferProbe.snapshot?.loaded===true')
+                verify_model(page, model)
                 stage('restore-session')
                 page.locator('#session-file').set_input_files(str(args.session.resolve()))
                 page.get_by_role('dialog').get_by_role('button', name='Restore', exact=True).click()
@@ -302,7 +328,11 @@ def main():
                     report['usb_connected'] = False
                 assert not errors and not report['worker_observation']['errors'], report
                 assert not report['worker_observation']['snapshot']['stopped'], report
+                verify_model(page, model)
                 assert {name: sha((ROOT/'dist'/name).read_bytes()) for name in report['assets']} == report['assets'], 'Production assets changed during the witness'
+                assert sha(args.rom.read_bytes()) == report['rom_sha256']
+                assert sha(args.session.read_bytes()) == report['session_sha256']
+                assert sha(args.upload.read_bytes()) == report['upload_sha256']
                 page.screenshot(path=str(args.output/'file-transfer.png'))
                 report['passed'] = True
                 stage('complete')

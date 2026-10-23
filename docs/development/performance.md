@@ -1,5 +1,39 @@
 # Performance and the two frontends
 
+## SDI and checkpoint compatibility check (2026-10-22)
+
+The r17 check compares the retained `ce9f81ac…` production WASM with
+`6fda3ed5…`, which includes the empty-slot SDI controller and ROM-stream USB
+MAXP compatibility. It reuses the existing private HP39g+ HOME/APLET sessions
+and their complete LCD results. All three scenes retain identical guest
+instructions, input contacts, LCD, UART and complete canonical machine state.
+
+Version 2 inserts 52 serialized SDI bytes before RAM. The Node scene and cold
+workflow tools now validate the exact wire layout and CRC, migrate version 1
+by inserting the documented SDI reset state, and compare **every** resulting
+byte. Version-2 SDI state is preserved in that comparison. Reports retain the
+original version-specific hashes and explicitly mark raw checkpoint equality
+false across versions; the canonical equality is a separate field. The
+comparator's six-model tests also ensure that a nonzero SDI field cannot be
+hidden and malformed inputs are rejected. This helper is only a benchmark
+comparison tool; checkpoint imports still go through the core's full loader.
+
+| HP39g+ scene | Default Node, 5 pairs | CPU 8 / `--no-liftoff`, 7 pairs |
+| --- | ---: | ---: |
+| HOME `1+1` | 0.974× | 1.145× |
+| APLET library | 1.028× | 1.072× |
+| Function START | 0.913× | 1.013× |
+
+Ratios are baseline median time divided by candidate median time. The first
+START slowdown did not repeat in the targeted steady-state experiment; the
+shared host also shows substantial variation within each build's samples.
+These results do not establish a precise speed improvement or a browser
+latency change. No core performance optimization was introduced. The bounded
+[r17 evidence](evidence/performance-r17.json) retains all samples, execution
+identities, migration checks and the two existing cold-boot stock workflows.
+The browser fixed-scene harness below still requires matching wire checkpoint
+versions; this round's cross-version comparison uses the Node tools.
+
 ## Fixed-scene execution comparison (2026-10-21)
 
 `tools/benchmark-scenes.mjs` compares two production WASM builds using private

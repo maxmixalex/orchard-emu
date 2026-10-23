@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 """Verify two selected uploads and actual GET downloads using the production UI.
 
-Requires a private admitted HP48gII NOR, a private wired/binary HOME or SERVER
+Requires a private admitted HP48gII or HP49g+ NOR, a wired/binary HOME or SERVER
 session, and an independently prepared HP binary object. The object is selected
 twice with distinct local and calculator names; --second-upload can supply a
 different second object. The observer only records production Worker messages.
@@ -28,8 +28,7 @@ spec = importlib.util.spec_from_file_location('orchard_transfer_probe', HELPERS)
 helper = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(helper)
 sha = helper.sha
-ASSETS = ('orchard.wasm', 'calculator.js', 'worker.js', 'virtual-usb.js',
-          'file-transfer.js', 'kermit.js')
+ASSETS = helper.ASSETS
 SERVER_KEYS = (57,15,57,39,57,22,57,30,57,39,57,22,6)
 SERIAL_FLAG_KEYS = (57,15,57,40,58,4,24,17,23,45,6)
 
@@ -58,6 +57,7 @@ def main():
     if not re.fullmatch(r'[0-9a-f]{64}', args.expected_wasm):
         parser.error('--expected-wasm must be an exact lowercase SHA-256')
     assets = asset_hashes()
+    model = helper.model_identity(args.rom)
     if assets['orchard.wasm'] != args.expected_wasm:
         raise ValueError('Production WASM does not match --expected-wasm')
     paths = [args.upload, args.second_upload or args.upload]
@@ -71,7 +71,8 @@ def main():
               'transport': args.transport, 'assets': assets,
               'expected_wasm_sha256': args.expected_wasm,
               'start_server_with_physical_ui': args.start_server,
-              'rom_sha256': sha(args.rom.read_bytes()),
+              'model': model,
+              'rom_sha256': model['rom_sha256'],
               'session_sha256': sha(args.session.read_bytes()),
               'tools': {Path(__file__).name: sha(Path(__file__).read_bytes()),
                         HELPERS.name: sha(HELPERS.read_bytes())},
@@ -108,6 +109,7 @@ def main():
                     page.get_by_role('button', name='Open ROM', exact=True).click()
                 picker.value.set_files(str(args.rom.resolve()))
                 page.wait_for_function('window.__transferProbe.snapshot?.loaded===true')
+                helper.verify_model(page, model)
                 page.locator('#session-file').set_input_files(str(args.session.resolve()))
                 page.get_by_role('dialog').get_by_role('button', name='Restore', exact=True).click()
                 page.wait_for_function("window.__transferProbe.events.some(e=>e.type==='checkpoint-restored')")
@@ -198,6 +200,7 @@ def main():
                 report['page_errors'] = errors
                 assert not errors and not report['worker_observation']['errors'], report
                 assert not report['worker_observation']['snapshot']['stopped'], report
+                helper.verify_model(page, model)
                 assert asset_hashes() == assets, 'Production assets changed during the witness'
                 assert sha(args.rom.read_bytes()) == report['rom_sha256']
                 assert sha(args.session.read_bytes()) == report['session_sha256']

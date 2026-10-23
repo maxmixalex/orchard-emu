@@ -26,7 +26,7 @@ jobs:
           set -euo pipefail
           cat /etc/os-release
           missing=()
-          for package in ca-certificates git clang libclang-rt-dev lld cmake ninja-build python3-venv; do
+          for package in ca-certificates git clang libclang-rt-dev lld cmake ninja-build python3-venv golang-go; do
             if ! dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q 'ok installed'; then
               missing+=("$package")
             fi
@@ -97,6 +97,12 @@ jobs:
           npm run test:skins
           npm run test:calculator
           npm run test:pages
+      - name: Check HP39 full-ROM receiver
+        working-directory: tools/hp39-romstream/receiver
+        run: |
+          go test ./...
+          go vet ./...
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /tmp/orchard-hp39-receiver.exe .
       - name: Browser receiver and production Worker regression
         run: |
           node tests/timer-receiver.mjs

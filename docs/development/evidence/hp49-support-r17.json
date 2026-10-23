@@ -1,0 +1,288 @@
+{
+  "schema": "orchard-hp49-support-v1",
+  "date": "2026-10-22",
+  "base_revision": "d199afd29572a8a8fca6e6bf673b286b2637ecb9",
+  "scope": "Original immutable HP49g+ ROM, explicit HOME board conditions, empty SD slot, physical-key operations and internal virtual USB. No physical-hardware equivalence claim.",
+  "performance_sample": false,
+  "fixture": {
+    "bytes": 2097152,
+    "sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+    "boot16k_sha256": "54191621b1a104157258fd6190597b53e92050dc3a3d111a2daf295fa7f83e5e",
+    "independent_reads_equal": true,
+    "sidecar_chunks_checked": 128,
+    "physical_mapping_verified": false,
+    "catalog_admitted": true,
+    "catalog_preset": "hp49-home"
+  },
+  "conditions": {
+    "keyboard": "apples",
+    "nor_device": "sst39vf1601",
+    "sram_decode": "exact",
+    "gpio_inputs": [
+      {
+        "port": "D",
+        "known_mask": "0000cc7f",
+        "levels": "00000000"
+      },
+      {
+        "port": "E",
+        "known_mask": "0000c000",
+        "levels": "0000c000"
+      },
+      {
+        "port": "F",
+        "known_mask": "0000008e",
+        "levels": "00000000"
+      },
+      {
+        "port": "G",
+        "known_mask": "00000001",
+        "levels": "00000000"
+      }
+    ],
+    "gpio_bias": [
+      {
+        "port": "G",
+        "known_mask": "0000f800",
+        "levels": "0000f800"
+      }
+    ],
+    "adc_inputs": [
+      {
+        "channel": 0,
+        "code": 1023
+      },
+      {
+        "channel": 7,
+        "code": 512
+      }
+    ],
+    "lcd_probe68": "idle-zero",
+    "frame_view": "packed-lsb"
+  },
+  "startup": {
+    "report_sha256": "88c67ea779589fd70502b2f3b10537c7f92adeaddfc48f624ee417c537034197",
+    "native_binary_sha256": "fec99383e8acfbd2c67de818ed430f467578f6721272e164370690647d65a9a0",
+    "wasm_sha256": "6fda3ed5604d2ac113ffb4288e0fd5baa8ecbc7f7bb46f803ff694a2c8a22767",
+    "virtual_ticks": "300000000",
+    "key_events": 20,
+    "diagnostic_stop": 0,
+    "sram_alias_reads": "0",
+    "sram_alias_writes": "0",
+    "lcd_hypothesis_reads": "24",
+    "frame_sha256": "63bd1ac6a568ac693dfaf37f9514b942430dd832812b17263b571efec87834c2",
+    "native_wasm_equal": true,
+    "native_replay_equal": true,
+    "wasm_replay_equal": true,
+    "displayed_history": [
+      "1+2",
+      "3",
+      "7*8",
+      "56"
+    ]
+  },
+  "stock_workflows": {
+    "report_sha256": "2363d164e3be50cb1de6d4e60947743bc26dc7a0de79d59b61bda1751b5a9bef",
+    "wasm_sha256": "6fda3ed5604d2ac113ffb4288e0fd5baa8ecbc7f7bb46f803ff694a2c8a22767",
+    "tool_sha256": "0f4b144e13a2b2941af612f583279eba38d34bb9b15c4f5fa4719b5e9760c52e",
+    "passed": true,
+    "physical_input_only": true,
+    "final_tick": 563000000,
+    "stages": [
+      {
+        "name": "home",
+        "tick": 160000000,
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0
+      },
+      {
+        "name": "version",
+        "tick": 206000000,
+        "frame_sha256": "bef9069bbed7d994b37bbb8d12feb46114936b64101e6f93f4b7501c31e6d237",
+        "stop": 0
+      },
+      {
+        "name": "factor",
+        "tick": 286200000,
+        "frame_sha256": "8c4c67757137cc527e4c7a9ee8955029af85252491a1127f8bba92b7e75347ba",
+        "stop": 0
+      },
+      {
+        "name": "apps",
+        "tick": 293600000,
+        "frame_sha256": "45bffac03251f577ea6a14676e047e7bce52912542e3f7c815d5c080fbb88377",
+        "stop": 0
+      },
+      {
+        "name": "apps-return",
+        "tick": 301000000,
+        "frame_sha256": "8c4c67757137cc527e4c7a9ee8955029af85252491a1127f8bba92b7e75347ba",
+        "stop": 0
+      },
+      {
+        "name": "mode",
+        "tick": 308400000,
+        "frame_sha256": "fede67d0bc1b92e424b8741441eec2853bd58ac77bcc0d8df971d742349dbe2b",
+        "stop": 0
+      },
+      {
+        "name": "mode-return",
+        "tick": 315800000,
+        "frame_sha256": "8c4c67757137cc527e4c7a9ee8955029af85252491a1127f8bba92b7e75347ba",
+        "stop": 0
+      },
+      {
+        "name": "plot",
+        "tick": 555600000,
+        "frame_sha256": "4456afd374894f168ce36162995dd0569ef2276075edf9bb6c01b2c84967820c",
+        "stop": 0
+      },
+      {
+        "name": "plot-return",
+        "tick": 563000000,
+        "frame_sha256": "eeaa7fae390582e8b7e7cbaa6aa36c677b897c7f0290958f13cf85efcca59527",
+        "stop": 0
+      }
+    ],
+    "resume": {
+      "bytes": 532506,
+      "reset_restore_equal": true,
+      "native_wasm_equal": true,
+      "before_sha256": "aabae7056cb598ec54a3fd03e4451e73e9b701fae262a2d8800e23afd360e2f9",
+      "after_sha256": "036bddbd90343a539a80a996d98c652e04d213b20d797ba63f1ca1d6ca0b3419"
+    },
+    "sram_alias_reads": "0",
+    "sram_alias_writes": "0"
+  },
+  "usb_all_operations": {
+    "report_sha256": "123a22f83a882f7a750bfe6cb05275025a48555ba92e2618742cb527f9d9c1b8",
+    "wasm_sha256": "f33fbe855b311aff94ef2c58fb02d42eb5420311f9817d6046fd65d9667525ba",
+    "browser_version": "156.0.8078.47",
+    "passed": true,
+    "production_worker": true,
+    "physical_start_server": true,
+    "assets": {
+      "orchard.wasm": "f33fbe855b311aff94ef2c58fb02d42eb5420311f9817d6046fd65d9667525ba",
+      "calculator.js": "aaf9736689e4aac8f4c49341c8f4b2bfe4c881da1cb32197d48eb14114676493",
+      "worker.js": "f49f2c1e0a9a44eed4a9eb6b5b26d729bd1534fbb865d9919f41451ea3978604",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "file-transfer.js": "937ffa17a8578bab11388a827e55520c05618d833bb63fa49d1806747bf6b4e9",
+      "kermit.js": "c925475c9eadef615b581c77b675e2f2f47b732348d6fd7bfc50a27f2f29781b",
+      "hp39-files.js": "8dca5fed02bd33f1cc81d968a80a65b77f08b49f0b1556fb8b6e87bff4624e4f",
+      "hp39-transfer.js": "7380be02706d44a858ee42a340c6c856cb8e1f025eebd74d6b727aa747616190"
+    },
+    "page_errors": 0,
+    "operations": {
+      "send": {
+        "phase": "complete",
+        "direction": "send",
+        "transferred": 45
+      },
+      "get": {
+        "phase": "complete",
+        "direction": "receive",
+        "transferred": 45
+      },
+      "directory": {
+        "phase": "complete",
+        "direction": "receive",
+        "transferred": 99
+      },
+      "finish": {
+        "phase": "complete",
+        "direction": "receive",
+        "transferred": 0
+      },
+      "calculator_send": {
+        "phase": "complete",
+        "direction": "receive",
+        "transferred": 45
+      },
+      "get_after_active_send": {
+        "phase": "complete",
+        "direction": "receive",
+        "transferred": 45
+      }
+    },
+    "file_bytes_equal": true,
+    "header": "HPHP49-C",
+    "directory_contains_uploaded_name": true,
+    "same_connection": true,
+    "active_send_file_equal": true,
+    "subsequent_get_file_equal": true
+  },
+  "usb_batch": {
+    "report_sha256": "136abe44ae1e1be84094c58e523d33421e72f8facc944347a3c7deeb262d26a4",
+    "wasm_sha256": "f33fbe855b311aff94ef2c58fb02d42eb5420311f9817d6046fd65d9667525ba",
+    "browser_version": "156.0.8078.47",
+    "passed": true,
+    "production_worker": true,
+    "physical_start_server": true,
+    "assets": {
+      "orchard.wasm": "f33fbe855b311aff94ef2c58fb02d42eb5420311f9817d6046fd65d9667525ba",
+      "calculator.js": "aaf9736689e4aac8f4c49341c8f4b2bfe4c881da1cb32197d48eb14114676493",
+      "worker.js": "f49f2c1e0a9a44eed4a9eb6b5b26d729bd1534fbb865d9919f41451ea3978604",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "file-transfer.js": "937ffa17a8578bab11388a827e55520c05618d833bb63fa49d1806747bf6b4e9",
+      "kermit.js": "c925475c9eadef615b581c77b675e2f2f47b732348d6fd7bfc50a27f2f29781b",
+      "hp39-files.js": "8dca5fed02bd33f1cc81d968a80a65b77f08b49f0b1556fb8b6e87bff4624e4f",
+      "hp39-transfer.js": "7380be02706d44a858ee42a340c6c856cb8e1f025eebd74d6b727aa747616190"
+    },
+    "page_errors": 0,
+    "uploaded_objects": 2,
+    "downloaded_objects": 2,
+    "all_files_equal": true,
+    "directory_contains_both_objects": true,
+    "finish_complete": true,
+    "same_connection": true
+  },
+  "serial_counterexample": {
+    "report_sha256": "6cd052995abf58c68b58dd5871edfe99c17f4114de6d07084b34ddf41aeb8fbc",
+    "passed": false,
+    "recipe": "CF(-33), SF(-78), SF(-35), SERVER",
+    "stock_awaiting_server_screen": true,
+    "uart_registers_unchanged_from_home": true,
+    "intsubmsk": "000007ff",
+    "result": "No UART0 Kermit reply; serial file operations are disabled for model 5."
+  },
+  "irda_boundary": {
+    "recipe": "SF(-33), SERVER",
+    "tick": 262234149,
+    "stop": "unimplemented MMIO",
+    "address": "50008024",
+    "device": "UART2 URXH",
+    "uart2_ulcon": "00000043",
+    "uart2_ucon": "00000705",
+    "uart2_ubrdiv": "00000138",
+    "checkpoint_sha256": "8e498c4811ec3455df9881a172513f7c4aad09e9377f94ce0ce9a820e303e3d6",
+    "implemented": false
+  },
+  "core_validation": {
+    "native_release_tests_passed": 16,
+    "native_reference_tests_passed": 16,
+    "sanitizer_tests_passed": 16,
+    "sdi_native_assertions": 678,
+    "checkpoint_export_version": 2,
+    "checkpoint_v1_import_models": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "sdi_serialized_bytes": 52
+  },
+  "limits": {
+    "canonical_hardware_boot": false,
+    "physical_mapping_verified": false,
+    "sd_card_storage": false,
+    "sd_filesystem": false,
+    "irda": false,
+    "uart2": false,
+    "physical_serial_port_claim": false,
+    "nor_program_erase": false,
+    "native_arm_payload_return": false
+  },
+  "privacy": "No firmware bytes, checkpoints, LCD images, directory bodies, raw bus traces or object contents included. Private reports remain local."
+}

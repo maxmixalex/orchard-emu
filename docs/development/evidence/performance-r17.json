@@ -1,0 +1,683 @@
+{
+  "schema": "orchard-r17-performance-compatibility-v1",
+  "generated_at": "2026-10-22T17:05:36.859Z",
+  "scope": "Regression investigation of existing HP39g+ and HP48gII stock workloads after empty-slot SDI and checkpoint v2; no performance optimization introduced.",
+  "baseline": {
+    "source_commit": "d199afd29572a8a8fca6e6bf673b286b2637ecb9",
+    "bytes": 97726,
+    "sha256": "ce9f81ac640cbeeb1cd249d841d06ada633b6b36454ec29cd11cf39b2ddbc830"
+  },
+  "candidate": {
+    "bytes": 102122,
+    "sha256": "6fda3ed5604d2ac113ffb4288e0fd5baa8ecbc7f7bb46f803ff694a2c8a22767"
+  },
+  "host": {
+    "node": "v24.19.0",
+    "platform": "linux",
+    "architecture": "x64",
+    "default_exec_argv": [],
+    "default_cpu_affinity": "0-8",
+    "steady_exec_argv": [
+      "--no-liftoff"
+    ],
+    "steady_cpu_affinity": "8"
+  },
+  "checkpoint_comparison": "Validate each wire checksum and exact schema layout, then migrate v1 to v2 by inserting only the documented 52-byte SDI reset state. Compare every canonical byte, including SDI, CPU, peripheral state, RAM and boot SRAM. Raw wire hashes are retained separately.",
+  "checkpoint_comparator_tests": {
+    "models": 6,
+    "checks": 96,
+    "failures": 0,
+    "nonzero_v2_sdi_state_preserved": true,
+    "malformed_wire_input_rejected": true
+  },
+  "scene_method": {
+    "runner": "run",
+    "quantum": 1024,
+    "result_sample_ticks": 12000,
+    "default_repeats": 5,
+    "steady_repeats": 7,
+    "warmups_per_variant": 2,
+    "alternating_ab_ba": true,
+    "fixture_sha256": "ff59f06a2e26390f51ea96ffd2d1fdbd4df0622da5b315013e894476257f71d5",
+    "measurement": "Node/V8 execution from exact private scene checkpoints to the baseline first full LCD result, including all key releases and their final gap. Each variant executes the complete workload twice before alternating timed replays; the first baseline replay locates the result. Loading, explicit WASM compilation, restore, LCD sampling and final checkpoint hashing are outside timed intervals. JS key scheduling, UART draining and incremental UART hashing are included. This is host execution throughput, not browser latency or real-calculator calibration.",
+    "process_cpu_measurement": "process.cpuUsage user plus system time; may include V8 background work. exec_argv records engine switches. --no-liftoff requests optimizing WASM compilation up front for a separate steady-state experiment; default-engine browser measurements are still required."
+  },
+  "scenes": [
+    {
+      "model": 1,
+      "expression": "1+1",
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "initial_checkpoint_sha256": "c63cbb85ee084cbb779454a979d06b1bbffeac1e2377ff14799aaa533b264dd3",
+      "final_checkpoint_sha256": "b9e4a0fb1e87d1656c3c97fffb810bf2bd72701c947cb5537d99e11d3a412c99",
+      "candidate_final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+      "canonical_final_checkpoint_sha256": "08b9117e2d74a3b3dd920aee0e3ab1a3db4e8e1d2f2f71e12cc4b500fde1483b",
+      "checkpoint_versions": [
+        1,
+        2
+      ],
+      "pixel_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+      "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "hold_ticks": 1500000,
+      "gap_ticks": 600000,
+      "first_result_ticks": 13104000,
+      "measured_ticks": 13104000,
+      "instructions": 13103802,
+      "events": [
+        [
+          0,
+          26,
+          1
+        ],
+        [
+          1500000,
+          26,
+          0
+        ],
+        [
+          2100000,
+          5,
+          1
+        ],
+        [
+          3600000,
+          5,
+          0
+        ],
+        [
+          4200000,
+          26,
+          1
+        ],
+        [
+          5700000,
+          26,
+          0
+        ],
+        [
+          6300000,
+          6,
+          1
+        ],
+        [
+          7800000,
+          6,
+          0
+        ]
+      ],
+      "complete_checkpoint_equal": false,
+      "canonical_checkpoint_equal": true,
+      "default_node": {
+        "baseline_ms": [
+          435.35908300000006,
+          424.0850190000001,
+          525.7878220000002,
+          438.39613800000006,
+          452.2408809999997
+        ],
+        "candidate_ms": [
+          418.00962800000025,
+          449.87163699999974,
+          379.05691600000046,
+          453.29086199999983,
+          455.9514399999998
+        ],
+        "baseline_process_cpu_ms": [
+          436.171,
+          424.267,
+          525.392,
+          438.621,
+          452.267
+        ],
+        "candidate_process_cpu_ms": [
+          419.834,
+          449.145,
+          378.886,
+          453.488,
+          456.011
+        ],
+        "speedup": 0.9744916148158954,
+        "process_cpu_speedup": 0.9765688140800854
+      },
+      "cpu_pinned_optimized_wasm": {
+        "baseline_ms": [
+          497.1673649999998,
+          540.9321290000003,
+          583.4701910000003,
+          513.7062930000002,
+          537.1442459999998,
+          620.8194409999996,
+          607.4801729999999
+        ],
+        "candidate_ms": [
+          472.5408000000002,
+          424.7191459999999,
+          545.6622930000003,
+          452.06536700000015,
+          419.16534799999954,
+          478.6561509999992,
+          532.9983429999993
+        ],
+        "baseline_process_cpu_ms": [
+          496.814,
+          537.769,
+          578.989,
+          513.742,
+          537.168,
+          620.913,
+          607.293
+        ],
+        "candidate_process_cpu_ms": [
+          471.339,
+          424.751,
+          545.468,
+          452.089,
+          419.153,
+          478.388,
+          533.026
+        ],
+        "speedup": 1.1447310560273314,
+        "process_cpu_speedup": 1.1409388996030458
+      }
+    },
+    {
+      "model": 1,
+      "expression": "APLET library",
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "initial_checkpoint_sha256": "c63cbb85ee084cbb779454a979d06b1bbffeac1e2377ff14799aaa533b264dd3",
+      "final_checkpoint_sha256": "269dfc99f8fbb3dc655e4458126cc3e7f172c0b5251ad1f8899e5e36ff59c071",
+      "candidate_final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+      "canonical_final_checkpoint_sha256": "673380845f8b062e139dbe04505d69760a97c085ce2f99098bf1f856c5fb0a20",
+      "checkpoint_versions": [
+        1,
+        2
+      ],
+      "pixel_sha256": "6f7de6bb96994c41e97f2e1cefc0f453414714e02e56a05ca84384763c7f1a60",
+      "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "hold_ticks": 1500000,
+      "gap_ticks": 600000,
+      "first_result_ticks": 12264000,
+      "measured_ticks": 12264000,
+      "instructions": 12263844,
+      "events": [
+        [
+          0,
+          49,
+          1
+        ],
+        [
+          1500000,
+          49,
+          0
+        ]
+      ],
+      "complete_checkpoint_equal": false,
+      "canonical_checkpoint_equal": true,
+      "default_node": {
+        "baseline_ms": [
+          392.855098,
+          401.8715150000007,
+          403.5948989999997,
+          413.5346960000006,
+          416.3688430000002
+        ],
+        "candidate_ms": [
+          384.9106329999995,
+          414.35493700000006,
+          392.7277320000012,
+          485.688306,
+          390.27126900000076
+        ],
+        "baseline_process_cpu_ms": [
+          392.873,
+          401.864,
+          403.628,
+          413.553,
+          416.395
+        ],
+        "candidate_process_cpu_ms": [
+          384.945,
+          414.372,
+          392.746,
+          485.703,
+          390.288
+        ],
+        "speedup": 1.0276709947236384,
+        "process_cpu_speedup": 1.027707475060217
+      },
+      "cpu_pinned_optimized_wasm": {
+        "baseline_ms": [
+          463.5405950000004,
+          432.54306299999917,
+          381.53592599999865,
+          495.20356900000115,
+          522.055706000001,
+          402.9376919999995,
+          407.36012499999924
+        ],
+        "candidate_ms": [
+          573.9700229999999,
+          462.3254429999997,
+          308.7746360000001,
+          399.97422799999913,
+          403.63784400000077,
+          336.91939999999886,
+          426.45855500000107
+        ],
+        "baseline_process_cpu_ms": [
+          463.574,
+          432.568,
+          381.567,
+          495.238,
+          521.951,
+          402.687,
+          407.385
+        ],
+        "candidate_process_cpu_ms": [
+          574.001,
+          462.36,
+          308.803,
+          400.007,
+          403.671,
+          336.92,
+          420.96
+        ],
+        "speedup": 1.071611766413058,
+        "process_cpu_speedup": 1.0715855238548224
+      }
+    },
+    {
+      "model": 1,
+      "expression": "APLET Function START",
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "initial_checkpoint_sha256": "2a3daff451d69ffaee12d2b10e2b9480d03ffb4e34142616444d17d2d2afb12b",
+      "final_checkpoint_sha256": "f525139ffdd362268df8456bdaef5b8aa0db8abf337a7b77d7cd73bc876ea018",
+      "candidate_final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+      "canonical_final_checkpoint_sha256": "16cf6deddc018a0780460a06aefcd53cbe4da32a789df3e1a676fb8fa6f1d10c",
+      "checkpoint_versions": [
+        1,
+        2
+      ],
+      "pixel_sha256": "b0b7cde04193b91d9c95e6679590b8f4911a0c05a4f9082f75a1b184df6d71e0",
+      "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "hold_ticks": 1500000,
+      "gap_ticks": 600000,
+      "first_result_ticks": 16164000,
+      "measured_ticks": 16164000,
+      "instructions": 16163798,
+      "events": [
+        [
+          0,
+          40,
+          1
+        ],
+        [
+          1500000,
+          40,
+          0
+        ]
+      ],
+      "complete_checkpoint_equal": false,
+      "canonical_checkpoint_equal": true,
+      "default_node": {
+        "baseline_ms": [
+          651.7788779999992,
+          509.6055129999986,
+          562.3954429999976,
+          454.19264900000053,
+          514.4463190000024
+        ],
+        "candidate_ms": [
+          594.1721500000003,
+          563.4877340000021,
+          501.17088299999887,
+          576.802549,
+          526.7119480000001
+        ],
+        "baseline_process_cpu_ms": [
+          650.971,
+          509.643,
+          562.418,
+          454.22,
+          514.473
+        ],
+        "candidate_process_cpu_ms": [
+          594.209,
+          563.41,
+          501.202,
+          576.816,
+          526.692
+        ],
+        "speedup": 0.9129680877844991,
+        "process_cpu_speedup": 0.9131414067907918
+      },
+      "cpu_pinned_optimized_wasm": {
+        "baseline_ms": [
+          479.98082599999907,
+          421.0606569999982,
+          434.51711799999975,
+          456.55911200000264,
+          465.4996289999981,
+          442.32736400000067,
+          441.73171999999977
+        ],
+        "candidate_ms": [
+          413.60084300000017,
+          436.81246400000236,
+          436.72352500000125,
+          452.0729910000009,
+          458.59911499999725,
+          453.4376239999983,
+          434.89060400000017
+        ],
+        "baseline_process_cpu_ms": [
+          480.008,
+          421.094,
+          434.542,
+          456.583,
+          465.514,
+          442.281,
+          441.765
+        ],
+        "candidate_process_cpu_ms": [
+          413.633,
+          436.81,
+          436.749,
+          452.077,
+          458.611,
+          453.443,
+          434.909
+        ],
+        "speedup": 1.0126253265520333,
+        "process_cpu_speedup": 1.0125248964080493
+      }
+    }
+  ],
+  "cold_stock_workflows": [
+    {
+      "model": 1,
+      "ticks": 230000000,
+      "events": [
+        {
+          "t": 50000000,
+          "scan": 40,
+          "down": 1
+        },
+        {
+          "t": 53000000,
+          "scan": 40,
+          "down": 0
+        },
+        {
+          "t": 120000000,
+          "scan": 26,
+          "down": 1
+        },
+        {
+          "t": 122000000,
+          "scan": 26,
+          "down": 0
+        },
+        {
+          "t": 130000000,
+          "scan": 5,
+          "down": 1
+        },
+        {
+          "t": 132000000,
+          "scan": 5,
+          "down": 0
+        },
+        {
+          "t": 140000000,
+          "scan": 19,
+          "down": 1
+        },
+        {
+          "t": 142000000,
+          "scan": 19,
+          "down": 0
+        },
+        {
+          "t": 150000000,
+          "scan": 6,
+          "down": 1
+        },
+        {
+          "t": 152000000,
+          "scan": 6,
+          "down": 0
+        },
+        {
+          "t": 180000000,
+          "scan": 24,
+          "down": 1
+        },
+        {
+          "t": 182000000,
+          "scan": 24,
+          "down": 0
+        },
+        {
+          "t": 190000000,
+          "scan": 3,
+          "down": 1
+        },
+        {
+          "t": 192000000,
+          "scan": 3,
+          "down": 0
+        },
+        {
+          "t": 200000000,
+          "scan": 17,
+          "down": 1
+        },
+        {
+          "t": 202000000,
+          "scan": 17,
+          "down": 0
+        },
+        {
+          "t": 210000000,
+          "scan": 6,
+          "down": 1
+        },
+        {
+          "t": 212000000,
+          "scan": 6,
+          "down": 0
+        }
+      ],
+      "baseline_ms": [
+        9872.401028
+      ],
+      "candidate_ms": [
+        9467.402472
+      ],
+      "single_pair_speedup": 1.0427782126298941,
+      "final_full_lcd_sha256": "efec8205f401a7189f3cd77eeaac6947165d480b383033c9796c86e95e9f6968",
+      "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "canonical_checkpoint_sha256": "4ed9a419dcc97e69633948688c5fcfa9098563e2f3c3a7552beea718f6801bce",
+      "wire_checkpoints": [
+        {
+          "variant": "baseline",
+          "repeat": 1,
+          "version": 1,
+          "sha256": "7b6ecfc5a45ae1f7e1b99effe254b8aa4a6dc66929d96bc6db1ebc97adb1da69"
+        },
+        {
+          "variant": "candidate",
+          "repeat": 1,
+          "version": 2,
+          "sha256": "4ed9a419dcc97e69633948688c5fcfa9098563e2f3c3a7552beea718f6801bce"
+        }
+      ],
+      "canonical_checkpoint_equal": true,
+      "cpu_peripherals_usb_gpio_snapshot_equal": true,
+      "final_arithmetic": "7*8=56"
+    },
+    {
+      "model": 4,
+      "ticks": 300000000,
+      "events": [
+        {
+          "t": 60000000,
+          "scan": 40,
+          "down": 1
+        },
+        {
+          "t": 65000000,
+          "scan": 40,
+          "down": 0
+        },
+        {
+          "t": 120000000,
+          "scan": 40,
+          "down": 1
+        },
+        {
+          "t": 125000000,
+          "scan": 40,
+          "down": 0
+        },
+        {
+          "t": 180000000,
+          "scan": 26,
+          "down": 1
+        },
+        {
+          "t": 182000000,
+          "scan": 26,
+          "down": 0
+        },
+        {
+          "t": 190000000,
+          "scan": 5,
+          "down": 1
+        },
+        {
+          "t": 192000000,
+          "scan": 5,
+          "down": 0
+        },
+        {
+          "t": 200000000,
+          "scan": 19,
+          "down": 1
+        },
+        {
+          "t": 202000000,
+          "scan": 19,
+          "down": 0
+        },
+        {
+          "t": 210000000,
+          "scan": 6,
+          "down": 1
+        },
+        {
+          "t": 212000000,
+          "scan": 6,
+          "down": 0
+        },
+        {
+          "t": 240000000,
+          "scan": 24,
+          "down": 1
+        },
+        {
+          "t": 242000000,
+          "scan": 24,
+          "down": 0
+        },
+        {
+          "t": 250000000,
+          "scan": 3,
+          "down": 1
+        },
+        {
+          "t": 252000000,
+          "scan": 3,
+          "down": 0
+        },
+        {
+          "t": 260000000,
+          "scan": 17,
+          "down": 1
+        },
+        {
+          "t": 262000000,
+          "scan": 17,
+          "down": 0
+        },
+        {
+          "t": 270000000,
+          "scan": 6,
+          "down": 1
+        },
+        {
+          "t": 272000000,
+          "scan": 6,
+          "down": 0
+        }
+      ],
+      "baseline_ms": [
+        13346.956320000001
+      ],
+      "candidate_ms": [
+        13887.534022
+      ],
+      "single_pair_speedup": 0.9610746082678436,
+      "final_full_lcd_sha256": "53a2eda0fe1c185236eda700cfaa6328fbb14bd89c8ffbe0b5ffde097bf527e9",
+      "uart_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "canonical_checkpoint_sha256": "3dcc4ebd72bf602acd731b1c782d3ca70618422e260841821654bdb47835e20c",
+      "wire_checkpoints": [
+        {
+          "variant": "baseline",
+          "repeat": 1,
+          "version": 1,
+          "sha256": "3784becb0f44034553979bb57f1aa9962e4a55d7e25012b4d1928b0ef606394b"
+        },
+        {
+          "variant": "candidate",
+          "repeat": 1,
+          "version": 2,
+          "sha256": "3dcc4ebd72bf602acd731b1c782d3ca70618422e260841821654bdb47835e20c"
+        }
+      ],
+      "canonical_checkpoint_equal": true,
+      "cpu_peripherals_usb_gpio_snapshot_equal": true,
+      "final_arithmetic": "7*8=56"
+    }
+  ],
+  "interpretation": {
+    "all_guest_workloads_equal_after_explicit_schema_migration": true,
+    "first_start_slowdown_reproduced_in_targeted_repeat": false,
+    "performance_gain_claimed": false,
+    "precise_regression_bound_claimed": false,
+    "browser_ui_latency_measured": false,
+    "real_calculator_speed_measured": false,
+    "host_noise": "Substantial within-build time variation on a shared host. The first default-Node START slowdown was not repeated with CPU pinning and up-front optimized WASM compilation. The cold workflow timings are single-pair witnesses, not stable performance estimates."
+  },
+  "source_sha256": {
+    "tools/benchmark-scenes.mjs": "fa7ab8bc89fe162ff9c9bfe9e91240b88ec400b1e5319aeb23a30c5da48ff6ec",
+    "tools/benchmark.mjs": "a22bc2a1c2060019ffa6761902bfbcd19fefaffed11bb3ab2ad5498462001b13",
+    "tools/checkpoint-equivalence.mjs": "91a261065838748796b07b84c9fe3fc91b7210805f5de57307424cba3a7cbc9b",
+    "tests/checkpoint-equivalence.mjs": "fa2f8589ad58cb9142245857a0a50ce98bc872303aeac45b0df7faeddfb51e76"
+  },
+  "private_report_identities": {
+    "scene-performance-r17.json": {
+      "bytes": 8003,
+      "sha256": "770b23d811dd4d468b8ff6acb78a0468d57be881f8540e9395022fb0f0d6a14b"
+    },
+    "scene-performance-r17-steady.json": {
+      "bytes": 8579,
+      "sha256": "2fc09202652e1a98fe3bb89e6e4c1427b606314f0b88672d8b39e33389b4a3e7"
+    },
+    "full-stock-performance-r17.json": {
+      "bytes": 9201,
+      "sha256": "20b6f71a168e553f308cefcd83d6673fb8d0693bea00f4b7aa2bdfb293f63829"
+    }
+  },
+  "firmware_checkpoints_pixels_or_raw_guest_payload_published": false
+}

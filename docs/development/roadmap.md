@@ -1,291 +1,196 @@
 # Orchard roadmap
 
-The [development board](board.md) owns immediate work; the current repository's
-[Actions runs](https://github.com/maxmixalex/orchard-emu/actions) record CI/Pages
-outcomes for each accepted commit. This document owns milestones,
-dependency order and completion criteria. A profile, passing build or exhausted
-run budget never substitutes for a hardware/stock-boot witness.
+The [development board](board.md) tracks current work. This roadmap defines
+milestones and their acceptance criteria; [validation](validation.md) records
+bounded results. Each source revision needs its own Build and Pages evidence.
+A profile, passing test or published asset does not establish physical hardware
+behavior or complete model compatibility.
 
 ## Project target
 
-Boot unmodified complete physical NORs on HP39g+, HP39gs, HP40gs, HP48gII USB
-revision, HP49g+ and HP50g. Run the guest ARM Saturn interpreter and native ARM
-applications, using one original MIT C17 machine core for native and browser
-hosts. Provide useful virtual PC connectivity without requiring a ROM patch,
-replacement bootloader, custom OS or host-side Saturn interception.
+Run unchanged complete physical NORs on HP39g+, HP39gs, HP40gs, HP48gII USB
+revision, HP49g+ and HP50g. Execute each guest's ARM Saturn interpreter and
+native ARM applications through one original MIT C17 core for native and WASM
+hosts. Provide usable calculator controls, persistent sessions and virtual PC
+file transfer, without ROM patches or host-side Saturn interception.
 
-External emulators are research or optional out-of-process comparison tools,
-not implementation dependencies in the original core. Firmware storage and
-publication remain separate from source, Pages and production packages.
+External emulators remain research or separate-process comparison tools.
+Firmware and private calculator data remain outside source, releases and Pages.
 
-## M0 — Repository, contracts and evidence discipline
+## Current functional acceptance
 
-**Engineering baseline complete**, originally accepted on `ecc0470` in
-[Build #2](https://github.com/zyf722/orchard-emu/actions/runs/36981413547).
+| Area | Implemented and observed | Remaining boundary |
+| --- | --- | --- |
+| HP39g+ D1.55 | Unchanged cold boot, HOME/arithmetic, browser controls, USB Disk drive aplet/library installation and reverse SEND; native ROMstream reads complete 1 MiB and returns to responsive HOME | Explicit board/LCD assumptions; wider native-program and sustained-use coverage |
+| HP48gII USB revision | Unchanged cold boot, arithmetic, sessions, USB and UART0 Kermit workflows and two-file batches in the production browser | Explicit SRAM mirror/LCD assumptions; broad keypad/power/long-run checks |
+| HP49g+ | User's full 2 MiB capture, unchanged cold boot, 131×80 display, arithmetic, CAS, graphing, menus, sessions and USB Kermit workflows | Empty SD slot only; infrared/UART2, SD storage, native payload return and physical-board calibration remain open |
+| HP39gs | Complete source-built ROMstream package reusing the proven HP39g+ payload, launcher and aplet; one-launch double-read receiver | Target hardware run and its own full NOR are pending |
+| HP40gs / HP50g | Model profiles and scoped boot-region/updater research | Complete original NORs and independent stock acceptance |
 
-The baseline includes native/WASM builds, bounded diagnostics, exact-size NOR
-loading, six candidate profiles, original-source licensing, maintained CTest
-and generated-guest regressions, Zensical documentation and the live board.
-Pages deployment and revision verification exist. New revisions require their
-own observed checks; the original green build is not evidence for new code.
+Details: [HP39 startup](hp39-startup.md), [HP48 startup](startup.md),
+[HP49 startup](hp49-startup.md), [file transfer](file-transfer.md),
+[full HP39gs reader](hp39gs-rom-dump.md).
 
-**Gate:** a fresh checkout builds, maintained tests run, the documentation
-strictly renders, production outputs exclude test/firmware assets, and source,
-roadmap, board and evidence agree. CPU conformance and stock boot are not M0.
+## M0 — Repository, contracts and reproducibility
 
-## M1 — ARM920T functional CPU correctness
+**Engineering baseline implemented; verify each revision.** Native/reference/
+sanitizer builds, WASM, bounded diagnostics, exact-size immutable NOR loading,
+license separation, strict documentation and publication allowlists are maintained.
+The live deployment promotes the exact successful main-branch artifact.
 
-**Initial implementation; conformance gate open.**
+**Gate:** a fresh checkout builds, all maintained checks pass, documentation and
+support claims agree, production artifacts exclude firmware/test/private data,
+and the deployed revision is independently observed. The original M0 acceptance
+on `ecc0470` remains historical, not proof for later changes.
 
-A first [independent Unicorn comparison](cpu-oracle.md) now passes a bounded
-common-ARMv4T corpus on native and test-WASM. It does not test complete ARM920T
-privileged/MMU/cache behavior or close this milestone. Unicorn remains a
-separate developer dependency, not a production interpreter replacement.
+## M1 — ARM920T functional correctness
 
-M1.1 covers decode restrictions, PC pipeline semantics, shifting/carry/overflow,
-ARM/Thumb transitions, banked registers, privilege rules and exception returns.
-M1.2 covers CP15, FCSE, table walks, AP/S/R/domain permissions, aborts and vector
-relocation. M1.3 covers precise partial transfer/writeback, legal undefined
-instructions versus unimplemented operations, and cache/TLB/lockdown behavior.
+**Initial implementation and bounded independent oracle; complete conformance open.**
+The independent Unicorn comparison covers common ARMv4T instructions on native
+and test-WASM. It does not certify all ARM920T privileged/MMU/cache semantics.
+See [CPU oracle](cpu-oracle.md).
 
-**Gate:** independently derived edge cases and bounded instruction differentials
-pass on the native and WASM core. Failures reduce to explicit input/state
-witnesses. Sanitizers pass; unsupported or implementation-defined cases are
-identified rather than silently normalized to another CPU model. Comparing two
-builds of Orchard is regression evidence, not an independent CPU oracle.
+Remaining work covers decode restrictions, pipeline PC semantics, shift/carry/
+overflow edges, ARM/Thumb changes, banked registers, privilege and exception
+returns; CP15, FCSE, descriptor permissions, domains, aborts and vector relocation;
+precise partial transfer/writeback, cache/TLB behavior and implementation-defined
+cases. Unsupported behavior must remain explicit.
 
-## M2 — Boot-relevant SoC and board model
+**Gate:** independently derived cases and bounded instruction differentials pass,
+failures reduce to precise input/state witnesses, and sanitizers pass. Comparing
+two Orchard builds is a regression check, not an independent CPU oracle.
 
-**In progress, driven by genuine NOR traces.**
+## M2 — SoC and physical board behavior
 
-Implemented functional pieces include internal/external SRAM, GPIO latches,
-explicit strong/weak pad conditions, opt-in passive keyboard circuits and
-unfiltered EINT, two-level IRQ arbitration, RTC/timers/watchdog, LCD scan/frame
-interrupts, normal ADC with explicit samples, and USB PIO/packet transactions.
-Explicit SST39VF1601 / SST39VF800A selection supports array/software-ID behavior, not erase
-or programming. Register storage alone is not full peripheral support.
+**Functional pieces implemented; canonical board gate open.** SRAM, GPIO drives
+and bias, passive keyboard circuits, unfiltered EINT, IRQ arbitration, timers,
+RTC/watchdog, LCD frame interrupts, normal ADC, USB PIO/packet transactions and
+an empty-slot SDI controller cover observed boot paths. Selected SST39VF1601 /
+SST39VF800A devices provide array/software-ID behavior, not flash programming.
 
-Open work includes physical clock/reset domains, verified component identities
-and pad bias, populated per-model keys, LCD panel/annunciator mapping, flash
-command/write behavior, DMA, SD, power management and other traced peripherals.
-Watchdog reset propagation, digital input filters and unsupported modes remain
-explicit. Resolve dependencies from bounded traces with primary references and
-minimal regressions, not convenient zero returns or interpreter model hacks.
+The SDI subset models command duration, absent-card timeout, status/IRQ and clock
+gating. It does not invent SD responses, storage, FIFO data or DMA. The unchanged
+HP39 reader uses both documented 2410X/2410A MAXP addresses; their functional
+compatibility is recorded without asserting a silicon alias.
 
-**Gate:** one model's cold-boot dependencies work with independently supported
-register/pin behavior and unmodified firmware, without unverified readback
-policies. The LCD `+0x68` idle-zero experiment does not close this gate.
+Remaining work includes physical PLL/PCLK/RTC/reset domains, verified component
+identities and pad bias, LCD/annunciator routing, flash commands, DMA, SD storage,
+power management and traced peripheral modes. Watchdog reset propagation and
+digital input filters remain explicit gaps.
 
-## M3 — First genuine stock cold boot
+**Gate:** one model's dependencies follow independently supported register/pin
+behavior with unchanged firmware and no unverified readback shortcuts. Current
+counted LCD `+0x68` idle-zero and packed-memory display assumptions do not close it.
 
-**Conditional HP48gII and HP39g+ HOME/basic arithmetic observed; canonical gate open.**
+## M3 — Genuine stock execution and native return
 
-Original HP39g+ and HP48gII full dumps execute from reset through their own
-startup prompts into HOME, then compute `1+2=3` and `7*8=56` with physical
-switch input. HP48gII uses selected SST39VF1601 and an explicit SRAM bank1-mirror
-hypothesis; HP39g+ uses a separate 1 MiB SST39VF800A hypothesis and exact SRAM.
-Both retain declared pad/ADC inputs, counted LCD idle-zero reads and a
-packed-memory display interpretation. This is functional stock OS execution,
-not a canonical physical-board result. See [HP48 startup](startup.md) and
-[HP39 startup](hp39-startup.md). Native payload/return and sustained use
-are separate, uncompleted checks. No other model inherits these results.
+**Three conditional stock systems; one HP39g+ native-reader return witness.**
+HP39g+, HP48gII and HP49g+ execute their own reset/startup and physical inputs.
+Their ROMs remain unchanged. HP48gII alone uses the documented experimental
+SRAM mirror; HP39g+ and HP49g+ use exact physical SRAM bounds. All retain stated
+GPIO/ADC/LCD conditions.
 
-Record four separate witnesses: bootloader progression, initialized LCD,
-interactive stock UI, and native ARM payload execution followed by return to a
-responsive stock UI. A guest PASS word, recovery menu or nonblank buffer is
-insufficient. Boot-only backing with erased OS sectors is not a full NOR.
+The original HP39g+ system now installs the unchanged ROMstream aplet and library
+through its real USB Disk drive client. The native program reads the full NOR,
+returns after disconnect and leaves HOME able to calculate `1+1=2`. The explicit
+cable input and USB compatibility conditions are part of that witness. It is
+not inherited by HP39gs, HP49g+ or arbitrary native applications.
 
-**Gate:** one model-correct hash-pinned full dump cold-boots without mutation or
-unverified hardware shortcuts, accepts physical press/release, survives reset
-and sustained use/idle, runs an ARM payload and returns correctly. Virtual
-checkpoints are compared independently of host timing.
+**Gate:** distinguish bootloader progress, initialized display, interactive stock
+UI and native ARM entry/return. Require sustained operation, reset/input coverage
+and independently supported physical conditions before canonical acceptance.
+A recovery menu, guest PASS word or boot-only erased backing is insufficient.
 
-## M4 — All six model/revision gates
+## M4 — Independent acceptance for all six models
 
-**Profiles exist; all six stock acceptance gates remain open.**
+**Three images admitted to the user catalog; six-model gate open.** Each model
+needs its own immutable full-NOR identity, memory bounds, display/keys, reset
+and native return evidence. The HP48gII target is the USB revision.
 
-Promote each model separately using its own bootloader and immutable full-NOR
-manifest. Check physical memory bounds, model identity, keys, LCD body and
-annunciators, reset behavior and ARM entry/return. The 48gII target is the USB
-revision, not every calculator sold under that name.
+The user's HP49g+ capture has been received and functionally validated; no repeat
+short probes are requested. Its acquisition metadata remains separate from the
+new execution evidence. The HP39gs next action is the complete
+[ROMstream package](hp39gs-rom-dump.md), reusing the proven program in one launch
+with independent per-block reads. The earlier return-only package is historical,
+not a mandatory preliminary task. HP39gs target compatibility is still unverified
+until its own hardware capture is received. HP40gs and HP50g acquisition continue
+independently; padded updaters and foreign bootloaders are not full original NORs.
 
-**Gate:** six independent cold-boot, interaction and ARM-return witnesses.
-An updater combined with different boot code cannot close a full-dump gate.
-The staged [HP49g+ read package](flash-capture.md) now supplies two 16-byte
-probes and independent A/B capture programs. First validate the user's ROM
-version, probe encoding and ARM-to-physical mapping; a complete candidate
-image does not itself close cold-boot or board gates. The ready-to-transfer
-[HP39gs ARM return probe](hp39-return-probe.md) now includes the 39-specific
-launcher rebuilt byte-for-byte from its pinned source, corresponding source and
-license, and an original aplet whose only ARM instruction is `bx lr`. Its
-structure and return instruction have independent checks; stock installation,
-visible return and responsive HOME still require the user's hardware witness.
-Only after that check should a bounded read probe establish mapping before a
-complete HP39gs capture. [Native-entry prerequisites](hp39-native-prerequisites.md)
-retain the model/library/version and directory-alias boundaries. Work on the
-available machines continues in parallel.
+**Gate:** six independent original-image cold-boot, interaction and ARM-return
+witnesses with accurate model-specific hardware limits.
 
 ## M5 — Usable browser calculator
 
-**Separate calculator/workbench, optimized shared core and skins implemented; browser gate open.**
+**React/Mantine user calculator implemented with bounded browser acceptance.**
+The bilingual UI automatically identifies three supported images, offers normal
+calculator controls, seven separately licensed skins, traditional keys, editable
+physical PC macros, captures, recording, settings and optional local autosave.
+The separate workbench retains research controls and diagnostics. The 49g+ LCD
+uses its full 131×80 dimensions in both views and capture export.
 
-The [calculator page](web.md) automatically selects the supported ROM configuration
-and exposes normal calculator controls. The separate workbench retains both
-opt-in HOME setups, seven skins, all model/debug controls and diagnostics.
-Physical taps and guest-driven annunciators share the optimized core. Node Worker tests are not HTTP/file-picker/browser
-lifecycle E2E; that gate remains open.
+One Worker owns execution. Bounded slices, explicit pacing, input queues,
+operation/generation isolation and cancellation remain invariant. Version-2
+sessions serialize SDI state; exact version-1 files migrate with SDI reset.
+Original-ROM and native/WASM continuation are independently checked. Actual
+Chrome file-picker/download/session and Worker tests supplement synthetic tests.
 
-Manual versioned session export/import is now implemented and tested across
-native/WASM, including continuation of both original systems. Automatic
-persistence, migration and actual browser file-operation acceptance remain open.
-Next are calibrated LCD output and broader stock-key
-coverage and performance controls. Preserve single-Worker ownership, bounded slices,
-cancellation and model/ROM generation isolation.
+Broader touch/focus/background/storage stress, zoom and sustained full-key use
+remain open. Retain and classify the rare historical HP48 Unlimited post-result
+stop instead of hiding it. Normal pace is based on the functional reference
+clock, not measured physical ARM instruction timing.
 
-**Gate:** production assets pass real browser load/boot/key/resize/reset/
-save-restore/ROM-change and sustained-interaction E2E. No stale state, UI-thread
-instruction loop or ROM upload. Node WASM tests do not certify page behavior.
+**Gate:** production assets pass load/boot/key/resize/reset/save-restore/model-
+change and sustained interaction without stale state, UI-thread instruction
+loops or ROM upload. One desktop run is not all-browser acceptance.
 
 ## M6 — Virtual PC connectivity
 
-**Bounded HP48gII USB/serial object workflows and upload batches implemented; broader transfer gates open.**
+**Stock object workflows and HP39 Disk drive protocol implemented.** HP48gII
+USB/UART0 and HP49g+ USB support upload, GET, calculator SEND/Receive, directory,
+FINISH and sequential upload batches. Limits and per-file results are explicit.
+HP48 export may change its transport-header revision; payload bytes match.
+HP49 USB exports preserve complete test objects byte-for-byte.
 
-M6.1 covers UART bytes, bounded queues, cancellation/replay/disconnect and an
-optional native PTY/TCP adapter. M6.2 covers USB reset, EP0 control requests,
-indexed CSR/FIFO ownership, guest descriptors, interrupts and SOF. M6.3 adds
-internal host transactions and real firmware protocols, keeping typed HP39
-files distinct from HP48/49/50 objects. M6.4 is an optional host-OS bridge with
-its own driver, enumeration, legacy software, disconnect and security gates.
+HP39/40 reverses the protocol role: the calculator is the Kermit client and
+Orchard serves `HP39DIR.CUR`, catalogs and typed files. Directory aliases are
+preserved. Original HP39g+ stock USB installs the 7,373-byte reader aplet and
+1,489-byte library and exports both through SEND. The OS may rename a library
+header to its directory alias while preserving its object body. Responses are
+queued for the next ordinary guest slice after USB input; no extra guest ticks
+or wall-clock sleeps are inserted. HP39gs/40gs still need their own ROM witnesses.
 
-The original HP50g boot region supplies device/configuration/string responses
-and completes SET_ADDRESS/SET_CONFIGURATION status. GET_CONFIGURATION remains
-an explicit NAK counterexample. Synthetic 64-byte bulk tests and the retained
-control guest pass; neither is stock object transfer or firmware installation.
-See [USB](usb.md) and [virtual links](virtual-link.md).
+Remaining work includes remote file management, broader capacity/recovery cases,
+infrared/UART2, UART FIFO/baud timing and a host-OS bridge. The standalone loopback
+USB/IP/raw serial prototype has TCP tests; it does not establish kernel attach
+or Conn3x interoperability. The original HP50g GET_CONFIGURATION NAK remains
+an explicit counterexample. See [virtual links](virtual-link.md).
 
-The [file client](file-transfer.md) adds an original bounded Kermit implementation,
-browser upload, named retrieval, explicit downloads and lifecycle cancellation.
-An unchanged HP48gII ROM completes USB and serial object round trips. The object
-bytes match; the OS changes the binary transport-header revision byte on export.
-Serial support follows a narrowly tested UART0 TX-empty level interrupt repair.
-Both transports now expose upload, GET, Receive, directory and FINISH, with
-calculator-initiated SEND and same-connection GET production-browser evidence.
-The complete-batch preflight and sequential uploader accept at most 16 objects
-and 8 MiB; two independently named objects were uploaded and downloaded on each
-transport with identical object bytes. The maximum bounds have deterministic
-tests, not stock maximum-capacity witnesses. [HP39 typed-file and
-bundle validation](hp39-files.md) is groundwork for its distinct application
-protocol, with opaque payloads and hardware upload still unverified.
-
-**Gate:** actual stock firmware completes both transfer directions, hashes
-match, failures/cancellation/disconnect recover, and the stock UI remains
-responsive. Internal packet exchange is not OS-level device enumeration.
+**Gate:** unchanged stock firmware completes both directions with file/object
+identity, cancellation/reconnect recovery and responsive UI. Internal packets
+do not imply a real OS USB/serial device or physical hardware connection.
 
 ## M7 — Stability and releases
 
-**Release gate open.**
+**Per-revision release checks implemented; broad stability gate open.** Maintain
+reproducible production artifacts, pinned dependencies and corresponding source,
+license audits, resource budgets and explicit support claims. Verify Build,
+Pages, revision manifests and downloaded package hashes after acceptance.
 
-Close long-run correctness, deterministic snapshots, resource budgets,
-Windows/Linux/macOS packaging, browser compatibility, reproducible dependencies,
-license audits, contributor/release workflows and known-issue documentation.
-Optimize only after correctness witnesses exist; a JIT is optional and must
-preserve the same architectural state contract.
+**Gate:** sustained supported-model use, wider browser/desktop compatibility,
+repeatable packaging and documented limitations. Full Windows/Linux/macOS device
+bridges and all-model certification remain separate work.
 
-**Gate:** reproducible production packages, sustained all-model use, a precise
-compatibility matrix and no firmware or unqualified optional-device claims.
+## Performance work
 
-## Working order and research boundaries
+Correctness and real workload measurements govern optimization. Existing CPU,
+translation memo, scheduler, WFI and rendering optimizations retain reference
+paths and exact-state comparisons. [Operand-pair profiles](arm-block-profile.md)
+identify independent MOV pairs and an ADD-to-CMP dependency as candidates;
+structural instruction counts are not speedups. A new path needs identical
+architecture, exceptions, interrupts and self-modifying-code behavior plus a
+measured benefit before production admission.
 
-Prioritize validation of the conditional HP48gII startup: independent SRAM
-address-wiring/LCD evidence, real-OS operation coverage and ARM payload return.
-Maintain local cold replay before CI. Independent HP39g+ component identification and unresolved
-EP0 response remain separate dependencies; full USB/SD work and skin polish
-must not displace a reliable, correctly presented first calculator.
-
-Historical checkpoints, commands and negative controls are linked by exact
-revision from [boot research](boot-research.md); current local acceptance is in
-[validation](validation.md). Explicit weak bias, ideal ADC codes, functional
-clocks, packed-memory views and the counted idle-zero hypothesis are separate
-conditions, never silently promoted to verified board defaults.
-
-## Skin / segments / HP39g+ continuation
-
-The separate [HP39g+ D1.55 path](hp39-startup.md) now reaches HOME and both
-arithmetic results with an explicit 1 MiB component and **exact** SRAM decode.
-This is a second conditional functional witness, not closure of physical-board
-M2/M3 or all-model M4. The original dumps are not modified.
-
-M5 now includes seven pinned outlined skins, 51 geometric hit regions per
-model, a separate guest-driven status strip, two hash-checked HOME setups,
-and an emulator subdirectory in the same Pages site. Actual browser-origin
-E2E, automatic persistence and sustained full-key compatibility remain open.
-
-## Performance continuation
-
-The latest [operand-pair profile](arm-block-profile.md) uses an isolated diagnostic
-build against the unchanged production core. HP39g+ `1+1`, APLET Library and
-Function START preserve full checkpoints, LCD, UART, instruction counts and key
-contacts. Fixed disjoint pure-DP pairs cover 34.69% / 36.18% / 36.27% of all
-fetched instructions, but the simple independent MOV-pair subset covers only
-4.20% / 5.02% / 5.15%. The `1+1` ADD-immediate to CMP-immediate dependency is a
-separate candidate. These are structural counts, not measured CPU-time shares
-or speedups; no new optimized execution path is enabled by this continuation.
-Prior HOLD candidates remain excluded until exact-state and browser timing
-comparisons justify a distinct implementation.
-
-[Measured optimization](performance.md) removes repeated keyboard circuit
-resolution, empty IRQ arbitration and debugger snapshot churn, with optimized
-WASM compilation. The next round adds exact-width reads, conservative
-no-checkpoint execution for non-faulting ARM classes, and host translation memo
-entries revalidated against live descriptors on every hit. Fallible instructions
-retain full rollback; the guest timeline and MMIO effects are unchanged.
-This host memo is not a guest TLB model. Bounded next-event phase scheduling is now implemented with a per-tick
-reference comparison. Decoded blocks and dynamic
-translation remain future work; no hardware speed ratio or complete browser
-E2E is claimed.
-
-
-## Scheduling and session continuation after 980e1ec
-
-M5 gains explicit Save/Load session file operations, without bundling the ROM
-or exposing research controls. This is portable machine state, not just a
-screenshot or SRAM dump. Original-OS continuation and native/WASM state identity
-pass; automatic storage, format migration and actual browser-origin file
-interaction remain separate tasks. See [sessions](sessions.md).
-
-The scheduler now defers only phase accounting in intervals that end strictly
-before any peripheral event. CPU instructions and interrupt acceptance retain
-their original ordering. Every MMIO access and public run boundary synchronizes
-state. This optimizes host work, not physical hardware fidelity. Tests and
-[measurements](performance.md) compare against the accepted 980e1ec path.
-
-## Settings / pacing / local storage / connection continuation
-
-M5 adds native settings dialogs, mutually exclusive skin/traditional views,
-viewport sizing, per-model macro bindings, opt-in localStorage autosave and
-`.ord` export naming. Actual browser-origin E2E remains open. The Normal
-time governor fixes the missing wall-rate limit; it does not close M2's
-physical clock-domain calibration or certify the absolute cursor period.
-
-M6 now exposes bounded HP48gII object upload/retrieval as well as UART bytes and
-guest-derived USB enumeration/individual packets. Broader model/protocol coverage
-and an OS-level device bridge remain open. [Infrared](infrared.md) is assessed as useful after those protocols and
-clock foundations; no IrDA toggle is presented as a completed virtual link.
-
-Continue CPU throughput work independently of pacing. WFI quiet-interval
-skipping preserves the reference timeline and has dedicated comparisons; no
-decoded-block or JIT implementation is claimed in this slice.
-
-
-## React and host prototype checkpoint
-
-M5 now includes a React/Mantine bilingual frontend, visual PC key mapping,
-traditional legends and PNG capture; actual browser-origin E2E remains open.
-Live display buffers are reused and traditional key geometry is constructed on
-first use. These remove repeated allocation and hidden-view layout work, without
-establishing an end-to-end arithmetic or Aplet latency improvement.
-M6 includes a standalone loopback USB/IP/raw serial prototype validated with
-generated ARM guests and real TCP, not OS-level or Conn3x acceptance.
-Next gates: kernel client attach, stock transfer-mode enumeration and full
-bidirectional Conn3x/object exchange. Performance still needs interpreter and
-physical clock-domain work; small LCD decoding cost is not the primary finding.
+The current feature round also checks the incremental cost of the idle SDI
+controller and checkpoint migration. Do not claim an interpreter speedup from
+model admission, checksum work, display caching or input dwell changes. Physical
+clock calibration remains independent of host execution throughput.

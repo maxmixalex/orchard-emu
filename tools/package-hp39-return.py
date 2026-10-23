@@ -207,6 +207,8 @@ def build_files(sdk, hptools):
     instructions = instructions.replace('](../downloads/', f']({repo}downloads/')
     instructions = instructions.replace('](hp39-native-prerequisites.md)',
                                         f']({repo}development/hp39-native-prerequisites.md)')
+    instructions = instructions.replace('](hp39gs-rom-dump.md)',
+                                        f']({repo}development/hp39gs-rom-dump.md)')
     files['README-zh.md'] = instructions.encode()
     for name in ('LICENSE', 'tools/package-hp39-return.py', 'tools/hp39-return/return.s',
                  'tools/hp39-return/return.m', 'licenses/hpgcc39/COPYING', 'licenses/hpgcc39/NOTICE.md'):

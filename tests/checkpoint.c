@@ -70,12 +70,43 @@ EXPORT("regression") unsigned regression(void){
   original[256]=2;put(original+28,crc(original+32,n-32));
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
   original[256]=0;
-  size_t head=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE-31-1032-8;
+  size_t head=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE-52-31-1032-8;
   CHECK(o_read_le(original+head,4)==1020);
   put(original+head,0xffffffffu);put(original+28,crc(original+32,n-32));
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
   put(original+head,1020);put(original+28,crc(original+32,n-32));
   export_to(actual,n);CHECK(equal(expected,actual,n));
+  /* A genuine v1 wire image has no trailing SD scalars. Import on every model
+     restores the original state and initializes the newly modeled empty slot. */
+  export_to(original,n);
+  size_t ram_offset=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE;
+  size_t legacy_n=n-52;
+  o_copy(actual,original,ram_offset-52);
+  o_copy(actual+ram_offset-52,original+ram_offset,n-ram_offset);
+  put(actual+8,1);put(actual+12,(uint32_t)legacy_n);
+  put(actual+28,crc(actual+32,legacy_n-32));
+  a.soc.sdi.argument=0xdeadbeef;
+  CHECK(orchard_checkpoint_load(&a,actual,legacy_n)==ORCHARD_OK);
+  CHECK(a.soc.sdi.argument==0 && a.soc.sdi.data_timer==0x2000);
+  export_to(actual,n);CHECK(equal(original,actual,n));
+  /* Correct-CRC, invalid SD phase must be rejected atomically. */
+  put(original+ram_offset-4,3);put(original+28,crc(original+32,n-32));
+  CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
+  export_to(original,n);CHECK(equal(original,actual,n));
+  /* A repaired CRC cannot import an active SD data/DMA mode that normal MMIO
+     rejects. Preserve the complete machine on each rejection. */
+  const uint32_t active_data_modes[]={0x1001,0x2001,0x3001,0x8000,0xbfff};
+  for(unsigned i=0;i<sizeof active_data_modes/sizeof active_data_modes[0];i++) {
+   put(original+ram_offset-52+7*4,active_data_modes[i]);
+   put(original+28,crc(original+32,n-32));
+   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
+   export_to(original,n);CHECK(equal(original,actual,n));
+  }
+  /* STOP by force is a valid quiescent value even with mode/DMA bits retained. */
+  CHECK(o_mmio_write(&a,0x5a00002c,4,0xf001));export_to(original,n);
+  a.soc.sdi.data_control=0;
+  CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_OK);
+  export_to(actual,n);CHECK(equal(original,actual,n));
  }
  return failures;
 }

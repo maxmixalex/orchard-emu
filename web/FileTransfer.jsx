@@ -9,26 +9,31 @@ export function FileTransfer({controller,state,transport}){
   const {t}=useTranslation(),input=useRef(null),[files,setFiles]=useState([]),[name,setName]=useState('');
   const file=files[0]?.file,multiple=files.length>1,batch=state.uploadBatch;
   const transfer=state.transfer,active=Boolean(transfer?.active||batch?.active),connected=transport==='usb'?state.usbReady:state.serial;
-  const capabilities=transferCapabilities(state.model.id,transport),supported=capabilities.send;
+  const capabilities=transferCapabilities(state.model.id,transport),supported=capabilities.send,hp39=capabilities.serve;
   const available=supported&&connected&&state.ready&&state.loaded&&!state.busy&&!state.stopped&&!active;
   const progress=transfer?.total?Math.min(100,100*transfer.transferred/transfer.total):0;
   return <Stack gap="sm">
-    <Text size="sm" c="dimmed">{t(!supported?'fileTransfer39Help':transport==='serial'?'fileTransferSerialHelp':'fileTransferHelp')}</Text>
+    <Text size="sm" c="dimmed">{t(hp39?'fileTransfer39Help':!supported?'fileTransferUnavailable':transport==='serial'?'fileTransferSerialHelp':'fileTransferHelp')}</Text>
     {supported&&<>
       <Group align="end"><Button variant="default" disabled={active} onClick={()=>{input.current.value='';input.current.click();}}>{t('chooseTransferFile')}</Button>
         <Text size="sm" style={{overflowWrap:'anywhere',flex:1,minWidth:100}}>{multiple?t('selectedTransferFiles',{count:files.length}):file?`${file.name} (${size(file.size)})`:t('noTransferFile')}</Text></Group>
       <input ref={input} type="file" multiple data-testid="transfer-file" hidden onChange={e=>{const next=Array.from(e.target.files||[],file=>({file,name:file.name}));setFiles(next);setName(next.length===1?next[0].name:'');}}/>
-      {multiple&&<Stack gap="xs" style={{maxHeight:260,overflowY:'auto'}}>{files.map((entry,index)=><Group key={index} align="end" wrap="nowrap">
+      {multiple&&!hp39&&<Stack gap="xs" style={{maxHeight:260,overflowY:'auto'}}>{files.map((entry,index)=><Group key={index} align="end" wrap="nowrap">
         <TextInput label={`${t('calculatorFileName')} · ${entry.file.name}`} value={entry.name} maxLength={64} disabled={active} style={{flex:1,minWidth:0}}
           onChange={e=>{const next=e.currentTarget.value;setFiles(current=>current.map((item,i)=>i===index?{...item,name:next}:item));}}/>
         <Button variant="subtle" size="compact-sm" disabled={active} aria-label={t('removeTransferFile',{name:entry.file.name})}
           onClick={()=>{const remaining=files.filter((_,i)=>i!==index);setFiles(remaining);if(remaining.length===1)setName(remaining[0].name);}}>{t('removeUploadFile')}</Button>
       </Group>)}</Stack>}
-      <TextInput label={t(multiple?'retrieveObjectName':'calculatorFileName')} value={name} onChange={e=>setName(e.currentTarget.value)} maxLength={64} disabled={active}/>
-      <Group><Button disabled={!available||!file} onClick={()=>multiple?controller.startUploadBatch(transport,files):controller.startTransfer('send',transport,{file,name})}>{t('uploadFile')}</Button>
-        {capabilities.receive&&<Button variant="light" disabled={!available} onClick={()=>controller.startTransfer('receive',transport)}>{t('receiveFiles')}</Button>}
+      {hp39&&files.length>0&&<Stack gap={4} style={{maxHeight:220,overflowY:'auto'}}>{files.map((entry,index)=><Group key={index} justify="space-between" wrap="nowrap">
+        <Text size="sm" style={{overflowWrap:'anywhere',minWidth:0}}>{entry.file.name} ({size(entry.file.size)})</Text>
+        <Button variant="subtle" size="compact-sm" disabled={active} aria-label={t('removeTransferFile',{name:entry.file.name})}
+          onClick={()=>setFiles(current=>current.filter((_,i)=>i!==index))}>{t('removeUploadFile')}</Button>
+      </Group>)}</Stack>}
+      {!hp39&&<TextInput label={t(multiple?'retrieveObjectName':'calculatorFileName')} value={name} onChange={e=>setName(e.currentTarget.value)} maxLength={64} disabled={active}/>}
+      <Group><Button disabled={!available||!file} onClick={()=>hp39?controller.startHp39Server(transport,files):multiple?controller.startUploadBatch(transport,files):controller.startTransfer('send',transport,{file,name})}>{t(hp39?'hostHp39Files':'uploadFile')}</Button>
+        {capabilities.receive&&<Button variant="light" disabled={!available} onClick={()=>controller.startTransfer('receive',transport)}>{t(hp39?'receiveHp39Files':'receiveFiles')}</Button>}
         {capabilities.get&&<Button variant="light" disabled={!available||!name.trim()} onClick={()=>controller.startTransfer('get',transport,{name})}>{t('getNamedFile')}</Button>}
-        {active&&<Button color="red" variant="light" onClick={()=>controller.cancelTransfer()}>{t('cancelTransfer')}</Button>}</Group>
+        {active&&<Button color="red" variant="light" onClick={()=>controller.cancelTransfer()}>{t(hp39?'stopHp39Server':'cancelTransfer')}</Button>}</Group>
       {(capabilities.directory||capabilities.finish)&&<Group>
         {capabilities.directory&&<Button variant="subtle" disabled={!available} onClick={()=>controller.startTransfer('directory',transport)}>{t('listCalculatorFiles')}</Button>}
         {capabilities.finish&&<Button variant="subtle" disabled={!available} onClick={()=>controller.startTransfer('finish',transport)}>{t('finishCalculatorServer')}</Button>}

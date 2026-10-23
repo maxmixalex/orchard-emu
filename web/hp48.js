@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Scan coordinates are hardware facts; provenance: docs/development/web.md.
 export const HP39_ROM = '95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67';
+export const HP49_ROM = '3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab';
 export const HP48_ROM = '4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937';
 export const KEY_ROWS = [
   [['F1',35],['F2',36],['F3',37],['F4',38],['F5',39],['F6',40]],
@@ -23,10 +24,10 @@ const shortcuts = new Map([
 ]);
 export function shortcut(key) { return shortcuts.get(key); }
 export function setupHash(preset) {
-  return preset === 'hp48-home' ? HP48_ROM : preset === 'hp39-home' ? HP39_ROM : null;
+  return preset === 'hp48-home' ? HP48_ROM : preset === 'hp39-home' ? HP39_ROM : preset === 'hp49-home' ? HP49_ROM : null;
 }
 export function isPlayable(model, preset) {
-  return (model === 4 && preset === 'hp48-home') || (model === 1 && preset === 'hp39-home');
+  return (model === 4 && preset === 'hp48-home') || (model === 1 && preset === 'hp39-home') || (model === 5 && preset === 'hp49-home');
 }
 export function keyRows(model) {
   if (model !== 1 && model !== 2 && model !== 3) return KEY_ROWS;
@@ -41,6 +42,11 @@ export function applySetup(core, model, preset) {
   const operations = preset === 'hp39-home' ? [
     ['keyboard_attach',1], ['nor_select',2], ['gpio_inputs',5,0x8e,0],
     ['adc_input',0,1,1023], ['lcd_probe68',1],
+  ] : preset === 'hp49-home' ? [
+    ['keyboard_attach',1], ['nor_select',1],
+    ['gpio_inputs',3,0xcc7f,0], ['gpio_inputs',4,0xc000,0xc000],
+    ['gpio_inputs',5,0x8e,0], ['gpio_inputs',6,1,0],
+    ['gpio_bias',6,0xf800,0xf800], ['adc_input',0,1,1023], ['adc_input',7,1,512], ['lcd_probe68',1],
   ] : [
     ['keyboard_attach',1], ['nor_select',1], ['sram_select',1],
     ['gpio_inputs',3,0xcc7f,0], ['gpio_inputs',5,0x8e,0], ['gpio_inputs',6,1,0],

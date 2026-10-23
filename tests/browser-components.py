@@ -190,16 +190,54 @@ with sync_playwright() as p:
  page.get_by_role('button',name='移除 BAD.hp',exact=True).click()
  assert page.get_by_label('计算器内文件名',exact=True).input_value()=='GOOD.hp'
  page.get_by_role('button',name='关闭',exact=True).click()
+ # HP39 presents a disk server, with immutable package basenames and the
+ # calculator's original RECV/SEND → Disk drive workflow.
+ select_model(1);resolve_manifest(6);keys_ready('hp39gplus')
+ page.evaluate("""()=>window.__controller.patch({loaded:true,running:false,busy:false,serial:true,usb:true,usbReady:true})""")
+ page.get_by_role('button',name='连接',exact=True).click()
+ assert 'Disk drive' in page.get_by_role('dialog').inner_text()
+ assert page.get_by_role('button',name='按名称取回对象',exact=True).count()==0
+ assert page.get_by_label('计算器内文件名',exact=True).count()==0
+ hp39_program=b'HP39AscD 4 TEST\nDISP 1;"Hello";'
+ hp39_library=b'HP39BinH\x03Lib\x00\xff'
+ page.locator('[data-testid="transfer-file"]').set_input_files([
+  {'name':'TEST.000','mimeType':'application/octet-stream','buffer':hp39_program},
+  {'name':'LIB.000','mimeType':'application/octet-stream','buffer':hp39_library}])
+ page.get_by_role('button',name='提供所选文件',exact=True).click()
+ page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).mode==="serve"')
+ hp39=page.evaluate('()=>{const m=window.__messages.filter(m=>m.type==="file-transfer-start").at(-1);return {request:m.request,files:m.files.map(f=>({name:f.name,bytes:Array.from(f.bytes)}))}}')
+ assert [f['name'] for f in hp39['files']]==['TEST.000','LIB.000','HP39DIR.CUR','HP39DIR.000']
+ assert hp39['files'][0]['bytes']==list(hp39_program)
+ assert page.get_by_role('button',name='提供所选文件',exact=True).is_disabled()
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:true,phase:"serving",transferred:12,total:42})}')
+ assert page.get_by_text('文件服务就绪，请在计算器中选择文件',exact=True).count()==1
+ page.get_by_role('button',name='停止文件服务',exact=True).click()
+ count=page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").length')
+ page.locator('[data-testid="transfer-file"]').set_input_files([
+  {'name':'TEST.000','mimeType':'application/octet-stream','buffer':hp39_program},
+  {'name':'BAD.000','mimeType':'application/octet-stream','buffer':b'not a typed file'}])
+ page.get_by_role('button',name='提供所选文件',exact=True).click()
+ page.wait_for_function('window.__controller.state.transfer.phase==="error"')
+ assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").length')==count
+ page.get_by_role('button',name='接收计算器文件',exact=True).click()
+ page.wait_for_function('(n)=>window.__messages.filter(m=>m.type==="file-transfer-start").length===n',arg=count+1)
+ assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).files.length')==2
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-received",generation:c.generation,request:c.transferRequest,name:"RETURN.000",bytes:new Uint8Array([0,255,13,10])})}')
+ page.get_by_role('button',name='下载',exact=True).click();page.wait_for_function('window.__downloadName==="RETURN.000"')
+ assert page.evaluate('window.__downloadBytes')==[0,255,13,10]
+ page.get_by_role('button',name='停止文件服务',exact=True).click()
+ page.screenshot(path=str(ROOT/'build/ui-hp39-files-zh.png'))
+ page.get_by_role('button',name='关闭',exact=True).click()
  for width in [320,390,720,1360]:
   page.set_viewport_size({'width':width,'height':900})
   page.wait_for_timeout(100)
   assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth'),width
  # Unmount also invalidates an outstanding load and removes frame/resize work.
- select_model(1);page.wait_for_function('window.__manifestRequests.length===7')
- page.evaluate('window.__unmount()');resolve_manifest(6)
+ select_model(4);page.wait_for_function('window.__manifestRequests.length===8')
+ page.evaluate('window.__unmount()');resolve_manifest(7)
  page.evaluate('window.dispatchEvent(new Event("resize"))')
  assert page.locator('.traditional-geometry').count()==0
  assert page.evaluate('window.__controller.frames.size')==0
  assert not errors,errors
- print('Offline components: lazy keypad load/view/model races, reuse, active key/segments, PC input and unmount; exact full canvas RGBA, changed and blank frames; bilingual Apply/Cancel, PC key + modifier selection, printed legends, PNG download, file upload/cancel/stale receive/download/raw exclusion, upload batch names/sequencing/partial error/full preflight, four viewport widths pass. No HTTP/ROM/Worker E2E.')
+ print('Offline components: lazy keypad load/view/model races, reuse, active key/segments, PC input and unmount; exact full canvas RGBA, changed and blank frames; bilingual Apply/Cancel, PC key + modifier selection, printed legends, PNG download, file upload/cancel/stale receive/download/raw exclusion, upload batch names/sequencing/partial error/full preflight, HP39 disk catalog/preserved names/preflight/serve/cancel/download, four viewport widths pass. No HTTP/ROM/Worker E2E.')
  b.close()

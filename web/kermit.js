@@ -6,6 +6,13 @@ export const MAX_FILE_BYTES = 2 * 1024 * 1024;
 export const MAX_RECEIVE_FILES = 16;
 export const MAX_RECEIVE_BYTES = 8 * 1024 * 1024;
 export const MAX_LISTING_BYTES = 64 * 1024;
+export function validateReceiveBudget(value = {files:MAX_RECEIVE_FILES,bytes:MAX_RECEIVE_BYTES}) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) ||
+      !Number.isSafeInteger(value.files) || value.files < 0 || value.files > MAX_RECEIVE_FILES ||
+      !Number.isSafeInteger(value.bytes) || value.bytes < 0 || value.bytes > MAX_RECEIVE_BYTES)
+    throw new Error('Invalid remaining file-receive capacity.');
+  return Object.freeze({files:value.files,bytes:value.bytes});
+}
 const EMPTY = new Uint8Array();
 const ascii = value => Uint8Array.from(value, c => c.charCodeAt(0));
 export const byteText = bytes => Array.from(bytes, b => String.fromCharCode(b)).join('');
@@ -120,11 +127,12 @@ export function decodeData(bytes, config = LOCAL, maximum = MAX_FILE_BYTES) {
 
 export class KermitSession {
   constructor({write, notify = () => {}, file = () => {}, listing = () => {}, hz = 12000000,
-    timeout = 5, retries = 4, duration = 300, end=null, onPacket=()=>{}} = {}) {
+    timeout = 5, retries = 4, duration = 300, end=null, onPacket=()=>{}, validateFile=()=>{}, receiveBudget} = {}) {
     if (typeof write !== 'function' || !Number.isFinite(hz) || hz <= 0) throw new Error('Invalid Kermit transport.');
     this.write = write; this.notify = notify; this.file = file; this.listing = listing; this.hz = hz;
     this.timeout = timeout * hz; this.retryLimit = retries; this.duration = duration * hz;
-    this.reader = new PacketReader({end});this.onPacket=onPacket;this.active = false; this.queue = []; this.lingerUntil = 0;
+    this.receiveBudget=validateReceiveBudget(receiveBudget);
+    this.reader = new PacketReader({end});this.onPacket=onPacket;this.validateFile=validateFile;this.active = false; this.queue = []; this.lingerUntil = 0;
   }
   get pending() { return this.active || this.queue.length > 0 || this.lingerUntil > this.now; }
   status(phase, error) {
@@ -133,7 +141,7 @@ export class KermitSession {
       name:this.name || '', transferred:this.transferred, total:this.mode === 'send' ? this.total : undefined,
       ...(error ? {error} : {})});
   }
-  start({mode, name, bytes}, now) {
+  start({mode, name, bytes, passive = false}, now) {
     if (this.active) throw new Error('A file transfer is already running.');
     if (!['send','receive','get','directory','finish'].includes(mode)) throw new Error('Unsupported file operation.');
     if (mode === 'send' || mode === 'get') validateFilename(name);
@@ -145,8 +153,8 @@ export class KermitSession {
     this.status('negotiating');
     if (mode === 'send') this.send('S', PARAMETERS, 'send-init');
     else if (mode === 'receive') {
-      this.stage='receive-init';this.deadline=Infinity;this.initialProbe=packet(0,'N');
-      this.enqueue(this.initialProbe,()=>{this.deadline=this.now+this.timeout;});
+      this.stage='receive-init';this.deadline=Infinity;
+      if(!passive){this.initialProbe=packet(0,'N');this.enqueue(this.initialProbe,()=>{this.deadline=this.now+this.timeout;});}
     }
     else this.send('I', PARAMETERS, 'command-init');
     this.poll(now);
@@ -273,6 +281,12 @@ export class KermitSession {
       if (!this.current) throw new Error('Kermit EOF arrived without a file.');
       if (p.data.length && decodeData(p.data,this.rx,16)[0]===68) throw new Error('The calculator discarded the incomplete file.');
       const bytes=this.current.buffer.slice(0,this.current.length);
+      if(!this.current.screen){
+        const pending=this.files.filter(f=>!f.screen);
+        if(pending.length+1>this.receiveBudget.files||pending.reduce((n,f)=>n+f.bytes.length,0)+bytes.length>this.receiveBudget.bytes)
+          throw new Error('Download and clear received files before receiving more.');
+        this.validateFile({name:this.current.name,bytes});
+      }
       this.files.push({name:this.current.name,bytes,screen:this.current.screen});this.current=null;
     } else if (p.type==='B') {
       if (this.current) throw new Error('Kermit transfer ended before the file EOF.');
@@ -285,7 +299,9 @@ export class KermitSession {
           this.listing(byteText(merged));
         }
         for (const f of this.files) if(!f.screen)this.file(f);
-        this.files=[];this.lingerUntil=this.now+this.timeout;this.complete();
+        // A retry is sent at the peer's timeout and arrives in a later poll.
+        // Keep one additional timeout interval without extending on duplicates.
+        this.files=[];this.lingerUntil=this.now+2*this.timeout;this.complete();
       };return;
     } else throw new Error('Unexpected Kermit packet '+p.type+'.');
     this.acknowledge(p);this.expected=(this.expected+1)&63;

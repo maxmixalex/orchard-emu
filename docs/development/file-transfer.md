@@ -8,21 +8,22 @@ the existing hardware input/output APIs and the calculator's own protocol
 implementation. It does not inject an object into calculator memory or install
 a replacement calculator-side server.
 
-The current application boundary is the HP48/49 object family on the admitted
-HP48gII model and HOME setup. Capabilities are checked per transport and operation:
+The HP48/49 client supports the admitted HP48gII and HP49g+ USB HOME setups.
+HP48gII also supports UART0 serial; HP49g+ has no equivalent external wired
+serial connector. The HP39/40 disk-drive server is described below. Capabilities are checked per transport and operation:
 
-| Connection | Upload | GET | Receive | Directory | FINISH |
+| Model and connection | Upload | GET | Receive | Directory | FINISH |
 | --- | --- | --- | --- | --- | --- |
-| Internal USB | Yes | Yes | Yes | Yes | Yes |
-| Internal UART0 serial | Yes | Yes | Yes | Yes | Yes |
+| HP48gII / HP49g+ internal USB | Yes | Yes | Yes | Yes | Yes |
+| HP48gII internal UART0 serial | Yes | Yes | Yes | Yes | Yes |
 
 The [serial validation record](stock-serial-validation.md) retains the original
 zero-reply counterexample, the successful round trip after the UART0 TX-empty
 level interrupt repair, and the subsequent production-browser witness for all
 five operations and same-connection reuse. Raw serial diagnostics remain separate.
-HP39 typed files, catalogs and client/server
-workflow are a separate application protocol. A Kermit ACK alone does not prove
-HP39 object compatibility. Physical USB, host OS enumeration, Conn3x/Conn4x
+HP39 typed files and catalogs use the separate calculator-client workflow
+implemented by `web/hp39-transfer.js`; they never pass through the HP48/49
+object client. Physical USB, host OS enumeration, Conn3x/Conn4x
 interoperability, XMODEM, flash installation and complete remote file management
 remain separate gates.
 
@@ -132,8 +133,14 @@ neither run changes instruction budgets or supplies a fabricated protocol ACK.
 Receive results are withheld until every file has a valid EOF and the final
 transaction packet has been acknowledged through the transport. An incomplete,
 discarded, cancelled or failed transaction does not publish a partial download.
-The receiver briefly retains the final ACK to answer a repeated end packet
-without redelivering files. Starting another explicit transaction replaces that
+The controller passes the remaining received-file count and byte capacity into
+the protocol before starting. Files retained from earlier operations therefore
+reduce the current receive budget; an oversize transaction is rejected before
+EOF ACK instead of succeeding on the calculator and being discarded by the UI.
+The receiver retains the final ACK for twice the negotiated packet timeout to
+answer a repeated end packet without redelivering files. HP39 FINISH replies
+use the same bounded recovery for repeated G commands. This recovery deadline
+does not slide forward with retries. Starting another explicit transaction replaces that
 recovery window; callers should start a new operation only after completion.
 
 ## Using the calculator's original server
@@ -197,7 +204,8 @@ come from `transferCapabilities(model)` rather than a UI assumption.
 The Worker reports `file-transfer-status`, `file-transfer-received` and
 `file-transfer-listing`. Status phases are stable translation keys:
 `negotiating`, `sending`, `receiving`, `listing`, `finishing`, `complete`,
-`cancelled`, and `error`. Every terminal result has `active: false`. Events carry
+`cancelled`, and `error`; the persistent HP39 host additionally uses `serving`.
+Every terminal result has `active: false`. Events carry
 both request and generation, so old events cannot replace a later session.
 
 The selected transport is exclusive while the session owns it. Protocol bytes
@@ -385,3 +393,40 @@ Worker timing and pacing tests still verify unchanged no-transfer scheduling.
 - [Samsung S3C2410A manual](https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf),
   chapter 13: USB FIFO, endpoint ownership and interrupt semantics. No other
   emulator or GPL link-client implementation was copied into the MIT modules.
+
+## HP39/40 disk-drive server
+
+For HP39-family objects, the Files panel offers **Host selected files** and
+**Receive from calculator**. Start the host service, then use the calculator's
+RECV or SEND menu and **Disk drive…**. The calculator requests HP39DIR.CUR and
+the selected directory, then individual objects and dependencies. No SERVER
+command or HP48 object conversion is involved.
+
+Select loose HP39 typed files to generate an in-memory directory, or select a
+complete package with its original directory files. Directory aliases are
+preserved independently of object titles, including `LIB275L` pointing to
+`ARMToolbox39`. Every explicit reference, type, filename, size and complete
+file is checked before publishing the catalog. Up to 16 selected files and
+8 MiB are accepted; filenames are safe ASCII basenames of up to 64 bytes.
+No host filesystem path is requested or opened by the calculator.
+
+The server handles I/R requests, both Kermit transfer directions, repeated
+packets, backpressure, missing files and FINISH. It remains active between
+objects so that selecting an aplet can trigger its later library requests.
+Received objects and all session/catalog limits are validated before EOF ACK,
+including earlier files in the same uncommitted transaction. Files are published
+only after final ACK.
+Complete downloads remain available after Stop; interrupted files do not.
+Pause, reconnect and model/session replacement invalidate the running server.
+
+Actual original HP39g+ USB evidence includes both directory files and the
+7,373-byte `H39 ROM USB` aplet followed by its 1,489-byte library, installed
+by the original OS with the package's distinct directory aliases intact.
+Stock SEND then returns the complete aplet with identical bytes, the library
+with its 1,468-byte object body intact under the stock-selected `LIB275L` title,
+and the new directory. All three exports also equal the user's earlier stock
+exports. For HP39, USB IN completion is given the next ordinary guest slice
+before the dependent host OUT; this prevents original-OS ACK loss without
+adding guest execution or changing the core scheduling policy.
+See [HP39 files](hp39-files.md) for exact scope and the separate 39gs/40gs
+model-validation boundary. The older HP39/40 (Wire) entry is a different path.

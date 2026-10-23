@@ -6,6 +6,8 @@ export const CALCULATORS = Object.freeze([
     hash:setupHash('hp39-home'), help:'When “Memory Clear” appears, press the top-right key (OK).' }),
   Object.freeze({ id:4, name:'HP 48gII', preset:'hp48-home', bytes:2097152,
     hash:setupHash('hp48-home'), help:'At “Try To Recover Memory?”, press the top-right key (NO). At “Memory Clear”, press that key again (OK).' }),
+  Object.freeze({ id:5, name:'HP 49g+', preset:'hp49-home', bytes:2097152,
+    hash:setupHash('hp49-home'), help:'At “Try To Recover Memory?”, press the top-right key (NO). At “Memory Clear”, press that key again (OK).' }),
 ]);
 export async function identifyROM(buffer) {
   if (!(buffer instanceof ArrayBuffer) || !CALCULATORS.some(c=>c.bytes===buffer.byteLength))

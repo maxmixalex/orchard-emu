@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Owns one Worker. React receives only changed controls; pixels use a separate
 // subscription so LCD refresh never rerenders settings or the PC keyboard.
+import {prepareHp39Files,MAX_HP39_HOST_FILES} from './hp39-transfer.js';
+import {validateHp39Filename} from './hp39-files.js';
 import { CALCULATORS, identifyROM } from './catalog.js';
 import { MAX_SESSION_BYTES } from './session.js';
 import { AUTO_PREFIX, readPreferences, writePreferences, validatePreferences,
@@ -101,7 +103,12 @@ export class CalculatorController {
     if(connected&&!this.state.running&&!this.state.stopped)this.send('run');
     this.send(transport==='usb'?'usb-connect':'serial-connect',{connected});
   }
+  remainingReceiveBudget(){
+    return {files:MAX_RECEIVE_FILES-this.received.size,
+      bytes:MAX_RECEIVE_BYTES-[...this.received.values()].reduce((n,f)=>n+f.bytes.length,0)};
+  }
   async startTransfer(mode,transport,{file=null,name=''}={}){
+    if(transferCapabilities(this.state.model.id,transport).serve&&['send','receive'].includes(mode))return this.startHp39Server(transport,mode==='send'?[{file,name:name||file?.name}]:[]);
     const s=this.state;if(this.dead||!s.ready||!s.loaded||s.busy||s.stopped||s.transfer?.active||s.uploadBatch?.active)return;
     const token=this.generation,request=++this.transferRequest;
     try{
@@ -122,13 +129,44 @@ export class CalculatorController {
       // Choosing a local file can blur the page and pause the calculator.
       // An explicit transfer action resumes it before starting the protocol.
       if(!this.state.running)this.send('run');
-      this.send('file-transfer-start',{request,mode,transport,name,...(bytes?{bytes}:{})});
+      this.send('file-transfer-start',{request,mode,transport,name,receiveBudget:this.remainingReceiveBudget(),...(bytes?{bytes}:{})});
     }catch(error){
       if(this.dead||token!==this.generation||request!==this.transferRequest)return;
       this.patch({transfer:{request,active:false,phase:'error',transport,direction:mode,name,transferred:0,total:0,error:String(error.message||error)}});
     }
   }
+  async startHp39Server(transport,files=[]){
+    const s=this.state;if(this.dead||!s.ready||!s.loaded||s.busy||s.stopped||s.transfer?.active||s.uploadBatch?.active)return;
+    const generation=this.generation,request=++this.transferRequest;
+    try{
+      if(!transferCapabilities(s.model.id,transport).serve)throw Error('HP39 file serving is unavailable on this connection.');
+      if(transport==='usb'?!s.usbReady:!s.serial)throw Error('Connect the selected link first.');
+      if(!Array.isArray(files)||files.length>MAX_HP39_HOST_FILES)throw Error('Choose at most 16 HP39 files.');
+      const seen=new Set();let total=0;
+      const selected=files.map(entry=>{const file=entry?.file,name=validateHp39Filename(entry?.name||file?.name),key=name.toUpperCase();
+        if(name.length>64||seen.has(key))throw Error('Use unique HP39 filenames of at most 64 bytes.');seen.add(key);
+        if(!file||!Number.isSafeInteger(file.size)||file.size<8||file.size>MAX_FILE_BYTES)throw Error('Choose HP39 typed files of 8 bytes to 2 MiB.');
+        total+=file.size;if(total>MAX_UPLOAD_BYTES)throw Error('The selected HP39 files exceed 8 MiB.');return {file,name};});
+      this.patch({uploadBatch:null,transferListing:'',transfer:{request,active:true,phase:'preparing',transport,direction:'serve',name:'',transferred:0,total,error:null}});
+      const loaded=[];
+      for(const entry of selected){
+        if(this.dead||generation!==this.generation||request!==this.transferRequest)return;
+        const bytes=new Uint8Array(await entry.file.arrayBuffer());
+        if(this.dead||generation!==this.generation||request!==this.transferRequest)return;
+        if(bytes.length!==entry.file.size)throw Error('An HP39 file changed while being read.');loaded.push({name:entry.name,bytes});
+      }
+      const prepared=prepareHp39Files(loaded);
+      if(this.dead||generation!==this.generation||request!==this.transferRequest)return;
+      if(!this.state.ready||!this.state.loaded||this.state.busy||this.state.stopped||(transport==='usb'?!this.state.usbReady:!this.state.serial))throw Error('The selected calculator connection is no longer ready.');
+      if(!this.state.running)this.send('run');
+      this.send('file-transfer-start',{request,mode:'serve',transport,files:prepared,receiveBudget:this.remainingReceiveBudget()});
+    }catch(error){
+      if(this.dead||generation!==this.generation||request!==this.transferRequest)return;
+      this.patch({transfer:{request,active:false,phase:'error',transport,direction:'serve',name:'',transferred:0,total:0,error:String(error.message||error)}});
+    }
+  }
   async startUploadBatch(transport,files){
+    if(transferCapabilities(this.state.model.id,transport).serve)return this.startHp39Server(transport,files);
     const s=this.state;if(this.dead||!s.ready||!s.loaded||s.busy||s.stopped||s.transfer?.active||s.uploadBatch?.active)return;
     const generation=this.generation,request=++this.transferRequest;let queue=null;
     try{
@@ -186,7 +224,7 @@ export class CalculatorController {
     // Subscribers may cancel or replace the machine while the state is posted.
     if(this.dead||this.uploadQueue!==queue||queue.generation!==this.generation)return;
     if(!this.state.running)this.send('run');
-    this.send('file-transfer-start',{request:queue.request,mode:'send',transport:queue.transport,name:entry.name,bytes});
+    this.send('file-transfer-start',{request:queue.request,mode:'send',transport:queue.transport,name:entry.name,bytes,receiveBudget:this.remainingReceiveBudget()});
     // The Worker owns a structured clone; pending files stay bounded locally.
     delete entry.bytes;
   }

@@ -1,0 +1,398 @@
+{
+  "schema": "orchard-release-validation-r17",
+  "date": "2026-10-22",
+  "base_revision": "d199afd29572a8a8fca6e6bf673b286b2637ecb9",
+  "revision_scope": "Local working-tree validation before publication; source identity is pinned by artifact and tool hashes.",
+  "remote_build_observed": false,
+  "remote_pages_observed": false,
+  "toolchain": {
+    "node": "v24.19.0",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+    "go": "go version go1.22.2 linux/amd64",
+    "python": "3.12.14",
+    "playwright": "1.57.0",
+    "zensical": "0.0.67",
+    "chrome": "156.0.8078.47",
+    "preinstalled_zensical_not_used": "0.0.71"
+  },
+  "production_assets": {
+    "LICENSE": {
+      "bytes": 1077,
+      "sha256": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f"
+    },
+    "README.txt": {
+      "bytes": 2466,
+      "sha256": "9bf3d3ef630ba6e36110b23bf4d9f75634a072d6eefd2d025cbe62ca4894ec4a"
+    },
+    "calculator.css": {
+      "bytes": 244680,
+      "sha256": "bf13f9ec0840a54132650be17ffcd60c250b390c20aeb8a8606d0d7211f3f71a"
+    },
+    "calculator.js": {
+      "bytes": 635675,
+      "sha256": "30204e8478009544ec5d4345b4c867aea82c91966139d41c995f6e801f13e630"
+    },
+    "catalog.js": {
+      "bytes": 1428,
+      "sha256": "42dd61ebc3f95f88048a75a76ebf19fe7bbb8e3057445bfc799da7eab56f8875"
+    },
+    "debug.html": {
+      "bytes": 7778,
+      "sha256": "cde0f1bfe988408c6341b9fe39e737676fd2a35001ed0e8d21aaa5cfe4aae24f"
+    },
+    "file-transfer.js": {
+      "bytes": 7426,
+      "sha256": "31be1e3ccb741f41e4bb967143555691d4a14338175e40df53726bf04da1cb2f"
+    },
+    "hp39-files.js": {
+      "bytes": 8881,
+      "sha256": "017245499683f5d32a231b13f51cc532a3c8df02e304e79a1592fdf8e09c8d7b"
+    },
+    "hp39-transfer.js": {
+      "bytes": 9288,
+      "sha256": "ab1c66af18a3a5184bac53d3b51a8bb838a367fd92917a36f76b43e27bac2385"
+    },
+    "hp48.js": {
+      "bytes": 5038,
+      "sha256": "d624cbb35b831f3d69c1da3bc1b5fa1f73080c83f871998060b0bd2eed565bbc"
+    },
+    "index.html": {
+      "bytes": 386,
+      "sha256": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282"
+    },
+    "kermit.js": {
+      "bytes": 19562,
+      "sha256": "b2d73695db7a29c8b71e26c4cafc1a4ea23903776cd508da4f74ddea0612b3d5"
+    },
+    "licenses/frontend.txt": {
+      "bytes": 28034,
+      "sha256": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd"
+    },
+    "licenses/hp-calcs-svg/LICENSE.txt": {
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "licenses/hp-calcs-svg/NOTICE.txt": {
+      "bytes": 1280,
+      "sha256": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868"
+    },
+    "licenses/hp-calcs-svg/README.md": {
+      "bytes": 567,
+      "sha256": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c"
+    },
+    "lifecycle.js": {
+      "bytes": 1258,
+      "sha256": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013"
+    },
+    "main.js": {
+      "bytes": 12872,
+      "sha256": "d56f80d0a04e5aac8d936a811288aa09dcb4100f277b9617037aa9656e577e65"
+    },
+    "orchard.wasm": {
+      "bytes": 102147,
+      "sha256": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f"
+    },
+    "pacing.js": {
+      "bytes": 1274,
+      "sha256": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952"
+    },
+    "preferences.js": {
+      "bytes": 6524,
+      "sha256": "65f6b4f9834ca5eb1bb30e13220acbefe90dba2cec077b12b4da7d8f7ae2949d"
+    },
+    "serve.mjs": {
+      "bytes": 1689,
+      "sha256": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7"
+    },
+    "session.js": {
+      "bytes": 2248,
+      "sha256": "fbd69bf94bdcac8eba4c9055f05e59256bae44964d0b3482421023035cfe5041"
+    },
+    "skin.js": {
+      "bytes": 5232,
+      "sha256": "94c541faa00c201e986aa00b0032f2fb90b59ea276fb9ccc017f8da3c1a82102"
+    },
+    "skins/hp39gplus.svg": {
+      "bytes": 117738,
+      "sha256": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26"
+    },
+    "skins/hp39gs.svg": {
+      "bytes": 117582,
+      "sha256": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458"
+    },
+    "skins/hp40gs.svg": {
+      "bytes": 116791,
+      "sha256": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2"
+    },
+    "skins/hp48gii.svg": {
+      "bytes": 160533,
+      "sha256": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f"
+    },
+    "skins/hp49gplus.svg": {
+      "bytes": 160313,
+      "sha256": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71"
+    },
+    "skins/hp50g-blue.svg": {
+      "bytes": 160256,
+      "sha256": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e"
+    },
+    "skins/hp50g.svg": {
+      "bytes": 159981,
+      "sha256": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433"
+    },
+    "skins/manifest.json": {
+      "bytes": 98457,
+      "sha256": "0f5a784541d7bd9a6cfe0956b7640880e511f576c1bed06bbb85c50cfec8644d"
+    },
+    "style.css": {
+      "bytes": 10997,
+      "sha256": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86"
+    },
+    "task-scheduler.js": {
+      "bytes": 2145,
+      "sha256": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7"
+    },
+    "virtual-usb.js": {
+      "bytes": 7099,
+      "sha256": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373"
+    },
+    "worker.js": {
+      "bytes": 15698,
+      "sha256": "604b544a5a04dfacb965b319b4165de5f7e6b64562cea0e633bcab7c1d76b852"
+    }
+  },
+  "validation_source_sha256": {
+    "tools/pages.py": "0308a9f10ddd26683989bfc95a16e6922846f3cf9a1910a9dc0d7c8321c25286",
+    "tools/build-pages.py": "0088e1835e02b1661ba5d09a7ee749553d757ad47e9d7df448b5d730934aa49c",
+    "tests/pages.py": "16e44dced2a2ce7a5355b93b9dd87a519a91b7f3f7ac5f67d6bdcf0c89d237fe",
+    "tests/browser-components.py": "fe532e7a6f3f4a11785f55f4b764e6586e9b434cf221d8b84e06b205a5a4420c",
+    "tests/browser-worker.py": "f4dbb79c955bc42c0b831121a4f8871b4a015c03428cf08d8b71c4be358b5554",
+    "tests/browser-stop-recovery.py": "d64335e614bf6a573e49850d777029901250a970da109552b4df96949997444c",
+    "tests/timer-receiver.mjs": "e3b79d909fb666897e2be5dfce11ab545d61838b627624060cf1c5c6e46f1bcb",
+    "tools/build-host.mjs": "4583c46a19e2a296b0d497b4a47b741b5ab7724ea20153c055db6414dda94a0a",
+    "tests/host.mjs": "f000ff60856bb40341f2113cdd30de6e1fd04008ead8c52d530caea1c3598978",
+    ".github/workflows/build.yml": "7a8a18fa7fa9ad177419435fc82dafc0c52e4dc35b57ecfb3bcd8813747c5753",
+    ".github/workflows/docs.yml": "909870a2497eb9c7689e57047332ecc2e906b2228c18e99073b56fcf47cd0423"
+  },
+  "generated_browser": {
+    "passed": true,
+    "model_audience_cases": 12,
+    "physical_keys": 104,
+    "page_errors": 0,
+    "components": {
+      "passed": true,
+      "four_viewports": true,
+      "synthetic_worker_events": true,
+      "full_canvas_pixels": true,
+      "hp39_disk_controls": true,
+      "upload_batch_preflight": true
+    },
+    "stop_recovery": {
+      "ordinary_passed": true,
+      "diagnostic_passed": true,
+      "original_observation_preserved": true,
+      "screenshot_failure_preserves_observation": true,
+      "same_stopped_checkpoint": true,
+      "active_timeout_replay": {
+        "passed": true,
+        "calls": 42548,
+        "run_calls": 21250,
+        "every_call_result_equal": true,
+        "complete_checkpoint_equal": true,
+        "same_wasm": true
+      },
+      "missing_pause_ack_rejected": true,
+      "changed_generation_rejected": true,
+      "original_rom_stop_reproduced": false
+    },
+    "report_sha256": {
+      "browser-worker.json": "ff666e72cffad3490175451e7bd90c44ba43a9b7bf5c82198dbaa3d0a3ecd7ec",
+      "browser-stop-recovery.json": "cf092ebaacdf401148be492dc27863df155aee962717e12651b723a043be923a",
+      "browser-stop-recovery-trace.json": "978aabcceb0b0caa48b1072b3e753f30232d142be66976235561809a70f52809"
+    },
+    "log_sha256": {
+      "browser-components.log": "00c9c978d60830561c63feef80a3fdc3bfac6b4569ac13fb0d3d84a8641a765d",
+      "browser-worker.log": "ff666e72cffad3490175451e7bd90c44ba43a9b7bf5c82198dbaa3d0a3ecd7ec",
+      "browser-stop-recovery.log": "cf092ebaacdf401148be492dc27863df155aee962717e12651b723a043be923a",
+      "browser-stop-recovery-trace.log": "978aabcceb0b0caa48b1072b3e753f30232d142be66976235561809a70f52809",
+      "timer-receiver.log": "cd45eebe19bb6dcc8578da44676f086482f00851d5a7b6be410283f46a02271a"
+    }
+  },
+  "host_package": {
+    "passed": true,
+    "source_and_packaged_loopback_tcp_checked": true,
+    "packaged_wasm_sha256": "5fb9626e86eed337fd4371ebf3e6ea27f5fa7af12bcee40e84d09e009121d48f",
+    "usbip_generated_ep0_urb": true,
+    "uart_generated_guest_binary_echo": true,
+    "os_attach_verified": false,
+    "physical_serial_verified": false,
+    "conn3x_verified": false,
+    "log_sha256": {
+      "source": "b8e1c71e97f37b7f5089bdaf61d9fd0aedf451b6b505b0e4b4277f4cf25574e2",
+      "package": "b8e1c71e97f37b7f5089bdaf61d9fd0aedf451b6b505b0e4b4277f4cf25574e2"
+    }
+  },
+  "core_regression": {
+    "release_suites": 16,
+    "reference_suites": 16,
+    "sanitize_suites": 16,
+    "native_assertions": 1119781,
+    "wasm_assertions": 1119781,
+    "functional_clock_assertions_each_host": 32949,
+    "unicorn_cases": 17075,
+    "unicorn_mismatches": 0,
+    "unicorn_skipped": 0,
+    "static_native_sources": 41,
+    "static_diagnostics": 0,
+    "targeted_checkpoint_assertions_each_host": 937,
+    "scheduler_reference_partitions": 256
+  },
+  "publication_audit": {
+    "production_asset_count": 36,
+    "production_asset_total_bytes": 2245758,
+    "pages_contract_tests": 9,
+    "added_missing_runtime_assets": [
+      "hp39-files.js",
+      "hp39-transfer.js"
+    ],
+    "no_rom_checkpoint_or_font_files": true,
+    "gpl_calculator_sdk_in_core_wasm_frontend_or_host": false,
+    "download_archives": [
+      {
+        "archive": "hp39gs-arm-return-v1.zip",
+        "bytes": 543722,
+        "sha256": "ef1e8505e2ec39b6d1cc2d62d6b99da27e06fc4eab1e2c70f9ae63c01bdece17",
+        "binary_members": [],
+        "license_files": [
+          "hp39gs-arm-return-v1/LICENSE",
+          "hp39gs-arm-return-v1/licenses/hpgcc39/COPYING",
+          "hp39gs-arm-return-v1/licenses/hpgcc39/NOTICE.md"
+        ]
+      },
+      {
+        "archive": "hp39gs-rom-dump-v1.zip",
+        "bytes": 1045637,
+        "sha256": "eeebe4ac2e9abf537fb25ecda40e441f3da0f52f30f36f3ea6a85ac0a84d1300",
+        "binary_members": [
+          {
+            "name": "hp39gs-rom-dump-v1/hp39-rom-receiver.exe",
+            "bytes": 1812480
+          },
+          {
+            "name": "hp39gs-rom-dump-v1/third-party/hpgcc39/apletcode.bin",
+            "bytes": 816
+          },
+          {
+            "name": "hp39gs-rom-dump-v1/third-party/hpgcc39/apletepilog.bin",
+            "bytes": 22
+          }
+        ],
+        "license_files": [
+          "hp39gs-rom-dump-v1/LICENSE",
+          "hp39gs-rom-dump-v1/licenses/hp39-romstream/NOTICE.md",
+          "hp39gs-rom-dump-v1/licenses/hpgcc39/COPYING",
+          "hp39gs-rom-dump-v1/third-party/hpclang/LICENSE"
+        ]
+      },
+      {
+        "archive": "hp49gplus-flash-read-v1.zip",
+        "bytes": 70059,
+        "sha256": "a1ab9008a5c79c27f877fd503ec69b738613fb531f0801ee5030e1068003fe9a",
+        "binary_members": [],
+        "license_files": [
+          "hp49gplus-flash-read-v1/LICENSE"
+        ]
+      }
+    ],
+    "strict_documentation_commands": [
+      "PYTHONPATH=/tmp/orchard-docs-r17-pinned python3 tools/check-docs.py",
+      "PYTHONPATH=/tmp/orchard-docs-r17-pinned python3 -m zensical build --strict",
+      "python3 tests/pages.py",
+      "python3 tools/build-pages.py"
+    ],
+    "documentation": {
+      "renderer": "Zensical",
+      "renderer_version": "0.0.67",
+      "page_count": 41,
+      "strict_passed": true,
+      "pages_contract_passed": true,
+      "local_pages_assembly_passed": true,
+      "local_assembly_revision": "d199afd29572a8a8fca6e6bf673b286b2637ecb9",
+      "assembly_revision_is_base_of_uncommitted_candidate": true,
+      "log_sha256": {
+        "docs-links.log": "b252dbebec97ed4e71c75b7e3b22913c6822a1478fdca3e5b0fce9956dadfee0",
+        "docs-strict.log": "7c8cd3b54f6c0283b7a2e2785c98a7d32b6c9a3debba75b37c48ed05ed80e329",
+        "pages-contract.log": "29fb4547628c914814aa66b83891fee09ea9d3798b7c450e64e7043e4cf60086",
+        "pages-assemble.log": "4dd86f48957cc4379989583b63babe9ac8345d30799e5a855ccad730546cec97"
+      }
+    }
+  },
+  "stock_reports": {
+    "hp49_browser_lifecycle": {
+      "passed": true,
+      "private_report_sha256": "39c7341bb577714cb3198245bf6ff62bbf0ad13d0b88ec8335102659c06585ab",
+      "production_assets_match": true,
+      "page_errors": 0,
+      "independent_visual_review": {
+        "one_plus_one_equals_two": true,
+        "seven_times_eight_equals_fifty_six": true,
+        "narrow_bottom_key_row_visible": true,
+        "legacy_hp48_session_screen_visible": true
+      }
+    },
+    "hp49_usb_all_operations": {
+      "passed": true,
+      "private_report_sha256": "74911ff03425e1b877915481500372962000202b8a76db9525f9a261d096ecaa",
+      "production_assets_match": true,
+      "page_errors": 0
+    },
+    "hp49_usb_batch": {
+      "passed": true,
+      "private_report_sha256": "5f863688aa2d827224bc549ca594d28793d32e713d9d6fadb683f496adfcf965",
+      "production_assets_match": true,
+      "page_errors": 0
+    },
+    "hp49_native_wasm_startup": {
+      "passed_under_recorded_conditions": true,
+      "private_report_sha256": "5e8e646e21f960ffd02ef6645acf5138c1ac02860f4cc7078bd77a1483e65fcd",
+      "wasm_matches_frozen": true,
+      "native_wasm_equal": true,
+      "native_replay_equal": true,
+      "wasm_replay_equal": true,
+      "canonical_hardware_boot": false,
+      "diagnostic_stop": 0
+    },
+    "hp49_workflows": {
+      "passed": true,
+      "private_report_sha256": "0eb4741ea4e446954334bebe603075d1c8428ea84251c7a35ad5bdf0164a50ca",
+      "wasm_matches_frozen": true,
+      "physical_input_only": true,
+      "reset_restore_equal": true,
+      "native_wasm_continuation_equal": true,
+      "checkpoint_bytes": 532506
+    },
+    "hp39_disk_browser": {
+      "passed": true,
+      "private_report_sha256": "3a7e99a52ae1a845361e480596b266d8bbbcee9d2a3eb38d1c3bd597232ae0b9",
+      "production_assets_match": true,
+      "cold_boot": true,
+      "page_errors": 0,
+      "hosted_object_bytes": 8862,
+      "aplet_file_bytes_equal": true,
+      "library_body_bytes_equal": true,
+      "library_header_title_changed": true,
+      "directory_alias_preserved": true,
+      "independent_visual_review": {
+        "post_send_home_one_plus_one_equals_two": true
+      }
+    }
+  },
+  "privacy": "Only sizes, hashes, bounded counts and validation outcomes are included. No firmware bytes, private checkpoints, LCD screenshots, object contents or raw bus traces are published.",
+  "limitations": [
+    "Original-ROM acceptance uses the explicit recorded GPIO, ADC, LCD and empty-SD-slot conditions, not canonical physical-board equivalence.",
+    "HP49g+ file transfer is verified on internal USB; populated SD media and UART2/IrDA are not implemented.",
+    "HP39gs and HP40gs need their own complete-ROM original-system acceptance; physical 39gs extraction and Windows HID hardware operation are not established by the HP39g+ emulator workflow.",
+    "Generated browser/host tests do not prove OS driver attachment, COM/PTY devices or Conn3x compatibility.",
+    "The historical original-ROM Unlimited stop remains unclassified; generated recovery tests verify diagnostic preservation rather than reproduce that stop."
+  ]
+}

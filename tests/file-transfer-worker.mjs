@@ -21,7 +21,7 @@ function fixture(){
     uart_input:()=>1024,uart_output:()=>2048,uart_send:n=>{writes.push(new Uint8Array(memory.buffer,1024,n).slice());return n;},
     uart_receive:()=>{const bytes=uartIncoming.shift();if(!bytes)return 0;new Uint8Array(memory.buffer,2048,bytes.length).set(bytes);return bytes.length;},
     frame_buffer:()=>512,annunciator_buffer:()=>600,usb_snapshot:()=>768,
-    checkpoint_size:()=>16,checkpoint_buffer:()=>4096,checkpoint_load:()=>0,
+    checkpoint_size:()=>32,checkpoint_buffer:()=>4096,checkpoint_load:()=>0,
   },{get:(o,k)=>k in o?o[k]:()=>0});
   class Scheduler{schedule(fn){jobs.set(++next,fn);return next;}cancel(id){jobs.delete(id);}}
   class USB{constructor(){this.connected=false;}poll(){}resetLocal(){this.connected=false;}start(){this.connected=true;}
@@ -30,7 +30,7 @@ function fixture(){
     read(){return incoming.length?{result:0,bytes:incoming.shift()}:{result:1,status:'NAK',bytes:new Uint8Array()};}}
   const scope={Pacer,FileTransfer,TaskScheduler:Scheduler,VirtualUSB:USB,TapQueue,HP48_ROM,isPlayable,setupHash,applySetup,
     Uint8Array,Uint32Array,ArrayBuffer,performance:{now:()=>++wall},self:{},postMessage:d=>output.push(d),initialCore:core,
-    encodeSession:async()=>new Uint8Array(16),decodeSession:async()=>({model:4,romHash:HP48_ROM,preset:'hp48-home',frameView:1,state:new Uint8Array(16)})};
+    encodeSession:async()=>new Uint8Array(32),decodeSession:async()=>({model:4,romHash:HP48_ROM,preset:'hp48-home',frameView:1,state:new Uint8Array(32)})};
   const context=vm.createContext(scope);vm.runInContext(source+'\ncore=initialCore;',context);
   const send=data=>scope.self.onmessage({data:{generation:1,...data}});
   send({type:'create',model:4,preset:'hp48-home',audience:'calculator'});
@@ -57,6 +57,7 @@ for(const transport of ['usb','serial'])for(const action of ['pause','reset','cr
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(final(f,1).phase,'cancelled',action);assert.equal(final(f,1).active,false,action);assert(!f.inspect().active,action);
   assert(!f.output.some(e=>e.type==='file-transfer-received'));
+  if(action==='checkpoint-load')assert(!f.output.some(e=>e.type==='error'),'Valid restore must complete after cancelling the transfer');
 }
 {
   const f=fixture();start(f,1,{transport:'serial',mode:'send',name:'OBJECT',bytes:text('HPHP49-Cdata')});

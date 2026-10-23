@@ -1,30 +1,39 @@
 # Native ROM preservation research
 
-Research snapshot: **2026-10-02**. Names, equal file sizes and emulator support
+Inventory updated: **2026-10-23**; the archive-search notes below retain their
+original acquisition boundaries. Names, equal file sizes and emulator support
 labels are not evidence that an image contains a physical ARM boot region.
 The local inspector distinguishes admitted full NORs, native boot regions,
 updaters and the archived Emu48+ image using exact hashes.
 
 ## Updated acquisition priority
 
-The user has offered their HP39gs and HP49g+ hardware for complete flash
-acquisition, after receiving suitable calculator programs. The new
-[HP49g+ read package and Chinese guide](flash-capture.md) use the documented
-stock-ROM `PEEKARM` command, starting with short memory and SD-format probes.
-It has not yet been validated on HP49g+ hardware. HP39gs still lacks a verified
-complete native read path on its original OS; ROMUPL39's Saturn bank dump is
-not a substitute. Both complete acquisitions remain **pending**, not acquired
-or verified. Existing HP39g+/HP48gII full inputs need not be supplied again.
+The user's HP49g+ full capture has been received: **2,097,152 bytes**, SHA-256
+`3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab`.
+All 128 captured blocks match their sidecar hashes and the independent A/B reads
+agree. Original-byte cold boot, arithmetic, CAS, graphing, sessions and USB file
+workflows now have separate functional evidence; see [HP49 startup](hp49-startup.md).
+The original acquisition sidecar is retained unchanged: its earlier false flags
+are not silently rewritten or treated as current execution results.
+
+For HP39gs, the [complete ROMstream package](hp39gs-rom-dump.md) reuses the
+user's proven hpclang HP39g+ ARM reader, byte-for-byte. The receiver reads the
+full 1 MiB in one launch and independently repeats every block. The aplet,
+launcher and payload have been rebuilt from pinned sources, and the unchanged
+program has also completed a full dump/return on the original HP39g+ OS inside
+Orchard. The target HP39gs image and physical run remain pending; a separate
+return or short-memory probe is not the next user step. Existing HP39g+/HP48gII
+inputs need not be supplied again.
 
 ## Six-model inventory
 
 | Model | Verified material available locally | Remaining native input |
 | --- | --- | --- |
 | HP39g+ | Hardware-acquired 1 MiB D1.55 full NOR | No acquisition blocker for this fixture |
-| HP39gs | Official 2.22 updater; original 2019 boot-region contribution located | The attachment has not been obtained; no verified complete NOR |
+| HP39gs | Official 2.22 updater; complete source-built ROMstream reader ready | Target physical capture and complete NOR still pending |
 | HP40gs | Official 2.22 updater, for a 2 MiB NOR machine | No independently verified native boot region or complete NOR found in this search |
 | HP48gII USB revision | Hardware-modification author's 2 MiB full-NOR mirror | No acquisition blocker for this fixture |
-| HP49g+ | Archived original 16 KiB boot region; official 2.15 updater | Not yet a complete native acquisition |
+| HP49g+ | User-acquired 2 MiB full NOR; original-byte functional validation | No acquisition blocker for this fixture; physical board assumptions remain explicit |
 | HP50g | Archived original 16 KiB boot region; official 2.15 updater | Not yet a complete native acquisition |
 
 Original full-dump identities and updater hashes remain in [ROM inputs](roms.md).
@@ -126,11 +135,12 @@ private traces is committed or published on Pages. MIT covers Orchard's
 original implementation, not HP's firmware. See [boot research](boot-research.md)
 for actual execution results and the explicit GPIO conditions.
 
-## Continuation search and chip provenance
+## Historical continuation search and chip provenance
 
-The follow-up search found no newly verified original 39gs/40gs native bytes
-or complete 49g+/50g dump. The located 39gs text attachment still could not be
-retrieved; the inventory above is unchanged. Searches for 40gs bootloader/dump
+The earlier archive search found no newly verified original 39gs/40gs native
+bytes or complete 49g+/50g dump. The later user-supplied 49g+ capture above
+supersedes the latter acquisition status. The located 39gs text attachment still could not be
+retrieved; the 39gs acquisition remains open. Searches for 40gs bootloader/dump
 and the shared LCD offset did not produce an admissible new binary or a
 register definition.
 

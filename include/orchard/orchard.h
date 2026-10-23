@@ -89,7 +89,8 @@ void orchard_reset(orchard_machine *m);
 orchard_stop orchard_run(orchard_machine *m, uint32_t tick_budget);
 void orchard_get_state(const orchard_machine *m, orchard_state *state);
 /* Portable versioned state, excluding immutable NOR. Load the matching ROM first.
- * Caller supplies a non-overlapping buffer of exactly checkpoint_size bytes.
+ * Save uses a non-overlapping buffer of exactly checkpoint_size bytes. Load
+ * also accepts the bounded v1 wire format; export always emits current v2.
  * Invalid data/ROM/version is rejected without changing the current machine.
  * CRC is corruption detection, not authentication; hosts should bind SHA-256. */
 size_t orchard_checkpoint_size(const orchard_machine *m);

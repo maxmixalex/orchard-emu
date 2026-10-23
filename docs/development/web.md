@@ -3,7 +3,7 @@
 [Open calculator](https://maxmixalex.github.io/orchard-emu/emulator/) ·
 [Developer workbench](https://maxmixalex.github.io/orchard-emu/emulator/debug.html)
 
-The user page identifies the two supported complete ROMs automatically. It
+The user page identifies the three supported complete ROMs automatically. It
 shows Open ROM, Pause/Resume, Restart, Save/Restore, Connections and Settings;
 CPU registers, boot presets and implementation counters stay in the workbench.
 The viewport-filling workspace switches between immersive outlined skin and
@@ -16,14 +16,19 @@ physical-key sequences and optional localStorage autosave. See
 Normal is paced to the existing functional timebase; it is not a measured
 ARM920T instruction/clock calibration. Other rates are explicit.
 
-Connections provides bounded HP48gII USB and serial object upload/retrieval, a received-file
-list with explicit local downloads, cancellation and progress. Its Raw data tab
-retains UART and individual USB packets. The USB host reads actual guest
-descriptors. See [file transfer](file-transfer.md) for setup and limits and
-[virtual links](virtual-link.md) for the host boundary. Serial currently exposes
-upload and GET; its other file operations, HP39 applet upload and complete Conn3x
-replacement remain open. IR is
-[evaluated separately](infrared.md), not advertised as implemented.
+Connections provides HP48gII USB/serial object transfers, HP49g+ USB object
+transfers, and the separate HP39/40 Disk drive file host. Object workflows include
+upload, named GET, calculator-initiated SEND/Receive, directory, FINISH and bounded
+upload batches. HP39/40 uses the calculator's APLET RECV/SEND menus: the browser
+serves typed aplets, libraries and catalogs, and offers received files for explicit
+local download. Original HP39g+ USB installation and export are exercised;
+39gs/40gs need their own full-ROM acceptance. See [file transfer](file-transfer.md).
+
+The Raw data tab retains UART0 and USB packet diagnostics. The USB host reads
+actual guest descriptors. These internal connections do not create an operating
+system device or access a physical cable. HP49g+ infrared uses UART2 and is not
+implemented by the UART0 link; see [virtual links](virtual-link.md) and
+[infrared](infrared.md).
 
 ## Build and use
 
@@ -33,7 +38,7 @@ ZIP needs only Node.js: extract and run `node serve.mjs`. No npm packages or
 ROMs are included. Use HTTP on localhost or HTTPS, not file URLs.
 
 Open the original full NOR. On HP39g+, acknowledge Memory Clear with F6/OK;
-on HP48gII first choose F6/NO at Try To Recover Memory, then F6/OK. These are
+on HP48gII and HP49g+ first choose F6/NO at Try To Recover Memory, then F6/OK. These are
 guest screens, not host-detected states. Restart clears memory; a saved HOME
 session can be restored instead. Both main thread and Worker bind the image
 to the documented hash. The displayed Beta is not an all-model support claim.
@@ -64,12 +69,19 @@ Pages promotes the exact successful current-main artifact, checks source and
 hashes, and verifies all public HTTPS assets. It never recompiles during deploy.
 Tests, firmware, saved sessions, reports and fonts are excluded.
 
-Node tests use the unmodified production Worker through browser-global/asset
-adapters. Preference, macro, pacing, storage and connection tests complement
-those. Offline Chromium layout checks do not execute application modules.
-Actual localhost-origin navigation still returns ERR_BLOCKED_BY_ADMINISTRATOR
-here; no policy was modified. No real file-picker, focus/touch/background,
-localStorage persistence or end-to-end browser acceptance is claimed.
+Production Worker tests, preference/macro/storage tests and actual Chrome
+Window/Worker tests complement native and WASM checks. The original HP48gII
+and HP49g+ USB transfer witnesses use the real file picker, production page,
+physical input and real browser downloads. HP48gII serial has separate stock
+browser evidence. The HP49g+ lifecycle witness exercises cold boot, keyboard
+input, 131×80 display, 4× PNG export, session save/restore and switching to an
+older HP48gII saved session; see [HP49 startup](hp49-startup.md) and
+[sessions](sessions.md). Private captures are kept outside publication.
+
+These are bounded desktop-Chrome witnesses. Broad touch-device coverage,
+background/foreground stress, long-term storage and sustained all-key use remain
+separate acceptance work. The earlier browser policy block is historical and
+does not describe the current validation environment.
 
 
 ## Current user frontend
