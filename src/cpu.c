@@ -417,25 +417,27 @@ static bool arm_without_checkpoint(orchard_machine *m, uint32_t op) {
     data_processing(m, op);
     return true;
 }
-static void cpu_step(orchard_machine *m, bool fast) {
+/* Report whether the existing instruction counter advances. A data abort
+ * counts its instruction; a prefetch abort or diagnostic stop does not. The
+ * run loop can keep the total local; standalone steps publish it immediately. */
+static bool cpu_step(orchard_machine *m, bool fast) {
     o_cpu *c = &m->cpu;
     uint32_t pc = c->r[15], physical = 0, instruction = 0;
     unsigned width = c->cpsr & O_T ? 2 : 4;
     c->data_abort = c->prefetch_abort = false;
     if (pc & (width - 1u)) {
-        o_stop(m, ORCHARD_UNPREDICTABLE, pc, width); return;
+        o_stop(m, ORCHARD_UNPREDICTABLE, pc, width); return false;
     }
     if (!o_translate(m, pc, false, true, (c->cpsr & 31u) == O_USR, &physical) ||
         !o_phys_read(m, physical, width, &instruction)) {
-        if (m->stop.status != ORCHARD_OK) return;
+        if (m->stop.status != ORCHARD_OK) return false;
         if (!c->prefetch_abort) o_fault(c, pc, 8, 0, true);
         o_exception(c, O_ABT, 0xc, pc + 4u);
-        return;
+        return false;
     }
     if (fast && width == 4 && arm_without_checkpoint(m, instruction)) {
         c->r[15] = c->next_pc;
-        ++c->instructions;
-        return;
+        return true;
     }
     /* Word/byte single transfers commit GPRs and writeback only after their
      * last fallible bus operation. Keep just the speculative PC and fault
@@ -451,15 +453,14 @@ static void cpu_step(orchard_machine *m, bool fast) {
             c->next_pc = previous_pc; c->far = previous_far; c->dfsr = previous_fsr;
             c->data_abort = false;
             m->stop.instruction = instruction;
-            return;
+            return false;
         }
         if (c->data_abort) {
             c->next_pc = previous_pc;
             c->data_abort = false;
             o_exception(c, O_ABT, 0x10, pc + 8u);
         } else c->r[15] = c->next_pc;
-        ++c->instructions;
-        return;
+        return true;
     }
     o_cpu before = *c;
     c->next_pc = pc + width;
@@ -468,7 +469,7 @@ static void cpu_step(orchard_machine *m, bool fast) {
     if (m->stop.status != ORCHARD_OK) {
         m->stop.instruction = instruction;
         *c = before;
-        return;
+        return false;
     }
     if (c->data_abort) {
         uint32_t far = c->far, fsr = c->dfsr;
@@ -477,14 +478,19 @@ static void cpu_step(orchard_machine *m, bool fast) {
         c->dfsr = fsr;
         o_exception(c, O_ABT, 0x10, pc + 8u);
     } else c->r[15] = c->next_pc;
-    ++c->instructions;
+    return true;
 }
 
-void o_cpu_step_reference(orchard_machine *m) { cpu_step(m, false); }
-void o_cpu_step(orchard_machine *m) {
+void o_cpu_step_reference(orchard_machine *m) {
+    if (cpu_step(m, false)) ++m->cpu.instructions;
+}
+bool o_cpu_step_retired(orchard_machine *m) {
 #ifdef ORCHARD_REFERENCE
-    cpu_step(m, false);
+    return cpu_step(m, false);
 #else
-    cpu_step(m, true);
+    return cpu_step(m, true);
 #endif
+}
+void o_cpu_step(orchard_machine *m) {
+    if (o_cpu_step_retired(m)) ++m->cpu.instructions;
 }

@@ -331,6 +331,101 @@ static void exercise_clocked(void) {
         CHECK(orchard_run_clocked(&a,0).status==ORCHARD_OK); same_state();
     }
 }
+static orchard_stop counter_run(unsigned policy, uint32_t budget) {
+    switch (policy) {
+    case 1: return orchard_run_divided(&a,budget);
+    case 2: return orchard_run_clocked(&a,budget);
+    case 3: return orchard_run_idle(&a,budget);
+    default: return orchard_run(&a,budget);
+    }
+}
+static void counter_reference(unsigned policy, uint32_t budget) {
+    if (policy==1) reference(budget);
+    else policy_reference(budget,policy==2);
+}
+/* Counter publication is observable at every call boundary, including stops,
+ * counter carry/wrap, checkpoint/debug reads and standalone internal steps.
+ * Expected deltas below are independent of the production CPU return value. */
+static void exercise_counter_boundaries(void) {
+    const uint64_t bases[]={0,UINT64_C(0xfffffffd),UINT64_MAX-2u};
+    for (unsigned policy=0;policy<4;++policy)
+    for (unsigned base=0;base<sizeof bases/sizeof *bases;++base)
+    for (unsigned kind=0;kind<18;++kind) {
+        init(1,3); a.cpu.control|=0xc0000000u;
+        a.cpu.instructions=a.ticks=bases[base];
+        const unsigned slots=policy==1 || policy==2 ? 4u : 1u;
+        uint64_t expected_instructions=7u*slots, expected_ticks=7;
+        for (unsigned vector=8;vector<=0x1c;vector+=4)
+            word(a.flash+vector,0xeafffffeu);
+        switch (kind) {
+        case 1: a.cpu.r[15]=1; expected_ticks=1; expected_instructions=0; break;
+        case 2: a.cpu.r[15]=0x60000000u; --expected_instructions; break;
+        case 3:
+            a.cpu.control|=1; a.cpu.ttb=O_RAM_BASE+0x4000;
+            expected_instructions=0; break;
+        case 4: /* A data abort counts its instruction; a prefetch abort does not. */
+            a.cpu.r[0]=0x60000000u; word(a.flash,0xe5901000u); break;
+        case 5:
+            a.cpu.r[0]=0x59000000u; word(a.flash,0xe5901000u);
+            expected_ticks=1; expected_instructions=0; break;
+        case 6:
+            word(a.flash,0xe5801000u);
+            expected_ticks=1; expected_instructions=0; break;
+        case 7: word(a.flash,0xef000001u); break;
+        case 8: word(a.flash,0xee070f90u); expected_instructions=1; break;
+        case 9: case 10:
+            a.soc.srcpnd=1u<<10; a.soc.intmsk=~(1u<<10);
+            if (kind==10) { a.soc.intmod=1u<<10; a.cpu.cpsr&=~O_F; }
+            else a.cpu.cpsr&=~O_I;
+            --expected_instructions; break;
+        case 11:
+            a.soc.wtcon=33; a.soc.wtcnt=0; a.soc.wtphase=15;
+            expected_ticks=1; expected_instructions=0; break;
+        case 12:
+            a.stop.status=ORCHARD_UNSUPPORTED_INSTRUCTION;
+            expected_ticks=expected_instructions=0; break;
+        case 13: /* A later slot stops after the first slot committed. */
+            a.cpu.r[0]=0x59000000u;
+            word(a.flash,0xe3a02007u); word(a.flash+4,0xe5901000u);
+            expected_ticks=slots==1?2:1; expected_instructions=1; break;
+        case 14:
+            a.cpu.cpsr|=O_T; word(a.flash,0xe7fe2007u); break;
+        case 15:
+            a.cpu.r[0]=0x4a000008u;
+            word(a.flash,0xe5901000u); word(a.flash+4,0xeafffffeu); break;
+        case 16:
+            a.cpu.control=0x80000078u;
+            if (policy==2) expected_ticks=expected_instructions=0;
+            break;
+        case 17:
+            a.cpu.r[0]=0x4c00000cu; a.cpu.r[1]=0x61b4;
+            word(a.flash,0xe5801000u); word(a.flash+4,0xeafffffeu);
+            if (policy>=2) { reference_idle_pc[0]=0; expected_instructions=1; }
+            break;
+        default: break;
+        }
+        duplicate();
+        (void)counter_run(policy,0); counter_reference(policy,0); same_state();
+        (void)counter_run(policy,7); counter_reference(policy,7); same_state();
+        CHECK(a.ticks==bases[base]+expected_ticks);
+        CHECK(a.cpu.instructions==bases[base]+expected_instructions);
+        orchard_state state; orchard_get_state(&a,&state);
+        CHECK(state.ticks==a.ticks && state.instructions==a.cpu.instructions);
+        (void)counter_run(policy,0); same_state();
+        if (kind==0) {
+            size_t n=orchard_checkpoint_size(&a); CHECK(n<=sizeof saved);
+            CHECK(orchard_checkpoint_save(&a,saved,n)==ORCHARD_OK);
+            a.ticks=a.cpu.instructions=0;
+            CHECK(orchard_checkpoint_load(&a,saved,n)==ORCHARD_OK); same_state();
+        }
+    }
+    init(1,0); a.cpu.instructions=a.ticks=UINT64_MAX-1u; duplicate();
+    for (unsigned i=0;i<4;++i) {
+        o_cpu_step(&a); o_cpu_step_reference(&b); same_state();
+        CHECK(a.cpu.instructions==(UINT64_MAX-1u)+(uint64_t)i+1u);
+        CHECK(a.ticks==UINT64_MAX-1u);
+    }
+}
 static void exercise(void) {
     CHECK(orchard_run_divided(NULL,1).status==ORCHARD_BAD_ARGUMENT);
     CHECK(orchard_clock_divisor(NULL)==0);
@@ -409,6 +504,7 @@ static void exercise(void) {
 EXPORT("regression") unsigned regression(void) {
     count_checks=failures=first=0; rng=0x1932410u;
     exercise(); exercise_clocked(); exercise_idle(true); exercise_idle(false); exercise_one_slot();
+    exercise_counter_boundaries();
     return failures;
 }
 EXPORT("checks") unsigned checks(void) { return count_checks; }
