@@ -32,7 +32,7 @@ function compileRegression(name, testModule, extraFlags = []) {
   ]);
 }
 let totalAssertions = 0, physicalReadAssertions = 0;
-for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb', 'sdi', 'spi', 'uart', 'watchdog-reset', 'buzzer', 'power', 'pwm-clock', 'nor-bus', 'nor-write', 'physical-read', 'memory', 'segments-nor', 'performance', 'execution', 'cpu-transactions', 'scheduler', 'checkpoint']) {
+for (const name of ['regression', 'mmu-tlb', 'lcd-input', 'lcd-adc', 'usb', 'sdi', 'spi', 'uart', 'watchdog-reset', 'buzzer', 'power', 'pwm-clock', 'nor-bus', 'nor-write', 'physical-read', 'memory', 'segments-nor', 'performance', 'execution', 'cpu-transactions', 'scheduler', 'checkpoint']) {
   const testModule = resolve(build, `${name}.wasm`);
   compileRegression(name, testModule);
   const { instance: { exports: test } } = await WebAssembly.instantiate(await readFile(testModule), {});

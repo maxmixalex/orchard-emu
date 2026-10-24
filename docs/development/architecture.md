@@ -58,14 +58,17 @@ branches/BL/BX, loads/stores, stack operations and SWI. Banked registers cover
 user/system, FIQ, IRQ, SVC, abort and undefined modes.
 
 CP15 covers identification, control, translation-table base, domain access,
-fault registers, FCSE PID, a whitelist of maintenance operations and WFI.
+fault registers, FCSE PID, TLB maintenance/lockdown, a whitelist of cache
+maintenance operations and WFI.
 Translation supports sections plus coarse/fine tables and large/small/tiny
-pages. There is no ARMv5/Thumb-2/VFP extension layer. CP15 identification is currently
+pages. Separate 64-entry I/D TLBs retain mappings with round-robin replacement,
+subpage protection and portable checkpoint state; see [ARM920T TLBs](arm920t-tlb.md).
+There is no ARMv5/Thumb-2/VFP extension layer. CP15 identification is currently
 a fixed ARM920T reference identity, not a verified per-board silicon revision.
 
 Known gaps are substantive: exhaustive decode validation, undefined-instruction
 exception policy, ARM920T implementation-defined cases, precise multiple-access
-abort behavior, cache/TLB/lockdown behavior and independent differential
+abort behavior, cache contents/writeback/prefetch timing and independent differential
 conformance remain open. Some currently unsupported or unpredictable cases
 halt the emulator rather than delivering a guest undefined-instruction trap.
 

@@ -1,5 +1,9 @@
 # r23 HP39 原版应用验证
 
+后续进展：r24 已通过[架构 TLB 实现](arm920t-tlb.md#hp39g-native-return)修复下述
+39g+ 的 ALIGN4 退出故障；两机均可正常返回和计算 `1+1=2`。原 GBP 0.3 包的
+loader 对齐问题仍单独保留。以下内容及 r23 证据维持原验收时的结果。
+
 本轮使用用户提供的完整 HP39g+、HP39gs ROM，正常物理按键和 stock USB 协议，
 验证了 Arkalite 与 GBP39 Player 0.3。原包、诊断重建包和传输成功分别记录，
 没有修改 ROM、直接写入 guest RAM 或放宽 ARM 对齐检查。

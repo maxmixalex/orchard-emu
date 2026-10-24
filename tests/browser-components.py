@@ -298,7 +298,38 @@ with sync_playwright() as p:
  assert page.evaluate('window.__messages.filter(m=>m.type==="configure").at(-1).transferUnlimited')
  page.get_by_role('button',name='连接',exact=True).click()
  page.get_by_label('计算器传输菜单',exact=True).select_option('wire')
- assert page.get_by_role('button',name='接收计算器文件',exact=True).count()==0
+ assert page.get_by_role('button',name='接收计算器文件',exact=True).is_enabled()
+ # Reverse Wire owns one receive request across multiple stock SEND actions.
+ # These events are a UI fixture; original-ROM protocol proof is separate.
+ received_before=page.evaluate('window.__controller.state.receivedFiles.length')
+ page.get_by_role('button',name='接收计算器文件',exact=True).click()
+ assert page.evaluate('(()=>{const m=window.__messages.filter(m=>m.type==="file-transfer-start").at(-1);return m.mode==="receive"&&m.protocol==="hp39-wire"})()')
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:true,phase:"listening",protocol:"hp39-wire",direction:"receive",filesCompleted:0,receivedBytes:0})}')
+ assert '等待计算器 SEND' in page.get_by_test_id('transfer-status').inner_text()
+ assert 'RECV' not in page.get_by_test_id('transfer-status').inner_text()
+ for index,name in enumerate(['Wire-First.note','Wire-Second.note']):
+  page.evaluate('([index,name])=>{const c=window.__controller;c.receive({type:"file-transfer-received",generation:c.generation,request:c.transferRequest,name,bytes:new Uint8Array([index,255,0])});c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:true,phase:"listening",protocol:"hp39-wire",direction:"receive",filesCompleted:index+1,receivedBytes:(index+1)*3})}',[index,name])
+ assert page.evaluate('window.__controller.state.receivedFiles.length')==received_before+2
+ assert '已接收 2 个文件' in page.get_by_test_id('transfer-status').inner_text()
+ page.evaluate('window.__deferCancel=true')
+ page.get_by_role('button',name='停止接收',exact=True).click()
+ assert '正在停止传输' in page.get_by_test_id('transfer-status').inner_text()
+ assert page.get_by_role('button',name='接收计算器文件',exact=True).is_disabled()
+ assert page.get_by_role('button',name='清空列表',exact=True).is_disabled()
+ # A complete file can already be posted before Stop, yet arrive on the UI
+ # task queue afterwards. Only the explicit cancellation barrier seals it.
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-received",generation:c.generation,request:c.transferRequest,name:"Wire-BeforeStop.note",bytes:new Uint8Array([2,255,0])});c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"complete",filesCompleted:3,receivedBytes:9})}')
+ assert page.evaluate('window.__controller.state.receivedFiles.length')==received_before+3
+ assert page.evaluate('window.__controller.state.transfer.phase')=='cancelling'
+ page.evaluate('()=>{window.__deferCancel=false;window.__cancelBarriers.shift()()}')
+ page.wait_for_function('window.__controller.state.transfer.phase==="cancelled"')
+ assert 'SEND → HP39/40 (Wire)' in page.get_by_test_id('transfer-status').inner_text()
+ assert '重新打开 RECV' not in page.get_by_test_id('transfer-status').inner_text()
+ page.get_by_role('button',name='接收计算器文件',exact=True).click()
+ page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"error",protocol:"hp39-wire",direction:"receive",errorCode:"wireReceiveObject"})}')
+ assert '不支持或不完整的 Wire 对象' in page.get_by_test_id('transfer-status').inner_text()
+ assert page.evaluate('window.__controller.state.receivedFiles.length')==received_before+3
+ page.screenshot(path=str(ROOT/'build/ui-hp39-wire-receive-zh.png'))
  assert page.get_by_test_id('transfer-file').get_attribute('accept') is None
  assert page.get_by_role('switch',name='传输时不限速',exact=False).count()==0
  auto_receive=page.get_by_role('switch',name='自动继续接收 aplet 和库',exact=False)
@@ -399,6 +430,7 @@ with sync_playwright() as p:
  assert 'HP39/40 (Ser)' in page.get_by_label('计算器传输菜单',exact=True).inner_text()
  assert 'Ser. Disk drive' in page.get_by_label('计算器传输菜单',exact=True).inner_text()
  assert page.get_by_role('switch',name='自动继续接收 aplet 和库',exact=False).count()==0
+ assert page.get_by_role('button',name='接收计算器文件',exact=True).count()==0
  assert 'RECV → HP39/40 (Ser)' in page.locator('#device-sidebar').inner_text()
  page.get_by_role('button',name='收起侧栏',exact=True).click()
  # Unmount also invalidates an outstanding load and removes frame/resize work.

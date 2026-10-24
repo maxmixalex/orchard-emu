@@ -129,6 +129,7 @@ static void translate(uint32_t va, bool write, bool fetch, bool user) {
     bool y = o_translate_reference(&reference, va, write, fetch, user, &b);
     CHECK(x == y && a == b);
     CHECK(equal(&fast.cpu, &reference.cpu, sizeof fast.cpu));
+    CHECK(equal(fast.tlb, reference.tlb, sizeof fast.tlb));
     CHECK(equal(&fast.stop, &reference.stop, sizeof fast.stop));
     CHECK(fast.sram_alias_reads == reference.sram_alias_reads);
 }
@@ -143,6 +144,7 @@ static void translations(void) {
         for (unsigned ap = 0; ap < 4; ++ap)
         for (unsigned domain = 0; domain < 4; ++domain)
         for (unsigned sr = 0; sr < 4; ++sr) {
+            o_zero(fast.tlb,sizeof fast.tlb);o_zero(reference.tlb,sizeof reference.tlb);
             uint32_t descriptor = section ? O_RAM_BASE | (ap << 10) | 2u : table | (fine ? 3u : 1u);
             pair_write(first, descriptor | (7u << 5));
             if (!section) pair_write(second, O_RAM_BASE | (layout == 1 ? 1u : layout == 2 ? 2u : 3u) | (ap * 0x550u));
@@ -160,7 +162,7 @@ static void translations(void) {
         pair_write(first, (section ? O_RAM_BASE | 2u : table | (fine ? 3u : 1u)) | (7u << 5));
         if (!section) pair_write(second, O_RAM_BASE | (layout == 1 ? 1u : layout == 2 ? 2u : 3u));
         translate(va,false,false,false); translate(va,false,false,false);
-        /* Direct guest RAM edits must be detected even without CP15 maintenance. */
+        /* Guest RAM edits leave already loaded TLB entries intact. */
         if (!section) { pair_write(second, 0); translate(va,false,false,false); }
         pair_write(first, 0); translate(va,false,true,false);
     }
@@ -172,8 +174,8 @@ static void translations(void) {
     pair_write(table,O_RAM_BASE|2u|(3u<<4));
     translate(0x100003fc,false,false,true); translate(0x100003fc,false,false,true);
     translate(0x10000400,false,true,true);
-    /* Side-effecting page-table reads must never be memoized. UART RX emits
-       a legal section descriptor once; the next read observes the empty FIFO. */
+    /* Architectural TLB hits do not repeat a page-table bus read, even when
+       a synthetic descriptor came from a side-effecting device. */
     fast.cpu.ttb = reference.cpu.ttb = 0x50000000u;
     fast.cpu.domain = reference.cpu.domain = UINT32_MAX;
     fast.soc.uart[0][0]=reference.soc.uart[0][0]=3;
@@ -200,16 +202,16 @@ static void translations(void) {
     CHECK(orchard_sram_select(&reference,ORCHARD_SRAM_BANK1_MIRROR)==ORCHARD_OK);
     pair_write(O_RAM_BASE+fast.profile->ram_bytes+0x4000,0x10000000|2u);
     translate(0x123,false,false,false);
-    /* Aliased table reads must retain their observable access counters. */
+    /* Aliased table reads occur on a miss, not on subsequent TLB hits. */
     fast.cpu.ttb = reference.cpu.ttb = O_RAM_BASE+fast.profile->ram_bytes+0x4000;
     translate(0x123,false,false,false); translate(0x123,false,false,false);
-    /* NOR software-ID changes cannot reuse an array-mode table hit. */
+    /* Changing a descriptor source does not implicitly invalidate a TLB. */
     fast.cpu.ttb = reference.cpu.ttb = 0;
     for (unsigned i=0;i<4;++i) fast.flash[i] = reference.flash[i] = (uint8_t)((O_RAM_BASE|2u)>>(8*i));
     translate(0x123,false,false,false); translate(0x123,false,false,false);
     fast.nor_id_mode = reference.nor_id_mode = true;
     translate(0x123,false,false,false);
-    /* Cached entries use offsets, not pointers into the original arena. */
+    /* TLB entries contain addresses, not pointers into the original arena. */
     fast.nor_id_mode = reference.nor_id_mode = false;
     translate(0x123,false,false,false);
     reference = fast;
@@ -218,7 +220,7 @@ static void translations(void) {
     CHECK(o_translate(&reference,0x123,false,false,false,&physical));
     CHECK(physical==O_RAM_BASE+0x123);
     orchard_reset(&fast);
-    for(unsigned i=0;i<O_TRANSLATIONS;++i) CHECK(fast.translations[i].first_offset==0);
+    for(unsigned i=0;i<O_TRANSLATIONS;++i) CHECK(!fast.translations[0][i].valid && !fast.translations[1][i].valid);
 }
 EXPORT("regression") unsigned run(void) {
     checks=failures=first_failure=0;

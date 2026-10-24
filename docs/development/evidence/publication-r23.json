@@ -1,0 +1,114 @@
+{
+  "schema": "orchard-publication-r23",
+  "date": "2026-10-24",
+  "pull_request": "https://github.com/maxmixalex/orchard-emu/pull/37",
+  "head_revision": "62e025cb2e9fe4528db9f8c5d649295fc5c7009d",
+  "published_revision": "395218554f18069bdf3936619edb0ae32aafa070",
+  "url": "https://maxmixalex.github.io/orchard-emu/emulator/",
+  "workflows": {
+    "pull_request_build": {
+      "id": 40066897003,
+      "conclusion": "success"
+    },
+    "main_build": {
+      "id": 40067357828,
+      "conclusion": "success"
+    },
+    "pages": {
+      "id": 40067977076,
+      "conclusion": "success"
+    }
+  },
+  "live_assets": {
+    "checked_at": "2026-10-24T05:54:58.938158+00:00",
+    "count": 47,
+    "all_equal_frozen_release": true,
+    "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9"
+  },
+  "browser": {
+    "passed": true,
+    "started_utc": "2026-10-24T05:55:58.388631+00:00",
+    "finished_utc": "2026-10-24T05:57:19.055135+00:00",
+    "browser": "156.0.8078.47",
+    "downloaded_assets": {
+      "orchard.wasm": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+      "worker.js": "84d27615dc41c079a99dbb7f26ba2f2ba6dc917e8a0c2a6292fb7c4dc74bdc0c",
+      "calculator.js": "7c20f8e68c19f7bdb961843bf01ef71311fd7d642bf9555cc9afb56b427f0dea"
+    },
+    "original_roms": true,
+    "rom_ram_patches": false,
+    "checkpoint_prepared_start": true,
+    "production_worker": true,
+    "performance_sample": false,
+    "inputs": {
+      "5": {
+        "identity": {
+          "id": 5,
+          "name": "hp49gplus",
+          "width": 131,
+          "height": 80,
+          "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab"
+        },
+        "session_sha256": "a122f1f0fdcbbc4a1fbbe5778b639d435d287fe7c1780722e1fc2371d95661c8"
+      },
+      "4": {
+        "identity": {
+          "id": 4,
+          "name": "hp48gii",
+          "width": 131,
+          "height": 64,
+          "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937"
+        },
+        "session_sha256": "856e33360d61c4a390a52cdf3f22bbe956641df7d4cdd1fff3e80bae8a98a3a5"
+      }
+    },
+    "paired_tabs": true,
+    "transport_completed": true,
+    "disconnect_propagates": true,
+    "visual_review": {
+      "reviewed_utc": "2026-10-24T05:57:41.475107+00:00",
+      "reviewer": "assistant visual inspection of actual screenshots",
+      "lcd-4.png": {
+        "sha256": "9ec53dae642960db75136a845f3225997556c71bbacd10260c24d53ed8b8d4eb",
+        "observation": "HP48gII HOME stack level 1 visibly reads 12345 after physical-key ORCHARD recall"
+      },
+      "disconnected-4.png": {
+        "sha256": "472c2791890257c3071387b032330b447d5126bbcad088f6a095580d8a3ed097",
+        "observation": "HP48gII sidebar visibly says Disconnected and offers Create connection; no Disconnect button"
+      },
+      "disconnected-5.png": {
+        "sha256": "97e1e23e5f6ac7e9d6c8c8b10bc3a45535a9218fde9e013541e927fd14a38a37",
+        "observation": "HP49g+ sidebar visibly says Connection ended and The other calculator disconnected.; Create connection is available"
+      }
+    },
+    "asset_manifest_entries": 47,
+    "browser_asset_entries": 27,
+    "pages": {
+      "5": {
+        "stopped": false,
+        "model": 5,
+        "uart_output_bytes": 1035,
+        "accepted_input_bytes": 987,
+        "errors": []
+      },
+      "4": {
+        "stopped": false,
+        "model": 4,
+        "uart_output_bytes": 987,
+        "accepted_input_bytes": 1026,
+        "errors": []
+      }
+    },
+    "limitations": [
+      "Original ROM execution through the deployed browser Worker and an actual same-origin two-tab link; not a physical infrared hardware timing claim.",
+      "Prepared sessions came from unchanged admitted ROM cold boots and physical calculator key sequences."
+    ]
+  },
+  "network": {
+    "methods": [
+      "GET"
+    ],
+    "uploads": 0,
+    "tls_verification_disabled": false
+  }
+}

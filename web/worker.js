@@ -298,7 +298,16 @@ self.onmessage=({data})=>{
         transfer.start(data,tick);
       } catch(error) {transferMessage({type:'file-transfer-status',request:data.request,transport:data.transport,active:false,phase:'error',...transferErrorDetails(error)});}
     }
-    else if(data.type==='file-transfer-cancel') {transfer?.cancel(tick,transferError('transferCancelled','File transfer cancelled.'),data.request);}
+    else if(data.type==='file-transfer-cancel') {
+      if(!Number.isSafeInteger(data.request)||data.request<1)return;
+      try{transfer?.cancel(tick,transferError('transferCancelled','File transfer cancelled.'),data.request);}
+      finally{
+        // Messages from this Worker are FIFO. The main thread may retain this
+        // request's completed files until this explicit closing barrier, even
+        // if start failed or the session ended before cancellation arrived.
+        postMessage({type:'file-transfer-cancelled',generation,request:data.request});
+      }
+    }
     else if(data.type==='serial-connect' && loaded) {if(!data.connected&&transfer?.transport==='serial')transfer.cancel(tick,transferError('linkDisconnected','Serial disconnected.'));serial=Boolean(data.connected);postMessage({type:'serial-status',generation,connected:serial});}
     else if(data.type==='irda-connect') {irda=Boolean(data.connected&&loaded);}
     else if(data.type==='irda-input') {

@@ -29,6 +29,19 @@ into calculator RAM.
    unresolved work leaves the ejected draft available for review, retry, download
    or manual insertion.
 
+Before applying a mounted synchronization, **Cancel** or **Back** restores the
+original card bytes, file name, write protection and in-memory directory
+association. The Worker must acknowledge insertion before a previously running
+calculator resumes; a previously paused calculator stays paused. Reset, model
+replacement and session restore invalidate the old transaction.
+
+Cancellation first restores the original card as the visible, downloadable
+draft, including when a different folder has since been selected. A failure to
+save the original association in IndexedDB is reported but does not prevent
+reinsertion of that card. If insertion also fails, the original bytes remain
+available for download and retry. Persistence errors can still require selecting
+the original folder again after a later page reload.
+
 The ordinary **Eject to edit / sync** path still permits file editing and
 **Preview synchronization** without automatic reinsertion. Hiding the sidebar or
 changing its tabs preserves the draft. The retained tabs use display-none
@@ -43,8 +56,9 @@ directory. **Forget folder** removes the handle and baseline record.
 
 Permission revocation, a moved directory, cleared browser storage, or failed
 IndexedDB writes do not imply continued access. Errors are localized. A storage
-failure leaves the current draft accessible and prevents the automatic insert
-step from hiding the error. The fallback directory file picker imports a
+failure during **Apply** leaves the current draft accessible and prevents the
+automatic insert step from hiding the error. The cancellation recovery above
+separately prioritizes restoring the original card. The fallback directory file picker imports a
 snapshot only; it cannot write back or persist a writable handle.
 
 ## Three-way rules
@@ -151,8 +165,22 @@ insertion.
 - `tests/sd-files-controller.mjs` and `tests/sd-worker.mjs` retain their live-media,
   stale-generation, failed-handoff and exact-byte checks. The Worker test uses
   the real WASM SD controller with a synthetic loop ROM.
+- `python3 tests/browser-sd-sync-cancel.py`: eight real-browser cancellation and
+  recovery cases, including replacement folders, IndexedDB failure, simultaneous
+  insertion failure and same-model reset/restore invalidation.
 
-The current browser/sync evidence is [r23](evidence/sd-directory-r23.json). It is
+The [final r24 original-ROM browser witness](evidence/sd-directory-final-r24.json)
+uses the frozen production Worker and unchanged HP49g+ ROM. The original FILES
+reads host-created ANSWER as 42 and writes TEST to the card. A two-way preview
+and apply copies LOCAL to the card and TEST to the real OPFS directory. A v7
+full-card save/reload reattaches the original IndexedDB handle; AFTER then appears
+in the exported media and original Filer. Cancel/Back preserve exact media,
+protection and running intent. Only the directory chooser is adapted, so this
+does not automate native operating-system permission dialogs. The separate
+[v6-to-v7 browser migration](evidence/sd-session-migration-r24.json) retains its
+earlier frontend identity and preserves all 16 MiB of the old card.
+
+Earlier component/sync evidence is [r23](evidence/sd-directory-r23.json). It is
 separate from the earlier [r22 original-ROM witness](evidence/sd-directory-r22.json):
 the unchanged HP49g+ accepted a prepared 32 MiB card, recalled objects from root
 and nested directories, wrote a new object in stock FILES, and round-tripped it

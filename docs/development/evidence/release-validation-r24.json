@@ -1,0 +1,383 @@
+{
+  "schema": "orchard-release-validation-r24-v1",
+  "recorded_on": "2026-10-24",
+  "base_revision": "395218554f18069bdf3936619edb0ae32aafa070",
+  "scope": "Completed local acceptance with exact source and asset identities. Remote PR/main Build, merge, Pages and live verification are recorded separately in the release PR; this document does not assert a future deployment.",
+  "production": {
+    "wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+    "wasm_bytes": 159677,
+    "asset_count": 48,
+    "assets_sha256": {
+      "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+      "README.txt": "db93522959e9bdfab941554285089b7467db5c73ab81d1159ba2f3e1e535f162",
+      "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+      "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+      "calculator.css": "a6758eb130d9cb6503315913c0af0473abf37461d8f17f02d1ce99b0839e40e7",
+      "calculator.js": "ce9404f04ad13200ec5ef6d9ea357d849b9a253a14775421044f745eb81aea6b",
+      "catalog.js": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8",
+      "debug.html": "134082d0e77b5fae7486ce9783610edaa448a7060fe95d19ae1d27d79b54682b",
+      "file-transfer.js": "b08edcd0d3142c59ee6807e3b3031fa907c9367c2544e0a02c0030ec659adcd9",
+      "host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+      "host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+      "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+      "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+      "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+      "hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+      "hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+      "hp48.js": "14590b079838824b7bc9359d0a49f14cfb7bb5a5c2a7321529658e35dd4238f8",
+      "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+      "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+      "lcd-frames.js": "b9dbbafaa686d3e0282ee3f935205d20bee5b864b6e5b7c90e4e17b4dfa162fe",
+      "licenses/frontend.txt": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+      "licenses/hp-calcs-svg/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "licenses/hp-calcs-svg/NOTICE.txt": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+      "licenses/hp-calcs-svg/README.md": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+      "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+      "main.js": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35",
+      "orchard.wasm": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+      "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+      "preferences.js": "2a68b46423babf91328fb1f70e4e2a8606f18248dc1a303c88da49a505f6ce6e",
+      "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+      "sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+      "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+      "session.js": "c16703077319fae40b9059b970a73e9ec4ee615d9b6534058d53e816766528d1",
+      "skin.js": "b63ffb7b17bcb971d283daea4672f93dfb84ad9fc79fa09aa0bd2dce7b7416d0",
+      "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+      "skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+      "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+      "skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+      "skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+      "skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+      "skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+      "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+      "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+      "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+      "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+      "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "worker.js": "82b96dd0005a7a9cbc7dc7874315a6351314d9aac22c541b434e97871adea7f0"
+    }
+  },
+  "source": {
+    "changed_code_test_workflow_sha256": {
+      ".github/workflows/build.yml": "7d19d98821796d9d55518d95a346fd8c92fcd652bb61ca8a0a096f9488fe4762",
+      "CMakeLists.txt": "4806c7bb2cabbed3459cf8990c9c5f8f4d47fe3050908aab1edbbfcd412204d3",
+      "package.json": "ede213a043b344e0bad34525a63a5deafb53b08a5c77b27bd5cf47774b6b0b4d",
+      "src/checkpoint.c": "457191f78197386ad0d688c23ec6dc428c64e999ba436063c7a91bfaded98c22",
+      "src/internal.h": "e07150e066b49d9dd8291849b8be8094411ed65c86936a23b726abdb32d29716",
+      "src/machine.c": "97e85e5a0258a160d50b159b4d7d40b980bf455a72fb392bdbc314de36d9a2bb",
+      "src/mmu.c": "d0f3d3e5b0006a6007f0538057ef727d36f547b8073c97196efb7294bbae5c62",
+      "tests/browser-components.py": "95ed82cb1f07b5b026a6da0a7fd49e7457ed81b6a78d92fa4cc863c0c4ad351f",
+      "tests/browser-sd-sync-cancel.py": "e701fb4dc787e89443ed8b6b50bc40225f9a18437141138fe152e8d517cb3760",
+      "tests/checkpoint-equivalence.mjs": "e153b439ee4d5f817c3ef12fc7c05060b874d7cf654cf48dc10f21d9b2fed9de",
+      "tests/checkpoint.c": "8ab9bffbb2715746138a873379205fbc7321d21df58329742e7f82b546870315",
+      "tests/clock-domains.c": "e343e912dcaf52bd8b63f0e4acc11b53396c36cf9c85d3a6a9a92f788ed171fe",
+      "tests/execution.c": "c7918ff34e83543329c53e2f7859075f5aeeb7e92eceee4b2997eeb214df5aed",
+      "tests/file-transfer-controller.mjs": "2529ee4fcb0a27b5b822d08a1b4166be29601d7dc7aa8a694f552681a80486b4",
+      "tests/file-transfer-worker.mjs": "a0804002d595da15be15510b7c9826b4198a8b6ca533aa248231741fd082b128",
+      "tests/hp39-wire-receive.mjs": "f194898425633aa11b2173e4980bea57c77e43c9872ead83c284c4daf27a8fed",
+      "tests/hp39-wire.mjs": "5e51d719f8051e629ec453bbe19abb309f8ba12c5a421a23efa26cd13475d6bc",
+      "tests/mmu-tlb.c": "90f448ee0d800081ae6d9ce5d3de546757d30d3af79c60beb64d1d1587ef7977",
+      "tests/pacing-rtc.mjs": "7237e713a1e31bc22e4af2e53cd07fda72920f947ec9a461a0161ce21684cc27",
+      "tests/pwm-clock.c": "631306728ee32e7f12e2206a27ee5c9cbb9e546d159da1a197bee2b119ee303c",
+      "tests/scheduler.c": "98270e1505e3debe2e47f92f6fb8010174878bb98db2731232ed7890a876e3f3",
+      "tests/sd-directory-fixture.jsx": "3455947235b3718ed0b4a43e53277cc0303ca780d78af4868bb10e3a4e640281",
+      "tests/sd-files-controller.mjs": "10144fced9b313d842f8c1f5fa1c26bd594edb46ed0cb74bac4d4bda9ab22838",
+      "tests/tlb-wasm.mjs": "226ebf6b775d7f5c385b24a4224075c27c19ef2ade50e7bc99e4c629a09e596e",
+      "tests/ui-fixture.jsx": "abbdd8e59f8adc61b2f77a3eb8a115d1de989e86f74b69ad5ff0cb7eefc76b19",
+      "tests/watchdog-reset.c": "860597a139279b70351d295ce49aad4c5bab231f7101afff59fc5b68fa3be8bc",
+      "tools/benchmark-scenes.mjs": "bf2861f6e86c5033d7f43be01d8ce62883887ac3d5f3c83cbc3467862e56476d",
+      "tools/benchmark.mjs": "e4693e8cdf6b1142c1c3d154bfd14567335b06ea0e29a943eabf02ccb46ecb89",
+      "tools/build-web.mjs": "bfdea76bae056b035e7b3b355aec799ed3ed8b33c51e95fb853fbd873a2724de",
+      "tools/check-wasm.mjs": "f621a16c3b6b785baf901d08b500b11a539dd991441fc3b0816de85a981744d2",
+      "tools/checkpoint-equivalence.mjs": "ef1cc0f7fabc71d33971db929be9d5b16494fd15a72cfd884f02ca76bb904809",
+      "tools/pages.py": "30335244b3472e7e1cc82bde472b0f977af63e2b231fc8fe1c37b50139e7a7fb",
+      "tools/probe-hp39gs-browser.py": "712fc5f3964c1116aabc9e9f670e998ada2a790b8195790053042e4494ce89fd",
+      "tools/probe-hp49-browser.py": "9e3f13ceb62346921621735f3539fabe429a406beeded95a5d1e05f46410a7b5",
+      "tools/probe-sd-browser.py": "8124b4a4bc5bc2adba645606cfb7fa30a7f832761c245d428a2a14402e5796a6",
+      "tools/probe-sd-directory-browser.py": "767a90e4d022aecdbb9a9e2a9553c1ec7af3cc409584f362cd66b1eb609580d9",
+      "tools/verify-hp39-native-return.mjs": "e869d6a34b172602c41b7042336cd5f295ba0eb37ec91885b9f30342b552c0d3",
+      "tools/verify-hp39-wire-receive.mjs": "ec6e74f46b3aaf73b0367a92371cb3594ac7214ca4a8fa1ee3455683fe33adfa",
+      "tools/verify-hp49-workflows.mjs": "46a04d45adab5ae0648baf6b956763b048ef153ab84e8153ad283db33b854016",
+      "tools/verify-sd-workflows.mjs": "75c8570f617c3d20c66695dcea34b7a874567684198f067ccc87fd218c2e6dee",
+      "web/DirectoryCardControls.jsx": "929c80047151040c4400fe1e517f05d5064abf1968cad1b60d41a5b97cbe1526",
+      "web/FileTransfer.jsx": "bde97b1dc7812c69d4e6544c7323ea5a36382d79d2844484ba583089fdd07ff7",
+      "web/SDCard.jsx": "eac81cbb2e2b32169334eac8febfc98d778fe21b5d840d70bd6363ed7ac58303",
+      "web/SDCardFiles.jsx": "dd3e2eb74491510b66e3bf71ed5447a719fca23467a8a32bbdd846e02bb9d449",
+      "web/controller.js": "52252b7d63296e470a40d79618b43080933d6b9c6a3b01311f3366ca257795f8",
+      "web/file-transfer.js": "b08edcd0d3142c59ee6807e3b3031fa907c9367c2544e0a02c0030ec659adcd9",
+      "web/hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+      "web/session.js": "c16703077319fae40b9059b970a73e9ec4ee615d9b6534058d53e816766528d1",
+      "web/transfer-ui-i18n.js": "e491d5bccd837f1951ee0bea53e8801ce95952433a639f76f7e70a7940a6a837",
+      "web/worker.js": "82b96dd0005a7a9cbc7dc7874315a6351314d9aac22c541b434e97871adea7f0"
+    },
+    "immutable_original_roms": true,
+    "rom_ram_patches": false,
+    "normal_pacing_changed": false,
+    "ordinary_key_dwell_changed": false
+  },
+  "checkpoint": {
+    "export_version": 7,
+    "read_versions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "new_scalar_bytes": 2056,
+    "tlb_banks": 2,
+    "entries_per_bank": 64,
+    "legacy_migration": "Versions 1-6 start with empty TLBs/reset c10; v7 retains architectural entries even when live page tables have changed. Host lookup hints are not serialized.",
+    "rom_identity": "immutable full input ROM",
+    "privacy": "Complete sessions, modified ROM sectors, original LCD pixels and card contents remain private."
+  },
+  "completed_local_gates": [
+    {
+      "name": "Native Release",
+      "passed": true,
+      "count": 24,
+      "detail": "24/24 CTest suites"
+    },
+    {
+      "name": "Retained reference",
+      "passed": true,
+      "count": 24,
+      "detail": "24/24 CTest suites"
+    },
+    {
+      "name": "ASan and UBSan",
+      "passed": true,
+      "count": 24,
+      "detail": "23 suites passed initially; memory-regression did not launch because its execution bit was missing. After restoring that local output permission, the one affected suite passed. Local LSan disabled under ptrace; CI retains default leak checks."
+    },
+    {
+      "name": "Native and WASM functional regression",
+      "passed": true,
+      "count": 1216544,
+      "detail": "1,182,695 default and 33,849 clock assertions per host. The 217,824 quarantined physical-read WASM checks are additional."
+    },
+    {
+      "name": "Independent instruction-driven TLB guest",
+      "passed": true,
+      "count": 25,
+      "detail": "Generated ARM executes mappings, c8/c10, I/D separation, aborts, overlapping host hints and exact warm v7 continuation. Old r23 negative control fails case 3."
+    },
+    {
+      "name": "Unicorn 2.1.4",
+      "passed": true,
+      "count": 17075,
+      "detail": "0 mismatch and 0 skip; privileged MMU/TLB is outside this instruction oracle."
+    },
+    {
+      "name": "Clang 18 analysis",
+      "passed": true,
+      "count": 52,
+      "detail": "52 C sources, no diagnostics."
+    },
+    {
+      "name": "Final JavaScript and frontend",
+      "passed": true,
+      "count": null,
+      "detail": "Syntax, tools, calculator, frontend, continuation, web, lifecycle, skins and trace gates pass. The resumed command sequence preserves initial environment-only launch failures in its logs."
+    },
+    {
+      "name": "Final actual Chromium component and Worker",
+      "passed": true,
+      "count": null,
+      "detail": "Final browser-components, six generated-ARM profiles in calculator/debug audiences, normal stop recovery and diagnostic trace recovery pass. Other unchanged component scripts were run earlier on the same core; the complete suite also remains a CI gate."
+    },
+    {
+      "name": "Final original-ROM Wire browser",
+      "passed": true,
+      "count": 2,
+      "detail": "Both 39g+ and 39gs receive two Notes under one listener, observe real cancellation acknowledgement, download exact complete files and perform later arithmetic."
+    },
+    {
+      "name": "Final original-ROM directory browser",
+      "passed": true,
+      "count": 1,
+      "detail": "Original 49g+ cold boot, original FILES read/write, bidirectional sync, exact Cancel/Back recovery, full-card v7 reload and persisted directory reassociation."
+    },
+    {
+      "name": "Original-ROM final protocol rerun",
+      "passed": true,
+      "count": 2,
+      "detail": "Both 39g+/39gs cold boot; 6 completed objects and 30,016 bytes each, two Notes and two multipart library/aplet groups under two listeners."
+    },
+    {
+      "name": "Original factory diagnostic regression",
+      "passed": true,
+      "count": null,
+      "detail": "39gs/49g+ quick/full FLASH WRITE and four admitted models' applicable RS232/IrDA loopback and factory-menu return on the final core."
+    },
+    {
+      "name": "Final directory cancellation components and CI browser discovery",
+      "passed": true,
+      "count": 8,
+      "detail": "All eight cases pass with CHROMIUM unset and an actual Chrome executable discovered from PATH. No production asset changed."
+    },
+    {
+      "name": "Strict documentation and Pages contract",
+      "passed": true,
+      "count": 57,
+      "detail": "57 pages with valid navigation/local targets; strict Zensical build; assembled allowlisted Pages assets; all 9 Pages contract tests passed."
+    },
+    {
+      "name": "Independent integration review",
+      "passed": true,
+      "detail": "Controller SD epoch and transfer cancellation barrier both retained after conflicts; source matches the validated core; CTest/WASM/receiver/browser coverage connected; public diff contains UTF-8 source/evidence only. Review found one missing CI browser discovery fallback, now fixed and verified. Its two pending release-record links now pass the 57-page link check."
+    }
+  ],
+  "private_log_sha256": {
+    "native-ctest-complete.log": "c4ed46a24d4f87a402b98e538def1b991b4230c857f9f5594a1ed0633aaade57",
+    "reference-ctest.log": "bb048af0c105455c7316cae86654f63bc204826ee790968bfa92e0d4fb47f0f1",
+    "sanitize-ctest.log": "a7896b90c30642b8323094bb4fe4214a0e0eadd1f6205be7640513daeb8f409b",
+    "sanitize-permission-rerun.log": "2f4d96de8e1004b620ea4c0a8873ea30ca9ec851626cd4bf44f1e451bd9c895a",
+    "javascript-remaining.log": "77b19ca0827d05642fdba32e76fd1fa438465ea52d2b7ab534a4e53cdf843007",
+    "oracle-final.log": "1b68aa898aa0a4df609d17200fa60117fe9373726c754dace55008720a7970b6",
+    "clang-analysis.json": "a385cceda848978db3ec24ac62cb837239cc12d9a107bd3b6eea78acbeafebb4",
+    "final-build.log": "3a0288162b4117f35d643aeae452930a090ddb0968c3e57e01804926ca7c40fe",
+    "final-js.log": "8374b280ae6d505f1e9106135674d9c7cc2619698005653fa5377f1db89c8358",
+    "final-js-rerun.log": "60c0fb8ccbc931ce8edfdbf23f6d6675461df4f0490f15a19dd6c725041fe05a",
+    "final-js-remaining.log": "addb65b1bdf3a17fb208543178ea5c2c7218e291522f5618730dd8327774cd2e",
+    "final-browser.log": "027e518c6a8621d293fdbb70ee7dc8b37d7f2c5cb48452bc44f96fb697f41009",
+    "sd-cancel-discovery.log": "1eab981b90a5805874b8d7a69dd4f3305f2915b6c977ef930c1310d0947c4ce7",
+    "docs-final.log": "72aec2c6714d48ec0e98b0bff77af9b82304fe1b81efbbaa608d520092c0bf36",
+    "pages-final.log": "a648b239e237733bd0cf86113e0ba233c719cc045ec207abe1ffa9beed9245fc"
+  },
+  "final_browser_reports": {
+    "browser-worker.json": {
+      "sha256": "ff666e72cffad3490175451e7bd90c44ba43a9b7bf5c82198dbaa3d0a3ecd7ec",
+      "passed": true
+    },
+    "browser-stop-recovery.json": {
+      "sha256": "e529718cc3314a0532465dede3085ff0a394a342817fe3d8b813bff45bb1bf00",
+      "passed": true
+    },
+    "browser-stop-trace-recovery.json": {
+      "sha256": "07e8a28199531cd1f34e6a9bf7234f2a21beb59c5e28dd928cfdb006c3908f0f",
+      "passed": true
+    }
+  },
+  "diagnostic_replay": {
+    "generated_guests": true,
+    "performance_sample": false,
+    "immediate_stop": {
+      "schema": "orchard-browser-core-replay-v1",
+      "passed": true,
+      "instrumented": true,
+      "performance_sample": false,
+      "model": 1,
+      "epoch": 1,
+      "generation": 2,
+      "calls": 7,
+      "run_calls": 1,
+      "key_transition_calls": 0,
+      "uart_bytes": 0,
+      "every_call_result_equal": true,
+      "complete_checkpoint_equal": true,
+      "start_tick": 0,
+      "end_tick": 2,
+      "stop": [
+        9,
+        16,
+        3891265776,
+        16,
+        3891265776
+      ],
+      "rom_sha256": "fae944b496e336c9fc627c191a6dfbbebf5e31fad9028e975c7a07abb1ac72b0",
+      "wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+      "captured_wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+      "same_wasm": true,
+      "initial_sha256": "a44aa6d145f3cb6f5d737d298fbd8706d2c0ef68977019f8c2e84ec52adecf7d",
+      "final_sha256": "8ef9fb853cbc4beb31e383438a764246161eac51768fcf08d89a95afe6658738"
+    },
+    "active_timeout": {
+      "complete_checkpoint_equal": true,
+      "original_observation_preserved": true,
+      "missing_pause_ack_rejected": true,
+      "changed_generation_rejected": true,
+      "replay": {
+        "schema": "orchard-browser-core-replay-v1",
+        "passed": true,
+        "instrumented": true,
+        "performance_sample": false,
+        "model": 1,
+        "epoch": 2,
+        "generation": 3,
+        "calls": 51441,
+        "run_calls": 12852,
+        "key_transition_calls": 0,
+        "uart_bytes": 0,
+        "every_call_result_equal": true,
+        "complete_checkpoint_equal": true,
+        "start_tick": 0,
+        "end_tick": 13160448,
+        "stop": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rom_sha256": "4b62e4e4e9ce9c7a3e5050ef80feed798e4d491677fb5009429c295443162320",
+        "wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+        "captured_wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+        "same_wasm": true,
+        "initial_sha256": "4015b9ca3e205c377c82b4528a2d128e5897f3fcf565c4932e3ea657a1b9c474",
+        "final_sha256": "992e4a6359ff925d1700a3433a064a0f68e052d5f4295bd41411c437599479fb"
+      }
+    }
+  },
+  "evidence": [
+    "arm920t-tlb-r24.json",
+    "factory-regression-r24.json",
+    "hp39-wire-receive-r24.json",
+    "hp39-wire-browser-r24.json",
+    "sd-directory-original-r24-v6.json",
+    "sd-session-migration-r24.json",
+    "sd-directory-final-r24.json",
+    "performance-tlb-r24.json",
+    "publication-r23.json"
+  ],
+  "runtime_boundaries": [
+    "GBP39 ALIGN4 is a separately named diagnostic rebuild. The original GBP 0.3 package still has the distinct unaligned BSS loader failure; no original-package compatibility pass is claimed.",
+    "No original HP40gs or HP50g full-NOR admission is claimed; HP48gII has no physical SD slot.",
+    "TLB support is a functional subset, not I/D cache contents, calibrated bus cycles or complete ARM920T conformance.",
+    "Original reverse Wire acceptance covers USB on 39g+/39gs and kinds B/C/H; D is structurally tested, serial reverse Wire and 40gs remain disabled.",
+    "Directory mapping uses explicit preview/apply while the image is ejected. It is not an OS block device, background watcher or simultaneous live FAT writer. Native picker/permission dialogs were not automated.",
+    "UART/IrDA remains decoded-byte transport without calibrated baud/optical collision/range semantics. Native host-device/Conn3x development stays retired.",
+    "LCD scan publication, temporal response and scaling reduce particular artifacts; physical-panel timing, all-model annunciator placement and complete elimination of intermediate redraws remain open.",
+    "The reference throughput comparison uses an ORCHARD_REFERENCE build disabling several fast paths; its ratios are not an r23-to-r24 speedup or a TLB-only performance measurement."
+  ],
+  "environment_notes": [
+    "Node 24.19.0, clang-18 and Chrome 156.0.8078.47 locally; remote CI uses its declared locked dependencies and Node 22.",
+    "Initial JavaScript child-process EPERM and missing default clang were environment launch failures; explicit allowed process execution and clang-18 PATH resolved them. Logs are retained.",
+    "Original ROMs, private sessions, media images, downloaded third-party applications and screenshots are excluded from public source and production assets."
+  ],
+  "directory_cancel_final": {
+    "test_sha256": "e701fb4dc787e89443ed8b6b50bc40225f9a18437141138fe152e8d517cb3760",
+    "chromium_env_present": false,
+    "report": {
+      "passed": true,
+      "browser": "156.0.8078.47",
+      "checks": [
+        "Cancel restores every original card byte, read-only state, directory handle and running state",
+        "Back from an unapplied mounted sync restores the card and preserves a previously paused machine",
+        "Cancel restores the original saved handle even after another folder was selected as the uncommitted draft",
+        "Rejected reinsertion keeps a downloadable exact draft; retry restores it and then resumes",
+        "After another folder replaces the draft, quota failure still reinserts the exact original card and reports a translated storage error",
+        "Combined quota and insertion failure keeps the original filename, read-only state and downloadable bytes; retry restores the original association and running state",
+        "Ordinary eject-to-edit Back remains an explicit discard with no automatic reinsertion",
+        "Same-model reset and restore invalidate the old synchronization without reinserting its media"
+      ],
+      "page_errors": [],
+      "card_sha256": "a9b94f59bcb6092be7b476c40c515e67a2654fb1da2cabb5904485b78e8dcc1f",
+      "picker_adapter": "Real OPFS DirectoryHandle; native picker dialog not automated",
+      "guest_adapter": "Explicit Worker acknowledgements and injected rejection; no ROM execution"
+    }
+  }
+}

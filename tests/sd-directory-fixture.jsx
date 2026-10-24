@@ -19,6 +19,8 @@ const worker={terminate(){},postMessage(data){
   queueMicrotask(()=>{
     if(message.type==='run'||message.type==='pause')controller.patch({running:message.type==='run'});
     else if(message.type==='sd-insert'){
+      if(window.__rejectInsertOnce){window.__rejectInsertOnce=false;
+        controller.receive({type:'sd-error',generation:message.generation,message:'Injected insertion rejection'});return;}
       card=message.bytes;
       controller.patch({sd:{present:true,bytes:card.length,writeProtected:message.writeProtected,dirty:false,readBlocks:0,writtenBlocks:0}});
       controller.receive({type:'sd-complete',action:'insert',name:message.name,generation:message.generation});
@@ -36,6 +38,7 @@ controller.patch({model:CALCULATORS.find(model=>model.id===5),ready:true,loaded:
 window.__controller=controller;
 window.__storedDirectory=()=>new DirectoryStore().read(controller.state.model.hash);
 window.__cardFile=path=>Array.from(readSDFile(card,path));
+window.__cardHash=async()=>card?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',card)),value=>value.toString(16).padStart(2,'0')).join(''):null;
 window.__saveCard=async()=>{
   const origin=await navigator.storage.getDirectory(),file=await origin.getFileHandle('saved-card.img',{create:true}),stream=await file.createWritable();
   await stream.write(card);await stream.close();

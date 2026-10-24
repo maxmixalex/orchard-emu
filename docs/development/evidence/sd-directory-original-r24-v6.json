@@ -1,0 +1,188 @@
+{
+  "schema": "orchard-sd-directory-browser-v1",
+  "passed": true,
+  "automatic_checks_passed": true,
+  "visual_review_required": false,
+  "original_rom": true,
+  "production_worker": true,
+  "rom_ram_patches": false,
+  "performance_sample": false,
+  "model": {
+    "id": 5,
+    "name": "hp49gplus",
+    "width": 131,
+    "height": 80,
+    "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab"
+  },
+  "picker_adapter": "Real OPFS FileSystemDirectoryHandle; native OS picker and permission prompts not automated",
+  "browser_version": "156.0.8078.47",
+  "stages": [
+    "original-rom-cold-boot-and-real-directory",
+    "mounted-cancel-and-back-preserve-original-media",
+    "original-files-reads-host-object-and-writes-test",
+    "bidirectional-preview-apply-and-reinsert",
+    "session-reload-reattaches-persisted-directory-handle"
+  ],
+  "initial_binding": {
+    "name": "orchard-original-rom",
+    "serial": 1250452136,
+    "sameEntry": true,
+    "mappings": [
+      {
+        "source": "ANSWER",
+        "card": "/ANSWER",
+        "type": "file"
+      }
+    ],
+    "baseline": [
+      {
+        "source": "ANSWER",
+        "type": "file"
+      }
+    ]
+  },
+  "mounted_cancel": {
+    "original_media_sha256": "8152f0f5baabeedf5e2f5461e298fc7e3f24114f6942a2619144bb5eb40bbfaf",
+    "all_bytes_equal": true,
+    "readonly_preserved": true,
+    "association_preserved": true,
+    "running_cancel_resumes": true,
+    "paused_back_stays_paused": true
+  },
+  "firmware_write": {
+    "sd": {
+      "bytes": 16777216,
+      "present": true,
+      "writeProtected": false,
+      "dirty": true,
+      "cardState": 3,
+      "lastCommand": 7,
+      "commands": 1729,
+      "readBlocks": 453,
+      "writtenBlocks": 15
+    },
+    "file": "TEST",
+    "sha256": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42"
+  },
+  "bidirectional_plan": "1 changes to card, 1 to folder, 0 conflicts\n\nLocal path\tAction\nLOCAL\t\n\nAdd to card\n\n\nTEST\t\n\nAdd to folder\n\nApply and insert card\nCancel",
+  "bidirectional_sync": {
+    "card_files": [
+      "ANSWER",
+      "LOCAL",
+      "TEST"
+    ],
+    "directory_files": [
+      "ANSWER",
+      "LOCAL",
+      "TEST"
+    ],
+    "exact_file_sha256": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42",
+    "running_resumed": true
+  },
+  "reload_reassociation": {
+    "automatic_rom_copy_reopen": true,
+    "session_media_exact": true,
+    "saved_handle_same_entry": true,
+    "picker_calls": [
+      {
+        "id": "orchard-sd",
+        "mode": "read"
+      }
+    ],
+    "new_local_file_synced": "AFTER",
+    "running_resumed": true
+  },
+  "final_snapshot": {
+    "loaded": true,
+    "running": true,
+    "stopped": false,
+    "model": 5,
+    "width": 131,
+    "height": 80,
+    "pending": 0,
+    "active": null,
+    "sd": {
+      "bytes": 16777216,
+      "present": true,
+      "writeProtected": false,
+      "dirty": true,
+      "cardState": 3,
+      "lastCommand": 7,
+      "commands": 2227,
+      "readBlocks": 584,
+      "writtenBlocks": 25
+    },
+    "ticks": 449697773
+  },
+  "visual_review": {
+    "reviewed_utc": "2026-10-24T05:59:46.156530+00:00",
+    "reviewer": "assistant visual inspection of actual browser screenshots",
+    "images": {
+      "lcd-host-answer-42.png": {
+        "sha256": "f00c365123bdf19c66e2ef9dc777cd5299f9951efe26eadb0849ab06f604b425",
+        "observation": "Original HP49g+ HOME displays 42 after physical FILES/RCL of host-created ANSWER."
+      },
+      "files-firmware-created-test.png": {
+        "sha256": "eb6446b73b4a7acb683a1ce343f17f853848ca1f1ddb5413ab1138012b8c5981",
+        "observation": "Original Filer visibly lists ANSWER and firmware-created TEST, both INTG."
+      },
+      "files-after-reload-sync.png": {
+        "sha256": "dd633fb1abe4788847264aa7687d003bc916731d3318f7c853b39b75002bdcb4",
+        "observation": "After reload and another directory synchronization, original Filer visibly lists ANSWER, TEST, LOCAL and AFTER; ANSWER is selected."
+      },
+      "lcd-after-reload-42.png": {
+        "sha256": "c6debc99949138ab681e6b4871e96eef7acc826c31f06f566580c7216ad62985",
+        "observation": "RCL of the retained ANSWER selection after reload displays another 42 at the bottom of HOME history."
+      },
+      "bidirectional-preview.png": {
+        "sha256": "b5237df2ccef8faa79b6853fa26c5bd6f271bdae8e8da22c2598018bd53c84df",
+        "observation": "Preview shows LOCAL Add to card, TEST Add to folder, one change in each direction and zero conflicts; calculator is paused while card is ejected."
+      }
+    }
+  },
+  "page_errors": [],
+  "worker_errors": [],
+  "request_methods": [
+    "GET"
+  ],
+  "limits": [
+    "A real OPFS handle replaced only showDirectoryPicker; native local-folder chooser and browser permission prompts are not automated.",
+    "All guest reads and writes use the unchanged original ROM and production WASM/Worker; no physical SD timing claim.",
+    "The final RCL retains ANSWER selection; the newly imported AFTER is verified by exact exported bytes and its actual firmware FILES listing."
+  ],
+  "assets": {
+    "orchard.wasm": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+    "worker.js": "84d27615dc41c079a99dbb7f26ba2f2ba6dc917e8a0c2a6292fb7c4dc74bdc0c",
+    "calculator.js": "e9302a5a4ee438538be5f11e373a2dd6da0e68c0bcdde955b7f11126c0b7f6ab"
+  },
+  "tools": {
+    "probe-sd-directory-browser.py": "df13c21a17b1fc9ca634a05e65a5a74c09546d91ab5541e2cd641360441270cc"
+  },
+  "session": {
+    "model": 5,
+    "romHash": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+    "stateHash": "464edc0b7b7629640e2d7a01241abfef6b32490f79570c9fbb59b7f4ccc8e353",
+    "checkpoint_version": 6,
+    "checkpoint_bytes": 17314948,
+    "file_sha256": "5fb95dbed8b2b7193a1e6e8f1b8efcdc2a3d228762b5343d49fc5aef6ff53e58"
+  },
+  "image_hashes": {
+    "back-restored.img": "8152f0f5baabeedf5e2f5461e298fc7e3f24114f6942a2619144bb5eb40bbfaf",
+    "bidirectional-synced.img": "afd1b386ca5a2c1415fc81fd9a037c43a449ba9a32a0a5288333eb90d39d4b07",
+    "cancel-restored.img": "8152f0f5baabeedf5e2f5461e298fc7e3f24114f6942a2619144bb5eb40bbfaf",
+    "firmware-write.img": "9f094243fcb83fdc923c71f918a9a2d30887de1bc4faed390cc7402f11b5f8a4",
+    "initial-readonly.img": "8152f0f5baabeedf5e2f5461e298fc7e3f24114f6942a2619144bb5eb40bbfaf",
+    "reloaded-after-sync.img": "30c19cd9a1314aa79c0a708f03f2618b70e31a9b3eaa25038220b50189c2aacf",
+    "reloaded-before-sync.img": "afd1b386ca5a2c1415fc81fd9a037c43a449ba9a32a0a5288333eb90d39d4b07"
+  },
+  "scope": "Historical r24 directory UI witness on the frozen r23 WASM and checkpoint v6. This does not assert final r24 integrated-core acceptance or cross-version migration.",
+  "directory_source_commit": "5cd05ee62ce225086a3148a07c959f36398eb489",
+  "frozen_core_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+  "checkpoint_version": 6,
+  "reproduce": [
+    "Build the directory frontend together with the identified frozen r23 core, keeping the recorded assets together.",
+    "python3 tools/probe-sd-directory-browser.py --rom /private/hp49gplus-full.bin --expected-wasm 4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9 --expected-checkpoint-version 6 --output /private/sd-directory-result",
+    "Inspect the actual LCD/Filer images before marking visual review passed. The maintained probe intentionally leaves passed false until review."
+  ],
+  "private_artifacts_committed": false
+}

@@ -1,6 +1,113 @@
 # Continuation handoff
 
-## Current r23 continuation from 128554d (2026-10-24)
+## Current r24 continuation from 3952185 (2026-10-24)
+
+The preceding r23 release is merged as
+`395218554f18069bdf3936619edb0ae32aafa070` in
+[PR #37](https://github.com/maxmixalex/orchard-emu/pull/37). Its PR Build, main
+Build and Pages completed successfully. Independent live verification matched
+all 47 assets, and the deployed original 49g+/48gII pair transferred and recalled
+`ORCHARD=12345`, then disconnected cleanly. The completed publication evidence
+is retained in [publication-r23.json](evidence/publication-r23.json).
+
+The user requested continued parallel development. The next work was divided
+between ARM native-return/MMU investigation, continuous Wire receiving,
+directory SD recovery, production-browser acceptance and independent cross
+review. The current C/WASM is SHA-256
+`74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a`.
+Its state format is version 7. Exact frontend identities and release checks
+belong to the r24 release evidence; earlier intermediate reports retain their
+own asset identities.
+
+### Architectural translations and native return
+
+The 39g+ ALIGN4 return failure was a missing architectural TLB, not a reason to
+patch the ROM or ignore a data abort. The normal ROM keyboard handler changes
+the native stack's live page-table descriptor, with no CP15 instruction before
+the subsequent IRQ stack access. The real translation must remain cached.
+Separate 64-entry instruction/data TLBs now retain it, with documented c8
+maintenance, c10 lockdown/replacement and dynamic access protection. Host lookup
+hints include exact MVA tags and are cleared on entry changes, preserving the
+reference scan's ordering even for overlapping entries. See
+[ARM920T translation](arm920t-tlb.md) and
+[the original-ROM record](evidence/arm920t-tlb-r24.json).
+
+Checkpoint v7 appends 2,056 bytes for both TLBs and their c10 registers. Versions
+1–6 migrate to empty TLBs because those formats did not record translation state.
+Never rebuild a v7 TLB from live tables or erase it during canonical comparison:
+stale-but-valid entries can be required for correct continuation. The independent
+generated ARM guest executes 25 mapping, exception, maintenance, overlap and
+restore checks; the targeted C suite adds 812 checks.
+
+Both original 39g+ and 39gs now launch the separately identified GBP39 ALIGN4
+diagnostic package, run, return with ON and calculate `1+1=2`. Warm-game restore
+followed by the same exit produces identical complete checkpoints. The original
+GBP 0.3 package still has its distinct loader alignment defect. Preserve that
+distinction; the diagnostic program is not an original-package compatibility pass.
+
+Original 49g+ CAS/menu/plot and complete native/WASM continuation, SD in-flight
+write/export/reboot/recall, 48gII FILES/arithmetic, and both models' ordinary
+USB SEND/GET/FINISH also pass on this core. The USB exports change the transport
+header revision, while their object payloads agree. Original quick/full FLASH
+and applicable serial/IrDA diagnostics have been rerun on the final core in
+[factory-regression-r24.json](evidence/factory-regression-r24.json).
+
+### Wire and directory recovery
+
+Original 39g+/39gs USB Wire receives successive SEND operations under one host
+listener. The production receiver parses exact Saturn object boundaries rather
+than stripping presumed zero padding, and implements the observed multipart
+index/library/aplet negotiation. Each model's cold-start witness receives two
+different Notes and two library/aplet groups, with the expected object bytes
+and subsequent HOME arithmetic. See
+[Wire receive evidence](evidence/hp39-wire-receive-r24.json).
+
+The shared receive limit remains 16 files/8 MiB. Capacity completion includes a
+bounded final-EOT acknowledgement window without an active transfer or speed
+boost. Completed files remain individually downloadable; serial reverse Wire
+and original 40gs acceptance are not claimed.
+
+Stop now preserves the active request until an explicit Worker cancellation
+acknowledgement. Complete files already queued by the Worker are accepted before
+that barrier, while new transfers and list clearing remain disabled. Ordinary
+completion/error messages cannot release it early. Both original-ROM production
+browser flows receive two Notes, observe the real barrier acknowledgement, then
+download exact bytes and return to arithmetic. See
+[browser Wire evidence](evidence/hp39-wire-browser-r24.json).
+
+Cancel/Back before applying a mounted directory synchronization restores the
+original media, name, write protection, association and prior running intent.
+Only the Worker insertion acknowledgement permits automatic resumption. A
+separate session epoch prevents old operations affecting a same-model reset or
+restore. Cross review reproduced a combined replacement-folder/storage failure;
+cancellation now makes the original card the visible downloadable draft before
+fallible persistence, and still attempts reinsertion if IndexedDB fails. If both
+persistence and insertion fail, those original bytes remain available for retry.
+
+The original-ROM directory witness on the preceding core remains explicitly
+versioned as [v6 evidence](evidence/sd-directory-original-r24-v6.json). A real
+production-UI [v6-to-v7 migration](evidence/sd-session-migration-r24.json) preserves
+every byte of its 16 MiB card, resumes, and recalls 42. Directory tests use real
+OPFS handles with only the chooser adapted; they do not certify native operating-
+system picker/permission dialogs or an OS-mounted virtual drive.
+
+The [final r24 original-ROM directory flow](evidence/sd-directory-final-r24.json)
+then repeats cold boot, original FILES reads/writes, both synchronization
+directions, exact Cancel/Back recovery, full-card v7 save/reload and persisted
+handle reassociation on all 48 frozen final assets. Eight separate actual-browser
+component scenarios cover cancellation and storage/insertion failures. Local
+gate identities are collected in [release validation](evidence/release-validation-r24.json).
+
+### Continuing boundaries
+
+Keep the original 40gs/50g full-NOR gate, physical clock/panel/optical calibration,
+cache contents/timing, larger SD media/DMA and sustained-use coverage open.
+Native host-device/Conn3x work stays retired. The earlier mixed 39gs fixture is
+historical OS-only evidence; current 39gs checks use the user's own complete NOR.
+Production artifacts must continue excluding private ROMs, sessions, card images,
+LCD captures and third-party binaries.
+
+## Released r23 continuation from 128554d (2026-10-24)
 
 The user requested factory RS232/FLASH fixes, infrared, original application
 coverage, two-way directory SD synchronization, easier Wire queues, clearer

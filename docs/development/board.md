@@ -11,6 +11,7 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [x] Four unchanged original NORs reach conditional HOME and basic arithmetic, including the user's complete HP39gs capture and its own bootloader.
 - [x] User/debug frontends; seven separately licensed skins and guest segments.
 - [x] Scheduler/CPU/memory optimizations with retained reference paths.
+- [x] Separate functional 64-entry ARM920T instruction/data TLBs, CP15 invalidation and lockdown, dynamic protection checks and exact saved translation state. Host lookup hints preserve reference ordering even for overlapping entries. See [ARM920T translation](arm920t-tlb.md).
 - [x] Portable manual sessions, with .ord names and legacy .orchard import.
 - [x] Settings: immersive, immersive landscape, traditional and traditional landscape view, viewport/scale, editable physical key sequences, independent blur/hidden policies; landscape keeps all six FN keys with the LCD.
 - [x] Wider per-model keyboard editor with assigned-key highlights, calculator-side binding badges and target selection; OS-resolved character defaults, layout-map labels and captured-key fallback. See [keyboard settings](keyboard-settings.md).
@@ -29,21 +30,24 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [x] HP39/40 Disk drive host, typed-file and alias-preserving catalog validation; original HP39g+ USB installs aplet/library and exports both. The complete HP39gs NOR independently installs the V2 reader; HP40gs remains open.
 - [x] Direct HP39 ZIP import and standard ZIP download, bounded decompression/CRC checks, and reconstruction of the catalog entry omitted by stock SEND.
 - [x] HP39 direct Wire upload with library-first package ordering, per-object RECV instructions and original-ROM SEND/ZIP verification; visible progress and cancellation recovery guidance.
+- [x] One USB Wire listener receives successive original 39g+/39gs SEND operations, exact Notes and multipart aplet/library objects; bounded counts/bytes, retry handling and completed-file retention after Stop or failure.
 - [x] ASCII Note packing for Wire with original 39g+/39gs installation, EDIT and exact export/repack checks; bounded receive-ACK recovery, large Note sequence wrap, and translated error metadata through Worker/controller/queue.
 - [x] Optional transfer-only Unlimited in Settings → Transfer, content-based selection without extension filters, isolated per-file errors and retry/skip recovery, bounded Init-Info ACK retransmission.
 - [x] HP49g+ full capture admission, fixed 512 KiB SRAM with explicit bank-1 mirror, 131×80 UI, arithmetic, CAS, graphing, menus, sessions and USB object workflows.
 - [x] HP49g+ FILES recovery and bounded SD image read/write, FAT16 create/import/export/eject and write protection; HP48gII no-card FILES navigation.
 - [x] Offline FAT16 file preparation: browse/extract files, create folders, add/rename files and folders, and delete files or empty folders transactionally before insertion; explicit 8.3 names, shared alias/long-name collision checks and no extension filter.
 - [x] Recursive local-directory import into 16/32 MiB FAT16 with persistent handles/name mappings/baselines, two-way add/edit/delete/rename previews and conflict resolution, preview revalidation and atomic mounted-card handoff. This is explicit synchronization, not an OS virtual-drive mount. See [directory SD](directory-sd.md).
+- [x] Cancel/Back before applying a mounted directory synchronization restores the original card, protection, association and prior running intent. Same-machine reset/restore invalidates pending transactions; failed reinsertion retains a downloadable draft.
 - [x] HP49g+ SDK native ARM example installed over stock USB, run through ARMToolbox, returned to HOME and followed by arithmetic and USB reconnect.
-- [x] Checkpoint v6 retains complete SD/UART/NOR in-flight state, modified flash sectors and existing clock/SPI/reset state; v1–v5 imports remain supported with explicit migration. Successful restore conditionally resumes, and paused state has a prominent direct action.
+- [x] Checkpoint v7 retains architectural instruction/data TLBs, complete SD/UART/NOR in-flight state, modified flash sectors and existing clock/SPI/reset state; v1–v6 imports remain supported with explicit migration. Successful restore conditionally resumes, and paused state has a prominent direct action.
 - [x] Held ON/F4 factory-test entry and ON/F3 exit controls; bounded [SPI](spi.md) register/transfer behavior and [watchdog reset propagation](watchdog-reset.md) retain external SRAM, media and RTC. Factory-test entry does not claim every diagnostic passes.
 - [x] Revised HP39gs ROMstream v2: visible progress, repaired mapping/cable/USB exit paths, one-launch double reads and corresponding source; original HP39g+ and original HP39gs full NORs complete dump/return/USB-reuse workflows. Earlier derived-OS evidence remains distinct.
+- [x] The separately identified GBP 0.3 ALIGN4 diagnostic package returns on both original 39g+ and 39gs systems, then calculates `1+1=2`; 39g+ required retaining the guest's cached translation across a page-table write. The original package's unaligned loader remains separate.
 - [x] Three functional UARTs with FIFO/line-format/clock-gate/interrupt/error/loopback behavior; original factory RS232/IRDA tests and same-origin tab infrared object transfer. See [UART/IrDA](uart-irda.md).
 - [x] NOR word program, sector/block/chip erase, busy polling and VF1601 suspend; original 39gs/49g+ quick and full FLASH WRITE diagnostics pass.
 - [x] Byte-table checkpoint CRC with unchanged format/full validation; independent checks on all six model capacities.
 - [x] Production Pacer + WASM RTC comparison across rates and host partitions.
-- [x] Explicit optimized sanitizer targets and 23 maintained native/reference/sanitizer suites, including buzzer, Power_OFF, PCLK/PWM, SPI and watchdog reset checks.
+- [x] Explicit optimized sanitizer targets and 24 maintained native/reference/sanitizer suites, including architectural TLB, buzzer, Power_OFF, PCLK/PWM, SPI and watchdog reset checks.
 - [x] Checked WASM physical reads and bounded caught-up Worker pacing, with same-input comparisons.
 - [x] Actual Chrome Window/Worker smoke coverage plus original-ROM file/restore/keyboard/result observation.
 

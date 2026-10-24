@@ -117,6 +117,7 @@ jobs:
           build/browser-venv/bin/python tests/browser-lcd.py
           build/browser-venv/bin/python tests/browser-display.py
           build/browser-venv/bin/python tests/browser-sd-directory.py
+          build/browser-venv/bin/python tests/browser-sd-sync-cancel.py
           build/browser-venv/bin/python tests/rom-storage-browser.py
           build/browser-venv/bin/python tests/browser-host-bridge.py
           build/browser-venv/bin/python tests/browser-host-bridge-network.py
@@ -151,6 +152,7 @@ jobs:
             build-r22/directory-sd/directory-mobile*.png
             build-r23/directory-sd/browser-result.json
             build-r23/directory-sd/directory-mobile*.png
+            build-r24/sd-sync-cancel/
             build-r20/sd-files/browser-result.json
             build-r20/sd-files/browser-mobile.png
             build-r20/sd-files/browser-mobile-zh.png

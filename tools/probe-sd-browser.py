@@ -125,7 +125,7 @@ def main():
         with page.expect_download() as pending: page.get_by_role('button',name='Save',exact=True).click()
         saved=args.output/'with-card.ord';pending.value.save_as(saved)
         report['session']=hp49.session_metadata(saved)
-        assert report['session']['checkpoint_version']==6 and report['session']['checkpoint_bytes']>16*1024*1024
+        assert report['session']['checkpoint_version']==7 and report['session']['checkpoint_bytes']>16*1024*1024
         page.wait_for_function('!window.__transferProbe.snapshot.running');saved_frame=hp49.frame(page)
         card();eject();close_card()
         page.locator('#session-file').set_input_files(str(saved.resolve()))

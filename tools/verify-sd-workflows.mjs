@@ -114,7 +114,7 @@ try{
   a.tap(36);a.run(10000000);a.tap(42);await a.picture('hp49-copy-destination-sd');
   const writesBefore=readSDState(a.c).writtenBlocks;let partial=null;
   a.setObserver(()=>{if(partial||readSDState(a.c).cardState!==6)return;
-    const bytes=a.checkpoint(),v=new DataView(bytes.buffer);assert.equal(v.getUint32(8,true),6);
+    const bytes=a.checkpoint(),v=new DataView(bytes.buffer);assert.equal(v.getUint32(8,true),7);
     const count=v.getUint32(4122+96,true);if(count>0&&count<512)partial=bytes;});
   a.tap(40);a.run(15000000);a.setObserver(null);await a.picture('hp49-copy-complete');
   assert(partial,'No in-flight sector write captured');assert(readSDState(a.c).writtenBlocks>writesBefore);await crossHost(partial);

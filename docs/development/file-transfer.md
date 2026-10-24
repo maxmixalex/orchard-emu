@@ -512,7 +512,15 @@ complete ZIP, choose **Upload through Wire**, and select **RECV → HP39/40 (Wir
 on the calculator for each displayed file. Libraries are sent first. The next
 file waits for a fresh receiver handshake, and an item is complete only after
 the final EOT ACK. This path uploads all selected supported objects; Disk drive
-remains the choice for calculator-side catalog selection and all downloads.
+remains the choice for calculator-side catalog selection. HP39g+/HP39gs USB
+also supports reverse Wire downloads through **Receive from calculator**:
+one listener accepts successive stock SENDs and requests aplet dependency
+libraries. Complete files are retained individually on Stop or later failure,
+up to the shared 16-file / 8 MiB download limit. Stop waits for the Worker's
+cancellation acknowledgement so that completed files already in transit to the
+UI remain downloadable. See the
+[continuous Wire receiver](hp39-files.md)
+for protocol evidence and the unverified serial/HP40gs boundary.
 Original catalog preflight, dependency references and binary input bytes are preserved.
 
 ASCII `HP39AscC` Notes are now packed as binary Saturn strings before Wire

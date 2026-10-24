@@ -1,0 +1,144 @@
+{
+  "schema": "orchard-full-session-migration-browser-v1",
+  "passed": true,
+  "automatic_checks_passed": true,
+  "visual_review_required": false,
+  "started_utc": "2026-10-24T06:03:16.975788+00:00",
+  "model": {
+    "id": 5,
+    "name": "hp49gplus",
+    "width": 131,
+    "height": 80,
+    "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab"
+  },
+  "source_session": {
+    "schema": 1,
+    "model": 5,
+    "romHash": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+    "preset": "hp49-home",
+    "frameView": 1,
+    "stateHash": "464edc0b7b7629640e2d7a01241abfef6b32490f79570c9fbb59b7f4ccc8e353",
+    "checkpoint_version": 6,
+    "checkpoint_bytes": 17314948,
+    "file_sha256": "5fb95dbed8b2b7193a1e6e8f1b8efcdc2a3d228762b5343d49fc5aef6ff53e58"
+  },
+  "expected_checkpoint_versions": {
+    "input": 6,
+    "output": 7
+  },
+  "source_card_sha256": "afd1b386ca5a2c1415fc81fd9a037c43a449ba9a32a0a5288333eb90d39d4b07",
+  "stages": [
+    "open-original-rom-and-restore-unchanged-v6-session",
+    "save-genuine-v7-session-from-production-core",
+    "eject-media-and-restore-the-new-v7-session",
+    "original-firmware-files-and-recall-after-migration"
+  ],
+  "original_rom": true,
+  "production_worker": true,
+  "rom_ram_patches": false,
+  "checkpoint_bytes_patched": false,
+  "performance_sample": false,
+  "tool_sha256": "4b559f5dba801c68273c200af9926e35cb0f969c9612610c9eea3a7dec47e02f",
+  "browser_version": "156.0.8078.47",
+  "v6_restore_auto_resumed": true,
+  "restored_v6_snapshot": {
+    "loaded": true,
+    "running": true,
+    "stopped": false,
+    "model": 5,
+    "width": 131,
+    "height": 80,
+    "pending": 0,
+    "active": null,
+    "sd": {
+      "bytes": 16777216,
+      "present": true,
+      "writeProtected": false,
+      "dirty": false,
+      "cardState": 0,
+      "lastCommand": 7,
+      "commands": 1729,
+      "readBlocks": 453,
+      "writtenBlocks": 15
+    },
+    "ticks": 391603215
+  },
+  "v6_restored_card_sha256": "afd1b386ca5a2c1415fc81fd9a037c43a449ba9a32a0a5288333eb90d39d4b07",
+  "migrated_session": {
+    "schema": 1,
+    "model": 5,
+    "romHash": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+    "preset": "hp49-home",
+    "frameView": 1,
+    "stateHash": "099c0fda168c4fb8878967070f4151fab6e0cf7955407f281d4c2c75d4a1ce01",
+    "checkpoint_version": 7,
+    "checkpoint_bytes": 17317004,
+    "file_sha256": "3f0df36cd650a835c2b9f20e9e7efeff2bc295bea9f1f3e07278a046551f5816"
+  },
+  "v7_restore_auto_resumed": true,
+  "v7_restored_card_sha256": "afd1b386ca5a2c1415fc81fd9a037c43a449ba9a32a0a5288333eb90d39d4b07",
+  "final_snapshot": {
+    "loaded": true,
+    "running": true,
+    "stopped": false,
+    "model": 5,
+    "width": 131,
+    "height": 80,
+    "pending": 0,
+    "active": null,
+    "sd": {
+      "bytes": 16777216,
+      "present": true,
+      "writeProtected": false,
+      "dirty": true,
+      "cardState": 3,
+      "lastCommand": 7,
+      "commands": 2203,
+      "readBlocks": 578,
+      "writtenBlocks": 23
+    },
+    "ticks": 453119839
+  },
+  "media_preserved_exactly": true,
+  "root_file_sha256": {
+    "ANSWER": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42",
+    "LOCAL": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42",
+    "TEST": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42"
+  },
+  "page_errors": [],
+  "request_methods": [
+    "GET"
+  ],
+  "worker_errors": [],
+  "finished_utc": "2026-10-24T06:03:25.415630+00:00",
+  "visual_review": {
+    "reviewed_utc": "2026-10-24T06:05:18.058405+00:00",
+    "reviewer": "assistant visual inspection of actual browser screenshots",
+    "images": {
+      "files-after-v7-migration.png": {
+        "sha256": "d8993b1f2ab45fe5594d4331824de17ff6de71072a1f25a61e87e8aa7987cc63",
+        "observation": "Original HP49g+ FILES visibly lists ANSWER, TEST and LOCAL as INTG after restoring the genuinely saved v7 session."
+      },
+      "lcd-after-v7-migration.png": {
+        "sha256": "c6debc99949138ab681e6b4871e96eef7acc826c31f06f566580c7216ad62985",
+        "observation": "Original HP49g+ HOME history visibly ends in 42 after physical FILES/RCL of ANSWER."
+      }
+    }
+  },
+  "limits": [
+    "This witness uses the identified integrated build before the pending directory cancellation persistence-failure fix.",
+    "The original full v6 input remains unchanged; v7 was produced and restored by the production Worker, not by patching version bytes.",
+    "Portable calculator sessions retain SD media; filesystem directory grants are intentionally a separate browser-local record."
+  ],
+  "asset_count": 48,
+  "actual_browser_asset_count": 27,
+  "assets": {
+    "orchard.wasm": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+    "worker.js": "84d27615dc41c079a99dbb7f26ba2f2ba6dc917e8a0c2a6292fb7c4dc74bdc0c",
+    "calculator.js": "964235a97511e664e6ac410321afd044dc1b34052c6c2e72e8fc9153c3bceca4"
+  },
+  "scope": "Actual unchanged full v6 session restored by the integrated R24 production Worker, saved as native v7, then ejected and restored again through UI with exact 16 MiB media preservation.",
+  "input_v6_evidence": "sd-directory-original-r24-v6.json",
+  "integration_assets_record": "All 48 build assets matched the frozen integration manifest before and after; actual browser responses were also hashed.",
+  "private_artifacts_committed": false
+}

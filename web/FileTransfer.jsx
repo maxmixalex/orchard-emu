@@ -2,7 +2,7 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {Button,Group,NativeSelect,Progress,Stack,Switch,Text,TextInput} from '@mantine/core';
 import {useTranslation} from 'react-i18next';
-import {transferCapabilities} from './file-transfer.js';
+import {transferCapabilities,canReceiveHp39Wire} from './file-transfer.js';
 import {hp39TransferMenus} from './hp39-transfer-ui.js';
 
 const size=n=>new Intl.NumberFormat(undefined,{maximumFractionDigits:1}).format(n/1024)+' KiB';
@@ -18,7 +18,8 @@ function TransferError({error,errorCode,errorValues,small=false}){
 export function TransferStatus({state,compact=false,onOpen}){
   const {t}=useTranslation(),transfer=state.transfer,batch=state.uploadBatch;
   const [wall,setWall]=useState(Date.now);
-  const active=Boolean(transfer?.active||batch?.active),moving=active&&transfer?.phase!=='serving';
+  const active=Boolean(transfer?.active||batch?.active),moving=active&&!['serving','listening'].includes(transfer?.phase);
+  const wireReceive=transfer?.protocol==='hp39-wire'&&transfer.direction==='receive';
   useEffect(()=>{
     setWall(Date.now());if(!moving)return;
     const timer=setInterval(()=>setWall(Date.now()),1000);return()=>clearInterval(timer);
@@ -34,7 +35,7 @@ export function TransferStatus({state,compact=false,onOpen}){
     style={compact?{padding:'6px 20px',background:'var(--mantine-color-default-hover)',flexShrink:0}:undefined}>
     <Group justify="space-between" gap="xs" wrap="nowrap">
       <Text size="sm" c={complete?'teal':undefined} style={{overflowWrap:'anywhere',minWidth:0}}>
-        {t(complete?'fileTransfer39Uploaded':transfer.protocol==='hp39-wire'&&transfer.phase==='negotiating'?(transfer.autoReceive?'fileTransferAutoReceiving':transfer.objectKind==='C'?'fileTransferWireNoteNext':'fileTransferWireNext'):'transferPhase_'+transfer.phase,{menu:wireMenu(state.model.id,transfer.transport)})}
+        {t(complete?'fileTransfer39Uploaded':transfer.protocol==='hp39-wire'&&transfer.phase==='negotiating'?(wireReceive?'fileTransferWireDependencies':transfer.autoReceive?'fileTransferAutoReceiving':transfer.objectKind==='C'?'fileTransferWireNoteNext':'fileTransferWireNext'):'transferPhase_'+transfer.phase,{menu:wireMenu(state.model.id,transfer.transport)})}
       </Text>
       {compact&&<Button variant="subtle" size="compact-xs" onClick={onOpen} style={{flexShrink:0}}>{t('fileTransferDetails')}</Button>}
     </Group>
@@ -42,6 +43,7 @@ export function TransferStatus({state,compact=false,onOpen}){
     {(compact||!batch)&&total>0&&<><Progress value={progress} aria-label={t('transferProgress')}/>
       <Text size="xs" c="dimmed">{t('fileTransferBytes',{transferred:number(transferred),total:number(total)})}</Text></>}
     {!total&&transfer.phase==='receiving'&&<Text size="xs" c="dimmed">{t('fileTransferReceivedBytes',{transferred:number(transferred)})}</Text>}
+    {wireReceive&&transfer.filesCompleted>0&&<Text size="xs" c="dimmed">{t('fileTransferWireReceived',{count:transfer.filesCompleted,bytes:number(transfer.receivedBytes)})}</Text>}
     {!compact&&transfer.hostedTotal>0&&transfer.phase!=='serving'&&<Text size="xs" c="dimmed">
       {t('fileTransfer39Overall',{completed:transfer.filesCompleted||0,count:transfer.filesTotal||0,
         transferred:number(transfer.hostedTransferred),total:number(transfer.hostedTotal)})}
@@ -52,7 +54,7 @@ export function TransferStatus({state,compact=false,onOpen}){
     {transfer.noteConverted&&<Text size="xs" c="dimmed">{t('fileTransferNoteConverted')}</Text>}
     <TransferError error={transfer.error} errorCode={transfer.errorCode} errorValues={transfer.errorValues}/>
     {batch?.recoverable&&<Text size="xs">{t('fileTransferQueueRecovery')}</Text>}
-    {wireRecovery&&<Text size="xs">{t(batch?.recoverable?'fileTransferWireRetry':'fileTransferWireRecovery',{menu:wireMenu(state.model.id,transfer.transport)})}</Text>}
+    {wireRecovery&&<Text size="xs">{t(wireReceive?'fileTransferWireReceiveRecovery':batch?.recoverable?'fileTransferWireRetry':'fileTransferWireRecovery',{menu:wireMenu(state.model.id,transfer.transport)})}</Text>}
   </Stack>;
 }
 export function FileTransfer({controller,state,transport}){
@@ -63,13 +65,15 @@ export function FileTransfer({controller,state,transport}){
   const transfer=state.transfer,active=Boolean(transfer?.active||batch?.active),connected=transport==='usb'?state.usbReady:state.serial;
   const capabilities=transferCapabilities(state.model.id,transport),supported=capabilities.send,hp39=capabilities.serve;
   const wire=hp39&&protocol==='wire';
+  const wireReceive=wire&&canReceiveHp39Wire(state.model.id,transport);
   const available=supported&&connected&&state.ready&&state.loaded&&!state.busy&&!state.stopped&&!active;
   const canRecover=state.ready&&state.loaded&&!state.busy&&!state.stopped&&
     (transfer?.transport==='usb'?state.usbReady:state.serial);
   return <Stack gap="sm">
     {hp39&&<NativeSelect label={t('fileTransferMode')} value={protocol} onChange={e=>setProtocol(e.currentTarget.value)} disabled={active}
-      data={[{value:'disk',label:t('fileTransferDisk',{disk:menus.disk})},{value:'wire',label:t('fileTransferWire',{menu:menus.wire})}]}/>}
+      data={[{value:'disk',label:t('fileTransferDisk',{disk:menus.disk})},{value:'wire',label:t(canReceiveHp39Wire(state.model.id,transport)?'fileTransferWireBoth':'fileTransferWire',{menu:menus.wire})}]}/>}
     <Text size="sm" c="dimmed">{t(wire?'fileTransferWireHelp':hp39?'fileTransfer39Help':!supported?'fileTransferUnavailable':transport==='serial'?'fileTransferSerialHelp':'fileTransferHelp',{menu:menus.wire,disk:menus.disk})}</Text>
+    {wireReceive&&<Text size="sm" c="dimmed">{t('fileTransferWireReceiveHelp',{menu:menus.wire})}</Text>}
     {wire&&transport==='usb'&&[1,2].includes(state.model.id)&&<Switch label={t('fileTransferAutoReceive')} description={t('fileTransferAutoReceiveHelp')}
       checked={autoReceive} disabled={active} onChange={event=>setAutoReceive(event.currentTarget.checked)}/>}
     {supported&&<>
@@ -89,9 +93,9 @@ export function FileTransfer({controller,state,transport}){
       </Group>)}</Stack>}
       {!hp39&&<TextInput label={t(multiple?'retrieveObjectName':'calculatorFileName')} value={name} onChange={e=>setName(e.currentTarget.value)} maxLength={64} disabled={active}/>}
       <Group><Button disabled={!available||!file} onClick={()=>hp39?controller.startHp39Server(transport,files,{protocol,autoReceive}):multiple?controller.startUploadBatch(transport,files):controller.startTransfer('send',transport,{file,name})}>{t(wire?'uploadHp39Wire':hp39?'hostHp39Files':'uploadFile')}</Button>
-        {capabilities.receive&&!wire&&<Button variant="light" disabled={!available} onClick={()=>controller.startTransfer('receive',transport)}>{t(hp39?'receiveHp39Files':'receiveFiles')}</Button>}
+        {capabilities.receive&&(!wire||wireReceive)&&<Button variant="light" disabled={!available} onClick={()=>controller.startTransfer('receive',transport,wireReceive?{protocol:'hp39-wire'}:undefined)}>{t(hp39?'receiveHp39Files':'receiveFiles')}</Button>}
         {capabilities.get&&<Button variant="light" disabled={!available||!name.trim()} onClick={()=>controller.startTransfer('get',transport,{name})}>{t('getNamedFile')}</Button>}
-        {active&&<Button color="red" variant="light" onClick={()=>controller.cancelTransfer()}>{t(hp39&&!wire?'stopHp39Server':'cancelTransfer')}</Button>}</Group>
+        {active&&<Button color="red" variant="light" onClick={()=>controller.cancelTransfer()}>{t(transfer?.protocol==='hp39-wire'&&transfer.direction==='receive'?'stopWireReceive':hp39&&!wire?'stopHp39Server':'cancelTransfer')}</Button>}</Group>
       {(capabilities.directory||capabilities.finish)&&<Group>
         {capabilities.directory&&<Button variant="subtle" disabled={!available} onClick={()=>controller.startTransfer('directory',transport)}>{t('listCalculatorFiles')}</Button>}
         {capabilities.finish&&<Button variant="subtle" disabled={!available} onClick={()=>controller.startTransfer('finish',transport)}>{t('finishCalculatorServer')}</Button>}

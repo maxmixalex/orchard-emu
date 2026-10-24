@@ -1,5 +1,46 @@
 # Validation
 
+## r24 architectural TLB, continuous Wire receive and SD recovery (2026-10-24)
+
+The C/WASM candidate is SHA-256
+`74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a`.
+It adds architectural translation state, so old v6 snapshots and new v7
+snapshots must not be made equal by discarding the new TLB fields. Source,
+frontend, input and tool identities remain attached to their individual records.
+Remote publication is recorded separately from local execution evidence.
+
+| Area | Observed result and boundary |
+| --- | --- |
+| ARM920T TLB | Separate 64-entry I/D banks, CP15 maintenance and lockdown, subpage coverage, cached protections and current domain checks. 812 C checks plus 25 independent instruction-driven cases cover stale mappings, exceptions, overlapping host hints and exact warm-state restore. No cache contents or physical cycle timing claim. [Implementation](arm920t-tlb.md). |
+| 39-series native return | The unchanged original 39g+/39gs ROMs run the separately named GBP39 ALIGN4 diagnostic, exit, restore/repeat the exit identically, and calculate `1+1=2`. The original GBP 0.3 loader alignment failure remains a separate result. [Evidence](evidence/arm920t-tlb-r24.json). |
+| 49/48 stock regression | 49g+ VERSION, CAS, menus, graphing, native/WASM checkpoint continuation, SD write/export/fresh-boot recall and in-flight media restore; 48gII FILES and arithmetic. Both complete ordinary USB SEND/GET/FINISH with exact payloads and firmware-changed transport headers. [Evidence](evidence/arm920t-tlb-r24.json). |
+| Factory diagnostics | The final TLB core repeats original 39gs/49g+ quick/full FLASH writes and four admitted models' applicable RS232/IrDA tests, including ENTER return to the factory menu. Full FLASH work remains 3.4665B/5.6505B reference ticks. [Evidence](evidence/factory-regression-r24.json). |
+| Continuous USB Wire | On each original 39g+/39gs ROM, one listener receives two different Notes and another receives two successive multipart library/aplet groups. Six complete files total 30,016 bytes per model; Notes and aplet match, while the library's original object body is preserved despite its export alias. The final production browser separately receives both Notes, waits for the real Stop acknowledgement, downloads exact files and returns to arithmetic. [Protocol](evidence/hp39-wire-receive-r24.json), [browser](evidence/hp39-wire-browser-r24.json). |
+| Directory cancellation | Original card bytes, name, protection, association and running intent survive cancellation before Apply. Eight browser component cases include replacing the folder, IndexedDB failure, simultaneous insertion refusal and recoverable original-card download. These are real OPFS handles with explicit media acknowledgements, separate from original firmware execution. |
+| Final directory browser | Original 49g+ cold-boots, reads host-created ANSWER as 42, writes TEST through stock FILES, synchronizes LOCAL and TEST in opposite directions, saves/restores a v7 full-card session, reattaches the original handle and synchronizes AFTER. Cancel/Back preserve the entire original card. The 48 frozen production assets remain unchanged. [Evidence](evidence/sd-directory-final-r24.json). |
+| Real session migration | The unmodified saved v6 session is restored through the production UI, saved by the real core as v7, and restored again after ejection. Both complete 16 MiB card exports match the original, the calculator resumes and recalls 42. The report retains its precise intermediate frontend identity. [Evidence](evidence/sd-session-migration-r24.json). |
+
+Final integrated native and reference CTest runs pass 24 suites. ASan/UBSan also
+pass all 24 suites after restoring the execution bit of one local build output;
+local leak detection is disabled because the execution environment uses ptrace.
+The remote sanitizer gate retains its normal leak checks. Native and WASM each
+pass 1,182,695 default assertions and 33,849 functional-clock assertions,
+**1,216,544 per host**. The quarantined physical-read variant adds 217,824
+separate WASM assertions. Unicorn 2.1.4 compares 17,075 shared ARMv4T cases with
+zero mismatch or skip; privileged MMU/TLB semantics are outside that oracle.
+Clang static analysis covers 52 C files without diagnostics.
+
+The [r24 local release record](evidence/release-validation-r24.json) binds the
+48 production assets, changed source hashes and completed local gates. Final
+Controller/Worker, browser components, six Worker profiles in two audiences,
+stop recovery and full-checkpoint trace replay were repeated after the recovery
+changes. Original-ROM browser results and generated-guest regressions remain
+separate. Remote Build, merge, Pages and live acceptance belong to the release PR.
+
+The previous r23 main and Pages release is independently completed, including
+all 47 live assets and original-ROM browser infrared recall. Its immutable
+publication result is in [publication-r23.json](evidence/publication-r23.json).
+
 ## r23 diagnostics, infrared, directory synchronization and display (2026-10-24)
 
 The production C/WASM candidate is SHA-256

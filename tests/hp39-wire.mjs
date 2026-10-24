@@ -129,7 +129,7 @@ for(const check of [21,67,68]){
   incoming.push(Uint8Array.of(68));f.poll(31001);assert.equal(sent.length,0,'Guest must see the IN completion first');
   f.poll(31002);assert.equal(sent[0][0],1);assert.equal(sent[0][1],1);
   f.cancel(31003);assert.equal(f.pending,false);assert.equal(events.at(-1).phase,'cancelled');
-  assert.throws(()=>f.start({request:2,mode:'receive',transport:'usb',protocol:'hp39-wire'},32000));
+  f.start({request:2,mode:'receive',transport:'usb',protocol:'hp39-wire'},32000);assert.equal(f.session.phase,'listening');f.cancel(32001);
 }
 // Exercise the same recovery through the real adapter with CANs remaining in
 // separate USB IN packets. No blanket drain may discard the following D.

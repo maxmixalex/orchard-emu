@@ -78,7 +78,9 @@ static void domains(void){
  o_rtc oldrtc=a.soc.rtc;
  a.nor_sequence=1;a.nor_id_mode=true;
  a.cpu.control=0xc0001079u;a.cpu.ttb=0x08004000;a.cpu.domain=3;
- a.translations[0].virtual_page=0x1234;a.sram_alias_reads=7;a.sram_alias_writes=9;
+ a.translations[0][0].valid=true;a.translations[0][0].index=17;
+ a.tlb[0].entry[3].valid=true;a.tlb[1].lockdown=0x4300001;
+ a.sram_alias_reads=7;a.sram_alias_writes=9;
  for(unsigned i=0;i<sizeof card;i++)card[i]=(uint8_t)(i*17u+3u);
  CHECK(orchard_sd_bind(&a,card,sizeof card)==ORCHARD_OK);CHECK(orchard_sd_insert(&a,sizeof card,true)==ORCHARD_OK);
  a.sd_dirty=true;a.soc.sdi.card_state=4;a.soc.sdi.remaining=7;a.soc.sdi.command=0x140;
@@ -94,7 +96,8 @@ static void domains(void){
  CHECK(a.soc.usb.connected&&!a.soc.usb.address&&!a.soc.usb.active_address&&!a.soc.usb.ep[1].tx_count);
  CHECK(a.soc.spi[0].status==1&&!a.soc.spi[0].remaining&&!a.soc.spi[0].half&&!a.soc.spi[0].control);
  CHECK(!a.soc.tcon&&!a.soc.count[2]&&!a.soc.reload_pending&&!a.soc.lcd[0]&&!a.soc.rx.count&&!a.soc.tx.count);
- CHECK(!a.cpu.ttb&&!a.cpu.domain&&a.cpu.control==0x78&&!a.translations[0].virtual_page);
+ CHECK(!a.cpu.ttb&&!a.cpu.domain&&a.cpu.control==0x78&&!a.translations[0][0].valid);
+ CHECK(!a.tlb[0].entry[3].valid&&!a.tlb[1].lockdown);
  CHECK(a.sram_alias_reads==7&&a.sram_alias_writes==9&&a.nor_sequence==1&&a.nor_id_mode);
  CHECK(equal(a.soc.rtc.reg+12,oldrtc.reg+12,7)&&a.soc.rtc.phase==oldrtc.phase&&a.soc.rtc.divider==oldrtc.divider);
  CHECK(!a.soc.rtc.reg[0]&&!a.soc.rtc.reg[1]&&!a.soc.rtc.reg[4]&&!a.soc.rtc.tick_count);
@@ -139,7 +142,7 @@ static void checkpoint_and_scheduler(void){
   if(stopped)o_stop(&a,ORCHARD_UNIMPLEMENTED_RESET,0x53000000u,0x21);
   size_t n=orchard_checkpoint_size(&a),ram=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE;
   CHECK(orchard_checkpoint_save(&a,saved,n)==ORCHARD_OK);
-  size_t remove=4377+(version<5?76:0)+(version<4?64:0)+(version<3?709:0)+(version==1?52:0),oldn=n-remove;
+  size_t remove=2056+4377+(version<5?76:0)+(version<4?64:0)+(version<3?709:0)+(version==1?52:0),oldn=n-remove;
   o_copy(left,saved,ram-remove);o_copy(left+ram-remove,saved+ram,n-ram);
   put(left+8,version);put(left+12,(uint32_t)oldn);put(left+28,crc(left+32,oldn-32));
   CHECK(orchard_checkpoint_load(&a,left,oldn)==ORCHARD_OK);
