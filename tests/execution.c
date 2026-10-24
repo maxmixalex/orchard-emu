@@ -37,6 +37,27 @@ static void initialize(void) {
     CHECK(orchard_init(&fast, sizeof fast, 1) != NULL);
     CHECK(orchard_init(&reference, sizeof reference, 1) != NULL);
 }
+static void conditions(void) {
+    const uint32_t lower[] = {0, O_USR, O_FIQ | O_I | O_F | O_T, 0x0fffffffu};
+    for (unsigned flags = 0; flags < 16; ++flags) {
+        bool n = (flags & 8u) != 0, z = (flags & 4u) != 0;
+        bool carry = (flags & 2u) != 0, v = (flags & 1u) != 0;
+        /* Architectural predicates form an independent oracle for the compact
+         * bitmaps, including signed comparisons and the ARMv4T NV encoding. */
+        const bool expected[] = {z, !z, carry, !carry, n, !n, v, !v,
+            carry && !z, !carry || z, n == v, n != v, !z && n == v,
+            z || n != v, true, false};
+        for (unsigned state = 0; state < sizeof lower / sizeof *lower; ++state) {
+            o_cpu c = {0};
+            c.cpsr = (flags << 28) | lower[state];
+            for (unsigned condition = 0; condition < 16; ++condition)
+                CHECK(o_condition(&c, condition) == expected[condition]);
+            CHECK(!o_condition(&c, 16));
+            CHECK(!o_condition(&c, 31));
+            CHECK(!o_condition(&c, UINT32_MAX));
+        }
+    }
+}
 static void one_instruction(uint32_t op, bool thumb, uint32_t *seed) {
     o_cpu c;
     o_cpu_reset(&c);
@@ -222,7 +243,7 @@ static void translations(void) {
 }
 EXPORT("regression") unsigned run(void) {
     checks=failures=first_failure=0;
-    dispatch(); single_rollbacks(); translations();
+    conditions(); dispatch(); single_rollbacks(); translations();
     return failures;
 }
 EXPORT("checks") unsigned get_checks(void) { return checks; }

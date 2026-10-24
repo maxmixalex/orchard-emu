@@ -76,6 +76,16 @@ uint32_t o_ror(uint32_t n, unsigned amount) {
     return amount ? (n >> amount) | (n << (32u - amount)) : n;
 }
 bool o_condition(const o_cpu *c, unsigned condition) {
+#ifndef ORCHARD_REFERENCE
+    if (condition == 14) return true; /* AL does not depend on NZCV. */
+    /* Bit n gives the result for NZCV == n. Keep this hot decision to one
+     * lookup and bit test; NV remains false in the ARMv4T model. */
+    static const uint16_t pass[16] = {
+        0xf0f0, 0x0f0f, 0xcccc, 0x3333, 0xff00, 0x00ff, 0xaaaa, 0x5555,
+        0x0c0c, 0xf3f3, 0xaa55, 0x55aa, 0x0a05, 0xf5fa, 0xffff, 0x0000
+    };
+    return condition < 16 && ((pass[condition] >> (c->cpsr >> 28)) & 1u);
+#else
     bool n = (c->cpsr & O_N) != 0, z = (c->cpsr & O_Z) != 0;
     bool carry = (c->cpsr & O_C) != 0, v = (c->cpsr & O_V) != 0;
     switch (condition) {
@@ -96,6 +106,7 @@ bool o_condition(const o_cpu *c, unsigned condition) {
     case 14: return true;
     default: return false; /* NV is not ARMv5's unconditional extension space. */
     }
+#endif
 }
 void o_nz(o_cpu *c, uint32_t value) {
     c->cpsr = (c->cpsr & ~(O_N | O_Z)) | (value & O_N) | (value ? 0 : O_Z);
