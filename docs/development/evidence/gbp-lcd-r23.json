@@ -1,0 +1,142 @@
+{
+  "schema": "orchard-lcd-game-v1",
+  "passed": true,
+  "model": 2,
+  "preset": "hp39gs-home",
+  "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+  "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+  "checkpoint_sha256": "677e37b2fce4516f955d122a2610f3740762b99dc8b7fc2162926b41bf10526c",
+  "ticks": 48000000,
+  "repeats": 3,
+  "sample_hz": 60,
+  "max_run_slice": 1024,
+  "guest_state_equal": true,
+  "canonical_hardware_speed": false,
+  "scope": "Production WASM and LCDFrames, identical private checkpoint, 60 Hz output samples. Measures core and host publication; excludes Worker messaging, canvas and compositor. 12 MHz functional reference, not physical ARM/LCD calibration.",
+  "variants": [
+    {
+      "mode": "after-slice",
+      "wall_ms": 2427,
+      "ticks": 48000000,
+      "reference_seconds": 4,
+      "reference_speed": 1.6481252575195715,
+      "instructions": 48000000,
+      "start_tick": 444478336,
+      "end_tick": 492478336,
+      "final_checkpoint_sha256": "5853ed3bad5c1f23640b573e17b5f89240a53bca743301ac7e8f5be85e1b964f",
+      "source_updates": 102,
+      "samples": 241,
+      "changed_samples": 99,
+      "same_scan_changes": 0,
+      "max_scans_between_samples": 1,
+      "min_mean_ink": 4.927242366412214,
+      "max_mean_ink": 31.357943702290076,
+      "white_samples": 0,
+      "mean_pixel_step": 1.4248195968511448,
+      "max_pixel_step": 26.217795801526716
+    },
+    {
+      "mode": "scan-boundary",
+      "wall_ms": 2332,
+      "ticks": 48000000,
+      "reference_seconds": 4,
+      "reference_speed": 1.7152658662092626,
+      "instructions": 48000000,
+      "start_tick": 444478336,
+      "end_tick": 492478336,
+      "final_checkpoint_sha256": "5853ed3bad5c1f23640b573e17b5f89240a53bca743301ac7e8f5be85e1b964f",
+      "source_updates": 102,
+      "samples": 241,
+      "changed_samples": 99,
+      "same_scan_changes": 0,
+      "max_scans_between_samples": 1,
+      "min_mean_ink": 6.812977099236641,
+      "max_mean_ink": 31.357943702290076,
+      "white_samples": 0,
+      "mean_pixel_step": 1.3102561426526715,
+      "max_pixel_step": 21.959685114503817
+    },
+    {
+      "mode": "scan-boundary-smooth",
+      "wall_ms": 1844.2999999988824,
+      "ticks": 48000000,
+      "reference_seconds": 4,
+      "reference_speed": 2.1688445480683316,
+      "instructions": 48000000,
+      "start_tick": 444478336,
+      "end_tick": 492478336,
+      "final_checkpoint_sha256": "5853ed3bad5c1f23640b573e17b5f89240a53bca743301ac7e8f5be85e1b964f",
+      "source_updates": 102,
+      "samples": 241,
+      "changed_samples": 102,
+      "same_scan_changes": 0,
+      "max_scans_between_samples": 1,
+      "min_mean_ink": 13.87833969465649,
+      "max_mean_ink": 31.336951335877863,
+      "white_samples": 0,
+      "mean_pixel_step": 0.9864543575063613,
+      "max_pixel_step": 14.639551526717558
+    }
+  ],
+  "timing_ms": {
+    "after-slice": [
+      2214.800000000745,
+      1891.9000000003725,
+      1699.2000000011176
+    ],
+    "scan-boundary": [
+      1923,
+      1730.5999999996275,
+      1795.0999999996275
+    ],
+    "scan-boundary-smooth": [
+      1874,
+      1680.5,
+      1921.4000000003725
+    ]
+  },
+  "median_ms": {
+    "after-slice": 1891.9000000003725,
+    "scan-boundary": 1795.0999999996275,
+    "scan-boundary-smooth": 1874
+  },
+  "execution_host": "Chromium 156.0.8078.47",
+  "production_worker": false,
+  "program_variant": "GBP39 Player 0.3 alignment diagnostic rebuild, unchanged main.c; not original package",
+  "page_errors": [],
+  "tool_sha256": {
+    "probe-lcd-game-browser.py": "100b471d48c48ecf56d3a1930433f45159cb25ab79fefb151b83ed9eb66dbb7e",
+    "lcd-game-sample.js": "d25764ee5f1ab66e782981f9105557c803de567aa9fec3782d8006eda9f1cbc6"
+  },
+  "after_slice_native_different_samples": 8,
+  "original_package": false,
+  "production_ui": {
+    "scope": "Production page, Worker, WASM, canvas and original ROM; private GBP0.3 alignment diagnostic rebuild, unchanged main.c, not original package",
+    "production_worker": true,
+    "responses": [
+      {
+        "mode": "instant",
+        "restored_auto_running": true,
+        "guest_ticks": 48272400,
+        "wall_seconds": 4.005968550998659,
+        "snapshots": 112,
+        "canvas_paints": 100,
+        "rgba_sha256": "42d106fb43cd9e649021ed102fde45f905a316e84790e0ce2ab8427447698a14",
+        "stopped": false,
+        "page_errors": []
+      },
+      {
+        "mode": "smooth",
+        "restored_auto_running": true,
+        "guest_ticks": 48130623,
+        "wall_seconds": 3.992060204000154,
+        "snapshots": 110,
+        "canvas_paints": 102,
+        "rgba_sha256": "fa462d6584ef7923deef78270204ef1206837b640dd50958990e08b766168d05",
+        "stopped": false,
+        "page_errors": []
+      }
+    ],
+    "passed": true
+  }
+}

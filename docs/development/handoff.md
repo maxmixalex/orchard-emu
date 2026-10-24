@@ -1,6 +1,131 @@
 # Continuation handoff
 
-## Current r22 continuation from 2ae6512 (2026-10-23)
+## Current r23 continuation from 128554d (2026-10-24)
+
+The user requested factory RS232/FLASH fixes, infrared, original application
+coverage, two-way directory SD synchronization, easier Wire queues, clearer
+pause/restore behavior, LCD sampling/scaling, traditional landscape and mobile
+UI refinement. Native host-device/Conn3x work is explicitly retired. Work was
+split across serial/infrared, NOR/checkpoints, display/UI, directory/transfer,
+original-program investigation, independent review and production browser
+acceptance. No original ROM or application was patched to obtain a stock pass.
+
+The final production C/WASM is SHA-256
+`4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9`.
+The [validation page](validation.md) and
+[r23 release record](evidence/release-validation-r23.json) distinguish local
+working-tree evidence from the remote Build/Pages and live checks recorded in
+the release PR. Private ROMs, checkpoints, card images, downloaded binaries and
+original LCD pixels must remain outside Git and public artifacts.
+
+### Core, firmware and infrared
+
+Selected SST NOR devices now implement functional word program, sector/block/
+chip erase, polling and supported suspend/resume. MMU/bus fast paths and idle
+scheduling preserve those operations. The immutable input ROM remains separate
+from programmed flash. Original 39gs and 49g+ complete both quick and full
+factory FLASH write tests on the final core; their full tests consume
+3.4665B/5.6505B reference ticks. This is functional selected-part behavior,
+not electrical timing certification. See [NOR](nor-write.md).
+
+Three UART channels have independent holding/FIFO buffers, host staging,
+interrupt/event state, documented internal loopback and applicable modem
+gating. Applicable original RS232/IrDA factory tests pass and return through
+ENTER. UART transport remains decoded bytes: there is no bit-waveform,
+baud-time or FIFO receive-timeout model. The admitted 49-family board condition
+includes the documented infrared-related GPIO connection. See
+[UART/IrDA](uart-irda.md).
+
+Two browser tabs can pair through **Connections → Infrared** and exchange
+original firmware traffic. The 49g+/48gII pair transfers and recalls objects in
+both directions; all four 39g+/39gs source/destination combinations transfer
+an aplet and export exactly the same 620 bytes. The production browser also
+recalls `ORCHARD=12345` on 48gII after a 49g+ transfer and disconnects both
+ends. Pairing keeps both tabs running under the link policy; manual pause,
+reset, ROM/session replacement or a fatal error disconnects the pair. Review
+fixed loss of an already-emitted tail byte when firmware disabled UART2 before
+the host drained it. This is a two-instance virtual link, not host infrared
+hardware or optical collision/range simulation.
+
+The original 39 ROM infrared path reaches an external SRAM alias before any
+UART traffic. The admitted `hp39-home` / `hp39gs-home` presets therefore now
+select the explicitly conditional bank-1 low-address mirror, with the same
+256 KiB physical RAM. Strict mode is unchanged, and legacy sessions retain
+their saved decode condition. To use the new infrared path from an old
+39-series session, export its objects, restart the original ROM under the new
+preset and reimport them. Do not silently rewrite saved hardware conditions or
+describe this hypothesis as a measured board decode.
+
+Checkpoint v6 adds 4,377 scalar bytes after v5, then saves sorted changed flash
+sectors after the existing RAM/boot SRAM/card payload. It validates all state
+before mutation and retains v1–v5 imports. ROM identity uses the immutable
+input; changed sectors can contain ROM-derived bytes, so sessions are private
+too. Restoring a healthy state automatically resumes when the current focus
+policy permits. A visible pause bar offers Resume; stopped states remain
+stopped. See [sessions](sessions.md).
+
+### Files, display and interface
+
+Directory SD now persists a directory handle, aliases, common baseline and
+card identity. Previewed two-way add/edit/delete/rename supports explicit
+conflict choices and revalidation before writing. Mounted media follows
+pause/eject/copy/preview/apply/reinsert/resume; cancellation guards each awaited
+mutation boundary. A completed host-file write cannot be rolled back merely
+because cancellation arrives afterward, and partial failure does not advance
+the whole baseline. This is explicit synchronization, not an OS-mounted disk
+or a background watcher. Native picker permission UI and an original-ROM
+end-to-end native directory mount remain distinct from the real OPFS/IndexedDB
+browser fixture and the stock SD-card tests. See [directory SD](directory-sd.md).
+
+Wire labels match each original firmware menu. Opt-in next-RECV automation is
+limited to recognized stable USB aplet/library catalogs on 39g+/39gs. It sends
+ordinary physical keys only after the previous object completes, and cancels
+on manual input, unknown screens or failure. Original two-object installs and
+SEND round trips pass. It remains one firmware receive per object; reverse
+Wire batch downloading and cross-catalog Note/program automation are not
+implemented. Disk-drive receive remains available.
+
+The LCD observer copies pixels/annunciators at completed scans without
+changing guest state. Default Instant and optional 35 ms response are separate
+from nearest/bilinear/bicubic/Lanczos-3 spatial scaling. Original 39gs/49g+
+self-tests enable the LCD before replacing OFF text with ON text; the brief
+old text is firmware order, not a hidden UI frame. Annunciator artwork follows
+the official 39gs manual, without claiming physical calibration for every
+model. Traditional landscape keeps F1–F6 with the LCD. Narrow screens retain
+the display/soft keys while scrolling the main keys, and settings actions
+remain reachable. Duplicate SD and Local device toolbar entries are removed.
+
+### Original applications and known limits
+
+Actual stock-install/use/exit/arithmetic witnesses cover native 2048, BabalPlus
+and base-conversion programs on 49g+, the `.49` RPL converters on 48gII, and
+Arkalite on 39g+/39gs. 2048 exposed legal DITHMODE `0x12210`, now stored/read
+back alongside zero; undocumented pixel dithering phases are not invented.
+The `.48` converter files load as strings on the admitted ARM 48gII firmware
+and are not counted as successful program execution.
+
+The exact user GBP 0.3 package fails in its unaligned loader BSS clear before
+the player starts. A separate **GBP39 ALIGN4** diagnostic rebuild aligns that
+boundary, retains the original `main.c`, and runs/returns on 39gs. Its 39g+
+IRQ-return fault remains open. The original package is not relabelled as
+compatible. Four-second actual diagnostic-game LCD samples show mean pixel
+changes of 1.425/1.310/0.986 for after-slice/scan/scan+35 ms response, with
+identical final guest checkpoints. Instant still shows real redraw
+intermediates; neither complete flicker removal nor a CPU speedup is claimed.
+See [39 programs](hp39-programs-r23.md), [49 programs](apps-r23.md) and
+[LCD](lcd.md).
+
+Native/reference/ASan-UBSan-LSan each pass 23 suites. Native and WASM each pass
+1,203,654 default-plus-clock assertions; the optional physical-read corpus is
+separate. Independent Unicorn has 17,075 matching cases and Clang analysis
+has zero diagnostics across 51 C files. The final 32 MiB original SD workflow
+has byte-identical v6 native/WASM continuation. Production Chromium passes
+the seven-stage 16 MiB original SD workflow, automatic/manual restore and
+legacy v5 migration. Keep physical board/clock verification, original
+HP40gs/HP50g admission, broader native-program compatibility and SD DMA/SDHC
+as explicit remaining work. Do not revive the retired native-device roadmap.
+
+## Historical r22 continuation from 2ae6512 (2026-10-23)
 
 The user requested mapped-key highlighting and model isolation, system keyboard
 layouts and calculator-side binding selection, persistent connection/SD panels,

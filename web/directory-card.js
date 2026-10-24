@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
-// Directory snapshots are copied into an unmounted FAT16 draft. Synchronization
-// is explicit and additive: no host entry is removed, renamed, or watched.
+// Directory snapshots and stable short names for an unmounted FAT16 draft.
+// Three-way synchronization lives in directory-sync.js; the older additive
+// write-back functions remain available to callers of the original API.
 import {createSDImage,MAX_SD_BYTES} from './sd-card.js';
 import {addSDTree,readSDTree,validateSDName} from './sd-filesystem.js';
 
@@ -107,7 +108,8 @@ export function mapDirectoryNames(snapshot,previous=null){
       if(!child){child={name,type:'directory',children:new Map()};parent.children.set(name,child);}
       if(last){
         if(entry.type==='file'&&child.children?.size)fail('directoryPath');
-        Object.assign(child,entry,{children:entry.type==='directory'?child.children:undefined});
+        Object.assign(child,{source:entry.source,type:entry.type,...(entry.type==='file'?{bytes:entry.bytes}:{}),
+          children:entry.type==='directory'?child.children:undefined});
       }
       parent=child;
     }
@@ -115,9 +117,15 @@ export function mapDirectoryNames(snapshot,previous=null){
   const previousMap=new Map((previous?.mappings||[]).map(entry=>[entry.source,entry.card])),mapped=[];
   function visit(parent,sourceParent='',cardParent=''){
     const children=[...parent.children.values()].sort((a,b)=>compare(a.name,b.name)),used=new Set(),chosen=new Map();
-    // Existing short filenames get first choice, so a synthesized alias never
-    // displaces a real FILE~1.TXT supplied by the user.
-    for(const child of children){const direct=short(child.name);if(direct&&!used.has(direct)){used.add(direct);chosen.set(child,direct);}}
+    // Retain previously published aliases first: new host filenames must not
+    // rename an existing guest path. On first import, direct short names still
+    // take precedence over generated aliases.
+    for(const child of children){
+      const source=sourceParent?sourceParent+'/'+child.name:child.name,old=previousMap.get(source);
+      const candidate=old&&old.slice(0,old.lastIndexOf('/'))===cardParent?short(old.split('/').at(-1)):null;
+      if(candidate&&!used.has(candidate)){used.add(candidate);chosen.set(child,candidate);}
+    }
+    for(const child of children){const direct=short(child.name);if(!chosen.has(child)&&direct&&!used.has(direct)){used.add(direct);chosen.set(child,direct);}}
     for(const child of children){
       const source=sourceParent?sourceParent+'/'+child.name:child.name;
       if(!chosen.has(child)){

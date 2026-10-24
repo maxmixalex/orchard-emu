@@ -1,0 +1,72 @@
+{
+  "schema": "orchard-directory-sync-r23-v1",
+  "recorded_on": "2026-10-24",
+  "source_sha256": {
+    "web/directory-card.js": "0c7a8da682041700ec64cbe40b5a922de9b7059a88e7c28c57daebc1b909de8e",
+    "web/directory-sync.js": "308450a1ab5356fafb2b9f68fdd41c067a11762333250cdb156158a95a26382c",
+    "web/directory-storage.js": "09a58b41f818d4fd7481cf0eec611acbb2c4bdff62b218d7135f202cce30d271",
+    "web/sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+    "web/DirectoryCardControls.jsx": "9d8e16477181172801fc8bb697dcc1c3451de56b5efa1ad44eec9c1850a086f3",
+    "web/SDCard.jsx": "42d18e172504e22e6365e5e224fb4907b2f1f75ab313f1e5ab8f158f037651cb",
+    "web/SDCardFiles.jsx": "d9251c6475909decf12835ae5f9a8526a3e0e77e0aed9f0f0442e8f9e94d5f12",
+    "tests/directory-sync.mjs": "3d54d3d515b431889cde4453872dd147f949872f0105945147736866b9222061",
+    "tests/browser-sd-directory.py": "c0866cb0cecad60ca20dddd6ffbb174c10dca5d3abee44c8d8e68cd8657fbbf9",
+    "tests/sd-directory-fixture.jsx": "b010ede9cfd1e1665c501cd5a8f95a84ff226272eff0e44d381ea55afcb56036"
+  },
+  "node_checks": {
+    "sd-directory": 68,
+    "directory-sync": 86
+  },
+  "browser": {
+    "checks": [
+      "native browser directory handles recursively import empty/nested folders and arbitrary names with reviewed 8.3 aliases and exact bytes",
+      "running guest pauses before eject; explicit three-way review imports local additions, writes guest changes, propagates deletions and leaves unresolved conflicts ejected",
+      "explicit conflict selection updates the card, persists the new common baseline and inserts before restoring the original running state",
+      "actual IndexedDB structured-clone directory handle and baseline survive reload; matching restored card reconnects without reopening picker and preserves paused state",
+      "unrelated card serial cannot attach to remembered folder; explicit reopen imports anew; mobile Chinese review fits viewport; forget removes persisted association",
+      "real directory file input fallback imports nested files without extension filter and clearly omits direct write-back",
+      "capacity overflow keeps the current draft; changing to 32 MiB rebuilds the already-read snapshot successfully"
+    ],
+    "browser": "156.0.8078.47",
+    "errors": [],
+    "picker_adapter": "Origin-private FileSystemDirectoryHandle; native permission dialog not automated",
+    "guest_adapter": "Explicit Worker ack; firmware acceptance tested separately"
+  },
+  "browser_report_sha256": "5844397f7bc29f6cfc1a36300290f5bb01c1b586fce2bba785be19b21d218a9f",
+  "mobile_chinese_screenshot_sha256": "cce36ecd529fbb275775eb00ca0aaa4f0ffb4fc8b8d0f38ae544e0f20baee28d",
+  "guarantees": [
+    "explicit ejected-card three-way preview",
+    "independent updates and bilateral deletions/renames",
+    "conflicts default to preserving both sides",
+    "whole-preview and per-destination recheck",
+    "children-first nonrecursive directory removal",
+    "baseline advances only for agreed paths",
+    "one private FAT copy with metadata preservation",
+    "native directory handle and baseline survive IndexedDB reload",
+    "volume-serial and ROM-hash association guard",
+    "successful sync reinserts then restores prior running state"
+  ],
+  "limits": [
+    "no live FAT editing or background watcher",
+    "no native OS block-device mount",
+    "no whole-directory atomicity or lock against native applications",
+    "native picker permission dialog not automated",
+    "Worker media acknowledgement fixture is not stock firmware evidence"
+  ],
+  "prior_original_rom_evidence": "sd-directory-r22.json",
+  "independent_review": {
+    "confirmed_defect": "A cancelled generation could still delete or overwrite one local file after its outstanding read resolved.",
+    "fix": "Recheck cancellation after awaited destination/parent/handle acquisition and before stream writes or close; abort acquired uncommitted streams.",
+    "checks_added": 28,
+    "covered_boundaries": [
+      "destination read before delete or overwrite",
+      "nested parent lookup before delete",
+      "file handle lookup before open",
+      "createWritable completion before write",
+      "write completion before close",
+      "already committed close stops subsequent writes without claiming rollback"
+    ],
+    "browser_followup": "All seven Chromium directory workflows rerun after the fix with the local Noto Sans CJK SC font.",
+    "visual_environment": "The 390 px Chinese component-fixture screenshot was inspected with Noto Sans CJK SC. Chinese glyphs render and controls fit the viewport; this is not a full-app visual witness."
+  }
+}

@@ -5,7 +5,8 @@ export const SETTINGS_KEY = 'orchard:preferences:v1';
 export const AUTO_PREFIX = 'orchard:autosave:v1:';
 export const DEFAULTS = Object.freeze({ version:1, view:'immersive', zoom:100,
   pauseOnBlur:true, pauseOnHidden:true, speed:1, transferUnlimited:false,
-  sound:true, volume:0.35, rememberROM:true, autosave:false, interval:30, mappings:{} });
+  sound:true, volume:0.35, rememberROM:true, autosave:false, interval:30,
+  screenScaling:'nearest', lcdResponse:'instant', mappings:{} });
 const CODE = /^(?:(?:Ctrl|Alt|Meta|Shift)\+)*(?:Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter|Equal|Comma)|Intl(?:Backslash|Yen|Ro)|F(?:[1-9]|1[0-2])|Enter|Escape|Backspace|Delete|Space|Period|Comma|Slash|Minus|Equal|Tab|Backquote|CapsLock|BracketLeft|BracketRight|Backslash|Semicolon|Quote|PrintScreen|ScrollLock|Pause|NumLock|ContextMenu|Insert|Home|End|PageUp|PageDown|Arrow(?:Up|Down|Left|Right))$/;
 export function validBinding(code, sequence) {
   return typeof code==='string' && code.length<=80 && CODE.test(code) &&
@@ -24,7 +25,13 @@ export function validatePreferences(value) {
   if(value.volume!==undefined){
     if(!Number.isFinite(value.volume)||value.volume<0||value.volume>1)throw new Error('Invalid settings.');p.volume=value.volume;
   }
-  if(!['immersive','immersive-landscape','traditional'].includes(value.view)||!Number.isInteger(value.zoom)||value.zoom<50||value.zoom>180||
+  if(value.screenScaling!==undefined){
+    if(!['nearest','linear','cubic','lanczos'].includes(value.screenScaling))throw new Error('Invalid settings.');p.screenScaling=value.screenScaling;
+  }
+  if(value.lcdResponse!==undefined){
+    if(!['instant','smooth'].includes(value.lcdResponse))throw new Error('Invalid settings.');p.lcdResponse=value.lcdResponse;
+  }
+  if(!['immersive','immersive-landscape','traditional','traditional-landscape'].includes(value.view)||!Number.isInteger(value.zoom)||value.zoom<50||value.zoom>180||
     ![0,0.5,1,2].includes(value.speed)||![15,30,60,120].includes(value.interval))throw new Error('Invalid settings.');
   Object.assign(p,{view:value.view,zoom:value.zoom,speed:value.speed,interval:value.interval});
   if(!value.mappings || typeof value.mappings!=='object'||Array.isArray(value.mappings))throw new Error('Invalid keyboard mappings.');

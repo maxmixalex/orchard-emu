@@ -34,7 +34,7 @@ static void nor800(void) {
     CHECK(o_phys_write(&m,0,2,0xf0));CHECK(!m.nor_id_mode);
     CHECK(o_phys_write(&m,0xffffc,4,0));CHECK(!o_phys_write(&m,0xffffe,4,0));
     CHECK(o_phys_write(&m,0xaaaa,2,0xaa));CHECK(o_phys_write(&m,0x5554,2,0x55));
-    CHECK(!o_phys_write(&m,0xaaaa,2,0xa0));CHECK(m.stop.status==ORCHARD_UNIMPLEMENTED_FLASH);
+    CHECK(o_phys_write(&m,0xaaaa,2,0xa0));CHECK(m.nor_sequence==3);
     orchard_reset(&m);CHECK(m.nor_device==ORCHARD_NOR_SST39VF800A);
     CHECK(m.profile->ram_bytes==0x40000&&!o_phys_read(&m,0x08040000,4,&value));
     CHECK(orchard_init(&m,sizeof m,4)!=NULL);

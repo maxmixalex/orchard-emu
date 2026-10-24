@@ -16,7 +16,7 @@ static bool permission(o_cpu *c, unsigned ap, bool user, bool write) {
     return !write && (sr == 2 || (sr == 1 && !user));
 }
 static uint32_t table_offset(const orchard_machine *m, uint32_t address) {
-    if (address < m->profile->flash_bytes && 4u <= m->profile->flash_bytes - address && !m->nor_id_mode)
+    if (address < m->profile->flash_bytes && 4u <= m->profile->flash_bytes - address && !m->nor_id_mode && !m->nor.remaining && !m->nor.erase_remaining)
         return (uint32_t)offsetof(orchard_machine, flash) + address;
     if (address >= O_RAM_BASE && address - O_RAM_BASE < m->profile->ram_bytes &&
         4u <= m->profile->ram_bytes - (address - O_RAM_BASE))
@@ -124,6 +124,7 @@ bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
     if (memo->first_offset && memo->virtual_page == (va & ~1023u) &&
         memo->control == c->control && memo->ttb == c->ttb &&
         memo->domain == c->domain && memo->access == access && !m->nor_id_mode &&
+        !m->nor.remaining && !m->nor.erase_remaining &&
         o_read_le(bytes + memo->first_offset, 4) == memo->first_word &&
         (!memo->second_offset || o_read_le(bytes + memo->second_offset, 4) == memo->second_word)) {
         *physical = memo->physical_page | (va & 1023u);

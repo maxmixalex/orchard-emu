@@ -32,8 +32,8 @@ async function send(data,filter){const p=wait(filter);w.postMessage({generation:
 try{
  await wait(d=>d.type==='ready');await send({type:'create',model:1,preset:'strict',audience:'calculator'},d=>d.type==='created');
  const rom=new Uint8Array(1048576).fill(255),dv=new DataView(rom.buffer);
- // Reset disables watchdog, then polling ARM firmware echoes UART input.
- const words=[0xea000000,0xe1a00000,0xe59f0028,0xe3a01000,0xe5801000,0xe59f0020,0xe5901010,0xe3110001,0x0afffffc,0xe5d01024,0xe5c01020,0xeafffff9,0xe1a00000,0xe1a00000,0x53000000,0x50000000];
+ // Reset disables watchdog and selects 8-bit PIO RX/TX before polling UART input.
+ const words=[0xea000000,0xe1a00000,0xe59f0038,0xe3a01000,0xe5801000,0xe59f0030,0xe3a01003,0xe5801000,0xe3a01005,0xe5801004,0xe5901010,0xe3110001,0x0afffffc,0xe5d01024,0xe5c01020,0xeafffff9,0xe1a00000,0xe1a00000,0x53000000,0x50000000];
  words.forEach((v,i)=>dv.setUint32(i*4,v,true));
  await send({type:'load',rom:rom.buffer},d=>d.type==='loaded');await send({type:'serial-connect',connected:true},d=>d.type==='serial-status'&&d.connected);
  const echoed=wait(d=>d.type==='uart-output'&&d.bytes.length);

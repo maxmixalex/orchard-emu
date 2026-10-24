@@ -81,7 +81,7 @@ only worked because the prior implementation did not run a scan clock.
 
 There is **no FIFO occupancy, fetch arbitration, underflow or analog panel**
 model. FIFO interrupts must remain masked; attempts to unmask them stop.
-Enabling LPC3600, a TFT temporary palette or nonzero dithering also stops.
+Enabling LPC3600, a TFT temporary palette or an undocumented dither pattern also stops.
 LCD `+0x68` remains separate, unidentified and strict by default. A working
 scan counter/frame IRQ is not evidence of correct physical panel pixels.
 
@@ -112,42 +112,60 @@ the workbench and CLI retain the explicit controller/packed-memory choice.
 ## Host presentation synchronized to the scan counter
 
 The raw framebuffer APIs above remain instantaneous, side-effect-free memory
-inspection. They are not a latched panel image. In particular, the firmware
-can clear and redraw part of its RAM while the LCD's current scan is still in
-progress. Previously the Worker decoded that RAM whenever a wall-time refresh,
-key queue update or link-status request happened. Two UI updates could therefore
-publish different partial redraws during the same scan.
+inspection. They are not a latched panel image. In r22, the Worker sampled live
+RAM after a run slice noticed a changed scan serial. That bounded repeated UI
+reads, but the first observation could still fall after the guest had begun
+clearing or redrawing the next image.
 
-The calculator Worker now uses `web/lcd-frames.js`. After each existing bounded
-`core.run` call, it checks the LCD frame serial. A changed serial samples one
-independent image and its annunciators; UI publications reuse that image until
-the next observed scan boundary. Link polling and exact key-contact scheduling
-run first and never wait for a display deadline. The maximum observation offset
-is the existing 1,024-reference-tick run quantum (about 85 microseconds at the
-functional 12 MHz timebase). Multiple completed scans in one quantum use the
-latest observed state. The calculator still publishes at roughly 30 Hz and its
-Canvas paints only the latest update in a `requestAnimationFrame` callback.
+The r23 optional native observer copies the framebuffer and annunciators in
+`o_lcd_tick`, exactly when the existing completed-frame event increments the
+serial. `orchard_lcd_observe` is disabled by default; the calculator's
+`LCDFrames` enables it with its explicit inspection view. Published accessors
+return the last completed-boundary copy. Raw debug access remains independent.
+The observer cannot advance time, change IRQ scheduling, write guest RAM or
+turn an unsuccessful inspection into a CPU stop. Its buffer and enable/view
+policy are host state, excluded from checkpoints. Reset, restore, view changes
+and ENVID transitions invalidate it.
 
-This is a bounded **host presentation policy**, not a new hardware DMA, FIFO,
-row-fetch or analog response model. Sampling RAM just after a frame boundary
-does not reconstruct every pixel that the physical panel received during the
-preceding scan. Firmware redraws that span complete scans remain visible. No
-ROM hash, pixel count, content recognition, arbitrary white-frame delay or
-guest modification is used. Valid entirely white images are published normally.
-Disabling the LCD resamples immediately. Paused/stopped and debugger inspection
-bypass the cache, so unsupported frames and real power-off are not concealed.
-Reset, model/view changes, restore and virtual-time rewind invalidate the old
-image. None of this host cache is serialized in a checkpoint.
+The Worker still checks after each bounded run call, after servicing links.
+It reuses the latest native publication until the serial changes. The UI still
+publishes around 30 Hz and coalesces incoming messages in `requestAnimationFrame`.
+This removes the after-slice sampling offset; it does not reconstruct row DMA,
+FIFO/bus arbitration or the individual pixels received during the preceding
+scan. A program that clears and redraws the same live buffer across complete
+scans can still show intermediate content. The r23 GBP diagnostic measurement
+below measures this new path separately; historical r22 timings do not.
 
-The live display, PNG capture and recording use the same published pixels and
-the same empty-screen fallback when the LCD decoder reports unavailable data.
-The original error status remains in the controller/workbench. Recording no
-longer keeps obsolete good pixels while the live display has already cleared.
+**Settings → General → LCD response** offers Instant (the default) and Smooth
+(35 ms). Smooth applies an explicit exponential response to intensities in guest
+time, with a 35 ms time constant. It processes the completed-scan samples
+observed by the existing Worker pump; it does not interpolate missing guest
+execution. This is a presentation choice, not an HP panel measurement. It
+reduces the contrast of rapid transitions at the cost of visible persistence.
+Every valid white image participates normally and converges to white. There is
+no text recognition, frame rejection, guessed black-pixel threshold or delay
+that waits for a preferred picture. Power-off, unavailable frames and reset
+clear history immediately; annunciators retain their actual published levels.
+The debugger always uses immediate raw pixels without the response filter.
+
+The self-test's briefly visible old **LCD TURNED OFF** text after ENVID becomes
+one is valid guest content. The original-ROM measurement below establishes that
+firmware enables the LCD before updating that text. The UI does not rewrite it.
+The observer explicitly invalidates on both power transitions; it cannot retain
+an obsolete cached disabled image over a newly enabled display.
+
+Live display, PNG capture and recording share the published native-size pixels,
+including a selected response mode, and the same empty-screen fallback when
+inspection is unavailable. The original error status remains in the controller
+and workbench. Spatial scaling described below affects only display rendering.
 
 Maintained verification:
 
-- `tests/lcd-publication.mjs` supplies partial rewrites within one synthetic
-  scan, a completed white frame, video disable, invalid data, forced observation,
+- `tests/lcd-input.c` checks capture at the native scan event, subsequent live
+  RAM rewrites, the next publication, off/on invalidation and observer reset.
+- `tests/lcd-publication.mjs` checks published exports and raw debugger access,
+  the explicit 35 ms response, power transitions and partial rewrites within one
+  synthetic scan, a completed white frame, video disable, invalid data, forced observation,
   model/view/reset/rewind changes, 64-bit serial carry and WASM memory growth.
 - `tests/browser-lcd.py` sends 300 synthetic messages before one real browser
   animation frame: one Canvas paint and no resize/clear. Legitimate white frames
@@ -160,8 +178,11 @@ Maintained verification:
   alternating warmed execution/CPU samples, and emits only hashes and metadata.
   Its 33-virtual-ms publication schedule is deterministic; it does not substitute
   for a browser wall-time benchmark or physical-panel calibration.
+  r23 recreates a fresh core for every trial: a host observer deliberately
+  survives checkpoint restoration, so reusing an enabled core would contaminate
+  a supposedly unobserved baseline.
 
-[r22 evidence](evidence/lcd-publication-r22.json) records 278 requests per original
+Historical [r22 evidence](evidence/lcd-publication-r22.json) records 278 requests per original
 ROM, without publishing the ROM, RAM, checkpoints or pixels:
 
 | Original firmware | Same-scan image changes before | After | Final guest checkpoint |
@@ -172,10 +193,170 @@ ROM, without publishing the ROM, RAM, checkpoints or pixels:
 | HP49g+ | 7 | 0 | Byte-identical |
 
 Three warmed, alternating CPU measurements per path found candidate/baseline
-ratios of 0.962, 0.905, 1.003 and 0.992 respectively. This rules out a large
-observer overhead in these workloads; it is not a statistically established
+ratios of 0.962, 0.905, 1.003 and 0.992 respectively. This ruled out a large
+r22 cache overhead in those workloads; it is not a statistically established
 speedup. The longest retained-frame age was 76.5 virtual milliseconds, following
 the guest's variable scan period rather than a fixed debounce timer.
+
+## Original self-test power/text ordering (r23)
+
+Both admitted original HP39gs and HP49g+ ROMs were taken through the physical
+factory LCD test, the contrast screen and ENTER. The native display observer
+was disabled. Coarse runs first bracketed the ENVID edge, then an unchanged
+checkpoint was replayed with one-reference-tick runs around that edge. The
+measurements read the real LCD control register and raw framebuffer; they do
+not rely on the browser retaining a picture.
+
+| Model | Exact observed ENVID 0→1 tick | First enabled raw image | At +4096 ticks | At +65536 ticks |
+| --- | ---: | --- | --- | --- |
+| HP39gs | 333,687,425 | LCD TURNED OFF | LCD TURNED OFF | LCD TURNED ON |
+| HP49g+ | 404,156,521 | LCD TURNED OFF | LCD TURNED OFF | LCD TURNED ON |
+
+For both models, the first enabled framebuffer is byte-identical to the
+previously visible OFF text. At the functional 12 MHz reference, the two later
+observations are about 0.34 ms and 5.46 ms after enabling. They bracket content
+updates; they do not measure the exact first changed byte or physical panel
+settling. Both raw updates precede the next completed scan in this trace.
+
+The firmware therefore enables scanning while the old string remains in RAM,
+then writes the new string. That explains why the emulator can briefly show
+OFF after enabling. There is no physical optical capture here, so whether the
+original calculator makes this interval perceptible remains unverified. The
+frontend does not suppress the valid old image or insert an invented blank.
+
+[Sanitized power-sequence evidence](evidence/lcd-power-r23.json) records both
+ROM identities, physical keys, registers, exact enable ticks and frame hashes.
+The repeatable witness takes the ordinary factory-menu checkpoints produced by
+`tools/verify-flash-selftests.mjs`:
+
+```sh
+node tools/verify-lcd-power-sequence.mjs WASM ROM-DIRECTORY FACTORY-CHECKPOINT-DIRECTORY NEW-PRIVATE-OUTPUT
+```
+
+## GBP redraw and publication measurement (r23)
+
+The exact GBP39 Player 0.3 package has a separate loader alignment problem; its
+unchanged executable did not reach the game in this test. A private diagnostic
+rebuild aligns the `.data`/BSS boundary to four bytes and uses the distinguishing
+title `GBP39 ALIGN4`. Its `main.c` gameplay/drawing code is unchanged. It was
+installed through stock HP39gs Wire and started with physical keys, with the
+original ROM and no host RAM patch. **The following results apply to that
+diagnostic rebuild, not to successful execution of the original package.**
+
+Inspection of the supplied source shows `draw_play()` calling `clear()` on the
+visible framebuffer, then drawing text, lanes, notes and soft-key boxes directly
+into the same buffer. It does not wait for vertical synchronization or swap a
+completed offscreen frame. Capturing at the actual LCD boundary removes the
+host's run-slice offset but can still capture a genuine intermediate redraw.
+
+The same running-game checkpoint was replayed in real Chromium for 48,000,000
+reference ticks (four reference seconds), with 1024-tick run slices and 60 Hz
+output samples. Each variant used a fresh WASM instance. All three ended with
+byte-identical guest checkpoints.
+
+| Publication | Output samples | Mean absolute pixel change | Largest pixel-change step | Fully white samples |
+| --- | ---: | ---: | ---: | ---: |
+| r22-style live RAM after each run slice | 241 | 1.425 | 26.218 | 0 |
+| Actual completed boundary, Instant | 241 | 1.310 | 21.960 | 0 |
+| Actual completed boundary, Smooth (35 ms) | 241 | 0.986 | 14.640 | 0 |
+
+Pixel change is the mean absolute 0–255 intensity difference between successive
+60 Hz output samples. Eight samples differed between after-slice and actual
+boundary publication. The smooth option reduces transition contrast and adds
+persistence; the metric is not a calibrated measure of perceived flicker.
+Instant still shows intermediate redraw content. This does not justify claiming
+that all GBP flicker has been eliminated.
+
+Three warmed, alternating measurements per variant gave these elapsed times:
+
+| Publication | Median | Observed range |
+| --- | ---: | ---: |
+| After-slice | 1892 ms | 1699–2215 ms |
+| Completed boundary, Instant | 1795 ms | 1731–1923 ms |
+| Completed boundary, Smooth | 1874 ms | 1681–1921 ms |
+
+Other development processes were active on this host. These samples check for
+a large new overhead in this workload; the overlap and variation do not support
+a speedup claim. This measurement includes production WASM and `LCDFrames`,
+but excludes Worker messaging, Canvas and the browser compositor.
+
+A separate real production-page test restored the same diagnostic session
+through the file picker, with the default nearest-neighbor display and normal
+speed. Both response modes resumed automatically, advanced about 48 million
+guest ticks in four wall seconds, and completed without a stop or page error.
+The Instant run received 112 snapshots and painted the Canvas 100 times; Smooth
+received 110 and painted 102 times. The displayed lane/notes and pause action
+were inspected in screenshots. These are real Worker/Canvas runs, unlike the
+synthetic browser burst test; they still do not establish physical panel timing.
+
+[Sanitized GBP/LCD evidence](evidence/gbp-lcd-r23.json) retains the input hashes,
+variant label, all timing samples and production-page counts. To repeat the
+controlled publication measurement with a supplied private checkpoint:
+
+```sh
+node tools/probe-lcd-game.mjs FULL-NOR PRIVATE-GAME-CHECKPOINT 2 hp39gs-home NEW-REPORT.json 48000000
+python3 tools/probe-lcd-game-browser.py --rom FULL-NOR --checkpoint PRIVATE-GAME-CHECKPOINT --model 2 --preset hp39gs-home --program-variant DESCRIPTION --ticks 48000000 --output NEW-PRIVATE-OUTPUT
+```
+
+The three issues are consequently separate: original firmware power/text order,
+the game's direct clear/redraw behavior, and redundant or mistimed host
+publication. Only the latter belongs to the host presentation pipeline.
+
+## Documented STN dither patterns
+
+The downloaded original HP49g+ 2048 executable exposed a real missing register
+case: its native Thumb code writes `0x12210` to DITHMODE (`0x4d00004c`). The
+Samsung manual, page 15-35, explicitly specifies reset `0x00000`, writable bits
+18:0 and the two valid patterns `0x00000` and `0x12210`. r23 stores and reads back
+both documented field values, masks reserved upper bits, resets the field to
+zero and preserves it in the existing LCD checkpoint register array. Other
+field values continue to stop explicitly; unsupported display modes still do
+not gain acceptance from a dither write.
+
+The pre-dither inspection APIs retain their defined ideal gray intensity and
+BLUELUT behavior for either pattern. The manual describes FRC duty-cycle intent
+on pages 15-7 and 15-41 but does not disclose each pattern's per-pixel phase
+sequence. The register support therefore does not claim an analog panel or
+invent a temporal switching schedule. `tests/lcd-input.c` checks both patterns,
+readback/reset/reserved bits, live STN programming, unchanged pre-dither levels
+and rejection of other values. Actual unchanged application execution provides
+separate evidence for the newly reachable path.
+
+## Spatial scaling and status symbols
+
+**Settings → General → Screen scaling** persists one of four implemented
+intensity resamplers. Nearest neighbor remains the default, preserving the
+native-size Canvas and explicit sharp pixel presentation. Bilinear smooths
+between neighboring samples; bicubic uses the Catmull–Rom cubic kernel;
+Lanczos uses a three-lobe sinc window. The latter two retain more edge contrast
+and can introduce ringing near high-contrast edges. All use pixel-center
+coordinates, normalized edge weights and widened support when downsampling.
+Outputs clamp to the valid 0–255 intensity range. These are actual separable
+kernels, not names attached to browser smoothing-quality hints.
+
+The coefficients and scratch buffers are reused while dimensions and algorithm
+stay constant. Smooth modes render to the displayed pixel size and DPR, bounded
+at six times native width; the compositor can scale that result further. This
+bounds filtering cost at large zoom/DPR without changing the guest frame or
+native PNG/recording dimensions. Resize, zoom, orientation and algorithm changes
+repaint without replacing the Canvas node. Unchanged frames do not repaint.
+`tests/screen-scaling.mjs` covers known interpolation values, constant images,
+axis symmetry, antialiased reduction and independent reusable buffers.
+
+The annunciator strip now uses original vector geometry instead of a generic
+battery box and font-dependent alpha. Its low-battery waves/dot, hourglass and
+transfer symbol follow the [HP 39gs User's Guide, section 1-3](https://literature.hpcalc.org/official/hp39gs-ug-en.pdf).
+Shift arrows are recurved and alpha is a vector stroke. No manual bitmap or
+third-party emulator icon was copied into the build. The six levels continue
+to come from the decoded guest segment bits. Exact model-specific etched
+positions, physical wiring and optical contrast remain separate evidence work;
+this is not a claim of pixel-exact photographs for every family.
+
+[Display UI evidence](evidence/display-r23.json) records real Chromium checks
+for all four admitted models, traditional landscape with soft keys beside the
+LCD, narrow-phone adaptation, all four spatial filters, settings Apply/Cancel,
+paused-state resume and the native PNG dimensions. Synthetic input pixels are
+clearly distinguished from original-ROM compatibility evidence.
 
 ## Corrected inspection behavior
 

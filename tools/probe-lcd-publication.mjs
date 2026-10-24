@@ -21,9 +21,12 @@ const rom=await readFile(args[0]),romHash=sha(rom);
 const choices=[[1,'hp39-home'],[2,'hp39gs-home'],[4,'hp48-home'],[5,'hp49-home']];
 const admitted=choices.find(([,preset])=>setupHash(preset)===romHash);assert(admitted,'Requires an admitted complete original NOR');
 const [model,preset]=admitted,wasm=await readFile(process.env.ORCHARD_WASM||new URL('../dist/orchard.wasm',import.meta.url));
-const {instance:{exports:c}}=await WebAssembly.instantiate(wasm,{});
-assert.equal(c.create(model),0);new Uint8Array(c.memory.buffer,c.rom_buffer(),rom.length).set(rom);
-assert.equal(c.load(rom.length),0);applySetup(c,model,preset);
+const module=await WebAssembly.compile(wasm);
+async function fresh(){const {exports:core}=await WebAssembly.instantiate(module,{});
+  assert.equal(core.create(model),0);new Uint8Array(core.memory.buffer,core.rom_buffer(),rom.length).set(rom);
+  assert.equal(core.load(rom.length),0);applySetup(core,model,preset);return core;
+}
+let c=await fresh();
 const state=()=>new Uint32Array(c.memory.buffer,c.snapshot(),33).slice();
 const time=()=>{const s=state();return s[22]+s[23]*4294967296;};
 let tick=0;
@@ -47,8 +50,10 @@ for(const scan of model<4?[26,5,19,6]:[26,6,19,5])tap(scan,'arithmetic',1500000)
 length+=12000000;
 const end=start+length;
 function raw(){const status=c.frame_view(1);assert.equal(status,0);return new Uint8Array(c.memory.buffer,c.frame_buffer(),width*height).slice();}
-function replay(sync,inspect=false){
-  restore(initial);const source=new LCDFrames();source.read(c,model,1,tick,true);
+async function replay(sync,inspect=false){
+  // Host observer policy intentionally survives checkpoint restores. A fresh
+  // core prevents a previous synchronized trial from enabling the raw baseline.
+  c=await fresh();restore(initial);const source=new LCDFrames();if(sync)source.read(c,model,1,tick,true);
   let next=0,nextFrame=start,previous=null,observations=0,changed=0,sameScanChanges=0,off=0;
   let sourceChanges=0,sourceFrame=source.frame,maxAge=0;
   const serials=new Set(),transitions=[],hashes=new Map();
@@ -78,7 +83,7 @@ function replay(sync,inspect=false){
     scans:serials.size,multiImageScans:[...hashes.values()].filter(set=>set.size>1).length,off,
     sourceChanges,maxAge,transitions};
 }
-const baseline=replay(false,true),candidate=replay(true,true);
+const baseline=await replay(false,true),candidate=await replay(true,true);
 assert(baseline.final.equals(candidate.final),'Display publication mutated CPU/RAM/peripheral state');
 assert.equal(candidate.sameScanChanges,0,'Healthy continuous scans must publish one image per scan');
 // The scan cache is an observer: duplicate reads also cannot change a single
@@ -87,16 +92,17 @@ const probe=new LCDFrames(),before=save(),at=time();probe.read(c,model,1,at,true
 const image=probe.frame;for(let i=0;i<1000;i++)assert.equal(probe.read(c,model,1,at),image);
 assert(save().equals(before));
 // Warm both paths, then alternate order to limit one-sided JIT/cache bias.
-replay(false);replay(true);const timing=[[],[]],cpuTiming=[[],[]];
+await replay(false);await replay(true);const timing=[[],[]],cpuTiming=[[],[]];
 for(let round=0;round<repeats;round++)for(const index of round%2?[1,0]:[0,1]){
-  const result=replay(Boolean(index));assert(result.final.equals(baseline.final));
+  const result=await replay(Boolean(index));assert(result.final.equals(baseline.final));
   timing[index].push(result.elapsed);cpuTiming[index].push(result.cpuMs);
 }
 const median=a=>a.toSorted((x,y)=>x-y)[Math.floor(a.length/2)];
 const summary=({final,transitions,elapsed,cpuMs,...rest})=>rest;
 const report={schema:'orchard-lcd-publication-v1',passed:true,model,preset,rom_sha256:romHash,wasm_sha256:sha(wasm),
   probe_sha256:sha(await readFile(new URL(import.meta.url))),source_sha256:sha(await readFile(new URL('../web/lcd-frames.js',import.meta.url))),
-  scope:'Original firmware, physical keys, uninterrupted run in 1024-tick chunks. Requests at 33 virtual ms and each key transition. Synchronized images are sampled after each observed scan counter change; host canvas/compositor and physical panel response are separate.',
+  scope:'Original firmware and physical keys in 1024-tick chunks; independent fresh cores per trial. Requests at 33 virtual ms and each key transition. Uses native completed-boundary publication when available, otherwise the older after-slice cache. Host canvas/compositor and physical panel response are separate.',
+  native_completed_boundary:typeof c.lcd_observe==='function',
   clock_scope:'Functional 12 MHz reference pacing; this is not physical ARM/LCD calibration.',
   start_tick:start,end_tick:end,events,baseline:summary(baseline),candidate:summary(candidate),
   identical_final_checkpoint:true,final_checkpoint_sha256:sha(baseline.final),

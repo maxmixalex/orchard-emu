@@ -23,8 +23,8 @@ Firmware and private calculator data remain outside source, releases and Pages.
 | --- | --- | --- |
 | HP39g+ D1.55 | Unchanged cold boot, HOME/arithmetic, browser controls, Disk drive and direct Wire installation including Notes, reverse SEND; full native ROMstream dump/return; inactivity shutdown and ON resume | Explicit board/LCD assumptions; broader reverse-SEND throughput/recovery, native-program and sustained-use coverage |
 | HP48gII USB revision | Unchanged cold boot, arithmetic, sessions, USB and UART0 Kermit workflows, two-file browser batches, no-card FILES navigation, inactivity shutdown and ON resume | Explicit SRAM mirror/LCD assumptions; no physical SD slot; broader keypad, power-mode and long-run checks |
-| HP49g+ | User's full 2 MiB capture, unchanged cold boot, 131×80 display, arithmetic, CAS, graphing, sessions, USB/native ARM workflows, FILES and SD image read/write, shared-PCLK BEEP, inactivity shutdown and ON resume | Explicit SRAM mirror/LCD conditions; infrared/UART2, SD DMA/SDHC, NOR programming and physical-board calibration remain open |
-| HP39gs | User's complete 1 MiB capture and its own bootloader, HOME arithmetic, APLET, browser sessions, Disk/Wire installation including Notes, native ROMstream dump/return/USB reuse, inactivity shutdown and ON resume | Explicit exact-SRAM/GPIO/ADC/LCD conditions; broader transfer, sound, native-program and sustained-use coverage |
+| HP49g+ | User's full 2 MiB capture, unchanged cold boot, 131×80 display, arithmetic, CAS, graphing, sessions, USB/native ARM workflows, FILES and SD image read/write, shared-PCLK BEEP, inactivity shutdown and ON resume | Explicit SRAM mirror/LCD conditions; physical IrDA timing, SD DMA/SDHC, unsupported flash modes and physical-board calibration remain open |
+| HP39gs | User's complete 1 MiB capture and its own bootloader, HOME arithmetic, APLET, browser sessions, Disk/Wire installation including Notes, native ROMstream dump/return/USB reuse, inactivity shutdown and ON resume | Explicit SRAM/GPIO/ADC/LCD conditions; broader transfer, sound, native-program and sustained-use coverage |
 | HP40gs / HP50g | Model profiles and scoped boot-region/updater research | Complete original NORs and independent stock acceptance |
 
 Details: [HP39g+ startup](hp39-startup.md), [HP39gs startup](hp39gs-startup.md), [HP48 startup](startup.md),
@@ -76,7 +76,7 @@ and bias, passive keyboard circuits, unfiltered EINT, IRQ arbitration, timers,
 RTC/watchdog reset, LCD frame interrupts, normal ADC, USB PIO/packet transactions,
 two bounded SPI channels and an SDI controller with SDSC media cover observed
 paths. Selected SST39VF1601 /
-SST39VF800A devices provide array/software-ID behavior, not flash programming.
+SST39VF800A devices provide array/software-ID, word program, sector/block/chip erase, busy polling and bounded VF1601 erase suspend; both original HP39gs and HP49g+ quick/full FLASH WRITE tests pass. See [NOR programming](nor-write.md).
 
 PWM, watchdog, ADC, SDI and SPI share the functional PCLK derived from guest clock
 register writes, with fractional phase, peripheral gates and buffered PWM
@@ -95,7 +95,7 @@ compatibility is recorded without asserting a silicon alias.
 
 Remaining work includes measured board input clocks, PLL lock duration,
 physical reset and power-rail behavior, shared-prescaler startup phase, verified
-component identities and pad bias, LCD/annunciator routing, flash commands,
+component identities and pad bias, LCD/annunciator routing, unsupported flash modes,
 DMA, larger SD media, attached SPI devices and further peripheral modes.
 Digital input filters and physical reset/clock-switch transients remain open.
 
@@ -107,10 +107,10 @@ counted LCD `+0x68` idle-zero and packed-memory display assumptions do not close
 
 **Four conditional stock systems; HP39g+, HP39gs and HP49g+ native-return witnesses.**
 HP39g+, HP39gs, HP48gII and HP49g+ execute their own reset/startup and physical inputs.
-Their ROMs remain unchanged. HP48gII and HP49g+ use explicitly declared bank-1
-SRAM mirror conditions, retaining fixed physical capacity; HP39g+ and HP39gs use exact
-physical SRAM bounds. All retain stated
-GPIO/ADC/LCD conditions.
+Their ROMs remain unchanged. The admitted HP39g+, HP39gs, HP48gII and HP49g+
+presets use explicitly declared bank-1 SRAM mirror conditions while retaining
+fixed physical capacity. Strict mode and legacy saved decode conditions remain
+unchanged. All retain stated GPIO/ADC/LCD conditions.
 
 The original HP39g+ system installs ROMstream through its real USB file client.
 The revised v2 reader reads the full NOR, shows block progress, returns after
@@ -164,9 +164,7 @@ Connections and SD use a persistent sidebar that preserves drafts while the
 calculator remains accessible. ROM recall is independently controlled in
 Storage settings: read-only handles reopen original files where permitted,
 and a labelled browser-local copy supports the ordinary file-input fallback.
-[Immersive landscape](landscape.md) cuts the unchanged skin below the six
-function keys, placing those keys with the screen to the left of the remaining
-keyboard. [Firmware sound](buzzer.md) observes GPB2/Timer2 edges with
+[Landscape modes](landscape.md) keep six function keys beside the display in both immersive and traditional appearances. Narrow portrait traditional landscape stacks the main keypad below a sticky LCD/FN pane. Four scaling kernels and optional 35 ms live response are selectable; raw capture/recording pixels remain independent of these display choices. [Firmware sound](buzzer.md) observes GPB2/Timer2 edges with
 gesture-gated Web Audio, mute and volume. Shared PCLK and buffered PWM now
 produce the original HP49g+ BEEP's register-derived period; physical board
 clock and speaker measurements remain open.
@@ -175,13 +173,9 @@ uses its full 131×80 dimensions in both views and capture export.
 
 One Worker owns execution. Bounded slices, explicit pacing, input queues,
 operation/generation isolation and cancellation remain invariant. LCD pixels
-and annunciators are sampled at observed completed scans, then reused for
-same-scan UI requests and coalesced into browser animation frames. Live display,
-capture and recording share the published image, including real blank or
-unavailable frames. This is presentation policy, not physical panel calibration.
-Version-5 sessions include complete SD media, in-flight controller state,
-fractional PCLK, PWM latches, both SPI channels and the watchdog reset hold.
-Version-1/2/3/4 files remain importable with explicit legacy timing/device
+and annunciators are captured inside the core at completed-scan boundaries and coalesced into browser animation frames. Optional 35 ms live response does not change raw captures, recordings or guest state; genuine blank/off frames remain represented. This is presentation policy, not physical panel calibration.
+Version-6 sessions include complete SD media, all UART state/queues, pending NOR operations and modified flash sectors alongside fractional PCLK, PWM/SPI and watchdog state. Successful restore resumes under the current lifecycle policy; a prominent pause bar remains whenever execution is paused.
+Version-1/2/3/4/5 files remain importable with explicit legacy timing/device
 migration; see [sessions](sessions.md). Binary IndexedDB
 autosaves retain the card and migrate the former small localStorage records.
 Original-ROM and native/WASM continuation are independently checked. Actual
@@ -216,7 +210,7 @@ directly and writes received typed files as a standard ZIP. A missing
 aliases or object bytes, so the returned bundle can be imported into a fresh
 machine. Direct Wire upload uses the stock D-handshake / CRC-16/KERMIT block
 protocol, validates a whole package first, and uploads its library before the
-aplet. Each object needs a fresh stock RECV selection. This is a faster upload
+aplet. Each object needs a fresh stock RECV selection. Optional automatic next RECV recognizes validated stock catalog/menu frames and presses physical keys for same-catalog USB batches. User input, errors and unknown/modal screens cancel automation; retry never sends blind ENTER. This is a faster upload
 path; reverse SEND remains the separate Kermit workflow. The original complete
 HP39gs now has its own Disk installation and native-reader return witness;
 HP40gs still needs its complete NOR. ASCII Notes are converted to the binary
@@ -239,30 +233,30 @@ transactionally in an unmounted image. The original HP49g+ reads prepared
 files and can add its own objects through FILES; the independent filesystem
 checks and remaining 8.3/PIO/media limits are in [SD cards](sd-cards.md).
 Local directories can be copied recursively into 16/32 MiB FAT16 drafts with
-a reviewable name mapping. A validated copy/eject operation returns mounted
-media to the editor. Associated directory handles support explicit re-read and
-additive write-back with conflict preservation; the association is page-session
-only. This snapshot workflow does not mount an operating-system block device
-or synchronize a mounted filesystem concurrently.
+a reviewable name mapping. Direct handles support persistent two-way add,
+update, delete and rename using baseline/local/card comparisons and conflict
+choices. Preview revalidation and partial-failure protection avoid silently
+replacing a concurrently changed file. Mounted synchronization pauses and
+ejects the image before edits, then reinserts it and conditionally resumes.
+It does not create an OS block device or mutate a mounted filesystem behind
+the guest cache. See [directory synchronization](directory-sd.md).
 
-The optional [local device bridge](host-mode.md) connects the live browser
-Worker to a loopback HTTP/USB-IP helper. Generated ARM guests pass real Chrome
-Worker, authenticated HTTP, USB/IP control/bulk, cancellation and reconnect
-checks. Unchanged HP48gII and HP49g+ ROMs complete object round trips using the
-same bridge modules under Node; each evidence record retains its runtime and
-build identity. Original HP49g+ also completes exact SEND/GET/FINISH through
-the production Chrome page and Worker, remains connected across sidebar
-hide/reopen and another tab taking focus, then returns to `1+1=2`. Internal
-transfers and live SD-card operations are excluded
-while the bridge owns the machine; unmounted drafts remain editable. The
-separate command-line calculator and raw serial entry point remain available.
+Three UARTs now implement their documented functional FIFO, stored line-format, clock-gate,
+interrupt, error and internal-loopback behavior. Original RS232/IrDA factory
+tests pass on the applicable admitted models. The [infrared link](infrared.md)
+pairs two same-origin browser tabs; original HP49g+/48gII firmware exchanges
+objects in both directions using IrLAP, IrCOMM and Kermit. Decoded bytes are
+bounded and ordered; optical waveform and physical-adapter timing remain open.
 
-Remaining work includes remote file management, broader capacity/recovery
-cases, infrared/UART2, UART FIFO/baud timing, operating-system USB/IP attachment,
-HP driver binding and unmodified Conn3x interoperability. The original-ROM
-GET_CONFIGURATION timeout is retained rather than synthesized into success;
-the earlier HP50g case also remains an explicit counterexample. See
-[USB evidence](usb.md) and [virtual links](virtual-link.md).
+**Native host-device simulation is retired at the user's request.** The Local
+device UI was removed. OS USB/IP attachment, HP driver binding and Conn3x are
+not future acceptance targets. Existing helper code and r22 evidence remain
+historical reproducibility material, not a current browser feature.
+
+Remaining connectivity work covers wider original-ROM IR object/cancellation
+coverage, physical optical/baud calibration and larger SD media/DMA. Printer
+IR is a separate protocol and has no support claim. Complete original HP40gs/HP50g
+images remain necessary before adding them to the supported calculator catalog.
 
 **Gate:** unchanged stock firmware completes both directions with file/object
 identity, cancellation/reconnect recovery and responsive UI. Internal packets
@@ -276,8 +270,7 @@ license audits, resource budgets and explicit support claims. Verify Build,
 Pages, revision manifests and downloaded package hashes after acceptance.
 
 **Gate:** sustained supported-model use, wider browser/desktop compatibility,
-repeatable packaging and documented limitations. Full Windows/Linux/macOS device
-bridges and all-model certification remain separate work.
+repeatable packaging and documented limitations. All-model certification and physical timing remain separate work; native host-device integration is retired.
 
 ## Performance work
 

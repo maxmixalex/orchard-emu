@@ -1,4 +1,4 @@
-# Immersive landscape appearance
+# Landscape appearances
 
 The `immersive-landscape` preference adds **Immersive (landscape)** / **沉浸式-横屏**
 to Settings → Appearance. It cuts the existing outlined skin horizontally below
@@ -87,3 +87,48 @@ appearance changes update layout and enabled states through the existing refs.
 The new settings are controlled inputs, there are no conditional hooks or new
 dependencies, all global listeners have matching cleanup, and artwork duplication
 adds no duplicate interactive elements or accessible image description.
+
+## Traditional landscape and narrow phones (r23)
+
+`traditional-landscape` adds **Traditional (landscape)** / **传统-横屏**. It uses
+the measured outlined-key geometry already used by the traditional portrait
+view. The six F1–F6 nodes move into a second SVG immediately below the LCD;
+the remaining 45 nodes occupy the right-hand keyboard. The same Canvas and
+all 51 key nodes survive every appearance change. The keyboard-mapping editor
+keeps its normal whole-keyboard view and does not receive a duplicate split.
+
+For available widths below 600 CSS pixels in a portrait-shaped workspace or
+portrait phone, the two traditional panes stack vertically. The calculator uses
+the available width so keys remain usable, and scrolling stays inside the
+workspace. The LCD/soft-key pane remains sticky while the lower keyboard
+scrolls. Rotating to a wide viewport restores two columns. The selected
+appearance and zoom remain saved. This responsive adaptation is specific to
+traditional landscape; the immersive artwork still uses its exact split.
+
+Phone toolbars group Save, Restore, captures and self-test actions into one
+Mantine menu. Recording remains an explicit action with its full accessible
+label. Settings use a fullscreen scrollable body and fixed Apply/Cancel actions
+on phones, two aligned columns for General settings on wider screens, and the
+wider existing keyboard editor. Theme defaults come from `createTheme`;
+application chrome uses Mantine variables and CSS Modules. A visible pause bar
+provides a direct Resume simulation action. Connections remains a persistent
+sidebar with SD in its own tab; there is no duplicate toolbar SD control or
+Local device entry. Its Files and Raw data tabs keep the wired Serial/USB
+controls, while Infrared shows its pairing controls without unrelated wired
+connection buttons. Switching tabs preserves the selected wired transport.
+
+`tests/browser-display.py` exercises all four admitted models at 1360×940,
+844×390, 390×844 and 360×640. It checks the split, unique key scans, node identity,
+physical click routing, sticky LCD visibility when scrolling to the bottom
+keyboard row, noninteger display scaling, unchanged native PNG dimensions,
+Apply/Cancel, paused-state action and mobile Connections. The former
+`browser-host-bridge.py` UI gate now verifies that the cancelled local-device
+feature is absent in both languages; historical transport tests remain separate.
+
+Screenshots were inspected from the real Chromium fixtures, including desktop
+settings and traditional landscape, portrait phone settings/sidebar, and pause
+state. These are browser layout and interaction witnesses using synthetic LCD
+pixels, not a claim of physical touch-hardware or original-ROM correctness.
+The separate [GBP production-page witness](lcd.md#gbp-redraw-and-publication-measurement-r23)
+also exercises the traditional landscape view with real game pixels, the
+production Worker and restored original-ROM execution.

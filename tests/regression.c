@@ -294,6 +294,7 @@ static void queues_and_profiles(void) {
         CHECK(orchard_run(&machine, 32).status == ORCHARD_OK);
         CHECK(machine.cpu.r[15] == 0 && machine.cpu.instructions == 32 && machine.ticks == 32);
         CHECK(orchard_run(&machine, 0).status == ORCHARD_OK && machine.ticks == 32);
+        CHECK(write_reg(0x50000000, 3)); CHECK(write_reg(0x50000004, 5));
         CHECK(orchard_uart_send(&machine, (const uint8_t *)"abc", 3) == 3);
         uint32_t value;
         CHECK(o_phys_read(&machine, 0x50000024, 1, &value) && value == 'a');
@@ -331,6 +332,7 @@ static void uart_tx_level(void) {
     CHECK(machine.soc.subsrcpnd == tx && machine.soc.srcpnd == uart && machine.soc.intpnd == uart);
     /* The host capture queue contains bytes that already left UTXH0. A host
        that has not drained them cannot make the hardware holding register full. */
+    CHECK(write_reg(0x50000000, 3));
     CHECK(o_phys_write(&machine, 0x50000020, 1, 0x00));
     CHECK(o_phys_write(&machine, 0x50000020, 1, 0xff));
     CHECK(o_phys_write(&machine, 0x50000020, 1, 0x41));
@@ -346,9 +348,9 @@ static void uart_tx_level(void) {
     ticks(1); CHECK(machine.soc.subsrcpnd == tx);
     CHECK(write_reg(0x4a000018, tx));
     ticks(1); CHECK(machine.soc.subsrcpnd == 0);
-    /* Disabled / RX-only / DMA / pulse modes do not synthesize an empty level;
-       FIFO and other UART channels are outside this UART0 non-FIFO subset. */
-    const uint32_t modes[] = {0, 1, 0x200, 0x201, 0x208, 0x20c, 4, 5};
+    /* Disabled / RX-only / pulse modes do not synthesize an empty level;
+       Pulse mode reports a transition, not a continually empty level. */
+    const uint32_t modes[] = {0, 1, 0x200, 0x201, 4, 5};
     for (unsigned i = 0; i < sizeof modes / sizeof modes[0]; ++i) {
         CHECK(write_reg(0x50000004, modes[i]));
         CHECK(write_reg(0x4a000018, tx));
@@ -356,14 +358,22 @@ static void uart_tx_level(void) {
     }
     CHECK(write_reg(0x50000004, 0x705));
     CHECK(write_reg(0x50000008, 1));
-    ticks(1); CHECK(machine.soc.subsrcpnd == 0);
+    ticks(1); CHECK(machine.soc.subsrcpnd == tx);
     CHECK(write_reg(0x50000008, 0));
     ticks(1); CHECK(machine.soc.subsrcpnd == tx);
     CHECK(write_reg(0x50000004, 0));
     CHECK(write_reg(0x50004004, 0x204));
     CHECK(write_reg(0x50008004, 0x204));
     CHECK(write_reg(0x4a000018, 0x7ff));
-    ticks(1); CHECK(machine.soc.subsrcpnd == 0);
+    ticks(1); CHECK(machine.soc.subsrcpnd == ((2u<<3)|(2u<<6)));
+    /* DMA request generation is outside the decoded-byte UART contract.
+       Reject the requested modes, preserving the prior control register. */
+    for (unsigned mode=2;mode<=3;mode++) {
+        orchard_reset(&machine);
+        CHECK(!o_phys_write(&machine,0x50000004u,4,0x200u|(mode<<2)));
+        CHECK(machine.stop.status==ORCHARD_UNIMPLEMENTED_MMIO);
+        CHECK(machine.stop.address==0x50000004u&&machine.soc.uart[0][1]==0);
+    }
     orchard_reset(&machine);
 }
 static void boot_sram_and_lcd(void) {
@@ -808,8 +818,8 @@ static void nor_identification(void) {
     CHECK(!machine.nor_id_mode);
     CHECK(o_phys_write(&machine, 0xaaaa, 2, 0xaa));
     CHECK(o_phys_write(&machine, 0x5554, 2, 0x55));
-    CHECK(!o_phys_write(&machine, 0xaaaa, 2, 0xa0));
-    CHECK(machine.stop.status == ORCHARD_UNIMPLEMENTED_FLASH && machine.nor_sequence == 2);
+    CHECK(o_phys_write(&machine, 0xaaaa, 2, 0xa0));
+    CHECK(machine.stop.status == ORCHARD_OK && machine.nor_sequence == 3);
     orchard_reset(&machine); CHECK(orchard_nor_select(&machine, ORCHARD_NOR_UNSPECIFIED) == ORCHARD_OK);
     CHECK(orchard_init(&machine, sizeof(machine), 1) != NULL);
     CHECK(orchard_nor_select(&machine, ORCHARD_NOR_SST39VF1601) == ORCHARD_BAD_ARGUMENT);

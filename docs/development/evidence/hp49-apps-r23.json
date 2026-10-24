@@ -1,0 +1,1568 @@
+{
+  "schema": "orchard-hp49-apps-v1",
+  "model": 5,
+  "preset": "hp49-home",
+  "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+  "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+  "tool_sha256": "e08de13b665d21eb3ccda0e975cadf4551172a87685ade506525f1dacc767a33",
+  "execution_host": "Node production WASM and virtual USB/Kermit modules",
+  "production_worker": false,
+  "original_programs_unchanged": true,
+  "guest_memory_patched": false,
+  "canonical_hardware_boot": false,
+  "canonical_hardware_speed": false,
+  "cold_boot": false,
+  "objects": [
+    {
+      "name": "MMGAME",
+      "path": "2048/MM48.EXE",
+      "sha256": "fb6eb450ad00a1dd65c6f5877fab352939ce8b449f99244d89b0e45d7739c971",
+      "bytes": 25874
+    },
+    {
+      "name": "ORBABAL",
+      "path": "babal49plus/Babal49Plus/BabalPlus.hp",
+      "sha256": "6aade17af0b0c1f0418aa6e19ab3d707d3bc2089c369784263e1eae9c0418577",
+      "bytes": 5946
+    },
+    {
+      "name": "BCONV",
+      "path": "baseconvert/BASECONVERT.49",
+      "sha256": "a056b2ff18b3741d32ad093836fece03e94240d629e8d27cfe324d3e497062fd",
+      "bytes": 126
+    },
+    {
+      "name": "LCONV",
+      "path": "baseconvert/LISTCONVERT.49",
+      "sha256": "46cdbadd17e099c8a355a51f134c9a7dccde0fa1b79cc2e2bc11e54ee6017446",
+      "bytes": 92
+    }
+  ],
+  "keys": [
+    {
+      "tick": 2413567872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2414767872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2415967872,
+      "scan": 28,
+      "down": true
+    },
+    {
+      "tick": 2417167872,
+      "scan": 28,
+      "down": false
+    },
+    {
+      "tick": 2418367872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2419567872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2420767872,
+      "scan": 28,
+      "down": true
+    },
+    {
+      "tick": 2421967872,
+      "scan": 28,
+      "down": false
+    },
+    {
+      "tick": 2423167872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2424367872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2425567872,
+      "scan": 41,
+      "down": true
+    },
+    {
+      "tick": 2426767872,
+      "scan": 41,
+      "down": false
+    },
+    {
+      "tick": 2427967872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2429167872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2430367872,
+      "scan": 35,
+      "down": true
+    },
+    {
+      "tick": 2431567872,
+      "scan": 35,
+      "down": false
+    },
+    {
+      "tick": 2432767872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2433967872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2435167872,
+      "scan": 28,
+      "down": true
+    },
+    {
+      "tick": 2436367872,
+      "scan": 28,
+      "down": false
+    },
+    {
+      "tick": 2437567872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2438767872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2439967872,
+      "scan": 39,
+      "down": true
+    },
+    {
+      "tick": 2441167872,
+      "scan": 39,
+      "down": false
+    },
+    {
+      "tick": 2442367872,
+      "scan": 6,
+      "down": true
+    },
+    {
+      "tick": 2443567872,
+      "scan": 6,
+      "down": false
+    },
+    {
+      "tick": 2461767872,
+      "scan": 43,
+      "down": true
+    },
+    {
+      "tick": 2462967872,
+      "scan": 43,
+      "down": false
+    },
+    {
+      "tick": 2464167872,
+      "scan": 44,
+      "down": true
+    },
+    {
+      "tick": 2465367872,
+      "scan": 44,
+      "down": false
+    },
+    {
+      "tick": 2466567872,
+      "scan": 45,
+      "down": true
+    },
+    {
+      "tick": 2467767872,
+      "scan": 45,
+      "down": false
+    },
+    {
+      "tick": 2468967872,
+      "scan": 42,
+      "down": true
+    },
+    {
+      "tick": 2470167872,
+      "scan": 42,
+      "down": false
+    },
+    {
+      "tick": 2495367872,
+      "scan": 56,
+      "down": true
+    },
+    {
+      "tick": 2496567872,
+      "scan": 56,
+      "down": false
+    },
+    {
+      "tick": 2509767872,
+      "scan": 26,
+      "down": true
+    },
+    {
+      "tick": 2510967872,
+      "scan": 26,
+      "down": false
+    },
+    {
+      "tick": 2512167872,
+      "scan": 6,
+      "down": true
+    },
+    {
+      "tick": 2513367872,
+      "scan": 6,
+      "down": false
+    },
+    {
+      "tick": 2514567872,
+      "scan": 26,
+      "down": true
+    },
+    {
+      "tick": 2515767872,
+      "scan": 26,
+      "down": false
+    },
+    {
+      "tick": 2516967872,
+      "scan": 5,
+      "down": true
+    },
+    {
+      "tick": 2518167872,
+      "scan": 5,
+      "down": false
+    },
+    {
+      "tick": 2524367872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2525567872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2526767872,
+      "scan": 37,
+      "down": true
+    },
+    {
+      "tick": 2527967872,
+      "scan": 37,
+      "down": false
+    },
+    {
+      "tick": 2529167872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2530367872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2531567872,
+      "scan": 50,
+      "down": true
+    },
+    {
+      "tick": 2532767872,
+      "scan": 50,
+      "down": false
+    },
+    {
+      "tick": 2533967872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2535167872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2536367872,
+      "scan": 39,
+      "down": true
+    },
+    {
+      "tick": 2537567872,
+      "scan": 39,
+      "down": false
+    },
+    {
+      "tick": 2538767872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2539967872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2541167872,
+      "scan": 35,
+      "down": true
+    },
+    {
+      "tick": 2542367872,
+      "scan": 35,
+      "down": false
+    },
+    {
+      "tick": 2543567872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2544767872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2545967872,
+      "scan": 22,
+      "down": true
+    },
+    {
+      "tick": 2547167872,
+      "scan": 22,
+      "down": false
+    },
+    {
+      "tick": 2548367872,
+      "scan": 6,
+      "down": true
+    },
+    {
+      "tick": 2549567872,
+      "scan": 6,
+      "down": false
+    },
+    {
+      "tick": 2555767872,
+      "scan": 25,
+      "down": true
+    },
+    {
+      "tick": 2556967872,
+      "scan": 25,
+      "down": false
+    },
+    {
+      "tick": 2558167872,
+      "scan": 19,
+      "down": true
+    },
+    {
+      "tick": 2559367872,
+      "scan": 19,
+      "down": false
+    },
+    {
+      "tick": 2560567872,
+      "scan": 6,
+      "down": true
+    },
+    {
+      "tick": 2561767872,
+      "scan": 6,
+      "down": false
+    },
+    {
+      "tick": 2562967872,
+      "scan": 19,
+      "down": true
+    },
+    {
+      "tick": 2564167872,
+      "scan": 19,
+      "down": false
+    },
+    {
+      "tick": 2565367872,
+      "scan": 6,
+      "down": true
+    },
+    {
+      "tick": 2566567872,
+      "scan": 6,
+      "down": false
+    },
+    {
+      "tick": 2567767872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2568967872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2570167872,
+      "scan": 36,
+      "down": true
+    },
+    {
+      "tick": 2571367872,
+      "scan": 36,
+      "down": false
+    },
+    {
+      "tick": 2572567872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2573767872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2574967872,
+      "scan": 37,
+      "down": true
+    },
+    {
+      "tick": 2576167872,
+      "scan": 37,
+      "down": false
+    },
+    {
+      "tick": 2577367872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2578567872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2579767872,
+      "scan": 14,
+      "down": true
+    },
+    {
+      "tick": 2580967872,
+      "scan": 14,
+      "down": false
+    },
+    {
+      "tick": 2582167872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2583367872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2584567872,
+      "scan": 21,
+      "down": true
+    },
+    {
+      "tick": 2585767872,
+      "scan": 21,
+      "down": false
+    },
+    {
+      "tick": 2586967872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2588167872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2589367872,
+      "scan": 30,
+      "down": true
+    },
+    {
+      "tick": 2590567872,
+      "scan": 30,
+      "down": false
+    },
+    {
+      "tick": 2591767872,
+      "scan": 6,
+      "down": true
+    },
+    {
+      "tick": 2592967872,
+      "scan": 6,
+      "down": false
+    },
+    {
+      "tick": 2604167872,
+      "scan": 19,
+      "down": true
+    },
+    {
+      "tick": 2605367872,
+      "scan": 19,
+      "down": false
+    },
+    {
+      "tick": 2606567872,
+      "scan": 6,
+      "down": true
+    },
+    {
+      "tick": 2607767872,
+      "scan": 6,
+      "down": false
+    },
+    {
+      "tick": 2608967872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2610167872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2611367872,
+      "scan": 50,
+      "down": true
+    },
+    {
+      "tick": 2612567872,
+      "scan": 50,
+      "down": false
+    },
+    {
+      "tick": 2613767872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2614967872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2616167872,
+      "scan": 37,
+      "down": true
+    },
+    {
+      "tick": 2617367872,
+      "scan": 37,
+      "down": false
+    },
+    {
+      "tick": 2618567872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2619767872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2620967872,
+      "scan": 14,
+      "down": true
+    },
+    {
+      "tick": 2622167872,
+      "scan": 14,
+      "down": false
+    },
+    {
+      "tick": 2623367872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2624567872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2625767872,
+      "scan": 21,
+      "down": true
+    },
+    {
+      "tick": 2626967872,
+      "scan": 21,
+      "down": false
+    },
+    {
+      "tick": 2628167872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2629367872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2630567872,
+      "scan": 30,
+      "down": true
+    },
+    {
+      "tick": 2631767872,
+      "scan": 30,
+      "down": false
+    },
+    {
+      "tick": 2632967872,
+      "scan": 6,
+      "down": true
+    },
+    {
+      "tick": 2634167872,
+      "scan": 6,
+      "down": false
+    },
+    {
+      "tick": 2645367872,
+      "scan": 26,
+      "down": true
+    },
+    {
+      "tick": 2646567872,
+      "scan": 26,
+      "down": false
+    },
+    {
+      "tick": 2647767872,
+      "scan": 6,
+      "down": true
+    },
+    {
+      "tick": 2648967872,
+      "scan": 6,
+      "down": false
+    },
+    {
+      "tick": 2650167872,
+      "scan": 26,
+      "down": true
+    },
+    {
+      "tick": 2651367872,
+      "scan": 26,
+      "down": false
+    },
+    {
+      "tick": 2652567872,
+      "scan": 5,
+      "down": true
+    },
+    {
+      "tick": 2653767872,
+      "scan": 5,
+      "down": false
+    },
+    {
+      "tick": 2659967872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2661167872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2662367872,
+      "scan": 37,
+      "down": true
+    },
+    {
+      "tick": 2663567872,
+      "scan": 37,
+      "down": false
+    },
+    {
+      "tick": 2664767872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2665967872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2667167872,
+      "scan": 50,
+      "down": true
+    },
+    {
+      "tick": 2668367872,
+      "scan": 50,
+      "down": false
+    },
+    {
+      "tick": 2669567872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2670767872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2671967872,
+      "scan": 39,
+      "down": true
+    },
+    {
+      "tick": 2673167872,
+      "scan": 39,
+      "down": false
+    },
+    {
+      "tick": 2674367872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2675567872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2676767872,
+      "scan": 35,
+      "down": true
+    },
+    {
+      "tick": 2677967872,
+      "scan": 35,
+      "down": false
+    },
+    {
+      "tick": 2679167872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2680367872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2681567872,
+      "scan": 22,
+      "down": true
+    },
+    {
+      "tick": 2682767872,
+      "scan": 22,
+      "down": false
+    },
+    {
+      "tick": 2683967872,
+      "scan": 6,
+      "down": true
+    },
+    {
+      "tick": 2685167872,
+      "scan": 6,
+      "down": false
+    },
+    {
+      "tick": 2696367872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2697567872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2698767872,
+      "scan": 36,
+      "down": true
+    },
+    {
+      "tick": 2699967872,
+      "scan": 36,
+      "down": false
+    },
+    {
+      "tick": 2701167872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2702367872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2703567872,
+      "scan": 47,
+      "down": true
+    },
+    {
+      "tick": 2704767872,
+      "scan": 47,
+      "down": false
+    },
+    {
+      "tick": 2705967872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2707167872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2708367872,
+      "scan": 21,
+      "down": true
+    },
+    {
+      "tick": 2709567872,
+      "scan": 21,
+      "down": false
+    },
+    {
+      "tick": 2710767872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2711967872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2713167872,
+      "scan": 15,
+      "down": true
+    },
+    {
+      "tick": 2714367872,
+      "scan": 15,
+      "down": false
+    },
+    {
+      "tick": 2715567872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2716767872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2717967872,
+      "scan": 8,
+      "down": true
+    },
+    {
+      "tick": 2719167872,
+      "scan": 8,
+      "down": false
+    },
+    {
+      "tick": 2720367872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2721567872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2722767872,
+      "scan": 35,
+      "down": true
+    },
+    {
+      "tick": 2723967872,
+      "scan": 35,
+      "down": false
+    },
+    {
+      "tick": 2725167872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2726367872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2727567872,
+      "scan": 50,
+      "down": true
+    },
+    {
+      "tick": 2728767872,
+      "scan": 50,
+      "down": false
+    },
+    {
+      "tick": 2729967872,
+      "scan": 57,
+      "down": true
+    },
+    {
+      "tick": 2731167872,
+      "scan": 57,
+      "down": false
+    },
+    {
+      "tick": 2732367872,
+      "scan": 50,
+      "down": true
+    },
+    {
+      "tick": 2733567872,
+      "scan": 50,
+      "down": false
+    },
+    {
+      "tick": 2734767872,
+      "scan": 6,
+      "down": true
+    },
+    {
+      "tick": 2735967872,
+      "scan": 6,
+      "down": false
+    },
+    {
+      "tick": 2757167872,
+      "scan": 56,
+      "down": true
+    },
+    {
+      "tick": 2757267872,
+      "scan": 37,
+      "down": true
+    },
+    {
+      "tick": 2758267872,
+      "scan": 37,
+      "down": false
+    },
+    {
+      "tick": 2758267872,
+      "scan": 56,
+      "down": false
+    },
+    {
+      "tick": 2788267872,
+      "scan": 59,
+      "down": true
+    },
+    {
+      "tick": 2789467872,
+      "scan": 59,
+      "down": false
+    },
+    {
+      "tick": 2790667872,
+      "scan": 19,
+      "down": true
+    },
+    {
+      "tick": 2791867872,
+      "scan": 19,
+      "down": false
+    },
+    {
+      "tick": 2798067872,
+      "scan": 35,
+      "down": true
+    },
+    {
+      "tick": 2799267872,
+      "scan": 35,
+      "down": false
+    },
+    {
+      "tick": 2805467872,
+      "scan": 37,
+      "down": true
+    },
+    {
+      "tick": 2806667872,
+      "scan": 37,
+      "down": false
+    },
+    {
+      "tick": 2879867872,
+      "scan": 36,
+      "down": true
+    },
+    {
+      "tick": 2881067872,
+      "scan": 36,
+      "down": false
+    },
+    {
+      "tick": 2882267872,
+      "scan": 37,
+      "down": true
+    },
+    {
+      "tick": 2883467872,
+      "scan": 37,
+      "down": false
+    },
+    {
+      "tick": 2884667872,
+      "scan": 35,
+      "down": true
+    },
+    {
+      "tick": 2885867872,
+      "scan": 35,
+      "down": false
+    },
+    {
+      "tick": 2887067872,
+      "scan": 38,
+      "down": true
+    },
+    {
+      "tick": 2888267872,
+      "scan": 38,
+      "down": false
+    },
+    {
+      "tick": 2913467872,
+      "scan": 56,
+      "down": true
+    },
+    {
+      "tick": 2914667872,
+      "scan": 56,
+      "down": false
+    },
+    {
+      "tick": 2927867872,
+      "scan": 26,
+      "down": true
+    },
+    {
+      "tick": 2929067872,
+      "scan": 26,
+      "down": false
+    },
+    {
+      "tick": 2930267872,
+      "scan": 6,
+      "down": true
+    },
+    {
+      "tick": 2931467872,
+      "scan": 6,
+      "down": false
+    },
+    {
+      "tick": 2932667872,
+      "scan": 26,
+      "down": true
+    },
+    {
+      "tick": 2933867872,
+      "scan": 26,
+      "down": false
+    },
+    {
+      "tick": 2935067872,
+      "scan": 5,
+      "down": true
+    },
+    {
+      "tick": 2936267872,
+      "scan": 5,
+      "down": false
+    }
+  ],
+  "transfers": [],
+  "frames": [
+    {
+      "name": "2048-running",
+      "tick": 2461767872,
+      "frame_sha256": "b3ebcdb5dfafd23315ef02f36252d7f08a65581d070e020648b169493dd8d547",
+      "checkpoint_sha256": "bcb609d6ad8954709bfccf3ddf4952d696f9323051fd966c62e5395907bfeff4",
+      "stop_status": 0,
+      "pc": 19009002,
+      "cpsr": 536870960
+    },
+    {
+      "name": "2048-moved",
+      "tick": 2495367872,
+      "frame_sha256": "92672cf8ae6e078cf265539fe69b83725b04dada1910f78468a8cd7fdf401b21",
+      "checkpoint_sha256": "b975f765d5e628d92e0f0ac12ae0f4deadaa145d1c892f2d0dbaf3e6486e9884",
+      "stop_status": 0,
+      "pc": 19009054,
+      "cpsr": 1073741872
+    },
+    {
+      "name": "2048-returned",
+      "tick": 2509767872,
+      "frame_sha256": "83d40b63c86233a2dd14a9e6d52802f2b2a90a7065829260a4ee72d86c80de59",
+      "checkpoint_sha256": "d07963130ed1a58e6336d5366f39933ffb07c0fa977fde288c7e0dbdc06705a2",
+      "stop_status": 0,
+      "pc": 33840,
+      "cpsr": 2147483667
+    },
+    {
+      "name": "2048-one-plus-one",
+      "tick": 2524367872,
+      "frame_sha256": "428982a9aaa21b5306417186842d0d8945021d268f9f46d272cbdf232c7423b9",
+      "checkpoint_sha256": "2d418bef03c3822076b77f1a180cd8c2e3159b6be4dbde0f3d3b6e76218e3ae5",
+      "stop_status": 0,
+      "pc": 259468,
+      "cpsr": 19
+    },
+    {
+      "name": "baseconvert-42-binary",
+      "tick": 2604167872,
+      "frame_sha256": "9606088f5d32a8c36b99a086fe0fa5671097b6e793aaf3f3b71710f5c86ad03b",
+      "checkpoint_sha256": "4e839e8f69a0002988090c6e309f6ee2e9d5b7186b0f759cca7cc6df4e295c16",
+      "stop_status": 0,
+      "pc": 23516,
+      "cpsr": 2147483667
+    },
+    {
+      "name": "listconvert-binary-42",
+      "tick": 2645367872,
+      "frame_sha256": "ce5bb3c926afe0b8ea5f4b8a6c5966b12a2518982658b80c0b13ca3ef80f33f1",
+      "checkpoint_sha256": "d8cb3f32fb50dcf1067dd8014365aae9a7d704b8bc466064736f4dffc4d8a7c6",
+      "stop_status": 0,
+      "pc": 33912,
+      "cpsr": 536870931
+    },
+    {
+      "name": "conversion-one-plus-one",
+      "tick": 2659967872,
+      "frame_sha256": "94132b535aa50f61b39b48e71cebe83ff57209c85fed43686fc3de3e8a8422b7",
+      "checkpoint_sha256": "04b644e2e970ef39ae8e0103a8c05e797f245741ebbc4637d328bafbcca1651c",
+      "stop_status": 0,
+      "pc": 33840,
+      "cpsr": 2147483667
+    },
+    {
+      "name": "babal-running",
+      "tick": 2879867872,
+      "frame_sha256": "018cfb9d9ae131df857b0f9be140ec276c1b1c48d83c4f6fafb2df1df187cf4c",
+      "checkpoint_sha256": "7ace55328a569945b8935cf2b55013eb9a382c146b655880efa335f2655801e5",
+      "stop_status": 0,
+      "pc": 242688,
+      "cpsr": 2147483664
+    },
+    {
+      "name": "babal-played",
+      "tick": 2913467872,
+      "frame_sha256": "2ed38985986fc1ca010b9209be2b55bba4f9fee07eba3f59e86e1b9f05e2a718",
+      "checkpoint_sha256": "95e15577249ce2ffbfda0431944fa6575570ba8eaccaca1c6efefc4099bec865",
+      "stop_status": 0,
+      "pc": 253248,
+      "cpsr": 1073741840
+    },
+    {
+      "name": "babal-returned",
+      "tick": 2927867872,
+      "frame_sha256": "4368d1c1f5a20b8f15faac9f822fd95c6d53c2bb456c21c60291e5de1fe245d4",
+      "checkpoint_sha256": "35dcaa504aa17ea9011aa963947cc877ee8b0dee15ccf1dab0352fff9eb80269",
+      "stop_status": 0,
+      "pc": 18736,
+      "cpsr": 2147483667
+    },
+    {
+      "name": "babal-one-plus-one",
+      "tick": 2942467872,
+      "frame_sha256": "f8145de7772fbc58dfe4ce3b4654696909e52ef2312c9f19cb33b3c367e3b281",
+      "checkpoint_sha256": "90f77861386990ace94234da1707a6ae7ed684f112a802ad5f2712227a6c8427",
+      "stop_status": 0,
+      "pc": 33832,
+      "cpsr": 2147483667
+    }
+  ],
+  "performance": [
+    {
+      "name": "2048",
+      "ticks": 24000000,
+      "wall_ms": 1608.0342689999998,
+      "reference_seconds": 2,
+      "instructions": 24000000,
+      "sampled_pc": [
+        19008986,
+        19008978,
+        19008970,
+        19008962,
+        19009002,
+        19009052,
+        19009020,
+        19009036,
+        19013116,
+        19007960,
+        19008992,
+        19008984,
+        19008976,
+        19008968,
+        19008960,
+        19009000,
+        19009050,
+        19009018,
+        19009034,
+        19013114,
+        19009010,
+        19008990,
+        19008982,
+        19008974,
+        19008966,
+        19007958,
+        19008998,
+        19009048,
+        19009016,
+        19009032,
+        19013112,
+        19009008,
+        19009056,
+        19009024,
+        19009040,
+        19013120,
+        19007956,
+        19008996,
+        19008988,
+        19008980,
+        19008972,
+        19008964,
+        19009004,
+        19009054,
+        19009022,
+        19009038,
+        19013118,
+        19007962,
+        19008994
+      ]
+    },
+    {
+      "name": "BabalPlus",
+      "ticks": 24000000,
+      "wall_ms": 823.8406710000017,
+      "reference_seconds": 2,
+      "instructions": 23999709,
+      "sampled_pc": [
+        254784,
+        166040,
+        234368,
+        151512,
+        186164,
+        156828,
+        173996,
+        259832,
+        166112,
+        149200,
+        172224,
+        184948,
+        161776,
+        171084,
+        166120,
+        151104,
+        252428,
+        166104,
+        242996,
+        253280,
+        176164,
+        253268,
+        166324,
+        151492,
+        153896,
+        174660,
+        173852,
+        151132,
+        185944,
+        173240,
+        252704,
+        156676,
+        242988,
+        259956,
+        259960,
+        259824,
+        176284,
+        161756,
+        178640,
+        156596,
+        171132,
+        149108,
+        248048,
+        149120,
+        173156,
+        154552,
+        259876,
+        151100,
+        259812,
+        186168,
+        259816,
+        189972,
+        175504,
+        161752,
+        149116,
+        166048,
+        254804,
+        175316,
+        172368,
+        233372,
+        154468,
+        166100,
+        243120,
+        259936,
+        151556,
+        252508,
+        254800,
+        176292,
+        156568,
+        242708,
+        171036,
+        176256,
+        166096,
+        259860,
+        176204,
+        253168,
+        189940,
+        161720,
+        253200,
+        176264,
+        252404,
+        156920,
+        176224,
+        259828,
+        151908,
+        259888,
+        176280,
+        156912,
+        254152,
+        149160,
+        166044,
+        173136,
+        153756,
+        188408,
+        206304,
+        153648,
+        185000,
+        156824,
+        157352,
+        180572,
+        154564,
+        185960,
+        173104,
+        180384,
+        171284,
+        259948,
+        259908,
+        176192,
+        178716,
+        257676,
+        187236,
+        166116,
+        174708,
+        252672,
+        259836,
+        154464,
+        161768,
+        253116,
+        154512,
+        187204,
+        156328,
+        156916,
+        151452,
+        233704,
+        176216,
+        156836,
+        235760,
+        171580,
+        184552,
+        167240,
+        172896,
+        242976,
+        154472,
+        171040,
+        154560,
+        168540,
+        172616,
+        188364,
+        176112,
+        175488,
+        156832,
+        171888,
+        259820,
+        155228,
+        235724,
+        161744,
+        185956,
+        172212,
+        251944,
+        151560,
+        153676,
+        167532,
+        253160,
+        242972,
+        156820,
+        253236,
+        178612,
+        254408,
+        174652,
+        166224,
+        167620,
+        172340,
+        253244,
+        253248,
+        186064,
+        252464,
+        259964,
+        186592,
+        149156,
+        172880,
+        242688,
+        259884,
+        156900,
+        151148,
+        175308,
+        171080,
+        243676,
+        118808
+      ]
+    }
+  ],
+  "visual_review_required": false,
+  "passed": true,
+  "installed_checkpoint_sha256": "0ede9234aecdb7a764fa241bd7030585b455d7c9a412dadd38f408e706a462a6",
+  "final_tick": 2942467872,
+  "visual_review": {
+    "2048-running": "4\u00d74 board with two initial 2 tiles",
+    "2048-moved": "Board changes after left/down/right/up; score 8",
+    "2048-returned": "HP-2048 saved game string on stack",
+    "2048-one-plus-one": "2 above saved game string",
+    "baseconvert-42-binary": "{ 1 0 1 0 1 0 }",
+    "listconvert-binary-42": "42",
+    "conversion-one-plus-one": "2 above 42",
+    "babal-running": "Babal lane and ball",
+    "babal-played": "Lane image advances after F2/F3/F1/F4",
+    "babal-returned": "Normal stack and KEYS/ABOUT/BABAL menu",
+    "babal-one-plus-one": "2 on stack"
+  },
+  "stock_installation": {
+    "cold_boot": true,
+    "checkpoint_sha256": "0ede9234aecdb7a764fa241bd7030585b455d7c9a412dadd38f408e706a462a6",
+    "ticks": 2413567872,
+    "wall_ms": 86559.802896,
+    "transfers": [
+      {
+        "mode": "send",
+        "name": "MMGAME",
+        "bytes": 25874,
+        "sha256": "fb6eb450ad00a1dd65c6f5877fab352939ce8b449f99244d89b0e45d7739c971",
+        "ticks": 1773822656,
+        "wall_ms": 63615.02143200001
+      },
+      {
+        "mode": "send",
+        "name": "ORBABAL",
+        "bytes": 5946,
+        "sha256": "6aade17af0b0c1f0418aa6e19ab3d707d3bc2089c369784263e1eae9c0418577",
+        "ticks": 290798272,
+        "wall_ms": 10467.528653999994
+      },
+      {
+        "mode": "send",
+        "name": "BCONV",
+        "bytes": 126,
+        "sha256": "a056b2ff18b3741d32ad093836fece03e94240d629e8d27cfe324d3e497062fd",
+        "ticks": 12107456,
+        "wall_ms": 590.7172859999991
+      },
+      {
+        "mode": "send",
+        "name": "LCONV",
+        "bytes": 92,
+        "sha256": "46cdbadd17e099c8a355a51f134c9a7dccde0fa1b79cc2e2bc11e54ee6017446",
+        "ticks": 11821760,
+        "wall_ms": 492.0195759999915
+      },
+      {
+        "mode": "send",
+        "name": "BINSTALL",
+        "bytes": 41,
+        "sha256": "d0056dd93fe331e29902f3e1ecbe16ddae87f6d540d58da9fd8d62496ae0d747",
+        "ticks": 10784448,
+        "wall_ms": 404.81017700000666
+      }
+    ],
+    "physical_key_trace_sha256": "5a7b653da0ad1dc9040821a57e2f00ac17e08ccf27372d2744804b9785a6946c"
+  },
+  "source_packages": [
+    {
+      "url": "https://www.hpcalc.org/hp49/games/board/2048.zip",
+      "file": "2048.zip",
+      "bytes": 33460,
+      "sha256": "0a549e03f2d3b0cb20638f49366baa4d5f2f774fa9eedca171a442300f851252"
+    },
+    {
+      "url": "https://www.hpcalc.org/hp49/math/misc/baseconvert.zip",
+      "file": "baseconvert.zip",
+      "bytes": 3101,
+      "sha256": "f0d847783cd9e19929c445f8243b3715936bd2fc7f0e3e779a2e2dbc09cdb1f0"
+    },
+    {
+      "url": "https://www.hpcalc.org/hp49/games/arcade/babal49plus.zip",
+      "file": "babal49plus.zip",
+      "bytes": 4259,
+      "sha256": "88936c36d517f724fdda0295c51810c2b000cf2f4e9fee9260800d091b5f3685"
+    }
+  ]
+}

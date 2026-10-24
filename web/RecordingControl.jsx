@@ -6,7 +6,7 @@ import i18n from './i18n.js';
 import {LCDRecorder,recordingFormat,recordingName} from './recording.js';
 i18n.addResourceBundle('en','translation',{recordLCD:'Record screen',stopRecording:'Stop recording',recordingError:'Unable to record the screen',recordingLimit:'Recording reached its size limit and was saved.',recordingUnavailable:'Screen recording is not supported by this browser'},true,false);
 i18n.addResourceBundle('zh','translation',{recordLCD:'录制屏幕',stopRecording:'停止录制',recordingError:'无法录制屏幕',recordingLimit:'录屏达到大小上限，已保存。',recordingUnavailable:'当前浏览器不支持屏幕录制'},true,false);
-export function RecordingControl({controller,state,onDownload}){
+export function RecordingControl({controller,state,onDownload,compact=false}){
   const {t}=useTranslation(),current=useRef(null),mounted=useRef(true),[active,setActive]=useState(false),[seconds,setSeconds]=useState(0);
   useEffect(()=>{
     mounted.current=true;
@@ -28,5 +28,5 @@ export function RecordingControl({controller,state,onDownload}){
       });
     }catch(error){controller.report('recordingError',error.message);}
   }
-  return <Group gap={6} wrap="nowrap"><Button variant={active?'filled':'default'} color={active?'red':undefined} disabled={!active&&(!state.loaded||state.busy||!recordingFormat())} title={!recordingFormat()?t('recordingUnavailable'):undefined} onClick={()=>active?void current.current?.stop():start()}>{t(active?'stopRecording':'recordLCD')}</Button>{active&&<Text size="xs" className="recording-clock" role="timer">{String(Math.floor(seconds/60)).padStart(2,'0')}:{String(seconds%60).padStart(2,'0')}</Text>}</Group>;
+  return <Group gap={6} wrap="nowrap"><Button variant={active?'filled':'default'} color={active?'red':undefined} aria-label={t(active?'stopRecording':'recordLCD')} disabled={!active&&(!state.loaded||state.busy||!recordingFormat())} title={!recordingFormat()?t('recordingUnavailable'):undefined} onClick={()=>active?void current.current?.stop():start()}>{t(compact?(active?'recordStopShort':'recordShort'):(active?'stopRecording':'recordLCD'))}</Button>{active&&<Text size="xs" className="recording-clock" role="timer">{String(Math.floor(seconds/60)).padStart(2,'0')}:{String(seconds%60).padStart(2,'0')}</Text>}</Group>;
 }

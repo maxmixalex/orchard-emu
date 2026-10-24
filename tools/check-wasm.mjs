@@ -25,13 +25,14 @@ function compileRegression(name, testModule, extraFlags = []) {
   command(process.env.CLANG || 'clang', [
     '--target=wasm32', '-std=c17', '-O3', '-flto', '-mbulk-memory', '-ffreestanding', '-nostdlib', '-fno-builtin',
     '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Iinclude', '-Isrc', ...extraFlags,
-    ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'checkpoint', 'scheduler', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb', 'sdi', 'spi', 'buzzer'].map(s => `src/${s}.c`),
+    ...['machine', 'cpu', 'thumb', 'mmu', 'bus', 'soc', 'uart', 'checkpoint', 'scheduler', 'watchdog', 'gpio', 'interrupt', 'rtc', 'keyboard', 'nor', 'sram', 'lcd', 'adc', 'usb', 'sdi', 'spi', 'buzzer'].map(s => `src/${s}.c`),
     `tests/${name}.c`, '-o', testModule, '-Wl,--no-entry', '-Wl,--stack-first',
-    '-Wl,-z,stack-size=524288', '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216',
+    // Multi-machine fixtures retain both immutable and programmed flash arrays.
+    '-Wl,-z,stack-size=524288', '-Wl,--initial-memory=33554432', '-Wl,--max-memory=33554432',
   ]);
 }
 let totalAssertions = 0, physicalReadAssertions = 0;
-for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb', 'sdi', 'spi', 'watchdog-reset', 'buzzer', 'power', 'pwm-clock', 'nor-bus', 'physical-read', 'memory', 'segments-nor', 'performance', 'execution', 'cpu-transactions', 'scheduler', 'checkpoint']) {
+for (const name of ['regression', 'lcd-input', 'lcd-adc', 'usb', 'sdi', 'spi', 'uart', 'watchdog-reset', 'buzzer', 'power', 'pwm-clock', 'nor-bus', 'nor-write', 'physical-read', 'memory', 'segments-nor', 'performance', 'execution', 'cpu-transactions', 'scheduler', 'checkpoint']) {
   const testModule = resolve(build, `${name}.wasm`);
   compileRegression(name, testModule);
   const { instance: { exports: test } } = await WebAssembly.instantiate(await readFile(testModule), {});
@@ -66,6 +67,7 @@ function syntheticNor(size, height) {
   function load(rd, value) { literals.push({ at: pc, rd, value }); word(0); }
   function reg(address, value) { load(0, address); load(1, value); word(0xe5801000); }
   reg(0x53000000, 0); // Disable watchdog in guest, not in the host.
+  reg(0x50000000, 3); reg(0x50000004, 5); // Enable 8-bit UART RX/TX.
   load(0, 0x50000000); word(0xe3a0104f); word(0xe5c01020); // UART 'O'
   word(0xe5d01024); word(0xe5c01020); // echo host byte
   reg(0x08001000, 0xa55a00ff);

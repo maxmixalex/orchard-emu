@@ -17,7 +17,7 @@ APLET 内部的运行时依赖由原系统请求，用户需同时选入其配�
 检查针对目录文件，不把封装识别提升为内部对象解析。
 
 需要更快安装笔记、二进制 aplet 和库时，在 **计算器传输菜单** 中改选
-**HP39/40 (Wire) — 快速上传**，仍选择同一个完整 ZIP，再点击 **通过 Wire 上传**。
+**HP39/40 (Wire)（上传）**，仍选择同一个完整 ZIP，再点击 **通过 Wire 上传**。
 浏览器先上传库；对当前显示的每一个文件，在计算器选择
 **RECV → HP39/40 (Wire)**。一个文件收到最后的结束确认后，浏览器才会等待下一个
 文件的 RECV。目录仅用于本机预检和选取原包内容，不作为 Wire 对象发送；
@@ -28,6 +28,56 @@ APLET 内部的运行时依赖由原系统请求，用户需同时选入其配�
 上述菜单文字对应 HP39g+；HP39gs 的 USB 直传菜单为 **HP39/40 (USB)**，
 串口为 **HP39/40 (Ser)**。页面按机型与连接显示对应提示，内部共用 Wire 发送器；
 菜单文字不构成未验证连接的传输通过声明。
+
+## 多对象接收与机型菜单
+
+菜单按实际机型和连接显示：
+
+| 机型/连接 | 直接上传 | 目录和下载 |
+| --- | --- | --- |
+| 39g+ USB | HP39/40 (Wire) | Disk drive… |
+| 39gs/40gs USB | HP39/40 (USB) | USB Disk drive… |
+| 39gs/40gs 串口 | HP39/40 (Ser) | Ser. Disk drive… |
+
+HP 官方 39gs [用户指南](https://literature.hpcalc.org/official/hp39gs-ug-en.pdf)
+第 270–271 页列出这些接收入口及目录多选；[Mastering 指南](https://literature.hpcalc.org/official/hp39gs40gs-mastering-en.pdf)
+第 243 页说明 USB Disk drive 目录中勾选多个对象。UI 标签不替代该连接的原 ROM 验证。
+
+原 Wire 直传每次接收一个对象。39g+ 和 39gs 的原 ROM 在完成第一份库文件后，
+直接发送下一份 aplet 并等待 36 个虚拟秒，仍没有下一次握手，传输字节为零。
+因此没有把一个原协议事务伪装成多对象事务。
+
+本轮增加明确的 **自动继续接收 aplet 和库** 开关，默认关闭。它仅对已验证
+39g+/39gs 的 USB 与连续 aplet/库队列启用。用户仍为首文件正常选择 RECV；
+前一个对象取得最终 ACK 后，宿主等待原系统回到已识别的 APLET catalog，
+通过正常物理键队列按 RECV，再逐帧确认原版 RECEIVE FROM 菜单及选中行，
+才选择 Wire/USB 和 ENTER。检查稳定画面、空闲键队列和虚拟时间；未知模态框、
+未匹配页面不会被自动确认，30 虚拟秒后恢复人工提示。手动按计算器键会停止
+本批自动续接；错误后的重试与跳过也不会盲目按 ENTER。代码不写 guest 内存。
+
+跨到笔记/程序目录、串口及 40gs 的自动续接尚未启用，按已有简短提示人工选择
+RECV。需要计算器原生的一次勾选多个对象时，可用相应的 Disk drive 目录模式。
+反向从计算器接收多个文件仍使用下面的 Disk drive 文件服务；这次自动按键
+功能不宣称实现 Wire 下载协议。
+
+`tests/hp39-wire-auto.mjs` 覆盖选择开关、稳定画面/键队列/时钟边界、未知页面、
+中断及模型标签。原 ROM 实测用同一个生产识别器和 TapQueue，在仅人工开启
+首对象 RECV 后，自动把 GBP 0.3 的 lib275.sys 接到 gbpplayer.apt；随后原版
+SEND 回收得到完全相同的 aplet 和完全相同的库 payload。其运行时兼容性仍是
+另一项测试，不能从传输一致推断原生程序能够运行。见
+[r23 Wire 批量证据](evidence/hp39-wire-batch-r23.json)。
+最终候选还用 Arkalite 原包在两机重新冷启动并完成同样的传输回收；
+原包与诊断重建包的运行结果见 [r23 HP39 应用验证](hp39-programs-r23.md)。
+
+```sh
+node tools/verify-hp39-wire-batch.mjs /private/39gs.bin \
+  /private/lib275.sys /private/gbpplayer.apt /private/new-batch-result \
+  --wasm dist/orchard.wasm --observe-idle
+```
+
+工具输出包含私有 LCD 和安装检查点，不应公开；机器可读公开记录只保留哈希和断言。
+省略 `--observe-idle` 会在首 ACK 后立即开始自动续接；该选项则先复核 36 虚拟秒无新 RECV 时
+确实没有第二对象传输。两种路径本轮都已在两款原 ROM 上分别通过。
 
 **设置 → 传输 → 传输时不限速**是可选开关，默认关闭。打开后，只有实际收发文件数据的阶段
 临时使用 Unlimited；等待用户选择 RECV、选择远程目录以及两个 Wire 文件之间

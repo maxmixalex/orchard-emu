@@ -7,7 +7,8 @@ import {listSDDirectory,readSDFile,addSDFiles,createSDDirectory,renameSDEntry,de
 import {DirectoryCardControls} from './DirectoryCardControls.jsx';
 
 // A draft owns its image bytes. Mounted SD media stays exclusively in the Worker.
-export function SDCardFiles({disabled,insertDisabled=false,download,onInsert,onBack,initialDraft=null}){
+export function SDCardFiles({disabled,insertDisabled=false,download,onInsert,onBack,initialDraft=null,
+  store,storageKey,savedDirectory,onSaved}){
   const {t}=useTranslation(),imageInput=useRef(null),filesInput=useRef(null),epoch=useRef(0);
   const [image,setImage]=useState(()=>initialDraft?.bytes||createSDImage()),[imageName,setImageName]=useState(initialDraft?.name||'orchard-sd.img');
   const [association,setAssociation]=useState(initialDraft?.association||null);
@@ -48,7 +49,6 @@ export function SDCardFiles({disabled,insertDisabled=false,download,onInsert,onB
   async function save(bytes,name){try{await download(bytes,name);setFailure(null);}catch{setFailure({code:'download',details:{}});}}
   return <Stack data-testid="sd-file-editor" gap="sm">
     <Text fw={600}>{t('sdDraftTitle')}</Text>
-    <Text size="sm" c="dimmed">{t('sdDraftHelp')}</Text>
     {failure&&<Alert color="red" role="alert">{t('sdFs_'+failure.code,{...failure.details,defaultValue:t('sdFs_input')})}</Alert>}
     <TextInput label={t('sdDraftImageName')} value={imageName} onChange={e=>setImageName(e.currentTarget.value)} disabled={locked}/>
     <Group gap="xs">
@@ -56,7 +56,9 @@ export function SDCardFiles({disabled,insertDisabled=false,download,onInsert,onB
       <Button variant="subtle" disabled={locked} onClick={()=>action(()=>{setImage(createSDImage());setImageName('orchard-sd.img');setAssociation(null);changePath('/');})}>{t('sdDraftBlank')}</Button>
     </Group>
     <DirectoryCardControls image={image} association={association} disabled={locked} onBusy={setReading} onAssociation={setAssociation}
-      onDraft={draft=>{setImage(draft.bytes);setImageName(draft.name);setAssociation(draft.association);changePath('/');}}/>
+      store={store} storageKey={storageKey} savedDirectory={savedDirectory} onSaved={onSaved}
+      autoSync={Boolean(initialDraft?.sync)} onSyncInsert={initialDraft?.sync?onInsert:undefined}
+      onDraft={draft=>{setImage(draft.bytes);setImageName(draft.name);setAssociation(draft.association);setSelected([]);changePath('/');}}/>
     <Text size="sm" role="status">{t('sdDraftSpace',{size:directory.bytes/1024/1024,free:directory.freeBytes.toLocaleString()})}</Text>
     <Group justify="space-between">
       <Text component="code" size="sm" style={{overflowWrap:'anywhere'}}>{path}</Text>

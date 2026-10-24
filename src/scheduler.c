@@ -30,6 +30,7 @@ void o_schedule_plan(orchard_machine *m) {
     /* The reset pulse is brief and has a separate held-reset domain. Keep
        its 128 edges explicit; never defer active peripheral transitions. */
     if(s->wtreset){m->quiet_left=0;return;}
+    if(m->nor.remaining||o_uart_pending(s)){m->quiet_left=0;return;}
     /* The RTC oscillator remains running even with its calendar held reset. */
     uint32_t n = s->rtc.phase < O_FUNCTIONAL_TIMEBASE_HZ ?
         (O_FUNCTIONAL_TIMEBASE_HZ - s->rtc.phase + 32767u) / 32768u : 1u;

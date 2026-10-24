@@ -5,6 +5,43 @@
  */
 #include "internal.h"
 
+orchard_status orchard_lcd_observe(orchard_machine *m, bool enabled, orchard_frame_view view) {
+    if (!m || !m->profile || (unsigned)view > ORCHARD_FRAME_PACKED_LSB)
+        return ORCHARD_BAD_ARGUMENT;
+    if (m->lcd_output.enabled != enabled || m->lcd_output.view != view)
+        m->lcd_output.valid = false;
+    m->lcd_output.enabled = enabled;
+    m->lcd_output.view = view;
+    return ORCHARD_OK;
+}
+void orchard_lcd_observer_reset(orchard_machine *m) {
+    if (m) m->lcd_output.valid = false;
+}
+static void lcd_publish(orchard_machine *m) {
+    o_lcd_output *out = &m->lcd_output;
+    if (!out->enabled) return;
+    out->status = orchard_framebuffer_view(m, out->view, out->pixels, sizeof(out->pixels));
+    out->annunciator_status = orchard_annunciators(m, out->annunciators);
+    out->valid = true;
+}
+orchard_status orchard_lcd_published_frame(const orchard_machine *m, uint8_t *pixels, size_t capacity) {
+    if (!m || !m->profile || !pixels || capacity < m->profile->lcd_width * m->profile->lcd_height)
+        return ORCHARD_BAD_ARGUMENT;
+    const o_lcd_output *out = &m->lcd_output;
+    if (!out->enabled || !out->valid || !(m->soc.lcd[0] & 1u))
+        return orchard_framebuffer_view(m, out->view, pixels, capacity);
+    o_copy(pixels, out->pixels, m->profile->lcd_width * m->profile->lcd_height);
+    return out->status;
+}
+orchard_status orchard_lcd_published_annunciators(const orchard_machine *m, uint8_t levels[6]) {
+    if (!m || !m->profile || !levels) return ORCHARD_BAD_ARGUMENT;
+    const o_lcd_output *out = &m->lcd_output;
+    if (!out->enabled || !out->valid || !(m->soc.lcd[0] & 1u))
+        return orchard_annunciators(m, levels);
+    o_copy(levels, out->annunciators, 6);
+    return out->annunciator_status;
+}
+
 orchard_status orchard_lcd_probe68(orchard_machine *m, bool idle_zero) {
     if (!m || !m->profile) return ORCHARD_BAD_ARGUMENT;
     m->soc.lcd_probe68_idle_zero = idle_zero;
@@ -59,6 +96,7 @@ void o_lcd_tick(orchard_machine *m) {
     else {
         s->lcd_line = (r[1] >> 14) & 0x3ffu;
         ++s->lcd_frames;
+        lcd_publish(m);
         r[0x58 / 4] |= LCD_FRAME_BIT;
         r[0x54 / 4] |= LCD_FRAME_BIT & ~r[0x5c / 4];
         lcd_irq(s);
@@ -79,6 +117,7 @@ bool o_lcd_register(orchard_machine *m, uint32_t address, unsigned width,
     }
     switch (off) {
     case 0:
+        if ((r[0] ^ *value) & 1u) orchard_lcd_observer_reset(m);
         if (!((r[0] ^ *value) & 1u)) {
             /* Live clock/mode reprogramming not assigned guessed scan timing. */
             if ((r[0] & 1u) && ((r[0] ^ *value) & 0x3fffeu)) {
@@ -95,9 +134,15 @@ bool o_lcd_register(orchard_machine *m, uint32_t address, unsigned width,
             o_stop(m, ORCHARD_UNSUPPORTED_LCD, address, *value); return false;
         }
         r[index] = *value; return true;
-    case 0x4c:
-        if (*value & 0x7ffffu) break;
-        r[index] = 0; return true;
+    case 0x4c: {
+        /* S3C2410A manual 15-35 specifies exactly these two STN dither
+           patterns. Retain/read back the writable 19-bit field. The raw
+           inspection APIs expose pre-dither gray intensity; they do not
+           claim to reconstruct the undocumented per-pixel FRC phase. */
+        uint32_t pattern = *value & 0x7ffffu;
+        if (pattern != 0u && pattern != 0x12210u) break;
+        r[index] = pattern; return true;
+    }
     case 0x50:
         if (*value & 0x1000000u) break; /* TFT temporary palette unsupported. */
         r[index] = *value & 0xffffffu; return true;

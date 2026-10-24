@@ -38,9 +38,8 @@
 .mapping-target-bindings{max-height:180px;overflow-y:auto;padding:1px}
 @media(max-width:1190px){.mapping-workspace{grid-template-columns:minmax(0,1fr)}.mapping-calculator-panel{width:min(100%,520px);justify-self:center}.mapping-layout-status button{white-space:normal;height:auto;min-height:24px}}
 @media(max-width:700px){.pc-physical{aspect-ratio:15/14}.pc-physical-key{left:calc(var(--pc-small-x)/15*100%)!important;top:calc(var(--pc-small-y)/14*100%)!important;width:calc(var(--pc-w)/15*100% - 3px)!important;height:calc(var(--pc-h)/14*100% - 3px)!important;font-size:10px;padding:0}.pc-physical-key.pc-unknown{font-size:8px}.mapping-topline{align-items:stretch}.mapping-topline>div:first-child,.mapping-capture{width:100%}.mapping-model-hint{min-width:0}.mapping-summary{min-width:0;width:100%}.mapping-selection{align-items:stretch;flex-direction:column}.mapping-calculator-panel{padding:10px}.mapping-layout-status{padding:8px}.mapping-layout-status button{max-width:100px}}
-#calculator[data-view=traditional]{background:#d8dcd9;border-color:#a9b5ad;padding:18px 22px;border-radius:24px}
-#calculator[data-view=traditional] .traditional-keypad{display:block;width:100%}
-#calculator:not([data-view=traditional]) .traditional-keypad{display:none}
+#calculator[data-view^=traditional] .traditional-keypad{display:block;width:100%}
+#calculator:not([data-view^=traditional]) .traditional-keypad{display:none}
 .traditional-geometry{display:block;width:100%;height:auto;overflow:visible}
 .traditional-geometry .traditional-key{display:inline;min-height:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;transform:none;cursor:pointer;fill:#f7f9f8;color:inherit}
 .traditional-geometry .key-outline{fill:#3d4543;stroke:#202926;stroke-width:1.4}

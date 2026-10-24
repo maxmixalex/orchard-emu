@@ -3,8 +3,12 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import {directoryEn,directoryZh} from './directory-i18n.js';
 import {hostBridgeEn,hostBridgeZh} from './host-bridge-i18n.js';
+import {displayEn,displayZh} from './display-i18n.js';
+import {irdaEn,irdaZh} from './irda-i18n.js';
+import {transferUiEn,transferUiZh} from './transfer-ui-i18n.js';
 export const LANG_KEY='orchard:language:v1';
 export const en={
+  ...displayEn,
   ...directoryEn,
   ...hostBridgeEn,
   sdDraftRename:'Rename',
@@ -63,7 +67,7 @@ export const en={
   sdDraftImageName:"Image filename",
   sdDraftOpen:"Open image for editing",
   sdDraftBlank:"Start a new blank card",
-  sdDraftSpace:"{{size}} MiB image · {{free}} bytes free",
+  sdDraftSpace:"{{size}} MiB image ({{free}} bytes free)",
   sdDraftParent:"Parent folder",
   sdDraftEntry:"File or folder",
   sdDraftBytes:"Bytes",
@@ -115,7 +119,7 @@ export const en={
   apply:'Apply',cancel:'Cancel',close:'Close',ok:'OK',delete:'Delete',switch:'Switch',startNew:'Start new',error:'Unable to complete the operation',
   replaceMemory:'Replace the current calculator memory and inserted SD card? Save or export any work you want to keep first.',clearMemory:'Clear current memory? Exported session files will not be deleted.',
   restoreLocal:'Restore local save?',localSaveTime:'Saved {{time}}',localKept:'Local save kept',autoSaved:'Saved on this device',autoStopped:'Automatic save stopped',foreignSave:'Another tab changed the local save',
-  exported:'Session exported',restored:'Restored · press Resume',savesDeleted:'Local saves deleted',deleteSaves:'Delete local saves',deleteSavesConfirm:'Delete Orchard saves on this device? Exported files will be kept.',
+  exported:'Session exported',restored:'Session restored',savesDeleted:'Local saves deleted',deleteSaves:'Delete local saves',deleteSavesConfirm:'Delete Orchard saves on this device? Exported files will be kept.',
   romError:'This ROM could not be opened. Choose a supported complete HP39g+, HP39gs, HP48gII or HP49g+ NOR, not an update or ZIP.',sessionError:'This saved session could not be restored.',saveError:'The file could not be exported.',
   storageError:'Device storage is unavailable, full, or was changed by another tab. Your previous complete save has been kept where possible.',
   workerFailure:'The calculator could not start. Reload the page and try again.',operationFailed:'The operation failed.',compatibilityError:'A compatibility issue stopped the calculator. Restart or restore an earlier session.',usbError:'The USB operation did not complete.',
@@ -161,6 +165,7 @@ export const en={
   copyright:'Unofficial. HP marks belong to their owners.',artwork:'Artwork',developer:'Developer',screen1:'Original size',screen4:'4× pixels',
 };
 export const zh={
+  ...displayZh,
   ...directoryZh,
   ...hostBridgeZh,
   sdDraftRename:'重命名',
@@ -219,7 +224,7 @@ export const zh={
   sdDraftImageName:"镜像文件名",
   sdDraftOpen:"打开镜像进行编辑",
   sdDraftBlank:"改用新空白卡",
-  sdDraftSpace:"{{size}} MiB 镜像 · 剩余 {{free}} 字节",
+  sdDraftSpace:"{{size}} MiB 镜像，剩余 {{free}} 字节",
   sdDraftParent:"上级目录",
   sdDraftEntry:"文件或文件夹",
   sdDraftBytes:"字节数",
@@ -271,7 +276,7 @@ export const zh={
   apply:'应用',cancel:'取消',close:'关闭',ok:'确定',delete:'删除',switch:'切换',startNew:'重新开始',error:'未能完成操作',
   replaceMemory:'替换当前计算器内存和已插入的 SD 卡？请先保存存档或导出需要保留的内容。',clearMemory:'清空当前内存并重新启动？已导出的存档文件不会删除。',
   restoreLocal:'恢复本机存档？',localSaveTime:'保存于 {{time}}',localKept:'已保留本机存档',autoSaved:'已保存到本机',autoStopped:'自动保存已停止',foreignSave:'其他标签页修改了本机存档',
-  exported:'存档已导出',restored:'已恢复，点击「继续」运行',savesDeleted:'已删除本机存档',deleteSaves:'删除本机存档',deleteSavesConfirm:'删除本机的 Orchard 自动存档？已导出的文件会保留。',
+  exported:'存档已导出',restored:'存档已恢复',savesDeleted:'已删除本机存档',deleteSaves:'删除本机存档',deleteSavesConfirm:'删除本机的 Orchard 自动存档？已导出的文件会保留。',
   romError:'无法打开此 ROM。请选择支持的 HP39g+、HP39gs、HP48gII 或 HP49g+ 完整 NOR 镜像，而非升级包或 ZIP。',sessionError:'无法恢复此存档。',saveError:'无法导出文件。',
   storageError:'本机存储不可用、已满，或存档被其他标签页修改。系统会尽可能保留此前的完整存档。',
   workerFailure:'计算器未能启动，请刷新页面重试。',operationFailed:'操作未能完成。',compatibilityError:'兼容性问题导致计算器停止，请重新启动或恢复此前的存档。',usbError:'USB 操作未完成。',
@@ -340,6 +345,7 @@ Object.assign(zh,{
   romIssue_storage:'此浏览器无法保存或读取已记住的 ROM，仍可手动打开 ROM。',
   selfTest:'进入自检',selfTestActions:'自检操作',selfTestExit:'退出自检',selfTestHelp:'发送计算器的 ON + F4 按住组合键。「退出自检」使用 ON + F3 热重启。请先结束文件传输。',
 });
+Object.assign(en,transferUiEn,irdaEn);Object.assign(zh,transferUiZh,irdaZh);
 export function initialLanguage(storage,locale='en'){try{const l=storage?.getItem(LANG_KEY);if(l==='en'||l==='zh')return l;}catch{}return locale.toLowerCase().startsWith('zh')?'zh':'en';}
 i18n.use(initReactI18next).init({resources:{en:{translation:en},zh:{translation:zh}},lng:'en',fallbackLng:'en',interpolation:{escapeValue:false},react:{useSuspense:false}});
 export default i18n;

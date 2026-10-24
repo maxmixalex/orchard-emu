@@ -59,7 +59,7 @@ static void word_cycles(void) {
     uint32_t id = 0;
     CHECK(o_phys_read(a, 0, 4, &id)); CHECK(id == 0x234b00bf);
     CHECK(o_phys_write(a, 0, 4, 0x00f000f0)); CHECK(!a->nor_id_mode);
-    const unsigned unimplemented[] = {0xa0, 0x80, 0x98, 0x88, 0xa5, 0x85};
+    const unsigned unimplemented[] = {0x98, 0x88, 0xa5, 0x85};
     for (unsigned i = 0; i < sizeof(unimplemented) / sizeof(unimplemented[0]); ++i) {
         command_state(a, 0, false);
         CHECK(o_phys_write(a, 0xaaaa, 2, 0xaa));

@@ -22,7 +22,7 @@ from http.server import ThreadingHTTPServer
 from urllib.parse import urljoin,urlsplit
 
 from PIL import Image
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location('orchard_transfer_probe', ROOT/'tools/probe-file-transfer-browser.py')
@@ -136,6 +136,7 @@ def main():
                         assert manifest['assets'][name]==digest,'Published asset differs from the tested build: '+name
                 stage('cold-boot-from-picker')
                 # Standard file-input/local-copy path; native picker permission UI is separate.
+                expect(page.get_by_role('button', name='Open ROM', exact=True)).to_be_enabled()
                 page.locator('#rom').set_input_files(str(args.rom.resolve()))
                 page.wait_for_function('window.__transferProbe.snapshot?.loaded===true')
                 helper.verify_model(page, model)
@@ -169,7 +170,7 @@ def main():
                 saved = args.output/'saved.ord'
                 pending.value.save_as(saved)
                 report['save'] = session_metadata(saved)
-                assert report['save']['model'] == 2 and report['save']['preset'] == 'hp39gs-home' and report['save']['checkpoint_version'] == 5
+                assert report['save']['model'] == 2 and report['save']['preset'] == 'hp39gs-home' and report['save']['checkpoint_version'] == 6
                 page.wait_for_function('window.__transferProbe.snapshot?.running===false')
                 saved_frame = frame(page)
                 page.get_by_role('button', name='Resume', exact=True).click()
@@ -182,6 +183,9 @@ def main():
                 page.locator('#session-file').set_input_files(str(saved.resolve()))
                 page.get_by_role('dialog').get_by_role('button', name='Restore', exact=True).click()
                 page.wait_for_function("n=>window.__transferProbe.events.slice(n).some(e=>e.type==='checkpoint-restored')", arg=before)
+                page.wait_for_function('window.__transferProbe.snapshot?.running===true')
+                report['restore_auto_resumed'] = True
+                page.get_by_role('button', name='Pause', exact=True).click()
                 page.wait_for_function('window.__transferProbe.snapshot?.running===false')
                 assert frame(page) == saved_frame, 'Restoration changed the complete displayed LCD'
                 report['saved_lcd_restored_exactly'] = True

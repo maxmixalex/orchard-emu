@@ -20,6 +20,7 @@ static unsigned checks,failures,first;
 static void init(unsigned model) {
     CHECK(orchard_init(&a,sizeof a,model)==&a);
     a.loaded=true; a.flash[0]=0xfe; a.flash[1]=a.flash[2]=0xff; a.flash[3]=0xea;
+    o_copy(a.flash_base,a.flash,a.profile->flash_bytes);
     a.soc.wtcon=0; a.cpu.cpsr=O_SVC|O_I|O_F;
 }
 static void wr(uint32_t offset,uint32_t value) { CHECK(o_mmio_write(&a,0x5a000000u+offset,4,value)); }

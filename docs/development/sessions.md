@@ -6,8 +6,11 @@
 exports `<model>-<yyyymmdd-hhmmss>.ord`, using local wall time for the filename
 only. Legacy `.orchard` files are still accepted: the validated format is
 backwards compatible. Keep the exported backup. To resume later, open the same original
-ROM and choose **Restore**, then **Resume**. Optional automatic local saves
-are described below; the ROM is never persisted.
+ROM and choose **Restore**. A successful restore automatically resumes when
+the current focus/visibility policy permits it. A saved compatibility stop
+remains stopped; a visible paused bar provides **Resume simulation** whenever
+execution is paused. Optional automatic local saves are described below.
+Remembering a local ROM is a separate storage setting.
 Restoring a saved HOME session avoids repeating cold boot and its prompts.
 If a session was saved after the firmware powered off, Resume continues that
 powered-off state; use the calculator's ON key to wake it.
@@ -22,9 +25,12 @@ for this compatibility boundary.
 
 The file records RAM, internal SRAM, CPU register banks and CP15 state,
 peripheral registers, pending interrupts, clock phases, ADC sample-and-hold,
-UART/USB queues, SDI state, the complete inserted SD card and NOR command state.
-It does not include the immutable NOR
-image, UI timers, pointers or execution caches. Like a calculator backup,
+all three UARTs and their queues, USB queues, SDI state, the complete inserted
+SD card, pending NOR operations and changed 4 KiB flash sectors.
+It does not include a complete immutable ROM image, UI timers, pointers or
+execution caches. Changed flash sectors can include bytes derived from the
+original ROM, so a session is private and must not be committed or published.
+Like a calculator backup,
 it contains the user's calculations and any data in calculator memory; treat
 it as private. Nothing is uploaded. A snapshot is not native warm reset,
 battery-backed storage or continuation of an external USB host connection.
@@ -33,19 +39,27 @@ battery-backed storage or continuation of an external USB host connection.
 
 The C API is `orchard_checkpoint_size/save/load`. The core format uses an
 explicit little-endian field stream, not `memcpy` of a C struct. Native and
-WASM share the schema. A 32-byte header contains `ORCHST01`, version 5, exact
+WASM share the schema. A 32-byte header contains `ORCHST01`, version 6, exact
 length, model, ROM CRC32, physical SRAM size and a payload CRC32. The body
 contains explicitly enumerated architectural scalars, active SRAM and the
-4 KiB internal SRAM. Without a card, 256 KiB machines produce **271,211 bytes**
-before the small browser envelope; 512 KiB machines produce **533,355 bytes**.
-An inserted card adds its complete image length. Version 2 added 52 bytes of
+4 KiB internal SRAM. Without a card or modified flash sectors, 256 KiB machines
+produce **275,588 bytes** before the small browser envelope; 512 KiB machines
+produce **537,732 bytes**. An inserted card adds its complete image length.
+Each modified flash sector adds 4,100 bytes: its 4-byte aligned offset followed
+by 4,096 bytes of data. Version 2 added 52 bytes of
 SDI state; version 3 added 709 bytes for media metadata and controller/FIFO/
 partial-transfer state, followed by the card image. Version 4 appends 64 scalar
 bytes for fractional PCLK phase, MPLL setup history, active PWM compares and
 pending reload values. Version 5 appends **76 bytes**: two 36-byte SPI channel
-states and a 4-byte watchdog reset-pulse countdown. RAM begins at byte 4971.
-Exports always use version 5; the browser envelope remains version 1. The loader
-continues to accept exact version-1/2/3/4 files. Legacy length, checksum, model
+states and a 4-byte watchdog reset-pulse countdown. Its RAM began at byte 4971.
+Version 6 appends **4,377 scalar bytes**: 204 bytes of UART holding/FIFO, event and modem state,
+4,128 bytes for UART1/2 host queues, one canonical IrDA board-attachment boolean,
+40 bytes of NOR operation state and a 4-byte modified-sector count.
+RAM begins at byte **9348**; the changed-sector records follow RAM, internal
+SRAM and the optional SD image. Records are strictly ordered, unique and bounded
+by the loaded model's NOR capacity.
+Exports always use version 6; the browser envelope remains version 1. The loader
+continues to accept exact version-1/2/3/4/5 files. Legacy length, checksum, model
 and field validation still apply.
 
 Versions 1–3 did not record the clock/PWM state. Their migration preserves
@@ -65,6 +79,14 @@ can expire and execute the real reset-vector path. An older saved diagnostic
 Version 5 can resume a partly shifted SPI byte or any of the 128 reset-hold
 edges exactly. See [SPI](spi.md) and [watchdog reset](watchdog-reset.md).
 
+Versions 1–5 have no new UART hardware-buffer/event or flash-delta fields. Migration
+starts those state machines idle, preserves the already represented UART0
+host queues, and restores the immutable flash image. The host-selected IrDA
+board attachment is retained because the older formats did not record it.
+Version 6 preserves UART hardware buffers, interrupt events, modem state and queued UART1/2 data, an in-flight word program or erase, and suspended erase/program state. UART transport remains atomic decoded bytes; serial bit timing and FIFO receive timeout are not implemented. The ROM CRC remains bound to the immutable original input, independently
+of subsequent flash programming. A load validates every record before restoring
+the original array and applying its sector deltas. See [NOR writes](nor-write.md).
+
 The browser envelope (`ORCHARD1`) adds versioned JSON metadata with the exact
 ROM SHA-256, model, compatibility configuration, display mode and state SHA-256.
 Its metadata and payload lengths are bounded before decoding. These checks
@@ -73,7 +95,8 @@ is still untrusted: core import stages small scalar state, checks booleans,
 enums, queue cursors/counts, ADC/sample bounds, endpoint indices and other
 index-bearing fields, card geometry, protocol state, bound media capacity,
 PCLK phase, PWM reload invariants, SPI register/shift ranges and READY/busy
-consistency, and the reset-pulse bound, and only then mutates the machine. Malformed data is
+consistency, the reset-pulse bound, UART queues/shift counters and NOR operation
+geometry/timing, and only then mutates the machine. Malformed data is
 rejected without partial replacement. Buffers overlapping the machine and
 incorrect/truncated/extra lengths are refused. The matched original ROM must
 already be loaded.
@@ -86,7 +109,8 @@ migration. Do not silently accept a different layout. Legacy migration is explic
 covered on all six model capacities. Unknown versions remain errors.
 
 For manual save and every import the Worker pauses first, binds asynchronous results to a
-machine generation and operation token, and leaves restored machines paused.
+machine generation and operation token. Once import succeeds, the controller
+resumes an unstopped machine under the current focus/visibility policy.
 Its host input queue is empty on import; physical inputs are released rather
 than resurrecting a stuck browser key. A failed import leaves the current
 calculator paused and intact. File selection and downloads belong to the UI;
@@ -100,7 +124,7 @@ external RAM, circular UART queues and partly consumed USB FIFOs. They reject
 wrong ROMs, damaged/truncated files, every changed header byte, bad versions,
 noncanonical booleans and invalid queue cursors even with a repaired checksum.
 The suite includes independent bitwise verification of both CRC fields on all
-six models, all four legacy-version imports, in-flight SDI/SPI continuation,
+six models, all five legacy-version imports, in-flight SDI/SPI/UART/NOR continuation,
 nonzero PCLK phase, buffered PWM reload, held WDT reset and Power_OFF save/wake.
 The v4 migration independently checks that nonzero phases and active/pending
 PWM latches survive without the older reconstruction. Browser-envelope and
@@ -156,9 +180,10 @@ completion is guarded by model generation, operation and request identity.
 The next load of that same ROM offers Restore or Start new in a modal. Escape
 dismissal preserves the old save and stays paused with autosave blocked, rather
 than silently overwriting it. Selecting another ROM never imports the old one.
-Import validates the existing state/envelope and leaves execution paused.
-Host USB links are detached and serial subscriptions cleared: a restored core
-state is not restoration of another program's USB transactions.
+Import validates the existing state/envelope and automatically resumes when
+allowed by the current policy. Host USB links and tab-to-tab infrared links are
+detached and serial subscriptions cleared: a restored core state does not
+restore another peer's protocol transaction.
 
 The prior writer-token read and complete replacement share one IndexedDB
 transaction, so competing writes remain atomic without Web Locks. A small

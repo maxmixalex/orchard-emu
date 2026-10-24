@@ -115,6 +115,7 @@ jobs:
           build/browser-venv/bin/python tests/browser-sd-files.py
           build/browser-venv/bin/python tests/browser-keyboard.py
           build/browser-venv/bin/python tests/browser-lcd.py
+          build/browser-venv/bin/python tests/browser-display.py
           build/browser-venv/bin/python tests/browser-sd-directory.py
           build/browser-venv/bin/python tests/rom-storage-browser.py
           build/browser-venv/bin/python tests/browser-host-bridge.py
@@ -143,10 +144,13 @@ jobs:
             build/buzzer-browser.json
             build/keyboard-r22-*.png
             build/lcd-browser/
+            build/display-r23/
             build/rom-storage-browser.json
             build/host-bridge-r22-mobile.png
             build-r22/directory-sd/browser-result.json
             build-r22/directory-sd/directory-mobile*.png
+            build-r23/directory-sd/browser-result.json
+            build-r23/directory-sd/directory-mobile*.png
             build-r20/sd-files/browser-result.json
             build-r20/sd-files/browser-mobile.png
             build-r20/sd-files/browser-mobile-zh.png

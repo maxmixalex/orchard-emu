@@ -48,8 +48,8 @@ static void nor(void) {
     CHECK(o_phys_write(&m,0,4,0xf0) && !m.nor_id_mode);
     CHECK(o_phys_write(&m,0xaaaa,2,0xaa));
     CHECK(o_phys_write(&m,0x5554,2,0x55));
-    CHECK(!o_phys_write(&m,0xaaaa,2,0xa0)); /* Programming is still unsupported. */
-    CHECK(m.stop.status==ORCHARD_UNIMPLEMENTED_FLASH);
+    CHECK(o_phys_write(&m,0xaaaa,2,0xa0));
+    CHECK(m.nor_sequence==3); /* The next x16 cycle is program data. */
     orchard_reset(&m);
     CHECK(o_nor_write(&m,0,4,0)); /* Shared upstream NOR adapter owns splitting. */
     orchard_reset(&m);

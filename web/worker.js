@@ -13,7 +13,7 @@ import { readSDState, validateSDSize } from './sd-card.js';
 import { listSDDirectory } from './sd-filesystem.js';
 import { setupHash, isPlayable, applySetup, TapQueue } from './hp48.js';
 let audience = 'debug';
-let romHash='', operation=0, busy=false, autoSaving=false, serial=false, usb, transfer, buzzer, hostBridge=null;
+let romHash='', operation=0, busy=false, autoSaving=false, serial=false, irda=false, usb, transfer, buzzer, hostBridge=null;
 let hostBridgeCleanup=Promise.resolve();
 const pacer=new Pacer(), scheduler=new TaskScheduler();
 const lcdFrames=new LCDFrames();
@@ -68,14 +68,31 @@ function pause() { stopHostBridge();transfer?.cancel(tick,transferError('transfe
 function sendUart() {
   const n = core.uart_receive();
   if(n){const bytes=new Uint8Array(core.memory.buffer,core.uart_output(),n).slice();
-    if(transfer?.receiveUart(bytes,tick))return;
-    if(audience === 'debug' || serial)postMessage({type:'uart-output',generation,bytes});}
+    if(!transfer?.receiveUart(bytes,tick)&&(audience === 'debug' || serial))postMessage({type:'uart-output',generation,bytes});}
+  // Drain all host capture queues even without a peer. Sending into open air
+  // must not eventually halt the CPU because the browser kept old octets.
+  if(typeof core.uart_receive_channel==='function')for(const channel of [1,2]){
+    const count=core.uart_receive_channel(channel);if(!count)continue;
+    const bytes=new Uint8Array(core.memory.buffer,core.uart_output(),count).slice();
+    // These bytes were already transmitted by the core. A guest can disable
+    // TX or change its line mode before this host slice drains them. An
+    // explicitly paired decoded-byte UART2 link must retain that final data;
+    // internal loopback never enters the core's external output queue.
+    if(channel===2&&irda)postMessage({type:'irda-output',generation,bytes},[bytes.buffer]);
+    else if(audience==='debug')postMessage({type:'uart-output',generation,channel,bytes});
+  }
+}
+function irdaReady(receiving){
+  if(typeof core.uart_snapshot!=='function')return false;
+  const pointer=core.uart_snapshot(2);if(!pointer)return false;
+  const s=new Uint32Array(core.memory.buffer,pointer,9);
+  return Boolean(s[7]&&(s[0]&64)&&!(s[1]&32)&&(receiving?(s[1]&3):(s[1]&12)));
 }
 function snapshot() {
   const s = state(); syncTick(s);
   // Key/link/status messages must not expose another partially rewritten RAM
   // image in the same LCD scan. Pause/stop/debug inspection remains immediate.
-  const frame=lcdFrames.read(core,model,frameView,tick,audience!=='calculator'||!running||s[28]!==0);
+  const frame=lcdFrames.read(core,model,frameView,tick,audience!=='calculator'||!running||s[28]!==0,audience==='calculator');
   sendUart();
   const visible = {type:'snapshot',generation,...frame,running,loaded,model,tick,
     sd:readSDState(core),stopped:s[28]!==0,pending:taps.pending,active:taps.active,
@@ -141,7 +158,7 @@ self.onmessage=({data})=>{
       if (!Number.isSafeInteger(data.generation) || !Number.isInteger(data.model) || !core.profile(data.model,0)) throw new Error('Invalid machine');
       if (data.audience !== undefined && !['debug','calculator'].includes(data.audience)) throw new Error('Invalid audience');
       generation=data.generation;model=data.model;preset=data.preset;audience=data.audience||'debug';
-      loaded=false;resetClock();events=[];eventOverflow=false;frameView=0;autoSaving=false;serial=false;
+      loaded=false;resetClock();events=[];eventOverflow=false;frameView=0;autoSaving=false;serial=false;irda=false;
       requestedSpeed=audience==='calculator'?1:0;transferUnlimited=false;transferMoving=false;configurePacing(true);
       // The HP39 debounce path needs a longer dwell: a shorter trial lost
       // multiply. Debug keeps its historical 2M/2M deterministic schedule.
@@ -240,9 +257,9 @@ self.onmessage=({data})=>{
           for(const pin of [0,4,5,6])core.keyboard_dedicated(pin,0);
         }
         usb?.resetLocal();if(new Uint32Array(core.memory.buffer,core.usb_snapshot(),44)[10])core.usb_connect(0);
-        serial=false;postMessage({type:'links-reset',generation});
-        frameView=saved.frameView;syncTick();pacer.reset(performance.now());events=[];eventOverflow=false;busy=false;
-        postMessage({type:'checkpoint-restored',generation});snapshot();
+        serial=false;irda=false;postMessage({type:'links-reset',generation});
+        frameView=saved.frameView;syncTick();lcdFrames.reset();pacer.reset(performance.now());events=[];eventOverflow=false;busy=false;
+        postMessage({type:'checkpoint-restored',generation,stopped:state()[28]!==0});snapshot();
       }).catch(error=>{if(token===generation&&job===operation)fail(error);});
     } else if(data.type==='pause') {pause();snapshot();}
     else if(data.type==='run' && loaded && !busy) {if(!running && state()[28]===0){buzzer?.clear();pacer.reset(performance.now());running=true;schedule();snapshot();}}
@@ -253,6 +270,7 @@ self.onmessage=({data})=>{
       if(data.transferUnlimited!==undefined){if(typeof data.transferUnlimited!=='boolean')throw new Error('Invalid transfer speed setting');transferUnlimited=data.transferUnlimited;}
       if(data.speed!==undefined||data.transferUnlimited!==undefined)configurePacing(true);
       if(data.sound!==undefined)buzzer?.configure(data.sound);
+      if(data.lcdResponse!==undefined)lcdFrames.configure({response:data.lcdResponse});
       if(data.hold!==undefined||data.gap!==undefined){
         if(!Number.isInteger(data.hold)||!Number.isInteger(data.gap)||data.hold<120000||data.hold>2400000||data.gap<120000||data.gap>2400000)throw new Error('Invalid key timing');
         taps.clear(tick);taps.hold=data.hold;taps.gap=data.gap;
@@ -282,6 +300,14 @@ self.onmessage=({data})=>{
     }
     else if(data.type==='file-transfer-cancel') {transfer?.cancel(tick,transferError('transferCancelled','File transfer cancelled.'),data.request);}
     else if(data.type==='serial-connect' && loaded) {if(!data.connected&&transfer?.transport==='serial')transfer.cancel(tick,transferError('linkDisconnected','Serial disconnected.'));serial=Boolean(data.connected);postMessage({type:'serial-status',generation,connected:serial});}
+    else if(data.type==='irda-connect') {irda=Boolean(data.connected&&loaded);}
+    else if(data.type==='irda-input') {
+      if(!(data.bytes instanceof Uint8Array)||data.bytes.length>1024||!Number.isSafeInteger(data.request))throw Error('Invalid infrared packet');
+      const discarded=!irda||!loaded||!running||busy||!irdaReady(true);
+      let accepted=0;
+      if(!discarded){new Uint8Array(core.memory.buffer,core.uart_input(),data.bytes.length).set(data.bytes);accepted=core.uart_send_channel(2,data.bytes.length);}
+      postMessage({type:'irda-input-result',generation,request:data.request,accepted,discarded});
+    }
     else if(data.type==='usb-connect' && loaded) {
       transfer?.resetUsb(tick);
       if(data.connected){if(!running)throw new Error('Resume the calculator before connecting USB.');usb.start(tick);}else usb.disconnect();

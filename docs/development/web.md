@@ -7,12 +7,15 @@ The user page identifies the four supported complete ROMs automatically. It
 shows Open ROM, Pause/Resume, Restart, Self-test, Save/Restore, Connections and Settings;
 CPU registers, boot presets and implementation counters stay in the workbench.
 The viewport-filling workspace switches between immersive outlined skin,
-[immersive landscape](landscape.md) and traditional LCD/HTML keys in Settings.
+[immersive landscape](landscape.md), traditional LCD/HTML keys and traditional
+landscape in Settings. In narrow portrait view, traditional landscape stacks
+the keyboard below the sticky LCD/FN pane instead of shrinking all keys.
 Landscape splits below the six FN keys, keeping them with the display on the
 left and the remaining keyboard on the right. Help is a question-button tooltip;
 confirmations and errors use Mantine modal dialogs.
 
-Settings configure scale, blur/background policies, speed, model-specific
+Settings configure scale, four LCD scaling kernels, optional 35 ms live LCD
+response, blur/background policies, speed, model-specific
 physical-key sequences, firmware sound/volume, local ROM recall and optional
 IndexedDB autosave. The wider [keyboard editor](keyboard-settings.md) highlights
 bound PC keys and shows their assignments on a clickable calculator keypad.
@@ -39,7 +42,10 @@ alongside the earlier aplet/library and native-reader workflows; HP40gs still ne
 full-ROM acceptance. File selection has no extension filter, recoverable
 batch errors offer Retry/Skip, and the optional **Unlimited during transfers**
 switch restores the user's chosen speed while waiting for the next RECV and
-on completion or interruption. Transfer failures carry stable translated
+on completion or interruption. Optional automatic next RECV uses verified
+original-menu observations and physical keys for same-catalog USB batches;
+it stops at unknown screens, manual intervention or errors.
+Transfer failures carry stable translated
 messages; unknown errors have a translated summary and collapsed technical
 details. See [file transfer](file-transfer.md).
 
@@ -50,13 +56,13 @@ edits a mounted guest filesystem behind the calculator's cache.
 [Choose local folder](directory-sd.md) imports a recursive directory into a
 16 or 32 MiB draft with a visible 8.3 alias preview. **Eject to edit / sync**
 copies, validates and ejects the card in one Worker operation before making it
-editable. Direct directory handles support explicit re-read and conflict-aware,
-additive write-back; the file-input fallback supports import and image download.
-Directory associations last for this page session. Manual and automatic saves
-retain the whole card, separately from any directory handle.
-While a local device bridge is active, insertion, export, edit/eject and removal
-are disabled with translated guidance to disconnect first. Preparation and
-directory work on a separate unmounted draft remain available.
+editable. Direct directory handles support two-way add/edit/delete/rename with
+a baseline comparison, preview and explicit conflict resolution. Handles,
+aliases and baselines persist in IndexedDB and reattach only to the matching
+volume identity. Synchronizing a mounted card pauses, ejects, validates and
+updates it, then reinserts it and conditionally resumes. The file-input fallback
+supports a directory snapshot and image download. Manual and automatic saves
+retain the whole card, separately from the directory handle.
 [Firmware sound](buzzer.md) follows
 GPIO/Timer2 output and starts after a user gesture. PWM, watchdog, ADC and SDI
 now share the register-derived PCLK; physical board and speaker calibration
@@ -69,21 +75,21 @@ the separate cold-reset action that clears calculator RAM.
 
 The Raw data tab retains UART0 and USB packet diagnostics. The USB host reads
 actual guest descriptors. These internal connections do not create an operating
-system device or access a physical cable. HP49g+ infrared uses UART2 and is not
-implemented by the UART0 link; see [virtual links](virtual-link.md) and
+system device or access a physical cable. **Connections → Infrared** pairs two
+tabs on the same origin through a user-selected code. Original firmware handles
+the UART2 IrLAP/IrCOMM transfer. HP49g+ and HP48gII have original-object transfers
+in both directions; the UART0 raw serial tab is separate. See [virtual links](virtual-link.md) and
 [infrared](infrared.md).
 
-**Connections → Local device** can explicitly link the current Worker to the
-optional [loopback HTTP/USB-IP helper](host-mode.md). It uses the same ROM,
-memory and SD card. Starting the bridge releases internal transfer links;
-manual pause, reset, ROM replacement and session operations disconnect it.
-Blur/background pause is suspended only for this active connection so a desktop
-client can take focus, while physical keys are still released. The helper
-does not install an OS USB/IP or calculator driver. Generated Chrome network
-checks and original-ROM Node-module object transfers have separate witnesses;
-the production Chrome page and Worker also complete an exact original HP49g+
-SEND/GET/FINISH round trip and return to arithmetic. Kernel attachment and
-unmodified Conn3x need their own acceptance.
+While an infrared pair is active, both tabs continue under background/blur;
+manual Pause, reset, ROM/session replacement or disconnect ends the link.
+The local-device entry has been removed and OS-device/Conn3x work is retired.
+The old [helper documentation](host-mode.md) is an archived r22 record.
+
+Restore automatically resumes a valid unstopped session when the current
+focus/visibility policy allows it. A persistent paused bar and direct resume
+button make a paused machine explicit. Version-6 saves include changed flash
+sectors as well as RAM and SD media; treat them as private calculator data.
 
 ## Build and use
 

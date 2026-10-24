@@ -176,6 +176,8 @@ static void translations(void) {
        a legal section descriptor once; the next read observes the empty FIFO. */
     fast.cpu.ttb = reference.cpu.ttb = 0x50000000u;
     fast.cpu.domain = reference.cpu.domain = UINT32_MAX;
+    fast.soc.uart[0][0]=reference.soc.uart[0][0]=3;
+    fast.soc.uart[0][1]=reference.soc.uart[0][1]=5;
     CHECK(o_q_push(&fast.soc.rx,2)); CHECK(o_q_push(&reference.soc.rx,2));
     translate(0x00900000,false,false,false);
     CHECK(fast.soc.rx.count==0 && reference.soc.rx.count==0);

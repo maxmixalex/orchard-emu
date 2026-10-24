@@ -55,6 +55,7 @@ static void initialize(unsigned model, unsigned decode, bool id) {
         ? ORCHARD_NOR_SST39VF800A : ORCHARD_NOR_SST39VF1601) == ORCHARD_OK);
     fast.nor_id_mode = id;
     fast.soc.lcd_probe68_idle_zero = true;
+    fast.soc.uart[0][0]=3;fast.soc.uart[0][1]=5;
     CHECK(o_q_push(&fast.soc.rx, 0x9d));
     reference = fast;
 }

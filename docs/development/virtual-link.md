@@ -31,11 +31,8 @@ FINISH. HP39/40 serves catalogs and typed files to the calculator's own Disk
 drive client; reverse SEND produces explicit downloadable files. Original
 HP39g+ USB installation and export now have stock evidence. The
 [HP39 format validator](hp39-files.md) checks envelopes, directory aliases and
-bundle references without certifying opaque payloads. Complete desktop Conn3x
-replacement remains separate.
-Serial routing, FIFO timing and physical board connectors remain
-separate from the UART0 host queue. Restoring a session disconnects host links.
-See the [infrared assessment](infrared.md) for the next independent transport.
+bundle references without certifying opaque payloads. Native host-device and Conn3x work is retired at the user's request.
+The [three-channel UART model](uart-irda.md) now includes functional FIFO, framing, clocks, interrupts and internal loopback. [Infrared](infrared.md) pairs two same-origin browser tabs over UART2 and lets original firmware transfer objects. Physical optical signals and external adapters are outside that functional link. Restoring a session disconnects peer links.
 
 ## Three different meanings
 
@@ -45,13 +42,15 @@ A usable link can exist at three different levels. Keep them separately named:
 | --- | --- | --- |
 | Host byte stream | The emulated UART exchanges bytes with a host adapter | Functional UART0 queues; HP48gII upload/GET/SEND/directory/FINISH; raw CLI/UI diagnostics remain available |
 | Internal virtual USB | Guest USB device controller talks to a modeled packet host inside Orchard | Functional PIO subset; HP48gII/HP49g+ Kermit workflows and HP39g+ Disk drive transfer; HP50g bootloader control remains separately scoped |
-| Host-OS virtual device | Windows/Linux/macOS enumerates a device that existing PC software can use | Not implemented; optional native companion work |
+| Host-OS virtual device | Windows/Linux/macOS enumerates a device that existing PC software can use | Retired in r23; prior USB/IP helper retained as historical research |
 
 The first level does not imply the second or third. A UART channel inside the
 SoC also does not prove that a given calculator board exposes that channel on
 a physical connector.
 
-## Current functional UART0
+## Initial UART0 implementation (historical)
+
+The following records the original bounded UART0 queue. The current register, FIFO, clock and loopback behavior superseding it is documented in [UART/IrDA](uart-irda.md).
 
 The native interface has bounded `orchard_uart_send` and
 `orchard_uart_receive` queues. The CLI feeds `--uart-in` and drains

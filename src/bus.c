@@ -57,7 +57,7 @@ __attribute__((always_inline))
 #endif
 bool o_phys_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value) {
     if (!value || (width != 1 && width != 2 && width != 4)) return false;
-    if (address < m->profile->flash_bytes && width <= m->profile->flash_bytes - address && !m->nor_id_mode) {
+    if (address < m->profile->flash_bytes && width <= m->profile->flash_bytes - address && !m->nor_id_mode && !m->nor.remaining && !m->nor.erase_remaining) {
         *value = o_read_le(m->flash + address, width);
         return true;
     }

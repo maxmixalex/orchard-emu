@@ -1,0 +1,206 @@
+{
+  "schema": "orchard-lcd-power-sequence-v1",
+  "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+  "tool_sha256": "f46d683718676a5d83edd45ac5fbf4f4cdba9d10c15303b7197e5fb1254324b8",
+  "observer_enabled": false,
+  "guest_memory_patched": false,
+  "physical_hardware_validated": false,
+  "frame_view": "packed-lsb",
+  "models": [
+    {
+      "model": 2,
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "keys": [
+        {
+          "scan": 26,
+          "down": true,
+          "tick": 168600000
+        },
+        {
+          "scan": 26,
+          "down": false,
+          "tick": 170100000
+        },
+        {
+          "scan": 6,
+          "down": true,
+          "tick": 299100000
+        },
+        {
+          "scan": 6,
+          "down": false,
+          "tick": 300600000
+        }
+      ],
+      "frames": [
+        {
+          "label": "contrast",
+          "tick": 299100000,
+          "lcd_control": 11799841,
+          "scan_serial": 1945,
+          "frame_sha256": "78aa2c518a79640f5483e2eef301ff83946674f1c96d55f76f4bb369271dac0b",
+          "pc": 73860,
+          "stop_status": 0
+        },
+        {
+          "label": "before-off",
+          "tick": 309600000,
+          "lcd_control": 13915169,
+          "scan_serial": 1967,
+          "frame_sha256": "20b7b89db8e5261719c8000deea0451dc8e71601ee0162820f0f1768f4431263",
+          "pc": 107180,
+          "stop_status": 0
+        },
+        {
+          "label": "after-on",
+          "tick": 339600000,
+          "lcd_control": 7623713,
+          "scan_serial": 1994,
+          "frame_sha256": "7f512da6107aa1a8c75dab63e2e4c6fc27551d2bfb2911e3ac59db60eccd975b",
+          "pc": 107168,
+          "stop_status": 0
+        },
+        {
+          "label": "first-enabled",
+          "tick": 333687425,
+          "lcd_control": 17847329,
+          "scan_serial": 1982,
+          "frame_sha256": "20b7b89db8e5261719c8000deea0451dc8e71601ee0162820f0f1768f4431263",
+          "pc": 111544,
+          "stop_status": 0
+        },
+        {
+          "label": "enabled-plus-4096",
+          "tick": 333691521,
+          "lcd_control": 17847329,
+          "scan_serial": 1982,
+          "frame_sha256": "20b7b89db8e5261719c8000deea0451dc8e71601ee0162820f0f1768f4431263",
+          "pc": 107732,
+          "stop_status": 0
+        },
+        {
+          "label": "enabled-plus-65536",
+          "tick": 333752961,
+          "lcd_control": 15488033,
+          "scan_serial": 1982,
+          "frame_sha256": "7f512da6107aa1a8c75dab63e2e4c6fc27551d2bfb2911e3ac59db60eccd975b",
+          "pc": 107176,
+          "stop_status": 0
+        }
+      ],
+      "factory_checkpoint_sha256": "1409384fdf0688d232733df796c97a99427a5ba66d2a00a532406246d24d4033",
+      "coarse_edges": [
+        {
+          "tick": 316688128,
+          "enabled": false
+        },
+        {
+          "tick": 333687552,
+          "enabled": true
+        }
+      ],
+      "enable_tick": 333687425,
+      "initial_enabled_matches_before_off": true,
+      "content_changed_by_ticks": 65536,
+      "passed": true
+    },
+    {
+      "model": 5,
+      "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "keys": [
+        {
+          "scan": 26,
+          "down": true,
+          "tick": 239100000
+        },
+        {
+          "scan": 26,
+          "down": false,
+          "tick": 240600000
+        },
+        {
+          "scan": 6,
+          "down": true,
+          "tick": 369600000
+        },
+        {
+          "scan": 6,
+          "down": false,
+          "tick": 371100000
+        }
+      ],
+      "frames": [
+        {
+          "label": "contrast",
+          "tick": 369600000,
+          "lcd_control": 5245729,
+          "scan_serial": 2404,
+          "frame_sha256": "e98f88753d217d3be6fed2ee030063355624663c9bd8e6d63dd826dab9ca2402",
+          "pc": 33836,
+          "stop_status": 0
+        },
+        {
+          "label": "before-off",
+          "tick": 380100000,
+          "lcd_control": 16008225,
+          "scan_serial": 2426,
+          "frame_sha256": "dd3035a6f6426faff62a4bbca9448df255c1662f3f886b994c452339abe44a0a",
+          "pc": 34452,
+          "stop_status": 0
+        },
+        {
+          "label": "after-on",
+          "tick": 410100000,
+          "lcd_control": 8143905,
+          "scan_serial": 2453,
+          "frame_sha256": "303b3d753a8997582ad0e29776a5b01457955549b4aa5cac5cb0836b63a0f106",
+          "pc": 34460,
+          "stop_status": 0
+        },
+        {
+          "label": "first-enabled",
+          "tick": 404156521,
+          "lcd_control": 22037537,
+          "scan_serial": 2441,
+          "frame_sha256": "dd3035a6f6426faff62a4bbca9448df255c1662f3f886b994c452339abe44a0a",
+          "pc": 29576,
+          "stop_status": 0
+        },
+        {
+          "label": "enabled-plus-4096",
+          "tick": 404160617,
+          "lcd_control": 22037537,
+          "scan_serial": 2441,
+          "frame_sha256": "dd3035a6f6426faff62a4bbca9448df255c1662f3f886b994c452339abe44a0a",
+          "pc": 148276,
+          "stop_status": 0
+        },
+        {
+          "label": "enabled-plus-65536",
+          "tick": 404222057,
+          "lcd_control": 19153953,
+          "scan_serial": 2441,
+          "frame_sha256": "303b3d753a8997582ad0e29776a5b01457955549b4aa5cac5cb0836b63a0f106",
+          "pc": 34456,
+          "stop_status": 0
+        }
+      ],
+      "factory_checkpoint_sha256": "ba66b0893b3836b2b243ebd149b47d5dbaf9b0922ecf13b662d20b9b56b8923b",
+      "coarse_edges": [
+        {
+          "tick": 387157408,
+          "enabled": false
+        },
+        {
+          "tick": 404156832,
+          "enabled": true
+        }
+      ],
+      "enable_tick": 404156521,
+      "initial_enabled_matches_before_off": true,
+      "content_changed_by_ticks": 65536,
+      "passed": true
+    }
+  ],
+  "passed": true
+}

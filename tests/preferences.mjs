@@ -8,13 +8,17 @@ import { TapQueue } from '../dist/hp48.js';
 import { bindLifecycle } from '../dist/lifecycle.js';
 const defaults=()=>({...DEFAULTS,mappings:{}});
 assert.deepEqual(validatePreferences(defaults()),defaults());
-const legacy=defaults();delete legacy.transferUnlimited;delete legacy.sound;delete legacy.volume;delete legacy.rememberROM;
+const legacy=defaults();delete legacy.transferUnlimited;delete legacy.sound;delete legacy.volume;delete legacy.rememberROM;delete legacy.screenScaling;delete legacy.lcdResponse;
 assert.deepEqual(validatePreferences(legacy),defaults());
 assert.equal(validatePreferences({...defaults(),view:'immersive-landscape',transferUnlimited:true,sound:false,volume:0}).view,'immersive-landscape');
+for(const screenScaling of ['nearest','linear','cubic','lanczos']){
+ const value=validatePreferences({...defaults(),view:'traditional-landscape',screenScaling,lcdResponse:'smooth'});
+ assert.equal(value.view,'traditional-landscape');assert.equal(value.screenScaling,screenScaling);assert.equal(value.lcdResponse,'smooth');
+}
 assert.deepEqual(validatePreferences({...defaults(),mappings:{'2':{KeyA:[58,28]}}}).mappings,{'2':{KeyA:[58,28]}});
 assert.deepEqual(validatePreferences({...defaults(),mappings:{'5':{KeyA:[57,35]}}}).mappings,{'5':{KeyA:[57,35]}});
 for(const update of [{version:2},{zoom:NaN},{zoom:181},{zoom:0},{view:'hidden'},{speed:Infinity},{speed:3},{interval:1},{autosave:1},
- {transferUnlimited:1},{sound:null},{rememberROM:'true'},{volume:NaN},{volume:Infinity},{volume:'0.5'},{volume:-0.1},{volume:1.1},
+ {transferUnlimited:1},{sound:null},{rememberROM:'true'},{volume:NaN},{volume:Infinity},{volume:'0.5'},{volume:-0.1},{volume:1.1},{screenScaling:'browser-high'},{lcdResponse:35},
  {mappings:[]},{mappings:{'6':{KeyA:[58]}}},{mappings:{'1':{KeyA:[55]}}},{mappings:{'1':{KeyA:Array(9).fill(6)}}}])assert.throws(()=>validatePreferences({...defaults(),...update}));
 assert.deepEqual(defaultBindings(1).KeyA,[58,28]);assert.deepEqual(defaultBindings(4).KeyA,[57,35]);
 assert.deepEqual(defaultBindings(2),defaultBindings(1));

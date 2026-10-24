@@ -20,7 +20,7 @@ import threading
 from http.server import ThreadingHTTPServer
 
 from PIL import Image
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location('orchard_transfer_probe', ROOT/'tools/probe-file-transfer-browser.py')
@@ -117,6 +117,7 @@ def main():
                 page.goto(f'http://127.0.0.1:{server.server_port}/')
                 stage('cold-boot-from-picker')
                 # Standard file-input/local-copy path; native picker permission UI is separate.
+                expect(page.get_by_role('button', name='Open ROM', exact=True)).to_be_enabled()
                 page.locator('#rom').set_input_files(str(args.rom.resolve()))
                 page.wait_for_function('window.__transferProbe.snapshot?.loaded===true')
                 helper.verify_model(page, model)
@@ -150,7 +151,7 @@ def main():
                 saved = args.output/'saved.ord'
                 pending.value.save_as(saved)
                 report['save'] = session_metadata(saved)
-                assert report['save']['model'] == 5 and report['save']['checkpoint_version'] == 5
+                assert report['save']['model'] == 5 and report['save']['checkpoint_version'] == 6
                 page.wait_for_function('window.__transferProbe.snapshot?.running===false')
                 saved_frame = frame(page)
                 page.get_by_role('button', name='Resume', exact=True).click()
@@ -163,6 +164,9 @@ def main():
                 page.locator('#session-file').set_input_files(str(saved.resolve()))
                 page.get_by_role('dialog').get_by_role('button', name='Restore', exact=True).click()
                 page.wait_for_function("n=>window.__transferProbe.events.slice(n).some(e=>e.type==='checkpoint-restored')", arg=before)
+                page.wait_for_function('window.__transferProbe.snapshot?.running===true')
+                report['restore_auto_resumed'] = True
+                page.get_by_role('button', name='Pause', exact=True).click()
                 page.wait_for_function('window.__transferProbe.snapshot?.running===false')
                 assert frame(page) == saved_frame, 'Restoration changed the complete displayed LCD'
                 report['saved_lcd_restored_exactly'] = True
@@ -189,27 +193,31 @@ def main():
                 page.set_viewport_size({'width':1360, 'height':940})
 
                 if args.legacy_rom:
-                    stage('previous-model-v1-session')
+                    stage('previous-model-legacy-session')
                     previous = helper.model_identity(args.legacy_rom)
                     legacy = session_metadata(args.legacy_session)
-                    assert legacy['checkpoint_version'] == 1 and legacy['model'] == previous['id']
-                    # Standard file-input/local-copy path; native picker permission UI is separate.
-                    page.locator('#rom').set_input_files(str(args.legacy_rom.resolve()))
-                    page.get_by_role('dialog').get_by_role('button', name='Open ROM', exact=True).click()
-                    page.wait_for_function('id=>window.__transferProbe.snapshot?.loaded&&window.__transferProbe.snapshot?.model===id', arg=previous['id'])
+                    assert 1 <= legacy['checkpoint_version'] <= 5 and legacy['model'] == previous['id']
+                    # Reuse the current machine when checking an older session
+                    # of the same ROM; selecting an identical input file does
+                    # not produce a browser change event.
+                    if previous != model:
+                        page.locator('#rom').set_input_files(str(args.legacy_rom.resolve()))
+                        page.get_by_role('dialog').get_by_role('button', name='Open ROM', exact=True).click()
+                        page.wait_for_function('id=>window.__transferProbe.snapshot?.loaded&&window.__transferProbe.snapshot?.model===id', arg=previous['id'])
                     before = page.evaluate('window.__transferProbe.events.length')
                     page.locator('#session-file').set_input_files(str(args.legacy_session.resolve()))
                     page.get_by_role('dialog').get_by_role('button', name='Restore', exact=True).click()
                     page.wait_for_function("n=>window.__transferProbe.events.slice(n).some(e=>e.type==='checkpoint-restored')", arg=before)
                     helper.verify_model(page, previous)
-                    page.get_by_role('button', name='Resume', exact=True).click()
+                    page.wait_for_function('window.__transferProbe.snapshot?.running===true')
+                    report['legacy_restore_auto_resumed'] = True
                     settle(page)
                     with page.expect_download() as pending:
                         page.get_by_role('button', name='Save', exact=True).click()
                     converted = args.output/'legacy-resaved.ord'
                     pending.value.save_as(converted)
                     report['legacy_session'] = {'input':legacy, 'resaved':session_metadata(converted)}
-                    assert report['legacy_session']['resaved']['checkpoint_version'] == 5
+                    assert report['legacy_session']['resaved']['checkpoint_version'] == 6
                     page.screenshot(path=str(args.output/'legacy-restored.png'))
 
                 report['worker_observation'] = page.evaluate('window.__transferProbe')

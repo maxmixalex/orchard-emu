@@ -39,12 +39,13 @@ export function validateBrowserTrace(trace) {
     assert([row.before, row.after].every(n => Number.isSafeInteger(n) && n >= 0) && row.after >= row.before,
       'Invalid guest tick at call ' + row.seq);
     assert([row.result, row.prior, row.status].every(unsigned), 'Invalid API result at call ' + row.seq);
-    if (row.name === 'uart_send' || row.name === 'usb_out') {
-      const length = row.args[row.name === 'uart_send' ? 0 : 4];
-      assert(bytes(row.input) && row.input.length === length && length <= (row.name === 'uart_send' ? 1024 : 64),
+    if (row.name === 'uart_send' || row.name === 'uart_send_channel' || row.name === 'usb_out') {
+      const length = row.args[row.name === 'uart_send' ? 0 : row.name === 'uart_send_channel' ? 1 : 4];
+      assert(bytes(row.input) && row.input.length === length && length <= (row.name === 'usb_out' ? 64 : 1024),
         'Missing input payload at call ' + row.seq);
     } else assert(!Object.hasOwn(row, 'input'), 'Unexpected input payload at call ' + row.seq);
-    if (row.name === 'uart_receive') assert(bytes(row.output) && row.output.length === row.result && row.output.length <= 1024,
+    if (row.name === 'uart_receive' || row.name === 'uart_receive_channel')
+      assert(bytes(row.output) && row.output.length === row.result && row.output.length <= 1024,
       'Missing UART output at call ' + row.seq);
     else if (row.name === 'usb_in') assert(bytes(row.output) && row.output.length <= 64 && unsigned(row.data1),
       'Missing USB output at call ' + row.seq);
@@ -77,12 +78,12 @@ export async function replayBrowserTrace({trace, rom, wasm, initial, final, comp
   for (const row of trace.calls) {
     assert.equal(typeof c[row.name], 'function', 'Missing API: ' + row.name);
     if (row.input) new Uint8Array(c.memory.buffer,
-      row.name === 'uart_send' ? c.uart_input() : c.usb_buffer(), row.input.length).set(row.input);
+      row.name === 'usb_out' ? c.usb_buffer() : c.uart_input(), row.input.length).set(row.input);
     const before = state(), result = c[row.name](...row.args), after = state();
     assert.deepEqual([tick(before), tick(after), result >>> 0, before[28], after[28]],
       [row.before, row.after, row.result, row.prior, row.status],
       'API result/state mismatch at call ' + row.seq + ' (' + row.name + ')');
-    if (row.name === 'uart_receive') {
+    if (row.name === 'uart_receive' || row.name === 'uart_receive_channel') {
       assert.deepEqual(Array.from(new Uint8Array(c.memory.buffer, c.uart_output(), result)), row.output,
         'UART output differs at call ' + row.seq); uartBytes += result;
     } else if (row.name === 'usb_in') {

@@ -61,7 +61,9 @@ def main():
         for scan in scans:
             h.physical_keys(page,(scan,));hp49.settle(page,4000000)
     def card():
-        page.get_by_role('button',name='SD card',exact=True).click()
+        if not page.locator('#device-sidebar').is_visible():
+            page.get_by_role('button',name='Connections',exact=True).click()
+        page.locator('#device-sidebar').get_by_role('tab',name='SD card',exact=True).click()
         expect(page.locator('#device-sidebar')).to_be_visible()
         expect(page.locator('#device-sidebar').get_by_role('tab',name='SD card',exact=True)).to_have_attribute('aria-selected','true')
     def eject():
@@ -123,12 +125,17 @@ def main():
         with page.expect_download() as pending: page.get_by_role('button',name='Save',exact=True).click()
         saved=args.output/'with-card.ord';pending.value.save_as(saved)
         report['session']=hp49.session_metadata(saved)
-        assert report['session']['checkpoint_version']==5 and report['session']['checkpoint_bytes']>16*1024*1024
+        assert report['session']['checkpoint_version']==6 and report['session']['checkpoint_bytes']>16*1024*1024
         page.wait_for_function('!window.__transferProbe.snapshot.running');saved_frame=hp49.frame(page)
         card();eject();close_card()
         page.locator('#session-file').set_input_files(str(saved.resolve()))
         page.get_by_role('dialog').get_by_role('button',name='Restore',exact=True).click()
-        page.wait_for_function('window.__transferProbe.snapshot.sd.present&&!window.__transferProbe.snapshot.running')
+        page.wait_for_function('window.__transferProbe.snapshot.sd.present&&window.__transferProbe.snapshot.running')
+        report['manual_restore_auto_resumed']=True
+        # Freeze only after observing the new automatic resume behavior. This
+        # preserves the exact displayed-frame comparison used by this witness.
+        page.get_by_role('button',name='Pause',exact=True).click()
+        page.wait_for_function('!window.__transferProbe.snapshot.running')
         assert hp49.frame(page)==saved_frame,'Full displayed LCD must restore exactly'
         card();after=exported('card-restored.img');assert h.sha(after.read_bytes())==first_hash;close_card()
         report['card_image_sha256']=first_hash;report['manual_session_media_exact']=True
@@ -172,7 +179,8 @@ def main():
         page.reload()
         page.wait_for_function('window.__transferProbe.snapshot?.loaded===true')
         page.get_by_role('dialog',name='Restore local save?',exact=True).get_by_role('button',name='Restore',exact=True).click()
-        page.wait_for_function('window.__transferProbe.snapshot?.sd?.present&&!window.__transferProbe.snapshot.running')
+        page.wait_for_function('window.__transferProbe.snapshot?.sd?.present&&window.__transferProbe.snapshot.running')
+        report['automatic_restore_auto_resumed']=True
         card();restored=exported('card-after-reload.img');assert h.sha(restored.read_bytes())==first_hash
         report['automatic_session_media_exact']=True
         report['automatic_rom_reopen']=True

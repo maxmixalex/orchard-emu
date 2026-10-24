@@ -56,6 +56,7 @@ void o_gpio_sample(const orchard_machine *m, unsigned port, uint32_t *known,
     uint32_t weak_only = (weak_high ^ weak_low) & ~*known;
     *known |= weak_only;
     *levels |= weak_high & weak_only;
+    o_irda_gpio_sample(m,port,known,levels,conflicts);
     if (!s->keyboard_attached) return;
     if (port == ORCHARD_GPIO_F) {
         *conflicts = (s->gpio_input_levels[port] ^ s->keyboard_direct) & s->gpio_input_known[port] & 0x71u;

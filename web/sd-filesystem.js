@@ -335,3 +335,68 @@ export function deleteSDEntry(image,path){
   // FAT deletion releases storage; it does not claim to securely erase bytes.
   new Volume(copy);return copy;
 }
+
+// Reconcile an explicitly reviewed complete tree in one private copy. Existing
+// directory entries, names, attributes and dates survive unchanged; changed
+// files retain their entry metadata. No mounted media or host file is touched.
+export function reconcileSDTree(image,entries){
+  byteArray(image);
+  if(!Array.isArray(entries)||entries.length>MAX_ENTRIES)fail('limit','The directory contains too many entries.');
+  const desired=new Map();
+  for(const entry of entries){
+    const path=pathKey(entry.path),names=path.slice(1).split('/');
+    if(path==='/'||desired.has(path)||!['file','directory'].includes(entry.type))fail('path','Invalid or duplicate card path.');
+    for(const name of names)validateSDName(name);
+    if(names.length-(entry.type==='file'?1:0)>MAX_DEPTH)fail('limit','Directory nesting exceeds 32 levels.');
+    if(entry.type==='file'&&(!(entry.bytes instanceof Uint8Array)||entry.bytes.length>image.length))fail('input','Invalid file contents.');
+    desired.set(path,{...entry,path});
+  }
+  for(const entry of desired.values()){
+    const parent=entry.path.slice(0,entry.path.lastIndexOf('/'))||'/';
+    if(parent!=='/'&&desired.get(parent)?.type!=='directory')fail('path','A file or folder has no directory parent.');
+  }
+  const copy=new Uint8Array(image),volume=new Volume(copy),updates=[];
+  const equalBytes=(a,b)=>a.length===b.length&&a.every((value,index)=>value===b[index]);
+  const removed=[...volume.nodes.values()].filter(node=>node.path!=='/'&&(!desired.has(node.path)||desired.get(node.path).type!==node.type))
+    .sort((a,b)=>b.path.split('/').length-a.path.split('/').length);
+  for(const node of removed){
+    const {entry,parent}=editableEntry(volume,node.path);
+    if(entry.type==='directory'&&entry.children.length)fail('path','A removed directory retains children.');
+    for(const cluster of entry.chain)volume.setFat(cluster,0);
+    for(const offset of [...entry.longOffsets,entry.offset])copy[offset]=0xe5;
+    volume.nodes.delete(entry.path);parent.children=parent.children.filter(child=>child!==entry);
+  }
+  // Release all changed file chains before allocating replacements, so equal-
+  // size rewrites work even on a full card. The original remains transactional.
+  for(const entry of desired.values()){
+    const node=volume.nodes.get(entry.path);
+    if(node?.type==='file'&&!equalBytes(fileBytes(volume,node),entry.bytes)){
+      const {parent}=editableEntry(volume,node.path);writable(parent);
+      for(const cluster of node.chain)volume.setFat(cluster,0);
+      node.chain=[];updates.push({entry,node});
+    }
+  }
+  volume.nextFree=2;
+  const writeBytes=(entry,chain)=>{
+    for(let i=0;i<chain.length;i++)copy.set(entry.bytes.subarray(i*volume.clusterBytes,(i+1)*volume.clusterBytes),volume.offset(chain[i]));
+  };
+  for(const {entry,node} of updates){
+    const chain=volume.allocate(Math.ceil(entry.bytes.length/volume.clusterBytes));writeBytes(entry,chain);
+    volume.view.setUint16(node.offset+26,chain[0]??0,true);volume.view.setUint32(node.offset+28,entry.bytes.length,true);
+    Object.assign(node,{chain,cluster:chain[0]??0,size:entry.bytes.length});
+  }
+  for(const entry of [...desired.values()].sort((a,b)=>a.path.split('/').length-b.path.split('/').length||(a.path<b.path?-1:1))){
+    if(volume.nodes.has(entry.path))continue;
+    const parent=volume.get(entry.path.slice(0,entry.path.lastIndexOf('/'))||'/','directory'),name=entry.path.split('/').at(-1);
+    writable(parent);
+    if(parent.children.some(child=>entryNames(child).includes(name)))fail('duplicate','A file or folder with that name already exists.',{name});
+    const slot=volume.freeSlot(parent),directory=entry.type==='directory',chain=volume.allocate(directory?1:Math.ceil(entry.bytes.length/volume.clusterBytes));
+    const cluster=chain[0]??0;
+    if(directory){const offset=volume.offset(cluster);volume.entry(offset,'.',16,cluster,0);volume.entry(offset+32,'..',16,parent.cluster,0);}
+    else writeBytes(entry,chain);
+    volume.entry(slot,name,directory?16:32,cluster,directory?0:entry.bytes.length);
+    const node={name,path:entry.path,type:entry.type,cluster,chain,children:[],parent:parent.cluster,offset:slot,longOffsets:[],size:directory?0:entry.bytes.length};
+    volume.nodes.set(entry.path,node);parent.children.push(node);
+  }
+  new Volume(copy);return copy;
+}
