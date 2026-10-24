@@ -44,7 +44,7 @@ with sync_playwright() as p:
  assert page.locator('.traditional-key[data-scan="26"]').get_attribute('aria-disabled')=='false'
  page.evaluate('window.__keypad=document.querySelector(".traditional-geometry")')
  page.locator('#calculator').focus();page.keyboard.press('1')
- assert page.evaluate('window.__messages.some(m=>m.type==="tap-sequence"&&m.scans.length===1&&m.scans[0]===26)')
+ assert page.evaluate('window.__messages.some(m=>m.type==="key-down"&&m.scan===26)')
  # Physical simultaneous system keys use the held-key Worker command, including
  # the user's Escape+F4 gesture; they must not become two isolated taps.
  page.keyboard.down('Escape');page.keyboard.press('F4');page.keyboard.up('Escape')
@@ -220,6 +220,13 @@ with sync_playwright() as p:
  assert 'Disk drive' in page.locator('#device-sidebar').inner_text()
  assert page.get_by_role('button',name='按名称取回对象',exact=True).count()==0
  assert page.get_by_label('计算器内文件名',exact=True).count()==0
+ # HP39g+ exposes USB only. A connected serial transport must not enable
+ # file actions merely because the related HP39gs now supports Serial Wire.
+ page.get_by_role('combobox',name='连接类型',exact=True).click();page.get_by_role('option',name='串口',exact=True).click()
+ assert page.get_by_role('button',name='接收计算器文件',exact=True).count()==0
+ assert page.get_by_test_id('transfer-file').count()==0
+ page.get_by_role('combobox',name='连接类型',exact=True).click();page.get_by_role('option',name='USB',exact=True).click()
+ assert page.get_by_role('button',name='接收计算器文件',exact=True).is_enabled()
  hp39_program=b'HP39AscD 4 TEST\nDISP 1;"Hello";'
  hp39_library=b'HP39BinH\x03Lib\x00\xff'
  page.locator('[data-testid="transfer-file"]').set_input_files([
@@ -339,9 +346,21 @@ with sync_playwright() as p:
   {'name':'APLET.blob','mimeType':'application/octet-stream','buffer':hp39_aplet},
   {'name':'LIB','mimeType':'application/octet-stream','buffer':hp39_library},
   {'name':'NOTE.zip','mimeType':'application/octet-stream','buffer':hp39_note}])
+ # Hold the first real file read so the previous Wire receive request remains
+ # the last posted message throughout asynchronous upload preflight.
+ before=page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").length')
+ page.get_by_test_id('transfer-file').evaluate('''element=>{const file=element.files[0],read=file.arrayBuffer.bind(file);
+  file.arrayBuffer=()=>new Promise((resolve,reject)=>{window.__releaseWireRead=()=>{
+   delete file.arrayBuffer;delete window.__releaseWireRead;read().then(resolve,reject);
+  };});}''')
  page.get_by_role('button',name='通过 Wire 上传',exact=True).click()
- page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).protocol==="hp39-wire"')
- assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name')=='LIB'
+ page.wait_for_function('typeof window.__releaseWireRead==="function"')
+ assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").length')==before
+ assert page.evaluate('(()=>{const m=window.__messages.filter(m=>m.type==="file-transfer-start").at(-1);return m.protocol==="hp39-wire"&&m.mode==="receive"})()')
+ page.evaluate('window.__releaseWireRead()')
+ page.wait_for_function('(n)=>window.__messages.filter(m=>m.type==="file-transfer-start").length===n',arg=before+1)
+ first=page.evaluate('(()=>{const m=window.__messages.filter(m=>m.type==="file-transfer-start").at(-1);return {name:m.name,mode:m.mode,protocol:m.protocol,transport:m.transport,bytes:Array.from(m.bytes)}})()')
+ assert first=={'name':'LIB','mode':'send','protocol':'hp39-wire','transport':'usb','bytes':list(hp39_library)},first
  page.get_by_role('button',name='收起侧栏',exact=True).click()
  summary=page.get_by_test_id('transfer-summary')
  assert 'RECV → HP39/40 (Wire)' in summary.inner_text() and 'LIB' in summary.inner_text()
@@ -430,8 +449,14 @@ with sync_playwright() as p:
  assert 'HP39/40 (Ser)' in page.get_by_label('计算器传输菜单',exact=True).inner_text()
  assert 'Ser. Disk drive' in page.get_by_label('计算器传输菜单',exact=True).inner_text()
  assert page.get_by_role('switch',name='自动继续接收 aplet 和库',exact=False).count()==0
- assert page.get_by_role('button',name='接收计算器文件',exact=True).count()==0
+ assert page.get_by_role('button',name='接收计算器文件',exact=True).is_enabled()
  assert 'RECV → HP39/40 (Ser)' in page.locator('#device-sidebar').inner_text()
+ page.get_by_role('button',name='接收计算器文件',exact=True).click()
+ assert page.evaluate('(()=>{const m=window.__messages.filter(m=>m.type==="file-transfer-start").at(-1);return m.mode==="receive"&&m.protocol==="hp39-wire"&&m.transport==="serial"})()')
+ assert page.get_by_role('button',name='接收计算器文件',exact=True).is_disabled()
+ page.get_by_role('button',name='停止接收',exact=True).click()
+ page.wait_for_function('window.__controller.state.transfer.phase==="cancelled"')
+ assert page.get_by_role('button',name='接收计算器文件',exact=True).is_enabled()
  page.get_by_role('button',name='收起侧栏',exact=True).click()
  # Unmount also invalidates an outstanding load and removes frame/resize work.
  select_model(4);page.wait_for_function('window.__manifestRequests.length===9')

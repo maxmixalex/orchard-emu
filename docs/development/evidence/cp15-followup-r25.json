@@ -1,0 +1,201 @@
+{
+  "schema": "orchard-r25-cp15-followup-v1",
+  "source_commit": "20c14b3",
+  "documentation_commit": "2bed87f",
+  "wasm_sha256": "178b165d61032be9a7cede597d6810c709fdbfb120330f1565df4b047c13085f",
+  "rom_free_before": [
+    "op=ee100f10 stop=0 r0=41129200 pc=08000104",
+    "op=ee100f30 stop=0 r0=0d172172 pc=08000104",
+    "op=ee100f50 stop=6 r0=deadbeef pc=08000100"
+  ],
+  "rom_free_after": [
+    "op=ee100f10 stop=0 r0=41129200 pc=08000104",
+    "op=ee100f30 stop=0 r0=0d172172 pc=08000104",
+    "op=ee100f50 stop=0 r0=41129200 pc=08000104"
+  ],
+  "new_regression_assertions": 226,
+  "old_core_failure_count": 96,
+  "new_core_regression_checks": 105059,
+  "native_ctest": {
+    "passed": 24,
+    "total": 24,
+    "log": "cp15-native-ctest.log",
+    "log_sha256": "71ce233cd6ba4ee98a0039c8a823ad7a52fcb69f9f8aa3afe0a62966d93f4200"
+  },
+  "reference_ctest": {
+    "passed": 24,
+    "total": 24,
+    "log": "cp15-reference-ctest.log",
+    "log_sha256": "05a64f71a92981661c009d9ab74cd87e8c240fc1356795a85d154f86d3001e4f"
+  },
+  "sanitizer_ctest": {
+    "initial_passed": 23,
+    "initial_not_run": [
+      "performance-regression"
+    ],
+    "initial_reason": "generated performance executable lacked executable permission",
+    "repair": "restored u+x on generated local build artifact; no source or compile-flag change",
+    "isolated_rerun_passed": true,
+    "initial_log": "cp15-sanitize-ctest.log",
+    "rerun_log": "cp15-sanitize-performance.log",
+    "ASAN_OPTIONS": "detect_leaks=0",
+    "UBSAN_OPTIONS": "halt_on_error=1",
+    "initial_log_sha256": "5b6132f6cedf8fd084cbd579c0adc729adcd9dacbed8a6cd3dda26d09575075f",
+    "rerun_log_sha256": "38aad4547ab9273386d70418ec89cb9f98a40e1b7e8a1ffacf6225d0af15db90"
+  },
+  "full_wasm_gate": {
+    "passed": true,
+    "log": "cp15-wasm-gates.log",
+    "log_sha256": "37477bbe19a2bd115d34a1fb68e0ffca5010e433bb5cb8012d49b13936eff83d"
+  },
+  "strict_docs": {
+    "passed": true,
+    "log": "cp15-docs-final.log",
+    "log_sha256": "3f2b720b23057b385b097c6b53b49c66358ee9c26a5b2f1130ce0b668a142271"
+  },
+  "original_program_runs": [
+    {
+      "scenario": "hp48-native",
+      "report_sha256": "111775c781a44bd882e2ba92682222c211d3c80022fe8d5b358ec418a7563238",
+      "passed": true,
+      "wasm_sha256": "178b165d61032be9a7cede597d6810c709fdbfb120330f1565df4b047c13085f",
+      "cold_boot": true,
+      "all_six_reviewed_frames_match_previous": true,
+      "native_program_sha256": "423be27dbfa7f12f5645b666c0d389da28b1bfd9424813d00981601ce099248b",
+      "library_sha256": "9469877dbc9791f2d87993fc596d6c34c966cc91a9bbc99e63b43cacdadba188",
+      "usb_return_transfers": [
+        {
+          "mode": "send",
+          "name": "ARMTOOL",
+          "start_tick": 283584320,
+          "end_tick": 443374400,
+          "transferred": 2404,
+          "sent_sha256": "9469877dbc9791f2d87993fc596d6c34c966cc91a9bbc99e63b43cacdadba188"
+        },
+        {
+          "mode": "send",
+          "name": "ARMHELLO",
+          "start_tick": 446374400,
+          "end_tick": 1168113152,
+          "transferred": 12536,
+          "sent_sha256": "423be27dbfa7f12f5645b666c0d389da28b1bfd9424813d00981601ce099248b"
+        },
+        {
+          "mode": "send",
+          "name": "INSTALL",
+          "start_tick": 1171113152,
+          "end_tick": 1178980544,
+          "transferred": 41,
+          "sent_sha256": "bcef103cdb1a25e703c1a3e37f2040f1062109c95007d3df86cc3cba2c356cdd"
+        },
+        {
+          "mode": "finish",
+          "start_tick": 1181980544,
+          "end_tick": 1183569792,
+          "transferred": 0
+        },
+        {
+          "mode": "get",
+          "name": "ARMTOOL",
+          "start_tick": 1454654112,
+          "end_tick": 1625794208,
+          "transferred": 2404,
+          "received_sha256": "08970778cf1d40408c537233e707688d28668cf59ed99c750051ca33e32c97f4"
+        },
+        {
+          "mode": "finish",
+          "start_tick": 1628794208,
+          "end_tick": 1630331232,
+          "transferred": 0
+        }
+      ]
+    },
+    {
+      "scenario": "hp49-native",
+      "report_sha256": "4fa1560b71b1f13771de47574adc7195fdb07dab8e59bc7b0f47dbfe4c0ced93",
+      "passed": true,
+      "wasm_sha256": "178b165d61032be9a7cede597d6810c709fdbfb120330f1565df4b047c13085f",
+      "cold_boot": true,
+      "all_six_reviewed_frames_match_previous": true,
+      "native_program_sha256": "423be27dbfa7f12f5645b666c0d389da28b1bfd9424813d00981601ce099248b",
+      "library_sha256": "7d204b746d0ded75e92da3d8e323637c2846fcd8f159dde2ba25ba8bdc0db637",
+      "usb_return_transfers": [
+        {
+          "mode": "send",
+          "name": "ARMTOOL",
+          "start_tick": 283584320,
+          "end_tick": 534781760,
+          "transferred": 4474,
+          "sent_sha256": "7d204b746d0ded75e92da3d8e323637c2846fcd8f159dde2ba25ba8bdc0db637"
+        },
+        {
+          "mode": "send",
+          "name": "ARMHELLO",
+          "start_tick": 537781760,
+          "end_tick": 1241171456,
+          "transferred": 12536,
+          "sent_sha256": "423be27dbfa7f12f5645b666c0d389da28b1bfd9424813d00981601ce099248b"
+        },
+        {
+          "mode": "send",
+          "name": "INSTALL",
+          "start_tick": 1244171456,
+          "end_tick": 1251842240,
+          "transferred": 41,
+          "sent_sha256": "bcef103cdb1a25e703c1a3e37f2040f1062109c95007d3df86cc3cba2c356cdd"
+        },
+        {
+          "mode": "finish",
+          "start_tick": 1254842240,
+          "end_tick": 1256355712,
+          "transferred": 0
+        },
+        {
+          "mode": "get",
+          "name": "ARMTOOL",
+          "start_tick": 1527440032,
+          "end_tick": 1764328096,
+          "transferred": 4474,
+          "received_sha256": "7d204b746d0ded75e92da3d8e323637c2846fcd8f159dde2ba25ba8bdc0db637"
+        },
+        {
+          "mode": "finish",
+          "start_tick": 1767328096,
+          "end_tick": 1768762720,
+          "transferred": 0
+        }
+      ]
+    },
+    {
+      "scenario": "tetris-warm",
+      "report_sha256": "9f6bf455dd8ac85fe03f443b9161e385038e046277c55c029e780335ff1b959b",
+      "passed": true,
+      "wasm_sha256": "178b165d61032be9a7cede597d6810c709fdbfb120330f1565df4b047c13085f",
+      "restored_continuation_exact": true,
+      "arithmetic_result_verified": true,
+      "cold_boot": false
+    },
+    {
+      "scenario": "arkalite39g-warm",
+      "report_sha256": "415f785ae7e4fbe6c3784d52a58137e8e643e2708fb22b0ceaa1999967a6c209",
+      "passed": true,
+      "wasm_sha256": "178b165d61032be9a7cede597d6810c709fdbfb120330f1565df4b047c13085f",
+      "restored_continuation_exact": true,
+      "arithmetic_result_verified": true,
+      "cold_boot": false
+    },
+    {
+      "scenario": "arkalite39gs-warm",
+      "report_sha256": "82e45aa0c6c0812f6e110a60c60d3762cb3654bdf34026346ee901f0a3635321",
+      "passed": true,
+      "wasm_sha256": "178b165d61032be9a7cede597d6810c709fdbfb120330f1565df4b047c13085f",
+      "restored_continuation_exact": true,
+      "arithmetic_result_verified": true,
+      "cold_boot": false
+    }
+  ],
+  "broader_retest_paused_for_independent_uart_fifo_reset_investigation": true,
+  "physical_cp15_layout_revision_verified": false,
+  "complete_arm920t_conformance": false,
+  "private_summary_sha256": "8524588315362667999f637455a67b9c6f6df0c25c0f6b3baf382559e98ffbef"
+}

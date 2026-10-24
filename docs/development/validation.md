@@ -1,5 +1,61 @@
 # Validation
 
+## r25 native applications, sustained input and connectivity continuation (2026-10-24)
+
+The initial local C/WASM acceptance identity is SHA-256
+`57d5d586bbf4e22e8e733130630c961df73ba0df57f1bcf683fc53bb327b8547`.
+The [source-driven CP15 follow-up](core-next-r25.md) has its own binary identity,
+independent instruction oracle and original-program regressions. The combined
+CP15/UART production core is SHA-256
+`36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569`;
+its [separate production record](evidence/production-continuation-r25.json)
+retains fresh original-program, factory/power/SD, browser Save/Restore,
+final v3 infrared recovery and fixed-workload performance outcomes.
+The [compatibility matrix](compatibility-r25.md) describes the implementation,
+download sources, independently observed results and unfinished roadmap gates.
+The [sanitized record](evidence/compatibility-r25.json) retains each run's exact
+core/frontend identity; earlier browser runs are not silently assigned the
+final frontend bundle. ROMs, program objects, guest screenshots, SD images and
+checkpoints are excluded from the repository and production artifacts.
+
+| Area | Observed result and boundary |
+| --- | --- |
+| Native ARM compatibility | ARM/Thumb multiple loads no longer apply ordinary LDR rotation; ordinary STM has an explicit original-base compatibility policy in its architecturally unpredictable case. Valid live LCD divider changes and narrow read-only PWM counter lanes support original HP-GCC consumers. Independent fixed-value regression expectations and source conflicts are documented in [ARM memory](arm-memory.md). |
+| 39-series applications | Original Tetris+ on its declared 39g+ target, Arkalite on both 39g+/39gs and Hanoi on both machines install through stock Wire, run, accept input, return and calculate `1+1=2`. Complete restored continuations match. Real production browser keyboard/touch holds visibly move Tetris and both Arkalite paddles. Shift/Alpha contacts are checked without claiming visible square-piece rotation. Combined-core browser Arkalite exit uses explicitly held DEL; ordinary short-click failures remain open. |
+| 49/48 applications | Original 49g+ 2048, BabalPlus and BaseConvert/ListConvert cold-install and satisfy reviewed result frames and subsequent arithmetic. The unchanged native SDK example also runs on both 49g+ and 48gII with their respective original ARMToolbox libraries, returns to arithmetic and completes USB GET/FINISH. 48gII's transport-header C-to-B change is explicit; its object payload is exact. |
+| Factory and power | All four admitted original systems repeat applicable RS232/IrDA factory results and menu return; 39gs/49g+ repeat quick and full FLASH WRITE. All four naturally power off after 300–301 functional seconds, restore an exact off-state checkpoint, wake through ON and calculate `7*8=56`. The original LCD enable-before-text-replacement sequence remains observable. |
+| SD continuation | Original 49g+ FILES writes TEST=42 to a 16 MiB image; exported bytes, fresh-boot recall and a complete v7 checkpoint with an in-flight transfer are checked. Native/WASM continue identically. Original 48gII no-card FILES returns to arithmetic. |
+| Serial Wire | 128-byte serial upload blocks resolve the observed original 39gs library rejection at 1 KiB. Cold original Wire installs/exports two Notes and two multipart library/aplet groups, six files totaling 30,016 bytes. The production browser receives both Notes in one listener, waits for Stop acknowledgment, downloads exact completed files and returns to arithmetic. |
+| Directory synchronization | Matching deletions/replacements on both sides converge and directory-to-file replacement removes obsolete descendant baselines. Real OPFS/IndexedDB browser cases supplement the production comparison/apply checks; their explicit media acknowledgments are not relabelled as new original-ROM SD execution. |
+| Initial infrared recovery | An explicitly identified initial 57d5 browser run uses original 49g+/48gII production tabs to pause/disconnect, re-pair, cancel the firmware wait and transfer/recall 12345 and 54321 in both directions, with exact 26-byte objects and valid final acknowledgment. Specific old-link continuation and bounded queued-chunk fixes also have controlled regressions. The later final pre-timing frontend timed out during reverse discovery; its failed report and earlier malformed-packet observations remain recorded. This historical positive run is not the combined-core timed-relay acceptance. |
+| Final v3 infrared recovery | On 36e2, one fixed production-browser flow restores the prepared original 49g+/48gII sessions, interrupts a transfer with Pause, re-pairs, cancels the old command with ON, transfers both exact 26-byte objects and actually recalls 12345/54321 before disconnect. Both complete S/F/D/Z/B and all valid Y acknowledgments; all complete IrLAP frames have valid FCS. One reverse Y3 has a bad Kermit checksum, then original-firmware retry recovers. No core stop, Worker/page error or overflow occurs. The eight-packet bounded window and hardware-RX-close clock reanchoring are independently tested; earlier failures and causal replays remain distinct. This full protocol witness precedes the final presentation-only phone sizing correction and retains its actual entry hash. |
+| UI lifecycle | Both keypads retain physical contacts, independent touches and finite character macros. Lifecycle reset also releases DOM pointer capture while background execution remains enabled. Eight blur/hidden and pause/infrared component scenarios reproduce the old misrouted click and verify the corrected target. Real pointer handling is distinct from synthetic Worker/lifecycle fixtures. |
+| Layout and local workflows | All four original systems pass production-page cold load, local ROM recall/forget, sidebar/input, self-test toolbar and held PC shortcuts, return and arithmetic. Manual Save, a changed calculation and file-based Restore prove automatic running/tick progress followed by exact saved LCD contents. Settings actions remain visible across four settings tabs and four viewports; a separate four-model/four-viewport check covers calculator layouts. Short traditional landscape keeps usable keys and scrolling; 49g+ SD remains inside Connections. |
+| Phone connection dock | The final layout-only correction keeps immersive portrait at the workspace width while Connections is open: 374/344 pixels on 390/360-pixel viewports. Four-model geometry, actual lower-row clicks, sidebar input and explicit zoom pass; existing desktop/landscape regressions remain separate. The original-ROM production UI check identifies the later bundle, with unchanged core/Worker/infrared assets. |
+| Performance and LCD | Six fixed original workloads have equal complete final checkpoints on r24/combined 36e2 in Node and Chromium Worker. Host timing differences are mixed and are not an overall speedup claim. Initial 57d5 GBP ALIGN4 display samples confirm guest-state equality; 35 ms response reduces the sampled pixel changes, while scan-boundary publication alone does not reduce that metric in this fixture. |
+
+For the initial 57d5 core, native, retained-reference and Clang ASan/UBSan
+all pass 24 suites. The independent Unicorn ARMv4T corpus passes 17,075 cases
+with zero mismatches or skips; privileged MMU/TLB behavior is checked separately.
+For the combined 36e2 core, native and reference again pass 24/24, while the
+sanitizer run passes 23 suites and cannot start its generated clock-domain
+binary because that local artifact lacks its executable bit. Restoring the
+artifact's `u+x` permits the affected suite to pass separately; both logs are
+retained. This is not a clean single-run sanitizer 24/24 claim. Local leak
+detection is disabled under the ptrace environment; hosted checks retain their
+normal leak checks. The combined full WASM gate passes 105,059 main-regression
+and 5,455 UART assertions, and a fresh Clang analysis covers 52 C files without
+diagnostics. Frontend, tools, trace, controller/Worker and Chromium gates retain
+separate source/bundle identities in the records.
+
+The unchanged original GBP 0.3 loader still faults at its unaligned BSS clear
+with CP15 alignment enabled. The working ALIGN4 diagnostic remains a different
+input. Complete original HP40gs/HP50g NOR admission, physical board/panel/optical
+calibration, additional peripheral modes, broader engines/phones and long-session
+stress remain open. No numerical all-features compatibility percentage follows
+from these finite checks. Hosted Build, merge, Pages and live asset acceptance
+are separate release gates.
+
 ## r24 architectural TLB, continuous Wire receive and SD recovery (2026-10-24)
 
 The C/WASM candidate is SHA-256

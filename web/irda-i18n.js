@@ -8,6 +8,7 @@ export const irdaEn={
   irdaError_code:'Use 6–12 letters or digits for the pairing code.',irdaError_crowded:'More than two calculators used this code. Create a new connection.',
   irdaError_gone:'The other calculator disconnected.',irdaError_timeout:'The other calculator did not respond. Resume both tabs and reconnect.',
   irdaError_overflow:'The infrared stream exceeded its buffer. Reconnect and restart SEND / RECV.',irdaError_sequence:'The infrared stream was interrupted. Reconnect and restart SEND / RECV.',
+  irdaError_timing:'The calculators\' clocks moved too far apart. Select matching speeds and reconnect.',
 };
 export const irdaZh={
   irda:'红外',irdaPairCode:'配对码',irdaNew:'创建连接',irdaJoin:'加入',irdaDisconnect:'断开',
@@ -18,4 +19,5 @@ export const irdaZh={
   irdaError_code:'配对码应包含 6–12 位字母或数字。',irdaError_crowded:'同一码有超过两台计算器，请创建新连接。',
   irdaError_gone:'另一台计算器已断开。',irdaError_timeout:'另一台计算器没有响应，请恢复两个标签页的模拟并重新连接。',
   irdaError_overflow:'红外数据超出缓冲容量，请重新连接并开始 SEND / RECV。',irdaError_sequence:'红外数据流中断，请重新连接并开始 SEND / RECV。',
+  irdaError_timing:'两台计算器的模拟时钟相差过大，请选择相同速度并重新连接。',
 };

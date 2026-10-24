@@ -17,12 +17,15 @@ NOR / SRAM / S3C2410 peripheral state / model wiring
 raw LCD output, physical key inputs, UART/USB host transport
 ```
 
-Raw LCD preview, a functional UART0 queue, and an opt-in electrical keyboard
-with unfiltered EINT sampling exist. The browser supplies physical key controls
-and printed legends; complete board wiring and all-model acceptance remain open. A functional USB PIO
-controller and explicit packet host now exchange real HP50g bootloader
-control responses and bounded HP48gII object transfers; see [USB evidence](usb.md),
-[file transfer](file-transfer.md) and [electrical input](input.md).
+The browser supplies physical key contacts, printed legends and scan-boundary
+LCD presentation. Three functional UARTs expose their own holding registers,
+FIFOs and interrupts; the UART2 relay lets the original firmware exchange
+infrared objects between calculator tabs. The USB PIO controller and explicit
+packet host support the admitted original systems' file workflows. HP50g
+bootloader control responses remain a separate, limited observation. Complete
+board wiring and all-model acceptance remain open; see [USB evidence](usb.md),
+[file transfer](file-transfer.md), [UART/IrDA](uart-irda.md) and
+[electrical input](input.md).
 
 A stock image begins at physical address zero with MMU/caches off and the CPU
 in supervisor mode with IRQ/FIQ masked. The guest supplies its own reset code,
@@ -38,12 +41,12 @@ host-side Saturn shortcut is planned. See the ARM/Samsung manuals in
 | CPU | `src/cpu.c`, `src/thumb.c` | Original ARM/Thumb dispatch, flags, register banks and exception entry/return |
 | MMU | `src/mmu.c` | CP15 subset, guest table walks, access permission and alignment checks |
 | Physical bus | `src/bus.c`, `src/sram.c` | NOR, external SRAM and 4 KiB internal SRAM bounds, MMIO routing; inspection in `src/lcd.c` |
-| SoC | `src/soc.c`, `src/watchdog.c`, `src/gpio.c`, `src/interrupt.c`, `src/rtc.c` | Shared PCLK and buffered PWM, functional UART/watchdog, two-level IRQ arbitration, GPIO latches and retained RTC subset |
-| Input / NOR | `src/keyboard.c`, `src/nor.c` | Opt-in switch network, unfiltered EINT and explicit read/software-ID NOR subset |
+| SoC | `src/soc.c`, `src/uart.c`, `src/watchdog.c`, `src/gpio.c`, `src/interrupt.c`, `src/rtc.c` | Shared PCLK and buffered PWM, three functional UARTs, watchdog, two-level IRQ arbitration, GPIO latches and retained RTC subset |
+| Input / NOR | `src/keyboard.c`, `src/nor.c` | Opt-in switch network, unfiltered EINT, selected NOR command/program/erase state and immutable base-image identity |
 | USB | `src/usb.c` | Functional EP0 / 64-byte bulk PIO, explicit packet host API, USB reset and IRQ25; no descriptor shortcuts |
 | Machine | `src/machine.c` | Cold reset, retained Power_OFF wake reset, loader, profiles and deterministic scheduler |
 | Native host | `app/main.c` | Full-NOR loading, bounded CLI run, JSON/PGM/UART files |
-| Web host | `app/wasm.c`, `web/` | Freestanding WASM adapter, Worker and diagnostic workbench |
+| Web host | `app/wasm.c`, `web/` | Freestanding WASM adapter, execution Worker, React/Mantine calculator, local media/transfers and diagnostic workbench |
 
 C17 was chosen for a small, auditable, platform-neutral core with no runtime
 package dependencies. The browser initially needs neither pthreads nor
@@ -82,12 +85,16 @@ no NAND image behind it. The bounded NAND register subset accepts an aligned
 word read of disabled `NFCONF=0` and a word write of zero; enabled configurations
 and NAND command/data transactions remain unsupported. HP40gs uses 2 MiB NOR.
 Flash does not silently mirror or pad. An explicitly selected SST39VF1601 (2 MiB) or SST39VF800A (1 MiB)
-implements array read and software identification; program/erase/CFI/security
-remain diagnostic stops. The default unspecified part only accepts read-array
+implements array read, software identification, word programming and
+sector/block/chip erase with busy polling. VF1601 additionally supports bounded
+erase suspend, programming outside the suspended range and resume. CFI/security
+and other unsupported modes remain diagnostic stops. The default unspecified part only accepts read-array
 reset. Selected x16 NOR receives aligned ARM word stores as two ordered
 halfword device cycles; each uses the actual command decoder. Invalid SDP
-sequences leave the array unchanged, while unsupported program/erase still
-stops. Part identity is not inferred from a ROM hash or profile size.
+sequences leave the array unchanged. The immutable original file identity is
+separate from the emulated writable array; checkpoints retain changed sectors
+and pending operations. Part identity is not inferred from a ROM hash or
+profile size. See [NOR programming](nor-write.md).
 
 One virtual tick is counted before advancing the current functional peripherals;
 a peripheral diagnostic stop therefore includes its triggering tick. A tick
@@ -110,7 +117,11 @@ participate in input resolution; DAT reads whose input pins remain unresolved
 stop. Strong external drives take precedence over weak bias. With the keyboard
 attached, its switch network
 supplies pad levels and unfiltered EINT detection. Other alternate-function
-producers and digital filters are not silently treated as implemented. UART is an error-free byte stream, not full FIFO/baud timing.
+producers and digital filters are not silently treated as implemented. UART
+models per-channel holding registers/FIFOs, masks, enables, clock gates,
+interrupts, overruns and internal loopback. Its host boundary carries decoded
+octets with backpressure; physical baud/optical waveforms and FIFO receive
+timeout remain outside that functional subset.
 
 RTC uses a deterministic cold-fixture epoch and a provisional 12-million-quanta
 timebase, not the host clock. Normal calendar carry and tick/alarm interrupts
@@ -148,8 +159,12 @@ behavioral evidence. Other segment naming and physical panel routing remain
 provisional. Host keypresses never directly set annunciator values.
 
 The optional keyboard API changes **physical switch connections** between
-bounded run calls. EINT sampling and guest IRQ handlers consume those levels;
-no Saturn keyboard variables are edited. Cold reset releases and detaches the
+bounded run calls. Browser keyboard and pointer contacts persist until their
+own release, including overlapping keys and independent touches. Brief clicks
+retain a minimum guest-time debounce; character macros remain finite sequences.
+Pause, blur, cancellation and view teardown release outstanding contacts.
+EINT sampling and guest IRQ handlers consume those levels; no Saturn keyboard
+variables are edited. Cold reset releases and detaches the
 circuit. Raw switch positions are not a complete printed-key map. Model skins
 are a separate presentation concern and may only use independently licensed
 artwork.

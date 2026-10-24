@@ -83,7 +83,8 @@ static void fifo_and_irqs(void){
   uint8_t data[20];for(unsigned n=0;n<20;n++)data[n]=(uint8_t)(n*13u);
   CHECK(orchard_uart_send_channel(&a,ch,data,20)==20);tick(1);
   CHECK(rd(ch,24)==0x100);CHECK(a.soc.subsrcpnd&(1u<<(3u*ch)));
-  for(unsigned n=0;n<20;n++)CHECK(rd(ch,36)==data[n]);CHECK(rd(ch,24)==0);
+  for(unsigned n=0;n<20;n++){CHECK(rd(ch,36)==data[n]);}
+  CHECK(rd(ch,24)==0);
   CHECK(o_mmio_write(&a,0x4a000018u,4,7u<<(ch*3u)));tick(1);
   CHECK(a.soc.subsrcpnd==(2u<<(3u*ch)));
   wr(ch,4,5);CHECK(o_mmio_write(&a,0x4a000018u,4,0x7ff));tick(1);CHECK(a.soc.subsrcpnd==0);
@@ -93,6 +94,50 @@ static void fifo_and_irqs(void){
   tick(1);CHECK(rd(ch,24)==0x100);CHECK(a.soc.subsrcpnd&(4u<<(3u*ch)));
   CHECK(rd(ch,20)==1&&rd(ch,20)==0);for(unsigned n=0;n<16;n++)CHECK(rd(ch,36)==n);
   wr(ch,8,7);CHECK(rd(ch,8)==1&&rd(ch,24)==0);
+ }
+}
+static void fifo_reset_staging(void){
+ /* The host queue contains future decoded octets, not extra chip FIFO slots.
+    A FIFO reset drops only already arrived bytes, regardless of API chunks. */
+ for(unsigned ch=0;ch<3;ch++)for(unsigned fifo=0;fifo<2;fifo++)for(unsigned split=0;split<2;split++)for(unsigned disabled=0;disabled<2;disabled++){
+  init();unsigned capacity=fifo?16u:1u,other=(ch+1u)%3u;
+  uint8_t data[20],marker=0xa7;for(unsigned n=0;n<20;n++)data[n]=(uint8_t)(n+0x40u);
+  wr(ch,0,3);wr(ch,4,1);wr(ch,8,fifo);
+  wr(other,0,3);wr(other,4,1);
+  CHECK(orchard_uart_send_channel(&a,other,&marker,1)==1);
+  if(split){
+   CHECK(orchard_uart_send_channel(&a,ch,data,capacity)==capacity);
+   CHECK(orchard_uart_send_channel(&a,ch,data+capacity,4)==4);
+  }else CHECK(orchard_uart_send_channel(&a,ch,data,capacity+4u)==capacity+4u);
+  tick(1);CHECK(a.soc.uart_state[ch].rx_count==capacity);
+  o_queue *staged=ch?&a.soc.uart_rx[ch-1u]:&a.soc.rx;
+  CHECK(staged->count==4);
+  /* Disabled RX exposes the reset boundary. Enabled RX immediately refills
+     hardware from future bytes through the normal service() path. */
+  if(disabled)wr(ch,4,0);
+  wr(ch,8,fifo|2u);
+  unsigned arrived=disabled?0u:fifo?4u:1u;
+  CHECK(a.soc.uart_state[ch].rx_count==arrived&&a.soc.uart_state[ch].errors==0);
+  CHECK(staged->count==4u-arrived);CHECK(rd(ch,8)==fifo);
+  CHECK(rd(ch,16)==(arrived?7u:6u));
+  CHECK(rd(other,36)==marker&&rd(other,16)==6);
+  if(disabled)wr(ch,4,1);
+  for(unsigned n=capacity;n<capacity+4u;n++)CHECK(rd(ch,36)==data[n]);
+  CHECK(staged->count==0&&rd(ch,16)==6);
+  /* With RX disabled from the outset none of this stream has arrived. TX
+     holding state is independent even when it shares the same UART bank. */
+  wr(ch,4,0);
+  CHECK(orchard_uart_send_channel(&a,ch,data,20)==20);wr(ch,32,0x91);
+  wr(ch,8,fifo|2u);
+  CHECK(a.soc.uart_state[ch].rx_count==0&&staged->count==20);
+  CHECK(a.soc.uart_state[ch].tx_count==1);wr(ch,4,5);
+  uint8_t transmitted=0;
+  CHECK(orchard_uart_receive_channel(&a,ch,&transmitted,1)==1&&transmitted==0x91);
+  for(unsigned n=0;n<20;n++)CHECK(rd(ch,36)==data[n]);
+  CHECK(staged->count==0&&rd(ch,16)==6);
+  /* A reset with no staged bytes still leaves an empty hardware receiver. */
+  CHECK(orchard_uart_send_channel(&a,ch,&marker,1)==1);tick(1);
+  wr(ch,8,fifo|2u);CHECK(rd(ch,16)==6&&rd(ch,36)==0);
  }
 }
 static void modem_and_flow(void){
@@ -197,7 +242,7 @@ static void checkpoint_stream(void){
  CHECK(orchard_checkpoint_load(&a,checkpoint,n)==ORCHARD_OK);
  CHECK(orchard_checkpoint_save(&a,continued,n)==ORCHARD_OK);CHECK(equal(checkpoint,continued,n));
 }
-EXPORT("regression") unsigned test(void){checks=failures=first=0;reset_and_isolation();modes_and_clock();loopback_and_ir();fifo_and_irqs();modem_and_flow();board_tx_net();unsupported_modes();checkpoint_stream();return failures;}
+EXPORT("regression") unsigned test(void){checks=failures=first=0;reset_and_isolation();modes_and_clock();loopback_and_ir();fifo_and_irqs();fifo_reset_staging();modem_and_flow();board_tx_net();unsupported_modes();checkpoint_stream();return failures;}
 EXPORT("checks") unsigned count(void){return checks;}
 EXPORT("first_failure") unsigned first_failure(void){return first;}
 #ifndef __wasm__

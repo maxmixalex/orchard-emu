@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import React,{memo,useEffect,useRef,useState,useSyncExternalStore} from 'react';
+import '@mantine/core/styles.css';
 import {MantineProvider,createTheme,Button,Group,Modal,Select,Slider,Switch,Tabs,Text,Textarea,Tooltip,Menu,Stack,CloseButton,ComboboxChevron,ActionIcon} from '@mantine/core';
 import {useMediaQuery} from '@mantine/hooks';
 import {KeyboardSettings} from './KeyboardSettings.jsx';
@@ -18,7 +19,6 @@ import {resolveKeyBinding,validatePreferences} from './preferences.js';
 import {capturePNG,captureName,createLCDRenderer,displayFrame} from './capture.js';
 import {createScreenScaler,SCREEN_SCALING} from './screen-scaling.js';
 import styles from './App.module.css';
-import '@mantine/core/styles.css';
 import './react.css';
 import './keyboards.css';
 export function downloadFile(data,name){const url=URL.createObjectURL(data instanceof Blob?data:new Blob([data],{type:'application/octet-stream'}));
@@ -36,22 +36,27 @@ function Indicators(){return <svg className="annunciator-strip" viewBox="0 0 393
 function HelpIcon(){return <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 8.6a2.7 2.7 0 0 1 5.3.7c0 2-2.8 2-2.8 4.2"/><circle cx="12" cy="16.5" r=".8" fill="currentColor" stroke="none"/></svg>;}
 function PauseIcon(){return <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor" aria-hidden="true"><rect x="5" y="3" width="3" height="14" rx=".7"/><rect x="12" y="3" width="3" height="14" rx=".7"/></svg>;}
 const traditional=view=>view.startsWith('traditional');
-const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,enabled}){
+const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,enabled,pointerReset}){
  const stage=useRef(null),workspace=useRef(null),host=useRef(null),view=useRef(null),keypadHost=useRef(null),softHost=useRef(null),keypad=useRef(null),ensureKeypadRef=useRef(null),prefsRef=useRef(prefs);
  prefsRef.current=prefs;
  useEffect(()=>{
   let disposed=false,raf=0,last=null,painted=null,ink='',active=null,keypadSpec=null,paintMode='';
-  const skin=new SkinView(stage.current,scan=>controller.tap([scan]));view.current=skin;
+  const live={press:(scan,source)=>{controller.keyDown(source,scan);host.current.focus({preventScroll:true});},release:(source,cancel)=>controller.keyUp(source,cancel)};
+  const skin=new SkinView(stage.current,scan=>controller.tap([scan]),live);view.current=skin;
+  // Background execution can leave these views enabled. Worker release alone
+  // cannot clear their DOM capture or local pointer owners.
+  const releasePointers=()=>{skin.releaseInputs();keypad.current?.releaseInputs();};
+  pointerReset.current=releasePointers;
   const canvas=stage.current.querySelector('canvas'),paintLCD=createLCDRenderer(canvas.getContext('2d',{alpha:false})),scaleLCD=createScreenScaler();
   function skinError(e){if(!disposed){skin.glass.hidden=false;controller.report('skinError',e.message);}}
   // SVG text/shape measurements are needed only when this view is requested.
   function ensureKeypad(){
    if(disposed||keypad.current||!keypadSpec||!traditional(prefsRef.current.view))return;
    try{
-    keypad.current=new TraditionalKeypad(keypadHost.current,keypadSpec,scan=>{controller.tap([scan]);host.current.focus({preventScroll:true});},{softHost:softHost.current});
+    keypad.current=new TraditionalKeypad(keypadHost.current,keypadSpec,scan=>{controller.tap([scan]);host.current.focus({preventScroll:true});},{softHost:softHost.current,...live});
     keypad.current.setLayout(prefsRef.current.view==='traditional-landscape');
     keypad.current.setEnabled(controller.state.loaded&&controller.state.running&&!controller.state.busy);
-    keypad.current.update(last?.active??null);
+    keypad.current.update(last?.active??null,last?.activeKeys);
    }catch(e){skinError(e);}
   }
   ensureKeypadRef.current=ensureKeypad;
@@ -59,7 +64,10 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
    keypad.current?.setLayout(p.view==='traditional-landscape');
    const boxStyle=getComputedStyle(box),width=Math.max(64,box.clientWidth-parseFloat(boxStyle.paddingLeft)-parseFloat(boxStyle.paddingRight)),
     height=Math.max(64,box.clientHeight-parseFloat(boxStyle.paddingTop)-parseFloat(boxStyle.paddingBottom)),dpr=window.devicePixelRatio||1;
-   const caseWidth=Math.round(Math.min(width,height*(w/h||.497))*p.zoom/100*dpr)/dpr;
+   // A phone's open Connections dock already gives each pane its own scroll.
+   // Keep the portrait case usable instead of fitting it into half a screen.
+   const scrollCase=p.view==='immersive'&&matchMedia('(max-width:760px)').matches&&box.parentElement?.dataset.panelOpen==='true';
+   const caseWidth=Math.round((scrollCase?width:Math.min(width,height*(w/h||.497)))*p.zoom/100*dpr)/dpr;
    host.current.style.setProperty('--case-width',`${caseWidth}px`);
    const lcdHeight=last?.height??(model.id>=5?80:64),lcdWidth=last?.width??131;
    // Traditional keys now use measured SVG geometry. Fit the LCD and that
@@ -68,11 +76,18 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
     stacked=p.view==='traditional-landscape'&&width<600&&(height>width||innerHeight>innerWidth),landscape=p.view==='traditional-landscape'&&!stacked;
    host.current.dataset.stacked=String(stacked);
    const leftRatio=lcdHeight/lcdWidth+18/393+(keypad.current?.softBounds?keypad.current.softBounds.height/keypad.current.softBounds.width:.16);
-   const plain=stacked?Math.min(width,500)*p.zoom/100:landscape?Math.min(width,1000,Math.max(130,(height-44)/Math.max(leftRatio,keyRatio))*2+64)*p.zoom/100:
+   // A short landscape viewport must scroll a usable keyboard instead of
+   // shrinking its entire geometry to the remaining height.
+   const plain=stacked?Math.min(width,500)*p.zoom/100:landscape?Math.min(width,1000,Math.max(320,(height-44)/Math.max(leftRatio,keyRatio))*2+64)*p.zoom/100:
     Math.min(width,500,Math.max(lcdWidth/dpr,(height-74)/(lcdHeight/lcdWidth+18/393+keyRatio))+46)*p.zoom/100;
    host.current.style.setProperty('--plain-width',`${plain}px`);
    const available=landscape?(plain-64)/2:plain-46;
-   host.current.style.setProperty('--lcd-width',`${Math.max(50,available)}px`);
+   const screenWidth=landscape?Math.min(available,Math.max(lcdWidth,(height-64)/leftRatio)):available;
+   host.current.style.setProperty('--screen-width',`${screenWidth}px`);
+   // A stacked LCD must leave enough viewport for the keys below it. This
+   // matters when Connections takes half of a portrait phone's workspace.
+   host.current.dataset.sticky=String(p.view==='traditional-landscape'&&leftRatio*screenWidth+52<height-(stacked?80:0));
+   host.current.style.setProperty('--lcd-width',`${Math.max(50,screenWidth)}px`);
    if(last&&!raf)raf=requestAnimationFrame(paint);
   }
   function paint(){raf=0;if(!last||disposed)return;const d=last;
@@ -84,8 +99,9 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
     if(canvas.height!==height)canvas.height=height;
     canvas.style.aspectRatio=`${d.width}/${d.height}`;
     paintLCD(scaleLCD(displayFrame(d),width,height,mode),skin.rgb);painted=d;ink=skin.rgb.join(',');paintMode=mode;}
-   controller.screenRGB=skin.rgb;skin.update(d.active,d.annunciators,d.annunciatorStatus,model.id);
-   if(active!==d.active){for(const button of host.current.querySelectorAll('.traditional-key'))button.setAttribute('aria-pressed',String(Number(button.dataset.scan)===d.active));active=d.active;}
+   controller.screenRGB=skin.rgb;skin.update(d.active,d.annunciators,d.annunciatorStatus,model.id,d.activeKeys);
+   const pressed=(d.activeKeys??(d.active===null?[]:[d.active])).join(',');
+   if(active!==pressed){keypad.current?.update(d.active,d.activeKeys);active=pressed;}
   }
   const unframe=controller.onFrame(d=>{last=d;if(!raf)raf=requestAnimationFrame(paint);});
   skin.show(model.id).then(async()=>{if(disposed)return;const m=await skin.manifest;if(disposed)return;
@@ -93,8 +109,8 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
    fit();paint();skin.setEnabled(controller.state.loaded&&controller.state.running&&!controller.state.busy&&!traditional(prefsRef.current.view));
   }).catch(skinError);
   const resize=new ResizeObserver(fit);resize.observe(workspace.current);window.addEventListener('resize',fit);fit();
-  return()=>{disposed=true;++skin.epoch;if(ensureKeypadRef.current===ensureKeypad)ensureKeypadRef.current=null;keypad.current?.destroy();keypad.current=null;cancelAnimationFrame(raf);unframe();resize.disconnect();window.removeEventListener('resize',fit);};
- },[controller,model.id]);
+  return()=>{disposed=true;++skin.epoch;skin.setEnabled(false);if(pointerReset.current===releasePointers)pointerReset.current=null;if(ensureKeypadRef.current===ensureKeypad)ensureKeypadRef.current=null;keypad.current?.destroy();keypad.current=null;cancelAnimationFrame(raf);unframe();resize.disconnect();window.removeEventListener('resize',fit);};
+ },[controller,model.id,pointerReset]);
  useEffect(()=>{ensureKeypadRef.current?.();view.current?.setEnabled(enabled&&!traditional(prefs.view));keypad.current?.setEnabled(enabled&&traditional(prefs.view));window.dispatchEvent(new Event('resize'));},[enabled,prefs.view,prefs.zoom,prefs.screenScaling]);
  return <main id="workspace" ref={workspace}><section id="calculator" ref={host} tabIndex={0} data-view={prefs.view} data-scaling={prefs.screenScaling}>
   <div className="calculator-screen">
@@ -108,12 +124,15 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
   <div className="traditional-keypad" ref={keypadHost}/>
  </section></main>;
 });
+// Mantine's Modal inserts a scroll-area wrapper between Content and Body.
+// Keep that wrapper in the flex chain so only the active panel scrolls.
+function SettingsViewport({children,...props}){return <div {...props} className={styles.settingsViewport}>{children}</div>;}
 function Settings({controller,state,onClose}){
  const {t}=useTranslation(),small=useMediaQuery('(max-width: 48em)');const [draft,setDraft]=useState(()=>validatePreferences(state.prefs)),[language,setLanguage]=useState(i18n.resolvedLanguage),[tab,setTab]=useState('general');
  const set=(k,v)=>setDraft(p=>({...p,[k]:v}));
- return <Modal opened trapFocus={!state.dialog} onClose={onClose} title={t('settings')} size={tab==='keyboard'?'min(1440px, calc(100vw - 48px))':'min(880px, calc(100vw - 48px))'} fullScreen={small} closeButtonProps={{'aria-label':t('close')}} classNames={{content:styles.settingsDialog,body:styles.settingsBody}}>
-  <Tabs value={tab} onChange={setTab} keepMounted={false} className={styles.settingsTabs}><Tabs.List>{['general','keyboard','transferSettings','storage'].map(k=><Tabs.Tab key={k} value={k}>{t(k)}</Tabs.Tab>)}</Tabs.List>
-   <Tabs.Panel value="general" pt="md"><div className={styles.generalSettings}>
+ return <Modal opened trapFocus={!state.dialog} onClose={onClose} title={t('settings')} size={tab==='keyboard'?'min(1440px, calc(100vw - 48px))':'min(880px, calc(100vw - 48px))'} fullScreen={small} scrollAreaComponent={SettingsViewport} closeButtonProps={{'aria-label':t('close')}} classNames={{content:styles.settingsDialog,header:styles.settingsHeader,body:styles.settingsBody}}>
+  <Tabs value={tab} onChange={setTab} keepMounted={false} className={styles.settingsTabs}><Tabs.List className={styles.settingsTabList}>{['general','keyboard','transferSettings','storage'].map(k=><Tabs.Tab key={k} value={k}>{t(k)}</Tabs.Tab>)}</Tabs.List>
+   <Tabs.Panel value="general" pt="md" className={styles.settingsPanel}><div className={styles.generalSettings}>
     <Stack gap="md"><Text fw={600} size="sm">{t('displaySettings')}</Text>
      <Select allowDeselect={false} label={t('view')} value={draft.view} onChange={v=>set('view',v)} data={['immersive','immersive-landscape','traditional','traditional-landscape'].map(k=>({value:k,label:t({'immersive-landscape':'immersiveLandscape','traditional-landscape':'traditionalLandscape'}[k]||k)}))}/>
      <div><Group justify="space-between" mb={4}><Text size="sm">{t('size')}</Text><Text size="sm" c="dimmed">{draft.zoom}%</Text></Group><Slider min={50} max={180} step={5} value={draft.zoom} onChange={v=>set('zoom',v)} thumbLabel={t('size')}/></div>
@@ -129,11 +148,11 @@ function Settings({controller,state,onClose}){
      <div><Group justify="space-between" mb={4}><Text size="sm">{t('volume')}</Text><Text size="sm" c="dimmed">{Math.round(draft.volume*100)}%</Text></Group><Slider min={0} max={100} step={5} value={Math.round(draft.volume*100)} disabled={!draft.sound} onChange={v=>set('volume',v/100)} thumbLabel={t('volume')}/></div>
     </Stack>
    </div></Tabs.Panel>
-   <Tabs.Panel value="keyboard" pt="md"><KeyboardSettings model={state.model} draft={draft} onChange={setDraft}/></Tabs.Panel>
-   <Tabs.Panel value="transferSettings" pt="md"><Stack>
+   <Tabs.Panel value="keyboard" pt="md" className={styles.settingsPanel}><KeyboardSettings model={state.model} draft={draft} onChange={setDraft}/></Tabs.Panel>
+   <Tabs.Panel value="transferSettings" pt="md" className={styles.settingsPanel}><Stack>
     <Switch label={t('fileTransferUnlimited')} description={t('fileTransferUnlimitedHelp')} checked={draft.transferUnlimited} onChange={e=>set('transferUnlimited',e.currentTarget.checked)}/>
    </Stack></Tabs.Panel>
-   <Tabs.Panel value="storage" pt="md"><Stack><ROMSettings controller={controller} state={state} remember={draft.rememberROM} onChange={v=>set('rememberROM',v)}/><Switch label={t('autosave')} checked={draft.autosave} onChange={e=>set('autosave',e.currentTarget.checked)}/><Select allowDeselect={false} label={t('interval')} value={String(draft.interval)} onChange={v=>set('interval',Number(v))} data={[15,30,60,120].map(v=>({value:String(v),label:t('seconds',{count:v})}))}/><Text size="sm" c="dimmed">{t('storagePrivacy')}</Text><Button variant="light" color="red" onClick={()=>controller.clearSaves()}>{t('deleteSaves')}</Button></Stack></Tabs.Panel>
+   <Tabs.Panel value="storage" pt="md" className={styles.settingsPanel}><Stack><ROMSettings controller={controller} state={state} remember={draft.rememberROM} onChange={v=>set('rememberROM',v)}/><Switch label={t('autosave')} checked={draft.autosave} onChange={e=>set('autosave',e.currentTarget.checked)}/><Select allowDeselect={false} label={t('interval')} value={String(draft.interval)} disabled={!draft.autosave} onChange={v=>set('interval',Number(v))} data={[15,30,60,120].map(v=>({value:String(v),label:t('seconds',{count:v})}))}/><Text size="sm" c="dimmed">{t('storagePrivacy')}</Text><Button variant="light" color="red" onClick={()=>controller.clearSaves()}>{t('deleteSaves')}</Button></Stack></Tabs.Panel>
   </Tabs><Group justify="flex-end" className={styles.settingsActions}><Button variant="default" onClick={onClose}>{t('cancel')}</Button><Button onClick={()=>{controller.setPreferences(draft);void i18n.changeLanguage(language);try{controller.storage?.setItem(LANG_KEY,language);}catch{}onClose();}}>{t('apply')}</Button></Group>
  </Modal>;
 }
@@ -160,27 +179,30 @@ function Connections({controller,state,target,onTargetChange}){
   </Tabs></Stack>;
 }
 export function App({controller}){
- const {t}=useTranslation(),compact=useMediaQuery('(max-width: 48em)'),state=useSyncExternalStore(controller.subscribe,controller.getSnapshot,controller.getSnapshot),[settings,setSettings]=useState(false),[panel,setPanel]=useState(null),[connectionTarget,setConnectionTarget]=useState('usb');
- const rom=useRef(null),session=useRef(null),modalOpen=settings||Boolean(state.dialog),modalRef=useRef(modalOpen);modalRef.current=modalOpen;
+ const {t}=useTranslation(),compact=useMediaQuery('(max-width: 48em), (max-height: 500px) and (orientation: landscape)'),state=useSyncExternalStore(controller.subscribe,controller.getSnapshot,controller.getSnapshot),[settings,setSettings]=useState(false),[panel,setPanel]=useState(null),[connectionTarget,setConnectionTarget]=useState('usb');
+ const rom=useRef(null),session=useRef(null),inputReset=useRef(null),pointerReset=useRef(null),modalOpen=settings||Boolean(state.dialog),modalRef=useRef(modalOpen);modalRef.current=modalOpen;
  const connections=panel==='connections',hasSD=[5,6].includes(state.model.id);
  useEffect(()=>{if(panel==='sd'&&!hasSD)setPanel('connections');},[panel,hasSD]);
- useEffect(()=>{const held=new Map(),release=()=>{held.clear();controller.release();};
+ useEffect(()=>{const held=new Map(),release=()=>{held.clear();pointerReset.current?.();controller.release();};
+  inputReset.current=release;
   // Paired calculator tabs must both keep running while focus moves between
   // them. An explicit Pause remains authoritative and stored preferences do
   // not change. Keep the historical host transport's lifecycle behavior too.
   const unbind=bindLifecycle(window,document,()=>controller.pause(),{preferences:()=>controller.state.hostBridge?.active||controller.state.irda?.active?
    {...controller.state.prefs,pauseOnBlur:false,pauseOnHidden:false}:controller.state.prefs,release,save:()=>controller.requestAuto()});
-  const key=e=>{if(e.repeat||e.isComposing||modalRef.current||e.target.closest('input,textarea,select,[contenteditable="true"]')||e.target.closest('button,[role="button"]')&&(e.key==='Enter'||e.key===' '))return;
+  const key=e=>{if(e.defaultPrevented||e.repeat||e.isComposing||modalRef.current||e.target.closest('input,textarea,select,[contenteditable="true"],[role="menu"],[role="menuitem"],[role="tablist"],[role="slider"],[role="listbox"],[aria-haspopup="menu"]')||e.target.closest('button,[role="button"]')&&(e.key==='Enter'||e.key===' '))return;
    const s=controller.state,seq=resolveKeyBinding(s.prefs,s.model.id,e);if(seq?.length&&s.loaded&&s.running&&!s.busy){
     e.preventDefault();held.set(e.code,seq.length===1?seq[0]:null);
     const scans=[...held.values()];if(scans.includes(56)&&scans.includes(38)){controller.systemChord('self-test');return;}
     if(scans.includes(56)&&scans.includes(37)){controller.systemChord('warm-restart');return;}
-    controller.tap(seq);}};
-  const keyUp=e=>held.delete(e.code);
+    if(seq.length===1)controller.keyDown(`keyboard:${e.code||e.key}`,seq[0]);else controller.tap(seq);}};
+  const keyUp=e=>{if(held.get(e.code)!==undefined&&held.get(e.code)!==null)controller.keyUp(`keyboard:${e.code||e.key}`);held.delete(e.code);};
   const storage=e=>controller.foreignSave(e.key),unlockAudio=()=>controller.unlockAudio?.();
   window.addEventListener('pointerdown',unlockAudio,true);window.addEventListener('keydown',unlockAudio,true);
   window.addEventListener('keydown',key);window.addEventListener('keyup',keyUp);window.addEventListener('storage',storage);
-  return()=>{unbind();window.removeEventListener('pointerdown',unlockAudio,true);window.removeEventListener('keydown',unlockAudio,true);window.removeEventListener('keydown',key);window.removeEventListener('keyup',keyUp);window.removeEventListener('storage',storage);};},[controller]);
+  return()=>{release();inputReset.current=null;unbind();window.removeEventListener('pointerdown',unlockAudio,true);window.removeEventListener('keydown',unlockAudio,true);window.removeEventListener('keydown',key);window.removeEventListener('keyup',keyUp);window.removeEventListener('storage',storage);};},[controller]);
+ useEffect(()=>{if(!state.running||state.busy||modalOpen)inputReset.current?.();},[state.running,state.busy,modalOpen]);
+ useEffect(()=>{inputReset.current?.();},[state.model.id,state.prefs.view]);
  useEffect(()=>{document.documentElement.lang=i18n.resolvedLanguage==='zh'?'zh-CN':'en';},[i18n.resolvedLanguage]);
  async function capture(scale){try{downloadFile(await capturePNG(controller.last,scale,controller.screenRGB),captureName(state.model.id));}catch(e){controller.report('captureError',e.message);}}
  const enabled=state.loaded&&state.running&&!state.stopped&&!state.busy;
@@ -209,7 +231,7 @@ export function App({controller}){
   {!connections&&<TransferStatus state={state} compact onOpen={()=>{setConnectionTarget(state.transfer.transport||'usb');setPanel('connections');}}/>}
   {paused&&<div className={styles.pausedBar} role="status"><PauseIcon/><Text size="sm" fw={600}>{t('paused')}</Text><Button variant="default" size="compact-sm" onClick={()=>controller.toggle()}>{t('resumeSimulation')}</Button></div>}
   <div className="calculator-body" data-panel-open={Boolean(panel)}>
-   <CalculatorDisplay controller={controller} model={state.model} prefs={state.prefs} enabled={enabled}/>
+   <CalculatorDisplay controller={controller} model={state.model} prefs={state.prefs} enabled={enabled} pointerReset={pointerReset}/>
    <aside id="device-sidebar" className="device-sidebar" aria-label={t('deviceSidebar')} hidden={!panel}>
     <Group justify="space-between" className="device-sidebar-header"><Text fw={600}>{t('deviceSidebar')}</Text><CloseButton aria-label={t('closeSidebar')} onClick={()=>setPanel(null)}/></Group>
     <Tabs value={panel||'connections'} onChange={setPanel} keepMounted keepMountedMode="display-none" className="device-sidebar-tabs">

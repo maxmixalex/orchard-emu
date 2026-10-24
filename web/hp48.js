@@ -67,8 +67,8 @@ export function applySetup(core, model, preset) {
 // Queueing is bounded. Pause/reset/visibility loss cancels pending and held keys.
 export class TapQueue {
   constructor(change, hold = 2000000, gap = 2000000) {
-    this.change = change; this.hold = hold; this.gap = gap; this.queue = []; this.active = null; this.readyAt = 0;
-    this.chord=null;this.held=new Set();
+    this.change = change; this.hold = hold; this.gap = gap; this.queue = []; this.activeTap = null; this.readyAt = 0;
+    this.chord=null;this.held=new Set();this.pressed=new Map();this.direct=new Map();this.nextPress=0;
   }
   push(scan) {
     if (!KEYS.has(scan)) throw new Error('Unknown physical key');
@@ -80,30 +80,67 @@ export class TapQueue {
     if (this.pending + scans.length > 32) throw new Error('Key queue full; wait for the pending taps.');
     this.queue.push(...scans);
   }
+  press(source,scan,tick){
+    if(typeof source!=='string'||!source.length||source.length>80||!KEYS.has(scan)||!Number.isSafeInteger(tick)||tick<0)throw new Error('Invalid physical key press');
+    if(this.pressed.has(source))return;
+    if(this.pending>=32)throw new Error('Key queue full; wait for the pending taps.');
+    const key={id:++this.nextPress,source,scan,released:false,releaseAt:Infinity};this.pressed.set(source,key);
+    // Genuine overlapping holds may close several contacts. A rapid sequence
+    // whose previous key is already released retains the tested debounce gap.
+    if(!this.queue.length&&this.direct.size&&[...this.direct.values()].some(key=>!key.released))this.startPress(key,tick);
+    else this.queue.push(key);
+    this.update(tick);
+  }
+  release(source,tick,cancel=false){
+    if(typeof source!=='string'||!source.length||source.length>80||!Number.isSafeInteger(tick)||tick<0||typeof cancel!=='boolean')throw new Error('Invalid physical key release');
+    const key=this.pressed.get(source);if(!key)return;this.pressed.delete(source);key.released=true;
+    if(this.direct.has(key.id)){
+      key.releaseAt=cancel?tick:Math.max(tick,key.started+this.hold);this.update(tick);
+    }else if(cancel)this.queue=this.queue.filter(item=>item!==key);
+  }
+  startPress(key,tick){
+    key.started=tick;key.releaseAt=key.released?tick+this.hold:Infinity;this.direct.set(key.id,key);
+    if(!this.held.has(key.scan))this.contact(key.scan,true,tick);
+  }
   update(tick) {
     if(this.chord){
       while(this.chord.length&&tick>=this.chord[0].at){const step=this.chord.shift();this.contact(step.scan,step.down,tick);}
-      this.active=this.held.size?[...this.held][0]:null;
       if(!this.chord.length){this.chord=null;this.readyAt=tick+this.gap;}
       return;
     }
-    if (this.active !== null && tick >= this.releaseAt) {
-      this.contact(this.active, false, tick); this.active = null; this.readyAt = tick + this.gap;
+    if(this.direct.size){
+      for(const [id,key] of this.direct)if(key.released&&tick>=key.releaseAt){
+        this.direct.delete(id);
+        if(![...this.direct.values()].some(other=>other.scan===key.scan))this.contact(key.scan,false,tick);
+        if(!this.direct.size)this.readyAt=tick+this.gap;
+      }
+      if(this.direct.size)return;
     }
-    if (this.active === null && this.queue.length && tick >= this.readyAt) {
-      this.active = this.queue.shift(); this.contact(this.active, true, tick); this.releaseAt = tick + this.hold;
+    if (this.activeTap !== null && tick >= this.releaseAt) {
+      this.contact(this.activeTap, false, tick); this.activeTap = null; this.readyAt = tick + this.gap;
+    }
+    if (this.activeTap === null && this.queue.length && tick >= this.readyAt) {
+      const key=this.queue.shift();
+      if(typeof key==='number'){this.activeTap=key;this.contact(key,true,tick);this.releaseAt=tick+this.hold;}
+      else{
+        this.startPress(key,tick);
+        // Contacts held together while an earlier macro finished still start
+        // together. Released clicks remain finite, ordered input pulses.
+        while(!key.released&&this.queue[0]&&typeof this.queue[0]!=='number'&&!this.queue[0].released)this.startPress(this.queue.shift(),tick);
+      }
     }
   }
   boundary(tick) {
     if(this.chord)return Math.max(tick,this.chord[0].at);
-    if (this.active !== null) return this.releaseAt;
+    if(this.direct.size){let next=Infinity;for(const key of this.direct.values())next=Math.min(next,key.releaseAt);return next;}
+    if (this.activeTap !== null) return this.releaseAt;
     return this.queue.length ? Math.max(tick, this.readyAt) : Infinity;
   }
   clear(tick) {
     this.queue.length = 0;
     for(const scan of this.held)this.contact(scan,false,tick);
-    this.chord=null;
-    this.active = null; this.readyAt = tick;
+    this.chord=null;this.pressed.clear();this.direct.clear();
+    this.activeTap = null; this.readyAt = tick;
   }
   contact(scan,down,tick){this.change(scan,down,tick);if(down)this.held.add(scan);else this.held.delete(scan);}
   systemChord(action,tick){
@@ -115,5 +152,6 @@ export class TapQueue {
     this.chord=[{at:tick,scan:56,down:true},{at:tick+1500000,scan:second,down:true},
       {at:tick+3000000,scan:second,down:false},{at:tick+3600000,scan:56,down:false}];
   }
-  get pending() { return this.queue.length + (this.chord||this.active!==null?1:0); }
+  get active(){return this.activeTap??(this.held.size?this.held.values().next().value:null);}
+  get pending() { return this.queue.length + this.direct.size + (this.chord||this.activeTap!==null?1:0); }
 }

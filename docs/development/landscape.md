@@ -132,3 +132,59 @@ pixels, not a claim of physical touch-hardware or original-ROM correctness.
 The separate [GBP production-page witness](lcd.md#gbp-redraw-and-publication-measurement-r23)
 also exercises the traditional landscape view with real game pixels, the
 production Worker and restored original-ROM execution.
+
+## Settings and keyboard focus recovery (r25)
+
+The r23 settings layout did not account for Mantine's scroll-area wrapper. On a
+360×640 viewport its Apply button could sit at y=880–916, below the visible
+dialog. Automated clicks scrolled the outer modal and concealed the problem.
+The settings dialog now keeps the native Modal wrapper in its flex layout;
+only the selected panel scrolls. The title, one-row tabs and Apply/Cancel stay
+visible at both phone orientations and on short desktop windows. The keyboard
+sequence editor uses Mantine's labelled CloseButton for removing a step.
+
+Calculator shortcuts now respect default-prevented events and input owned by
+menus, menu triggers, tabs, lists and sliders. Opening Actions and pressing Down
+or Escape previously sent Down and ON/CANCEL into the guest while the trigger
+still had focus. Navigation remains inside the UI, and focusing the calculator
+restores its physical key bindings.
+
+`tests/browser-display.py` checks title/tab/action bounds and actual center-point
+hit targets before and after panel scrolling for all four settings tabs at
+390×844, 360×640, 844×390 and 1360×940. It also verifies menu keyboard isolation
+and subsequent calculator input. These checks supplement the existing
+keyboard-editor and component regressions. A separate production HP49g+ browser
+run uses its unchanged original ROM for cold boot, `1+1=2`, native-size capture,
+v7 save/restore with automatic resume and exact saved display, followed by
+traditional desktop and narrow layouts. No synthetic frame is used in that
+stock-ROM run; physical touch-device behavior remains separate.
+
+## Short landscape touch layout (r25)
+
+The earlier height fit reduced a traditional calculator to roughly 324 pixels
+wide at 844×390, leaving small keys despite unused horizontal space. Short
+landscape windows now use the compact Actions menu too; header and toolbar
+together stay below 100 pixels at that viewport. Traditional landscape keeps
+a 320-pixel keyboard pane at 100% when width permits and scrolls the lower rows
+instead of shrinking every key to fit the height. The LCD and soft keys fit
+the adjacent viewport and stay visible during that scrolling. The HP49g+
+LCD uses a narrower left pane when its 80 rows need the extra height.
+
+In a stacked portrait layout, the display stays sticky only when it leaves at
+least 80 pixels for the keyboard. Opening Connections on a phone can reduce
+the workspace below that threshold; normal scrolling then keeps the lower
+keys reachable. This changes only the traditional appearance, preserving the
+original immersive artwork geometry and the explicit saved zoom.
+
+Storage settings now describe automatic reopening and local storage once each.
+The per-ROM original-file/copy distinction and access recovery actions remain
+available beside remembered files. The Save interval control is disabled while
+automatic saving is off, and re-enabling saving keeps the selected interval.
+
+The display browser gate checks at least 24×24 CSS-pixel bounds for the 45 main
+keys at 844×390, the compact chrome height, LCD visibility after scrolling to
+ENTER, and actual lower-key hit testing with Connections open on a portrait
+phone. It also toggles automatic saving and verifies its dependent control at
+all four settings viewports. Screenshots under `build/display-r23/` show the
+resulting layout and concise Storage tab; the synthetic fixture does not
+substitute for original-program input tests.

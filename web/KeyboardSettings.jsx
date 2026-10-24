@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
-import {Badge,Button,Group,Select,Stack,Text,TextInput} from '@mantine/core';
+import {Badge,Button,CloseButton,Group,Select,Stack,Text,TextInput} from '@mantine/core';
 import {useTranslation} from 'react-i18next';
 import {CALCULATORS} from './catalog.js';
 import {keyRows} from './hp48.js';
@@ -128,8 +128,8 @@ export function KeyboardSettings({model,draft,onChange}){
      <div className="mapping-summary"><Text size="sm">{t('keyboardCurrentLabel',{label:bindingLabel(code,layout.labels)})}</Text><Text fw={600} size="sm" mt={4}>{describe(sequence)}</Text><Badge size="sm" mt={6} variant="light">{t(Object.hasOwn(custom,code)?'keyboardCustom':sequence.length?'keyboardDefault':'unassigned')}</Badge></div>
     </Group>
     {!Object.hasOwn(map,code)&&<Text size="xs" c="dimmed">{t('keyboardUnknownCombo')}</Text>}
-    <div className="mapping-sequence-editor"><Text size="sm" fw={600} mb="xs">{t('sequence')} · {sequence.length}/8</Text>
-     <Stack gap="xs">{sequence.map((scan,index)=><Group key={index} wrap="nowrap" gap="xs"><Text size="xs" c="dimmed" className="mapping-step-number">{index+1}</Text><Select aria-label={`${t('sequence')} ${index+1}`} data={names} value={String(scan)} onChange={value=>{if(value){const next=[...sequence];next[index]=Number(value);setSequence(next);}}} style={{flex:1,minWidth:0}}/><Button size="compact-sm" variant="subtle" onClick={()=>setSequence(sequence.filter((_,i)=>i!==index))} aria-label={`${t('removeStep')} ${index+1}`}>−</Button></Group>)}</Stack>
+    <div className="mapping-sequence-editor"><Group justify="space-between" mb="xs"><Text size="sm" fw={600}>{t('sequence')}</Text><Text size="xs" c="dimmed">{sequence.length}/8</Text></Group>
+     <Stack gap="xs">{sequence.map((scan,index)=><Group key={index} wrap="nowrap" gap="xs"><Text size="xs" c="dimmed" className="mapping-step-number">{index+1}</Text><Select aria-label={`${t('sequence')} ${index+1}`} data={names} value={String(scan)} onChange={value=>{if(value){const next=[...sequence];next[index]=Number(value);setSequence(next);}}} style={{flex:1,minWidth:0}}/><CloseButton onClick={()=>setSequence(sequence.filter((_,i)=>i!==index))} aria-label={`${t('removeStep')} ${index+1}`}/></Group>)}</Stack>
     </div>
     <Group gap="xs"><Button size="xs" variant="light" disabled={sequence.length>=8} onClick={()=>setSequence([...sequence,target??6])}>{t('addStep')}</Button><Button size="xs" variant="subtle" onClick={()=>setSequence([])}>{t('unassign')}</Button><Button size="xs" variant="subtle" disabled={!Object.hasOwn(custom,code)} onClick={resetBinding}>{t('defaultKey')}</Button></Group>
     <Text size="xs" c="dimmed">{t('keyboardPhysicalHint')} {t('keyStateHint')}</Text>

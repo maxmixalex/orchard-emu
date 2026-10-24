@@ -197,6 +197,78 @@ static void banking_and_exception(void) {
     o_cpu_step(&machine);
     CHECK(c->r[15] == O_RAM_BASE + 0x102 && c->cpsr == (O_SYS | O_T | O_C));
 }
+/* ARM920T DDI 0151C 2.3.3/2.3.4: CRn=CRm=0, opcode_1=0.
+ * The independent encoding/value table includes every opcode_2; only 1
+ * selects cache type. These are the existing reference CPU identities, not
+ * a new assertion about the silicon revision in any calculator board. */
+static void cp15_identification(void) {
+    static const struct { uint32_t op, value, flags; } reads[] = {
+        {0xee100f10u, 0x41129200u, O_Z},
+        {0xee100f30u, 0x0d172172u, 0},
+        {0xee100f50u, 0x41129200u, O_Z},
+        {0xee100f70u, 0x41129200u, O_Z},
+        {0xee100f90u, 0x41129200u, O_Z},
+        {0xee100fb0u, 0x41129200u, O_Z},
+        {0xee100fd0u, 0x41129200u, O_Z},
+        {0xee100ff0u, 0x41129200u, O_Z},
+    };
+    static const struct { uint32_t op; orchard_status status; } rejected[] = {
+        {0xee100f51u, ORCHARD_UNSUPPORTED_CP15}, /* CRm=1: not widened. */
+        {0xee300f50u, ORCHARD_UNSUPPORTED_CP15}, /* opcode_1=1. */
+        {0xee000f50u, ORCHARD_UNSUPPORTED_CP15}, /* MCR to read-only c0. */
+        {0xee140f50u, ORCHARD_UNSUPPORTED_CP15}, /* Reserved CRn=4. */
+        {0xee100e50u, ORCHARD_UNSUPPORTED_CP15}, /* Not CP15. */
+        {0xe6000010u, ORCHARD_UNPREDICTABLE},   /* ARM undefined space. */
+        {0xe16f0f10u, ORCHARD_UNPREDICTABLE},   /* CLZ is not ARMv4T. */
+    };
+    for (unsigned reference = 0; reference < 2; ++reference) {
+        void (*step)(orchard_machine *) = reference ? o_cpu_step_reference : o_cpu_step;
+        for (unsigned i = 0; i < sizeof reads / sizeof reads[0]; ++i) {
+            instruction(reads[i].op, false, 0x100);
+            machine.cpu.r[0] = 0xa5a5a5a5u;
+            machine.cpu.cpsr |= O_N | O_C;
+            step(&machine);
+            CHECK(machine.stop.status == ORCHARD_OK);
+            CHECK(machine.cpu.r[0] == reads[i].value);
+            CHECK(machine.cpu.r[15] == O_RAM_BASE + 0x104u);
+            CHECK(machine.cpu.cpsr == (O_SVC | O_I | O_F | O_N | O_C));
+            CHECK(machine.cpu.instructions == 1 && machine.cpu.exceptions == 0);
+            /* MRC with Rd=PC copies NZCV, without branching or changing mode. */
+            instruction(reads[i].op | 0xf000u, false, 0x100);
+            machine.cpu.r[0] = 0xa5a5a5a5u;
+            machine.cpu.cpsr |= O_N | O_C;
+            step(&machine);
+            CHECK(machine.stop.status == ORCHARD_OK);
+            CHECK(machine.cpu.r[0] == 0xa5a5a5a5u);
+            CHECK(machine.cpu.r[15] == O_RAM_BASE + 0x104u);
+            CHECK(machine.cpu.cpsr == (O_SVC | O_I | O_F | reads[i].flags));
+            CHECK(machine.cpu.instructions == 1 && machine.cpu.exceptions == 0);
+        }
+        /* Keep the current explicit diagnostic policy for undefined/unmodeled
+         * instructions. Guest UND delivery is a separate documented M1 task. */
+        for (unsigned i = 0; i < sizeof rejected / sizeof rejected[0]; ++i) {
+            instruction(rejected[i].op, false, 0x100);
+            machine.cpu.r[0] = 0xa5a5a5a5u;
+            step(&machine);
+            CHECK(machine.stop.status == rejected[i].status);
+            CHECK(machine.cpu.r[0] == 0xa5a5a5a5u);
+            CHECK(machine.cpu.r[15] == O_RAM_BASE + 0x100u);
+            CHECK(machine.cpu.instructions == 0 && machine.cpu.exceptions == 0);
+        }
+        instruction(0xee100f50u, false, 0x100);
+        o_set_cpsr(&machine.cpu, O_USR);
+        machine.cpu.r[0] = 0xa5a5a5a5u;
+        step(&machine);
+        CHECK(machine.stop.status == ORCHARD_UNSUPPORTED_CP15);
+        CHECK(machine.cpu.r[0] == 0xa5a5a5a5u && machine.cpu.cpsr == O_USR);
+        CHECK(machine.cpu.r[15] == O_RAM_BASE + 0x100u);
+        instruction(0x0e100f50u, false, 0x100); /* EQ, with Z clear. */
+        machine.cpu.r[0] = 0xa5a5a5a5u;
+        step(&machine);
+        CHECK(machine.stop.status == ORCHARD_OK);
+        CHECK(machine.cpu.r[0] == 0xa5a5a5a5u && machine.cpu.r[15] == O_RAM_BASE + 0x104u);
+    }
+}
 static void mmu_and_bus(void) {
     orchard_reset(&machine);
     uint32_t value, physical;
@@ -839,10 +911,184 @@ static void nor_identification(void) {
 
 }
 
+/* Samsung S3C2410A UM, 3-41 and Thumb formats 14/15: multiple loads do not
+ * use the single LDR's byte rotation. ARM920T DDI 0151C, 3.7.1: CP15.A still
+ * faults before any transfer. Fixed distinct bytes make rotation observable. */
+static void multiple_load_alignment(void) {
+    static const uint32_t words[] = {0x12345678u, 0x90abcdefu, 0x76543210u};
+    for (unsigned reference = 0; reference < 2; ++reference)
+    for (unsigned flags = 0; flags < 8; ++flags)
+    for (unsigned low = 0; low < 4; ++low)
+    for (unsigned alignment = 0; alignment < 2; ++alignment) {
+        bool pre = (flags & 1u) != 0, up = (flags & 2u) != 0;
+        bool writeback = (flags & 4u) != 0;
+        uint32_t base = O_RAM_BASE + 0x900u + low;
+        uint32_t first = up ? base + (pre ? 4u : 0u) : base - (pre ? 12u : 8u);
+        uint32_t op = 0xe8130085u | (pre ? 1u << 24 : 0u) |
+                      (up ? 1u << 23 : 0u) | (writeback ? 1u << 21 : 0u);
+        instruction(op, false, 0x100);
+        machine.cpu.control |= alignment << 1;
+        machine.cpu.r[3] = base;
+        for (unsigned i = 0; i < 3; ++i)
+            put_word(machine.ram + ((first & ~3u) - O_RAM_BASE) + 4u * i, words[i]);
+        if (reference) o_cpu_step_reference(&machine); else o_cpu_step(&machine);
+        CHECK(machine.stop.status == ORCHARD_OK);
+        if (alignment && low) {
+            CHECK((machine.cpu.cpsr & 31u) == O_ABT);
+            CHECK(machine.cpu.dfsr == 1 && machine.cpu.far == first);
+            CHECK(machine.cpu.r[0] == 0 && machine.cpu.r[2] == 0 && machine.cpu.r[7] == 0);
+            CHECK(machine.cpu.r[3] == base);
+        } else {
+            CHECK(machine.cpu.r[0] == words[0] && machine.cpu.r[2] == words[1] && machine.cpu.r[7] == words[2]);
+            CHECK(machine.cpu.r[3] == (writeback ? (up ? base + 12u : base - 12u) : base));
+            CHECK(machine.cpu.r[15] == O_RAM_BASE + 0x104u);
+        }
+    }
+    for (unsigned reference = 0; reference < 2; ++reference)
+    for (unsigned pop = 0; pop < 2; ++pop)
+    for (unsigned low = 0; low < 4; ++low)
+    for (unsigned alignment = 0; alignment < 2; ++alignment) {
+        uint32_t base = O_RAM_BASE + 0x900u + low;
+        instruction(pop ? 0xbc85u : 0xcb85u, true, 0x100);
+        machine.cpu.cpsr = O_SYS | O_T;
+        machine.cpu.control |= alignment << 1;
+        machine.cpu.r[pop ? 13 : 3] = base;
+        for (unsigned i = 0; i < 3; ++i)
+            put_word(machine.ram + 0x900u + 4u * i, words[i]);
+        if (reference) o_cpu_step_reference(&machine); else o_cpu_step(&machine);
+        CHECK(machine.stop.status == ORCHARD_OK);
+        if (alignment && low) {
+            CHECK((machine.cpu.cpsr & 31u) == O_ABT && !(machine.cpu.cpsr & O_T));
+            CHECK(machine.cpu.dfsr == 1 && machine.cpu.far == base);
+            CHECK(machine.cpu.r[0] == 0 && machine.cpu.r[2] == 0 && machine.cpu.r[7] == 0);
+            CHECK((pop ? machine.cpu.usr[5] : machine.cpu.r[3]) == base);
+        } else {
+            CHECK(machine.cpu.r[0] == words[0] && machine.cpu.r[2] == words[1] && machine.cpu.r[7] == words[2]);
+            CHECK(machine.cpu.r[pop ? 13 : 3] == base + 12u);
+            CHECK(machine.cpu.r[15] == O_RAM_BASE + 0x102u && (machine.cpu.cpsr & O_T));
+        }
+    }
+    /* The same unaligned address MUST retain rotation for a single LDR. */
+    for (unsigned low = 0; low < 4; ++low) {
+        static const uint32_t expected[] = {0x12345678u, 0x78123456u, 0x56781234u, 0x34567812u};
+        instruction(0xe5930000u, false, 0x100);
+        put_word(machine.ram + 0x900u, words[0]);
+        machine.cpu.r[3] = O_RAM_BASE + 0x900u + low;
+        o_cpu_step(&machine);
+        CHECK(machine.stop.status == ORCHARD_OK && machine.cpu.r[0] == expected[low]);
+    }
+    /* Returning through PC must use the loaded word, then the instruction's
+     * normal ARM/Thumb alignment and SPSR rules, rather than rotating it. */
+    for (unsigned kind = 0; kind < 3; ++kind)
+    for (unsigned low = 0; low < 4; ++low) {
+        uint32_t base = O_RAM_BASE + 0x900u + low;
+        instruction(kind == 2 ? 0xbd01u : kind == 1 ? 0xe8f38001u : 0xe8b38001u,
+                    kind == 2, 0x100);
+        machine.cpu.r[kind == 2 ? 13 : 3] = base;
+        if (kind == 1) *o_spsr(&machine.cpu) = O_SYS | O_T | O_C;
+        put_word(machine.ram + 0x900u, words[0]);
+        put_word(machine.ram + 0x904u, O_RAM_BASE + 0x143u);
+        o_cpu_step(&machine);
+        CHECK(machine.stop.status == ORCHARD_OK && machine.cpu.r[0] == words[0]);
+        CHECK(machine.cpu.r[15] == O_RAM_BASE + (kind == 0 ? 0x140u : 0x142u));
+        CHECK(machine.cpu.r[kind == 2 ? 13 : 3] == base + 8u);
+        if (kind == 1) CHECK(machine.cpu.cpsr == (O_SYS | O_T | O_C));
+    }
+}
+
+/* ARM DDI 0100I STM/STMIA: a base stored first has its original value.
+ * Non-lowest base is architecturally UNPREDICTABLE; our explicit compatibility
+ * choice also stores its original value. See arm-memory.md for the evidence. */
+static void multiple_store_base(void) {
+    static const struct { uint32_t bits; int first, last; } modes[] = {
+        {0x00800000u, 0, 12}, {0x01800000u, 4, 12},
+        {0x00000000u, -8, -12}, {0x01000000u, -12, -12}
+    };
+    static const unsigned registers[] = {0, 2, 7};
+    static const uint32_t values[] = {0x12345678u, 0x90abcdefu, 0x76543210u};
+    for (unsigned reference = 0; reference < 2; ++reference)
+    for (unsigned mode = 0; mode < 4; ++mode)
+    for (unsigned writeback = 0; writeback < 2; ++writeback)
+    for (unsigned slot = 0; slot < 3; ++slot) {
+        unsigned rn = registers[slot];
+        uint32_t base = O_RAM_BASE + 0xa00u;
+        uint32_t first = base + (uint32_t)modes[mode].first;
+        uint32_t final = base + (uint32_t)modes[mode].last;
+        instruction(0xe8000085u | modes[mode].bits | (rn << 16) |
+                    (writeback ? 1u << 21 : 0u), false, 0x100);
+        for (unsigned i = 0; i < 3; ++i) machine.cpu.r[registers[i]] = values[i];
+        machine.cpu.r[rn] = base;
+        if (reference) o_cpu_step_reference(&machine); else o_cpu_step(&machine);
+        CHECK(machine.stop.status == ORCHARD_OK);
+        CHECK(machine.cpu.r[rn] == (writeback ? final : base));
+        for (unsigned i = 0; i < 3; ++i) {
+            uint32_t value = 0;
+            CHECK(o_phys_read(&machine, first + i * 4u, 4, &value));
+            CHECK(value == (i == slot ? base : values[i]));
+        }
+        CHECK(machine.cpu.r[15] == O_RAM_BASE + 0x104u);
+    }
+    for (unsigned reference = 0; reference < 2; ++reference)
+    for (unsigned slot = 0; slot < 3; ++slot)
+    for (unsigned low = 0; low < 4; ++low)
+    for (unsigned alignment = 0; alignment < 2; ++alignment) {
+        unsigned rb = registers[slot];
+        uint32_t base = O_RAM_BASE + 0xa00u + low;
+        instruction(0xc085u | (rb << 8), true, 0x100);
+        machine.cpu.control |= alignment << 1;
+        for (unsigned i = 0; i < 3; ++i) {
+            machine.cpu.r[registers[i]] = values[i];
+            put_word(machine.ram + 0xa00u + 4u * i, 0);
+        }
+        machine.cpu.r[rb] = base;
+        if (reference) o_cpu_step_reference(&machine); else o_cpu_step(&machine);
+        CHECK(machine.stop.status == ORCHARD_OK);
+        bool abort = alignment && low;
+        CHECK(machine.cpu.r[rb] == (abort ? base : base + 12u));
+        if (abort) CHECK(machine.cpu.dfsr == 1 && machine.cpu.far == base &&
+                         (machine.cpu.cpsr & 31u) == O_ABT);
+        for (unsigned i = 0; i < 3; ++i) {
+            uint32_t value = 0;
+            CHECK(o_phys_read(&machine, (base & ~3u) + i * 4u, 4, &value));
+            CHECK(value == (abort ? 0u : i == slot ? base : values[i]));
+        }
+    }
+    /* Original HP39g+ Tetris+ 1.1 uses exactly this full context push. */
+    for (unsigned reference = 0; reference < 2; ++reference) {
+        instruction(0xe92d7fffu, false, 0x100); /* STMDB sp!, {r0-r14}. */
+        machine.cpu.cpsr = O_USR;
+        for (unsigned r = 0; r < 15; ++r) machine.cpu.r[r] = 0x10203040u + r;
+        machine.cpu.r[13] = O_RAM_BASE + 0xa00u;
+        machine.cpu.r[14] = O_RAM_BASE + 0x180u;
+        if (reference) o_cpu_step_reference(&machine); else o_cpu_step(&machine);
+        CHECK(machine.stop.status == ORCHARD_OK && machine.cpu.r[13] == O_RAM_BASE + 0x9c4u);
+        for (unsigned r = 0; r < 15; ++r) {
+            uint32_t value = 0;
+            CHECK(o_phys_read(&machine, O_RAM_BASE + 0x9c4u + r * 4u, 4, &value));
+            CHECK(value == (r == 13 ? O_RAM_BASE + 0xa00u :
+                            r == 14 ? O_RAM_BASE + 0x180u : 0x10203040u + r));
+        }
+        put_word(machine.ram + 0x104u, 0xe89dbfffu); /* LDM sp,{r0-r12,sp,pc}. */
+        for (unsigned r = 0; r < 13; ++r) machine.cpu.r[r] = 0;
+        if (reference) o_cpu_step_reference(&machine); else o_cpu_step(&machine);
+        CHECK(machine.stop.status == ORCHARD_OK && machine.cpu.r[13] == O_RAM_BASE + 0xa00u);
+        for (unsigned r = 0; r < 13; ++r) CHECK(machine.cpu.r[r] == 0x10203040u + r);
+        CHECK(machine.cpu.r[15] == O_RAM_BASE + 0x180u && machine.cpu.cpsr == O_USR);
+        instruction(0xe8a28005u, false, 0x100); /* STMIA r2!, {r0,r2,pc}. */
+        machine.cpu.r[0] = 0xabcdef01u;
+        machine.cpu.r[2] = O_RAM_BASE + 0xa00u;
+        if (reference) o_cpu_step_reference(&machine); else o_cpu_step(&machine);
+        uint32_t value = 0;
+        CHECK(machine.stop.status == ORCHARD_OK && machine.cpu.r[2] == O_RAM_BASE + 0xa0cu);
+        CHECK(o_phys_read(&machine, O_RAM_BASE + 0xa04u, 4, &value) && value == O_RAM_BASE + 0xa00u);
+        CHECK(o_phys_read(&machine, O_RAM_BASE + 0xa08u, 4, &value) && value == O_RAM_BASE + 0x10cu);
+    }
+}
+
 EXPORT("regression") unsigned orchard_regression(void) {
     checks = failures = first_failure = 0; seed = 0x09202410;
     if (!orchard_init(&machine, sizeof(machine), 6)) return 1;
-    arithmetic(); shifter(); conditions(); decoded_arithmetic(); instruction_edges();
+    arithmetic(); shifter(); conditions(); decoded_arithmetic(); instruction_edges(); cp15_identification(); multiple_load_alignment(); multiple_store_base();
     banking_and_exception(); mmu_and_bus(); watchdog(); queues_and_profiles(); uart_tx_level();
     boot_sram_and_lcd(); gpio_and_reset(); saved_status_patterns(); unused_nand_controller(); gpio_stimuli(); interrupt_arbitration(); rtc_calendar(); keyboard_and_eint(); nor_identification();
     return failures;

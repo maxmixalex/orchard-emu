@@ -155,9 +155,17 @@ static uint32_t *plain_register(o_soc *s, uint32_t address) {
     if (address >= 0x4c000000u && address <= 0x4c000014u) return &s->clock[(address & 0xffu) / 4u];
     return NULL;
 }
-static bool timer_register(orchard_machine *m, uint32_t address, uint32_t *value, bool write) {
+static bool timer_register(orchard_machine *m, uint32_t address, unsigned width,
+                           uint32_t *value, bool write) {
+    if ((width != 1 && width != 2 && width != 4) || (address & (width - 1u))) return false;
     o_soc *s = &m->soc;
-    uint32_t off = address - 0x51000000u;
+    uint32_t off = (address - 0x51000000u) & ~3u;
+    bool observation = off == 0x40u ||
+        (off >= 0x14u && off <= 0x38u && (off - 0x14u) % 12u == 0);
+    /* HP-GCC's sys_getPWMCounter0 uses LDRH. Expose lanes of the existing
+       read-only 16-bit count; narrow control/buffer writes remain unsupported.
+       The vendor table recommends word accesses; see arm-memory.md. */
+    if (width != 4 && (write || !observation)) return false;
     uint32_t *reg = NULL;
     if (off == 0) reg = &s->tcfg0;
     else if (off == 4) reg = &s->tcfg1;
@@ -180,7 +188,9 @@ static bool timer_register(orchard_machine *m, uint32_t address, uint32_t *value
         else if (ch < 4 && slot == 4) reg = &s->tcmpb[ch];
         else if ((ch < 4 && slot == 8) || (ch == 4 && slot == 4)) {
             if (write) return false;
-            *value = s->count[ch]; return true;
+            *value = s->count[ch] >> ((address & 3u) * 8u);
+            if (width < 4) *value &= (1u << (width * 8u)) - 1u;
+            return true;
         }
     }
     if (!reg) return false;
@@ -204,6 +214,8 @@ bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
     if (o_rtc_register(m, address, width, value, false)) return true;
     if (o_uart_register(m, address, width, value, false)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
+    if (address >= 0x51000000u && address <= 0x51000043u &&
+        timer_register(m, address, width, value, false)) return true;
     if (width == 4 && !(address & 3u)) {
         /* These NOR-booting boards expose no NAND medium. The bounded
            controller subset retains only the disabled NFCONF=0 state;
@@ -215,7 +227,6 @@ bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
         if (m->stop.status != ORCHARD_OK) return false;
         uint32_t *reg = plain_register(s, address);
         if (reg) { *value = *reg; return true; }
-        if (address >= 0x51000000u && address <= 0x51000040u && timer_register(m, address, value, false)) return true;
         switch (address) {
         case 0x4a000000: *value = s->srcpnd; return true;
         case 0x4a000004: *value = s->intmod; return true;
@@ -286,7 +297,7 @@ bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t
             if (address == 0x4c00000cu && (value & 8u)) m->cpu.sleeping = true;
             return true;
         }
-        if (address >= 0x51000000u && address <= 0x51000040u && timer_register(m, address, &value, true)) return true;
+        if (address >= 0x51000000u && address <= 0x51000040u && timer_register(m, address, width, &value, true)) return true;
         switch (address) {
         case 0x4a000000: s->srcpnd &= ~value; return true;
         case 0x4a000004: s->intmod = value; return true;

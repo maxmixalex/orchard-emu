@@ -101,7 +101,7 @@ Wire/USB 模式，点击接收后，在原计算器的 APLET、NOTEPAD 等目录
 
 Steve Dunham 的 HP38 原始通信说明提供多部件 index 和方向反转的历史格式背景；[14]
 HP39 的实际 marker、库编号列表和原系统导出的库别名以本次原 ROM 记录为准。
-串口、40gs 及未知 index 形态尚未开放反向 Wire 入口；`D` 程序的字符串格式
+40gs 及未知 index 形态尚未开放反向 Wire 入口；`D` 程序的字符串格式
 准入经过单元测试，但实际原 ROM 回收验证范围是 `B/C/H`。
 
 `tests/hp39-wire-receive.mjs` 覆盖非零 padding、嵌套/长度/目录回链、128/1024
@@ -130,6 +130,31 @@ node tools/verify-hp39-wire-receive.mjs 2 /private/39gs.bin /private/new-receive
 通过正常页面操作，在同一监听器连续接收两份 Note，取得真实 Worker 取消确认，
 停止后下载完整文件，并返回 HOME 算术。此测试恢复的是通过原 ROM 正常安装
 生成的笔记目录存档；前面的 Node 协议测试则从冷启动完成安装和回收。
+
+### r25：39gs 串口的完整 Wire 收发
+
+39gs 的串口连接现在开放同一连续接收入口，计算器选择 **SEND → HP39/40 (Ser)**。
+原版 2.22 ROM 经 UART0 连续回传两份不同的 Note、两次带依赖库的 aplet；
+共 6 份文件、30,016 字节，标题、字符串、完整 aplet 和库对象体逐字节相同，
+退出后继续 `1+1=2`。40gs 仍需要自己的完整 ROM 验证。
+
+广泛测试同时发现原发送器的串口缺陷：收到 CRC `D` 握手后使用 1 KiB 分块，
+小 Note 可通过，但 1,489 字节库在第一块就重复拒收并超时。`D` 只选择校验方式，
+不表示接收器支持 1 KiB。串口改用 128 字节块后，该库和 13,352 字节 aplet
+完整上传并可回收；USB 保持已验证的 1 KiB 分块。
+
+```sh
+node tools/verify-hp39-wire-receive.mjs 2 /private/39gs.bin /private/new-serial \
+  --transport serial --multipart /private/lib275.sys /private/gbpplayer.apt \
+  --wasm dist/orchard.wasm
+python3 tools/verify-hp39-wire-browser.py --rom /private/39gs.bin \
+  --input /private/new-serial --output /private/new-browser --transport serial \
+  --expected-wasm <production-wasm-sha256>
+```
+
+原 ROM 工具另存两份 Note 正常安装后的便携存档，供生产页面恢复验证。存档、
+截图和文件保持私有；浏览器工具只观察 Worker 消息，并通过实际页面操作、
+计算器按键和下载检查完整数据流，不发送替代 Worker 消息。
 
 `tests/hp39-wire-auto.mjs` 覆盖选择开关、稳定画面/键队列/时钟边界、未知页面、
 中断及模型标签。原 ROM 实测用同一个生产识别器和 TapQueue，在仅人工开启
@@ -193,8 +218,9 @@ Wire 支持二进制 `B/C/D/H` 和 ASCII `C` 笔记；其他 ASCII 对象请使�
 | HP39g+ 串口 | 不开放文件能力 | 此机型没有 39gs/40gs 的有线串口；保留原始数据诊断 |
 | HP39g+ USB，HP39/40 (Wire) | 原生分块上传，逐块及 EOT 确认 | r19 在 Normal 下安装原 ZIP 并回收；r20 同机真实 ON 中断、重试、跳过、任意后缀重选及数据阶段 Unlimited 后回收核对；见 [r20 传输证据](evidence/hp39-transfer-r20.json) |
 | HP39gs USB，HP39/40 (USB) | 同一有界发送器 | r20 独立完整 2.22 NOR 冷启、库与 V2 aplet 完成确认、SEND 回收字节核对、原生 START 后返回 HOME；见 [39gs 启动证据](hp39gs-startup.md) |
-| HP39gs 串口 / HP40gs USB 或串口，直传 | 同一有界发送器 | 尚无这些机型/连接的原 ROM 或真机端到端见证 |
-| HP39g+/39gs USB，Wire/USB 下载 | 连续 XMODEM 接收及双向 index/依赖库协商 | 同一监听器接收两个不同 Note；同一监听器接收两次库/aplet SEND；精确字节比对；40gs 和串口不开放此入口 |
+| HP39gs 串口，HP39/40 (Ser) | 128 字节分块上传及连续反向接收 | 原版 2.22 冷启；Note、库和 aplet 上传；同一监听器连续两份 Note 和两次多部件 SEND；6 份文件精确回收后继续 HOME 算术 |
+| HP40gs USB 或串口，直传 | 同一有界发送器 | 尚无该机型原 ROM 或真机端到端见证 |
+| HP39g+/39gs USB，Wire/USB 下载 | 连续 XMODEM 接收及双向 index/依赖库协商 | 同一监听器接收两个不同 Note；同一监听器接收两次库/aplet SEND；精确字节比对；40gs 不开放此入口 |
 
 每次选择最多 16 个对象及其两个目录文件、总共 8 MiB、每文件最多 2 MiB。自动目录计入总字节
 上限。主机 basename 限制为 64 个 ASCII 字节，拒绝

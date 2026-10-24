@@ -74,10 +74,15 @@ of two for WDLY/WLH, while register tables 15-28/15-29 specify 16/32/48/64 HCLK.
 The functional model follows the explicit tables. This discrepancy remains a
 physical-timing verification item, rather than being silently hidden.
 
+A valid LCDCON1 write confined to CLKVAL is accepted while video stays enabled.
+The current line and elapsed phase are preserved; the next scheduler tick uses
+the new line period. If the shortened period has already elapsed, one line
+completes at that tick. This functional convention supports native software
+that adjusts the divider, but is not measured physical divider-edge timing.
 CLKVAL below 2, unsupported display modes, reserved timing fields and live
-mode/timing reprogramming while video stays enabled stop explicitly. Valid
-clock settings were added to the old synthetic guests; their CLKVAL=0 had
-only worked because the prior implementation did not run a scan clock.
+mode or geometry reprogramming still stop explicitly. Valid clock settings
+were added to the old synthetic guests; their CLKVAL=0 had only worked because
+the prior implementation did not run a scan clock.
 
 There is **no FIFO occupancy, fetch arbitration, underflow or analog panel**
 model. FIFO interrupts must remain masked; attempts to unmask them stop.

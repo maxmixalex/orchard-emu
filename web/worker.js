@@ -8,12 +8,13 @@ import { FileTransfer } from './file-transfer.js';
 import {transferError,transferErrorDetails} from './transfer-errors.js';
 import { BuzzerStream } from './buzzer-worker.js';
 import { LCDFrames } from './lcd-frames.js';
+import { IrDAInput } from './irda-input.js';
 import { encodeSession, decodeSession, MAX_STATE } from './session.js';
 import { readSDState, validateSDSize } from './sd-card.js';
 import { listSDDirectory } from './sd-filesystem.js';
 import { setupHash, isPlayable, applySetup, TapQueue } from './hp48.js';
 let audience = 'debug';
-let romHash='', operation=0, busy=false, autoSaving=false, serial=false, irda=false, usb, transfer, buzzer, hostBridge=null;
+let romHash='', operation=0, busy=false, autoSaving=false, serial=false, irda=false, irdaEpoch=0, usb, transfer, buzzer, hostBridge=null;
 let hostBridgeCleanup=Promise.resolve();
 const pacer=new Pacer(), scheduler=new TaskScheduler();
 const lcdFrames=new LCDFrames();
@@ -64,7 +65,7 @@ function stopHostBridge(){const previous=hostBridge;hostBridge=null;
   if(previous)hostBridgeCleanup=Promise.allSettled([hostBridgeCleanup,previous.stop()]).then(()=>{});
   return hostBridgeCleanup;
 }
-function pause() { stopHostBridge();transfer?.cancel(tick,transferError('transferPaused','File transfer cancelled because the calculator paused.'));buzzer?.clear();running = false; scheduler.cancel(timer); timer = null; taps.clear(tick); }
+function pause() { stopHostBridge();transfer?.cancel(tick,transferError('transferPaused','File transfer cancelled because the calculator paused.'));buzzer?.clear();irdaInput.reset(tick);running = false; scheduler.cancel(timer); timer = null; taps.clear(tick); }
 function sendUart() {
   const n = core.uart_receive();
   if(n){const bytes=new Uint8Array(core.memory.buffer,core.uart_output(),n).slice();
@@ -78,7 +79,7 @@ function sendUart() {
     // TX or change its line mode before this host slice drains them. An
     // explicitly paired decoded-byte UART2 link must retain that final data;
     // internal loopback never enters the core's external output queue.
-    if(channel===2&&irda)postMessage({type:'irda-output',generation,bytes},[bytes.buffer]);
+    if(channel===2&&irda)postMessage({type:'irda-output',generation,epoch:irdaEpoch,tick,bytes},[bytes.buffer]);
     else if(audience==='debug')postMessage({type:'uart-output',generation,channel,bytes});
   }
 }
@@ -88,14 +89,21 @@ function irdaReady(receiving){
   const s=new Uint32Array(core.memory.buffer,pointer,9);
   return Boolean(s[7]&&(s[0]&64)&&!(s[1]&32)&&(receiving?(s[1]&3):(s[1]&12)));
 }
+const irdaInput=new IrDAInput({
+  ready:()=>irda&&loaded&&running&&!busy&&irdaReady(true),
+  send:bytes=>{new Uint8Array(core.memory.buffer,core.uart_input(),bytes.length).set(bytes);return core.uart_send_channel(2,bytes.length);},
+  reply:result=>postMessage({type:'irda-input-result',generation,epoch:irdaEpoch,tick,...result}),
+  progress:result=>postMessage({type:'irda-input-progress',generation,epoch:irdaEpoch,...result}),
+});
 function snapshot() {
   const s = state(); syncTick(s);
+  irdaInput.notifyProgress(tick);
   // Key/link/status messages must not expose another partially rewritten RAM
   // image in the same LCD scan. Pause/stop/debug inspection remains immediate.
   const frame=lcdFrames.read(core,model,frameView,tick,audience!=='calculator'||!running||s[28]!==0,audience==='calculator');
   sendUart();
   const visible = {type:'snapshot',generation,...frame,running,loaded,model,tick,
-    sd:readSDState(core),stopped:s[28]!==0,pending:taps.pending,active:taps.active,
+    sd:readSDState(core),stopped:s[28]!==0,pending:taps.pending,active:taps.active,activeKeys:[...taps.held],
     effectiveSpeed:pacer.speed,transferBoosted:transferBoosted()};
   if (audience === 'calculator') postMessage(visible);
   else postMessage({...visible,state:s,preset,frameView,
@@ -114,9 +122,10 @@ function pump() {
     // Keep each core call short enough to drain even a continuously transmitting UART.
     // Batch calls in one bounded Worker task instead of a timer per 256 ticks.
     do {
+      irdaInput.poll(tick);
       taps.update(tick);
       const allowance=audience==='calculator'?pacer.available(performance.now(),1024):256;
-      const boundary=taps.boundary(tick)-tick;
+      const boundary=Math.min(taps.boundary(tick),irdaInput.boundary(tick))-tick;
       // Match Pacer.delay's 256-tick waiting threshold. On a fast host, the
       // bookkeeping above can continually mint a handful of wall-time ticks;
       // executing those tiny allowances would spin for the whole 6 ms task.
@@ -128,6 +137,7 @@ function pump() {
       const status = core.run(budget);
       if (status) syncTick(); else tick += budget;
       if(audience==='calculator')pacer.consume(budget);
+      irdaInput.poll(tick);
       usb?.poll(tick);
       hostBridge?.poll(tick);
       sendUart();
@@ -143,6 +153,7 @@ function pump() {
 }
 function fail(error) {
   stopHostBridge();
+  irdaInput.reset(tick);
   transfer?.cancel(tick,'File transfer cancelled because the calculator stopped.');
   buzzer?.clear();
   busy=false;autoSaving=false;running=false;scheduler.cancel(timer);timer=null;
@@ -158,7 +169,7 @@ self.onmessage=({data})=>{
       if (!Number.isSafeInteger(data.generation) || !Number.isInteger(data.model) || !core.profile(data.model,0)) throw new Error('Invalid machine');
       if (data.audience !== undefined && !['debug','calculator'].includes(data.audience)) throw new Error('Invalid audience');
       generation=data.generation;model=data.model;preset=data.preset;audience=data.audience||'debug';
-      loaded=false;resetClock();events=[];eventOverflow=false;frameView=0;autoSaving=false;serial=false;irda=false;
+      loaded=false;resetClock();events=[];eventOverflow=false;frameView=0;autoSaving=false;serial=false;irda=false;irdaEpoch=0;
       requestedSpeed=audience==='calculator'?1:0;transferUnlimited=false;transferMoving=false;configurePacing(true);
       // The HP39 debounce path needs a longer dwell: a shorter trial lost
       // multiply. Debug keeps its historical 2M/2M deterministic schedule.
@@ -277,6 +288,8 @@ self.onmessage=({data})=>{
       }
     }
     else if(data.type==='tap-sequence' && loaded && running && isPlayable(model,preset)) {taps.pushMany(data.scans);snapshot();}
+    else if(data.type==='key-down' && loaded && running && !busy && isPlayable(model,preset)) {taps.press(data.source,data.scan,tick);snapshot();}
+    else if(data.type==='key-up' && loaded && isPlayable(model,preset)) {taps.release(data.source,tick,data.cancel===true);snapshot();}
     else if(data.type==='system-chord' && loaded && running && !busy && !transfer?.active && !hostBridge?.active && isPlayable(model,preset)) {taps.systemChord(data.action,tick);snapshot();}
     else if(data.type==='host-bridge-start') {
       if(hostBridge?.active)return;
@@ -309,13 +322,16 @@ self.onmessage=({data})=>{
       }
     }
     else if(data.type==='serial-connect' && loaded) {if(!data.connected&&transfer?.transport==='serial')transfer.cancel(tick,transferError('linkDisconnected','Serial disconnected.'));serial=Boolean(data.connected);postMessage({type:'serial-status',generation,connected:serial});}
-    else if(data.type==='irda-connect') {irda=Boolean(data.connected&&loaded);}
+    else if(data.type==='irda-connect') {
+      if(!Number.isSafeInteger(data.epoch)||data.epoch<0)throw Error('Invalid infrared connection');
+      if(data.epoch<irdaEpoch)return;
+      const connected=Boolean(data.connected&&loaded);
+      if(!connected||!irda||data.epoch!==irdaEpoch)irdaInput.reset(tick);
+      irda=connected;irdaEpoch=data.epoch;
+    }
     else if(data.type==='irda-input') {
-      if(!(data.bytes instanceof Uint8Array)||data.bytes.length>1024||!Number.isSafeInteger(data.request))throw Error('Invalid infrared packet');
-      const discarded=!irda||!loaded||!running||busy||!irdaReady(true);
-      let accepted=0;
-      if(!discarded){new Uint8Array(core.memory.buffer,core.uart_input(),data.bytes.length).set(data.bytes);accepted=core.uart_send_channel(2,data.bytes.length);}
-      postMessage({type:'irda-input-result',generation,request:data.request,accepted,discarded});
+      if(data.epoch!==irdaEpoch){postMessage({type:'irda-input-result',generation,epoch:data.epoch,request:data.request,tick,accepted:0,discarded:true});return;}
+      irdaInput.receive(data,tick);
     }
     else if(data.type==='usb-connect' && loaded) {
       transfer?.resetUsb(tick);

@@ -170,7 +170,10 @@ bool o_uart_register(orchard_machine *m,uint32_t address,unsigned width,uint32_t
                               ((*value&4u)?0u:u->tx_count)>1u)) {
                 o_stop(m,ORCHARD_UNIMPLEMENTED_MMIO,address,*value);return false;
             }
-            if(*value&2u){u->rx_head=u->rx_count=u->errors=u->rx_event=0;o_zero(input(s,ch),sizeof(o_queue));}
+            /* UFCON resets the chip FIFO, not future host-staged octets.
+               Clearing input here made delivery depend on host chunking:
+               a following IrLAP frame could disappear with the old FIFO. */
+            if(*value&2u)u->rx_head=u->rx_count=u->errors=u->rx_event=0;
             if(*value&4u)u->tx_head=u->tx_count=u->tx_event=0;
             s->uart[ch][2]=*value&0xf1u;
         } else if(off==0xcu) {

@@ -119,9 +119,14 @@ bool o_lcd_register(orchard_machine *m, uint32_t address, unsigned width,
     case 0:
         if ((r[0] ^ *value) & 1u) orchard_lcd_observer_reset(m);
         if (!((r[0] ^ *value) & 1u)) {
-            /* Live clock/mode reprogramming not assigned guessed scan timing. */
+            /* CLKVAL is writable with ENVID set (UM 15-26). Preserve the
+               current line and elapsed phase; the functional scan clock uses
+               the new divider on its next tick. Live format changes remain
+               unsupported because their DMA/panel transition is not modeled. */
             if ((r[0] & 1u) && ((r[0] ^ *value) & 0x3fffeu)) {
-                o_stop(m, ORCHARD_UNSUPPORTED_LCD, address, *value); return false;
+                if (((r[0] ^ *value) & 0xfeu) || ((*value >> 8) & 0x3ffu) < 2u) {
+                    o_stop(m, ORCHARD_UNSUPPORTED_LCD, address, *value); return false;
+                }
             }
         } else if (*value & 1u) {
             s->lcd_phase = 0;

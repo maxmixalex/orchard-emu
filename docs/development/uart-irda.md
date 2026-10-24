@@ -37,6 +37,16 @@ not the host staging depth. The staging queues have 1,024 bytes per direction
 and provide host backpressure; an accepted staged byte has not yet arrived at
 the chip. Callers must honor the returned accepted length.
 
+`UFCON` receive reset clears the chip's current holding register/FIFO, receive
+error state and receive event. It preserves future bytes in the host staging
+queue. With RX still enabled, normal servicing immediately refills the empty
+hardware buffer from that queue; with RX disabled those bytes wait for enable.
+The reset does not affect TX or another UART. This distinction is covered with
+identical streams submitted in one or several API calls before the same guest
+tick, in both holding-register and FIFO modes. It does not establish a baud
+timing model or guarantee arbitrary host batching will preserve every firmware
+protocol's turnaround interval.
+
 The implementation covers:
 
 - Per-UART clock gates and RX/TX enables; 5–8-bit data masking and stored line
@@ -87,9 +97,57 @@ the line mode of a byte that has already been emitted.
 
 Deliver only while the destination is clocked, configured for infrared, has
 RX enabled, and is not in internal loopback.
-Bytes emitted while the destination is unavailable must not be held until a
+Bytes arriving while the destination is unavailable must not be held until a
 later unrelated receive operation. The browser relay applies this readiness
 policy separately from the core's flow-controlled staging API.
+
+The tab relay's version 3 messages preserve each output chunk's sender virtual
+tick observed when a bounded core run is followed by draining UART output.
+This is a batch timestamp, not an exact per-byte emission time or waveform.
+Already queued chunks may share a host message, but their observed tick
+boundaries remain separate segments. The receiving Worker schedules those
+segments on its own guest clock. The first batch establishes a fixed
+source-to-receiver clock mapping: later host/ACK delay does not move that
+connection anchor forward. A late merged packet retains its internal observed
+batch offsets from its actual first due tick; partial acceptance does not
+extend that schedule or deadline. Later packets can catch up to the nominal
+mapping. This policy cannot simultaneously preserve every cross-packet minimum
+interval under arbitrary host delay or backpressure. It never parses IrLAP,
+generates a peer response or assigns a guessed baud rate. Previously, merging the last discovery
+frame with the following connection request could consume their entire gap:
+both original calculators then reached their own SEND/RECV timeout despite
+every byte having been accepted by the core. A fixed original-ROM witness
+reproduces this with a 94-byte batch and a 143,552-reference-tick interval;
+retaining that interval completes the actual transfer and object recall.
+
+Each packet contains at most 1,024 bytes and 1,024 segments. Each direction
+has at most eight packets in flight; unacknowledged and unsent bytes together
+remain bounded to 16 KiB. The receiver queues them in order and can consume
+already due packets in the same guest tick, without another main-thread
+round trip between tiny fragments. Out-of-order completion callbacks only
+acknowledge the completed contiguous prefix. The source timestamps must be
+safe, monotonic integers. Queued source spans and a receiver's initial future
+lead are each bounded to 12 million reference ticks, one functional second.
+Each packet also has a finite guest-time deadline consisting of its scheduled
+span plus one second for input backpressure. Actual guest-clock progress keeps
+each queued request's host/peer liveness timers alive during a scheduled wait; it cannot extend
+that guest-time deadline. A receiver checks readiness when each segment is due:
+a temporarily disabled receiver does not lose a later, not-yet-arrived segment.
+The count shown as received includes only bytes actually accepted by the core,
+including when other segments in the consumed packet were discarded.
+
+The controller and Worker use a separate connection epoch, even when the
+calculator generation remains unchanged. Disconnect, Pause, reset, save and
+restore clear transport segments that have not reached the core; delayed old
+Worker output, progress and completions cannot enter a new pairing. These
+future transport segments are not serialized as calculator state. When the
+queue is empty and the hardware receiver is unavailable, its old clock mapping
+is released; the source timestamp ordering and connection identity remain. A
+subsequent receive operation establishes a fresh mapping. Temporarily disabling
+RX while future segments are still queued does not change their scheduled
+arrival or discard them early. This does
+not roll back bytes already accepted into core UART buffers. Version 1 and 2 tabs
+must be reloaded to pair with the current transport.
 
 `tests/irda-worker.mjs` runs generated ARM instructions through the actual WASM
 and production Worker. It checks send-then-disable and send-then-mode-change
@@ -221,8 +279,11 @@ without ROM bytes or LCD images.
 `tests/uart.c` covers all three register banks, FIFO/holding behavior,
 interrupt sources, clock and mode gating, loopback, a two-machine 256-byte
 peer exchange, CTS input, board-net contention, unsupported operations, and
-checkpoint continuation. The 3,331 assertions pass natively, in WASM, and
-under address/undefined-behavior sanitizers. The isolated agent run could not
-use LeakSanitizer because its sandbox prevented `/proc` task inspection. The
-integrated release sanitizer gate, including leak detection, is recorded
-separately in [validation](validation.md).
+checkpoint continuation. The historical r23 gate passed 3,331 assertions
+natively, in WASM and under address/undefined-behavior sanitizers. The r25
+combined 36e2 core expands this to 5,455 assertions, including future-input
+preservation across hardware RX reset. Its [core continuation](core-next-r25.md)
+and [validation record](validation.md) identify the build and full suite results.
+Local sanitizer runs disable LeakSanitizer under the sandbox's `/proc`
+inspection restriction. The combined-core local 23-suite pass and isolated
+executable-bit repair/rerun remain separate from a clean hosted sanitizer gate.

@@ -271,6 +271,7 @@ bool o_translate_reference(orchard_machine *m, uint32_t address, bool write, boo
 bool o_translate(orchard_machine *m, uint32_t address, bool write, bool fetch,
                  bool user, uint32_t *physical);
 bool o_load(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t *value);
+bool o_load_multiple(orchard_machine *m, uint32_t address, bool user, uint32_t *value);
 bool o_store(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t value);
 void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool fetch);
 void o_soc_reset(o_soc *s);

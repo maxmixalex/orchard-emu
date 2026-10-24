@@ -171,8 +171,8 @@ OBSERVER = r'''
    if(data.type==='run'){probe.runCommand=event;probe.runSnapshot=null;probe.pauseCommand=null;probe.pauseSnapshot=null;}
    if(data.type==='pause'){probe.pauseCommand=event;probe.pauseSnapshot=null;}
    const w=probe.watch;
-   if(w&&(data.type==='tap-sequence'||data.type==='tap')){
-    const scans=data.type==='tap'?[data.scan]:data.scans;
+   if(w&&(data.type==='tap-sequence'||data.type==='tap'||data.type==='key-down')){
+    const scans=data.type==='tap-sequence'?data.scans:[data.scan];
     if(w.firstSendAt===null)w.firstSendAt=event.at;
     w.sentScans.push(...scans);
     if(scans.includes(w.completionScan)){w.enterSendAt=event.at;w.enterCommandSeq=event.seq;}
@@ -187,7 +187,7 @@ OBSERVER = r'''
   if(w.firstKeyAt===null)w.firstKeyAt=at;
   if(event.code==='Enter')w.enterKeyAt=at;
  },true);
- addEventListener('click',event=>{
+ addEventListener('pointerdown',event=>{
   const w=probe.watch;if(!w||w.inputKind!=='pointer'||w.resultAt!==null)return;
   const target=event.target?.closest?.('.traditional-key[data-scan]');if(!target)return;
   const scan=Number(target.dataset.scan),at=performance.now();

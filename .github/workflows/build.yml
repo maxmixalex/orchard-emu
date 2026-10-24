@@ -116,6 +116,7 @@ jobs:
           build/browser-venv/bin/python tests/browser-keyboard.py
           build/browser-venv/bin/python tests/browser-lcd.py
           build/browser-venv/bin/python tests/browser-display.py
+          build/browser-venv/bin/python tests/browser-held-keys.py
           build/browser-venv/bin/python tests/browser-sd-directory.py
           build/browser-venv/bin/python tests/browser-sd-sync-cancel.py
           build/browser-venv/bin/python tests/rom-storage-browser.py
@@ -146,6 +147,7 @@ jobs:
             build/keyboard-r22-*.png
             build/lcd-browser/
             build/display-r23/
+            build/held-keys/report.json
             build/rom-storage-browser.json
             build/host-bridge-r22-mobile.png
             build-r22/directory-sd/browser-result.json

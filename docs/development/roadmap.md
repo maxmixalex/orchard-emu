@@ -40,6 +40,14 @@ now follows observed completed scans. [SPI](spi.md) and
 entry/exit path without patching firmware or substituting diagnostic results.
 Exact build identities and evidence boundaries remain in [validation](validation.md).
 
+The [r25 compatibility continuation](compatibility-r25.md) adds unchanged
+Tetris+ play/return, sustained keyboard and touch contacts, short-window
+layout fixes, original HP39gs serial Wire batches and convergent directory
+changes. Its acceptance matrix separates downloaded native programs, guest
+Saturn/RPL programs, production-browser workflows and generated regressions.
+These completed flows expand the gates below; they do not convert missing
+original images or unmeasured board behavior into a percentage of support.
+
 ## M0 — Repository, contracts and reproducibility
 
 **Engineering baseline implemented; verify each revision.** Native/reference/
@@ -68,6 +76,16 @@ implement the documented CP15 invalidation and lockdown operations, and survive
 version-7 checkpoints. This functional subset and its independent instruction
 cases are described in [ARM920T translation](arm920t-tlb.md); it is not complete
 cache, pipeline or hardware-timing conformance. Unsupported behavior remains explicit.
+
+ARM/Thumb multiple loads now retain word ordering at unaligned addresses when
+alignment checking is off, without changing ordinary LDR rotation. The
+deterministic ordinary STM base-in-list choice enables original HP-GCC context
+save/restore; its architectural UNPREDICTABLE field, conflicting Samsung text
+and physical-validation limit are explicit in [ARM memory behavior](arm-memory.md).
+The subsequent source review also implements the six missing documented CP15
+ID-read aliases, with fixed instruction encodings and independent expectations.
+The [core follow-up](core-next-r25.md) retains its distinct build identity and
+separates this completed fix from the remaining exception and abort work.
 
 **Gate:** independently derived cases and bounded instruction differentials pass,
 failures reduce to precise input/state witnesses, and sanitizers pass. Comparing
@@ -109,7 +127,7 @@ counted LCD `+0x68` idle-zero and packed-memory display assumptions do not close
 
 ## M3 — Genuine stock execution and native return
 
-**Four conditional stock systems; HP39g+, HP39gs and HP49g+ native-return witnesses.**
+**Four conditional stock systems with bounded native-return witnesses.**
 HP39g+, HP39gs, HP48gII and HP49g+ execute their own reset/startup and physical inputs.
 Their ROMs remain unchanged. The admitted HP39g+, HP39gs, HP48gII and HP49g+
 presets use explicitly declared bank-1 SRAM mirror conditions while retaining
@@ -130,12 +148,28 @@ translation that must survive an in-memory page-table change until TLB
 invalidation; the core now retains it without patching the ROM or guest RAM.
 The original GBP package's unaligned loader is a separate unresolved boundary.
 
+The unchanged published Tetris+ 1.1 package now cold-installs and runs on its
+declared HP39g+ target, responds to physical input, exits, calculates `1+1=2`
+and continues identically after a warm restore. Its hardware dependencies
+exposed real STM, LCD divider and PWM counter-access gaps. Arkalite and Hanoi
+complete input/animation, return, arithmetic and exact checkpoint replay on
+both original HP39g+ and HP39gs. An installed file or a changing title screen
+alone is not accepted as a working application.
+
 The independent [HP49g+ native workflow](hp49-native.md) installs the pinned
 SDK ARMToolbox library and example through ordinary stock USB transfers. It
 uses the original library's `PrRUN` in RPN mode, observes the native greeting,
 returns with ON, calculates `1 ENTER 1 +` and reconnects for an exact GET.
 The original ROM and guest RAM are not patched. This closes the specific
 49g+ entry/return gap while wider native-application coverage remains open.
+
+The [HP48gII native workflow](hp48-native.md) now independently installs its
+own original ARMToolbox library and the unchanged SDK example. Six reviewed
+frame assertions cover the native greeting, ON return, RPN arithmetic and
+subsequent USB GET/FINISH. The original OS changes the returned binary file's
+header revision from C to B; every payload byte must still agree. This expands
+native-return coverage without treating the 49g+ library or a header-normalized
+whole file as an identical 48gII export.
 
 **Gate:** distinguish bootloader progress, initialized display, interactive stock
 UI and native ARM entry/return. Require sustained operation, reset/input coverage
@@ -190,6 +224,16 @@ autosaves retain the card and migrate the former small localStorage records.
 Original-ROM and native/WASM continuation are independently checked. Actual
 Chrome file-picker/download/session and Worker tests supplement synthetic tests.
 
+Ordinary keyboard and pointer presses now retain physical contacts until
+their own release; multi-touch and simultaneous keys have independent owners.
+Minimum guest-time dwell protects brief clicks, while character macros remain
+finite. Blur, pause, cancellation and teardown release contacts. Original
+Arkalite and Tetris+ production-browser runs exercise sustained movement and
+subsequent arithmetic. Arkalite's combined-core browser return witness uses an
+explicitly held DEL; ordinary short-DEL failures remain recorded and unresolved. Settings actions remain visible at narrow and short
+sizes, Mantine menu navigation no longer reaches the guest, and short landscape
+traditional mode scrolls usable keys rather than shrinking the whole keyboard.
+
 Broader touch/focus/background/storage stress, zoom and sustained full-key use
 remain open. Retain and classify the rare historical HP48 Unlimited post-result
 stop instead of hiding it. Normal pace is based on the functional reference
@@ -224,8 +268,10 @@ path. On the original 39g+ and 39gs USB connection, a single Wire listener now
 accepts successive calculator SEND operations, including Notes and aplet/library
 dependency negotiation. Completed files remain available after Stop or an error;
 the shared receive budget is 16 files and 8 MiB. Object boundaries are parsed
-instead of treating the last XMODEM block's padding as file content. Serial
-reverse Wire and original 40gs behavior remain unverified. The original complete
+instead of treating the last XMODEM block's padding as file content. Original
+HP39gs serial Wire now also sends libraries and receives successive Notes and
+multipart aplet/library groups; serial uses the stock receiver's supported
+128-byte blocks. Original 40gs behavior remains unverified. The original complete
 HP39gs now has its own Disk installation and native-reader return witness;
 HP40gs still needs its complete NOR. ASCII Notes are converted to the binary
 Saturn string format accepted by Wire; original 39g+ and 39gs install, EDIT and
@@ -256,6 +302,9 @@ Before changes are applied, Cancel or Back restores the original media, write
 protection, directory association and prior running intent. A reset, session
 restore or model change invalidates the old transaction; a failed insertion
 retains the recoverable draft.
+Identical deletions or replacements made on both sides now converge without
+spurious conflicts; replacing a directory with a file removes its obsolete
+descendant baselines, including after persistence/reload.
 It does not create an OS block device or mutate a mounted filesystem behind
 the guest cache. See [directory synchronization](directory-sd.md).
 
@@ -265,6 +314,12 @@ tests pass on the applicable admitted models. The [infrared link](infrared.md)
 pairs two same-origin browser tabs; original HP49g+/48gII firmware exchanges
 objects in both directions using IrLAP, IrCOMM and Kermit. Decoded bytes are
 bounded and ordered; optical waveform and physical-adapter timing remain open.
+The r25 continuation adds observed batch timing, an eight-packet bounded window,
+exact connection epochs and hardware-RX-close clock reanchoring. Its final
+production-browser Pause/re-pair/ON workflow completes both exact objects,
+actual recalled values and all valid final acknowledgments. One bad reverse
+Y3 recovers through the original firmware's retry; that retained observation
+still needs an explanation and is not a zero-error reliability result.
 
 **Native host-device simulation is retired at the user's request.** The Local
 device UI was removed. OS USB/IP attachment, HP driver binding and Conn3x are

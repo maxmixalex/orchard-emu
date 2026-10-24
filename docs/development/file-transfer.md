@@ -507,12 +507,12 @@ model-validation boundary.
 
 ## HP39/40 native Wire upload and visible progress
 
-The Files panel now also offers **HP39/40 (Wire) — fast upload**. Select the same
+The Files panel also offers the model's **HP39/40 (Wire/USB/Ser)** menu. Select the same
 complete ZIP, choose **Upload through Wire**, and select **RECV → HP39/40 (Wire)**
 on the calculator for each displayed file. Libraries are sent first. The next
 file waits for a fresh receiver handshake, and an item is complete only after
 the final EOT ACK. This path uploads all selected supported objects; Disk drive
-remains the choice for calculator-side catalog selection. HP39g+/HP39gs USB
+remains the choice for calculator-side catalog selection. HP39g+/HP39gs USB and HP39gs serial
 also supports reverse Wire downloads through **Receive from calculator**:
 one listener accepts successive stock SENDs and requests aplet dependency
 libraries. Complete files are retained individually on Stop or later failure,
@@ -520,8 +520,17 @@ up to the shared 16-file / 8 MiB download limit. Stop waits for the Worker's
 cancellation acknowledgement so that completed files already in transit to the
 UI remain downloadable. See the
 [continuous Wire receiver](hp39-files.md)
-for protocol evidence and the unverified serial/HP40gs boundary.
+for protocol evidence and the unverified HP40gs boundary.
 Original catalog preflight, dependency references and binary input bytes are preserved.
+
+HP39gs serial uses 128-byte Wire upload blocks. Its original 2.22 receiver
+requested CRC with `D` but rejected a 1 KiB first block for a 1,489-byte library,
+exhausting the sender's retries with zero acknowledged object bytes. Selecting
+128-byte blocks completes that library and the 13,352-byte aplet. CRC selection
+does not negotiate block size. USB keeps its independently verified 1 KiB path.
+The same unchanged original serial system then returns two Notes and two complete
+aplet/library SENDs through continuous listeners, preserving all object bodies
+and returning to HOME arithmetic. The six returned files total 30,016 bytes.
 
 ASCII `HP39AscC` Notes are now packed as binary Saturn strings before Wire
 upload. Open their catalog with **SHIFT, 0 (NOTEPAD)** and choose the matching
@@ -616,8 +625,8 @@ Current Wire cancellation stops host output. If the calculator remains in RECV,
 the UI tells the user to press calculator **ON** before retrying; already complete
 files remain installed. No unverified remote CAN cancellation is implied.
 Stock **SEND → Wire** begins a separate HP39BinI negotiation and reverses roles;
-that session is not implemented as a native download. This is therefore a useful
-internal upload workflow, not full Conn3x or desktop USB-device interoperability.
+the continuous receiver described above implements that separate session.
+Native OS-device and Conn3x integration remain outside the requested scope.
 
 Progress remains visible above the calculator while Connections is closed:
 current file, exact bytes, elapsed time and an idle hint. Updates are limited to

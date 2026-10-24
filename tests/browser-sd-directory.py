@@ -101,6 +101,24 @@ with sync_playwright() as p:
     assert page.evaluate('window.__controller.state.running') is False
     passed('actual IndexedDB structured-clone directory handle and baseline survive reload; matching restored card reconnects without reopening picker and preserves paused state')
 
+    page.evaluate('window.__guestConvergingBoundaries()')
+    page.evaluate('''async()=>{
+      await window.__directoryRoot.removeEntry('PROGRAMS',{recursive:true});
+      await window.__directoryRoot.removeEntry('Empty folder');
+      await window.__setHostFile('PROGRAMS',[31,0,255]);
+    }''')
+    button('Sync folder').click();plan.wait_for()
+    assert '0 changes to card, 0 to folder, 0 conflicts' in plan.inner_text()
+    assert page.get_by_role('combobox',name='Resolve PROGRAMS',exact=True).count()==0
+    button('Apply and insert card').click();button('Sync folder').wait_for()
+    assert page.evaluate('window.__cardFile("/PROGRAMS")')==[31,0,255]
+    assert page.evaluate('window.__getHostFile("PROGRAMS")')==[31,0,255]
+    assert page.evaluate('window.__storedDirectory().then(record=>record.association.baseline.some(entry=>entry.source==="PROGRAMS/NESTED"||entry.source==="Empty folder"))') is False
+    button('Sync folder').click();plan.wait_for()
+    assert '0 changes to card, 0 to folder, 0 conflicts' in plan.inner_text()
+    button('Apply and insert card').click();button('Sync folder').wait_for()
+    passed('matching directory deletion and directory-to-file replacement converge without conflicts; real OPFS blocked descendants leave the persisted baseline and the next sync is empty')
+
     page.evaluate('window.__restoreCard(true)');button('Sync folder').click()
     button('Choose local folder').wait_for()
     assert page.evaluate('window.__controller.state.dialog.message')=='sdDirectoryMismatch'
