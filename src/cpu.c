@@ -417,6 +417,11 @@ static bool arm_without_checkpoint(orchard_machine *m, uint32_t op) {
     data_processing(m, op);
     return true;
 }
+/* Retain instruction-loop inlining when the WASM runners are specialized.
+ * Native and Reference builds keep their original compiler boundaries. */
+#if defined(__wasm__) && !defined(ORCHARD_REFERENCE) && (defined(__GNUC__) || defined(__clang__))
+__attribute__((always_inline))
+#endif
 static void cpu_step(orchard_machine *m, bool fast) {
     o_cpu *c = &m->cpu;
     uint32_t pc = c->r[15], physical = 0, instruction = 0;
@@ -481,6 +486,9 @@ static void cpu_step(orchard_machine *m, bool fast) {
 }
 
 void o_cpu_step_reference(orchard_machine *m) { cpu_step(m, false); }
+#if defined(__wasm__) && !defined(ORCHARD_REFERENCE) && (defined(__GNUC__) || defined(__clang__))
+__attribute__((always_inline))
+#endif
 void o_cpu_step(orchard_machine *m) {
 #ifdef ORCHARD_REFERENCE
     cpu_step(m, false);
