@@ -417,6 +417,25 @@ static bool arm_without_checkpoint(orchard_machine *m, uint32_t op) {
     data_processing(m, op);
     return true;
 }
+/* Only ARM fetch after the original translation can use live NOR array bytes.
+ * ID mode, Thumb and every other mapping retain the original bus dispatch. */
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((always_inline))
+#endif
+static inline bool cpu_fetch_read(orchard_machine *m, uint32_t physical,
+                                 unsigned width, bool fast, uint32_t *value) {
+#if defined(__wasm__) && !defined(ORCHARD_REFERENCE)
+    if (fast && width == 4 &&
+        physical < m->profile->flash_bytes &&
+        4u <= m->profile->flash_bytes - physical && !m->nor_id_mode) {
+        *value = o_read_le(m->flash + physical, 4);
+        return true;
+    }
+#else
+    (void)fast;
+#endif
+    return o_phys_read(m, physical, width, value);
+}
 static void cpu_step(orchard_machine *m, bool fast) {
     o_cpu *c = &m->cpu;
     uint32_t pc = c->r[15], physical = 0, instruction = 0;
@@ -426,7 +445,7 @@ static void cpu_step(orchard_machine *m, bool fast) {
         o_stop(m, ORCHARD_UNPREDICTABLE, pc, width); return;
     }
     if (!o_translate(m, pc, false, true, (c->cpsr & 31u) == O_USR, &physical) ||
-        !o_phys_read(m, physical, width, &instruction)) {
+        !cpu_fetch_read(m, physical, width, fast, &instruction)) {
         if (m->stop.status != ORCHARD_OK) return;
         if (!c->prefetch_abort) o_fault(c, pc, 8, 0, true);
         o_exception(c, O_ABT, 0xc, pc + 4u);

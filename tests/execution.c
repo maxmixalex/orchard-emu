@@ -120,6 +120,128 @@ static void single_rollbacks(void) {
         CHECK(equal(fast.ram,reference.ram,sizeof fast.ram));
     }
 }
+/* Generated instructions use the actual fast/reference CPU fetch entrances,
+ * not a second implementation of the bus shortcut. WASM exercises the new
+ * path; native and ORCHARD_REFERENCE retain the original physical reader. */
+static void fetch_word(uint32_t address, uint32_t op) {
+    for (unsigned i = 0; i < 4; ++i)
+        fast.flash[address+i] = reference.flash[address+i] = (uint8_t)(op >> (8*i));
+}
+static void fetch_step(uint32_t pc) {
+    fast.cpu.r[15] = reference.cpu.r[15] = pc;
+    o_zero(&fast.stop, sizeof fast.stop); o_zero(&reference.stop, sizeof reference.stop);
+    o_cpu_step(&fast); o_cpu_step_reference(&reference);
+    CHECK(equal(&fast.cpu, &reference.cpu, sizeof fast.cpu));
+    CHECK(equal(&fast.stop, &reference.stop, sizeof fast.stop));
+    CHECK(equal(&fast.soc, &reference.soc, sizeof fast.soc));
+    CHECK(fast.quiet_left == reference.quiet_left && fast.deferred_ticks == reference.deferred_ticks);
+    CHECK(fast.sram_alias_reads == reference.sram_alias_reads && fast.sram_alias_writes == reference.sram_alias_writes);
+    CHECK(fast.nor_id_mode == reference.nor_id_mode && fast.nor_sequence == reference.nor_sequence);
+}
+static void fetch_command(uint32_t address, uint32_t value) {
+    CHECK(o_phys_write(&fast, address, 2, value));
+    CHECK(o_phys_write(&reference, address, 2, value));
+}
+static void fetch_boundaries(void) {
+    const unsigned models[] = {1, 4}; /* Both supported NOR extents and ID words. */
+    for (unsigned i = 0; i < sizeof models / sizeof *models; ++i) {
+        CHECK(orchard_init(&fast, sizeof fast, models[i]) != NULL);
+        CHECK(orchard_init(&reference, sizeof reference, models[i]) != NULL);
+        orchard_nor_device device = models[i] == 1 ? ORCHARD_NOR_SST39VF800A : ORCHARD_NOR_SST39VF1601;
+        CHECK(orchard_nor_select(&fast, device) == ORCHARD_OK);
+        CHECK(orchard_nor_select(&reference, device) == ORCHARD_OK);
+        fast.quiet_left = reference.quiet_left = 11;
+        fast.deferred_ticks = reference.deferred_ticks = 3;
+        fetch_word(0x100, 0xe3a00011); /* MOV r0,#0x11. */
+        fetch_step(0x100);
+        CHECK(fast.stop.status == ORCHARD_OK && fast.cpu.r[0] == 0x11 && fast.cpu.r[15] == 0x104);
+        fetch_word(0x100, 0xe3a00022); /* Same address, edited live bytes. */
+        fetch_step(0x100);
+        CHECK(fast.cpu.r[0] == 0x22 && fast.cpu.instructions == 2);
+        uint32_t end = fast.profile->flash_bytes;
+        fetch_word(end - 4, 0xe3a00033);
+        fetch_step(end - 4);
+        CHECK(fast.stop.status == ORCHARD_OK && fast.cpu.r[0] == 0x33 && fast.cpu.r[15] == end);
+        CHECK(fast.quiet_left == 11 && fast.deferred_ticks == 3);
+        uint64_t executed = fast.cpu.instructions;
+        fetch_step(end);
+        CHECK(fast.stop.status == ORCHARD_OK && fast.cpu.prefetch_abort && fast.cpu.ifsr == 8);
+        CHECK(fast.cpu.r[15] == 0xc && (fast.cpu.cpsr & 31u) == O_ABT && fast.cpu.instructions == executed);
+        fetch_word(end - 4, 0x20440000); /* Last halfword: Thumb MOVS r0,#0x44. */
+        fast.cpu.cpsr |= O_T; reference.cpu.cpsr |= O_T;
+        fetch_step(end - 2);
+        CHECK(fast.stop.status == ORCHARD_OK && fast.cpu.r[0] == 0x44 && fast.cpu.r[15] == end);
+        executed = fast.cpu.instructions;
+        fetch_step(0x101);
+        CHECK(fast.stop.status == ORCHARD_UNPREDICTABLE && fast.stop.detail == 2 && fast.cpu.instructions == executed);
+        fast.cpu.cpsr &= ~O_T; reference.cpu.cpsr &= ~O_T;
+        fetch_step(0x102);
+        CHECK(fast.stop.status == ORCHARD_UNPREDICTABLE && fast.stop.detail == 4 && fast.cpu.instructions == executed);
+
+        /* Enter/leave ID through device commands. Both ID words have CS
+         * condition: with carry clear they must not execute the flash MOV. */
+        fast.cpu.cpsr = reference.cpu.cpsr = O_SVC | O_I | O_F;
+        fetch_word(0, 0xe3a00055); fetch_word(4, 0xe3a00066);
+        fetch_command(0xaaaa, 0xaa);
+        fetch_step(0);
+        CHECK(fast.nor_sequence == 1 && !fast.nor_id_mode && fast.cpu.r[0] == 0x55);
+        fetch_command(0x5554, 0x55); fetch_command(0xaaaa, 0x90);
+        CHECK(fast.nor_id_mode);
+        fast.cpu.r[0] = reference.cpu.r[0] = 0x99;
+        fetch_step(0);
+        CHECK(fast.stop.status == ORCHARD_OK && fast.cpu.r[0] == 0x99 && fast.cpu.r[15] == 4);
+        executed = fast.cpu.instructions;
+        fetch_step(4);
+        CHECK(fast.stop.status == ORCHARD_UNIMPLEMENTED_FLASH && fast.stop.address == 4 && fast.stop.detail == 4);
+        CHECK(fast.cpu.instructions == executed);
+        fetch_command(0, 0xf0);
+        fetch_step(0);
+        CHECK(!fast.nor_id_mode && fast.stop.status == ORCHARD_OK && fast.cpu.r[0] == 0x55);
+
+        /* Non-NOR fetches keep alias accounting and MMIO synchronization. */
+        pair_write(O_RAM_BASE + 0x100, 0xe3a00066);
+        fetch_step(O_RAM_BASE + 0x100);
+        CHECK(fast.cpu.r[0] == 0x66);
+        CHECK(orchard_sram_select(&fast, ORCHARD_SRAM_BANK1_MIRROR) == ORCHARD_OK);
+        CHECK(orchard_sram_select(&reference, ORCHARD_SRAM_BANK1_MIRROR) == ORCHARD_OK);
+        fetch_step(O_RAM_BASE + fast.profile->ram_bytes + 0x100);
+        CHECK(fast.cpu.r[0] == 0x66 && fast.sram_alias_reads == 1);
+        pair_write(O_BOOT_SRAM_BASE, 0xe3a00077);
+        fetch_step(O_BOOT_SRAM_BASE);
+        CHECK(fast.cpu.r[0] == 0x77);
+        fetch_step(0x4d000068);
+        CHECK(fast.stop.status == ORCHARD_UNIMPLEMENTED_MMIO && fast.stop.address == 0x4d000068);
+        CHECK(fast.quiet_left == 0 && fast.deferred_ticks == 0);
+    }
+}
+static void fetch_translations(void) {
+    initialize();
+    const uint32_t va = 0x10000100, ttb = O_RAM_BASE + 0x4000, table = O_RAM_BASE + 0x8000;
+    fetch_word(0x1100, 0xe3a00011); fetch_word(0x2100, 0xe3a00022);
+    pair_write(ttb + 0x400, table | 1u);
+    pair_write(table, 0x1000u | (3u << 4) | 2u); /* Only first 1 KiB allows user fetch. */
+    fast.cpu.ttb = reference.cpu.ttb = ttb;
+    fast.cpu.control = reference.cpu.control = 0x79;
+    fast.cpu.domain = reference.cpu.domain = 1;
+    fast.cpu.cpsr = reference.cpu.cpsr = O_USR | O_I | O_F;
+    fetch_step(va); fetch_step(va); /* Seed and hit the original live-descriptor memo. */
+    CHECK(fast.stop.status == ORCHARD_OK && fast.cpu.r[0] == 0x11 && fast.cpu.instructions == 2);
+    pair_write(table, 0x2000u | (3u << 4) | 2u); /* Live remap, no CP15 maintenance. */
+    fetch_step(va);
+    CHECK(fast.stop.status == ORCHARD_OK && fast.cpu.r[0] == 0x22 && fast.cpu.r[15] == va + 4);
+    uint64_t executed = fast.cpu.instructions;
+    fetch_step(va + 0x400); /* Adjacent 1 KiB permission boundary. */
+    CHECK(fast.cpu.prefetch_abort && fast.cpu.ifsr == 15 && fast.cpu.r[15] == 0xc);
+    CHECK(fast.cpu.r[0] == 0x22 && fast.cpu.instructions == executed);
+    pair_write(table, 0x2000u | 2u); /* Revoke the previously memoized page permission. */
+    o_set_cpsr(&fast.cpu, O_USR | O_I | O_F); o_set_cpsr(&reference.cpu, O_USR | O_I | O_F);
+    fetch_step(va);
+    CHECK(fast.cpu.prefetch_abort && fast.cpu.ifsr == 15 && fast.cpu.instructions == executed);
+    pair_write(ttb + 0x400, 0); /* A changed first-level descriptor must also fault. */
+    o_set_cpsr(&fast.cpu, O_USR | O_I | O_F); o_set_cpsr(&reference.cpu, O_USR | O_I | O_F);
+    fetch_step(va);
+    CHECK(fast.cpu.prefetch_abort && fast.cpu.ifsr == 5 && fast.cpu.instructions == executed);
+}
 static void translate(uint32_t va, bool write, bool fetch, bool user) {
     o_zero(&fast.stop, sizeof fast.stop); o_zero(&reference.stop, sizeof reference.stop);
     fast.cpu.data_abort = fast.cpu.prefetch_abort = false;
@@ -222,7 +344,7 @@ static void translations(void) {
 }
 EXPORT("regression") unsigned run(void) {
     checks=failures=first_failure=0;
-    dispatch(); single_rollbacks(); translations();
+    dispatch(); single_rollbacks(); fetch_boundaries(); fetch_translations(); translations();
     return failures;
 }
 EXPORT("checks") unsigned get_checks(void) { return checks; }
