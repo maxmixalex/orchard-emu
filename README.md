@@ -23,6 +23,18 @@ component identification, panel interpretation and pad/ADC conditions remain
 unverified hardware assumptions.
 This is conditional functional operation, not complete six-model support.
 
+The current compatibility continuation runs the unchanged HP-GCC Tetris+ on
+39g+ through installation, play, return and arithmetic; Arkalite and Hanoi
+also return correctly on both admitted 39-series ROMs; Arkalite's browser
+acceptance uses an explicitly held DEL, with short-click failures retained. Native 2048, BabalPlus
+and conversion programs provide separate 49g+ coverage. The original SDK example
+also executes through the correct [48gII ARMToolbox library](docs/development/hp48-native.md),
+returns to arithmetic and reconnects over USB. See the
+[program and browser acceptance record](docs/development/compatibility-r25.md)
+for exact scope, input identities and remaining roadmap work.
+The subsequent [ARM920T review](docs/development/core-next-r25.md) also restores
+the documented CP15 ID-read aliases while keeping unsupported encodings explicit.
+
 ## Browser
 
 **[Open the web emulator](https://maxmixalex.github.io/orchard-emu/emulator/)** ·
@@ -45,6 +57,11 @@ physical keys. It detects the four supported ROM identities and selects their
 compatibility settings automatically. CPU counters, boot setup and internal
 research controls live in the separate **[developer workbench](https://maxmixalex.github.io/orchard-emu/emulator/debug.html)**.
 Both pages use the same optimized core, not different levels of emulation.
+Keyboard and touch contacts remain down for as long as they are held, including
+simultaneous keys; quick clicks retain the guest's minimum debounce interval.
+Leaving the page, pausing or canceling a pointer releases held contacts. Character
+macros stay finite. Short landscape windows retain usable traditional keys and
+scroll the lower rows with the LCD visible when space allows.
 At startup use the top-right soft key for NO/OK as prompted; wait for HOME
 before entering calculations. **Save** exports the paused machine to a timestamped
 `.ord` file. Open the same ROM and choose **Restore** to resume under the current
@@ -177,11 +194,14 @@ manual input and errors stop that automation; retries never press ENTER blindly.
 `HP39AscC` ASCII Notes are
 converted to the binary string format accepted by Wire. For a Note, first open
 **SHIFT → 0 (NOTEPAD)** and use that catalog's RECV menu. Both original ROMs
-pass installation, EDIT and exact content round trips. On HP39g+/HP39gs USB,
+pass installation, EDIT and exact content round trips. On HP39g+/HP39gs USB
+and HP39gs serial,
 **Receive from calculator** in Wire mode stays listening across successive
 **SEND → HP39/40 (Wire/USB)** operations, including aplet dependency libraries.
 Completed files remain available after a later error or Stop; the download
-list is bounded to 16 files and 8 MiB. Original-ROM HP39
+list is bounded to 16 files and 8 MiB.
+Serial Wire uses 128-byte XMODEM blocks, which the original HP39gs accepts for
+library installation; USB retains its 1 KiB blocks. Original-ROM HP39
 file-transfer and ZIP round-trip verification uses the complete HP39g+ NOR.
 HP39gs has its own original-ROM Disk installation and native-reader return
 witness; HP40gs still needs its complete original NOR. File choosers accept

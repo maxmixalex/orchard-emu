@@ -9,8 +9,8 @@ export { MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES
 export const MAX_UPLOAD_FILES = 16;
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 export const isHp39 = model => [1,2,3].includes(model);
-// Continuous Wire reception is verified against these original USB ROMs.
-export const canReceiveHp39Wire = (model,transport) => [1,2].includes(model)&&transport==='usb';
+// Continuous Wire reception follows the original model's exposed connector.
+export const canReceiveHp39Wire = (model,transport) => [1,2].includes(model)&&transport==='usb'||model===2&&transport==='serial';
 export function transferCapabilities(model,transport='usb') {
   const link=['usb','serial'].includes(transport),hp39=isHp39(model)&&(transport==='usb'||model!==1&&transport==='serial');
   const supported=model===4&&link||model===5&&transport==='usb';
@@ -64,6 +64,10 @@ export class FileTransfer {
     };
     const Session=wire?(data.mode==='receive'?Hp39WireReceiver:Hp39WireSender):isHp39(this.model)?Hp39FileServer:KermitSession;
     this.session=new Session({hz:this.core.timebase_hz(),write:bytes=>this.write(bytes),notify:status,receiveBudget,
+      // The stock 39gs serial receiver rejects STX/1 KiB blocks even after
+      // the D CRC handshake. USB accepts them; serial uses SOH/128 bytes.
+      // CRC selection is not block-size negotiation.
+      maxBlockSize:data.transport==='serial'?128:1024,
       receiveId:data.request,
       end:data.transport==='usb'?13:null,
       onPacket:p=>{

@@ -10,6 +10,7 @@ import {FileTransfer} from '../web/file-transfer.js';
 import {transferError,transferErrorDetails} from '../web/transfer-errors.js';
 import {BuzzerStream} from '../web/buzzer-worker.js';
 import {LCDFrames} from '../web/lcd-frames.js';
+import {IrDAInput} from '../web/irda-input.js';
 import {readSDState,validateSDSize} from '../web/sd-card.js';
 import {MAX_STATE} from '../web/session.js';
 import {TapQueue,HP48_ROM,isPlayable,setupHash,applySetup} from '../web/hp48.js';
@@ -27,7 +28,7 @@ function fixture(){
  class Scheduler{schedule(fn){jobs.set(++next,fn);return next;}cancel(id){jobs.delete(id);}}
  class USB{constructor(){this.connected=false;}poll(){}resetLocal(){this.connected=false;}start(){this.connected=true;}disconnect(){this.connected=false;}endpoint(){return {maxPacket:64};}send(){return {result:0};}read(){return {result:1,bytes:new Uint8Array()};}}
  class Bridge{constructor(c,{notify}){assert.equal(c,core);this.notify=notify;this.active=false;this.stops=0;this.polls=0;bridges.push(this);}async start(a,t){assert.equal(a,address);assert.equal(t,token);this.active=true;this.notify({active:true,phase:'enumerating'});}poll(){this.polls++;}stop(){this.active=false;++this.stops;this.notify({active:false,phase:'disconnected'});return Promise.resolve();}}
- const scope={Pacer,FileTransfer,transferError,transferErrorDetails,BuzzerStream,LCDFrames,readSDState,validateSDSize,MAX_STATE,TapQueue,HP48_ROM,isPlayable,setupHash,applySetup,bridgeAddress,bridgeToken,TaskScheduler:Scheduler,VirtualUSB:USB,BrowserHostBridge:Bridge,
+ const scope={Pacer,FileTransfer,transferError,transferErrorDetails,BuzzerStream,LCDFrames,IrDAInput,readSDState,validateSDSize,MAX_STATE,TapQueue,HP48_ROM,isPlayable,setupHash,applySetup,bridgeAddress,bridgeToken,TaskScheduler:Scheduler,VirtualUSB:USB,BrowserHostBridge:Bridge,
   Uint8Array,Uint32Array,ArrayBuffer,performance:{now:()=>++wall},self:{},postMessage:d=>output.push(d),initialCore:core,
   encodeSession:async()=>new Uint8Array(32),decodeSession:async()=>({model:4,romHash:HP48_ROM,preset:'hp48-home',frameView:1,state:new Uint8Array(32)})};
  const context=vm.createContext(scope);vm.runInContext(source+'\ncore=initialCore;',context);

@@ -76,7 +76,7 @@ with sync_playwright() as p:
   page.set_viewport_size({'width':1360,'height':940});view('immersive-landscape');check_landscape(spec)
   for scan in [35,36,37,38,39,40,26]:
    page.evaluate('window.__messages.length=0');page.locator(f'.skin-key[data-scan="{scan}"]').click()
-   assert page.evaluate('window.__messages.filter(m=>m.type==="tap-sequence").map(m=>m.scans)')==[[scan]]
+   assert page.evaluate('window.__messages.filter(m=>m.type==="key-down").map(m=>m.scan)')==[scan]
    assert page.locator('#calculator').evaluate('(e)=>document.activeElement===e')
   for scan in [40,26]:
    page.evaluate('window.__messages.length=0');page.locator(f'.skin-key[data-scan="{scan}"]').focus();page.keyboard.press('Enter')

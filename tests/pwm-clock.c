@@ -98,6 +98,49 @@ static void gate_and_transition(void){
  }
 }
 
+static void observation_widths(void){
+ static const uint32_t addresses[]={0x51000014u,0x51000020u,0x5100002cu,0x51000038u,0x51000040u};
+ for(unsigned ch=0;ch<5;ch++){
+  init(5);timer(&a,ch,0x89ab,0x4321,true);step(14);
+  CHECK(a.soc.count[ch]==0x89a4&&a.soc.phase[ch]==0);
+  uint32_t value=0;
+  for(unsigned repeat=0;repeat<4;repeat++){
+   CHECK(o_phys_read(&a,addresses[ch],4,&value)&&value==0x89a4);
+   CHECK(o_phys_read(&a,addresses[ch],2,&value)&&value==0x89a4);
+   CHECK(o_phys_read(&a,addresses[ch]+2u,2,&value)&&value==0);
+   CHECK(o_phys_read(&a,addresses[ch],1,&value)&&value==0xa4);
+   CHECK(o_phys_read(&a,addresses[ch]+1u,1,&value)&&value==0x89);
+   CHECK(o_phys_read(&a,addresses[ch]+2u,1,&value)&&value==0);
+   CHECK(o_phys_read(&a,addresses[ch]+3u,1,&value)&&value==0);
+  }
+  CHECK(a.soc.count[ch]==0x89a4&&a.soc.phase[ch]==0&&!irq(ch));
+  step(2);CHECK(o_phys_read(&a,addresses[ch],2,&value)&&value==0x89a3);
+  CHECK(!o_phys_read(&a,addresses[ch]+1u,2,&value));
+  CHECK(a.stop.status==ORCHARD_UNIMPLEMENTED_MMIO&&a.soc.count[ch]==0x89a3);
+  for(unsigned width=1;width<=4;width*=2){
+   init(5);timer(&a,ch,0x89ab,0x4321,true);
+   CHECK(!o_phys_write(&a,addresses[ch],width,0x1234));
+   CHECK(a.stop.status==ORCHARD_UNIMPLEMENTED_MMIO&&a.soc.count[ch]==0x89ab);
+  }
+ }
+ /* Counter observations are the only new narrow accesses, not a blanket
+    width adapter for control registers or write-sensitive peripherals. */
+ static const uint32_t unsupported[]={0x51000000u,0x51000004u,0x51000008u,0x5100000cu,0x51000010u,0x5100003cu,0x51000044u};
+ for(unsigned i=0;i<sizeof unsupported/sizeof *unsupported;i++)for(unsigned width=1;width<=2;width*=2){
+  init(5);uint32_t value=0xdeadbeefu;
+  CHECK(!o_phys_read(&a,unsupported[i],width,&value));
+  CHECK(a.stop.status==ORCHARD_UNIMPLEMENTED_MMIO&&value==0xdeadbeefu);
+ }
+ /* Both decoders must pass the halfword read through the ordinary bus. */
+ for(unsigned thumb=0;thumb<2;thumb++)for(unsigned reference=0;reference<2;reference++){
+  init(5);a.soc.count[0]=0xabcd;a.cpu.r[1]=addresses[0];
+  put(a.flash,thumb?0x8808u:0xe1d100b0u);a.cpu.cpsr|=thumb?O_T:0;
+  if(reference)o_cpu_step_reference(&a);else o_cpu_step(&a);
+  CHECK(a.stop.status==ORCHARD_OK&&a.cpu.r[0]==0xabcd);
+  CHECK(a.cpu.r[15]==(thumb?2u:4u)&&a.soc.count[0]==0xabcd);
+ }
+}
+
 static void buffer_cases(void){
  for(unsigned ch=0;ch<5;ch++)for(unsigned disable=0;disable<2;disable++){
   init(5);timer(&a,ch,3,1,true);wr(&a,count_address(ch),5);
@@ -250,7 +293,7 @@ static void partition_cases(void){
 }
 
 EXPORT("regression") unsigned regression(void){
- checks=failures=first=0;ratio_cases();gate_and_transition();buffer_cases();short_counts();
+ checks=failures=first=0;ratio_cases();gate_and_transition();observation_widths();buffer_cases();short_counts();
  shared_domain();beep_period();checkpoint_cases();partition_cases();return failures;
 }
 EXPORT("checks") unsigned get_checks(void){return checks;}

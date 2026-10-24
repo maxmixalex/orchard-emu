@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Artwork is a separate Apache-2.0 asset; preserve its own NOTICE and provenance.
+import {bindCalculatorKey} from './key-input.js';
 const NS='http://www.w3.org/2000/svg';
 const SLUGS=['','hp39gplus','hp39gs','hp40gs','hp48gii','hp49gplus','hp50g'];
 const ATTRS=new Set(['d','x','y','width','height','rx','ry','cx','cy','r']);
 const NAMES=['I/O','Left shift','Right shift','Alpha','Battery','Busy'];
 const LANDSCAPE_GAP=24;
 export class SkinView {
-  constructor(stage, tap) {
+  constructor(stage, tap, {press,release}={}) {
     this.stage=stage;this.tap=tap;this.epoch=0;this.enabled=false;this.appliedEnabled=null;this.buttons=[];this.lastActive=-1;this.lastSegments='';this.rgb=[194,208,202];
+    this.press=press;this.release=release;this.cancelInputs=[];
     this.image=stage.querySelector('.skin-image');this.keyboardImage=stage.querySelector('.skin-keyboard-image');
     this.screenHits=stage.querySelector('.skin-screen-keys');this.hits=stage.querySelector('.skin-keyboard .skin-keys')??stage.querySelector('.skin-keys');
     this.spec=null;this.landscape=false;
@@ -19,6 +21,7 @@ export class SkinView {
     this.manifest.catch(()=>{});
   }
   async show(model,blue=false) {
+    this.releaseInputs();this.cancelInputs=[];
     const token=++this.epoch;this.buttons=[];this.appliedEnabled=null;this.lastActive=-1;this.lastSegments='';this.hits.replaceChildren();this.screenHits?.replaceChildren();this.image.hidden=true;
     this.glass.hidden=true;if(this.keyboardImage)this.keyboardImage.hidden=true;
     const manifest=await this.manifest;
@@ -49,9 +52,9 @@ export class SkinView {
       group.dataset.scan=String(key.scan);group.classList.add('skin-key');group.setAttribute('role','button');
       group.setAttribute('aria-label',`Calculator ${key.label}`);group.setAttribute('aria-pressed','false');
       title.textContent=key.label;group.append(title,shape);
-      const activate=()=>{if(this.enabled){this.tap(key.scan);this.stage.closest('#calculator').focus({preventScroll:true});}};
-      group.addEventListener('click',activate);
-      group.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();activate();}});
+      const focus=()=>this.stage.closest('#calculator')?.focus({preventScroll:true});
+      this.cancelInputs.push(bindCalculatorKey(group,{enabled:()=>this.enabled,tap:()=>{this.tap(key.scan);focus();},
+        press:this.press?source=>{this.press(key.scan,source);focus();}:undefined,release:this.release}));
       // Keep soft keys beside their LCD labels in both immersive appearances.
       // The debug workbench has one SVG and continues to receive all 51 keys.
       (this.screenHits&&key.scan>=35&&key.scan<=40?this.screenHits:this.hits).append(group);this.buttons.push(group);
@@ -72,14 +75,17 @@ export class SkinView {
     this.stage.style.setProperty('--split-gap',`${LANDSCAPE_GAP/bounds[0]*100}%`);
     return bounds;
   }
+  releaseInputs(){this.cancelInputs.forEach(cancel=>cancel());}
   setEnabled(enabled) {
+    if(!enabled)this.releaseInputs();
     this.enabled=enabled;
     if(this.appliedEnabled===enabled)return;
     this.appliedEnabled=enabled;
     for(const key of this.buttons){key.setAttribute('aria-disabled',String(!enabled));key.setAttribute('tabindex',enabled?'0':'-1');}
   }
-  update(active,levels,status,model) {
-    if(this.lastActive!==active){for(const key of this.buttons)key.setAttribute('aria-pressed',String(Number(key.dataset.scan)===active));this.lastActive=active;}
+  update(active,levels,status,model,activeKeys) {
+    const pressed=activeKeys??(active===null?[]:[active]),signatureKeys=pressed.join(',');
+    if(this.lastActive!==signatureKeys){for(const key of this.buttons)key.setAttribute('aria-pressed',String(pressed.includes(Number(key.dataset.scan))));this.lastActive=signatureKeys;}
     // Packed routing: 39g+/39gs/48gII Shift/Alpha transitions were checked against
     // original guests; the remaining labels follow recorded reference routing.
     // A visible unavailable state is distinct from six known-off segments.

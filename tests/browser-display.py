@@ -36,15 +36,21 @@ with sync_playwright() as p:
             if width<600 and height>width:assert geometry['screen']['bottom']<geometry['keys']['y'],geometry
             else:assert geometry['screen']['right']<geometry['keys']['x'],geometry
             assert geometry['host']['w']<=geometry['workspace']['w']+.1,geometry
-            if width>=600 or height<=width:assert geometry['host']['h']<=geometry['workspace']['h']+.1,geometry
+            if width==844:
+                # A tiny height-fitted keypad was technically inside the
+                # viewport but unusable. Preserve its scale and scroll it.
+                assert geometry['host']['w']>=700 and geometry['host']['h']>geometry['workspace']['h'],geometry
+                assert all(key['w']>=24 and key['h']>=24 for key in geometry['main']),geometry
+                assert page.get_by_role('button',name='Actions',exact=True).is_visible()
+                assert page.locator('.app-header').bounding_box()['height']+page.locator('.app-toolbar').bounding_box()['height']<100
             assert len(geometry['soft'])==6 and len(geometry['main'])==45,geometry
             assert all(35<=key['scan']<=40 and key['y']>=geometry['lcd']['bottom'] for key in geometry['soft']),geometry
             assert all(key['x']>=geometry['keys']['x']-.1 and key['right']<=geometry['keys']['right']+.1 for key in geometry['main']),geometry
             assert len({key['scan'] for key in geometry['soft']+geometry['main']})==51
-            if width<600 and height>width:
+            if width<600 and height>width or width==844:
                 page.locator('#workspace').evaluate('(e)=>e.scrollTop=e.scrollHeight');settled()
-                reached=page.evaluate('''()=>{const r=q=>document.querySelector(q).getBoundingClientRect(),w=r('#workspace'),lcd=r('#lcd'),end=r('.traditional-key[data-scan="6"]');return lcd.y>=w.y&&lcd.bottom<w.bottom&&end.bottom<=w.bottom}''')
-                assert reached,'The LCD stays visible while scrolling to the bottom keyboard row'
+                reached=page.evaluate('''()=>{const r=q=>document.querySelector(q).getBoundingClientRect(),w=r('#workspace'),lcd=r('#lcd'),end=r('.traditional-key[data-scan="6"]');return {visible:lcd.y>=w.y&&lcd.bottom<w.bottom&&end.bottom<=w.bottom,workspace:[w.y,w.bottom],lcd:[lcd.y,lcd.bottom],end:end.bottom,sticky:document.querySelector('#calculator').dataset.sticky}}''')
+                assert reached['visible'],(model,width,height,reached)
                 page.locator('#workspace').evaluate('(e)=>e.scrollTop=0');settled()
             if model in [2,5]:page.screenshot(path=str(OUT/f'{slug}-traditional-{width}x{height}.png'))
         page.set_viewport_size({'width':1360,'height':940});settled()
@@ -53,7 +59,7 @@ with sync_playwright() as p:
             assert page.evaluate('window.__originalCanvas===document.querySelector("#lcd")&&window.__originalSoft===document.querySelector(".traditional-key[data-scan=\\"40\\"]")&&window.__originalKey===document.querySelector(".traditional-key[data-scan=\\"26\\"]")')
         for scan in [40,26]:
             page.evaluate('window.__messages.length=0');page.locator(f'.traditional-key[data-scan="{scan}"]').click()
-            assert page.evaluate('window.__messages.filter(m=>m.type==="tap-sequence").map(m=>m.scans)')==[[scan]]
+            assert page.evaluate('window.__messages.filter(m=>m.type==="key-down").map(m=>m.scan)')==[scan]
         results.append({'model':model,'viewports':4,'soft_keys_with_display':6,'main_keys':45,'node_identity_preserved':True})
     # Actual display pixels change with the selected kernel, while guest/capture
     # pixels remain native and untouched. Non-integer zoom exercises resampling.
@@ -96,10 +102,16 @@ with sync_playwright() as p:
     frame();preferences(zoom=100)
     page.set_viewport_size({'width':390,'height':844});settled()
     page.get_by_role('button',name='Actions',exact=True).click()
+    page.evaluate('window.__messages.length=0')
+    # The menu trigger owns navigation before its portal is mounted as well.
+    page.keyboard.press('ArrowDown')
     page.get_by_role('menuitem',name='Save',exact=True).wait_for()
     assert page.get_by_role('menuitem',name='Restore',exact=True).is_visible()
     assert page.get_by_role('menuitem',name='Enter self-test',exact=True).is_visible()
     page.keyboard.press('Escape')
+    assert not page.evaluate('window.__messages.some(m=>m.type==="tap-sequence"||m.type==="key-down"||m.type==="system-chord")'),'Menu navigation leaked into the guest keypad'
+    page.locator('#calculator').focus();page.keyboard.press('1')
+    assert page.evaluate('window.__messages.some(m=>m.type==="key-down"&&m.scan===26)'),'Calculator focus no longer accepts mapped PC keys'
     page.get_by_role('button',name='Connections',exact=True).click();settled()
     assert page.get_by_role('tab',name='SD card',exact=True).is_visible()
     assert page.get_by_role('button',name='SD card',exact=True).count()==0
@@ -109,12 +121,36 @@ with sync_playwright() as p:
     page.get_by_role('tab',name='Files',exact=True).click();settled()
     assert page.get_by_role('button',name='Connect USB',exact=True).is_visible()
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+    page.locator('#workspace').evaluate('(e)=>e.scrollTop=e.scrollHeight');settled()
+    assert page.locator('.traditional-key[data-scan="6"]').evaluate('''e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return e.contains(hit)}'''),'A sticky display covered the lower keys while Connections was open'
+    page.locator('#workspace').evaluate('(e)=>e.scrollTop=0');settled()
     page.screenshot(path=str(OUT/'connections-mobile.png'))
     page.get_by_role('button',name='Close sidebar',exact=True).click()
     page.get_by_role('button',name='Settings',exact=True).click();settled()
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
     page.screenshot(path=str(OUT/'settings-mobile.png'))
+    settings=[]
+    for width,height in [(390,844),(360,640),(844,390),(1360,940)]:
+        page.set_viewport_size({'width':width,'height':height});settled()
+        for tab in ['General','Keyboard','Transfer','Storage']:
+            page.get_by_role('tab',name=tab,exact=True).click();settled()
+            if tab=='Keyboard':page.locator('.mapping-calculator .traditional-key').first.wait_for()
+            if tab=='Storage':
+                interval=page.get_by_role('combobox',name='Save interval',exact=True)
+                autosave=page.get_by_role('switch',name='Save automatically on this device',exact=True)
+                assert interval.is_disabled();autosave.check();assert interval.is_enabled();autosave.uncheck();assert interval.is_disabled()
+            def chrome():
+                return page.get_by_role('dialog').evaluate('''dialog=>{
+                  const controls=[dialog.querySelector('.mantine-Modal-header'),dialog.querySelector('[role="tablist"]'),...[...dialog.querySelectorAll('button')].filter(e=>['Apply','Cancel'].includes(e.textContent))];
+                  return {count:controls.length,visible:controls.every(e=>{const r=e.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth}),
+                    usable:controls.slice(-2).every(e=>{const r=e.getBoundingClientRect();return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}),
+                    outerScroll:dialog.scrollHeight-dialog.clientHeight};}''')
+            before=chrome();assert before=={'count':4,'visible':True,'usable':True,'outerScroll':0},(width,height,tab,before)
+            page.get_by_role('tabpanel').evaluate('(e)=>e.scrollTop=e.scrollHeight');settled()
+            after=chrome();assert after==before,(width,height,tab,after)
+            settings.append({'viewport':[width,height],'tab':tab,'actions_visible_after_scroll':True})
+        if width==360:page.screenshot(path=str(OUT/'settings-storage-360x640.png'))
     page.get_by_role('button',name='Cancel',exact=True).click()
     assert not errors,errors
-    report={'passed':True,'scope':'Real Chromium with production UI/controller/capture and synthetic LCD pixels; no ROM execution implied','layouts':results,'scaling':scaled,'pause_resume':True,'settings_apply_cancel':True,'mobile_actions_sidebar':True,'page_errors':errors}
+    report={'passed':True,'scope':'Real Chromium with production UI/controller/capture and synthetic LCD pixels; no ROM execution implied','layouts':results,'scaling':scaled,'pause_resume':True,'settings_apply_cancel':True,'settings_scroll_containment':settings,'menu_keyboard_isolation':True,'mobile_actions_sidebar':True,'page_errors':errors}
     (OUT/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report));browser.close()

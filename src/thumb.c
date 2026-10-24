@@ -112,7 +112,7 @@ void o_thumb(orchard_machine *m, uint16_t op) {
             if (!(list & (1u << r))) continue;
             uint32_t value;
             if (pop) {
-                if (!o_load(m, address, 4, false, &value)) return;
+                if (!o_load_multiple(m, address, false, &value)) return;
                 o_putr(c, r, value); /* ARMv4T POP PC stays in Thumb state. */
             } else if (!o_store(m, address, 4, false, c->r[r])) return;
             address += 4;
@@ -122,13 +122,12 @@ void o_thumb(orchard_machine *m, uint16_t op) {
         unsigned rb = (op >> 8) & 7u;
         uint32_t list = op & 255u, address = c->r[rb];
         bool load = (op & 0x800u) != 0;
-        if (!list || (!load && (list & (1u << rb)) && (list & ((1u << rb) - 1u)))) {
-            fail(m, op); return;
-        }
+        if (!list) { fail(m, op); return; }
+        /* Match ARM STM's documented original-base compatibility choice. */
         for (unsigned r = 0; r < 8; ++r) {
             if (!(list & (1u << r))) continue;
             if (load) {
-                if (!o_load(m, address, 4, false, &c->r[r])) return;
+                if (!o_load_multiple(m, address, false, &c->r[r])) return;
             } else if (!o_store(m, address, 4, false, c->r[r])) return;
             address += 4;
         }

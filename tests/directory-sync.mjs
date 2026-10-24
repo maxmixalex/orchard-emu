@@ -68,6 +68,25 @@ for(const choose of ['keep','local','card']){
   if(choose==='local'){check(()=>assert.equal(readSDTree(r.bytes).length,0));check(()=>assert.equal(directory.children.has('FOLDER'),false));}
   if(choose==='card'){check(()=>assert.deepEqual(directory.children.get('FOLDER').children.get('A').bytes,bytes(10)));check(()=>assert.equal(r.failed.length,0));}
 }
+// Independently reaching the same subtree result is already synchronized.
+// Matching deletions and directory-to-file replacements need no conflict UI
+// and must discard the obsolete subtree baseline in the same apply.
+for(const replacement of [null,bytes(8,9)]){
+  const directory=new LocalDirectory(),folder=directory.dir('FOLDER');
+  folder.file('A',bytes(1));folder.dir('NESTED').file('B',bytes(2));
+  const initial=await imported(directory);directory.children.delete('FOLDER');
+  let image=initial.bytes;
+  for(const path of ['/FOLDER/NESTED/B','/FOLDER/NESTED','/FOLDER/A','/FOLDER'])image=deleteSDEntry(image,path);
+  if(replacement){directory.file('FOLDER',replacement);image=addSDFiles(image,'/',[{name:'FOLDER',bytes:replacement}]);}
+  const p=await planDirectorySync(image,initial.association);
+  check(()=>assert.deepEqual(directorySyncSummary(p),{toCard:0,toLocal:0,deletions:0,conflicts:0}));
+  check(()=>assert(p.entries.every(entry=>entry.direction==='same'&&!entry.group)));
+  const r=await applyDirectorySync(p);
+  check(()=>assert.deepEqual(r.conflicts,[]));check(()=>assert.deepEqual(r.failed,[]));
+  check(()=>assert.deepEqual(r.association.baseline.map(entry=>entry.source),replacement?['FOLDER']:[]));
+  const next=await planDirectorySync(r.bytes,r.association);
+  check(()=>assert.deepEqual(directorySyncSummary(next),{toCard:0,toLocal:0,deletions:0,conflicts:0}));
+}
 // Changed preview is rejected before any host writes and leaves source image.
 const stale=new LocalDirectory(),staleFile=stale.file('A',bytes(1)),staleCard=await imported(stale);
 const staleImage=put(staleCard.bytes,'/A',bytes(2)),stalePlan=await planDirectorySync(staleImage,staleCard.association);
@@ -112,6 +131,9 @@ for(const direction of ['local','card']){
   check(()=>assert.deepEqual(readSDFile(typedResult.bytes,'/NODE'),bytes(4)));
   check(()=>assert.deepEqual(typed.children.get('NODE').bytes,bytes(4)));
   check(()=>assert.equal(typedResult.failed.length,0));
+  check(()=>assert.deepEqual(typedResult.association.baseline.map(entry=>entry.source),['NODE']));
+  const typedNext=await planDirectorySync(typedResult.bytes,typedResult.association);
+  check(()=>assert.deepEqual(directorySyncSummary(typedNext),{toCard:0,toLocal:0,deletions:0,conflicts:0}));
 }
 // Reconciliation preserves metadata for untouched and rewritten files, rejects
 // readonly changes and rolls back a late capacity failure in one private copy.

@@ -58,7 +58,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 OBSERVE = r"""(() => {
   const NativeWorker=window.Worker;
-  window.__transferProbe={events:[],snapshot:null,snapshots:0,errors:[]};
+  window.__transferProbe={events:[],snapshot:null,snapshots:0,inputActivity:0,errors:[]};
   window.Worker=class extends NativeWorker {
     constructor(...args) {
       super(...args);
@@ -68,6 +68,7 @@ OBSERVE = r"""(() => {
           p.snapshot={loaded:d.loaded,running:d.running,stopped:d.stopped,model:d.model,width:d.width,height:d.height,pending:d.pending,active:d.active,
             ticks:d.tick??(d.state?d.state[22]+d.state[23]*4294967296:null)};
           ++p.snapshots;
+          if(d.pending>0||d.active!=null)++p.inputActivity;
         }
         else if(d.type==='file-transfer-status'||d.type==='file-transfer-listing'||d.type==='usb-status'||d.type==='serial-status'||d.type==='checkpoint-restored'){
           if(p.events.length<1024)p.events.push(d);
@@ -93,13 +94,16 @@ def terminal(page, mode, after, transport='usb'):
 
 def physical_keys(page, scans):
     for scan in scans:
+        before = page.evaluate('window.__transferProbe.inputActivity')
         page.locator(f'.skin-key[data-scan="{scan}"]').click()
-    after = page.evaluate('window.__transferProbe.snapshots')
-    page.wait_for_function('''after=>window.__transferProbe.snapshots>after&&
-      window.__transferProbe.snapshot?.pending===0&&
-      window.__transferProbe.snapshot?.active===null&&
-      window.__transferProbe.snapshot?.running===true''',
-                           arg=after, timeout=300000)
+        # A fresh idle snapshot can predate the input command at the Worker.
+        # Observe the contact first, then its release; never inject a guest key
+        # or infer acceptance solely from elapsed browser time.
+        page.wait_for_function('''before=>window.__transferProbe.inputActivity>before&&
+          window.__transferProbe.snapshot?.pending===0&&
+          window.__transferProbe.snapshot?.active===null&&
+          window.__transferProbe.snapshot?.running===true''',
+                               arg=before, timeout=300000, polling=50)
 
 
 def active_send_keys(name):

@@ -73,6 +73,13 @@ window.__guestChanges=()=>{
   card=deleteSDEntry(card,'/README');card=addSDFiles(card,'/',[{name:'GUEST.ANY',bytes:new Uint8Array([8,0,255])}]);
   controller.patch({sd:{...controller.state.sd,dirty:true,writtenBlocks:5}});
 };
+window.__guestConvergingBoundaries=()=>{
+  const empty=controller.sdDirectory.mappings.find(entry=>entry.source==='Empty folder').card;
+  card=deleteSDEntry(deleteSDEntry(card,'/PROGRAMS/NESTED'),'/PROGRAMS');
+  card=addSDFiles(card,'/',[{name:'PROGRAMS',bytes:new Uint8Array([31,0,255])}]);
+  card=deleteSDEntry(card,empty);
+  controller.patch({sd:{...controller.state.sd,dirty:true,writtenBlocks:9}});
+};
 function Fixture(){
   const state=useSyncExternalStore(controller.subscribe,controller.getSnapshot),[open,setOpen]=useState(true);
   return <MantineProvider><Button onClick={()=>setOpen(true)}>Open SD sidebar</Button>

@@ -198,6 +198,33 @@ static void lcd(void) {
     }
     orchard_reset(&m); write_reg(0x4d000000, 0x221);
     CHECK(!o_phys_write(&m, 0x4d000008, 4, 0x100)); CHECK(m.soc.lcd[2] == 0);
+    /* CLKVAL is writable while ENVID remains set (UM 15-26). Live divider
+     * updates keep the current line/elapsed phase in this functional model. */
+    orchard_reset(&m);
+    write_reg(0x4d000004, 2u << 14);
+    write_reg(0x4d000008, 7u << 8 | 3u);
+    write_reg(0x4d000000, 0x1421); /* 376 HCLK per line. */
+    lcd_ticks(120);
+    write_reg(0x4d000000, 0x0a21); /* Tetris+ 1.1: 216 HCLK per line. */
+    CHECK(m.soc.lcd_line == 2 && m.soc.lcd_phase == 120 && m.soc.lcd_frames == 0);
+    CHECK((read_reg(0x4d000000) & 0x3ffffu) == 0x0a21);
+    lcd_ticks(95); CHECK(m.soc.lcd_line == 2 && m.soc.lcd_phase == 215);
+    lcd_ticks(1); CHECK(m.soc.lcd_line == 1 && m.soc.lcd_phase == 0);
+    lcd_ticks(10); write_reg(0x4d000000, 0x0f21); /* Lengthen to 296 HCLK. */
+    CHECK(m.soc.lcd_line == 1 && m.soc.lcd_phase == 10);
+    lcd_ticks(285); CHECK(m.soc.lcd_line == 1);
+    lcd_ticks(1); CHECK(m.soc.lcd_line == 0 && m.soc.lcd_frames == 0);
+    lcd_ticks(250); write_reg(0x4d000000, 0x0a21); /* New period already elapsed. */
+    CHECK(m.soc.lcd_phase == 250 && m.soc.lcd_frames == 0);
+    lcd_ticks(1); CHECK(m.soc.lcd_line == 2 && m.soc.lcd_phase == 0 && m.soc.lcd_frames == 1);
+    CHECK(read_reg(0x4d000058) == 2);
+    lcd_ticks(17); write_reg(0x4d000000, read_reg(0x4d000000));
+    CHECK(m.soc.lcd_phase == 17 && m.soc.lcd_line == 2); /* RO bits do not restart. */
+    CHECK(!o_phys_write(&m, 0x4d000000, 4, 0x0a23)); /* Format change still unsupported. */
+    CHECK(m.soc.lcd[0] == 0x0a21);
+    orchard_reset(&m); write_reg(0x4d000000, 0x0a21);
+    CHECK(!o_phys_write(&m, 0x4d000000, 4, 0x0121)); /* STN CLKVAL must be >= 2. */
+    CHECK(m.soc.lcd[0] == 0x0a21);
     orchard_reset(&m); CHECK(m.soc.lcd_line == 0 && m.soc.lcd_frames == 0);
 }
 EXPORT("regression") unsigned run(void) {

@@ -323,14 +323,19 @@ static void block_transfer(orchard_machine *m, uint32_t op) {
     uint32_t loaded_pc = 0;
     unsigned first = 0;
     while (!(list & (1u << first))) ++first;
-    if (!load && wb && (list & (1u << rn)) && rn != first) {
+    /* For ordinary STM the original register values, including the base,
+     * are stored before writeback. ARM DDI 0100I A4.1.97 leaves a non-lowest
+     * stored base UNPREDICTABLE; our deterministic choice supports HP-GCC's
+     * full-context push/pop. The conflicting Samsung text and physical
+     * validation limit are recorded in docs/development/arm-memory.md. */
+    if (!load && user && wb && (list & (1u << rn)) && rn != first) {
         unpredictable(m, op); return;
     }
     for (unsigned r = 0; r < 16; ++r) {
         if (!(list & (1u << r))) continue;
         uint32_t value;
         if (load) {
-            if (!o_load(m, address, 4, false, &value)) return;
+            if (!o_load_multiple(m, address, false, &value)) return;
             if (r == 15) loaded_pc = value;
             else if (user) o_put_user(c, r, value);
             else c->r[r] = value;

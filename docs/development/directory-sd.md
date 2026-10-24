@@ -77,6 +77,10 @@ on browser rename support outside origin-private storage. Selecting one side of
 a conflict can overwrite or delete the other side; the default preserves both.
 A successful path advances the common baseline. Unresolved or failed paths retain
 the older baseline, so retries do not silently reinterpret one side as authoritative.
+Matching folder deletions, or identical replacements of a folder by a file on
+both sides, advance without a false subtree conflict. Completed folder-to-file
+replacements remove obsolete child entries from the baseline, including paths
+which are now unreachable beneath the file. A second preview is then empty.
 
 Before any local mutation, the complete directory is reread and compared with
 the preview. A changed preview is rejected. Each individual destination is then
@@ -151,14 +155,16 @@ insertion.
 
 - `node tests/sd-directory.mjs`: existing 68 import, alias, capacity, fallback,
   original-name and additive-API regressions.
-- `node tests/directory-sync.mjs`: 86 focused checks for independent changes,
+- `node tests/directory-sync.mjs`: 102 focused checks for independent changes,
   bilateral deletion/rename, explicit conflict choices, subtree replacement,
   stale previews, late file edits, late arriving children, asynchronous cancellation before deletion/open/write/commit, partial failures,
-  retryable baselines, alias stability, metadata and transactional FAT rollback.
+  retryable baselines, matching subtree deletion/replacement, obsolete-child
+  baseline cleanup, alias stability, metadata and transactional FAT rollback.
 - `python3 tests/browser-sd-directory.py`: real Chromium OPFS directory handles,
   file streams and IndexedDB structured cloning. The production React controls
   and controller exercise import, original-name mapping, paused media handoff,
   two-way edits/deletion/conflict resolution, reinsertion, running/paused state,
+  matching directory deletion/replacement with persisted obsolete-child cleanup,
   reload/reassociation, wrong-card rejection, forgetting, fallback input, capacity
   recovery and a 390px Chinese layout. Only the directory picker and Worker media
   acknowledgements are adapted; the native permission dialog is not automated.

@@ -219,7 +219,32 @@ for(const model of [1,2])for(const boundary of ['files','bytes'])for(const endin
   const files=events.filter(e=>e.type==='file-transfer-received');assert.equal(files.length,1);assert.deepEqual(files[0].bytes,original);
   if(ending==='new-owner')f.cancel(++tick);
 }
-for(const [model,transport] of [[1,'serial'],[2,'serial'],[3,'usb'],[4,'usb']]){
+// The original 39gs serial connector uses the same Wire frames through UART0,
+// including continuous receive and fresh ownership after Stop. USB methods
+// must never be touched on this route.
+{
+  const memory={buffer:new ArrayBuffer(2048)},written=[],events=[];
+  const core={memory,timebase_hz:()=>1000,uart_input:()=>0,uart_send:count=>{
+    written.push(...new Uint8Array(memory.buffer,0,count));return count;
+  }};
+  const f=new FileTransfer({core,usb:{},model:2,notify:e=>events.push(e)});
+  assert.equal(canReceiveHp39Wire(2,'serial'),true);
+  f.start({request:20,mode:'receive',protocol:'hp39-wire',transport:'serial'},0);
+  f.poll(1);assert.deepEqual(written.splice(0),[68]);
+  for(const [i,original] of [note('First',[0,255,0]),note('Second',[4,68,24])].entries()){
+    const tick=2+i*3;assert(f.receiveUart(hp39WireBlock(1,pad(original)),tick));
+    f.poll(tick);assert.deepEqual(written.splice(0),[6]);
+    assert(f.receiveUart(Uint8Array.of(4),tick+1));f.poll(tick+1);
+    assert.deepEqual(events.filter(e=>e.type==='file-transfer-received')[i].bytes,original);
+    assert(f.active);written.splice(0);
+  }
+  f.cancel(10);written.splice(0);assert.equal(f.pending,false);
+  assert.equal(f.receiveUart(Uint8Array.of(4),11),false);
+  f.start({request:21,mode:'receive',protocol:'hp39-wire',transport:'serial'},12);
+  f.poll(13);assert.deepEqual(written,[68]);f.cancel(14);
+  assert.equal(events.filter(e=>e.type==='file-transfer-received').length,2);
+}
+for(const [model,transport] of [[1,'serial'],[3,'usb'],[3,'serial'],[4,'usb']]){
   assert.equal(canReceiveHp39Wire(model,transport),false);
   const f=new FileTransfer({core:{timebase_hz:()=>1000},usb:{endpoint:()=>({maxPacket:64})},model,notify:()=>{}});
   assert.throws(()=>f.start({request:1,mode:'receive',protocol:'hp39-wire',transport},0));assert.equal(f.active,false);

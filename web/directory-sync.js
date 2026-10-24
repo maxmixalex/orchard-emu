@@ -59,6 +59,10 @@ export async function planDirectorySync(image,association,options={}){
   // Deleting/replacing a directory conflicts with any change on the other
   // side below it. Resolve the subtree as one unit, never orphan its children.
   for(const entry of entries){
+    // Both sides can have independently deleted or identically replaced the
+    // entire subtree. Its removed children changed relative to the baseline,
+    // but those matching changes do not introduce a competing version.
+    if(entry.direction==='same')continue;
     if(![entry.base,entry.card,entry.local].some(value=>value?.type==='directory'))continue;
     const cardBoundary=entry.card?.type!=='directory',localBoundary=entry.local?.type!=='directory';
     const children=entries.filter(child=>child!==entry&&inside(child.source,entry.source));
@@ -172,7 +176,11 @@ export async function applyDirectorySync(plan,choices={},options={}){
     guard(options);
     if(selected.get(entry.source)==='keep')continue;
     const finalCard=desired.get(entry.source)||null;
-    if(equal(await readEntry(root,entry.source),finalCard)){
+    const local=await readEntry(root,entry.source);guard(options);
+    // A replaced directory's old descendants are absent beneath the new
+    // file. Keep the blocked marker for mutation checks above, but do not
+    // retain those obsolete descendants as a competing baseline version.
+    if(equal(local,finalCard)||!finalCard&&local?.type==='blocked'){
       if(finalCard)baseline.set(entry.source,plain({...finalCard,source:entry.source}));else baseline.delete(entry.source);
     }
   }

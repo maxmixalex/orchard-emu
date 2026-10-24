@@ -10,6 +10,7 @@ import {listSDDirectory,addSDFiles} from '../web/sd-filesystem.js';
 import {MAX_STATE} from '../web/session.js';
 import {Pacer} from '../web/pacing.js';
 import {LCDFrames} from '../web/lcd-frames.js';
+import {IrDAInput} from '../web/irda-input.js';
 import {TapQueue} from '../web/hp48.js';
 
 const {instance:{exports:core}}=await WebAssembly.instantiate(readFileSync('dist/orchard.wasm'),{});
@@ -17,7 +18,7 @@ assert.equal(core.create(5),0);
 const rom=new Uint8Array(2*1024*1024);new DataView(rom.buffer).setUint32(0,0xeafffffe,true);
 new Uint8Array(core.memory.buffer,core.rom_buffer(),rom.length).set(rom);assert.equal(core.load(rom.length),0);
 const source=readFileSync('web/worker.js','utf8').replace(/^import .*;\n/gm,'').split('\ntry {\n  const response=await fetch')[0];
-const output=[],scope={readSDState,validateSDSize,listSDDirectory,MAX_STATE,Pacer,LCDFrames,TapQueue,
+const output=[],scope={readSDState,validateSDSize,listSDDirectory,MAX_STATE,Pacer,LCDFrames,IrDAInput,TapQueue,
   TaskScheduler:class{schedule(){return 1;}cancel(){}},Uint8Array,Uint32Array,ArrayBuffer,
   performance:{now:()=>0},self:{},initialCore:core,
   postMessage:(data,transfer=[])=>output.push(structuredClone(data,{transfer}))};

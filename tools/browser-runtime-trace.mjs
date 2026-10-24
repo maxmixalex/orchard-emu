@@ -107,7 +107,7 @@ export function validateRuntimeTrace(trace, identity=trace) {
     const result=observation.result_worker_event,posted=trace.events[result?.seq-1];
     ensure(result?.epoch===trace.epoch&&posted?.type==='snapshot-post','result snapshot association');
     const command=trace.events.find(row=>row.type==='command'&&row.main_seq===observation.last_command_seq);
-    ensure(command&&['tap','tap-sequence'].includes(command.command)&&command.seq<posted.seq,'input command association');
+    ensure(command&&['tap','tap-sequence','key-down'].includes(command.command)&&command.seq<posted.seq,'input command association');
     ensure(trace.events.some(row=>row.type==='key-contact'&&row.down&&row.result===0&&
       row.scan===observation.completion_scan&&row.seq>command.seq&&row.seq<posted.seq),'completion key did not reach the guest');
   }

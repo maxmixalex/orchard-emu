@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Key outlines/legends derive from the separate Apache-2.0 hp-calcs-svg manifest.
 // Keep licenses/hp-calcs-svg/LICENSE.txt and NOTICE.txt with distributed artwork.
+import {bindCalculatorKey} from './key-input.js';
 const NS='http://www.w3.org/2000/svg';
 const ATTRS=new Set(['d','x','y','width','height','rx','ry','cx','cy','r']);
 const legend=value=>({'double-colon':'∷','return-arrow':'↵',uparrow:'↑',downarrow:'↓'}[value]||value);
@@ -10,9 +11,9 @@ const measure=root=>{const b=root.getBBox();return {x:b.x-8,y:b.y-8,width:b.widt
 const dimensions=(node,bounds)=>{node.setAttribute('viewBox',Object.values(bounds).join(' '));node.style.aspectRatio=`${bounds.width}/${bounds.height}`;};
 const reveal=node=>{for(const name of ['position','visibility','left','top'])node.style.removeProperty(name);};
 export class TraditionalKeypad {
-  constructor(host,spec,tap,{softHost=null}={}){
+  constructor(host,spec,tap,{softHost=null,press,release}={}){
     if(!spec||spec.keys?.length!==51)throw Error('Invalid keyboard geometry');
-    this.host=host;this.softHost=softHost;this.enabled=false;this.buttons=[];this.placements=[];this.landscape=false;
+    this.host=host;this.softHost=softHost;this.enabled=false;this.buttons=[];this.placements=[];this.landscape=false;this.cancelInputs=[];
     this.svg=svg('svg',{'class':'traditional-geometry','aria-label':spec.name,role:'group'});
     this.root=svg('g');this.svg.append(this.root);
     // Measure in an attached, unhidden tree, including when immersive mode is active.
@@ -39,9 +40,7 @@ export class TraditionalKeypad {
       text(legend(key.shift),x,y-7,'key-shift','start',13);
       text(legend(key.right),x+w,y-7,'key-right','end',13);
       text(key.alpha,x+w-5,y+h-4,'key-alpha','end',11);
-      const activate=()=>{if(this.enabled)tap(key.scan);};
-      group.addEventListener('click',activate);
-      group.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();activate();}});
+      this.cancelInputs.push(bindCalculatorKey(group,{enabled:()=>this.enabled,tap:()=>tap(key.scan),press:press?source=>press(key.scan,source):undefined,release}));
       this.buttons.push(group);
     }
     this.portraitBounds=measure(this.root);this.bounds=this.portraitBounds;
@@ -62,7 +61,8 @@ export class TraditionalKeypad {
     for(const {scan,node} of this.placements)(landscape&&scan>=35&&scan<=40?this.softRoot:this.root).append(node);
     this.bounds=landscape?this.mainBounds:this.portraitBounds;dimensions(this.svg,this.bounds);
   }
-  setEnabled(value){this.enabled=Boolean(value);for(const b of this.buttons){b.setAttribute('aria-disabled',String(!this.enabled));b.setAttribute('tabindex',this.enabled?'0':'-1');}}
-  update(active){for(const b of this.buttons)b.setAttribute('aria-pressed',String(Number(b.dataset.scan)===active));}
-  destroy(){this.host.replaceChildren();this.softHost?.replaceChildren();this.buttons=[];this.placements=[];}
+  releaseInputs(){this.cancelInputs.forEach(cancel=>cancel());}
+  setEnabled(value){this.enabled=Boolean(value);if(!this.enabled)this.releaseInputs();for(const b of this.buttons){b.setAttribute('aria-disabled',String(!this.enabled));b.setAttribute('tabindex',this.enabled?'0':'-1');}}
+  update(active,activeKeys){const pressed=activeKeys??(active===null?[]:[active]);for(const b of this.buttons)b.setAttribute('aria-pressed',String(pressed.includes(Number(b.dataset.scan))));}
+  destroy(){this.releaseInputs();this.cancelInputs=[];this.host.replaceChildren();this.softHost?.replaceChildren();this.buttons=[];this.placements=[];}
 }

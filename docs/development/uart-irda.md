@@ -37,6 +37,16 @@ not the host staging depth. The staging queues have 1,024 bytes per direction
 and provide host backpressure; an accepted staged byte has not yet arrived at
 the chip. Callers must honor the returned accepted length.
 
+`UFCON` receive reset clears the chip's current holding register/FIFO, receive
+error state and receive event. It preserves future bytes in the host staging
+queue. With RX still enabled, normal servicing immediately refills the empty
+hardware buffer from that queue; with RX disabled those bytes wait for enable.
+The reset does not affect TX or another UART. This distinction is covered with
+identical streams submitted in one or several API calls before the same guest
+tick, in both holding-register and FIFO modes. It does not establish a baud
+timing model or guarantee arbitrary host batching will preserve every firmware
+protocol's turnaround interval.
+
 The implementation covers:
 
 - Per-UART clock gates and RX/TX enables; 5–8-bit data masking and stored line
@@ -87,9 +97,43 @@ the line mode of a byte that has already been emitted.
 
 Deliver only while the destination is clocked, configured for infrared, has
 RX enabled, and is not in internal loopback.
-Bytes emitted while the destination is unavailable must not be held until a
+Bytes arriving while the destination is unavailable must not be held until a
 later unrelated receive operation. The browser relay applies this readiness
 policy separately from the core's flow-controlled staging API.
+
+The tab relay's version 2 messages preserve each output chunk's sender virtual
+tick observed when a bounded core run is followed by draining UART output.
+This is a batch timestamp, not an exact per-byte emission time or waveform.
+Already queued chunks may share a host message, but their observed tick
+boundaries remain separate segments. The receiving Worker schedules those
+segments on its own guest clock, retaining the observed sender intervals when
+browser delivery arrives in a burst. It never parses IrLAP, generates a peer
+response or assigns a guessed baud rate. Previously, merging the last discovery
+frame with the following connection request could consume their entire gap:
+both original calculators then reached their own SEND/RECV timeout despite
+every byte having been accepted by the core. A fixed original-ROM witness
+reproduces this with a 94-byte batch and a 143,552-reference-tick interval;
+retaining that interval completes the actual transfer and object recall.
+
+Each packet contains at most 1,024 bytes and 1,024 segments; each direction has
+one packet in flight and at most 16 KiB queued. The source timestamps must be
+safe, monotonic integers. Queued source spans and a receiver's initial future
+lead are each bounded to 12 million reference ticks, one functional second.
+Each packet also has a finite guest-time deadline consisting of its scheduled
+span plus one second for input backpressure. Actual guest-clock progress keeps
+the host/peer liveness timers alive during a scheduled wait; it cannot extend
+that guest-time deadline. A receiver checks readiness when each segment is due:
+a temporarily disabled receiver does not lose a later, not-yet-arrived segment.
+The count shown as received includes only bytes actually accepted by the core,
+including when other segments in the consumed packet were discarded.
+
+The controller and Worker use a separate connection epoch, even when the
+calculator generation remains unchanged. Disconnect, Pause, reset, save and
+restore clear transport segments that have not reached the core; delayed old
+Worker output, progress and completions cannot enter a new pairing. These
+future transport segments are not serialized as calculator state. This does
+not roll back bytes already accepted into core UART buffers. Version 1 tabs
+must be reloaded to pair with the current transport.
 
 `tests/irda-worker.mjs` runs generated ARM instructions through the actual WASM
 and production Worker. It checks send-then-disable and send-then-mode-change

@@ -41,7 +41,7 @@
 #calculator[data-view^=traditional] .traditional-keypad{display:block;width:100%}
 #calculator:not([data-view^=traditional]) .traditional-keypad{display:none}
 .traditional-geometry{display:block;width:100%;height:auto;overflow:visible}
-.traditional-geometry .traditional-key{display:inline;min-height:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;transform:none;cursor:pointer;fill:#f7f9f8;color:inherit}
+.traditional-geometry .traditional-key{display:inline;min-height:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;transform:none;cursor:pointer;fill:#f7f9f8;color:inherit;touch-action:none}
 .traditional-geometry .key-outline{fill:#3d4543;stroke:#202926;stroke-width:1.4}
 .traditional-geometry .key-face{fill:#fafbfa;font-weight:650;paint-order:stroke;stroke:none}
 .traditional-geometry .key-shift{fill:#146490;font-weight:650}

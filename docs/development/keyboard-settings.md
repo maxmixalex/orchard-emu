@@ -128,3 +128,73 @@ screenshots to `build/keyboard-r22-{wide,mobile}.png`.
 This is a UI and input-routing witness. It does not replace stock-ROM keyboard
 and Alpha-state tests, and it does not claim that a mocked layout source is an
 actual keyboard device or a complete hardware survey.
+
+## Held physical keys
+
+A PC binding with one calculator key now closes that contact from `keydown`
+until `keyup`. OS keyboard repeat does not enqueue more taps. Mouse and touch
+input use pointer capture and independent pointer owners, so directions can be
+held and simultaneous contacts can overlap. Two sources holding the same scan
+cannot release one another. All pressed contacts are highlighted in both views.
+Multi-key bindings, keyboard activation of a focused on-screen button and
+assistive clicks remain finite sequences.
+
+Short clicks retain the model's tested minimum virtual dwell and release gap:
+HP39g+ uses 1.5 million / 600,000 ticks; the other calculator presets use
+600,000 / 360,000 ticks. Rapid clicks, including repeated clicks on one key,
+remain ordered. A genuine hold has no timeout and does not depend on browser
+repeat or the selected execution speed. Finite macros wait for current held
+contacts to be released. The existing ON/F4 and ON/F3 system chords retain
+their explicit overlap and timing.
+
+Pointer cancellation or lost capture releases immediately. Blur, page hiding,
+pause, a modal, reset, model/view changes and teardown clear input even when
+the preference allows the calculator to keep running in the background.
+The shared reset clears the displayed keys' pointer owners and DOM capture as
+well as the Worker contacts. This also applies while IrDA keeps paired tabs
+running; returning to the tab cannot route the next click to a previous key.
+Cancelled queued pointers never execute later. The keyboard mapping editor
+has no live-contact callbacks, so selecting a printed key cannot press it.
+
+`tests/system-keys.mjs` verifies independent contact timelines, short-click
+ordering, ownership, macros and cancellation. `tests/worker-pacing.mjs`
+executes the production Worker down/up handlers at half, normal, double and
+unlimited speed. `tests/browser-held-keys.py` uses Chromium keyboard, mouse
+capture and CDP multi-touch dispatch to verify real DOM events, lifecycle
+cleanup and both calculator views. Its background cases cover blur and page
+hiding with pause disabled, and with pause overridden by an active IrDA pair,
+then require a click on another key to reach that key. Pointer events and
+capture are real; headless lifecycle events and snapshots are synthetic.
+
+`tools/verify-held-keys-browser.py` is the separate original-ROM witness. It
+opens an unchanged admitted HP39g+/HP39gs ROM and stock-installed Arkalite
+game checkpoint through the production file inputs, holds keyboard left and
+touch right for at least 12 million virtual ticks each, checks the paddle's
+actual pixel movement and contact release, quits with DEL, and compares the
+complete visible 1+1=2 frame against the independently executed native program.
+It records asset/input hashes and private screenshots without changing guest
+memory. This is bounded functional evidence, not a timing benchmark or a
+claim of complete game, browser or physical touch-device coverage.
+
+The same driver accepts `--scenario tetris` for the original native ARM Tetris+
+on HP39g+ only. It restores the original cold-installed game's checkpoint,
+holds keyboard left and touch right/Shift/Alpha for at least 12 million ticks
+each, requires exactly one down/up pair per hold, checks continued display
+updates, exits with ON and returns through HOME. Both the whole `1+1=2` LCD
+and its arithmetic area (rows 16–55) must match the native run. The initial
+Tetris piece is square, so Shift/Alpha exercise held contacts and continued
+execution without claiming a visible rotation of that piece.
+
+`--exit-hold-ticks 2000000` explicitly tests a sustained DEL/ON contact during
+program return. The default remains an ordinary short click. Reports name the
+exit operation and retain its actual down/up messages and observed contact
+snapshots. A passing held-DEL case does not replace a failed short-click case
+or change the product's click dwell; those outcomes remain separate.
+
+Arkalite's post-DEL program return needs its own settling interval before HOME
+and subsequent typing. The browser witness now allows the same 60 million
+ticks used by the native program test. Native HP39gs trials at 600,000,
+1.5 million and 2 million ticks across three input phase offsets all return
+and calculate correctly with that interval. The initial shorter browser
+settle could type before the game had returned; it did not establish a
+missed physical contact and did not justify changing normal click timing.

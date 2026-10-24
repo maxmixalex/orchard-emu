@@ -18,6 +18,7 @@ import { AUTO_PREFIX, readPreferences, writePreferences, validatePreferences,
 import { MAX_FILE_BYTES, MAX_UPLOAD_FILES, MAX_UPLOAD_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename, validateUpload, transferCapabilities, canReceiveHp39Wire } from './file-transfer.js';
 import {bridgeAddress,bridgeToken} from './host-bridge-protocol.js';
 import {IrDALink,irdaCode,newIrdaCode} from './irda-link.js';
+import {irdaTimeline,irdaSuffix} from './irda-input.js';
 const bridgeDisconnected=()=>({active:false,phase:'disconnected',ready:false,attached:false,usbipPort:null,errorCode:null});
 const irdaDisconnected=()=>({active:false,phase:'disconnected',error:null,code:'',peer:null,sent:0,received:0});
 export class CalculatorController {
@@ -30,7 +31,7 @@ export class CalculatorController {
     this.writer=crypto.randomUUID(); this.dialogs=[]; this.dialogId=0;
     this.transferRequest=0;this.transferStartedRequest=null;this.transferCancelRequest=null;this.received=new Map();this.receivedId=0;this.uploadQueue=null;
     this.sdDirectory=null;this.sdInsertDirectory=null;this.sdEditPending=null;
-    this.irdaLink=null;this.irdaInput=new Map();this.irdaRequest=0;
+    this.irdaLink=null;this.irdaInput=new Map();this.irdaRequest=0;this.irdaEpoch=0;
     this.state={model:CALCULATORS[0],prefs:readPreferences(storage),ready:false,loaded:false,running:false,sessionEpoch:0,
       busy:false,stopped:false,note:null,dialog:null,sd:null,sdName:'orchard-sd.img',serial:false,usb:false,usbReady:false,usbInfo:null,usbPhase:'Disconnected',log:'',
       transfer:null,uploadBatch:null,receivedFiles:[],transferListing:'',effectiveSpeed:1,transferBoosted:false,
@@ -60,31 +61,41 @@ export class CalculatorController {
     try{
       const code=value?irdaCode(value):newIrdaCode();
       if(typeof BroadcastChannel!=='function')return;
-      const generation=this.generation;
-      this.irdaLink=new IrDALink({code,label:this.state.model.name,
-        receive:bytes=>this.receiveIrDA(bytes,generation),notify:status=>{
-          if(this.dead||generation!==this.generation)return;
-          this.patch({irda:status});this.send('irda-connect',{connected:status.active&&status.phase==='paired'});
+      const generation=this.generation,epoch=++this.irdaEpoch;
+      const link=new IrDALink({code,label:this.state.model.name,
+        receive:(bytes,segments,progress)=>this.receiveIrDA(bytes,generation,link,segments,progress),notify:status=>{
+          if(this.dead||generation!==this.generation||epoch!==this.irdaEpoch)return;
+          this.patch({irda:status});this.send('irda-connect',{connected:status.active&&status.phase==='paired',epoch});
         }});
+      this.irdaLink=link;
       if(!this.state.running)this.send('run');
     }catch(error){this.patch({irda:{...irdaDisconnected(),phase:'error',error:error.code||'code'}});}
   }
   disconnectIrDA(){
-    if(this.irdaLink){const link=this.irdaLink;this.irdaLink=null;link.close();this.send('irda-connect',{connected:false});}
+    if(this.irdaLink){const link=this.irdaLink;this.irdaLink=null;link.close();this.send('irda-connect',{connected:false,epoch:++this.irdaEpoch});}
     for(const pending of this.irdaInput.values()){clearTimeout(pending.timer);pending.reject(Error('IrDA disconnected'));}this.irdaInput.clear();
   }
-  async receiveIrDA(bytes,generation){
-    if(this.dead||generation!==this.generation||!this.irdaLink?.active||!this.state.running)return 0;
+  async receiveIrDA(bytes,generation,link=this.irdaLink,segments,onProgress=()=>{}){
+    if(this.dead||generation!==this.generation||this.irdaLink!==link||!link?.active||!this.state.running)return 0;
+    const timeline=irdaTimeline(bytes.length,segments);
     let offset=0,accepted=0,attempt=0;
     while(offset<bytes.length){
-      if(this.dead||generation!==this.generation||!this.irdaLink?.active)return accepted;
+      // Re-pairing does not replace the calculator generation. A suspended
+      // receive belongs to its original link even if a new peer is now active.
+      if(this.dead||generation!==this.generation||this.irdaLink!==link||!link.active||!this.state.running)return accepted;
       const request=++this.irdaRequest;
       const result=await new Promise((resolve,reject)=>{
-        const timer=setTimeout(()=>{this.irdaInput.delete(request);reject(Error('IrDA worker timeout'));},2000);
-        this.irdaInput.set(request,{resolve,reject,timer});this.send('irda-input',{request,bytes:bytes.subarray(offset)});
+        const pending={resolve,reject,timer:null,tick:-1,epoch:this.irdaEpoch,progress:tick=>{
+          if(this.dead||generation!==this.generation||this.irdaLink!==link||!link.active||!Number.isSafeInteger(tick)||tick<=pending.tick)return;
+          pending.tick=tick;arm();onProgress();
+        }};
+        const arm=()=>{clearTimeout(pending.timer);pending.timer=setTimeout(()=>{this.irdaInput.delete(request);reject(Error('IrDA worker timeout'));},2000);};
+        arm();this.irdaInput.set(request,pending);this.send('irda-input',{request,epoch:pending.epoch,bytes:bytes.subarray(offset),segments:irdaSuffix(timeline,offset)});
       });
+      if(result.error)throw Object.assign(Error('Infrared receive failed'),{code:result.error});
+      accepted+=result.accepted;
       if(result.discarded)return accepted; // Inactive transceivers do not retain earlier light.
-      offset+=result.accepted;accepted+=result.accepted;
+      offset+=result.accepted;
       if(offset<bytes.length){if(++attempt>200)throw Error('IrDA receive overflow');await new Promise(resolve=>setTimeout(resolve,5));}
     }
     return accepted;
@@ -185,6 +196,8 @@ export class CalculatorController {
   pause(){if(this.state.loaded){this.cancelTransfer();this.send('pause');}}
   release(){if(this.state.loaded)this.send('release');}
   tap(scans){if(this.state.loaded&&this.state.running&&!this.state.busy&&!this.state.stopped){this.stopWireAutoReceive(true);this.unlockAudio();this.send('tap-sequence',{scans});}}
+  keyDown(source,scan){if(this.state.loaded&&this.state.running&&!this.state.busy&&!this.state.stopped){this.stopWireAutoReceive(true);this.unlockAudio();this.send('key-down',{source,scan});}}
+  keyUp(source,cancel=false){if(this.state.loaded)this.send('key-up',{source,cancel});}
   stopWireAutoReceive(manual=false){this.wireAutoReceive?.cancel();this.wireAutoReceive=null;if(manual&&this.uploadQueue)this.uploadQueue.autoReceive=false;
     if(this.state.transfer?.autoReceive)this.patch({transfer:{...this.state.transfer,autoReceive:false}});}
   continueWireReceive(frame){
@@ -702,8 +715,9 @@ export class CalculatorController {
       case 'serial-status':this.patch({serial:data.connected});if(!data.connected&&this.state.transfer?.transport==='serial')this.cancelTransfer();break;
       case 'uart-output':this.log('RX '+Array.from(data.bytes,b=>b.toString(16).padStart(2,'0')).join(' '));break;
       case 'uart-sent':this.log(`TX ${data.accepted}/${data.requested}`);break;
-      case 'irda-output':this.irdaLink?.send(data.bytes);break;
-      case 'irda-input-result':{const pending=this.irdaInput.get(data.request);if(pending){this.irdaInput.delete(data.request);clearTimeout(pending.timer);pending.resolve(data);}break;}
+      case 'irda-output':if(data.epoch===this.irdaEpoch)this.irdaLink?.send(data.bytes,data.tick);break;
+      case 'irda-input-progress':{const pending=this.irdaInput.get(data.request);if(pending?.epoch===data.epoch)pending.progress(data.tick);break;}
+      case 'irda-input-result':{const pending=this.irdaInput.get(data.request);if(pending?.epoch===data.epoch){this.irdaInput.delete(data.request);clearTimeout(pending.timer);pending.resolve(data);}break;}
       case 'usb-status':this.patch({usb:data.connected,usbReady:data.phase==='Connected',usbPhase:data.phase,usbInfo:data.info||this.state.usbInfo});if(!data.connected&&this.state.transfer?.transport==='usb')this.cancelTransfer();if(data.error)this.report('usbError',data.error);break;
       case 'usb-packet':this.log(`USB ${data.direction}: ${data.status} ${data.bytes?Array.from(data.bytes,b=>b.toString(16).padStart(2,'0')).join(' '):data.accepted??''}`);break;
       case 'file-transfer-status':this.transferStatus(data);break;

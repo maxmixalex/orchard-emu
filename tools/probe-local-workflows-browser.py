@@ -71,6 +71,64 @@ def remembered_records(page):
         t.onabort=()=>{db.close();reject(t.error)}}})''')
 
 
+def session_roundtrip(page, model, output):
+    before = page.evaluate('window.__transferProbe.snapshots')
+    with page.expect_download() as pending:
+        page.get_by_role('button', name='Save', exact=True).click()
+    saved = output/'manual-session.ord'
+    pending.value.save_as(saved)
+    data = saved.read_bytes()
+    assert data[:8] == b'ORCHARD1'
+    size = int.from_bytes(data[8:12], 'little')
+    assert 0 < size <= 4096 and 12+size < len(data)
+    metadata = json.loads(data[12:12+size])
+    checkpoint = data[12+size:]
+    assert checkpoint[:8] == b'ORCHST01'
+    assert helper.sha(checkpoint) == metadata['stateHash']
+    assert metadata['model'] == model['id'] and metadata['romHash'] == model['rom_sha256']
+    version = int.from_bytes(checkpoint[8:12], 'little')
+    assert version == 7
+    page.wait_for_function('''n=>window.__transferProbe.snapshots>n&&
+      window.__transferProbe.snapshot?.running===false''', arg=before)
+    saved_tick = page.evaluate('window.__transferProbe.snapshot.ticks')
+    saved_frame = frame(page)
+    page.screenshot(path=str(output/'session-saved.png'))
+
+    page.get_by_role('button', name='Resume', exact=True).click()
+    helper.physical_keys(page, (24,3,17,6))  # 7 * 8 ENTER through real keys.
+    settle(page, 12000000)
+    changed_frame = frame(page)
+    assert changed_frame != saved_frame, 'The session must replace an observably changed calculator'
+    page.screenshot(path=str(output/'session-before-restore.png'))
+    before = page.evaluate('window.__transferProbe.events.length')
+    page.locator('#session-file').set_input_files(str(saved.resolve()))
+    page.get_by_role('dialog').get_by_role('button', name='Restore', exact=True).click()
+    page.wait_for_function("n=>window.__transferProbe.events.slice(n).some(e=>e.type==='checkpoint-restored')", arg=before)
+    restored = page.evaluate('n=>window.__transferProbe.events.slice(n).find(e=>e.type==="checkpoint-restored")', before)
+    # A pre-restore running snapshot is insufficient. Require a fresh snapshot
+    # after the restore ACK and actual guest progress, without clicking Resume.
+    after_ack = page.evaluate('window.__transferProbe.snapshots')
+    page.wait_for_function('''v=>window.__transferProbe.snapshots>v.count&&
+      window.__transferProbe.snapshot?.running===true&&
+      window.__transferProbe.snapshot.ticks>v.tick''', arg={'count':after_ack,'tick':saved_tick})
+    running = page.evaluate('window.__transferProbe.snapshot')
+    assert not running['stopped'] and not restored['stopped']
+    before_pause = page.evaluate('window.__transferProbe.snapshots')
+    page.get_by_role('button', name='Pause', exact=True).click()
+    page.wait_for_function('''n=>window.__transferProbe.snapshots>n&&
+      window.__transferProbe.snapshot?.running===false''', arg=before_pause)
+    restored_frame = frame(page)
+    assert restored_frame == saved_frame, 'Restoration changed the complete displayed LCD'
+    page.screenshot(path=str(output/'session-restored.png'))
+    assert saved.read_bytes() == data, 'The downloaded session was changed'
+    page.get_by_role('button', name='Resume', exact=True).click()
+    return {'metadata':metadata,'checkpoint_version':version,'file_sha256':helper.sha(data),
+            'file_bytes':len(data),'saved_tick':saved_tick,'automatically_running_tick':running['ticks'],
+            'restore_ack':restored,'restore_auto_resumed':True,'guest_progress_observed':True,
+            'saved_frame':saved_frame,'changed_frame':changed_frame,'restored_frame':restored_frame,
+            'saved_lcd_restored_exactly':True,'arithmetic_requires_visual_review':True}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--rom', type=Path, required=True)
@@ -79,6 +137,7 @@ def main():
     parser.add_argument('--url')
     parser.add_argument('--expected-revision')
     parser.add_argument('--self-test', action='store_true', help='Also exercise the toolbar and held Escape+F4, then exit by ON+F3')
+    parser.add_argument('--session-roundtrip', action='store_true', help='Download a session, change the calculator, then restore it and verify automatic execution and the exact saved LCD')
     args = parser.parse_args()
     digest = helper.sha(args.rom.read_bytes())
     if digest not in MODELS or args.rom.stat().st_size != MODELS[digest][3]:
@@ -190,7 +249,7 @@ def main():
                 page.get_by_role('button', name='Connections', exact=True).click()
                 assert sidebar.get_by_role('textbox', name='Data', exact=True).input_value() == '01 02 03'
                 if identifier == 5:
-                    page.get_by_role('button', name='SD card', exact=True).click()
+                    sidebar.get_by_role('tab', name='SD card', exact=True).click()
                     sidebar.get_by_text('No card inserted', exact=True).wait_for()
                     sidebar.get_by_role('tab', name='Connections', exact=True).click()
                     assert sidebar.get_by_role('textbox', name='Data', exact=True).input_value() == '01 02 03'
@@ -202,6 +261,10 @@ def main():
                 page.set_viewport_size({'width':1360, 'height':940})
                 page.get_by_role('button', name='Close sidebar', exact=True).click()
                 report['sidebar_keeps_draft_and_calculator_input'] = True
+
+                if args.session_roundtrip:
+                    stage('manual-session-roundtrip')
+                    report['session_roundtrip'] = session_roundtrip(page, model, args.output)
 
                 stage('automatic-rom-reopen')
                 page.reload()

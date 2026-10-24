@@ -81,9 +81,9 @@ export function hp39WireBlock(sequence,bytes,check=68){
 }
 
 export class Hp39WireSender {
-  constructor({write,notify=()=>{},hz=12000000}={}){
-    if(typeof write!=='function'||!Number.isFinite(hz)||hz<=0)throw Error('Invalid HP39 Wire transport.');
-    this.write=write;this.notify=notify;this.hz=hz;this.active=false;this.queue=[];
+  constructor({write,notify=()=>{},hz=12000000,maxBlockSize=1024}={}){
+    if(typeof write!=='function'||!Number.isFinite(hz)||hz<=0||![128,1024].includes(maxBlockSize))throw Error('Invalid HP39 Wire transport.');
+    this.write=write;this.notify=notify;this.hz=hz;this.maxBlockSize=maxBlockSize;this.active=false;this.queue=[];
   }
   get pending(){return this.active||this.queue.length>0;}
   status(phase,error){this.phase=phase;this.notify({active:this.active,phase,protocol:'hp39-wire',direction:'send',
@@ -103,7 +103,7 @@ export class Hp39WireSender {
     if(this.transferred===this.total){this.stage='eot';this.last=Uint8Array.of(4);}
     else{
       this.stage='data';
-      const left=this.total-this.transferred,size=this.check!==21&&left>=1024?1024:128;
+      const left=this.total-this.transferred,size=this.maxBlockSize===1024&&this.check!==21&&left>=1024?1024:128;
       const data=new Uint8Array(size);data.set(this.bytes.subarray(this.transferred,this.transferred+size));
       this.nextOffset=Math.min(this.total,this.transferred+size);this.last=hp39WireBlock(this.sequence,data,this.check);
     }

@@ -159,7 +159,8 @@ static bool aligned(orchard_machine *m, uint32_t address, unsigned width) {
     }
     return true;
 }
-bool o_load(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t *value) {
+static bool load(orchard_machine *m, uint32_t address, unsigned width, bool user,
+                 uint32_t *value, bool rotate) {
     if (!aligned(m, address, width)) return false;
     uint32_t physical;
     user = user || (m->cpu.cpsr & 31u) == O_USR;
@@ -168,8 +169,16 @@ bool o_load(orchard_machine *m, uint32_t address, unsigned width, bool user, uin
         if (m->stop.status == ORCHARD_OK) o_fault(&m->cpu, address, 8, 0, false);
         return false;
     }
-    if (width == 4) *value = o_ror(*value, (address & 3u) * 8u);
+    if (rotate && width == 4) *value = o_ror(*value, (address & 3u) * 8u);
     return true;
+}
+bool o_load(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t *value) {
+    return load(m, address, width, user, value, true);
+}
+bool o_load_multiple(orchard_machine *m, uint32_t address, bool user, uint32_t *value) {
+    /* ARM920T LDM and its Thumb forms transfer whole words, without LDR's
+     * unaligned rotation. Preserve the original address for CP15.A and FAR. */
+    return load(m, address, 4, user, value, false);
 }
 bool o_store(orchard_machine *m, uint32_t address, unsigned width, bool user, uint32_t value) {
     if (!aligned(m, address, width)) return false;
@@ -190,7 +199,8 @@ bool o_cp15(orchard_machine *m, uint32_t op) {
     unsigned crm = op & 15u, op2 = (op >> 5) & 7u;
     uint32_t value = o_getr(c, rd);
     if (read) {
-        if (crn == 0 && crm == 0 && op2 == 0) value = 0x41129200u;
+        /* ARM920T DDI 0151C 2.3.3: every opcode_2 except 1 reads the ID. */
+        if (crn == 0 && crm == 0 && op2 != 1) value = 0x41129200u;
         else if (crn == 0 && crm == 0 && op2 == 1) value = 0x0d172172u;
         else if (crn == 1 && crm == 0 && op2 == 0) value = c->control;
         else if (crn == 2 && crm == 0 && op2 == 0) value = c->ttb;

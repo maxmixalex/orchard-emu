@@ -51,10 +51,10 @@ function payload(size){const p=Uint8Array.from({length:size},(_,i)=>(i*73)&255);
   assert.deepEqual(prepareHp39WireFile('NOTE',text('HP39AscC 1 N\n\\032\\010A\r\nB\n\rC')).bytes.subarray(15),text(' \nA\nB\n\rC'));
 }
 
-function transfer(size,check,{dropAck=false,rejectBlock=false}={}){
+function transfer(size,check,{dropAck=false,rejectBlock=false,maxBlockSize=1024}={}){
   const original=payload(size),received=[],states=[],fragments=[],controls=[];
   let now=0,calls=0,expected=1,dropped=false,rejected=false,frame=[];
-  const s=new Hp39WireSender({hz:1000,notify:x=>states.push(x),write:bytes=>{
+  const s=new Hp39WireSender({hz:1000,maxBlockSize,notify:x=>states.push(x),write:bytes=>{
     if(++calls%7===0)return 0;const n=Math.min(7,bytes.length);fragments.push(bytes.slice(0,n));return n;
   }});
   s.start({name:'APLET.000',bytes:original},now);assert.equal(s.phase,'negotiating');assert.equal(fragments.length,0);
@@ -68,6 +68,7 @@ function transfer(size,check,{dropAck=false,rejectBlock=false}={}){
         frame=[];controls.push(6);continue;
       }
       assert([1,2].includes(frame[0]));const blockSize=frame[0]===1?128:1024,full=blockSize+(check===21?4:5);
+      assert(blockSize<=maxBlockSize,'CRC handshakes never override the transport block-size limit');
       if(frame.length<full)continue;
       assert.equal(frame.length,full);assert.equal(frame[1]+frame[2],255);
       const sequence=frame[1],data=frame.slice(3,3+blockSize);frame=[];
@@ -88,6 +89,9 @@ function transfer(size,check,{dropAck=false,rejectBlock=false}={}){
 for(const check of [21,67,68])for(const size of [11,127,128,129,1023,1024,1025,7373])transfer(size,check);
 transfer(32769,21); // sequence wraps at 256
 transfer(2200,68,{dropAck:true,rejectBlock:true});
+for(const check of [21,67,68])transfer(2200,check,{maxBlockSize:128,dropAck:true,rejectBlock:true});
+transfer(32769,68,{maxBlockSize:128}); // Serial CRC sequence also wraps.
+for(const maxBlockSize of [0,64,129,2048])assert.throws(()=>new Hp39WireSender({write:()=>0,maxBlockSize}));
 {
   const s=new Hp39WireSender({hz:1000,write:b=>b.length});s.start({name:'A',bytes:payload(11)},0);
   s.poll(119999);assert(s.active);s.poll(120000);assert.equal(s.phase,'error');assert.equal(s.pending,false);

@@ -10,6 +10,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {BuzzerStream} from '../web/buzzer-worker.js';
 import {LCDFrames} from '../web/lcd-frames.js';
+import {IrDAInput} from '../web/irda-input.js';
 import {Pacer} from '../web/pacing.js';
 import {FileTransfer} from '../web/file-transfer.js';
 import {transferError,transferErrorDetails} from '../web/transfer-errors.js';
@@ -36,7 +37,7 @@ function fixture(hostHz,{speed=1,model=1,audience='calculator',preset=model===1?
     schedule(fn,delay=0){const id=++next;jobs.set(id,{fn,at:wall+delay});return id;}
     cancel(id){jobs.delete(id);}
   }
-  const scope={transferError,transferErrorDetails,BuzzerStream,LCDFrames,readSDState,validateSDSize,MAX_STATE,Pacer,FileTransfer,TaskScheduler:Scheduler,TapQueue,isPlayable,setupHash,applySetup,VirtualUSB,
+  const scope={transferError,transferErrorDetails,BuzzerStream,LCDFrames,IrDAInput,readSDState,validateSDSize,MAX_STATE,Pacer,FileTransfer,TaskScheduler:Scheduler,TapQueue,isPlayable,setupHash,applySetup,VirtualUSB,
     Uint32Array,Uint8Array,ArrayBuffer,self:{},postMessage:d=>output.push(d),initialCore:core,
     // 250 ns for a monotonic-clock read, 300 ns fixed host cost per core call;
     // the requested hostHz supplies only the per-tick cost. Faster clock reads
@@ -171,3 +172,19 @@ assert(keys.budgets.includes(70),'Input boundaries smaller than the pacing batch
 keys.send({type:'pause'});assert.equal(keys.jobs.size,0);
 
 console.log('Worker pacing: real create defaults; exact HP39 125/50 ms contacts and late-gap taps at .5/1/2/Unlimited; unchanged HP48/workbench timing; legacy run/step and bounded pacing pass.');
+
+for(const speed of [.5,1,2,0]){
+  const f=fixture(150000000,{speed});
+  f.send({type:'key-down',source:'keyboard:ArrowLeft',scan:43});
+  pumpUntil(f,()=>f.input().tick>=4500000);
+  assert.deepEqual(f.presses,[{scan:43,down:1,tick:0}],'A held key must not turn into periodic taps');
+  f.send({type:'key-up',source:'keyboard:ArrowLeft'});
+  assert.deepEqual(f.presses.at(-1),{scan:43,down:0,tick:f.input().tick});
+  f.send({type:'key-down',source:'pointer:1',scan:45});f.send({type:'key-up',source:'pointer:1'});
+  pumpUntil(f,()=>f.presses.length===4);
+  assert.equal(f.presses[3].tick-f.presses[2].tick,1500000,'Short pointer clicks retain original 39g+ debounce');
+  f.send({type:'key-down',source:'keyboard:ArrowUp',scan:42});pumpUntil(f,()=>f.presses.length===5);
+  f.send({type:'pause'});assert.equal(f.input().pending,0);assert.equal(f.presses.at(-1).down,0);
+  assert.equal(f.jobs.size,0);
+}
+console.log('Worker held input: real down/up commands at all four rates preserve sustained contacts, short-click debounce and pause cleanup.');

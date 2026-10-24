@@ -1,9 +1,14 @@
 /* SPDX-License-Identifier: MIT */
 .shell{color:var(--mantine-color-text);background:var(--mantine-color-body)}
 .generalSettings{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--mantine-spacing-xl)}
-.settingsDialog{display:flex;flex-direction:column;max-height:calc(100dvh - 10vh)}
-.settingsBody{display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.settingsTabs{min-height:0;overflow:auto;padding-inline-end:2px}
+.settingsDialog{display:flex;flex-direction:column;max-height:calc(100dvh - 10dvh);overflow:hidden}
+.settingsViewport{display:flex;flex-direction:column;min-height:0;flex:1;overflow:hidden}
+.settingsHeader{flex:none}
+.settingsBody{display:flex;flex-direction:column;min-height:0;flex:1;overflow:hidden}
+.settingsTabs{display:flex;flex-direction:column;min-height:0;flex:1;overflow:hidden}
+.settingsTabList{flex:none;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
+.settingsTabList>button{flex:1;padding-inline:var(--mantine-spacing-sm)}
+.settingsPanel{min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-inline-end:4px}
 .settingsActions{flex:none;padding-top:var(--mantine-spacing-lg)}
 .pausedBar{display:flex;align-items:center;justify-content:center;gap:var(--mantine-spacing-sm);flex-shrink:0;padding:6px var(--mantine-spacing-md);background:var(--mantine-color-yellow-1);color:var(--mantine-color-yellow-9);border-bottom:1px solid var(--mantine-color-yellow-3)}
 .footerLinks{display:inline-flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px}

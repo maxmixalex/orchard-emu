@@ -13,7 +13,7 @@ class NativeWorker extends EventTarget {
   receive(data){const event=new Event('message');event.data=data;this.dispatchEvent(event);}
 }
 const scope={Worker:NativeWorker,performance:{now:()=>++now},
-  addEventListener:(type,fn)=>{if(type==='keydown')keys.push(fn);if(type==='click')clicks.push(fn);}};
+  addEventListener:(type,fn)=>{if(type==='keydown')keys.push(fn);if(type==='pointerdown')clicks.push(fn);}};
 vm.runInNewContext(observer,scope);
 const p=scope.__orchardProbe,worker=new scope.Worker(),other=new scope.Worker();
 const send=(type,extra={})=>worker.postMessage({type,generation:1,...extra});
@@ -151,7 +151,7 @@ assert.equal(p.errors.length,0);
 const diagnosticClicks=[];
 const diagnosticScope={Worker:NativeWorker,__orchardDiagnosticRuntime:true,
   performance:{timeOrigin:1000,now:()=>++now},
-  addEventListener:(type,fn)=>{if(type==='click')diagnosticClicks.push(fn);}};
+  addEventListener:(type,fn)=>{if(type==='pointerdown')diagnosticClicks.push(fn);}};
 vm.runInNewContext(observer,diagnosticScope);
 const dp=diagnosticScope.__orchardProbe,dw=new diagnosticScope.Worker();
 const ds=(type,extra={})=>dw.postMessage({type,generation:1,...extra});
@@ -163,7 +163,7 @@ dr('diagnostic-trace-epoch',{epoch:1,model:1,tick:100,source:'checkpoint-load'})
 dr('checkpoint-restored');df();ds('run');df({running:true});
 dp.arm({pixels:[3,4],scans:[49],inputKind:'pointer'});
 diagnosticClicks.forEach(fn=>fn({target:{closest:()=>({dataset:{scan:'49'}})}}));
-ds('tap',{scan:49});
+ds('key-down',{scan:49,source:'pointer:1'});
 assert.equal(dw.lastSent.diagnostic_runtime.seq,dp.watch.enterCommandSeq);
 assert.equal(dw.lastSent.diagnostic_runtime.time_origin_ms,1000);
 assert.equal(dw.lastSent.diagnostic_runtime.at_ms,dp.watch.enterSendAt);
