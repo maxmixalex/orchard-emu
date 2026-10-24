@@ -306,12 +306,30 @@ static void single_transfer(orchard_machine *m, uint32_t op, bool half) {
     if (!pre || wb) c->r[rn] = adjusted;
     if (load) o_putr(c, rd, value);
 }
+static unsigned block_register_count(uint32_t list) {
+#if defined(__GNUC__) || defined(__clang__)
+    return (unsigned)__builtin_popcount((unsigned)list);
+#else
+    unsigned count = 0;
+    for (; list; list &= list - 1u) ++count;
+    return count;
+#endif
+}
+/* The register list is at most 16 bits and must be nonzero here. */
+static unsigned first_block_register(uint32_t list) {
+#if defined(__GNUC__) || defined(__clang__)
+    return (unsigned)__builtin_ctz((unsigned)list);
+#else
+    unsigned first = 0;
+    while (!(list & 1u)) { list >>= 1; ++first; }
+    return first;
+#endif
+}
 static void block_transfer(orchard_machine *m, uint32_t op) {
     o_cpu *c = &m->cpu;
     unsigned rn = (op >> 16) & 15u;
     uint32_t list = op & 0xffffu;
-    unsigned count = 0;
-    for (unsigned i = 0; i < 16; ++i) count += (list >> i) & 1u;
+    unsigned count = block_register_count(list);
     bool load = (op & (1u << 20)) != 0, wb = (op & (1u << 21)) != 0;
     bool special = (op & (1u << 22)) != 0, up = (op & (1u << 23)) != 0;
     bool pre = (op & (1u << 24)) != 0;
@@ -321,13 +339,12 @@ static void block_transfer(orchard_machine *m, uint32_t op) {
     uint32_t address = up ? base + (pre ? 4u : 0u) : adjusted + (pre ? 0u : 4u);
     bool user = special && (!load || !(list & 0x8000u));
     uint32_t loaded_pc = 0;
-    unsigned first = 0;
-    while (!(list & (1u << first))) ++first;
+    unsigned first = first_block_register(list);
     if (!load && wb && (list & (1u << rn)) && rn != first) {
         unpredictable(m, op); return;
     }
-    for (unsigned r = 0; r < 16; ++r) {
-        if (!(list & (1u << r))) continue;
+    for (uint32_t remaining = list; remaining; remaining &= remaining - 1u) {
+        unsigned r = first_block_register(remaining);
         uint32_t value;
         if (load) {
             if (!o_load(m, address, 4, false, &value)) return;
