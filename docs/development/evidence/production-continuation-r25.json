@@ -1,6 +1,6 @@
 {
   "schema": "orchard-production-continuation-r25-v1",
-  "generated_at": "2026-10-24T09:04:48.092388+00:00",
+  "generated_at": "2026-10-24T09:58:26.961609+00:00",
   "core_wasm_sha256": "36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569",
   "scope": "Combined CP15/UART core, unchanged original applications and four admitted original systems. Frontend phases retain their own bundle identities. All-attempts success and 99-percent compatibility are not claimed.",
   "private_firmware_program_pixels_or_checkpoints_included": false,
@@ -2816,6 +2816,200 @@
     "historical_browser_failure_reproduced": false,
     "limit": "Exact browser RIGHT/contact transitions were not captured in the failing run; this finite matrix does not establish arbitrary timing correctness or a failure probability."
   },
+  "serial_wire_cold": {
+    "private_report_sha256": "49267f689a930722f13e24b43a42870aae7349e13707aea02e43f913c387dde1",
+    "schema": "orchard-hp39-wire-receive-stock-v1",
+    "passed": true,
+    "tool_sha256": "82e4018a08e25f249ea5204d84cf2b996e1c219929779e28ac4e705f004ff415",
+    "model": 2,
+    "transport": "serial",
+    "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+    "wasm_sha256": "36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569",
+    "cold_boot": true,
+    "guest_memory_patched": false,
+    "host_timing_sample": false,
+    "hardware_validated": false,
+    "multipart": true,
+    "sources": {
+      "web/hp48.js": "b8d62541ab887872834d040417f72628f3c6bb53f4fcd31328e6564bd8b4e5ac",
+      "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "web/file-transfer.js": "a6bcdc45af858b6709b343f21712958e3865835b9ed61fe18d0c124ae94f6aac",
+      "web/hp39-wire.js": "8c3b409f3d2c4ee31f49a9a95a2c42b0677d0d276e3337a9c19239f2e6fd4b8d",
+      "web/hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+      "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3"
+    },
+    "inputs": [
+      {
+        "name": "First.arbitrary",
+        "bytes": 280,
+        "sha256": "3697a4035f8380cb5b855ef15ab45c5cb2c74ba4a07e6be19f4b6124299560ec"
+      },
+      {
+        "name": "Second.arbitrary",
+        "bytes": 80,
+        "sha256": "1ebabf591cabc3a9528d5dbb0d788033637afd890dcc152f95fb460577cf9827"
+      },
+      {
+        "name": "LIBRARY.any",
+        "bytes": 1489,
+        "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+      },
+      {
+        "name": "APLET.any",
+        "bytes": 13352,
+        "sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc"
+      }
+    ],
+    "received": [
+      {
+        "tick": 281168704,
+        "name": "Orchard_Two-3-1.note",
+        "bytes": 75,
+        "sha256": "8095a44e359bfe75ab728b7e252e18fb9318654eb1b50c097e1a2f5c97563637",
+        "request": 3
+      },
+      {
+        "tick": 354055424,
+        "name": "Orchard_One-3-2.note",
+        "bytes": 269,
+        "sha256": "fea412cc3b197478d18ad897b241d5c19c5f935758ba97232ebc60ccb4a18e2e",
+        "request": 3
+      },
+      {
+        "tick": 623662656,
+        "name": "LIB275L-6-1.L39",
+        "bytes": 1484,
+        "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f",
+        "request": 6
+      },
+      {
+        "tick": 682423872,
+        "name": "GBP39_ALIGN4-6-2.apt",
+        "bytes": 13352,
+        "sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc",
+        "request": 6
+      },
+      {
+        "tick": 795342592,
+        "name": "LIB275L-6-3.L39",
+        "bytes": 1484,
+        "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f",
+        "request": 6
+      },
+      {
+        "tick": 854095616,
+        "name": "GBP39_ALIGN4-6-4.apt",
+        "bytes": 13352,
+        "sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc",
+        "request": 6
+      }
+    ],
+    "two_notes_exact": true,
+    "notes_one_listener": true,
+    "stop_kept_files": true,
+    "multipart_two_sends_exact": true,
+    "multipart_one_listener": true,
+    "arithmetic_work_area_sha256": "4f424d9352b6962f8d3d8ec76203f9d7c60136d66caf9b85774d8c6227717bea",
+    "arithmetic_after_transfer": true
+  },
+  "serial_wire_browser": {
+    "private_report_sha256": "f8bf9fd20879dcf1095684b9fdc34244cf7f5e8f6e85ad34e30f1ca359bc4fe7",
+    "schema": "orchard-hp39-wire-production-browser-v1",
+    "passed": true,
+    "tool_sha256": "fe07390a0b38f53dede8e10b865f556418ea3697689421bcd714abde542d26a3",
+    "model": 2,
+    "transport": "serial",
+    "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+    "wasm_sha256": "36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569",
+    "production_worker": true,
+    "synthetic_worker_messages": false,
+    "guest_memory_patched": false,
+    "browser_cold_boot": false,
+    "prepared_from_cold_boot": true,
+    "preparation_report_sha256": "49267f689a930722f13e24b43a42870aae7349e13707aea02e43f913c387dde1",
+    "preparation_wasm_sha256": "36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569",
+    "assets": {
+      "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+      "README.txt": "6cae0b5efd9a4a6e15d9e253783fa880147f67f90ec9f89508c8f3b0c4ad2e11",
+      "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+      "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+      "calculator.css": "8b4b2742be3751b54273a9cf15ff5d3652fa7a7890eb148c7a01a2504b8794c8",
+      "calculator.js": "1d488de1dfe46419d2b42f1b166b049de00872a10071c8f02a6ca49f3c78efd2",
+      "catalog.js": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8",
+      "debug.html": "e1366fa83c3493408dada98e228066a1328f030cea90de4285975a88f337729f",
+      "file-transfer.js": "a6bcdc45af858b6709b343f21712958e3865835b9ed61fe18d0c124ae94f6aac",
+      "host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+      "host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+      "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+      "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+      "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+      "hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+      "hp39-wire.js": "8c3b409f3d2c4ee31f49a9a95a2c42b0677d0d276e3337a9c19239f2e6fd4b8d",
+      "hp48.js": "b8d62541ab887872834d040417f72628f3c6bb53f4fcd31328e6564bd8b4e5ac",
+      "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+      "irda-input.js": "d25b1c8e81ea4c1af4d176004ea41a544f57cde572c46e8216306e617d1553f7",
+      "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+      "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09",
+      "lcd-frames.js": "b9dbbafaa686d3e0282ee3f935205d20bee5b864b6e5b7c90e4e17b4dfa162fe",
+      "licenses/frontend.txt": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+      "licenses/hp-calcs-svg/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "licenses/hp-calcs-svg/NOTICE.txt": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+      "licenses/hp-calcs-svg/README.md": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+      "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+      "main.js": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35",
+      "orchard.wasm": "36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569",
+      "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+      "preferences.js": "2a68b46423babf91328fb1f70e4e2a8606f18248dc1a303c88da49a505f6ce6e",
+      "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+      "sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+      "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+      "session.js": "c16703077319fae40b9059b970a73e9ec4ee615d9b6534058d53e816766528d1",
+      "skin.js": "9f63995616505e9daa0fd7c4b9bb245fef0bfeedf584dbe57ace611cf770b74c",
+      "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+      "skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+      "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+      "skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+      "skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+      "skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+      "skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+      "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+      "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+      "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+      "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+      "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256"
+    },
+    "performance_sample": false,
+    "hardware_validated": false,
+    "browser_version": "156.0.8078.47",
+    "stage": "complete",
+    "transfer_menu_label": "HP39/40 (Ser) (send and receive)",
+    "one_listener_two_distinct_files": true,
+    "worker_cancel_acknowledged": true,
+    "downloads": [
+      {
+        "name": "Orchard_Two-4-1.note",
+        "title": "Orchard Two",
+        "bytes": 75,
+        "sha256": "8095a44e359bfe75ab728b7e252e18fb9318654eb1b50c097e1a2f5c97563637",
+        "exact_file_equal": true
+      },
+      {
+        "name": "Orchard_One-4-2.note",
+        "title": "Orchard One",
+        "bytes": 269,
+        "sha256": "fea412cc3b197478d18ad897b241d5c19c5f935758ba97232ebc60ccb4a18e2e",
+        "exact_file_equal": true
+      }
+    ],
+    "stop_preserved_all_files": true,
+    "total_download_bytes": 344,
+    "arithmetic_work_area_sha256": "4f424d9352b6962f8d3d8ec76203f9d7c60136d66caf9b85774d8c6227717bea",
+    "arithmetic_after_transfer": true,
+    "page_errors": [],
+    "download_list_and_arithmetic_images_visually_reviewed": true
+  },
   "node_fixed_workloads": {
     "private_report_sha256": "2fa74e6b509ea4685fbf2cc064f7b8f1fb6f6cb7caeb1cf2ddeea9f4e2140b14",
     "schema": "orchard-scene-throughput-v1",
@@ -3361,11 +3555,1142 @@
       "tools/cpu-throughput.c"
     ]
   },
+  "presentation_continuation": {
+    "schema": "orchard-phone-layout-continuation-r25-v1",
+    "passed": true,
+    "scope": "Presentation-only follow-up after the complete v3 infrared workflow. Only phone-width immersive portrait with an open dock changes sizing; core and transport source are unchanged. Original-ROM production UI and fixture geometry remain distinct.",
+    "baseline_source_commit": "04aafbd27ba18ba3d9352a3880244eeb09d1c9bd",
+    "runtime_source_changes": [
+      "web/App.jsx"
+    ],
+    "runtime_source_patch_sha256": "4d8b6f77df2466af59bea1d1a9604c8fbcd0852680f820bb181eca594237adff",
+    "before_assets": {
+      "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+      "README.txt": "6cae0b5efd9a4a6e15d9e253783fa880147f67f90ec9f89508c8f3b0c4ad2e11",
+      "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+      "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+      "calculator.css": "8b4b2742be3751b54273a9cf15ff5d3652fa7a7890eb148c7a01a2504b8794c8",
+      "calculator.js": "54b621457e9ddb744ca15862612bde8c56bec8f36c520bf78b72664bc0d10610",
+      "catalog.js": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8",
+      "debug.html": "e1366fa83c3493408dada98e228066a1328f030cea90de4285975a88f337729f",
+      "file-transfer.js": "a6bcdc45af858b6709b343f21712958e3865835b9ed61fe18d0c124ae94f6aac",
+      "host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+      "host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+      "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+      "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+      "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+      "hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+      "hp39-wire.js": "8c3b409f3d2c4ee31f49a9a95a2c42b0677d0d276e3337a9c19239f2e6fd4b8d",
+      "hp48.js": "b8d62541ab887872834d040417f72628f3c6bb53f4fcd31328e6564bd8b4e5ac",
+      "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+      "irda-input.js": "6ad8506f1888aec03401081165e052c921f389e326cd8e9efb00028d539870ac",
+      "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+      "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09",
+      "lcd-frames.js": "b9dbbafaa686d3e0282ee3f935205d20bee5b864b6e5b7c90e4e17b4dfa162fe",
+      "licenses/frontend.txt": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+      "licenses/hp-calcs-svg/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "licenses/hp-calcs-svg/NOTICE.txt": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+      "licenses/hp-calcs-svg/README.md": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+      "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+      "main.js": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35",
+      "orchard.wasm": "36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569",
+      "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+      "preferences.js": "2a68b46423babf91328fb1f70e4e2a8606f18248dc1a303c88da49a505f6ce6e",
+      "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+      "sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+      "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+      "session.js": "c16703077319fae40b9059b970a73e9ec4ee615d9b6534058d53e816766528d1",
+      "skin.js": "9f63995616505e9daa0fd7c4b9bb245fef0bfeedf584dbe57ace611cf770b74c",
+      "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+      "skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+      "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+      "skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+      "skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+      "skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+      "skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+      "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+      "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+      "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+      "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+      "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256"
+    },
+    "after_assets": {
+      "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+      "README.txt": "6cae0b5efd9a4a6e15d9e253783fa880147f67f90ec9f89508c8f3b0c4ad2e11",
+      "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+      "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+      "calculator.css": "8b4b2742be3751b54273a9cf15ff5d3652fa7a7890eb148c7a01a2504b8794c8",
+      "calculator.js": "971b3303370544d3f6f1e3770e43b685afb8aafd5c68d6b6dcdc5054ed36090f",
+      "catalog.js": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8",
+      "debug.html": "e1366fa83c3493408dada98e228066a1328f030cea90de4285975a88f337729f",
+      "file-transfer.js": "a6bcdc45af858b6709b343f21712958e3865835b9ed61fe18d0c124ae94f6aac",
+      "host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+      "host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+      "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+      "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+      "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+      "hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+      "hp39-wire.js": "8c3b409f3d2c4ee31f49a9a95a2c42b0677d0d276e3337a9c19239f2e6fd4b8d",
+      "hp48.js": "b8d62541ab887872834d040417f72628f3c6bb53f4fcd31328e6564bd8b4e5ac",
+      "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+      "irda-input.js": "6ad8506f1888aec03401081165e052c921f389e326cd8e9efb00028d539870ac",
+      "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+      "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09",
+      "lcd-frames.js": "b9dbbafaa686d3e0282ee3f935205d20bee5b864b6e5b7c90e4e17b4dfa162fe",
+      "licenses/frontend.txt": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+      "licenses/hp-calcs-svg/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "licenses/hp-calcs-svg/NOTICE.txt": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+      "licenses/hp-calcs-svg/README.md": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+      "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+      "main.js": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35",
+      "orchard.wasm": "36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569",
+      "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+      "preferences.js": "2a68b46423babf91328fb1f70e4e2a8606f18248dc1a303c88da49a505f6ce6e",
+      "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+      "sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+      "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+      "session.js": "c16703077319fae40b9059b970a73e9ec4ee615d9b6534058d53e816766528d1",
+      "skin.js": "9f63995616505e9daa0fd7c4b9bb245fef0bfeedf584dbe57ace611cf770b74c",
+      "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+      "skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+      "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+      "skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+      "skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+      "skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+      "skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+      "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+      "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+      "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+      "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+      "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256"
+    },
+    "changed_assets": [
+      "calculator.js"
+    ],
+    "frontend_build": {
+      "private_report_sha256": "2cb9f0137f8858c803d68c8f1bde988a5c1541e798f3721500dd63639d303117",
+      "command": "npm run build:frontend",
+      "exit_code": 0
+    },
+    "production_ui": {
+      "private_report_sha256": "20b08676cde4746978596033d1672352c05be5f0dc2bf12651d93872afe5f848",
+      "passed": true,
+      "scope": "Production dist, real original-ROM ready sessions, actual UI pairing and input; no file-transfer or game certification",
+      "preparation_report_sha256": "d1ca93e0dc51dd30d7fbc8916856a61d3ca426e666ddbeba1bd5b81392e9d234",
+      "preparation_wasm_sha256": "57d5d586bbf4e22e8e733130630c961df73ba0df57f1bcf683fc53bb327b8547",
+      "browser_cold_boot": false,
+      "synthetic_worker_messages": false,
+      "synthetic_lifecycle_events": false,
+      "screenshots_are_emulated_viewports": true,
+      "inputs": {
+        "5": {
+          "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+          "session_sha256": "54b437026ea5bcfbaa6d914c526606b05e60d528dc917ab38f1544388e5562d4"
+        },
+        "4": {
+          "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+          "session_sha256": "80bea15f320406d7e9eb3b4a61906c15ed573c3b6a51857ac90fbfd37a30ab90"
+        }
+      },
+      "page_errors": [],
+      "http_errors": [],
+      "browser_version": "156.0.8078.47",
+      "paired_real_blur": {
+        "commands": [
+          {
+            "type": "key-up",
+            "generation": 2,
+            "source": "pointer:1",
+            "cancel": true
+          },
+          {
+            "type": "release",
+            "generation": 2
+          }
+        ],
+        "pointer_capture_released": true,
+        "continued_ticks": 2661600
+      },
+      "new_pointer_key_after_return": [
+        {
+          "type": "key-down",
+          "generation": 2,
+          "source": "pointer:1",
+          "scan": 45
+        },
+        {
+          "type": "key-up",
+          "generation": 2,
+          "source": "pointer:1",
+          "cancel": false
+        }
+      ],
+      "mobile_settings_apply_visible": true,
+      "manual_pause_ends_peer_link": true,
+      "repair_and_disconnect": true,
+      "debug_key_input_http": {
+        "main.js": 200,
+        "skin.js": 200,
+        "key-input.js": 200
+      },
+      "assets_unchanged": true,
+      "tool_sha256": "e1e42021afff29aaed8c3ce9abff81d144610c9cb4fcee0c00ccd3cd004c71cc",
+      "phone_geometry": {
+        "stageWidth": 374,
+        "contentWidth": 374,
+        "workspaceHeight": 269,
+        "scrollHeight": 774,
+        "enterWidth": 42.12554931640625,
+        "enterHeight": 28.1971435546875,
+        "outerWidth": 390
+      },
+      "phone_physical_on": [
+        {
+          "type": "key-down",
+          "generation": 2,
+          "source": "pointer:1",
+          "scan": 56
+        },
+        {
+          "type": "key-up",
+          "generation": 2,
+          "source": "pointer:1",
+          "cancel": false
+        }
+      ],
+      "phone_physical_right": [
+        {
+          "type": "key-down",
+          "generation": 2,
+          "source": "pointer:1",
+          "scan": 45
+        },
+        {
+          "type": "key-up",
+          "generation": 2,
+          "source": "pointer:1",
+          "cancel": false
+        }
+      ],
+      "phone_panel_tabs_operable": true
+    },
+    "fixture_display": {
+      "private_report_sha256": "4831f1c2ba919ec62e93e754c821cb43eb19ab134ed7b473f3e9f659dcc14916",
+      "passed": true,
+      "scope": "Real Chromium with production UI/controller/capture and synthetic LCD pixels; no ROM execution implied",
+      "phone_immersive_connections": [
+        {
+          "model": 1,
+          "viewport": [
+            390,
+            844
+          ],
+          "stageWidth": 374,
+          "contentWidth": 374,
+          "workspaceHeight": 269,
+          "scrollHeight": 774,
+          "outerWidth": 390,
+          "enterWidth": 42.17962646484375,
+          "enterHeight": 26.3763427734375,
+          "physical_scans": [
+            38,
+            39,
+            6
+          ],
+          "panel_input": true
+        },
+        {
+          "model": 1,
+          "viewport": [
+            360,
+            640
+          ],
+          "stageWidth": 344,
+          "contentWidth": 344,
+          "workspaceHeight": 240,
+          "scrollHeight": 713,
+          "outerWidth": 360,
+          "enterWidth": 38.79693603515625,
+          "enterHeight": 24.260986328125,
+          "physical_scans": [
+            38,
+            39,
+            6
+          ],
+          "panel_input": true
+        },
+        {
+          "model": 2,
+          "viewport": [
+            390,
+            844
+          ],
+          "stageWidth": 374,
+          "contentWidth": 374,
+          "workspaceHeight": 269,
+          "scrollHeight": 774,
+          "outerWidth": 390,
+          "enterWidth": 42.17962646484375,
+          "enterHeight": 26.3763427734375,
+          "physical_scans": [
+            38,
+            39,
+            6
+          ],
+          "panel_input": true
+        },
+        {
+          "model": 2,
+          "viewport": [
+            360,
+            640
+          ],
+          "stageWidth": 344,
+          "contentWidth": 344,
+          "workspaceHeight": 240,
+          "scrollHeight": 713,
+          "outerWidth": 360,
+          "enterWidth": 38.79693603515625,
+          "enterHeight": 24.260986328125,
+          "physical_scans": [
+            38,
+            39,
+            6
+          ],
+          "panel_input": true
+        },
+        {
+          "model": 4,
+          "viewport": [
+            390,
+            844
+          ],
+          "stageWidth": 374,
+          "contentWidth": 374,
+          "workspaceHeight": 269,
+          "scrollHeight": 774,
+          "outerWidth": 390,
+          "enterWidth": 42.12554931640625,
+          "enterHeight": 28.1971435546875,
+          "physical_scans": [
+            38,
+            39,
+            6
+          ],
+          "panel_input": true
+        },
+        {
+          "model": 4,
+          "viewport": [
+            360,
+            640
+          ],
+          "stageWidth": 344,
+          "contentWidth": 344,
+          "workspaceHeight": 240,
+          "scrollHeight": 713,
+          "outerWidth": 360,
+          "enterWidth": 38.7471923828125,
+          "enterHeight": 25.935791015625,
+          "physical_scans": [
+            38,
+            39,
+            6
+          ],
+          "panel_input": true
+        },
+        {
+          "model": 5,
+          "viewport": [
+            390,
+            844
+          ],
+          "stageWidth": 374,
+          "contentWidth": 374,
+          "workspaceHeight": 269,
+          "scrollHeight": 774,
+          "outerWidth": 390,
+          "enterWidth": 42.12554931640625,
+          "enterHeight": 28.1971435546875,
+          "physical_scans": [
+            38,
+            39,
+            6
+          ],
+          "panel_input": true
+        },
+        {
+          "model": 5,
+          "viewport": [
+            360,
+            640
+          ],
+          "stageWidth": 344,
+          "contentWidth": 344,
+          "workspaceHeight": 240,
+          "scrollHeight": 713,
+          "outerWidth": 360,
+          "enterWidth": 38.7471923828125,
+          "enterHeight": 25.935791015625,
+          "physical_scans": [
+            38,
+            39,
+            6
+          ],
+          "panel_input": true
+        }
+      ],
+      "phone_panel_zoom": [
+        {
+          "zoom": 75,
+          "width": 258
+        },
+        {
+          "zoom": 100,
+          "width": 344
+        },
+        {
+          "zoom": 150,
+          "width": 516
+        }
+      ],
+      "page_errors": []
+    },
+    "fixture_gates": {
+      "display": {
+        "private_report_sha256": "04f9b2f06107e0c997b5c8295b09313981c0abf81a2743b7ee51b0ecb2791702",
+        "exit_code": 0,
+        "passed": true,
+        "test_sha256": "7f5c25b22440047da587e44aac9d3fc95e2d2b6dbbe1331943463979d2efcc18",
+        "scope": "Production UI/controller with synthetic Worker/LCD fixture",
+        "command": "python3 tests/browser-display.py"
+      },
+      "landscape": {
+        "private_report_sha256": "40bbbffd5f2dcc81c8c8f8cd8cfca674e1cd478dfa516dee020b65aee71fd979",
+        "exit_code": 0,
+        "passed": true,
+        "test_sha256": "2483068bbaaaf988e6d983aa7e32408dc34ec1b60c1cb181525c259e1882e34f",
+        "scope": "Production UI/controller with synthetic Worker/LCD fixture",
+        "command": "python3 tests/browser-landscape.py"
+      }
+    },
+    "original_phone_top_and_scrolled_keys_visually_reviewed": true,
+    "no_new_full_protocol_or_game_acceptance_claim": true,
+    "source_commit": "af69241fb0809f0e7360a66cb714411a26ce077a",
+    "strict_documentation": {
+      "command": "zensical build --strict",
+      "exit_code": 0,
+      "navigation_page_count": 61,
+      "log_sha256": "9c9ff2bfb508800d58c1b2d547bd12fb1852dc8b20b92bb2cf0a50f7f21f65d3"
+    }
+  },
+  "release_candidate_runtime_assets_sha256": {
+    "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+    "README.txt": "6cae0b5efd9a4a6e15d9e253783fa880147f67f90ec9f89508c8f3b0c4ad2e11",
+    "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+    "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+    "calculator.css": "8b4b2742be3751b54273a9cf15ff5d3652fa7a7890eb148c7a01a2504b8794c8",
+    "calculator.js": "971b3303370544d3f6f1e3770e43b685afb8aafd5c68d6b6dcdc5054ed36090f",
+    "catalog.js": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8",
+    "debug.html": "e1366fa83c3493408dada98e228066a1328f030cea90de4285975a88f337729f",
+    "file-transfer.js": "a6bcdc45af858b6709b343f21712958e3865835b9ed61fe18d0c124ae94f6aac",
+    "host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+    "host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+    "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+    "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+    "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+    "hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+    "hp39-wire.js": "8c3b409f3d2c4ee31f49a9a95a2c42b0677d0d276e3337a9c19239f2e6fd4b8d",
+    "hp48.js": "b8d62541ab887872834d040417f72628f3c6bb53f4fcd31328e6564bd8b4e5ac",
+    "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+    "irda-input.js": "6ad8506f1888aec03401081165e052c921f389e326cd8e9efb00028d539870ac",
+    "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+    "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09",
+    "lcd-frames.js": "b9dbbafaa686d3e0282ee3f935205d20bee5b864b6e5b7c90e4e17b4dfa162fe",
+    "licenses/frontend.txt": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+    "licenses/hp-calcs-svg/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "licenses/hp-calcs-svg/NOTICE.txt": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+    "licenses/hp-calcs-svg/README.md": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+    "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+    "main.js": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35",
+    "orchard.wasm": "36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569",
+    "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+    "preferences.js": "2a68b46423babf91328fb1f70e4e2a8606f18248dc1a303c88da49a505f6ce6e",
+    "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+    "sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+    "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+    "session.js": "c16703077319fae40b9059b970a73e9ec4ee615d9b6534058d53e816766528d1",
+    "skin.js": "9f63995616505e9daa0fd7c4b9bb245fef0bfeedf584dbe57ace611cf770b74c",
+    "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+    "skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+    "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+    "skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+    "skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+    "skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+    "skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+    "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+    "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+    "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+    "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+    "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+    "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+    "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256"
+  },
+  "timed_infrared": {
+    "private_summary_sha256": "4a6717cb9510362e7d459be6e1aee6cecf1ba531e90b1a2af72032593246c3ad",
+    "schema": "orchard-infrared-production-acceptance-v1",
+    "passed": true,
+    "report_sha256": "769877fa876a1036a7771182b00801e507c0713ec4dd33c36362747723265362",
+    "tool_sha256": "7bcaf714f982f3fbc4f8037aa4dde666daf6478669fef81eba8311095225dcac",
+    "production_worker": true,
+    "synthetic_worker_messages": false,
+    "guest_memory_patched": false,
+    "hardware_validated": false,
+    "performance_sample": false,
+    "assets_sha256": {
+      "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+      "README.txt": "6cae0b5efd9a4a6e15d9e253783fa880147f67f90ec9f89508c8f3b0c4ad2e11",
+      "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+      "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+      "calculator.css": "8b4b2742be3751b54273a9cf15ff5d3652fa7a7890eb148c7a01a2504b8794c8",
+      "calculator.js": "54b621457e9ddb744ca15862612bde8c56bec8f36c520bf78b72664bc0d10610",
+      "catalog.js": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8",
+      "debug.html": "e1366fa83c3493408dada98e228066a1328f030cea90de4285975a88f337729f",
+      "file-transfer.js": "a6bcdc45af858b6709b343f21712958e3865835b9ed61fe18d0c124ae94f6aac",
+      "host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+      "host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+      "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+      "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+      "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+      "hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+      "hp39-wire.js": "8c3b409f3d2c4ee31f49a9a95a2c42b0677d0d276e3337a9c19239f2e6fd4b8d",
+      "hp48.js": "b8d62541ab887872834d040417f72628f3c6bb53f4fcd31328e6564bd8b4e5ac",
+      "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+      "irda-input.js": "6ad8506f1888aec03401081165e052c921f389e326cd8e9efb00028d539870ac",
+      "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+      "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09",
+      "lcd-frames.js": "b9dbbafaa686d3e0282ee3f935205d20bee5b864b6e5b7c90e4e17b4dfa162fe",
+      "licenses/frontend.txt": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+      "licenses/hp-calcs-svg/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "licenses/hp-calcs-svg/NOTICE.txt": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+      "licenses/hp-calcs-svg/README.md": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+      "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+      "main.js": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35",
+      "orchard.wasm": "36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569",
+      "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+      "preferences.js": "2a68b46423babf91328fb1f70e4e2a8606f18248dc1a303c88da49a505f6ce6e",
+      "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+      "sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+      "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+      "session.js": "c16703077319fae40b9059b970a73e9ec4ee615d9b6534058d53e816766528d1",
+      "skin.js": "9f63995616505e9daa0fd7c4b9bb245fef0bfeedf584dbe57ace611cf770b74c",
+      "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+      "skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+      "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+      "skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+      "skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+      "skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+      "skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+      "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+      "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+      "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+      "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+      "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256"
+    },
+    "browser_version": "156.0.8078.47",
+    "inputs": {
+      "5": {
+        "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+        "session_sha256": "54b437026ea5bcfbaa6d914c526606b05e60d528dc917ab38f1544388e5562d4"
+      },
+      "4": {
+        "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+        "session_sha256": "80bea15f320406d7e9eb3b4a61906c15ed573c3b6a51857ac90fbfd37a30ab90"
+      }
+    },
+    "browser_cold_boot": false,
+    "prepared_from_cold_boot": true,
+    "preparation_report_sha256": "d1ca93e0dc51dd30d7fbc8916856a61d3ca426e666ddbeba1bd5b81392e9d234",
+    "preparation_wasm_sha256": "57d5d586bbf4e22e8e733130630c961df73ba0df57f1bcf683fc53bb327b8547",
+    "flow": {
+      "physical_key_count": 127,
+      "manual_pause_ends_both_links": true,
+      "new_pairing_after_pause": true,
+      "stock_on_recovers_after_interruption": true,
+      "disconnect_propagates": true
+    },
+    "transfers": [
+      {
+        "name": "ORCHARD",
+        "value": 12345,
+        "from": 5,
+        "to": 4,
+        "file_bytes": 26,
+        "file_sha256": "e71ff07ffc6135a8fef3553b53d7cdddd911159585a0aaed1fdda4c39d3328f7",
+        "exact_file_equal": true,
+        "kermit_checksum_verified": true,
+        "ir_lap_fcs_verified": true,
+        "start_acknowledged": true,
+        "header_acknowledged": true,
+        "data_packets_acknowledged": 1,
+        "eof_acknowledged": true,
+        "end_acknowledged": true,
+        "malformed_packet_counts": {
+          "sent": 0,
+          "received": 0
+        },
+        "sent_wire_bytes": 998,
+        "received_wire_bytes": 957,
+        "ir_lap": {
+          "sent": {
+            "complete_frames": 88,
+            "valid_frames": 88,
+            "malformed_frame_count": 0,
+            "interrupted_frame_count": 0
+          },
+          "received": {
+            "complete_frames": 88,
+            "valid_frames": 88,
+            "malformed_frame_count": 0,
+            "interrupted_frame_count": 0
+          }
+        },
+        "recovered_bad_acknowledgments": []
+      },
+      {
+        "name": "RETURN",
+        "value": 54321,
+        "from": 4,
+        "to": 5,
+        "file_bytes": 26,
+        "file_sha256": "68b741473c9d18cb1debea6e0bf12cd1458a52a05fc76b8808f7f457bed5c603",
+        "exact_file_equal": true,
+        "kermit_checksum_verified": true,
+        "ir_lap_fcs_verified": true,
+        "start_acknowledged": true,
+        "header_acknowledged": true,
+        "data_packets_acknowledged": 1,
+        "eof_acknowledged": true,
+        "end_acknowledged": true,
+        "malformed_packet_counts": {
+          "sent": 0,
+          "received": 1
+        },
+        "sent_wire_bytes": 1191,
+        "received_wire_bytes": 1169,
+        "ir_lap": {
+          "sent": {
+            "complete_frames": 120,
+            "valid_frames": 120,
+            "malformed_frame_count": 0,
+            "interrupted_frame_count": 0
+          },
+          "received": {
+            "complete_frames": 121,
+            "valid_frames": 121,
+            "malformed_frame_count": 0,
+            "interrupted_frame_count": 0
+          }
+        },
+        "recovered_bad_acknowledgments": [
+          {
+            "sequence": 3,
+            "type": "Y",
+            "reason": "checksum"
+          }
+        ]
+      }
+    ],
+    "final_peers": {
+      "5": {
+        "running": true,
+        "stopped": false,
+        "pending_keys": 0,
+        "active_key": null,
+        "page_worker_errors": 0,
+        "transport_input_errors": 0
+      },
+      "4": {
+        "running": true,
+        "stopped": false,
+        "pending_keys": 0,
+        "active_key": null,
+        "page_worker_errors": 0,
+        "transport_input_errors": 0
+      }
+    },
+    "screen_review": [
+      {
+        "model": 4,
+        "recalled_value": "12345",
+        "image_sha256": "c1d89bb79a8e4b5cb3c6e8faa477cd0953b0cbea4d0b3cd27a8988569f08af13"
+      },
+      {
+        "model": 5,
+        "recalled_value": "54321",
+        "image_sha256": "da4c42bcc712f9153dfdcbd328470c76c55129cfb39e92cd0e8b33ceaf69e27f"
+      }
+    ],
+    "limitations": [
+      "This is one fixed complete production browser flow after independently tested fixes, not a statistical reliability percentage.",
+      "The reverse transfer emitted one bad Kermit Y3 checksum; the original peers retried and subsequently completed the entire valid transfer. The earlier malformed-ACK cause remains unresolved.",
+      "All accepted file and acknowledgment packets came from valid IrLAP FCS frames. Malformed Kermit packets did not establish success.",
+      "The browser restored hash-pinned sessions prepared from original-ROM cold boot; it did not cold boot both peers during this browser run.",
+      "Decoded-byte timing uses observed output-batch timestamps, not measured per-byte baud or optical behavior.",
+      "Earlier failed production attempts and deterministic counterexamples remain retained independently."
+    ],
+    "asset_scope": "Complete original infrared workflow before the final phone portrait/dock sizing correction. Its actual served entry hash is retained. The separate presentation_continuation verifies the later layout-only entry; core/Worker/input and all other assets are identical."
+  },
+  "retained_eof_causal_diagnosis": {
+    "private_summary_sha256": "140e4fff66826736890bfabc877f326d1d6dc3c31570c789731d0a9cc93cd471",
+    "schema": "orchard-infrared-eof-causal-summary-v2",
+    "production_browser_strict_passed": false,
+    "wasm_sha256": "36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569",
+    "production_assets_sha256": {
+      "calculator.js": "1d488de1dfe46419d2b42f1b166b049de00872a10071c8f02a6ca49f3c78efd2",
+      "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256",
+      "irda-input.js": "d25b1c8e81ea4c1af4d176004ea41a544f57cde572c46e8216306e617d1553f7",
+      "orchard.wasm": "36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569"
+    },
+    "input_identities": {
+      "model5_rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "model4_rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+      "prepared_sessions": {
+        "5": "54b437026ea5bcfbaa6d914c526606b05e60d528dc917ab38f1544388e5562d4",
+        "4": "80bea15f320406d7e9eb3b4a61906c15ed573c3b6a51857ac90fbfd37a30ab90"
+      },
+      "reverse_object_bytes": 26,
+      "reverse_object_sha256": "68b741473c9d18cb1debea6e0bf12cd1458a52a05fc76b8808f7f457bed5c603"
+    },
+    "production_failure": {
+      "report_sha256": "1cb64531985ab53ae56030055d0ad6847471eba9f4f61ee9f960c402c33f11e4",
+      "forward_strict_passed": true,
+      "reverse_file_header_data_eof_acknowledged": true,
+      "reverse_final_transaction_acknowledged": false,
+      "core_stopped": false,
+      "page_errors": 0,
+      "description": "Reverse sends valid S/F/D/Z/B; receiver acknowledges through Z, then advances IrLAP N(R) for the B frame but produces no complete Kermit Y4 before closing UART."
+    },
+    "bounded_diagnostic_capture": {
+      "report_sha256": "346d93b9e50df64354d1773c02350c3dad1403194d3a664426928b932a74a6c0",
+      "instrumented": true,
+      "performance_sample": false,
+      "guest_memory_patched": false,
+      "host_protocol_responses": false,
+      "model5_trace_sha256": "b99602f2996d3d3bcf1054e81fa20f91a263fc8b9f1ae846fa8e3acc36000f4a",
+      "model5_calls": 13265,
+      "model5_initial_checkpoint_sha256": "d4d5cd9ccbabe539d5df45a8cae22bfba4e829e0f6f98b8e9696a773d925451d",
+      "model5_final_checkpoint_sha256": "1322e5266562c7b4c9d5e69c670d49e695fbdbe12c1af9413a50d253e7d9b177",
+      "model4_trace_sha256": "9cf912412665ae703909eaf9ba602c30a6a16a33f5b4949f9d18ec3021031996",
+      "model4_calls": 591867,
+      "model4_initial_checkpoint_sha256": "73dec5e2473e02169fb040a739758663b08d16a620542b840033b5954913b2c0",
+      "model4_final_checkpoint_sha256": "32339dfa7fd84ac76511c337a07148782436e78437012e9a0f185cd0a330e2e3",
+      "capture_boundary": "A valid reverse Z or Y3 output starts a complete API trace; observed UART RX disable freezes it without changing the guest."
+    },
+    "single_receiver_counterfactuals": {
+      "report_sha256": "4c6fd7bb3e3a05ab4469deeda4fc3e999f577e67ca5aa7c60d81be30bb72a4c4",
+      "recorded_variant_complete_checkpoint_equal": true,
+      "changed_input": "The same final B frame is supplied whole at its recorded first or last chunk time. All other input bytes, run budgets and API ordering remain the same.",
+      "complete_final_acknowledgment": [
+        false,
+        false
+      ],
+      "conclusion": "The observed B chunk gap alone is not sufficient to explain or repair the failure."
+    },
+    "actual_two_peer_local_continuation": {
+      "report_sha256": "26cb16e80096142854fa80d02972e54b2d4c171ad6b1285fcb95e4e13bdcf2a9",
+      "strict_report_sha256": "c7040da279ca80e70f42a32d5bdba54ae3e257058aaf5c78ab18385d5c1ed15e",
+      "model5_start": "Captured state immediately after valid Y3 output.",
+      "model4_start": "Exact replay of the captured prefix through call 9233, admitting that same Y3.",
+      "quantum_ticks": 512,
+      "real_original_firmware_peers": true,
+      "host_protocol_responses": false,
+      "fresh_local_transport_clock_mapping": true,
+      "waited_ticks": 2280000,
+      "both_ports_closed": true,
+      "all_S_F_D_Z_B_and_Y_verified": true,
+      "exact_26_byte_object_equal": true,
+      "malformed_packets": {
+        "sent": 0,
+        "received": 0
+      }
+    },
+    "same_two_peers_with_original_transport_clock_mapping": {
+      "report_sha256": "da8478b689db155c1d4b51bef17a9b9b3c26a51713c0682db2c0bd467b079bbb",
+      "only_changed_variable": "Restore the two original epoch-3 source-to-target clock anchors in IrDAInput.",
+      "anchors": [
+        {
+          "model": 5,
+          "source": 448163839,
+          "target": 450157359
+        },
+        {
+          "model": 4,
+          "source": 447544830,
+          "target": 446154191
+        }
+      ],
+      "net_nominal_round_trip_ticks": 602881,
+      "waited_ticks": 147360000,
+      "all_S_F_D_Z_B_and_Y_verified": false,
+      "conclusion": "The persistent connection clock phase can reproduce the EOF failure even with prompt 512-tick closed-loop routing.",
+      "strict_result_sha256": "8187acd8562eaed84d64e0d5dfddf70c7d35879b900bb3672c3ed3b70f0a62bd"
+    },
+    "limitations": [
+      "Both local peer continuations reconstruct empty JavaScript waiting queues from identical guest resume states. They isolate the clock-anchor variable in this local continuation; they are not an exact replay of all earlier browser transport events.",
+      "The successful local continuation is diagnostic, not a production browser acceptance.",
+      "The exact failed production attempt remains retained. At diagnosis time, a new implementation still required the same strict fixed flow; the subsequent final v3 pass is recorded separately in timed_infrared.",
+      "The single receiver variations and local clock comparison do not establish physical optical timing, measured baud rate, or exhaustive IrDA compatibility.",
+      "No raw firmware, checkpoints, trace calls, UART streams or screenshots are included in this summary.",
+      "The private local harness report field passed only means both UART ports closed; strict-transfer.json and strict-result.json separately determine protocol acceptance."
+    ],
+    "record_scope": "Historical failed production attempt and causal diagnosis, recorded before final v3 acceptance. See timed_infrared for the later complete browser flow; the malformed-ACK cause remains open."
+  },
+  "final_focused_gates": {
+    "schema": "orchard-final-focused-gates-r25-v1",
+    "assets": {
+      "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+      "README.txt": "6cae0b5efd9a4a6e15d9e253783fa880147f67f90ec9f89508c8f3b0c4ad2e11",
+      "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+      "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+      "calculator.css": "8b4b2742be3751b54273a9cf15ff5d3652fa7a7890eb148c7a01a2504b8794c8",
+      "calculator.js": "54b621457e9ddb744ca15862612bde8c56bec8f36c520bf78b72664bc0d10610",
+      "catalog.js": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8",
+      "debug.html": "e1366fa83c3493408dada98e228066a1328f030cea90de4285975a88f337729f",
+      "file-transfer.js": "a6bcdc45af858b6709b343f21712958e3865835b9ed61fe18d0c124ae94f6aac",
+      "host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+      "host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+      "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+      "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+      "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+      "hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+      "hp39-wire.js": "8c3b409f3d2c4ee31f49a9a95a2c42b0677d0d276e3337a9c19239f2e6fd4b8d",
+      "hp48.js": "b8d62541ab887872834d040417f72628f3c6bb53f4fcd31328e6564bd8b4e5ac",
+      "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+      "irda-input.js": "6ad8506f1888aec03401081165e052c921f389e326cd8e9efb00028d539870ac",
+      "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+      "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09",
+      "lcd-frames.js": "b9dbbafaa686d3e0282ee3f935205d20bee5b864b6e5b7c90e4e17b4dfa162fe",
+      "licenses/frontend.txt": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+      "licenses/hp-calcs-svg/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "licenses/hp-calcs-svg/NOTICE.txt": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+      "licenses/hp-calcs-svg/README.md": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+      "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+      "main.js": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35",
+      "orchard.wasm": "36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569",
+      "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+      "preferences.js": "2a68b46423babf91328fb1f70e4e2a8606f18248dc1a303c88da49a505f6ce6e",
+      "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+      "sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+      "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+      "session.js": "c16703077319fae40b9059b970a73e9ec4ee615d9b6534058d53e816766528d1",
+      "skin.js": "9f63995616505e9daa0fd7c4b9bb245fef0bfeedf584dbe57ace611cf770b74c",
+      "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+      "skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+      "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+      "skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+      "skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+      "skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+      "skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+      "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+      "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+      "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+      "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+      "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+      "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+      "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256"
+    },
+    "prior_integrated_phase": {
+      "schema": "orchard-integration-gates-r25-v1",
+      "scope": "First integrated timed relay; before subsequent original-browser drift correction. These gates are not the original two-calculator transfer acceptance.",
+      "assets": {
+        "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+        "README.txt": "6cae0b5efd9a4a6e15d9e253783fa880147f67f90ec9f89508c8f3b0c4ad2e11",
+        "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+        "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+        "calculator.css": "8b4b2742be3751b54273a9cf15ff5d3652fa7a7890eb148c7a01a2504b8794c8",
+        "calculator.js": "1d488de1dfe46419d2b42f1b166b049de00872a10071c8f02a6ca49f3c78efd2",
+        "catalog.js": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8",
+        "debug.html": "e1366fa83c3493408dada98e228066a1328f030cea90de4285975a88f337729f",
+        "file-transfer.js": "a6bcdc45af858b6709b343f21712958e3865835b9ed61fe18d0c124ae94f6aac",
+        "host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+        "host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+        "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+        "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+        "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+        "hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+        "hp39-wire.js": "8c3b409f3d2c4ee31f49a9a95a2c42b0677d0d276e3337a9c19239f2e6fd4b8d",
+        "hp48.js": "b8d62541ab887872834d040417f72628f3c6bb53f4fcd31328e6564bd8b4e5ac",
+        "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+        "irda-input.js": "887e4cb93fc5f3a9f3f386500a6fd162f1460468b53892146eb1435769e47d8b",
+        "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+        "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09",
+        "lcd-frames.js": "b9dbbafaa686d3e0282ee3f935205d20bee5b864b6e5b7c90e4e17b4dfa162fe",
+        "licenses/frontend.txt": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+        "licenses/hp-calcs-svg/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "licenses/hp-calcs-svg/NOTICE.txt": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+        "licenses/hp-calcs-svg/README.md": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+        "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+        "main.js": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35",
+        "orchard.wasm": "36e2a4811a793413ca5ec49436e047b3f47a518112810f2c1835030322fa8569",
+        "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+        "preferences.js": "2a68b46423babf91328fb1f70e4e2a8606f18248dc1a303c88da49a505f6ce6e",
+        "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+        "sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+        "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+        "session.js": "c16703077319fae40b9059b970a73e9ec4ee615d9b6534058d53e816766528d1",
+        "skin.js": "9f63995616505e9daa0fd7c4b9bb245fef0bfeedf584dbe57ace611cf770b74c",
+        "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+        "skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+        "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+        "skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+        "skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+        "skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+        "skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+        "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+        "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+        "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+        "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+        "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+        "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256"
+      },
+      "node": {
+        "passed": true,
+        "gates": [
+          {
+            "gate": "check",
+            "exit_code": 0,
+            "log_sha256": "77e2d3eaacd5a548b0bd0d01acaadfc799445b2e4450c79770c6f3417c825023"
+          },
+          {
+            "gate": "test:frontend",
+            "exit_code": 0,
+            "log_sha256": "06d97c90c270ced0bebfe77248c250e383a8512886cb06fe19ed0554c25ee816"
+          },
+          {
+            "gate": "test:trace",
+            "exit_code": 0,
+            "log_sha256": "db7199399ca2712aac24fbe38d0623a71a7ab94f288bc8512dcc4d0fd6a181c6"
+          },
+          {
+            "gate": "test:web",
+            "exit_code": 0,
+            "log_sha256": "b56f4817a8d6a285db62436d7904097a356507535bff682c5030798c5310a04c"
+          },
+          {
+            "gate": "test:pages",
+            "exit_code": 0,
+            "log_sha256": "8c0ed25d3ffd65ac8031cabb40d929b6ee153403152c589e52e9a4ff1f3d0361"
+          }
+        ],
+        "retained_initial_failure": {
+          "gate": "test:frontend",
+          "cause": "Isolated VM fixture stripped Worker imports and omitted the newly required IrDAInput constructor. Fixed by importing the actual production class in all five affected fixtures.",
+          "log_sha256": "eddf6a7bc0850073151d5bcb05031a18af2b460bf1e6ee6fd5bb619666069bd6"
+        }
+      },
+      "browser": {
+        "passed": true,
+        "gates": [
+          {
+            "gate": "browser-components.py",
+            "exit_code": 0,
+            "log_sha256": "a4f422db2aaa5a70439bc79291899827d3d6317f027bd15f2ebce8971779ab59"
+          },
+          {
+            "gate": "browser-held-keys.py",
+            "exit_code": 0,
+            "log_sha256": "a252935ae4543b7b32bb2d353ff52a9b27bc5758eff53545b85c8ac9309a3d5a"
+          },
+          {
+            "gate": "browser-keyboard.py",
+            "exit_code": 0,
+            "log_sha256": "2320c207d1b242fd4ced3e9259dd6fcfe7be2f859853b9638fdeb9326afa4161"
+          },
+          {
+            "gate": "browser-display.py",
+            "exit_code": 0,
+            "log_sha256": "e30529a7887b57c30de5c3267f1a28aab2de3a9aeaa9cd996ad78f1927c21282"
+          }
+        ]
+      },
+      "sd_worker_log_sha256": "e5ac234de2a7b5bd9cecf666d7bf15675456e9d3b217d7e6047ab13bd1c14ffb",
+      "host_bridge_worker_log_sha256": "29ad7fbfd4e7b8464969840dae26f66fa3cfaf1b9b072bdf4cce098b194a2574"
+    },
+    "combined_v3_frontend": {
+      "exit_code": 0,
+      "log_sha256": "d9b98758eb51f424753f4ab22707730b591a8c331b85591ba0f76f2d08976b1b",
+      "scope": "Complete frontend suite with current v3 window, stable clock arithmetic, hardware-RX reopening and actual production Worker/core tests."
+    },
+    "pages_publication_fix": {
+      "failed_ci_run": "https://github.com/maxmixalex/orchard-emu/actions/runs/40081316945",
+      "cause": "Production build copied key-input.js, but exact Pages asset inventory omitted it. Retained the strict inventory and added the actual shared key module.",
+      "actual_production_assembly": {
+        "passed": true,
+        "assets": 50,
+        "source_revision": "4630253c83d8807665e3bd56a2593a39b792b561",
+        "copied_original_dist": true,
+        "runtime_dist_changed": false
+      },
+      "unit_log_sha256": "f57165854c6ab33d32d7ce0beecbf3ed2d0b6e8cbc0e50c91cc438a896ed04fd"
+    },
+    "final_documentation": {
+      "navigation_page_count": 61,
+      "strict_render_exit_code": 0,
+      "strict_render_log_sha256": "c63d1b97c1d7e4c8f9ea8a446031a3877fbb272337fca8d9efdd2f07eaf2f03c",
+      "scope": "Final v3 production acceptance, earlier failures and explicit remaining boundaries; isolated production assembly is checked separately."
+    },
+    "final_browser_components": {
+      "private_report_sha256": "5502140665f8c374a6287efbc4eb03184a0275716950637fc240e251542700bf",
+      "scope": "offline React/Mantine integration with fixture Worker; not production-ROM E2E",
+      "exit_code": 0,
+      "passed": true,
+      "tool_sha256": "fd163fff4e5e01042ac3d51cde97fa926fceed347736639b270cb5037ef39983",
+      "assets_unchanged": true,
+      "screenshots": [
+        "offline-initial.png",
+        "ui-keyboard-zh.png",
+        "ui-traditional-zh.png",
+        "ui-files-zh.png",
+        "ui-upload-batch-zh.png",
+        "ui-hp39-files-zh.png",
+        "ui-hp39-wire-receive-zh.png",
+        "test-capture.png"
+      ],
+      "production_assets_present_at_check_match_final_runtime": true,
+      "command": "python3 tests/browser-components.py"
+    },
+    "production_package_rehearsal": {
+      "private_report_sha256": "d874e050081dde2557272050ad6ca53f20c71bcd81571da1116a446177a79ed5",
+      "schema": "orchard-final-v3-package-check-v1",
+      "passed": true,
+      "source_head": "04aafbd27ba18ba3d9352a3880244eeb09d1c9bd",
+      "source_status": [
+        " M README.md",
+        " M docs/development/board.md",
+        " M docs/development/compatibility-r25.md",
+        " M docs/development/evidence/production-continuation-r25.json",
+        " M docs/development/roadmap.md",
+        " M docs/development/uart-irda.md",
+        " M docs/development/validation.md"
+      ],
+      "root_dist_written": false,
+      "root_site_written": false,
+      "remote_write": false,
+      "is_official_github_artifact": false,
+      "scope": "Copied current production dist and strict-built site, assembled only the copies, downloaded ZIPs over temporary localhost HTTP and checked their full contents. Final committed source revision and remote Build/Pages remain separate release gates.",
+      "source_dist_tree_sha256": "b78057d0469c8468e328000c255ac9482dd1f77ab5bffcfdd0fcaeb21bc36616",
+      "source_site_tree_sha256": "c0178c1624c28ba01e89160b44cfa71d7a79604fd17b7cdc31de9163c0824a67",
+      "workflow_sha256": {
+        ".github/workflows/build.yml": "9055aad5e467682a18ae498d82d0b19f499e3991dab3e95902177227b6d3cd8a",
+        ".github/workflows/docs.yml": "909870a2497eb9c7689e57047332ecc2e906b2228c18e99073b56fcf47cd0423",
+        "tools/pages.py": "3090c4f6f9bc3c696f16571c482f1bfd69d11af511d329cc2eaed4bc2847512e",
+        "tools/build-pages.py": "0088e1835e02b1661ba5d09a7ee749553d757ad47e9d7df448b5d730934aa49c",
+        "tools/verify-pages.py": "7c550e25b9cc5b8ba40dcb5ce769ad32ddd17853895e8cefa52aa833f930f5c4"
+      },
+      "production_asset_count": 50,
+      "assembled_emulator_file_count": 52,
+      "web_pages_byte_equal": true,
+      "archives": {
+        "orchard-web": {
+          "bytes": 647823,
+          "sha256": "0571ffd50f44510795f9cc7c792f235e53cb611011d826c1115ec81a0ef1c6c0",
+          "entries": 52,
+          "crc_valid": true,
+          "safe_paths": true,
+          "downloaded_bytes_equal": true,
+          "unpacked_files_equal": true
+        },
+        "orchard-pages": {
+          "bytes": 4640730,
+          "sha256": "2c4443fd634362826f7a6b2df717ddb2a7ee74610ba3dfa6399d7b1604a68825",
+          "entries": 218,
+          "crc_valid": true,
+          "safe_paths": true,
+          "downloaded_bytes_equal": true,
+          "unpacked_files_equal": true
+        },
+        "orchard-host": {
+          "bytes": 81385,
+          "sha256": "7dbd6806753c2738bbba31705bbf655c6b60bf56aa0bad7c1e9e707aec8dc605",
+          "entries": 18,
+          "crc_valid": true,
+          "safe_paths": true,
+          "downloaded_bytes_equal": true,
+          "unpacked_files_equal": true
+        }
+      },
+      "downloaded_web_manifest_verified": true,
+      "downloaded_pages_verified": true,
+      "legacy_host_packaged_entrypoints_load": true,
+      "public_downloads": [
+        {
+          "url": "https://maxmixalex.github.io/orchard-emu/downloads/hp39gs-arm-return-v1.zip",
+          "bytes": 543722,
+          "sha256": "ef1e8505e2ec39b6d1cc2d62d6b99da27e06fc4eab1e2c70f9ae63c01bdece17",
+          "entries": 23,
+          "crc_valid": true,
+          "safe_paths": true,
+          "companion_sha256_equal": true,
+          "repository_bytes_equal": true,
+          "checked_location": "isolated local copy of final site"
+        },
+        {
+          "url": "https://maxmixalex.github.io/orchard-emu/downloads/hp39gs-rom-dump-v1.zip",
+          "bytes": 1046118,
+          "sha256": "f21b775a89ac6f3ce513abdb70181627c87c6088fdeeeff1fa6bebe0a5bf9ce1",
+          "entries": 50,
+          "crc_valid": true,
+          "safe_paths": true,
+          "companion_sha256_equal": true,
+          "repository_bytes_equal": true,
+          "checked_location": "isolated local copy of final site"
+        },
+        {
+          "url": "https://maxmixalex.github.io/orchard-emu/downloads/hp39gs-rom-dump-v2.zip",
+          "bytes": 1069100,
+          "sha256": "94d41700fb8f6db8feb9448c3cedad994a78681dc5b06bbc7c34d79e74444ca2",
+          "entries": 55,
+          "crc_valid": true,
+          "safe_paths": true,
+          "companion_sha256_equal": true,
+          "repository_bytes_equal": true,
+          "checked_location": "isolated local copy of final site"
+        },
+        {
+          "url": "https://maxmixalex.github.io/orchard-emu/downloads/hp49gplus-flash-read-v1.zip",
+          "bytes": 70366,
+          "sha256": "dfb2bba0c199255fc13add0a293ae50dde50c85f0c3375476aa4d81f42d7ea2c",
+          "entries": 16,
+          "crc_valid": true,
+          "safe_paths": true,
+          "companion_sha256_equal": true,
+          "repository_bytes_equal": true,
+          "checked_location": "isolated local copy of final site"
+        }
+      ],
+      "separate_package_verifiers_passed": [
+        "hp39gs-arm-return-v1.zip",
+        "hp39gs-rom-dump-v2.zip"
+      ],
+      "root_dist_unchanged": true,
+      "root_site_unchanged": true,
+      "production_assets_match_final_runtime": true
+    },
+    "scope": "Integrated v3 infrared phase before the final presentation-only phone sizing correction. Each retained report keeps its original assets. See presentation_continuation for the later page entry; no protocol or core result is relabelled."
+  },
   "remaining_boundaries": [
     "Complete original HP40gs/HP50g NOR admission is unavailable.",
     "Original GBP0.3 unaligned loader faults remain distinct from the ALIGN4 diagnostic.",
     "Arkalite ordinary short-DEL browser failures remain open; explicit held-DEL passes do not replace them.",
-    "Historical malformed IrDA ACKs require their own captured explanation; a successful flow does not establish a failure rate.",
+    "The final v3 infrared flow recovers one bad reverse Kermit Y3 through original-firmware retry. Malformed ACKs require their own explanation; a successful flow does not establish a failure rate.",
     "Physical board clocks/reset/pad/panel/optical behavior, DMA and larger SD modes remain outside current acceptance.",
     "Chromium desktop/narrow/emulated-touch tests do not establish physical phone or all-browser compatibility.",
     "Native operating-system device/Conn3x development is retired."

@@ -314,6 +314,12 @@ tests pass on the applicable admitted models. The [infrared link](infrared.md)
 pairs two same-origin browser tabs; original HP49g+/48gII firmware exchanges
 objects in both directions using IrLAP, IrCOMM and Kermit. Decoded bytes are
 bounded and ordered; optical waveform and physical-adapter timing remain open.
+The r25 continuation adds observed batch timing, an eight-packet bounded window,
+exact connection epochs and hardware-RX-close clock reanchoring. Its final
+production-browser Pause/re-pair/ON workflow completes both exact objects,
+actual recalled values and all valid final acknowledgments. One bad reverse
+Y3 recovers through the original firmware's retry; that retained observation
+still needs an explanation and is not a zero-error reliability result.
 
 **Native host-device simulation is retired at the user's request.** The Local
 device UI was removed. OS USB/IP attachment, HP driver binding and Conn3x are

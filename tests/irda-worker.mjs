@@ -3,7 +3,7 @@
 // simulated UART queue, or injected Worker output is used in this regression.
 import assert from 'node:assert/strict';
 import {Worker} from 'node:worker_threads';
-import {IRDA_SPAN_TICKS} from '../web/irda-input.js';
+import {IRDA_SPAN_TICKS,IRDA_WINDOW_PACKETS} from '../web/irda-input.js';
 
 const adapter=`
 import {parentPort,workerData} from 'node:worker_threads';
@@ -14,7 +14,9 @@ globalThis.fetch=async url=>{
   if(String(url)!==new URL('orchard.wasm',workerData.workerURL).href)throw Error('Unexpected asset request');
   return new Response(await readFile(new URL(workerData.wasmURL)),{status:200});
 };
-parentPort.on('message',data=>self.onmessage?.({data}));
+// The test-only batch delivers ordinary messages within one host task, so no
+// scheduler task can advance guest time between enqueueing window packets.
+parentPort.on('message',data=>{for(const message of data.testBatch??[data])self.onmessage?.({data:message});});
 await import(workerData.workerURL);
 `;
 function guest(mode){
@@ -99,4 +101,53 @@ for(const mode of ['enabled','disable-after','serial-after','loopback','unpaired
     assert.equal(output.some(data=>data.type==='error'||data.type==='fatal'),false);
   }finally{await worker.terminate();for(const entry of pending)clearTimeout(entry.timer);}
 }
-console.log('IrDA Worker: real ARM send→disable and send→mode-change retain transmitted bytes; internal loopback, unpaired output and disabled TX do not forward.');
+{
+ const worker=new Worker(new URL('data:text/javascript,'+encodeURIComponent(adapter)),{
+  workerData:{workerURL:new URL('../web/worker.js',import.meta.url).href,wasmURL:new URL('../dist/orchard.wasm',import.meta.url).href}});
+ const output=[],pending=[];
+ worker.on('message',data=>{output.push(data);for(const entry of [...pending])if(entry.match(data)){clearTimeout(entry.timer);pending.splice(pending.indexOf(entry),1);entry.resolve(data);}});
+ const wait=match=>{
+  const old=output.find(match);if(old)return Promise.resolve(old);
+  return new Promise((resolve,reject)=>{const entry={match,resolve,timer:setTimeout(()=>reject(Error('Pipelined IR Worker: '+JSON.stringify(output.at(-1)))),10000)};pending.push(entry);});
+ };
+ const send=data=>worker.postMessage({generation:1,epoch:1,...data});
+ const batch=messages=>worker.postMessage({testBatch:messages.map(message=>({generation:1,epoch:1,...message}))});
+ try{
+  await wait(data=>data.type==='ready');send({type:'create',model:2,preset:'strict',audience:'calculator'});
+  await wait(data=>data.type==='created');send({type:'load',rom:guest('echo').buffer});await wait(data=>data.type==='loaded');
+  send({type:'irda-connect',connected:true});send({type:'run'});
+  await wait(data=>data.type==='snapshot'&&data.running&&data.tick>=1024);
+  const source=100,gap=4096;
+  batch(Array.from({length:IRDA_WINDOW_PACKETS},(_,index)=>({type:'irda-input',request:index+1,
+   bytes:Uint8Array.from(index===0?[51,52]:[59+index]),segments:index===0?[[1,source],[1,source+gap]]:[[1,source+gap]]})));
+  await wait(data=>data.type==='irda-input-result'&&data.request===IRDA_WINDOW_PACKETS);
+  await wait(data=>data.type==='irda-output'&&data.bytes.includes(59+IRDA_WINDOW_PACKETS-1));
+  const results=output.filter(data=>data.type==='irda-input-result');
+  assert.deepEqual(results.map(data=>data.request),Array.from({length:IRDA_WINDOW_PACKETS},(_,index)=>index+1));
+  assert.equal(new Set(results.map(data=>data.tick)).size,1,'The real Worker consumes the already queued window at one virtual tick');
+  assert(results.every((data,index)=>data.accepted===(index===0?2:1)&&!data.discarded&&!data.error));
+  const expected=[51,52,...Array.from({length:IRDA_WINDOW_PACKETS-1},(_,index)=>60+index)];
+  assert.deepEqual(output.filter(data=>data.type==='irda-output').flatMap(data=>Array.from(data.bytes)),expected);
+  const future=source+gap+100+IRDA_SPAN_TICKS/2;
+  batch([
+   ...Array.from({length:IRDA_WINDOW_PACKETS},(_,index)=>({type:'irda-input',request:100+index,
+    bytes:Uint8Array.from(index===0?[88,99]:[99+index]),segments:index===0?[[1,source+gap+100],[1,future]]:[[1,future]]})),
+   {type:'irda-connect',connected:false,epoch:2},{type:'irda-connect',connected:true,epoch:3},
+   {type:'irda-connect',connected:false,epoch:1},
+   {type:'irda-input',request:900,epoch:1,bytes:Uint8Array.of(110),segments:[[1,0]]},
+   {type:'irda-input',request:901,epoch:3,bytes:Uint8Array.of(77),segments:[[1,0]]},
+  ]);
+  await wait(data=>data.type==='irda-input-result'&&data.request===901);
+  const cancelled=output.filter(data=>data.type==='irda-input-result'&&data.request>=100&&data.request<100+IRDA_WINDOW_PACKETS);
+  assert.equal(cancelled.length,IRDA_WINDOW_PACKETS);
+  assert(cancelled.every((data,index)=>data.epoch===1&&data.accepted===(index===0?1:0)&&data.discarded&&!data.error));
+  const stale=output.find(data=>data.type==='irda-input-result'&&data.request===900);
+  assert.equal(stale.epoch,1);assert.equal(stale.accepted,0);assert.equal(stale.discarded,true);
+  await wait(data=>data.type==='irda-output'&&data.bytes.includes(77));send({type:'configure',speed:0});
+  await wait(data=>data.type==='snapshot'&&data.tick>cancelled[0].tick+IRDA_SPAN_TICKS/2+1024);
+  assert.deepEqual(output.filter(data=>data.type==='irda-output').flatMap(data=>Array.from(data.bytes)),[...expected,88,77],
+   'Cancel keeps the accepted prefix but no old queued suffix survives a new connection epoch');
+  assert.equal(output.some(data=>data.type==='error'||data.type==='fatal'),false);
+ }finally{await worker.terminate();for(const entry of pending)clearTimeout(entry.timer);}
+}
+console.log('IrDA Worker: real ARM TX boundaries, eight queued packets consumed at one tick, ordered completion and full-window epoch cancellation pass.');

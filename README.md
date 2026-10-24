@@ -228,6 +228,11 @@ retain their saved exact SRAM decode; export wanted objects, Restart from the
 original ROM to use the new preset, then reimport them before using this path.
 Linked tabs keep running in the
 background; Pause, reset, session replacement or disconnect ends the link.
+After updating, reload both tabs before pairing so they use the same link
+protocol version. The current relay preserves observed batch intervals and
+uses a bounded packet window; the [production acceptance record](docs/development/compatibility-r25.md#final-production-infrared-flow)
+includes interruption/re-pair recovery, both exact recalled objects and a
+retained malformed acknowledgment recovered by the original firmware's retry.
 This models decoded serial bytes and does not access a physical infrared adapter.
 Original RS232/IrDA factory loopback diagnostics also pass on the applicable
 four admitted systems. [NOR programming](docs/development/nor-write.md) lets

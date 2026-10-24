@@ -33,10 +33,10 @@ compatibility pass.
 | CP15 identification follow-up | Six documented ID-read encodings stopped as unsupported | All seven ID-read aliases retain the existing processor ID; the separate cache-type encoding and rejection boundaries remain covered independently |
 | Physical input | DOM key presses and pointer clicks became fixed pulses even when held | Independent down/up contacts, overlapping keys and touches, minimum brief-click dwell, finite character macros, and lifecycle cancellation |
 | Background pointer capture | With background execution enabled, releasing only Worker contacts left DOM capture attached to an old key | The same lifecycle reset clears keyboard owners, both keypads' pointer owners/capture and Worker contacts; a new click reaches its actual key |
-| Settings and layout | Settings actions fell below short viewports; menu keys leaked into the guest; fitting the whole calculator made landscape keys too small | Bounded modal scrolling, native Mantine input ownership, compact short-window actions, usable scrolling keys and conditional sticky LCD |
+| Settings and layout | Settings actions fell below short viewports; menu keys leaked into the guest; height fitting shrank landscape keys and an open phone connection dock | Bounded modal scrolling, native Mantine input ownership, usable scrolling keys and conditional sticky LCD; an open phone dock keeps the portrait skin at the available width |
 | Serial Wire | HP39gs rejected a library's first 1 KiB block; continuous receive was USB-only | Serial uses accepted 128-byte blocks, with continuous bounded Note/aplet/library reception and completed-file retention after Stop |
 | Directory synchronization | Matching changes on both sides could be reported as conflicts; directory-to-file replacement retained obsolete descendants | Identical changes converge, obsolete child baselines are removed and the next persisted synchronization remains clean |
-| Infrared reconnection | An old asynchronous partial receive could outlive its peer link; tiny queued chunks required repeated browser acknowledgments | Receive continuations retain their exact link identity; subsequent timing and original-firmware acceptance are recorded below |
+| Infrared delivery and reconnection | Old receives could outlive a peer link; serial host round trips and retained clock phases delayed later firmware exchanges | Exact connection identity, observed batch timestamps, a bounded eight-packet window and stable clock mapping; an empty queue releases its old mapping when hardware RX closes |
 
 [ARM memory behavior](arm-memory.md) records independent source-derived cases,
 the original native program's exact failing instructions and the evidence
@@ -126,6 +126,15 @@ are verified separately in the native-program record.
   The lower rows scroll, and the LCD stays visible only when enough room
   remains to operate the keyboard. Narrow Connections layouts also verify
   actual lower-row hit targets.
+- A final visual review also found that the open phone dock compressed the
+  immersive portrait case to approximately 120 pixels wide. Its narrowly
+  scoped layout correction uses the workspace width and existing scroll pane:
+  374 pixels at 390×844 and 344 pixels at 360×640 on the four admitted models.
+  Maintained cases click F4/F5/ENTER after scrolling, edit the connection panel
+  and retain explicit 75/100/150% zoom. Desktop, immersive landscape and both
+  traditional views keep their previous sizing rules. The later production
+  UI witness and served bundle are recorded separately from the complete
+  infrared-transfer witness below.
 - Settings Apply/Cancel stay inside the viewport across four settings tabs
   and four viewports. Storage explanations are shorter, and the save interval is
   disabled while automatic saving is off. Menu Arrow/Escape keys do not reach
@@ -168,20 +177,53 @@ ejects a mounted image before modifications, then reinstates it under the
 existing lifecycle policy. It does not mutate a mounted filesystem behind
 the guest cache or create an operating-system virtual disk.
 
-An initial 57d5-core browser run, before the later DOM-capture and timed-relay
-changes, uses original 49g+/48gII production tabs to interrupt a stock infrared
-transfer, end both peer links on Pause, resume with a new pairing code and
-cancel the firmware's old command through ON. The next forward object recalls
-`ORCHARD = 12345`; the reverse object recalls `RETURN = 54321`. Each is exactly
-26 bytes with valid Kermit completion and final acknowledgment, followed by
-Disconnect on both tabs. [The maintained workflow](infrared.md#browser-interruption-and-recovery)
-records the prepared cold-boot sessions, physical inputs and all served assets.
-A subsequent strict run on the final pre-timing frontend completed the forward
-object but timed out during reverse discovery; that failed report is retained
-separately, so the earlier positive run is not final timed-relay acceptance.
-The separate controlled stale-link and partial-acceptance regressions establish
-the two relay fixes. A successful browser exchange does not establish that
-they explain every earlier malformed ACK or firmware discovery timeout.
+### Final production infrared flow
+
+The combined 36e2 core and v3 frontend complete one fixed original 49g+/48gII
+production-browser workflow: interrupt an active stock transfer with Pause,
+observe both links close, resume and pair again, cancel the old firmware command
+with ON, transfer in both directions and disconnect both peers. The actual
+receiver screens show `ORCHARD = 12345` and `RETURN = 54321`. Both 26-byte files
+are exact; S/F/D/Z/B and every corresponding Y acknowledgment validate through
+the final end-of-transfer acknowledgment. Forward complete IrLAP frames are
+88/88 valid on each side; reverse frames are 120/120 and 121/121 valid. Neither
+core stops, and neither page/Worker reports an error or receive overflow.
+
+The reverse exchange also emits one checksum-invalid Kermit Y3. The original
+peers retry and then complete the valid sequence; that malformed packet is
+retained and never used to establish success. This is a completed recovery
+flow, not a zero-malformed-packet or statistical reliability claim. The browser
+restores hash-pinned sessions prepared from original-ROM cold boots on the
+earlier 57d5 core; it does not cold boot both peers during this final browser run.
+[The maintained workflow](infrared.md#browser-interruption-and-recovery) records
+the physical inputs and served assets. Its final entry, Worker, input module
+and core hashes are retained together in the
+[production record](evidence/production-continuation-r25.json).
+The subsequent phone-layout correction changes only the bundled presentation
+entry. Separate production UI checks validate its controls and geometry;
+the core, Worker, infrared input module and all other served assets remain
+byte-identical. The complete protocol workflow retains its actual earlier
+entry hash instead of being reassigned to the later display bundle.
+
+Earlier positive and failed attempts remain distinct. An initial 57d5 run
+completed both directions, while its later pre-timing frontend timed out during
+reverse discovery. Subsequent 36e2 timing candidates exposed accumulated host
+delay and a missing final Y4 even after correct file arrival. Exact API replay
+showed that the original firmware read the final B bytes, then closed UART2
+without writing a complete Y4; the Worker had not dropped an emitted suffix.
+A controlled continuation using two real original cores completed Y4 with new
+local clock mappings, while restoring the earlier mappings reproduced the
+failure. This bounded comparison does not reproduce the entire browser history.
+
+The production fixes preserve output-batch intervals, keep one source-to-target
+clock mapping while receiving, pipeline at most eight packets within the
+16 KiB bound, and release the old phase only when hardware RX is unavailable
+and no delivery is pending. Existing future input keeps its deadlines; old
+connections cannot acknowledge or feed a new peer. These are decoded-byte
+functional semantics. Batch timestamps are observed after bounded core runs,
+not exact per-byte emission times or a measured optical/baud model. The final
+full workflow validates their integration without claiming that every earlier
+malformed acknowledgment has been explained.
 
 ## Fixed-workload performance comparison
 
@@ -218,7 +260,7 @@ substituted for these final-core samples.
 | Board timing and LCD, M2 | Functional 12 MHz reference, declared SRAM/GPIO/LCD conditions | Physical clock/reset/pad/panel measurements; retain exact original-ROM counterexamples instead of interpreting visual smoothness as hardware accuracy |
 | SD and peripherals, M2/M6 | SDSC PIO/FAT16 and bounded UART/SPI/NOR modes | Add a source-derived PCLK UART receive-timeout subset and checkpoint state; first establish any external UEXTCLK frequency used by stock IrDA. DMA/larger media require separate transaction evidence and exact continuation |
 | Browser stability, M5/M7 | Maintained Chromium desktop/narrow/touch fixtures and real original programs; Arkalite short DEL is not consistently accepted | Retain exact input/virtual-time histories for the Arkalite failure; add other engines, real phones and long-session/storage-pressure cases, including the historical rare HP48 Unlimited post-result failure |
-| Infrared, M6 | Decoded-byte same-origin pairing, original object transfer | Wider cancellation/retry/re-pair cases with valid end acknowledgements, exact recalled objects and retained malformed/retransmitted-packet evidence; physical optical timing remains separate |
+| Infrared, M6 | Decoded-byte same-origin pairing and final v3 original bidirectional recovery; one bad Y3 recovers through firmware retry | Explain retained malformed acknowledgments and extend cancellation/retry/re-pair cases with valid end acknowledgements and exact recalled objects; physical optical timing remains separate |
 | Performance | Exact-workload state comparison and host measurements | Measure candidate/reference execution and browser input latency separately, at fixed inputs, without inferring physical calculator speed or a speedup from passing functionality |
 | Release, M0/M7 | Source review, local gates, hosted Build and Pages are distinct | Observe successful hosted checks and the exact live asset/revision manifest for every accepted release |
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Preserve decoded sender-clock gaps across host batching. This is transport
 // scheduling, not a baud, optical waveform or firmware-protocol model.
-export const IRDA_PACKET_BYTES=1024,IRDA_QUEUE_BYTES=16384,IRDA_SPAN_TICKS=12000000;
+export const IRDA_PACKET_BYTES=1024,IRDA_QUEUE_BYTES=16384,IRDA_SPAN_TICKS=12000000,IRDA_WINDOW_PACKETS=8;
 export function irdaTimeline(length,segments=[[length,0]]){
   if(!Number.isInteger(length)||length<1||length>IRDA_PACKET_BYTES||!Array.isArray(segments)||!segments.length||segments.length>IRDA_PACKET_BYTES)throw Error('Invalid infrared timeline');
   let total=0,previous=-1;
@@ -22,14 +22,22 @@ export function irdaSuffix(segments,offset){
 export class IrDAInput {
   constructor({ready,send,reply,progress=()=>{}}){
     this.ready=ready;this.send=send;this.reply=reply;this.progress=progress;
-    this.pending=null;this.sourceTick=null;this.sourceAnchor=null;this.targetAnchor=0;
+    this.queue=[];this.queued=0;this.failure=null;this.sourceTick=null;this.sourceAnchor=null;this.targetAnchor=0;
   }
-  reset(tick=0){if(this.pending)this.finish(true,tick);this.sourceTick=null;this.sourceAnchor=null;this.targetAnchor=0;}
+  get pending(){return this.queue[0]??null;}
+  reset(tick=0){while(this.pending)this.finish(true,tick);this.failure=null;this.sourceTick=null;this.sourceAnchor=null;this.targetAnchor=0;}
   receive({request,bytes,segments},tick){
-    if(this.pending)throw Error('An infrared packet is already pending');
     if(!(bytes instanceof Uint8Array)||!Number.isSafeInteger(request)||request<1)throw Error('Invalid infrared packet');
     const timeline=irdaTimeline(bytes.length,segments);
-    if(this.sourceTick!==null&&timeline[0][1]<this.sourceTick)throw Error('Infrared clock moved backwards');
+    const reject=error=>this.reply({request,accepted:0,discarded:true,error});
+    if(this.failure){reject(this.failure);return;}
+    if(this.queue.some(packet=>packet.request===request))throw Error('Duplicate infrared request');
+    const previous=this.queue.at(-1)?.segments.at(-1)[1]??this.sourceTick;
+    if(previous!==null&&timeline[0][1]<previous)throw Error('Infrared clock moved backwards');
+    if(this.queue.length>=IRDA_WINDOW_PACKETS||this.queued+bytes.length>IRDA_QUEUE_BYTES||
+      this.pending&&timeline.at(-1)[1]-this.pending.segments[0][1]>IRDA_SPAN_TICKS){
+      this.abort(tick,'overflow');reject('overflow');return;
+    }
     if(this.sourceAnchor===null){this.sourceAnchor=timeline[0][1];this.targetAnchor=tick;}
     // Map the peer's clock once per connection. Host delivery or RX retries
     // may be late, but their lateness must not accumulate into future packets.
@@ -38,15 +46,26 @@ export class IrDAInput {
     // Wall-clock progress keeps a slow host alive, but cannot extend this
     // finite guest-time allowance for an RX queue that never drains.
     const deadline=due+(timeline.at(-1)[1]-timeline[0][1])+IRDA_SPAN_TICKS;
-    this.pending={request,bytes:bytes.slice(),segments:timeline,index:0,offset:0,end:timeline[0][0],start:due,due,deadline,accepted:0,discarded:false,progressTick:tick};
-    if(due-tick>IRDA_SPAN_TICKS||!Number.isSafeInteger(due)||!Number.isSafeInteger(deadline)){this.finish(true,tick,'timing');return;}
+    if(due-tick>IRDA_SPAN_TICKS||!Number.isSafeInteger(due)||!Number.isSafeInteger(deadline)){
+      this.abort(tick,'timing');reject('timing');return;
+    }
+    this.queue.push({request,bytes:bytes.slice(),segments:timeline,index:0,offset:0,end:timeline[0][0],start:due,due,deadline,accepted:0,discarded:false,progressTick:tick});
+    this.queued+=bytes.length;
     this.poll(tick);
   }
-  boundary(tick){const p=this.pending;if(!p)return Infinity;return Math.min(p.due>tick?p.due:Infinity,p.deadline>tick?p.deadline:Infinity);}
+  boundary(tick){
+    let next=this.pending?.due>tick?this.pending.due:Infinity;
+    for(const packet of this.queue)if(packet.deadline>tick)next=Math.min(next,packet.deadline);
+    return next;
+  }
   poll(tick){
+    // A closed receiver with no future input has no active arrival clock.
+    // Keep source ordering, but let a later hardware receive session establish
+    // its own phase instead of inheriting an old connection's transport lag.
+    if(!this.pending&&!this.ready()){this.sourceAnchor=null;this.targetAnchor=0;}
     while(this.pending){
+      if(this.queue.some(packet=>tick>=packet.deadline)){this.abort(tick,'overflow');return;}
       const p=this.pending;
-      if(tick>=p.deadline){this.finish(true,tick,'overflow');return;}
       if(tick<p.due)return;
       if(!this.ready()){
         // Unavailable receivers lose this arriving segment. Later segments
@@ -59,19 +78,28 @@ export class IrDAInput {
         if(p.offset<p.end)return;
       }
       this.sourceTick=p.segments[p.index][1];
-      if(++p.index===p.segments.length){this.finish(p.discarded,tick);return;}
+      // Continue with already queued packets at this same guest tick. Their
+      // delivery must not wait for a main-thread ACK and another Worker task.
+      if(++p.index===p.segments.length){this.finish(p.discarded,tick);continue;}
       // A late coalesced packet still retains its captured internal gaps.
       // Completing a segment late does not move the remaining schedule.
       p.end+=p.segments[p.index][0];p.due=p.start+(p.segments[p.index][1]-p.segments[0][1]);
     }
   }
   notifyProgress(tick){
-    const p=this.pending;if(!p||tick<=p.progressTick)return;
-    p.progressTick=tick;this.progress({request:p.request,tick,accepted:p.accepted});
+    for(const p of this.queue){
+      if(tick<=p.progressTick)continue;
+      p.progressTick=tick;this.progress({request:p.request,tick,accepted:p.accepted});
+    }
   }
   finish(discarded,tick,error){
-    const p=this.pending;if(!p)return;this.pending=null;
+    const p=this.queue.shift();if(!p)return;this.queued-=p.bytes.length;
     if(discarded)this.sourceTick=p.segments.at(-1)[1];
     this.reply({request:p.request,accepted:p.accepted,discarded,...(error?{error}:{})});
+  }
+  abort(tick,error){
+    // A failed direction cannot deliver a queued suffix before the main
+    // thread processes its error. Already accepted core bytes stay accepted.
+    this.failure=error;while(this.pending)this.finish(true,tick,error);
   }
 }

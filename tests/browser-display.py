@@ -125,6 +125,44 @@ with sync_playwright() as p:
     assert page.locator('.traditional-key[data-scan="6"]').evaluate('''e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return e.contains(hit)}'''),'A sticky display covered the lower keys while Connections was open'
     page.locator('#workspace').evaluate('(e)=>e.scrollTop=0');settled()
     page.screenshot(path=str(OUT/'connections-mobile.png'))
+    # An open phone dock must not shrink the portrait skin into its 45% height
+    # allocation. Keep readable keys and let the existing two panes scroll.
+    phone_immersive=[]
+    for model,slug in [(1,'hp39gplus'),(2,'hp39gs'),(4,'hp48gii'),(5,'hp49gplus')]:
+        page.evaluate('(id)=>{const c=window.__controller;c.patch({loaded:false});c.select(id)}',model)
+        page.wait_for_function('(slug)=>document.querySelector("#skin-stage")?.dataset.model===slug&&document.querySelectorAll("#calculator .skin-key").length===51',arg=slug)
+        frame();preferences(view='immersive',zoom=100)
+        for width,height in [(390,844),(360,640)]:
+            page.set_viewport_size({'width':width,'height':height});settled()
+            page.get_by_role('tab',name='Infrared',exact=True).click();settled()
+            page.locator('#workspace').evaluate('(e)=>{e.scrollTop=0;e.scrollLeft=0}');settled()
+            geometry=page.evaluate('''()=>{const w=document.querySelector('#workspace'),s=getComputedStyle(w),stage=document.querySelector('#skin-stage').getBoundingClientRect(),enter=document.querySelector('.skin-key[data-scan="6"]').getBoundingClientRect();return {stageWidth:stage.width,contentWidth:w.clientWidth-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight),workspaceHeight:w.clientHeight,scrollHeight:w.scrollHeight,outerWidth:document.documentElement.scrollWidth,enterWidth:enter.width,enterHeight:enter.height}}''')
+            assert geometry['stageWidth']>=300 and abs(geometry['stageWidth']-geometry['contentWidth'])<=1,geometry
+            assert geometry['scrollHeight']>geometry['workspaceHeight'] and geometry['outerWidth']<=width,geometry
+            assert geometry['enterWidth']>=24 and geometry['enterHeight']>=24,geometry
+            if model==4:page.screenshot(path=str(OUT/f'connections-immersive-{slug}-{width}x{height}-top.png'))
+            for scan in [38,39,6]:
+                page.evaluate('window.__messages.length=0');page.locator(f'.skin-key[data-scan="{scan}"]').click()
+                messages=page.evaluate('window.__messages.filter(m=>m.type==="key-down"||m.type==="key-up")')
+                assert [m.get('scan') for m in messages if m['type']=='key-down']==[scan],messages
+                assert len(messages)==2 and messages[-1]['type']=='key-up' and not messages[-1]['cancel'],messages
+            assert page.locator('#workspace').evaluate('(e)=>e.scrollTop')>0
+            if model==4:page.screenshot(path=str(OUT/f'connections-immersive-{slug}-{width}x{height}-keys.png'))
+            # The separate panel still accepts input after scrolling the keys.
+            code=page.get_by_role('textbox',name='Pairing code',exact=True)
+            code.fill('LAYOUT42');assert code.input_value()=='LAYOUT42';code.fill('')
+            page.get_by_role('tab',name='Files',exact=True).click()
+            assert page.get_by_role('button',name='Connect USB',exact=True).is_visible()
+            phone_immersive.append({'model':model,'viewport':[width,height],**geometry,'physical_scans':[38,39,6],'panel_input':True})
+    # User zoom still scales the full-width phone case, including scrollable
+    # enlargement; the dock must not clamp an explicit zoom back to 100%.
+    phone_zoom=[]
+    for zoom in [75,100,150]:
+        preferences(zoom=zoom)
+        size=page.locator('#skin-stage').bounding_box()['width']
+        assert abs(size-geometry['contentWidth']*zoom/100)<=1,(zoom,size,geometry)
+        phone_zoom.append({'zoom':zoom,'width':size})
+    preferences(view='traditional-landscape',zoom=100)
     page.get_by_role('button',name='Close sidebar',exact=True).click()
     page.get_by_role('button',name='Settings',exact=True).click();settled()
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
@@ -152,5 +190,5 @@ with sync_playwright() as p:
         if width==360:page.screenshot(path=str(OUT/'settings-storage-360x640.png'))
     page.get_by_role('button',name='Cancel',exact=True).click()
     assert not errors,errors
-    report={'passed':True,'scope':'Real Chromium with production UI/controller/capture and synthetic LCD pixels; no ROM execution implied','layouts':results,'scaling':scaled,'pause_resume':True,'settings_apply_cancel':True,'settings_scroll_containment':settings,'menu_keyboard_isolation':True,'mobile_actions_sidebar':True,'page_errors':errors}
+    report={'passed':True,'scope':'Real Chromium with production UI/controller/capture and synthetic LCD pixels; no ROM execution implied','layouts':results,'scaling':scaled,'pause_resume':True,'settings_apply_cancel':True,'settings_scroll_containment':settings,'menu_keyboard_isolation':True,'mobile_actions_sidebar':True,'phone_immersive_connections':phone_immersive,'phone_panel_zoom':phone_zoom,'page_errors':errors}
     (OUT/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report));browser.close()

@@ -207,3 +207,37 @@ values for unspecified non-base destinations. Exact silicon partial-beat or
 peripheral-side-effect fidelity needs additional ARM9TDMI detail or measured
 hardware evidence. A broader generated test matrix alone would not complete
 that hardware-conformance work.
+
+## Program-driven follow-ups
+
+### Arkalite short DEL
+
+The combined core's held-DEL browser exits pass, but the retained ordinary
+short-click failures remain open. The 28 paired initial/combined-core cases
+reach equal full checkpoints and do not reproduce those failures. The failed
+browser reports lack a complete preceding RIGHT-contact and core API history;
+a nearby successful DEL tick is therefore not an independent timing oracle.
+
+The next bounded investigation is one HP39gs capture from the second Restore
+through the quit decision, with the original failing frontend identity and
+36e2 core. Record every execution API, actual C key-contact edge, input owner,
+pre-DEL full checkpoint and observed outcome. Require exact same-core replay
+before comparing an earlier core or adding read-only GPIO/EINT observations.
+If that capture succeeds, retain it as a non-reproduction rather than repeatedly
+sampling for a preferred result. Separate host contact delivery, guest scanning,
+instruction/interrupt behavior and LCD publication. The established return-title
+region and complete HOME arithmetic frame remain outcome checks; increasing
+DEL dwell is not itself a short-click fix. See the retained boundaries in the
+[program compatibility record](compatibility-r25.md#browser-input-and-presentation).
+
+### Original GBP entry environment
+
+The [native prerequisite record](hp39-native-prerequisites.md) retains the
+unaligned original-loader fault and the distinct working ALIGN4 diagnostic.
+Before changing another CPU rule, identify the actual installed Library 275,
+the original program's PrRUN/ARMSYS entry and every relevant CP15 alignment-bit
+write up to the first BSS store. Follow the unmodified ROM's abort handler to
+its observed return, retry or loop. An independently normal case must use the
+same original package and established entry environment; a separately aligned
+package or disabled alignment checking cannot supply that evidence. This is
+an investigation plan, not new original-package acceptance.

@@ -64,7 +64,10 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
    keypad.current?.setLayout(p.view==='traditional-landscape');
    const boxStyle=getComputedStyle(box),width=Math.max(64,box.clientWidth-parseFloat(boxStyle.paddingLeft)-parseFloat(boxStyle.paddingRight)),
     height=Math.max(64,box.clientHeight-parseFloat(boxStyle.paddingTop)-parseFloat(boxStyle.paddingBottom)),dpr=window.devicePixelRatio||1;
-   const caseWidth=Math.round(Math.min(width,height*(w/h||.497))*p.zoom/100*dpr)/dpr;
+   // A phone's open Connections dock already gives each pane its own scroll.
+   // Keep the portrait case usable instead of fitting it into half a screen.
+   const scrollCase=p.view==='immersive'&&matchMedia('(max-width:760px)').matches&&box.parentElement?.dataset.panelOpen==='true';
+   const caseWidth=Math.round((scrollCase?width:Math.min(width,height*(w/h||.497)))*p.zoom/100*dpr)/dpr;
    host.current.style.setProperty('--case-width',`${caseWidth}px`);
    const lcdHeight=last?.height??(model.id>=5?80:64),lcdWidth=last?.width??131;
    // Traditional keys now use measured SVG geometry. Fit the LCD and that
