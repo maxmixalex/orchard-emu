@@ -143,7 +143,9 @@ are verified separately in the native-program record.
 These are actual Chromium keyboard and emulated-touch events, not a claim of
 physical iOS/Android or all-engine acceptance. LCD nearest/bilinear/bicubic/
 Lanczos scaling and optional 35 ms response remain presentation policies;
-raw captures, recordings and guest state remain independent. The original
+spatial scaling does not affect exported pixels. The selected LCD response is
+shared by the live display, PNG captures and recordings; neither option changes
+guest state. The original
 firmware's OFF-text-at-enable sequence is retained rather than hidden.
 
 The initial 57d5 core also measures a four-second GBP39 ALIGN4 workload on each
