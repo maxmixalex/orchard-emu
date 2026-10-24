@@ -225,10 +225,56 @@ static void descriptor_diagnostics(void) {
     }
 }
 
+/* A classified DP may skip only the encoding checks already performed by
+ * arm_without_checkpoint. Check both sides of that boundary independently of
+ * the retained full-checkpoint dispatcher, including aliases of DP encodings. */
+static void data_processing_boundaries(void) {
+    initialize();
+    uint32_t seed = 0x64702d76u;
+    o_cpu initial = cpu_state(false, &seed);
+    initial.cpsr = O_SVC | O_I | O_F | O_C | O_V;
+    initial.r[0] = 0xdeadbeefu;
+    initial.r[2] = 3; initial.r[3] = 1; initial.r[4] = 1;
+    const struct { uint32_t op, r0, pc, cpsr; bool stopped; } cases[] = {
+        {0xe08f0412u, 0x112, 0x104, 0x300000d3u, false}, /* ADD: Rn PC+12. */
+        {0xe083041fu, 0x219, 0x104, 0x300000d3u, false}, /* ADD: Rm PC+12. */
+        {0xe1a00062u, 0x80000001u, 0x104, 0x300000d3u, false}, /* MOV RRX, no S. */
+        {0xe1b00062u, 0x80000001u, 0x104, 0xb00000d3u, false}, /* MOVS RRX. */
+        {0xe0b30082u, 8, 0x104, 0x000000d3u, false}, /* ADCS: old carry. */
+        {0xe113f002u, 0xdeadbeefu, 0x104, 0x300000d3u, false}, /* TST ignores Rd. */
+        {0xe1030002u, 0xdeadbeefu, 0x100, 0x300000d3u, true}, /* Test without S. */
+        {0xe0830f12u, 0xdeadbeefu, 0x100, 0x300000d3u, true}, /* Shift Rs=PC. */
+        {0xe0830492u, 3, 0x104, 0x300000d3u, false}, /* Bit 7 selects UMULL, not DP. */
+        {0x00830f12u, 0xdeadbeefu, 0x104, 0x300000d3u, false}, /* Failed EQ skips invalid encoding. */
+        {0xe10f0000u, 0x300000d3u, 0x104, 0x300000d3u, false}, /* MRS is not DP. */
+        {0xe12fff12u, 0xdeadbeefu, 2, 0x300000f3u, false}, /* BX enters Thumb. */
+    };
+    for (unsigned i = 0; i < sizeof cases / sizeof *cases; ++i) {
+        execute(cases[i].op, initial, false);
+        CHECK(fast.stop.status == (cases[i].stopped ? ORCHARD_UNPREDICTABLE : ORCHARD_OK));
+        CHECK(fast.cpu.r[0] == cases[i].r0 && fast.cpu.r[15] == cases[i].pc);
+        CHECK(fast.cpu.cpsr == cases[i].cpsr);
+        CHECK(fast.cpu.instructions == initial.instructions + (cases[i].stopped ? 0u : 1u));
+        if (cases[i].stopped) CHECK(equal(&fast.cpu, &initial, sizeof initial));
+    }
+    /* S+Rd=PC must keep the checked route and restore SPSR before PC alignment. */
+    initial.r[2] = 0x1235;
+    initial.spsr[2] = O_USR | O_T | O_C;
+    execute(0xe1b0f002u, initial, false);
+    CHECK(fast.stop.status == ORCHARD_OK && fast.cpu.cpsr == (O_USR | O_T | O_C));
+    CHECK(fast.cpu.r[15] == 0x1234 && fast.cpu.instructions == initial.instructions + 1u);
+    initial.spsr[2] = 0; /* Invalid saved mode. */
+    execute(0xe1b0f002u, initial, false);
+    CHECK(fast.stop.status == ORCHARD_UNPREDICTABLE && equal(&fast.cpu, &initial, sizeof initial));
+    initial.cpsr = O_USR | O_C | O_V; /* No SPSR in user mode. */
+    execute(0xe1b0f002u, initial, false);
+    CHECK(fast.stop.status == ORCHARD_UNPREDICTABLE && equal(&fast.cpu, &initial, sizeof initial));
+}
+
 EXPORT("regression") unsigned run(void) {
     checks = failures = first_failure = 0;
     exhaustive_thumb(); halfwords(); multiple_stores(); thumb_memory();
-    partial_effects(); descriptor_diagnostics();
+    partial_effects(); descriptor_diagnostics(); data_processing_boundaries();
     return failures;
 }
 EXPORT("checks") unsigned get_checks(void) { return checks; }
