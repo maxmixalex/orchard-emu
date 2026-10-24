@@ -191,6 +191,8 @@ static void partial_effects(void) {
         c.r[1] = 0x50000020u;
         c.r[13] = instruction == 2 ? 0x50000028u : 0x50000024u;
         c.r[0] = 0x42;
+        fast.soc.uart[0][0]=reference.soc.uart[0][0]=3;
+        fast.soc.uart[0][1]=reference.soc.uart[0][1]=5;
         CHECK(o_q_push(&fast.soc.rx, 0x55)); CHECK(o_q_push(&reference.soc.rx, 0x55));
         execute(mmio_ops[instruction], c, true);
         CHECK(fast.stop.status == ORCHARD_UNIMPLEMENTED_MMIO);

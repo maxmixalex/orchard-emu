@@ -13,14 +13,15 @@ view.setUint32(0, 0xea000002, true); // Branch to the explicit diagnostic stop.
 view.setUint32(16, 0xe7f000f0, true);
 const metadata = {generation: 7, model: 1, preset: 'strict'};
 let captured, epochs = [];
-async function make(options = {}, firmware = rom) {
+async function make(options = {}, firmware = rom, model = 1) {
   const {instance: {exports: raw}} = await WebAssembly.instantiate(wasm, {});
   const c = attachCoreTrace({...raw, unrepresented_mutation: () => 0,
-    buzzer_unrepresented_mutation: () => 0}, {
+    buzzer_unrepresented_mutation: () => 0, lcd_unrepresented_mutation: () => 0}, {
     context: () => metadata, onCapture: trace => { captured = trace; },
     onEpoch: epoch => epochs.push(epoch), ...options,
   });
-  assert.equal(c.create(1), 0);
+  metadata.model = model;
+  assert.equal(c.create(model), 0);
   new Uint8Array(c.memory.buffer, c.rom_buffer(), firmware.length).set(firmware);
   assert.equal(c.load(firmware.length), 0);
   return c;
@@ -93,6 +94,9 @@ const unknownAudio = await make(); unknownAudio.buzzer_unrepresented_mutation();
 const unknownAudioCapture = unknownAudio.trace_capture('unknown-audio-call');
 assert(unknownAudioCapture.problems.includes('Unrepresented API call: buzzer_unrepresented_mutation'));
 assert.throws(() => validateBrowserTrace(unknownAudioCapture), /Incomplete trace/); ++negativeChecks;
+const unknownLCD = await make(); unknownLCD.lcd_unrepresented_mutation();
+assert(unknownLCD.trace_capture('unknown-lcd-call').problems.includes('Unrepresented API call: lcd_unrepresented_mutation'));
+assert.throws(() => validateBrowserTrace(unknownLCD.trace_capture('unknown-lcd-call')), /Incomplete trace/); ++negativeChecks;
 const mixed = await make(); metadata.generation++; mixed.keyboard_attach(1);
 assert.throws(() => validateBrowserTrace(mixed.trace_capture('mixed-generation')), /Incomplete trace/); ++negativeChecks;
 
@@ -187,6 +191,91 @@ assert.deepEqual(audioCapture.calls.map(row => row.name), ['run', 'checkpoint_sa
 const audioReport = await replayBrowserTrace(artifact(audioCapture, audioRom));
 assert(audioReport.every_call_result_equal && audioReport.complete_checkpoint_equal);
 
+// UART2 input and output queues are serialized guest state. A generated ARM
+// guest reads two actual URXH bytes and echoes them through UTXH before stop;
+// recording must retain channel, input/output payload and the IrDA board pin.
+const uartRom = new Uint8Array(2097152).fill(255), uartView = new DataView(uartRom.buffer);
+[
+  0xea000000, 0xeafffffe, 0xe59f002c, 0xe3a01000, 0xe5801000,
+  0xe59f0024, 0xe3a01043, 0xe5801000, 0xe3a01005, 0xe5801004,
+  0xe5d01024, 0xe5c01020, 0xe5d01024, 0xe5c01020, 0xe7f000f0,
+  0x53000000, 0x50008000,
+].forEach((word, index) => uartView.setUint32(index * 4, word, true));
+const uart = await make({}, uartRom, 5);
+assert.equal(uart.irda_attach(1), 0);
+new Uint8Array(uart.memory.buffer, uart.uart_input(), 2).set([0x35, 0x96]);
+assert.equal(uart.uart_send_channel(2, 2), 2);
+assert.equal(uart.run(13), 0);
+const beforeUARTObservation = checkpointBytes(uart);
+assert(uart.uart_snapshot(2)); assert.equal(uart.uart_snapshot(3), 0);
+assert.deepEqual(checkpointBytes(uart), beforeUARTObservation);
+assert.equal(uart.uart_receive_channel(0), 0);
+assert.equal(uart.uart_receive_channel(1), 0);
+assert.equal(uart.uart_receive_channel(2), 2);
+assert.deepEqual([...new Uint8Array(uart.memory.buffer, uart.uart_output(), 2)], [0x35, 0x96]);
+assert.equal(uart.run(1), 9);
+const uartCapture = captured, uartArtifact = artifact(uartCapture, uartRom);
+assert(uartCapture.complete);
+assert.deepEqual(uartCapture.calls.find(row => row.name === 'uart_send_channel').input, [0x35, 0x96]);
+assert.deepEqual(uartCapture.calls.find(row => row.name === 'uart_receive_channel' && row.args[0] === 2).output,
+  [0x35, 0x96]);
+const uartReport = await replayBrowserTrace(uartArtifact);
+assert.equal(uartReport.uart_bytes, 2); assert(uartReport.complete_checkpoint_equal);
+for (const name of ['uart_send_channel', 'uart_receive_channel']) {
+  const invalid = structuredClone(uartArtifact.trace);
+  const row = invalid.calls.find(row => row.name === name && row.args[0] === 2);
+  delete row[name === 'uart_send_channel' ? 'input' : 'output'];
+  assert.throws(() => validateBrowserTrace(invalid), /Missing (input payload|UART output)/); ++negativeChecks;
+}
+for (const kind of ['input', 'output', 'channel', 'board-pin']) {
+  const invalid = structuredClone(uartArtifact.trace);
+  if (kind === 'input') invalid.calls.find(row => row.name === 'uart_send_channel').input[0] ^= 1;
+  else if (kind === 'output') invalid.calls.find(row => row.name === 'uart_receive_channel' && row.args[0] === 2).output[0] ^= 1;
+  else if (kind === 'channel') invalid.calls.find(row => row.name === 'uart_send_channel').args[0] = 1;
+  else invalid.calls.find(row => row.name === 'irda_attach').args[0] = 0;
+  await assert.rejects(replayBrowserTrace({...uartArtifact, trace: invalid}),
+    /UART output differs|Complete replay checkpoint differs/); ++negativeChecks;
+}
+
+// A real LCD scan copies an all-ink SRAM word before the guest clears it.
+// The published pixels therefore differ from live RAM, but enabling, reading
+// and changing the host view must not change any checkpoint byte or replay.
+const lcdRom = new Uint8Array(1048576).fill(255), lcdView = new DataView(lcdRom.buffer);
+[
+  0xea000000, 0xeafffffe, 0xe59f0058, 0xe3a01000, 0xe5801000,
+  0xe59f0050, 0xe3e01000, 0xe5801000, 0xe59f0048, 0xe59f1048,
+  0xe5801004, 0xe59f1044, 0xe5801014, 0xe59f1040, 0xe5801018,
+  0xe59f103c, 0xe580101c, 0xe59f1038, 0xe5801000, 0xe59f2034,
+  0xe2522001, 0x1afffffd, 0xe59f002c, 0xe3a01000, 0xe5801000,
+  0xeafffffe, 0x53000000, 0x40000000, 0x4d000000, 0x000fc000,
+  0x20000000, 0x00000280, 0x0000000a, 0x00000221, 0x00000800, 0x40000000,
+].forEach((word, index) => lcdView.setUint32(index * 4, word, true));
+const lcd = await make({}, lcdRom);
+assert.equal(lcd.lcd_observe(1), 0);
+assert.equal(lcd.run(4200), 0);
+assert.equal(new Uint32Array(lcd.memory.buffer, lcd.peripheral_snapshot(), 6)[4], 1);
+const beforeLCDObservation = checkpointBytes(lcd);
+assert.equal(lcd.lcd_published_frame(), 0);
+assert.deepEqual([...new Uint8Array(lcd.memory.buffer, lcd.frame_buffer(), 40)],
+  [...Array(32).fill(255), ...Array(8).fill(0)]);
+assert.equal(lcd.lcd_published_annunciators(), 0);
+assert.equal(lcd.frame_view(1), 0);
+assert.deepEqual([...new Uint8Array(lcd.memory.buffer, lcd.frame_buffer(), 40)], Array(40).fill(0));
+assert.equal(lcd.lcd_observe(0), 0); assert.equal(lcd.lcd_observe(1), 0);
+assert.deepEqual(checkpointBytes(lcd), beforeLCDObservation,
+  'Reading and changing host LCD publication must preserve the entire guest checkpoint');
+const lcdCapture = lcd.trace_capture('completed-scan-observation');
+assert(lcdCapture.complete);
+assert(lcdCapture.calls.every(row => !row.name.startsWith('lcd_')));
+const lcdReport = await replayBrowserTrace(artifact(lcdCapture, lcdRom));
+assert(lcdReport.complete_checkpoint_equal);
+const {instance: {exports: plainLCD}} = await WebAssembly.instantiate(wasm, {});
+assert.equal(plainLCD.create(1), 0);
+new Uint8Array(plainLCD.memory.buffer, plainLCD.rom_buffer(), lcdRom.length).set(lcdRom);
+assert.equal(plainLCD.load(lcdRom.length), 0); assert.equal(plainLCD.run(4200), 0);
+assert.deepEqual(checkpointBytes(plainLCD), beforeLCDObservation,
+  'Completed-scan publication must preserve every guest byte relative to an unobserved core');
+
 console.log(JSON.stringify({passed: true, generated_guest: true, original_rom_reproduced: false,
   call_results_equal: true, complete_checkpoint_equal: true, exact_key_ticks: true,
   immutable_stop_capture: true, held_key_stop_preserved: true, release_changes_checkpoint: true,
@@ -195,5 +284,10 @@ console.log(JSON.stringify({passed: true, generated_guest: true, original_rom_re
   host_audio_calls_excluded: true, host_audio_checkpoint_equal: true,
   audio_waveform_levels: waveform.levels, audio_replay_checkpoint_equal: audioReport.complete_checkpoint_equal,
   unknown_audio_api_rejected: true,
+  uart_channel_payloads_replayed: true, uart_snapshot_checkpoint_equal: true,
+  irda_attachment_replayed: true, uart_channel_bytes: uartReport.uart_bytes,
+  unknown_lcd_api_rejected: true, completed_scan_differs_from_live: true,
+  host_lcd_calls_excluded: true, host_lcd_checkpoint_equal: true,
+  lcd_replay_checkpoint_equal: lcdReport.complete_checkpoint_equal,
   isolated_epochs: true, negative_checks: negativeChecks,
   wasm_sha256: hash(wasm), calls: report.calls, run_calls: report.run_calls, stop: report.stop}));

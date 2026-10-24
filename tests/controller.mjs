@@ -23,6 +23,26 @@ c.create();c.receive({type:'checkpoint-auto-saved',generation:1,request:req.requ
 // Dismiss restore must not overwrite the old save or automatically Run.
 c.patch({loaded:true});const loading=c.loadedROM();assert.equal(c.state.dialog.title,'restoreLocal');c.answer(null);await loading;assert(c.autoBlocked);assert.equal(c.state.note,'localKept');
 const pending=c.ask('error','operationFailed');c.dispose();assert.equal(await pending,null);assert(worker.terminated);const old=c.state;c.receive(snapshot);assert.equal(c.state,old);
+// A successful restore resumes under the current focus/visibility policy.
+// Saved compatibility stops stay stopped and stale-generation replies do nothing.
+for(const allowed of [true,false])for(const stopped of [true,false]){
+ const posts=[];const q=new CalculatorController({worker:{postMessage:d=>posts.push(d),terminate(){}},database:null,mayRun:()=>allowed});
+ q.patch({loaded:true,busy:true});q.receive({type:'checkpoint-restored',generation:q.generation,stopped});
+ assert.equal(posts.some(d=>d.type==='run'),allowed&&!stopped);assert.equal(q.state.stopped,stopped);assert.equal(q.state.busy,false);
+ const n=posts.length;q.receive({type:'checkpoint-restored',generation:q.generation+1,stopped:false});assert.equal(posts.length,n);q.dispose();
+}
+// Disconnect before changing the machine generation: stale link notifications
+// must not leave the new calculator marked active or suppress its focus policy.
+for(const action of ['create','pause','worker-error','fatal','error','links-reset']){
+ const w={postMessage(){},terminate(){}};
+ const q=new CalculatorController({worker:w,database:null});q.patch({loaded:true,running:true});
+ q.connectIrDA('CTRL23');assert.equal(q.state.irda.active,true);
+ if(action==='create')q.create();
+ else if(action==='pause')q.send('pause');
+ else if(action==='worker-error')w.onerror();
+ else q.receive({type:action,generation:q.generation,message:'Fixture failure'});
+ assert.equal(q.irdaLink,null,action);assert.equal(q.state.irda.active,false,action);q.dispose();
+}
 // A storage operation can already be awaiting IndexedDB when its session is
 // replaced. Both success and rejection belong to the original request only.
 for(const end of ['success','error'])for(const invalidate of ['create','disable','foreign','dispose']){

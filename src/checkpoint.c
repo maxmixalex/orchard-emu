@@ -1,11 +1,12 @@
 /* SPDX-License-Identifier: MIT
  * Versioned little-endian checkpoints. Explicit field order, no C padding,
- * host pointers, translation/EINT caches or immutable NOR bytes. Two-phase
+ * host pointers, translation/EINT caches or unchanged NOR bytes. Two-phase
  * import validates header, CRC and all index-bearing state before mutation.
  */
 #include "internal.h"
 #define HEADER 32u
-#define VERSION 5u
+#define VERSION 6u
+#define FLASH_SECTOR 4096u
 static const uint8_t magic[8] = {'O','R','C','H','S','T','0','1'};
 typedef struct {
     o_cpu cpu;
@@ -13,6 +14,8 @@ typedef struct {
     uint64_t ticks, reads, writes;
     uint32_t nor, decode, sequence, status, pc, instruction, address, detail;
     uint32_t sd_bytes;
+    o_nor nor_state;
+    uint32_t flash_sectors;
     bool id_mode, sd_write_protected, sd_dirty;
 } saved;
 typedef struct { uint8_t *out; const uint8_t *in; size_t pos; bool ok; } codec;
@@ -115,6 +118,22 @@ static void fields(codec *c, saved *s, unsigned version) {
         }
         U32(d->wtreset);
     } else if(c->in)for(unsigned channel=0;channel<2;channel++)o_spi_reset(&d->spi[channel]);
+    if(version>=6u) {
+        for(unsigned ch=0;ch<3;ch++) {
+            o_uart *u=&d->uart_state[ch];bytes(c,u->rx,16);bytes(c,u->tx,16);
+            U32(u->rx_head);U32(u->rx_count);U32(u->tx_head);U32(u->tx_count);
+            U32(u->errors);U32(u->rx_event);U32(u->tx_event);U32(u->modem);U32(u->modem_known);
+        }
+        for(unsigned ch=0;ch<2;ch++) {
+            bytes(c,d->uart_rx[ch].data,O_QUEUE);U32(d->uart_rx[ch].head);U32(d->uart_rx[ch].count);
+            bytes(c,d->uart_tx[ch].data,O_QUEUE);U32(d->uart_tx[ch].head);U32(d->uart_tx[ch].count);
+        }
+        BOOL(d->irda_attached);
+        o_nor *n=&s->nor_state;
+        U32(n->kind);U32(n->remaining);U32(n->address);U32(n->length);U32(n->data);U32(n->toggle);
+        U32(n->suspend_wait);U32(n->erase_remaining);U32(n->erase_address);U32(n->erase_length);
+        U32(s->flash_sectors);
+    }
 }
 static size_t scalar_size(unsigned version) { saved s; o_zero(&s,sizeof s); codec c={0}; fields(&c,&s,version); return c.pos; }
 /* Reflected CRC-32 (polynomial 0xedb88320), advanced eight bits at once.
@@ -167,8 +186,18 @@ static bool overlap(const void *p, size_t n, const void *q, size_t z) {
     uintptr_t a=(uintptr_t)p,b=(uintptr_t)q;
     return n&&z&&(a<=b ? b-a<n : a-b<z);
 }
+static bool flash_changed(const orchard_machine *m,uint32_t offset) {
+    for(unsigned i=0;i<FLASH_SECTOR;i++)if(m->flash[offset+i]!=m->flash_base[offset+i])return true;
+    return false;
+}
+static uint32_t changed_sectors(const orchard_machine *m) {
+    uint32_t count=0;
+    for(uint32_t i=0;i<m->profile->flash_bytes;i+=FLASH_SECTOR)if(flash_changed(m,i))++count;
+    return count;
+}
 size_t orchard_checkpoint_size(const orchard_machine *m) {
-    return m&&m->profile&&m->loaded ? HEADER+scalar_size(VERSION)+m->profile->ram_bytes+O_BOOT_SRAM_SIZE+m->sd_bytes : 0;
+    return m&&m->profile&&m->loaded ? HEADER+scalar_size(VERSION)+m->profile->ram_bytes+O_BOOT_SRAM_SIZE+m->sd_bytes+
+        (size_t)changed_sectors(m)*(FLASH_SECTOR+4u) : 0;
 }
 orchard_status orchard_checkpoint_save(const orchard_machine *m, void *buffer, size_t length) {
     size_t required=orchard_checkpoint_size(m);
@@ -182,21 +211,52 @@ orchard_status orchard_checkpoint_save(const orchard_machine *m, void *buffer, s
     s.status=m->stop.status; s.pc=m->stop.pc; s.instruction=m->stop.instruction;
     s.address=m->stop.address; s.detail=m->stop.detail;
     s.sd_bytes=m->sd_bytes; s.sd_write_protected=m->sd_write_protected; s.sd_dirty=m->sd_dirty;
+    s.nor_state=m->nor;s.flash_sectors=changed_sectors(m);
     codec c={.out=out,.pos=HEADER,.ok=true}; fields(&c,&s,VERSION);
     o_copy(out+c.pos,m->ram,m->profile->ram_bytes);c.pos+=m->profile->ram_bytes;
     o_copy(out+c.pos,m->boot_sram,O_BOOT_SRAM_SIZE);c.pos+=O_BOOT_SRAM_SIZE;
     if(m->sd_bytes) o_copy(out+c.pos,m->sd_storage,m->sd_bytes);
+    c.pos+=m->sd_bytes;
+    for(uint32_t i=0;i<m->profile->flash_bytes;i+=FLASH_SECTOR)if(flash_changed(m,i)) {
+        put(out+c.pos,i);c.pos+=4;o_copy(out+c.pos,m->flash+i,FLASH_SECTOR);c.pos+=FLASH_SECTOR;
+    }
     o_copy(out,magic,8);put(out+8,VERSION);put(out+12,(uint32_t)length);
-    put(out+16,m->profile->id);put(out+20,crc(m->flash,m->profile->flash_bytes));
+    put(out+16,m->profile->id);put(out+20,crc(m->flash_base,m->profile->flash_bytes));
     put(out+24,m->profile->ram_bytes);put(out+28,crc(out+HEADER,length-HEADER));
     return ORCHARD_OK;
 }
 static bool valid(const saved *s, const orchard_machine *m) {
     const o_soc *d=&s->soc;
     if(!o_mode_valid(s->cpu.cpsr)||s->status>ORCHARD_UNSUPPORTED_USB||s->nor>ORCHARD_NOR_SST39VF800A||
-        s->decode>ORCHARD_SRAM_BANK1_MIRROR||s->sequence>2||
+        s->decode>ORCHARD_SRAM_BANK1_MIRROR||s->sequence>6||
         (s->nor==ORCHARD_NOR_SST39VF800A && m->profile->flash_bytes!=0x100000)||
         (s->nor==ORCHARD_NOR_SST39VF1601 && m->profile->flash_bytes!=0x200000))return false;
+    if(d->irda_attached&&m->profile->id!=5&&m->profile->id!=6)return false;
+    for(unsigned ch=0;ch<3;ch++) {
+        const o_uart *u=&d->uart_state[ch];
+        if(u->rx_head>=16||u->tx_head>=16||u->rx_count>16||u->tx_count>16||u->errors>1||
+           u->rx_event>1||u->tx_event>1||(u->modem&~0x11u)||u->modem_known>1)return false;
+    }
+    for(unsigned ch=0;ch<2;ch++)if(d->uart_rx[ch].head>=O_QUEUE||d->uart_tx[ch].head>=O_QUEUE||
+        d->uart_rx[ch].count>O_QUEUE||d->uart_tx[ch].count>O_QUEUE)return false;
+    const o_nor *n=&s->nor_state;
+    if(n->kind>4||n->remaining>840000u||n->data>65535u||(n->toggle&~0x44u)||n->suspend_wait>240u||
+       (n->kind!=0)!=(n->remaining!=0)||s->flash_sectors>m->profile->flash_bytes/FLASH_SECTOR)return false;
+    if(n->kind) {
+        uint32_t size=n->kind==1?2u:n->kind==2?4096u:n->kind==3?65536u:m->profile->flash_bytes;
+        uint32_t limit=n->kind==1?(s->nor==ORCHARD_NOR_SST39VF800A?168u:84u):
+            n->kind==4?(s->nor==ORCHARD_NOR_SST39VF800A?840000u:480000u):216000u;
+        if(n->length!=size||(n->address&(size-1u))||n->address>m->profile->flash_bytes-size||
+           n->remaining>limit||(n->kind!=1&&n->data)||s->id_mode||s->sequence||s->nor==ORCHARD_NOR_UNSPECIFIED)return false;
+        if(n->suspend_wait && (s->nor!=ORCHARD_NOR_SST39VF1601||n->kind<2||n->kind>3))return false;
+    } else if(n->address||n->length||n->data||n->suspend_wait)return false;
+    if(n->erase_remaining) {
+        if(s->nor!=ORCHARD_NOR_SST39VF1601||n->erase_remaining>216000u||
+           (n->erase_length!=4096u&&n->erase_length!=65536u)||
+           (n->erase_address&(n->erase_length-1u))||n->erase_address>m->profile->flash_bytes-n->erase_length||
+           n->kind>1||s->sequence>3||s->id_mode||
+           (n->kind==1&&n->address>=n->erase_address&&n->address-n->erase_address<n->erase_length))return false;
+    } else if(n->erase_address||n->erase_length)return false;
     if(d->rx.head>=O_QUEUE||d->rx.count>O_QUEUE||d->tx.head>=O_QUEUE||d->tx.count>O_QUEUE||
         d->lcd_line>1023||d->rtc.phase>=O_FUNCTIONAL_TIMEBASE_HZ||d->rtc.divider>32767||
         d->adc.remaining>1280||d->adc.data>1023||d->adc.sample>1023||
@@ -259,13 +319,22 @@ static bool decode(const orchard_machine *m, const void *buffer, size_t length, 
     unsigned version=word(in+8);
     if(version<1u||version>VERSION)return false;
     size_t base=HEADER+scalar_size(version)+m->profile->ram_bytes+O_BOOT_SRAM_SIZE;
-    if(length<base||length-base>ORCHARD_SD_MAX_BYTES)return false;
+    if(length<base||length-base>ORCHARD_SD_MAX_BYTES+(size_t)(O_FLASH_MAX/FLASH_SECTOR)*(FLASH_SECTOR+4u))return false;
     for(unsigned i=0;i<8;i++)if(in[i]!=magic[i])return false;
     if(word(in+12)!=length||word(in+16)!=m->profile->id||
         word(in+24)!=m->profile->ram_bytes||word(in+28)!=crc(in+HEADER,length-HEADER)||
-        word(in+20)!=crc(m->flash,m->profile->flash_bytes))return false;
+        word(in+20)!=crc(m->flash_base,m->profile->flash_bytes))return false;
     o_zero(s,sizeof(*s)); codec c={.in=in,.pos=HEADER,.ok=true};fields(&c,s,version);
-    if(!c.ok||length!=base+s->sd_bytes||!valid(s,m))return false;
+    if(version<6u)s->soc.irda_attached=m->soc.irda_attached;
+    if(!c.ok||!valid(s,m)||length!=base+s->sd_bytes+(size_t)s->flash_sectors*(FLASH_SECTOR+4u))return false;
+    size_t patch=base+s->sd_bytes;uint32_t previous=0;
+    for(uint32_t i=0;i<s->flash_sectors;i++) {
+        uint32_t address=word(in+patch);
+        if((address&(FLASH_SECTOR-1u))||address>m->profile->flash_bytes-FLASH_SECTOR||
+           (i&&address<=previous))return false;
+        previous=address;patch+=FLASH_SECTOR+4u;
+    }
+    if(version<6u&&s->sequence>2)return false;
     *offset=c.pos; return true;
 }
 orchard_status orchard_checkpoint_sd_size(const orchard_machine *m, const void *buffer, size_t length, size_t *required) {
@@ -284,15 +353,23 @@ orchard_status orchard_checkpoint_load(orchard_machine *m, const void *buffer, s
     m->sram_alias_reads=s.reads;m->sram_alias_writes=s.writes;
     m->nor_device=(orchard_nor_device)s.nor;m->sram_decode=(orchard_sram_decode)s.decode;
     m->nor_sequence=s.sequence;m->nor_id_mode=s.id_mode;
+    m->nor=s.nor_state;
     m->stop=(orchard_stop){(orchard_status)s.status,s.pc,s.instruction,s.address,s.detail};
     o_copy(m->ram,in+offset,m->profile->ram_bytes);offset+=m->profile->ram_bytes;
     o_copy(m->boot_sram,in+offset,O_BOOT_SRAM_SIZE);offset+=O_BOOT_SRAM_SIZE;
     if(s.sd_bytes)o_copy(m->sd_storage,in+offset,s.sd_bytes);
+    offset+=s.sd_bytes;
+    o_copy(m->flash,m->flash_base,m->profile->flash_bytes);
+    for(uint32_t i=0;i<s.flash_sectors;i++) {
+        uint32_t address=word(in+offset);offset+=4;
+        o_copy(m->flash+address,in+offset,FLASH_SECTOR);offset+=FLASH_SECTOR;
+    }
     m->sd_bytes=s.sd_bytes; m->sd_write_protected=s.sd_write_protected; m->sd_dirty=s.sd_dirty;
     m->quiet_left=m->deferred_ticks=0;
     m->idle_write_enabled=false;
     m->power_wake=0;
     o_zero(m->translations,sizeof m->translations);
     o_buzzer_reset(m);
+    orchard_lcd_observer_reset(m);
     return ORCHARD_OK;
 }

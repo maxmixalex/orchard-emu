@@ -80,7 +80,7 @@ sequence is a production-WASM test**, not a dynamic native CLI test.
 Selection is explicit through `orchard_nor_select`, WASM `nor_select`, or
 `--nor-device sst39vf1601`. It is valid only with a 2 MiB physical profile,
 but capacity alone does not select it. The component survives a cold reset;
-its command/ID state returns to array-read mode. Raw NOR bytes never change.
+its command/ID state returns to array-read mode. Completed array programming persists across reset; the immutable original input remains separate.
 
 Primary component source: **SST S71223-05-000, June 2008**, tables 3 and 6,
 [manufacturer-hosted data sheet](https://ww1.microchip.com/downloads/en/devicedoc/s71223_.pdf).
@@ -95,9 +95,7 @@ software-ID mode; on the byte-addressed ARM bus these are AAAA, 5554, AAAA.
 Higher command address/data bits are ignored as specified. F0 exits to array
 read. Invalid software-data-protection sequences abort to array read. The
 implemented ID reads expose only the manufacturer/device words; other ID
-locations stop. Recognized program/erase/CFI/security commands also stop.
-There is no flash programming, erase, status polling, protection, bus timing
-or installed-updater conversion in this slice.
+locations stop. The r23 [NOR implementation](nor-write.md) adds word programming, sector/block/chip erase, status polling and VF1601 suspend/resume. Unsupported CFI/security/protection modes remain explicit stops. Physical bus timing and installed-updater conversion are not claimed.
 
 ## Explicit boot conditions
 

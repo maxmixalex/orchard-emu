@@ -4,6 +4,7 @@
 const operations = new Map([
   ['run', 1], ['run_divided', 1], ['run_clocked', 1], ['run_idle', 1], ['frame', 0], ['frame_view', 1],
   ['annunciators', 0], ['uart_receive', 0], ['uart_send', 1],
+  ['uart_receive_channel', 1], ['uart_send_channel', 2], ['irda_attach', 1],
   ['gpio_inputs', 3], ['gpio_bias', 3], ['adc_input', 3],
   ['keyboard_attach', 1], ['keyboard_matrix', 3], ['keyboard_dedicated', 2],
   ['sram_select', 1], ['nor_select', 1], ['lcd_probe68', 1], ['sd_reconnect', 0],
@@ -12,7 +13,7 @@ const operations = new Map([
 ]);
 const observers = new Set([
   'profile', 'rom_buffer', 'snapshot', 'clock_snapshot', 'clock_divisor', 'clock_slots',
-  'frame_buffer', 'annunciator_buffer', 'uart_input', 'uart_output',
+  'frame_buffer', 'annunciator_buffer', 'uart_input', 'uart_output', 'uart_snapshot',
   'usb_buffer', 'usb_length', 'usb_data1', 'usb_snapshot', 'peripheral_snapshot',
   'checkpoint_buffer', 'checkpoint_size', 'timebase_hz', 'sd_snapshot', 'sd_image_buffer',
   'sram_alias_reads', 'sram_alias_writes', 'lcd_probe68_reads',
@@ -21,6 +22,10 @@ const observers = new Set([
   // tests/buzzer.c and tests/browser-core-trace.mjs compare full checkpoints.
   // Keep an explicit list so an unknown future buzzer API still fails closed.
   'buzzer_enable', 'buzzer_clear', 'buzzer_drain', 'buzzer_snapshot',
+  // Completed-scan publication is host presentation state. These explicit
+  // exports neither advance the guest nor alter serialized machine state.
+  // tests/browser-core-trace.mjs verifies whole checkpoints and replay.
+  'lcd_observe', 'lcd_published_frame', 'lcd_published_annunciators',
 ]);
 export const traceOperationArguments = Object.freeze(Object.fromEntries(operations));
 
@@ -93,10 +98,11 @@ export function attachCoreTrace(raw, {
         problem('Unsupported API arguments for ' + name);
       const canonical = args.map(n => n >>> 0), before = nowTick, prior = stop;
       let input = null;
-      if (name === 'uart_send' || name === 'usb_out') {
-        const length = canonical[name === 'uart_send' ? 0 : 4], maximum = name === 'uart_send' ? 1024 : 64;
+      if (name === 'uart_send' || name === 'uart_send_channel' || name === 'usb_out') {
+        const uart = name !== 'usb_out';
+        const length = canonical[name === 'uart_send' ? 0 : name === 'uart_send_channel' ? 1 : 4], maximum = uart ? 1024 : 64;
         if (length <= maximum) input = Array.from(new Uint8Array(raw.memory.buffer,
-          name === 'uart_send' ? raw.uart_input() : raw.usb_buffer(), length));
+          uart ? raw.uart_input() : raw.usb_buffer(), length));
         else problem('Unsupported input payload length for ' + name);
       }
       let result;
@@ -112,7 +118,8 @@ export function attachCoreTrace(raw, {
       const row = {seq: ++calls, epoch, generation: identity.generation, name, args: canonical,
         before, after: nowTick, result: result >>> 0, prior, status: stop};
       if (input !== null) row.input = input;
-      if (name === 'uart_receive') row.output = Array.from(new Uint8Array(raw.memory.buffer, raw.uart_output(), result));
+      if (name === 'uart_receive' || name === 'uart_receive_channel')
+        row.output = Array.from(new Uint8Array(raw.memory.buffer, raw.uart_output(), result));
       if (name === 'usb_in') {
         row.output = Array.from(new Uint8Array(raw.memory.buffer, raw.usb_buffer(), raw.usb_length()));
         row.data1 = raw.usb_data1();

@@ -1,0 +1,78 @@
+{
+  "schema": "orchard-original-48gii-baseconvert-r23-v1",
+  "date": "2026-10-24",
+  "model": 4,
+  "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+  "wasm_sha256": "8c79eebd255cb6e6b0a238ef8e77af2b8726977288f50c12d46b0386b9214e62",
+  "author": "John Keith",
+  "sources": [
+    {
+      "url": "https://www.hpcalc.org/hp49/math/misc/baseconvert.zip",
+      "sha256": "f0d847783cd9e19929c445f8243b3715936bd2fc7f0e3e779a2e2dbc09cdb1f0"
+    },
+    {
+      "url": "https://www.hpmuseum.org/forum/thread-19371.html",
+      "role": "author instructions and UserRPL source listing, copied into downloaded archive as baseconvert.html"
+    }
+  ],
+  "execution_kind": "UserRPL calculator programs, not ARM-native code",
+  "files": [
+    {
+      "name": "BASECONVERT.48",
+      "bytes": 142,
+      "sha256": "b147b97f81ab8bae7bb8655eaaedc2615698e8e76ab59ba9770fea12762f0080"
+    },
+    {
+      "name": "BASECONVERT.49",
+      "bytes": 126,
+      "sha256": "a056b2ff18b3741d32ad093836fece03e94240d629e8d27cfe324d3e497062fd"
+    },
+    {
+      "name": "LISTCONVERT.48",
+      "bytes": 68,
+      "sha256": "04436ffb1c30a5da86b0c3f97b1c536a2e369651c71668adfac3e794dc476ab8"
+    },
+    {
+      "name": "LISTCONVERT.49",
+      "bytes": 92,
+      "sha256": "46cdbadd17e099c8a355a51f134c9a7dccde0fa1b79cc2e2bc11e54ee6017446"
+    }
+  ],
+  "physical_input_only": true,
+  "guest_memory_patched": false,
+  "author_file_bytes_modified": false,
+  "transport": "Stock UART0 Kermit SERVER send/get/finish on original48gII; files stored under BCONV and LCONV aliases",
+  "accepted_variants": [
+    "BASECONVERT.49",
+    "LISTCONVERT.49"
+  ],
+  "results": [
+    {
+      "label": "positive",
+      "input": 12345,
+      "base": 16,
+      "DIGITS": "%%HP: T(1)A(R)F(.);\r\n{ 3 0 3 9 }",
+      "RESULT": "%%HP: T(1)A(R)F(.);\r\n12345."
+    },
+    {
+      "label": "negative",
+      "input": -13,
+      "base": -2,
+      "DIGITS": "%%HP: T(1)A(R)F(.);\r\n{ 1 1 0 1 1 1 }",
+      "RESULT": "%%HP: T(1)A(R)F(.);\r\n-13."
+    }
+  ],
+  "roundtrip_results_exported_by_original_firmware": true,
+  "classic48_container_observation": {
+    "files": [
+      "BASECONVERT.48",
+      "LISTCONVERT.48"
+    ],
+    "observed": "Original48gII stores the HPHP48-W binary container as a string. Recalling it displays the binary envelope rather than executing the program. No core compatibility stop. The .49 variants from the same unmodified author archive execute successfully.",
+    "claim": "This is an observed container compatibility distinction, not a successful execution of the .48 program variants."
+  },
+  "performance_scope": "The28.4m tick preparation/execution budget includes physical key entry and settling; no isolated execution-throughput claim is made.",
+  "final_core_status": 0,
+  "passed": true,
+  "private_report_sha256": "b3c3131456e7179c81bf457a04dd4285f2b87d3a81e0b810bc835545a09a56fe"
+}

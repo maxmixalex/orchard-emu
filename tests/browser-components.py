@@ -185,12 +185,12 @@ with sync_playwright() as p:
   {'name':name+'.hp','mimeType':'application/octet-stream','buffer':b'HPHP49-C'+bytes([index,0,255])}
   for index,name in enumerate(['FIRST','SECOND','THIRD'])])
  for name in ['FIRST','SECOND','THIRD']:
-  page.get_by_label('计算器内文件名 · '+name+'.hp',exact=True).fill(name)
- page.get_by_label('计算器内文件名 · FIRST.hp',exact=True).fill('RENAMED')
+  page.get_by_label(name+'.hp 的计算器内文件名',exact=True).fill(name)
+ page.get_by_label('FIRST.hp 的计算器内文件名',exact=True).fill('RENAMED')
  page.get_by_role('button',name='上传到计算器',exact=True).click()
  page.wait_for_function('(count)=>window.__messages.filter(m=>m.type==="file-transfer-start").length===count',arg=before+1)
  assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name')=='RENAMED'
- assert page.get_by_label('计算器内文件名 · SECOND.hp',exact=True).is_disabled()
+ assert page.get_by_label('SECOND.hp 的计算器内文件名',exact=True).is_disabled()
  page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"complete",name:"RENAMED.1"})}')
  page.wait_for_function('(count)=>window.__messages.filter(m=>m.type==="file-transfer-start").length===count',arg=before+2)
  assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name')=='SECOND'
@@ -208,7 +208,7 @@ with sync_playwright() as p:
  page.get_by_role('button',name='上传到计算器',exact=True).click()
  page.wait_for_function('window.__controller.state.transfer.phase==="error"&&window.__controller.state.uploadBatch?.items.every(i=>i.phase==="not-sent")')
  assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").length')==before+2
- assert page.get_by_label('计算器内文件名 · BAD.hp',exact=True).is_enabled()
+ assert page.get_by_label('BAD.hp 的计算器内文件名',exact=True).is_enabled()
  page.get_by_role('button',name='移除 BAD.hp',exact=True).click()
  assert page.get_by_label('计算器内文件名',exact=True).input_value()=='GOOD.hp'
  page.get_by_role('button',name='收起侧栏',exact=True).click()
@@ -244,7 +244,7 @@ with sync_playwright() as p:
   page.set_viewport_size({'width':width,'height':940})
   assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth'),width
  summary.get_by_role('button',name='传输详情',exact=True).click()
- assert page.get_by_test_id('transfer-status').get_by_text('已上传 1 / 2 个对象 · 7,629 / 8,862 字节',exact=True).count()==1
+ assert page.get_by_test_id('transfer-status').get_by_text('已上传 1 / 2 个对象（7,629 / 8,862 字节）',exact=True).count()==1
  page.get_by_role('button',name='停止文件服务',exact=True).click()
  assert page.get_by_test_id('transfer-summary').count()==0
  count=page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start").length')
@@ -301,6 +301,9 @@ with sync_playwright() as p:
  assert page.get_by_role('button',name='接收计算器文件',exact=True).count()==0
  assert page.get_by_test_id('transfer-file').get_attribute('accept') is None
  assert page.get_by_role('switch',name='传输时不限速',exact=False).count()==0
+ auto_receive=page.get_by_role('switch',name='自动继续接收 aplet 和库',exact=False)
+ assert not auto_receive.is_checked()
+ auto_receive.check()
  page.locator('[data-testid="transfer-file"]').set_input_files([
   {'name':'APLET.blob','mimeType':'application/octet-stream','buffer':hp39_aplet},
   {'name':'LIB','mimeType':'application/octet-stream','buffer':hp39_library},
@@ -317,6 +320,8 @@ with sync_playwright() as p:
  page.wait_for_function('window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).name==="APLET.blob"')
  assert page.evaluate('Array.from(window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).bytes)')==list(hp39_aplet)
  assert 'APLET.blob' in summary.inner_text() and '正在不限速传输' not in summary.inner_text()
+ assert '等待计算器返回目录后继续接收' in summary.inner_text()
+ assert page.evaluate('window.__controller.wireAutoReceive.active')
  page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"error",transferred:3,total:25,error:"Guest RECV interrupted",errorCode:"wireCancelledByCalculator",effectiveSpeed:1,transferBoosted:false})}')
  assert '计算器取消了此次 Wire 上传' in summary.inner_text() and 'RECV' in summary.inner_text()
  assert 'Guest RECV interrupted' not in summary.inner_text()
@@ -333,6 +338,7 @@ with sync_playwright() as p:
  page.wait_for_function('window.__controller.state.uploadBatch.active')
  assert page.evaluate('window.__messages.filter(m=>m.type==="file-transfer-start"&&m.name==="LIB").length')==1
  assert page.evaluate('Array.from(window.__messages.filter(m=>m.type==="file-transfer-start").at(-1).bytes)')==list(hp39_aplet)
+ assert not page.evaluate('Boolean(window.__controller.wireAutoReceive?.active)')
  page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"error",transferred:0,total:25,error:"Guest RECV interrupted again",effectiveSpeed:1,transferBoosted:false})}')
  assert '文件传输未能完成。请检查所选文件与连接后重试。' in page.get_by_test_id('transfer-status').inner_text()
  assert 'Guest RECV interrupted again' not in page.get_by_test_id('transfer-status').inner_text()
@@ -377,6 +383,7 @@ with sync_playwright() as p:
  page.get_by_role('button',name='连接',exact=True).click()
  page.get_by_label('计算器传输菜单',exact=True).select_option('wire')
  assert 'HP39/40 (USB)' in page.get_by_label('计算器传输菜单',exact=True).inner_text()
+ assert 'USB Disk drive' in page.get_by_label('计算器传输菜单',exact=True).inner_text()
  assert 'RECV → HP39/40 (USB)' in page.locator('#device-sidebar').inner_text()
  page.get_by_test_id('transfer-file').set_input_files({'name':'LIB.gs','mimeType':'application/octet-stream','buffer':hp39_library})
  page.get_by_role('button',name='通过 Wire 上传',exact=True).click()
@@ -390,6 +397,8 @@ with sync_playwright() as p:
  page.get_by_role('combobox',name='连接类型',exact=True).click()
  page.get_by_role('option',name='串口',exact=True).click()
  assert 'HP39/40 (Ser)' in page.get_by_label('计算器传输菜单',exact=True).inner_text()
+ assert 'Ser. Disk drive' in page.get_by_label('计算器传输菜单',exact=True).inner_text()
+ assert page.get_by_role('switch',name='自动继续接收 aplet 和库',exact=False).count()==0
  assert 'RECV → HP39/40 (Ser)' in page.locator('#device-sidebar').inner_text()
  page.get_by_role('button',name='收起侧栏',exact=True).click()
  # Unmount also invalidates an outstanding load and removes frame/resize work.

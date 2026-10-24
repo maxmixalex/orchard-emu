@@ -1,0 +1,404 @@
+{
+  "schema": "orchard-original-flash-selftests-v1",
+  "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+  "tool_sha256": "f4493b250d0897e2b0832b80f476bf92a7b3ccd3ecf5b28e15800127d60e3a5e",
+  "setup_sha256": "de400de9562d96d6882ddc9d72b41337d4b1eccd1101fe17cb6d4e3f874c8132",
+  "cold_boot": true,
+  "physical_input_only": true,
+  "guest_memory_patched": false,
+  "physical_hardware_validated": false,
+  "full_requested": true,
+  "models": [
+    {
+      "model": 2,
+      "preset": "hp39gs-home",
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "keys": [
+        {
+          "tick": 60000000,
+          "scan": 40,
+          "down": true
+        },
+        {
+          "tick": 61500000,
+          "scan": 40,
+          "down": false
+        },
+        {
+          "tick": 130500000,
+          "scan": 56,
+          "down": true
+        },
+        {
+          "tick": 132000000,
+          "scan": 38,
+          "down": true
+        },
+        {
+          "tick": 133500000,
+          "scan": 38,
+          "down": false
+        },
+        {
+          "tick": 134100000,
+          "scan": 56,
+          "down": false
+        },
+        {
+          "tick": 158100000,
+          "scan": 35,
+          "down": true
+        },
+        {
+          "tick": 159600000,
+          "scan": 35,
+          "down": false
+        },
+        {
+          "tick": 168600000,
+          "scan": 12,
+          "down": true
+        },
+        {
+          "tick": 170100000,
+          "scan": 12,
+          "down": false
+        },
+        {
+          "tick": 179100000,
+          "scan": 6,
+          "down": true
+        },
+        {
+          "tick": 180600000,
+          "scan": 6,
+          "down": false
+        },
+        {
+          "tick": 189600000,
+          "scan": 26,
+          "down": true
+        },
+        {
+          "tick": 191100000,
+          "scan": 26,
+          "down": false
+        },
+        {
+          "tick": 248100000,
+          "scan": 6,
+          "down": true
+        },
+        {
+          "tick": 249600000,
+          "scan": 6,
+          "down": false
+        },
+        {
+          "tick": 258600000,
+          "scan": 12,
+          "down": true
+        },
+        {
+          "tick": 260100000,
+          "scan": 12,
+          "down": false
+        },
+        {
+          "tick": 269100000,
+          "scan": 6,
+          "down": true
+        },
+        {
+          "tick": 270600000,
+          "scan": 6,
+          "down": false
+        },
+        {
+          "tick": 279600000,
+          "scan": 19,
+          "down": true
+        },
+        {
+          "tick": 281100000,
+          "scan": 19,
+          "down": false
+        },
+        {
+          "tick": 3746100000,
+          "scan": 6,
+          "down": true
+        },
+        {
+          "tick": 3747600000,
+          "scan": 6,
+          "down": false
+        }
+      ],
+      "frames": [
+        {
+          "label": "home",
+          "tick": 130500000,
+          "frame_sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa",
+          "checkpoint_sha256": "ad7b22b351907fc7eacac63e360943eb1d0a819eecc349f2c9bfd6170b3f30a5",
+          "checkpoint_bytes": 275588,
+          "status": 0
+        },
+        {
+          "label": "factory-menu",
+          "tick": 168600000,
+          "frame_sha256": "c10ffaafa06e79a9c23f98ce141658f48547ab795bd750291e1280fc0669baef",
+          "checkpoint_sha256": "1409384fdf0688d232733df796c97a99427a5ba66d2a00a532406246d24d4033",
+          "checkpoint_bytes": 275588,
+          "status": 0
+        },
+        {
+          "label": "rom-verify",
+          "tick": 179100000,
+          "frame_sha256": "15850b8c1747f9a346c03b7f2a70fc9e45e3c0bff702c0f2e17bf43aff838e38",
+          "checkpoint_sha256": "d6b433511d510518131d2c2628971446f81385c9f9769f0e561ced4f7ff3b8cb",
+          "checkpoint_bytes": 275588,
+          "status": 0
+        },
+        {
+          "label": "write-menu",
+          "tick": 189600000,
+          "frame_sha256": "38bb7ba503c21ae23644bb70afecbed872dc9041c1252c4e5b0b1db4d14f621b",
+          "checkpoint_sha256": "0090c4f64624f524f34073c5651a653748f5acf00462581512e4a074f29b5710",
+          "checkpoint_bytes": 275588,
+          "status": 0
+        },
+        {
+          "label": "quick-passed",
+          "tick": 248100000,
+          "frame_sha256": "fdc1b43f15323e434be8a857d501a7350636d7c179a3bee1e58a2478ecd9039a",
+          "checkpoint_sha256": "62e8e80297426e3f155d6341a4dbe96f6da55bb3d2d7def15fb8a4fe14341900",
+          "checkpoint_bytes": 275588,
+          "status": 0
+        },
+        {
+          "label": "full-passed",
+          "tick": 3746100000,
+          "frame_sha256": "7df15149b865d5ff4b6ec969983ec18c44ff67af74bded7f63db0bb43fda41e7",
+          "checkpoint_sha256": "4720fd091691b93fb86cbc75073b947df7479944fb89a8c2fc37e1ef529c5213",
+          "checkpoint_bytes": 279688,
+          "status": 0
+        }
+      ],
+      "passed": true,
+      "verify_ticks": 0,
+      "quick_ticks": 58500000,
+      "full_ticks": 3466500000
+    },
+    {
+      "model": 5,
+      "preset": "hp49-home",
+      "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "keys": [
+        {
+          "tick": 60000000,
+          "scan": 40,
+          "down": true
+        },
+        {
+          "tick": 61500000,
+          "scan": 40,
+          "down": false
+        },
+        {
+          "tick": 130500000,
+          "scan": 40,
+          "down": true
+        },
+        {
+          "tick": 132000000,
+          "scan": 40,
+          "down": false
+        },
+        {
+          "tick": 201000000,
+          "scan": 56,
+          "down": true
+        },
+        {
+          "tick": 202500000,
+          "scan": 38,
+          "down": true
+        },
+        {
+          "tick": 204000000,
+          "scan": 38,
+          "down": false
+        },
+        {
+          "tick": 204600000,
+          "scan": 56,
+          "down": false
+        },
+        {
+          "tick": 228600000,
+          "scan": 35,
+          "down": true
+        },
+        {
+          "tick": 230100000,
+          "scan": 35,
+          "down": false
+        },
+        {
+          "tick": 239100000,
+          "scan": 12,
+          "down": true
+        },
+        {
+          "tick": 240600000,
+          "scan": 12,
+          "down": false
+        },
+        {
+          "tick": 249600000,
+          "scan": 6,
+          "down": true
+        },
+        {
+          "tick": 251100000,
+          "scan": 6,
+          "down": false
+        },
+        {
+          "tick": 260100000,
+          "scan": 26,
+          "down": true
+        },
+        {
+          "tick": 261600000,
+          "scan": 26,
+          "down": false
+        },
+        {
+          "tick": 306600000,
+          "scan": 6,
+          "down": true
+        },
+        {
+          "tick": 308100000,
+          "scan": 6,
+          "down": false
+        },
+        {
+          "tick": 317100000,
+          "scan": 12,
+          "down": true
+        },
+        {
+          "tick": 318600000,
+          "scan": 12,
+          "down": false
+        },
+        {
+          "tick": 327600000,
+          "scan": 6,
+          "down": true
+        },
+        {
+          "tick": 329100000,
+          "scan": 6,
+          "down": false
+        },
+        {
+          "tick": 338100000,
+          "scan": 19,
+          "down": true
+        },
+        {
+          "tick": 339600000,
+          "scan": 19,
+          "down": false
+        },
+        {
+          "tick": 5988600000,
+          "scan": 6,
+          "down": true
+        },
+        {
+          "tick": 5990100000,
+          "scan": 6,
+          "down": false
+        }
+      ],
+      "frames": [
+        {
+          "label": "home",
+          "tick": 201000000,
+          "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+          "checkpoint_sha256": "64d16929cbba093b43ecfa23162a4213e150d944628af8fde184a175f19a52e4",
+          "checkpoint_bytes": 537732,
+          "status": 0
+        },
+        {
+          "label": "factory-menu",
+          "tick": 239100000,
+          "frame_sha256": "a8c98c6be733e53bdbb8ffa910e912ee648d202899362f2bc4ff2bddf382ddfd",
+          "checkpoint_sha256": "ba66b0893b3836b2b243ebd149b47d5dbaf9b0922ecf13b662d20b9b56b8923b",
+          "checkpoint_bytes": 537732,
+          "status": 0
+        },
+        {
+          "label": "rom-verify",
+          "tick": 249600000,
+          "frame_sha256": "287b774a2fe1d0d1dce42659ff0c9b3e3fc9680e9ce3eff6efd93e183f8f4c8d",
+          "checkpoint_sha256": "930ae6fb36257fa274c6d6bae7aae47bcaca5d67ce334a6e99b492c4b3f5156c",
+          "checkpoint_bytes": 537732,
+          "status": 0
+        },
+        {
+          "label": "write-menu",
+          "tick": 260100000,
+          "frame_sha256": "5cd0a3a4246860bb1cd1b04eebfac20d798fa3a6e3b8cdc13e5b0104d282a6b3",
+          "checkpoint_sha256": "ac88a9b479989c899068daa0a7f6ae96438dc83ca748311654fe5add756238e7",
+          "checkpoint_bytes": 537732,
+          "status": 0
+        },
+        {
+          "label": "quick-passed",
+          "tick": 306600000,
+          "frame_sha256": "2ba15b00bc5bb5d5adae8cd899c499724688182924ce760c87ee9faa78576e0b",
+          "checkpoint_sha256": "a114bf31af46429fa4c167d48878b78d4fb5a017ae9fc33a7508e438fc9bae82",
+          "checkpoint_bytes": 537732,
+          "status": 0
+        },
+        {
+          "label": "full-passed",
+          "tick": 5988600000,
+          "frame_sha256": "7c3b44f04f5fb7303d301d869da0ba73f3699bc5f1435e09581c16d086164661",
+          "checkpoint_sha256": "258219fe0ecee7a956d68316b706697e5ca1115462ac03a9a71522253c1328bb",
+          "checkpoint_bytes": 537732,
+          "status": 0
+        }
+      ],
+      "passed": true,
+      "verify_ticks": 0,
+      "quick_ticks": 46500000,
+      "full_ticks": 5650500000
+    }
+  ],
+  "passed": true,
+  "recorded_on": "2026-10-24",
+  "baseline": {
+    "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+    "39gs_write_test": "Stopped at unsupported NOR erase setup command 0x80, byte address 0x0000aaaa"
+  },
+  "source_sha256": {
+    "src/nor.c": "71ddbcffa1c63b97d25e82af189fc7eb560cfb2a66cb9d38b664715fcae5a734",
+    "src/checkpoint.c": "b1b3a41f5fa54a8c7d20dd248ed1e9a9ff18a605ef6ffc312f96a37a00a20c20",
+    "src/machine.c": "04e31c8d3df7662251f20de68f59c41c8435f45520013a496ccb5457bd874a86",
+    "tests/nor-write.c": "92af0f79bb271d57beae40ffd3bc71392f4ed5608cbd00e0e58200c2fee6dc0c",
+    "tools/verify-flash-selftests.mjs": "f4493b250d0897e2b0832b80f476bf92a7b3ccd3ecf5b28e15800127d60e3a5e"
+  },
+  "limits": [
+    "Functional timing from selected SST data sheets and the existing12MHz reference; not measured board timing",
+    "WP# is deasserted in this bounded board model",
+    "CFI/security modes and unsupported accesses still stop",
+    "Only hashes/results are published; ROM/checkpoint/LCD files remain private"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "schema": "orchard-independent-review-r23-v1",
+  "date": "2026-10-24",
+  "source_sha256": {
+    "web/directory-sync.js": "308450a1ab5356fafb2b9f68fdd41c067a11762333250cdb156158a95a26382c",
+    "tests/directory-sync.mjs": "3d54d3d515b431889cde4453872dd147f949872f0105945147736866b9222061",
+    "web/worker.js": "84d27615dc41c079a99dbb7f26ba2f2ba6dc917e8a0c2a6292fb7c4dc74bdc0c",
+    "tests/irda-worker.mjs": "7ab7995ce41d39565690692190f587a44e1da70a7ce23a15e0cde277a4ec2b3f"
+  },
+  "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+  "fixed_findings": [
+    {
+      "area": "directory cancellation",
+      "before": "A generation cancelled while a destination read was outstanding still deleted or overwrote one local file, then reported directoryCancelled.",
+      "after": "Recheck cancellation after awaited reads/parent/handle acquisition and before write-stream mutation or close. Abort acquired uncommitted streams; already committed operations are not rolled back.",
+      "verification": {
+        "directory_sync_checks": 86,
+        "added_checks": 28,
+        "directory_import_checks": 68,
+        "browser_workflow_groups": 7,
+        "browser_errors": 0
+      }
+    },
+    {
+      "area": "UART2 relay tail bytes",
+      "before": "A generated ARM program transmitted 0x42 then disabled TX within 128 ticks. The real core emitted the byte, but Worker discarded it using the current transmitter readiness.",
+      "after": "Explicitly paired decoded UART2 transport forwards already emitted bytes. The receiving side still checks enabled infrared reception; internal loopback does not enter the external transmit queue.",
+      "verification": {
+        "test": "tests/irda-worker.mjs",
+        "real_production_worker": true,
+        "real_wasm": true,
+        "rom_free_generated_arm": true,
+        "scenarios": [
+          "enabled transmitter",
+          "send then disable TX",
+          "send then change line mode",
+          "internal loopback not forwarded",
+          "unpaired transmitter not forwarded",
+          "disabled TX not forwarded"
+        ],
+        "passed": true
+      }
+    }
+  ],
+  "reviewed_without_new_defect": [
+    "NOR pending operation geometry, suspension and array mutation bounds",
+    "checkpoint v6 delta bounds/order, immutable ROM identity and validation before mutation"
+  ],
+  "limits": [
+    "Not a physical hardware timing proof",
+    "Directory browser suite uses real OPFS handles and IndexedDB with picker and Worker acknowledgement adapters; Chinese visual inspection covers its component fixture."
+  ]
+}

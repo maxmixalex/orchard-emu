@@ -1,5 +1,81 @@
 # Validation
 
+## r23 diagnostics, infrared, directory synchronization and display (2026-10-24)
+
+The production C/WASM candidate is SHA-256
+`4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9`.
+The [r23 release record](evidence/release-validation-r23.json) pins the local
+source and asset identities. Remote Build, merge, Pages and live acceptance
+are recorded separately in the release PR.
+All firmware/application witnesses below retain their exact input identities
+and physical-key procedures. ROMs, checkpoints, card images and original LCD
+pixels remain private. The admitted 39-series presets now use the explicitly
+conditional bank-1 SRAM decode; strict mode and legacy saved conditions remain
+unchanged.
+
+| Area | Observed result and scope |
+| --- | --- |
+| Factory FLASH | Original 39gs and 49g+ complete quick and full write tests through real NOR program/erase/polling. The final cold-boot probe matches the stock success text. [NOR evidence](evidence/nor-write-r23.json) records 58.5M/46.5M quick-test ticks and 3.4665B/5.6505B full-test ticks. Functional timings use the selected data sheets; electrical calibration remains open. |
+| RS232 and IrDA | Applicable factory loopback tests return PASS and leave through ENTER. Original 49g+/48gII exchange and recall 12345/54321 in both directions. All four 39g+/39gs source/destination pairs cold-boot, transfer IRTEST and export identical complete 620-byte objects. The production Chromium pair also recalls 12345 and disconnects cleanly. [UART/IrDA evidence](evidence/uart-irda-r23.json). |
+| SD directories | Persistent directory handles, aliases, baseline and card identity; reviewed two-way add/edit/delete/rename, conflict choices, revalidation and pause/eject/reinsert/resume. The browser fixture uses real OPFS/IndexedDB and explicit media acknowledgments; it does not claim a native picker or original-ROM end-to-end directory mount. [Directory evidence](evidence/sd-directory-r23.json). |
+| Original SD/FILES | Original 49g+ reads root/nested 42 objects from a prepared 32 MiB card, writes TEST, exports and recalls it in a fresh boot. A 34,092,164-byte v6 checkpoint with 32 staged sector bytes continues identically on native and WASM. Original 48gII FILES returns to arithmetic. [Stock SD evidence](evidence/sd-stock-r23.json). |
+| Wire batches | Opt-in recognition of stable original USB catalog/menu screens drives physical next-RECV keys for aplet/library queues. Original 39g+/39gs installs and exact SEND round trips pass; unknown screens, user input and failures cancel automation. It remains one stock receive transaction per object. [Wire evidence](evidence/hp39-wire-batch-r23.json). |
+| Third-party programs | Arkalite on both 39 ROMs; native 2048, non-native BabalPlus and RPL conversion programs on 49g+; positive/negative-base RPL conversions on 48gII. Launch, actual input, return and subsequent arithmetic are separated from mere successful installation. [39 programs](hp39-programs-r23.md), [49 programs](apps-r23.md), [48 conversion evidence](evidence/baseconvert-48gii-r23.json). |
+| GBP 0.3 | The original package's unaligned loader BSS clear fails before the player starts. A separately identified ALIGN4 diagnostic rebuild, with unchanged main.c, runs and returns on 39gs; the 39g+ IRQ-return fault remains unresolved. Original and rebuilt binaries are never combined into one compatibility claim. [Program evidence](evidence/hp39-programs-r23.json). |
+| LCD publication | Completed-scan capture, optional 35 ms response and four spatial scaling kernels. Four-second actual GBP diagnostic workloads have identical final guest state; mean pixel changes are 1.425/1.310/0.986 for after-slice/scan/scan+smooth. Instant still exposes some genuine redraw intermediates. [GBP LCD evidence](evidence/gbp-lcd-r23.json). |
+| LCD power | Both original 39gs/49g+ enable the LCD before replacing OFF text with ON text. Single-tick boundary observations retain old text initially and show the updated text within 65,536 subsequent ticks. This is a firmware order observation, not an optical measurement. [Power evidence](evidence/lcd-power-r23.json). |
+| UI | Traditional landscape with LCD/FN grouping, narrow-screen scrolling, four actual scaling kernels, stable canvas identity, visible pause/resume and accessible settings actions. Duplicate SD and retired Local device entries are removed; infrared hides unrelated wired controls. Four models × four viewports pass in real Chromium. [Display evidence](evidence/display-r23.json). |
+
+Release, retained-reference and ASan/UBSan with leak detection each pass
+**23 native suites**. Native and WASM each pass **1,169,805 default core
+assertions** plus **33,849 clock assertions** (**1,203,654 per host**).
+The quarantined physical-read variant adds 217,824 WASM-only assertions outside
+that total. The independent Unicorn corpus passes **17,075 cases**, with zero
+mismatches or skips. Clang analysis covers **51 C files** with zero diagnostics.
+Restoring the missing execution bit on the local reference SDI binary resolved
+its initial launch failure; no test assertion was weakened. Test-only WASM
+fixtures now allocate 32 MiB because multiple machines retain immutable and
+mutable flash arrays; this does not increase the production initial memory.
+
+Independent review found two concrete integration defects and verified their
+fixes: cancellation during an asynchronous directory read/write could still
+modify one local file, and changing UART2 mode immediately after transmitting
+could discard an already-emitted tail byte. Directory tests now cover 86 cases,
+including cancellation around each awaited mutation boundary. A new production
+Worker + real WASM test covers six generated-ARM transmission/disable/loopback
+scenarios. [Review record](evidence/review-r23.json).
+
+The final Chromium component command passes all twelve scripts, and the
+production Worker passes six profiles in both calculator/debug audiences with
+generated ARM guests. Original 49g+ passes all seven 16 MiB SD browser stages,
+including exact media retention and automatic running after both manual and
+IndexedDB restore. Original 39gs/49g+ also pass physical/PC arithmetic,
+capture, exact paused LCD restore and narrow layouts. A genuine same-ROM v5
+full-card session imports, automatically resumes and re-exports as v6.
+[Browser evidence](evidence/browser-r23.json) retains the tested assets;
+the final rebuild changes only the distributable README's session wording.
+
+Diagnostic tracing records the new UART channel input/output payloads and
+IrDA attachment state. Only explicit read-only UART and host LCD observer
+APIs are excluded. Real-WASM directed tests prove full checkpoint equality
+with/without the observer and reject 23 malformed or unknown-API cases.
+Instrumented browser stop and timeout runs replay all 7/64,780 API calls with
+equal complete checkpoints. These generated-guest diagnostic fixtures are
+separate from original-ROM browser acceptance.
+
+Checkpoint v6 retains the immutable-ROM identity while saving changed flash
+sectors and all UART hardware-buffer/event/queue state. Versions 1–5 migrate
+explicitly. A successful restore resumes under the current focus policy;
+historical stopped or exact-decode sessions retain their recorded conditions.
+UART transport remains decoded bytes, with no bit-waveform/baud-time or FIFO
+receive-timeout implementation. See [sessions](sessions.md) and
+[UART scope](uart-irda.md).
+
+Native host-device/Conn3x work is retired at the user's request. Its former
+source and r22 results remain reproducibility material; the UI no longer
+advertises it. Full original HP40gs/HP50g admission, physical timing, SD DMA/
+SDHC and wider original-program coverage remain separate future work.
+
 ## r22 keyboard, local files, LCD publication and factory-test continuation (2026-10-23)
 
 The browser now has model-isolated keyboard editing with layout-aware defaults,

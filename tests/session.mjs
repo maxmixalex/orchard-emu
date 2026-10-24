@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { Worker } from 'node:worker_threads';
 import { readFile } from 'node:fs/promises';
-import { encodeSession, decodeSession, MAX_SESSION_BYTES } from '../dist/session.js';
+import { encodeSession, decodeSession, MAX_SESSION_BYTES,MAX_BASE_STATE } from '../dist/session.js';
 // Structural guard for the independently rendered narrow-screen layout.
 // This checks the shipped selector contract, not browser layout or click behavior.
 const html=await readFile(new URL('../dist/index.html',import.meta.url),'utf8');
@@ -22,7 +22,9 @@ await assert.rejects(encodeSession({...meta,model:1,preset:'hp39gs-home'}));
 await assert.rejects(encodeSession({...meta,model:4,preset:'hp49-home'}));
 for(const data of [null,new ArrayBuffer(0),new ArrayBuffer(MAX_SESSION_BYTES+1),encoded.buffer.slice(0,11),encoded.buffer.slice(0,-1)])await assert.rejects(decodeSession(data));
 for(const i of [0,8,11,14,encoded.length-1]){const bad=encoded.slice();bad[i]^=0xff;await assert.rejects(decodeSession(bad.buffer));}
-for(const update of [{model:7},{model:4},{preset:'unknown'},{romHash:'no'},{frameView:3},{state:new Uint8Array(600001)}])await assert.rejects(encodeSession({...meta,...update}));
+for(const update of [{model:7},{model:4},{preset:'unknown'},{romHash:'no'},{frameView:3},{state:new Uint8Array(MAX_BASE_STATE+1)}])await assert.rejects(encodeSession({...meta,...update}));
+const withFlashDelta=new Uint8Array(600000+2*4100);withFlashDelta[600000]=0x73;
+assert.deepEqual((await decodeSession((await encodeSession({...meta,state:withFlashDelta})).buffer)).state,withFlashDelta);
 const w=new Worker(new URL('./web-worker-node.mjs',import.meta.url));
 const waits=[];let last;
 w.on('message',d=>{last=d;for(const a of [...waits])if(a.filter(d)){clearTimeout(a.timer);waits.splice(waits.indexOf(a),1);a.resolve(d);}});
@@ -53,5 +55,5 @@ try{
  await send({type:'create',generation:2,model:4,preset:'strict'},d=>d.type==='created'&&d.generation===2);
  const fresh=await send({type:'pause',generation:2},d=>d.type==='snapshot'&&d.generation===2);
  assert.equal(fresh.loaded,false);assert.equal(fresh.state[22],0);
- console.log('Session envelope integrity, wrong ROM rejection, Worker save/restore/continued step and stale-generation isolation pass. No ROM is included in the session.');
+ console.log('Session integrity, NOR-delta capacity, wrong ROM rejection, Worker save/restore/continued step and stale-generation isolation pass.');
 }finally{await w.terminate();for(const a of waits)clearTimeout(a.timer);}

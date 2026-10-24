@@ -6,6 +6,7 @@
 static orchard_machine machine;
 static uint8_t rom_input[O_FLASH_MAX];
 static uint8_t pixels[131 * 80];
+static uint8_t annunciator_levels[6];
 static uint8_t uart_input[O_QUEUE], uart_output[O_QUEUE];
 static uint32_t snapshot[33];
 static uint32_t buzzer_output[8 + ORCHARD_BUZZER_CAPACITY * 3];
@@ -117,6 +118,28 @@ EXPORT("uart_output") uintptr_t web_uart_output(void) { return (uintptr_t)uart_o
 EXPORT("uart_receive") unsigned web_uart_receive(void) {
     return (unsigned)orchard_uart_receive(&machine, uart_output, sizeof(uart_output));
 }
+EXPORT("uart_send_channel") unsigned web_uart_send_channel(unsigned channel,unsigned length) {
+    if(length>sizeof(uart_input))return 0;
+    return (unsigned)orchard_uart_send_channel(&machine,channel,uart_input,length);
+}
+EXPORT("uart_receive_channel") unsigned web_uart_receive_channel(unsigned channel) {
+    return (unsigned)orchard_uart_receive_channel(&machine,channel,uart_output,sizeof(uart_output));
+}
+/* Read-only line/mode and FIFO information; no inferred physical baud rate. */
+EXPORT("uart_snapshot") uintptr_t web_uart_snapshot(unsigned channel) {
+    static uint32_t state[9];
+    if(!machine.profile||channel>=3u)return 0;
+    const o_soc *s=&machine.soc;const o_uart *u=&s->uart_state[channel];
+    state[0]=s->uart[channel][0];state[1]=s->uart[channel][1];
+    state[2]=s->uart[channel][2];state[3]=s->uart[channel][3];
+    state[4]=s->uart[channel][10];state[5]=u->rx_count;state[6]=u->tx_count;
+    state[7]=(s->clock[3]&(0x400u<<channel))!=0;state[8]=u->errors;
+    return (uintptr_t)state;
+}
+EXPORT("irda_attach") unsigned web_irda_attach(unsigned attached) {
+    if(attached>1u)return ORCHARD_BAD_ARGUMENT;
+    return orchard_irda_attach(&machine,attached!=0);
+}
 
 EXPORT("gpio_inputs") unsigned web_gpio_inputs(unsigned port, uint32_t known_mask, uint32_t levels) {
     return orchard_gpio_inputs(&machine, (orchard_gpio_port)port, known_mask, levels);
@@ -159,6 +182,15 @@ EXPORT("lcd_probe68_reads") uint64_t web_lcd_probe68_reads(void) {
 }
 EXPORT("frame_view") unsigned web_frame_view(unsigned view) {
     return orchard_framebuffer_view(&machine, (orchard_frame_view)view, pixels, sizeof(pixels));
+}
+EXPORT("lcd_observe") unsigned web_lcd_observe(unsigned view) {
+    return orchard_lcd_observe(&machine, true, (orchard_frame_view)view);
+}
+EXPORT("lcd_published_frame") unsigned web_lcd_published_frame(void) {
+    return orchard_lcd_published_frame(&machine, pixels, sizeof(pixels));
+}
+EXPORT("lcd_published_annunciators") unsigned web_lcd_published_annunciators(void) {
+    return orchard_lcd_published_annunciators(&machine, annunciator_levels);
 }
 
 EXPORT("adc_input") unsigned web_adc_input(unsigned channel, unsigned known, unsigned code) {
@@ -222,7 +254,6 @@ EXPORT("usb_snapshot") uintptr_t web_usb_snapshot(void) {
     return (uintptr_t)words;
 }
 
-static uint8_t annunciator_levels[6];
 EXPORT("annunciators") unsigned web_annunciators(void) {
     return orchard_annunciators(&machine, annunciator_levels);
 }
@@ -293,7 +324,7 @@ static uint8_t checkpoint_bytes[600000];
 EXPORT("checkpoint_buffer") uintptr_t web_checkpoint_buffer(unsigned length) {
     size_t n=length ? length : orchard_checkpoint_size(&machine);
     if(n<=sizeof(checkpoint_bytes))return (uintptr_t)checkpoint_bytes;
-    if(n>sizeof(checkpoint_bytes)+ORCHARD_SD_MAX_BYTES)return 0;
+    if(n>sizeof(checkpoint_bytes)+ORCHARD_SD_MAX_BYTES+O_FLASH_MAX+2048u)return 0;
     uintptr_t p=sd_base()+ORCHARD_SD_MAX_BYTES;
     return grow_memory(p+n) ? p : 0;
 }

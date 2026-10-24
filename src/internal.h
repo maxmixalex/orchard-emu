@@ -107,6 +107,15 @@ typedef struct {
     uint32_t remaining,half,shift;
 } o_spi;
 
+/* Functional decoded-byte UART boundary. The guest holding registers/FIFOs
+ * are bounded independently of the host's staging/capture queues. Serial bit
+ * timing and the external UEXTCLK frequency are not inferred from the ROM. */
+typedef struct {
+    uint8_t rx[16], tx[16];
+    uint32_t rx_head,rx_count,tx_head,tx_count;
+    uint32_t errors,rx_event,tx_event,modem,modem_known;
+} o_uart;
+
 /* Host optimization state only. Exact input comparison, not a hash or a
  * hardware debounce filter. It must never replace architectural EINT state. */
 typedef struct {
@@ -134,6 +143,9 @@ typedef struct {
     uint32_t keyboard_direct, eint_known, eint_levels;
     o_eint_cache eint_cache;
     uint32_t uart[3][11];
+    o_uart uart_state[3];
+    o_queue uart_rx[2],uart_tx[2]; /* UART1/2 host queues; rx/tx below are UART0. */
+    bool irda_attached;
     uint32_t tcfg0, tcfg1, tcon, tcntb[5], tcmpb[4], count[5];
     uint32_t phase[5];
     /* Functional clock-domain state; reference Fin is the 12M timebase.
@@ -162,6 +174,20 @@ typedef struct {
     bool enabled, level;
 } o_buzzer;
 
+/* Optional host LCD observer. A frame is copied at the completed scan event,
+ * never at a later UI request. It is not architectural state or a DMA model. */
+typedef struct {
+    uint8_t pixels[131u * 80u], annunciators[6];
+    orchard_status status, annunciator_status;
+    orchard_frame_view view;
+    bool enabled, valid;
+} o_lcd_output;
+
+typedef struct {
+    uint32_t kind, remaining, address, length, data, toggle, suspend_wait;
+    uint32_t erase_remaining, erase_address, erase_length;
+} o_nor;
+
 struct orchard_machine {
     const orchard_profile *profile;
     uint32_t quiet_left, deferred_ticks; /* Host-only, flushed at public boundaries. */
@@ -169,6 +195,7 @@ struct orchard_machine {
     uint32_t power_wake; /* Transient wake requests; consumed within one SoC tick. */
     o_translation translations[O_TRANSLATIONS];
     o_buzzer buzzer;
+    o_lcd_output lcd_output;
     o_cpu cpu;
     o_soc soc;
     uint64_t ticks;
@@ -178,12 +205,16 @@ struct orchard_machine {
     uint64_t sram_alias_reads, sram_alias_writes;
     unsigned nor_sequence;
     bool nor_id_mode;
+    /* External NOR's self-timed write engine, in reference-input quanta.
+       erase_* retains a suspended sector/block while another word programs. */
+    o_nor nor;
     orchard_stop stop;
     uint8_t *sd_storage; /* Host allocation, never serialized. */
     size_t sd_capacity;
     uint32_t sd_bytes;
     bool sd_write_protected, sd_dirty;
     uint8_t flash[O_FLASH_MAX];
+    uint8_t flash_base[O_FLASH_MAX]; /* Immutable identity loaded by the host. */
     uint8_t ram[O_RAM_MAX];
     uint8_t boot_sram[O_BOOT_SRAM_SIZE];
 };
@@ -217,6 +248,8 @@ bool o_sram_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
 bool o_sram_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value);
 bool o_nor_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value);
 bool o_nor_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);
+void o_nor_tick(orchard_machine *m);
+void o_nor_reset(orchard_machine *m);
 bool o_phys_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value);
 bool o_phys_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value);
 bool o_translate_reference(orchard_machine *m, uint32_t address, bool write, bool fetch,
@@ -228,6 +261,12 @@ bool o_store(orchard_machine *m, uint32_t address, unsigned width, bool user, ui
 void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool fetch);
 void o_soc_reset(o_soc *s);
 void o_soc_tick(orchard_machine *m);
+void o_uart_tick(orchard_machine *m);
+bool o_uart_pending(const o_soc *s);
+void o_irda_gpio_sample(const orchard_machine *m,unsigned port,
+                       uint32_t *known,uint32_t *levels,uint32_t *conflicts);
+bool o_uart_register(orchard_machine *m, uint32_t address, unsigned width,
+                     uint32_t *value, bool write);
 void o_spi_reset(o_spi *s);
 void o_spi_tick(orchard_machine *m);
 bool o_spi_register(orchard_machine *m, uint32_t address, unsigned width,

@@ -1,0 +1,280 @@
+{
+  "schema": "orchard-hp39-wire-batch-r23-v1",
+  "recorded_on": "2026-10-24",
+  "test": "two separately acknowledged Wire objects with optional normal physical-key continuation",
+  "models": [
+    {
+      "model": 1,
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+      "tool_sha256": "25c6d01fee0f86645ecd1e9220113a7051c2360edf78dfb70b9a48404b4b3701",
+      "source_sha256": {
+        "hp39-wire-auto.js": "98bd82192c71e156110fad7d020eb7ce634a0657b930f580b72237710d44f293",
+        "file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+        "hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+        "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+        "hp48.js": "de400de9562d96d6882ddc9d72b41337d4b1eccd1101fe17cb6d4e3f874c8132"
+      },
+      "inputs": [
+        {
+          "name": "lib275.sys",
+          "bytes": 1489,
+          "sha": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+        },
+        {
+          "name": "gbpplayer.apt",
+          "bytes": 13276,
+          "sha": "096985f550cdcf54a41fba68c6c418831715711bcf66ca7b00f33af94d7939a6"
+        }
+      ],
+      "stock_without_second_recv": {
+        "stage": "handshake",
+        "phase": "negotiating",
+        "bytes": 0
+      },
+      "automatic_physical_keys": [
+        {
+          "tick": 611823936,
+          "scans": [
+            39
+          ]
+        },
+        {
+          "tick": 619450688,
+          "scans": [
+            44
+          ]
+        },
+        {
+          "tick": 622260544,
+          "scans": [
+            6
+          ]
+        }
+      ],
+      "roundtrip_aplet_equal": true,
+      "roundtrip_library_payload_equal": true,
+      "received": [
+        {
+          "tick": 2132212160,
+          "type": "file-transfer-received",
+          "name": "GBP39PLA.000",
+          "length": 13276,
+          "sha": "096985f550cdcf54a41fba68c6c418831715711bcf66ca7b00f33af94d7939a6"
+        },
+        {
+          "tick": 2260867520,
+          "type": "file-transfer-received",
+          "name": "LIB275L0.000",
+          "length": 1484,
+          "sha": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f"
+        },
+        {
+          "tick": 2302466496,
+          "type": "file-transfer-received",
+          "name": "HP39DIR.000",
+          "length": 67,
+          "sha": "7b94028a514a623b9956c3508c0da4086a652f25f7335cef93f741c196212b3c"
+        }
+      ],
+      "report_sha256": "589e11fbca0e8c45e382a1268a86cff75bc3d8f55161f3c056b98ebe8f66dcb8",
+      "immediate_after_first_ack": {
+        "passed": true,
+        "automatic_physical_keys": [
+          {
+            "tick": 190260544,
+            "scans": [
+              39
+            ]
+          },
+          {
+            "tick": 199894336,
+            "scans": [
+              44
+            ]
+          },
+          {
+            "tick": 202704192,
+            "scans": [
+              6
+            ]
+          }
+        ],
+        "report_sha256": "d0257466736dc79e21b70532cd031304fa5f2f25d7c59e0eaf1da723fea43f52"
+      }
+    },
+    {
+      "model": 2,
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+      "tool_sha256": "25c6d01fee0f86645ecd1e9220113a7051c2360edf78dfb70b9a48404b4b3701",
+      "source_sha256": {
+        "hp39-wire-auto.js": "98bd82192c71e156110fad7d020eb7ce634a0657b930f580b72237710d44f293",
+        "file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+        "hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+        "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+        "hp48.js": "de400de9562d96d6882ddc9d72b41337d4b1eccd1101fe17cb6d4e3f874c8132"
+      },
+      "inputs": [
+        {
+          "name": "lib275.sys",
+          "bytes": 1489,
+          "sha": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+        },
+        {
+          "name": "gbpplayer.apt",
+          "bytes": 13276,
+          "sha": "096985f550cdcf54a41fba68c6c418831715711bcf66ca7b00f33af94d7939a6"
+        }
+      ],
+      "stock_without_second_recv": {
+        "stage": "handshake",
+        "phase": "negotiating",
+        "bytes": 0
+      },
+      "automatic_physical_keys": [
+        {
+          "tick": 646582592,
+          "scans": [
+            39
+          ]
+        },
+        {
+          "tick": 654209344,
+          "scans": [
+            44
+          ]
+        },
+        {
+          "tick": 656617792,
+          "scans": [
+            6
+          ]
+        }
+      ],
+      "roundtrip_aplet_equal": true,
+      "roundtrip_library_payload_equal": true,
+      "received": [
+        {
+          "tick": 2128609984,
+          "type": "file-transfer-received",
+          "name": "GBP39PLA.000",
+          "length": 13276,
+          "sha": "096985f550cdcf54a41fba68c6c418831715711bcf66ca7b00f33af94d7939a6"
+        },
+        {
+          "tick": 2300117696,
+          "type": "file-transfer-received",
+          "name": "LIB275L0.000",
+          "length": 1484,
+          "sha": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f"
+        },
+        {
+          "tick": 2305344192,
+          "type": "file-transfer-received",
+          "name": "HP39DIR.000",
+          "length": 67,
+          "sha": "7b94028a514a623b9956c3508c0da4086a652f25f7335cef93f741c196212b3c"
+        }
+      ],
+      "report_sha256": "77e24babf06f78be049db297c41ad5cb6ccd497b7b359cd6e5e313541deb6297",
+      "immediate_after_first_ack": {
+        "passed": true,
+        "automatic_physical_keys": [
+          {
+            "tick": 224617792,
+            "scans": [
+              39
+            ]
+          },
+          {
+            "tick": 234251584,
+            "scans": [
+              44
+            ]
+          },
+          {
+            "tick": 236660032,
+            "scans": [
+              6
+            ]
+          }
+        ],
+        "report_sha256": "4d50cb347255169a607dec506537a19733a138c271f7c8d4487383e7a5001cd6"
+      }
+    }
+  ],
+  "unit_checks": 75,
+  "component_browser_suite": "tests/browser-components.py passed with explicit opt-in, ACK continuation, error/retry isolation, model-specific menus and 320/390/720/1360px layouts",
+  "limits": [
+    "uses frozen r22 reference WASM for transfer isolation; does not certify later core changes",
+    "unchanged admitted ROMs; no guest RAM/ROM patch",
+    "normal physical TapQueue, no extra protocol ACK",
+    "same APLET catalog B/H on 39g+/39gs USB only",
+    "first RECV remains a user action; default automatic option is off",
+    "unknown screens and modal dialogs receive no automatic confirmation; bounded virtual timeout",
+    "manual calculator key stops automatic continuation for this batch",
+    "Wire download and cross-catalog/serial automation are not implemented",
+    "round-trip byte equality is not native application compatibility or real-hardware proof",
+    "core harness and React browser fixture are separate, not production-browser end-to-end"
+  ],
+  "candidate_arkalite_runs": [
+    {
+      "model": 1,
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+      "wire_report_sha256": "1c316faa977289cfc09499caed14f7be11fea720c78dfff1740d0a074a9b88cf",
+      "aplet_equal": true,
+      "library_payload_equal": true,
+      "automatic_physical_keys": [
+        {
+          "tick": 187008320,
+          "scans": [
+            39
+          ]
+        },
+        {
+          "tick": 196240704,
+          "scans": [
+            44
+          ]
+        },
+        {
+          "tick": 199050560,
+          "scans": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "model": 2,
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+      "wire_report_sha256": "8b722e19f7549caff51249d2e085db559d8c955e569d99c0aa5ea3f52be42d6b",
+      "aplet_equal": true,
+      "library_payload_equal": true,
+      "automatic_physical_keys": [
+        {
+          "tick": 221193536,
+          "scans": [
+            39
+          ]
+        },
+        {
+          "tick": 231228736,
+          "scans": [
+            44
+          ]
+        },
+        {
+          "tick": 233637184,
+          "scans": [
+            6
+          ]
+        }
+      ]
+    }
+  ],
+  "application_runtime_evidence": "hp39-programs-r23.json"
+}

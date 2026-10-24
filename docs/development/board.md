@@ -12,7 +12,7 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [x] User/debug frontends; seven separately licensed skins and guest segments.
 - [x] Scheduler/CPU/memory optimizations with retained reference paths.
 - [x] Portable manual sessions, with .ord names and legacy .orchard import.
-- [x] Settings: immersive, immersive landscape and traditional view, viewport/scale, editable physical key sequences, independent blur/hidden policies; landscape keeps all six FN keys with the LCD.
+- [x] Settings: immersive, immersive landscape, traditional and traditional landscape view, viewport/scale, editable physical key sequences, independent blur/hidden policies; landscape keeps all six FN keys with the LCD.
 - [x] Wider per-model keyboard editor with assigned-key highlights, calculator-side binding badges and target selection; OS-resolved character defaults, layout-map labels and captured-key fallback. See [keyboard settings](keyboard-settings.md).
 - [x] Persistent Connections/SD sidebar keeps selections and drafts while the calculator remains usable; narrow layouts stack the panel below it.
 - [x] Per-model local ROM recall with read-only original-file handles or labelled browser-local copies, explicit permission continuation and Forget, identity validation and cancellation of stale automatic reads. See [ROM storage](rom-storage.md).
@@ -34,15 +34,16 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [x] HP49g+ full capture admission, fixed 512 KiB SRAM with explicit bank-1 mirror, 131×80 UI, arithmetic, CAS, graphing, menus, sessions and USB object workflows.
 - [x] HP49g+ FILES recovery and bounded SD image read/write, FAT16 create/import/export/eject and write protection; HP48gII no-card FILES navigation.
 - [x] Offline FAT16 file preparation: browse/extract files, create folders, add/rename files and folders, and delete files or empty folders transactionally before insertion; explicit 8.3 names, shared alias/long-name collision checks and no extension filter.
-- [x] Recursive local-directory import into 16/32 MiB FAT16 with deterministic 8.3 mapping preview, native-directory and file-input paths, atomic mounted-card handoff, and explicit additive write-back that preserves conflicts. Associations are page-session only; this is not an OS virtual-drive mount. See [directory SD](directory-sd.md).
+- [x] Recursive local-directory import into 16/32 MiB FAT16 with persistent handles/name mappings/baselines, two-way add/edit/delete/rename previews and conflict resolution, preview revalidation and atomic mounted-card handoff. This is explicit synchronization, not an OS virtual-drive mount. See [directory SD](directory-sd.md).
 - [x] HP49g+ SDK native ARM example installed over stock USB, run through ARMToolbox, returned to HOME and followed by arithmetic and USB reconnect.
-- [x] Checkpoint v5 retains complete SD/in-flight state and PCLK/PWM latches, adding both SPI channels and the watchdog reset pulse; v1–v4 imports remain supported with documented migration boundaries.
+- [x] Checkpoint v6 retains complete SD/UART/NOR in-flight state, modified flash sectors and existing clock/SPI/reset state; v1–v5 imports remain supported with explicit migration. Successful restore conditionally resumes, and paused state has a prominent direct action.
 - [x] Held ON/F4 factory-test entry and ON/F3 exit controls; bounded [SPI](spi.md) register/transfer behavior and [watchdog reset propagation](watchdog-reset.md) retain external SRAM, media and RTC. Factory-test entry does not claim every diagnostic passes.
 - [x] Revised HP39gs ROMstream v2: visible progress, repaired mapping/cable/USB exit paths, one-launch double reads and corresponding source; original HP39g+ and original HP39gs full NORs complete dump/return/USB-reuse workflows. Earlier derived-OS evidence remains distinct.
-- [x] IR/IrDA assessment with primary sources, not a claimed implementation.
+- [x] Three functional UARTs with FIFO/line-format/clock-gate/interrupt/error/loopback behavior; original factory RS232/IRDA tests and same-origin tab infrared object transfer. See [UART/IrDA](uart-irda.md).
+- [x] NOR word program, sector/block/chip erase, busy polling and VF1601 suspend; original 39gs/49g+ quick and full FLASH WRITE diagnostics pass.
 - [x] Byte-table checkpoint CRC with unchanged format/full validation; independent checks on all six model capacities.
 - [x] Production Pacer + WASM RTC comparison across rates and host partitions.
-- [x] Explicit optimized sanitizer targets and 21 maintained native/reference/sanitizer suites, including buzzer, Power_OFF, PCLK/PWM, SPI and watchdog reset checks.
+- [x] Explicit optimized sanitizer targets and 23 maintained native/reference/sanitizer suites, including buzzer, Power_OFF, PCLK/PWM, SPI and watchdog reset checks.
 - [x] Checked WASM physical reads and bounded caught-up Worker pacing, with same-input comparisons.
 - [x] Actual Chrome Window/Worker smoke coverage plus original-ROM file/restore/keyboard/result observation.
 
@@ -52,10 +53,10 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [ ] Identify the browser dispatch cost before another MOV-pair or ADD-to-CMP candidate; the r18 quiet-loop/cold-function experiments are withdrawn, not pending admission. Preserve precise faults, interrupts and self-modifying code.
 - [ ] Broader browser focus/touch/download/storage/zoom E2E and sustained interaction; preserve and classify the observed rare HP48 Unlimited post-result stop.
 - [ ] Broader original-OS keypad/Alpha-state coverage, additional power modes and sustained native applications; four-model Power_OFF/ON, HP49g+ warm-start and one native ARM return are now witnessed.
-- [ ] Target HP40gs/HP50g stock acceptance, remote file management and broader stock capacity/recovery cases; preserve the original HP50g GET_CONFIGURATION counterexample, then implement applicable infrared links.
+- [ ] Target HP40gs/HP50g stock acceptance, remote file management and broader stock capacity/recovery cases; preserve the original HP50g GET_CONFIGURATION counterexample, expand applicable infrared transfer/recovery coverage.
 - [x] Receive the HP49g+ full A/B capture and independently validate original-byte boot and user workflows; retain the original acquisition sidecar unchanged.
 - [x] Receive and validate the HP39gs full V2 image; admit its own unchanged boot/OS after native/WASM, browser, continuation and full-reader/return checks. Retain acquisition metadata unchanged.
-- [ ] Independently establish SRAM/LCD/NOR/pad/analog assumptions; implement HP49 infrared/UART2, SD DMA/larger media and NOR programming with their own evidence.
+- [ ] Independently establish SRAM/LCD/NOR/pad/analog assumptions; extend SD DMA/larger media, physical IrDA timing and the remaining NOR modes with their own evidence.
 
 
 Do not infer all-model or canonical physical-board support from skins, arithmetic,
@@ -73,6 +74,8 @@ release result. Do not treat a source push as deployment.
 
 ## React / connection continuation
 
+Local host-device simulation was retired in r23. The completed USB/IP entries below record r22 research; they are no longer current UI features or future targets.
+
 - [x] Separate React/Mantine user frontend with English/Chinese i18n and PC keyboard editor.
 - [x] Printed modifier/Alpha legends; native/4x matrix PNG capture.
 - [x] Keep per-frame pixels outside React subscriptions; avoid unchanged canvas uploads.
@@ -83,4 +86,4 @@ release result. Do not treat a source push as deployment.
 - [x] Original HP49g+ completes SEND/GET/FINISH through the production Chrome page/Worker and a user-space USB/IP peer with all object bytes equal, keeps the connection while another tab has focus and the sidebar is hidden, and returns to arithmetic. Kernel attachment, installed HP drivers and unmodified Conn3x are not covered by this witness.
 - [x] Preserve extra single-transfer reference tests, reject unproductive CPU optimization prototypes.
 - [ ] Observe the accepted revision's Build/Pages and downloaded-package results in the current repository.
-- [ ] Broader browser E2E, kernel attachment/Conn3x transfer and physical clock calibration remain open.
+- [ ] Broader browser E2E, infrared recovery and physical clock calibration remain open. Native OS-device/Conn3x work is retired.

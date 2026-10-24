@@ -63,8 +63,9 @@ void orchard_reset(orchard_machine *m) {
     m->idle_write_enabled = false;
     m->power_wake = 0;
     m->sram_alias_reads = m->sram_alias_writes = 0;
-    m->nor_sequence = 0; m->nor_id_mode = false;
+    o_nor_reset(m);
     o_buzzer_reset(m);
+    orchard_lcd_observer_reset(m);
 }
 static void retained_reset(orchard_machine *m, uint32_t sources, bool watchdog) {
     /* Samsung 7-14..17, 9-28, 17-1/5, 18-1/3. Both paths restart the CPU
@@ -88,6 +89,7 @@ static void retained_reset(orchard_machine *m, uint32_t sources, bool watchdog) 
     o_copy(s->gpio_bias_levels,old.gpio_bias_levels,sizeof s->gpio_bias_levels);
     o_copy(s->adc.inputs,old.adc.inputs,sizeof s->adc.inputs); s->adc.known=old.adc.known;
     s->keyboard_attached=old.keyboard_attached;
+    s->irda_attached=old.irda_attached;
     s->keyboard_switches=old.keyboard_switches; s->keyboard_direct=old.keyboard_direct;
     s->lcd_probe68_idle_zero=old.lcd_probe68_idle_zero;
     s->lcd_probe68_reads=old.lcd_probe68_reads;
@@ -108,6 +110,7 @@ static void retained_reset(orchard_machine *m, uint32_t sources, bool watchdog) 
     o_zero(m->translations,sizeof m->translations);
     m->quiet_left=m->deferred_ticks=m->power_wake=0;
     o_buzzer_reset(m);
+    orchard_lcd_observer_reset(m);
 }
 void o_power_wake(orchard_machine *m, uint32_t sources) { retained_reset(m,sources,false); }
 void o_watchdog_system_reset(orchard_machine *m) { retained_reset(m,0,true); }
@@ -124,6 +127,7 @@ orchard_status orchard_load_rom(orchard_machine *m, const void *bytes, size_t le
         (first & 0xff7ff000u) != 0xe51ff000u)
         return ORCHARD_BAD_ROM_FORMAT;
     o_copy(m->flash, data, length);
+    o_copy(m->flash_base, data, length);
     m->loaded = true;
     orchard_reset(m);
     return ORCHARD_OK;
@@ -268,16 +272,10 @@ orchard_status orchard_read_memory(const orchard_machine *m, uint32_t address,
     return ORCHARD_BUS_ERROR;
 }
 size_t orchard_uart_send(orchard_machine *m, const uint8_t *data, size_t length) {
-    if (!m || (!data && length)) return 0;
-    size_t n = 0;
-    while (n < length && o_q_push(&m->soc.rx, data[n])) ++n;
-    return n;
+    return orchard_uart_send_channel(m, 0, data, length);
 }
 size_t orchard_uart_receive(orchard_machine *m, uint8_t *data, size_t capacity) {
-    if (!m || (!data && capacity)) return 0;
-    size_t n = 0;
-    while (n < capacity && o_q_pop(&m->soc.tx, &data[n])) ++n;
-    return n;
+    return orchard_uart_receive_channel(m, 0, data, capacity);
 }
 
 void orchard_get_peripheral_state(const orchard_machine *m, orchard_peripheral_state *state) {

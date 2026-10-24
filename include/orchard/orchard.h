@@ -104,10 +104,11 @@ orchard_status orchard_buzzer_enable(orchard_machine *m, bool enabled);
 void orchard_buzzer_clear(orchard_machine *m);
 void orchard_get_buzzer_state(const orchard_machine *m, orchard_buzzer_state *state);
 size_t orchard_buzzer_read(orchard_machine *m, orchard_buzzer_edge *edges, size_t capacity);
-/* Portable versioned state, excluding immutable NOR. Load the matching ROM first.
+/* Portable versioned state; load the matching original ROM first.
  * Save uses a non-overlapping buffer of exactly checkpoint_size bytes. Load
- * also accepts bounded v1-v4 wire formats; export emits v5, including an
- * inserted SD card's image, in-flight controller/clock/SPI state and WDT reset.
+ * accepts bounded v1-v5 formats; export emits v6, including inserted SD media,
+ * in-flight controller/UART/NOR state and changed 4 KiB NOR sectors. Unchanged
+ * NOR is omitted; changed sectors can contain firmware-derived bytes.
  * Invalid data/ROM/version is rejected without changing the current machine.
  * CRC is corruption detection, not authentication; hosts should bind SHA-256. */
 size_t orchard_checkpoint_size(const orchard_machine *m);
@@ -140,9 +141,19 @@ void orchard_get_sd_state(const orchard_machine *m, orchard_sd_state *state);
 /* Physical memory debug access; MMIO is deliberately not exposed here. */
 orchard_status orchard_read_memory(const orchard_machine *m, uint32_t address,
                                    void *destination, size_t length);
-/* Functional UART0 queues; these are not USB or a host-OS virtual device. */
+/* Functional decoded-byte UART queues. UART0 wrappers remain compatible;
+ * channels 0..2 provide independent streams, with UART2 used by HP IrDA.
+ * Staging/capture is separate from the bounded hardware holding/FIFO state.
+ * No bit timing or optical connection is inferred from this host API. */
 size_t orchard_uart_send(orchard_machine *m, const uint8_t *data, size_t length);
 size_t orchard_uart_receive(orchard_machine *m, uint8_t *data, size_t capacity);
+size_t orchard_uart_send_channel(orchard_machine *m, unsigned channel,
+                                 const uint8_t *data, size_t length);
+size_t orchard_uart_receive_channel(orchard_machine *m, unsigned channel,
+                                    uint8_t *data, size_t capacity);
+/* Explicit HP49g+/50g research board net: GPE12 and GPH6 share IrDA TX.
+ * UART transport itself remains available without this board attachment. */
+orchard_status orchard_irda_attach(orchard_machine *m, bool attached);
 /* Functional, acknowledged USB transactions, NOT a host-OS virtual device.
  * Call only between run() slices on the machine owner. No descriptor contents
  * are synthesized. The caller explicitly supplies bus presence/reset/SOF.
@@ -248,6 +259,13 @@ uint64_t orchard_lcd_probe68_reads(const orchard_machine *m);
  * memory-inspection view, NOT a verified physical panel mapping. Selecting a
  * view never changes the CPU, LCD registers, or probe68 policy/counter. */
 typedef enum { ORCHARD_FRAME_CONTROLLER = 0, ORCHARD_FRAME_PACKED_LSB } orchard_frame_view;
+/* Optional host presentation observer. Copies at each completed scan event;
+ * does not alter emulated time or implement row DMA / panel persistence.
+ * Raw inspection below remains independent. Output is not checkpoint state. */
+orchard_status orchard_lcd_observe(orchard_machine *m, bool enabled, orchard_frame_view view);
+void orchard_lcd_observer_reset(orchard_machine *m);
+orchard_status orchard_lcd_published_frame(const orchard_machine *m, uint8_t *pixels, size_t capacity);
+orchard_status orchard_lcd_published_annunciators(const orchard_machine *m, uint8_t levels[6]);
 orchard_status orchard_framebuffer_view(const orchard_machine *m, orchard_frame_view view,
                                         uint8_t *pixels, size_t capacity);
 /* Raw STN pixels, one intensity byte per pixel. No skin or annunciator overlays. */

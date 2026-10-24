@@ -1,0 +1,85 @@
+{
+  "passed": true,
+  "scope": "Real Chromium with production UI/controller/capture and synthetic LCD pixels; no ROM execution implied",
+  "layouts": [
+    {
+      "model": 1,
+      "viewports": 4,
+      "soft_keys_with_display": 6,
+      "main_keys": 45,
+      "node_identity_preserved": true
+    },
+    {
+      "model": 2,
+      "viewports": 4,
+      "soft_keys_with_display": 6,
+      "main_keys": 45,
+      "node_identity_preserved": true
+    },
+    {
+      "model": 4,
+      "viewports": 4,
+      "soft_keys_with_display": 6,
+      "main_keys": 45,
+      "node_identity_preserved": true
+    },
+    {
+      "model": 5,
+      "viewports": 4,
+      "soft_keys_with_display": 6,
+      "main_keys": 45,
+      "node_identity_preserved": true
+    }
+  ],
+  "scaling": [
+    {
+      "method": "nearest",
+      "width": 131,
+      "height": 80,
+      "colors": 2
+    },
+    {
+      "method": "linear",
+      "width": 542,
+      "height": 331,
+      "colors": 164
+    },
+    {
+      "method": "cubic",
+      "width": 542,
+      "height": 331,
+      "colors": 164
+    },
+    {
+      "method": "lanczos",
+      "width": 542,
+      "height": 331,
+      "colors": 164
+    }
+  ],
+  "pause_resume": true,
+  "settings_apply_cancel": true,
+  "mobile_actions_sidebar": true,
+  "page_errors": [],
+  "default_lcd_browser": {
+    "passed": true,
+    "scope": "Offline real Chromium, production React/canvas/controller/capture/MediaRecorder; all pixels synthetic",
+    "burst_messages": 300,
+    "burst_canvas_paints": 1,
+    "burst_canvas_resizes": 0,
+    "valid_white_visible": true,
+    "png_and_recorder_preencode_exact": true,
+    "encoded_recording": {
+      "bytes": 6853,
+      "width": 131,
+      "height": 64,
+      "type": "video/webm;codecs=vp8"
+    },
+    "page_errors": []
+  },
+  "native_lcd_input": {
+    "checks": 13155,
+    "failures": 0
+  },
+  "annunciator_reference": "https://literature.hpcalc.org/official/hp39gs-ug-en.pdf#page=13"
+}

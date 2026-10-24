@@ -21,6 +21,7 @@ static void init(unsigned model){
  put(a.flash,0xea00003eu); /* B 0x100; distinguish the reset vector from old PC. */
  put(a.flash+0x100,0xe3a0302au);put(a.flash+0x104,0xeafffffeu);
  put(a.flash+0x200,0xeafffffeu);a.cpu.r[15]=0x200;a.cpu.r[3]=0x99;
+ o_copy(a.flash_base,a.flash,a.profile->flash_bytes);
  a.soc.wtcon=0;
 }
 static void arm(uint32_t control){
@@ -133,12 +134,12 @@ static void checkpoint_and_scheduler(void){
  /* Old live snapshots retain a partly elapsed WDT timer. New execution
     continues through the real reset; a saved historical status14 diagnostic
     stays stopped, rather than silently changing its checkpoint meaning. */
- for(unsigned version=1;version<=4;version++)for(unsigned stopped=0;stopped<2;stopped++){
+ for(unsigned version=1;version<=5;version++)for(unsigned stopped=0;stopped<2;stopped++){
   init(5);arm(0x21);run(15);
   if(stopped)o_stop(&a,ORCHARD_UNIMPLEMENTED_RESET,0x53000000u,0x21);
   size_t n=orchard_checkpoint_size(&a),ram=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE;
   CHECK(orchard_checkpoint_save(&a,saved,n)==ORCHARD_OK);
-  size_t remove=76+(version<4?64:0)+(version<3?709:0)+(version==1?52:0),oldn=n-remove;
+  size_t remove=4377+(version<5?76:0)+(version<4?64:0)+(version<3?709:0)+(version==1?52:0),oldn=n-remove;
   o_copy(left,saved,ram-remove);o_copy(left+ram-remove,saved+ram,n-ram);
   put(left+8,version);put(left+12,(uint32_t)oldn);put(left+28,crc(left+32,oldn-32));
   CHECK(orchard_checkpoint_load(&a,left,oldn)==ORCHARD_OK);

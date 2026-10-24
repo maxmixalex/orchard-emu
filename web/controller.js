@@ -5,6 +5,7 @@ import {prepareHp39Files,MAX_HP39_HOST_FILES} from './hp39-transfer.js';
 import {readHp39Archive,writeHp39Archive,isHp39Archive,MAX_HP39_ARCHIVE_BYTES} from './hp39-archive.js';
 import {inspectHp39File,validateHp39Filename} from './hp39-files.js';
 import {prepareHp39WireFile} from './hp39-wire.js';
+import {Hp39WireAutoReceive} from './hp39-wire-auto.js';
 import {transferError,transferErrorDetails} from './transfer-errors.js';
 import { CALCULATORS, identifyROM } from './catalog.js';
 import { MAX_SESSION_BYTES } from './session.js';
@@ -16,7 +17,9 @@ import { AUTO_PREFIX, readPreferences, writePreferences, validatePreferences,
   readAuto, writeAuto, sessionName } from './preferences.js';
 import { MAX_FILE_BYTES, MAX_UPLOAD_FILES, MAX_UPLOAD_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename, validateUpload, transferCapabilities } from './file-transfer.js';
 import {bridgeAddress,bridgeToken} from './host-bridge-protocol.js';
+import {IrDALink,irdaCode,newIrdaCode} from './irda-link.js';
 const bridgeDisconnected=()=>({active:false,phase:'disconnected',ready:false,attached:false,usbipPort:null,errorCode:null});
+const irdaDisconnected=()=>({active:false,phase:'disconnected',error:null,code:'',peer:null,sent:0,received:0});
 export class CalculatorController {
   constructor({worker, storage=null, database=globalThis.indexedDB, locks=null, mayRun=()=>true, download=()=>{}, now=()=>new Date(), audio=null,romStore=undefined}={}) {
     this.worker=worker; this.storage=storage;this.autoStore=database?new AutoSaveStore(storage,database):null; this.locks=locks; this.mayRun=mayRun;
@@ -27,14 +30,15 @@ export class CalculatorController {
     this.writer=crypto.randomUUID(); this.dialogs=[]; this.dialogId=0;
     this.transferRequest=0;this.received=new Map();this.receivedId=0;this.uploadQueue=null;
     this.sdDirectory=null;this.sdInsertDirectory=null;this.sdEditPending=null;
+    this.irdaLink=null;this.irdaInput=new Map();this.irdaRequest=0;
     this.state={model:CALCULATORS[0],prefs:readPreferences(storage),ready:false,loaded:false,running:false,
       busy:false,stopped:false,note:null,dialog:null,sd:null,sdName:'orchard-sd.img',serial:false,usb:false,usbReady:false,usbInfo:null,usbPhase:'Disconnected',log:'',
       transfer:null,uploadBatch:null,receivedFiles:[],transferListing:'',effectiveSpeed:1,transferBoosted:false,
-      rememberedROMs:[],romSource:null,romIssue:null,hostBridge:bridgeDisconnected()};
+      rememberedROMs:[],romSource:null,romIssue:null,hostBridge:bridgeDisconnected(),irda:irdaDisconnected()};
     this.audio=audio||new BuzzerAudio();this.audioLive=false;this.audio.configure(this.state.prefs);
     this.hostBridgeRequest=0;
     worker.onmessage=({data})=>this.receive(data);
-    worker.onerror=()=>{if(this.state.hostBridge?.active)this.send('host-bridge-stop');this.sdEditPending?.(null);this.sdEditPending=null;this.audioLive=false;this.audio.reset();this.endTransfer('error','The calculator worker stopped.');this.patch({ready:false,running:false,busy:false,hostBridge:bridgeDisconnected()});this.report('workerFailure');};
+    worker.onerror=()=>{this.disconnectIrDA();if(this.state.hostBridge?.active)this.send('host-bridge-stop');this.sdEditPending?.(null);this.sdEditPending=null;this.audioLive=false;this.audio.reset();this.endTransfer('error','The calculator worker stopped.');this.patch({ready:false,running:false,busy:false,hostBridge:bridgeDisconnected()});this.report('workerFailure');};
   }
   subscribe=(fn)=>{this.listeners.add(fn);return()=>this.listeners.delete(fn);};
   getSnapshot=()=>this.state;
@@ -42,10 +46,46 @@ export class CalculatorController {
   patch(update){if(this.dead)return; if(Object.entries(update).every(([k,v])=>this.state[k]===v))return;
     this.state={...this.state,...update};for(const fn of this.listeners)fn();}
   send(type,extra={}){if(this.dead)return;
+    if(['pause','create','load','reset','checkpoint-save','checkpoint-load'].includes(type))this.disconnectIrDA();
     if(type==='run')this.audioLive=true;
     else if(['pause','create','load','reset','checkpoint-save','checkpoint-load'].includes(type)){this.audioLive=false;this.audio.reset();}
     this.worker.postMessage({type,generation:this.generation,...extra});}
   unlockAudio(){if(!this.dead)void this.audio.unlock();}
+  connectIrDA(value){
+    if(this.dead||!this.state.loaded||this.state.busy||this.state.stopped)return;
+    this.disconnectIrDA();
+    try{
+      const code=value?irdaCode(value):newIrdaCode();
+      if(typeof BroadcastChannel!=='function')return;
+      const generation=this.generation;
+      this.irdaLink=new IrDALink({code,label:this.state.model.name,
+        receive:bytes=>this.receiveIrDA(bytes,generation),notify:status=>{
+          if(this.dead||generation!==this.generation)return;
+          this.patch({irda:status});this.send('irda-connect',{connected:status.active&&status.phase==='paired'});
+        }});
+      if(!this.state.running)this.send('run');
+    }catch(error){this.patch({irda:{...irdaDisconnected(),phase:'error',error:error.code||'code'}});}
+  }
+  disconnectIrDA(){
+    if(this.irdaLink){const link=this.irdaLink;this.irdaLink=null;link.close();this.send('irda-connect',{connected:false});}
+    for(const pending of this.irdaInput.values()){clearTimeout(pending.timer);pending.reject(Error('IrDA disconnected'));}this.irdaInput.clear();
+  }
+  async receiveIrDA(bytes,generation){
+    if(this.dead||generation!==this.generation||!this.irdaLink?.active||!this.state.running)return 0;
+    let offset=0,accepted=0,attempt=0;
+    while(offset<bytes.length){
+      if(this.dead||generation!==this.generation||!this.irdaLink?.active)return accepted;
+      const request=++this.irdaRequest;
+      const result=await new Promise((resolve,reject)=>{
+        const timer=setTimeout(()=>{this.irdaInput.delete(request);reject(Error('IrDA worker timeout'));},2000);
+        this.irdaInput.set(request,{resolve,reject,timer});this.send('irda-input',{request,bytes:bytes.subarray(offset)});
+      });
+      if(result.discarded)return accepted; // Inactive transceivers do not retain earlier light.
+      offset+=result.accepted;accepted+=result.accepted;
+      if(offset<bytes.length){if(++attempt>200)throw Error('IrDA receive overflow');await new Promise(resolve=>setTimeout(resolve,5));}
+    }
+    return accepted;
+  }
   ask(title,message,ok='ok',cancel=null,values={}){if(this.dead)return Promise.resolve(null);
     return new Promise(resolve=>{this.dialogs.push({id:++this.dialogId,title,message,ok,cancel,values,resolve});this.nextDialog();});}
   nextDialog(){if(!this.state.dialog&&this.dialogs.length)this.patch({dialog:this.dialogs.shift()});}
@@ -53,10 +93,11 @@ export class CalculatorController {
   report(message='operationFailed',detail=''){return this.ask('error',message,'ok',null,{detail:String(detail)});}
   linksReset(){++this.transferRequest;this.uploadQueue=null;this.received.clear();this.patch({serial:false,usb:false,usbReady:false,usbInfo:null,usbPhase:'Disconnected',log:'',transfer:null,uploadBatch:null,receivedFiles:[],transferListing:'',effectiveSpeed:this.state.prefs.speed,transferBoosted:false});}
   create(model=this.state.model,rom=null){
+    this.disconnectIrDA();
     this.sdEditPending?.(null);this.sdEditPending=null;this.sdDirectory=null;this.sdInsertDirectory=null;
     ++this.generation;clearTimeout(this.autoTimer);this.autoPending=null;this.autoBlocked=false;this.autoToken=null;this.awaitingRestore=false;
     this.pending=rom;this.last=null;this.linksReset();this.patch({model,loaded:false,running:false,stopped:false,busy:Boolean(rom),note:null,sd:null,sdName:'orchard-sd.img',hostBridge:bridgeDisconnected()});
-    this.send('create',{model:model.id,preset:model.preset,audience:'calculator'});this.send('configure',{speed:this.state.prefs.speed,transferUnlimited:this.state.prefs.transferUnlimited,sound:this.state.prefs.sound});
+    this.send('create',{model:model.id,preset:model.preset,audience:'calculator'});this.send('configure',{speed:this.state.prefs.speed,transferUnlimited:this.state.prefs.transferUnlimited,sound:this.state.prefs.sound,lcdResponse:this.state.prefs.lcdResponse});
   }
   async chooseROM(fallback){
     if(!this.state.ready||this.state.busy)return;
@@ -136,11 +177,20 @@ export class CalculatorController {
   toggle(){if(!this.state.loaded||this.state.busy||this.state.stopped)return;if(this.state.running)this.pause();else{this.unlockAudio();this.send('run');}}
   pause(){if(this.state.loaded){this.cancelTransfer();this.send('pause');}}
   release(){if(this.state.loaded)this.send('release');}
-  tap(scans){if(this.state.loaded&&this.state.running&&!this.state.busy&&!this.state.stopped){this.unlockAudio();this.send('tap-sequence',{scans});}}
+  tap(scans){if(this.state.loaded&&this.state.running&&!this.state.busy&&!this.state.stopped){this.stopWireAutoReceive(true);this.unlockAudio();this.send('tap-sequence',{scans});}}
+  stopWireAutoReceive(manual=false){this.wireAutoReceive?.cancel();this.wireAutoReceive=null;if(manual&&this.uploadQueue)this.uploadQueue.autoReceive=false;
+    if(this.state.transfer?.autoReceive)this.patch({transfer:{...this.state.transfer,autoReceive:false}});}
+  continueWireReceive(frame){
+    const driver=this.wireAutoReceive;if(!driver)return;
+    if(!this.state.transfer?.active||this.state.transfer.protocol!=='hp39-wire'||this.state.transfer.phase!=='negotiating'){this.stopWireAutoReceive();return;}
+    const scans=driver.observe(frame);
+    if(!driver.active)this.stopWireAutoReceive();
+    if(scans)this.send('tap-sequence',{scans});
+  }
   systemChord(action){const s=this.state;if(!['self-test','warm-restart'].includes(action)||!s.loaded||s.busy||s.stopped||s.transfer?.active||s.uploadBatch?.active||s.hostBridge?.active)return;
     this.unlockAudio();if(!s.running)this.send('run');this.send('system-chord',{action});}
   async restart(){if(!this.state.loaded||this.state.busy)return;this.pause();
-    if(await this.ask('restart','clearMemory','restart','cancel')){this.autoPending=null;this.send('reset');this.send('configure',{speed:this.state.prefs.speed,transferUnlimited:this.state.prefs.transferUnlimited,sound:this.state.prefs.sound});if(this.mayRun(this.state.prefs))this.send('run');}}
+    if(await this.ask('restart','clearMemory','restart','cancel')){this.autoPending=null;this.send('reset');this.send('configure',{speed:this.state.prefs.speed,transferUnlimited:this.state.prefs.transferUnlimited,sound:this.state.prefs.sound,lcdResponse:this.state.prefs.lcdResponse});if(this.mayRun(this.state.prefs))this.send('run');}}
   save(){if(!this.state.loaded||this.state.busy)return;this.cancelTransfer();this.autoPending=null;this.patch({busy:true});this.send('checkpoint-save');}
   async restore(file){if(!file||!this.state.loaded||this.state.busy)return;this.pause();
     if(!await this.ask('restore','replaceMemory','restore','cancel'))return;
@@ -182,7 +232,7 @@ export class CalculatorController {
     if(this.state.hostBridge?.active){this.report('sdHostBridgeBusy');return;}
     this.autoPending=null;this.patch({busy:true});this.send('sd-eject');
   }
-  setPreferences(value){const previous=this.state.prefs;const prefs=validatePreferences(value);this.patch({prefs});this.audio.configure(prefs);if(prefs.sound&&!previous.sound)this.unlockAudio();this.send('configure',{speed:prefs.speed,transferUnlimited:prefs.transferUnlimited,sound:prefs.sound});
+  setPreferences(value){const previous=this.state.prefs;const prefs=validatePreferences(value);this.patch({prefs});this.audio.configure(prefs);if(prefs.sound&&!previous.sound)this.unlockAudio();this.send('configure',{speed:prefs.speed,transferUnlimited:prefs.transferUnlimited,sound:prefs.sound,lcdResponse:prefs.lcdResponse});
     if(previous.rememberROM&&!prefs.rememberROM)++this.automaticROMEpoch;
     try{writePreferences(this.storage,prefs);}catch(e){this.report('storageError',e.message);}
     if(prefs.autosave&&!previous.autosave)this.autoBlocked=false;
@@ -271,7 +321,7 @@ export class CalculatorController {
       this.patch({transfer:{request,active:false,phase:'error',transport,direction:mode,name,transferred:0,total:0,...transferErrorDetails(error)}});
     }
   }
-  async startHp39Server(transport,files=[],{protocol='disk'}={}){
+  async startHp39Server(transport,files=[],{protocol='disk',autoReceive=false}={}){
     if(this.state.hostBridge?.active){this.report('hostBridgeDisconnectFirst');return;}
     const s=this.state;if(this.dead||!s.ready||!s.loaded||s.busy||s.stopped||s.transfer?.active||s.uploadBatch?.active)return;
     const generation=this.generation,request=++this.transferRequest;
@@ -342,7 +392,8 @@ export class CalculatorController {
         const total=entries.reduce((sum,entry)=>sum+entry.size,0);
         if(total>MAX_UPLOAD_BYTES)throw transferError('hp39UploadLimit','The selected HP39 files exceed 8 MiB.');
         const invalid=entries.findIndex(entry=>entry.error);
-        const queue={generation,request,transport,protocol:'hp39-wire',entries,index:invalid<0?0:invalid,completedBytes:0,preflight:invalid>=0};
+        const queue={generation,request,transport,protocol:'hp39-wire',entries,index:invalid<0?0:invalid,completedBytes:0,preflight:invalid>=0,
+          autoReceive:autoReceive===true&&transport==='usb'&&[1,2].includes(this.state.model.id),continueReceive:false};
         this.uploadQueue=queue;
         this.patch({uploadBatch:{active:true,recoverable:false,protocol:'hp39-wire',completed:0,total,transferred:0,
           items:entries.map(entry=>({name:entry.name,size:entry.size,phase:'queued',transferred:0}))}});
@@ -412,7 +463,11 @@ export class CalculatorController {
     if(queue.index>0||queue.protocol==='hp39-wire')queue.request=++this.transferRequest;
     const entry=queue.entries[queue.index],bytes=entry.bytes;
     if(entry.error){this.pauseUploadFile(queue,entry);return;}
+    this.stopWireAutoReceive();
+    if(queue.autoReceive&&queue.continueReceive)this.wireAutoReceive=new Hp39WireAutoReceive({model:s.model.id,transport:queue.transport,previousKind:queue.previousKind,kind:entry.objectKind});
+    queue.continueReceive=false;
     this.patch({transfer:{request:queue.request,active:true,phase:'negotiating',transport:queue.transport,protocol:queue.protocol,direction:'send',name:entry.name,objectKind:entry.objectKind,
+      autoReceive:Boolean(this.wireAutoReceive?.active),
       noteConverted:entry.noteConverted,sourceBytes:entry.sourceBytes,transferred:0,total:entry.size,error:null,errorCode:null,errorValues:null},
       uploadBatch:{...s.uploadBatch,active:true,recoverable:false,items:s.uploadBatch.items.map((item,i)=>i===queue.index?{...item,phase:'sending',transferred:0,error:null,errorCode:null,errorValues:null}:item)}});
     // Subscribers may cancel or replace the machine while the state is posted.
@@ -441,6 +496,7 @@ export class CalculatorController {
   }
   pauseUploadFile(queue,error,transferred=0){
     if(this.dead||this.uploadQueue!==queue||queue.generation!==this.generation)return;
+    this.stopWireAutoReceive();queue.continueReceive=false;
     const batch=this.state.uploadBatch,entry=queue.entries[queue.index];
     queue.request=++this.transferRequest;
     this.patch({effectiveSpeed:this.state.prefs.speed,transferBoosted:false,transfer:{...this.state.transfer,request:queue.request,active:false,phase:'error',transport:queue.transport,
@@ -498,11 +554,12 @@ export class CalculatorController {
       return {...item,phase:started?phase:'not-sent',...(started&&error?transferErrorDetails(error):{})};
     })}});
   }
-  cancelTransfer(){const current=this.state.transfer;if(!current?.active&&!this.uploadQueue)return;
+  cancelTransfer(){this.stopWireAutoReceive();const current=this.state.transfer;if(!current?.active&&!this.uploadQueue)return;
     if(current?.active)this.send('file-transfer-cancel',{request:current.request});
     this.endTransfer('cancelled');
   }
   endTransfer(phase,error=null){const current=this.state.transfer;if(!current?.active&&!this.uploadQueue)return;
+    this.stopWireAutoReceive();
     // Invalidate a pending File.arrayBuffer() and any late messages immediately.
     ++this.transferRequest;this.stopUploadBatch(phase,error);this.patch({effectiveSpeed:this.state.prefs.speed,transferBoosted:false,transfer:{...current,active:false,phase,...transferErrorDetails(error)}});
   }
@@ -533,7 +590,8 @@ export class CalculatorController {
         return i===index?{...entry,...update,phase:data.phase==='cancelled'?'cancelled':'error',...transferErrorDetails(data)}:{...entry,phase:'not-sent'};
       })}});return;
     }
-    queue.completedBytes+=item.size;delete queue.entries[index].bytes;delete queue.entries[index].file;
+    queue.completedBytes+=item.size;queue.previousKind=queue.entries[index].objectKind;queue.continueReceive=true;
+    delete queue.entries[index].bytes;delete queue.entries[index].file;
     const items=batch.items.map((entry,i)=>i===index?{...entry,...update,phase:'complete',transferred:item.size}:entry);
     queue.index=queue.protocol==='hp39-wire'?this.nextWireUpload(queue,items):index+1;
     const active=queue.index>=0&&queue.index<queue.entries.length;if(!active)this.uploadQueue=null;
@@ -577,25 +635,26 @@ export class CalculatorController {
   clearTransferredFiles(){if(this.state.transfer?.active)return;this.received.clear();this.patch({receivedFiles:[],transferListing:''});}
   receive(data){if(this.dead||!data)return;
     if(data.type==='ready'){this.patch({ready:true});this.create();void this.restoreRememberedROMs();return;}
-    if(data.type==='fatal'){this.audioLive=false;this.audio.reset();this.endTransfer('error','The calculator worker stopped.');this.patch({ready:false,loaded:false,running:false,busy:false,hostBridge:bridgeDisconnected()});this.report('workerFailure',data.message);return;}
+    if(data.type==='fatal'){this.disconnectIrDA();this.audioLive=false;this.audio.reset();this.endTransfer('error','The calculator worker stopped.');this.patch({ready:false,loaded:false,running:false,busy:false,hostBridge:bridgeDisconnected()});this.report('workerFailure',data.message);return;}
     if(data.generation!==this.generation)return;
     switch(data.type){
       case 'created':if(this.pending){const rom=this.pending;this.pending=null;this.send('load',{rom});}else this.patch({busy:false});break;
       case 'loaded':this.patch({loaded:true,busy:false});void this.loadedROM();break;
       case 'snapshot':{const stopped=!this.state.stopped&&data.stopped;this.last=data;
+        if(data.stopped)this.disconnectIrDA();
         if(!data.running||data.stopped)this.audio.reset();
         if(data.stopped)this.endTransfer('error','The calculator stopped.');
         const sd=data.sd===undefined?this.state.sd:JSON.stringify(data.sd)===JSON.stringify(this.state.sd)?this.state.sd:data.sd;
         this.patch({loaded:data.loaded,running:data.running,stopped:data.stopped,sd,...(data.stopped?{hostBridge:bridgeDisconnected()}:{}),
           ...(data.effectiveSpeed!==undefined?{effectiveSpeed:data.effectiveSpeed,transferBoosted:Boolean(data.transferBoosted)}:{})});for(const f of this.frames)f(data);
-        if(stopped)this.report('compatibilityError');break;}
+        this.continueWireReceive(data);if(stopped)this.report('compatibilityError');break;}
       case 'checkpoint-auto-saved':void this.acceptAuto(data);break;
       case 'checkpoint-skipped':if(data.request===this.autoPending?.request){this.autoPending=null;this.scheduleAuto(5000);}break;
       case 'autosave-error':this.autoPending=null;this.autoBlocked=true;this.patch({note:'autoStopped'});this.report('storageError',data.message);break;
       case 'checkpoint-saved':this.autoPending=null;this.patch({busy:false,running:false,note:'exported'});
         Promise.resolve(this.download(data.file,sessionName(this.state.model.id,this.now()))).catch(e=>this.report('saveError',e.message));this.scheduleAuto();break;
-      case 'checkpoint-restored':this.sdDirectory=null;this.patch({sdName:'orchard-sd.img'});this.autoPending=null;this.awaitingRestore=false;this.patch({busy:false,running:false,note:'restored'});this.scheduleAuto();break;
-      case 'error':this.audioLive=false;this.audio.reset();this.endTransfer('error','The calculator operation stopped.');if(this.awaitingRestore)this.autoBlocked=true;this.autoPending=null;this.awaitingRestore=false;this.patch({busy:false,running:false,hostBridge:bridgeDisconnected()});this.report('operationFailed',data.message);this.scheduleAuto();break;
+      case 'checkpoint-restored':this.sdDirectory=null;this.patch({sdName:'orchard-sd.img'});this.autoPending=null;this.awaitingRestore=false;this.patch({busy:false,running:false,stopped:Boolean(data.stopped),note:'restored'});if(!data.stopped&&this.mayRun(this.state.prefs))this.send('run');this.scheduleAuto();break;
+      case 'error':this.disconnectIrDA();this.audioLive=false;this.audio.reset();this.endTransfer('error','The calculator operation stopped.');if(this.awaitingRestore)this.autoBlocked=true;this.autoPending=null;this.awaitingRestore=false;this.patch({busy:false,running:false,hostBridge:bridgeDisconnected()});this.report('operationFailed',data.message);this.scheduleAuto();break;
       case 'sd-complete':if(data.action==='insert'){this.sdDirectory=this.sdInsertDirectory;this.sdInsertDirectory=null;}this.patch({busy:false,note:data.action==='insert'?'sdInserted':'sdEjected',...(data.action==='insert'?{sdName:sdImageName(data.name)}:{})});this.scheduleAuto();break;
       case 'sd-exported':this.patch({busy:false,note:'sdExported'});Promise.resolve(this.download(data.bytes,sdImageName(this.state.sdName))).catch(e=>this.report('saveError',e.message));break;
       case 'sd-edited':{
@@ -604,13 +663,15 @@ export class CalculatorController {
         this.patch({busy:false,sd:null,note:'sdEjected'});resolve?.(draft);this.scheduleAuto();break;
       }
       case 'sd-error':this.sdEditPending?.(null);this.sdEditPending=null;this.sdInsertDirectory=null;this.patch({busy:false});this.report(data.code==='hostBridgeBusy'?'sdHostBridgeBusy':['format','damaged','limit'].includes(data.code)?'sdFs_'+data.code:'sdError',data.code==='hostBridgeBusy'?undefined:data.message);this.scheduleAuto();break;
-      case 'links-reset':this.linksReset();break;
+      case 'links-reset':this.disconnectIrDA();this.linksReset();break;
       case 'host-bridge-status':if(data.request!==undefined&&data.request!==this.hostBridgeRequest)break;
         this.patch({hostBridge:{active:Boolean(data.active),phase:data.phase,ready:Boolean(data.ready),attached:Boolean(data.attached),usbipPort:data.usbipPort??null,errorCode:data.errorCode??null}});break;
       case 'host-bridge-conflict':this.report('hostBridgeDisconnectFirst');break;
       case 'serial-status':this.patch({serial:data.connected});if(!data.connected&&this.state.transfer?.transport==='serial')this.cancelTransfer();break;
       case 'uart-output':this.log('RX '+Array.from(data.bytes,b=>b.toString(16).padStart(2,'0')).join(' '));break;
       case 'uart-sent':this.log(`TX ${data.accepted}/${data.requested}`);break;
+      case 'irda-output':this.irdaLink?.send(data.bytes);break;
+      case 'irda-input-result':{const pending=this.irdaInput.get(data.request);if(pending){this.irdaInput.delete(data.request);clearTimeout(pending.timer);pending.resolve(data);}break;}
       case 'usb-status':this.patch({usb:data.connected,usbReady:data.phase==='Connected',usbPhase:data.phase,usbInfo:data.info||this.state.usbInfo});if(!data.connected&&this.state.transfer?.transport==='usb')this.cancelTransfer();if(data.error)this.report('usbError',data.error);break;
       case 'usb-packet':this.log(`USB ${data.direction}: ${data.status} ${data.bytes?Array.from(data.bytes,b=>b.toString(16).padStart(2,'0')).join(' '):data.accepted??''}`);break;
       case 'file-transfer-status':this.transferStatus(data);break;
@@ -619,7 +680,7 @@ export class CalculatorController {
       case 'buzzer':if(this.audioLive&&this.state.running&&!this.state.stopped)this.audio.receive(data);break;
     }
   }
-  dispose(){if(this.dead)return;this.dead=true;++this.selection;clearTimeout(this.autoTimer);this.autoPending=null;
+  dispose(){if(this.dead)return;this.disconnectIrDA();this.dead=true;++this.selection;clearTimeout(this.autoTimer);this.autoPending=null;
     this.sdEditPending?.(null);this.sdEditPending=null;this.sdDirectory=null;this.sdInsertDirectory=null;
     this.state.dialog?.resolve(null);for(const d of this.dialogs)d.resolve(null);this.dialogs=[];
     ++this.transferRequest;this.uploadQueue=null;this.received.clear();this.audioLive=false;this.audio.dispose();this.worker.terminate();this.listeners.clear();this.frames.clear();}

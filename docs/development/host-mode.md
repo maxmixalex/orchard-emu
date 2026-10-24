@@ -1,4 +1,10 @@
-# Local USB/IP host and live browser bridge
+# Archived host-device research
+
+**Retired in r23 at the user's request.** The browser's Local device tab has
+been removed. Native host-device simulation, OS USB/IP attachment, HP driver
+binding and Conn3x integration are no longer roadmap targets. The source helper
+and its tests remain to reproduce historical results. The instructions below
+describe the r22 interface and do not describe a current browser feature.
 
 The standalone host package has two entry points, both using Node.js 22+ built-in
 modules. It includes no drivers or firmware.

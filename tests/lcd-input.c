@@ -203,11 +203,93 @@ static void lcd_views_and_absolute_lanes(void) {
     orchard_reset(&machine);
 }
 
+static void documented_dither_patterns(void) {
+    orchard_reset(&machine);
+    uint32_t value;
+    CHECK(o_phys_read(&machine, 0x4d00004c, 4, &value) && value == 0);
+    CHECK(o_phys_write(&machine, 0x4d00004c, 4, 0x12210));
+    CHECK(o_phys_read(&machine, 0x4d00004c, 4, &value) && value == 0x12210);
+    CHECK(o_phys_write(&machine, 0x4d00004c, 4, 0xfff92210));
+    CHECK(o_phys_read(&machine, 0x4d00004c, 4, &value) && value == 0x12210);
+    uint8_t before[131 * 80], after[131 * 80];
+    machine.soc.lcd[0] = 0x223; machine.soc.lcd[1] = 79u << 14;
+    machine.soc.lcd[5] = O_BOOT_SRAM_BASE >> 1;
+    machine.soc.lcd[6] = 80u * 40u / 2u; machine.soc.lcd[7] = 20;
+    machine.soc.lcd[10] = 0xf840;
+    for (unsigned i = 0; i < 3200; ++i) machine.boot_sram[i] = 0xe4;
+    CHECK(orchard_framebuffer_view(&machine, ORCHARD_FRAME_PACKED_LSB, before, sizeof(before)) == ORCHARD_OK);
+    CHECK(before[0] == 0 && before[1] == 68 && before[2] == 136 && before[3] == 255);
+    CHECK(o_phys_write(&machine, 0x4d00004c, 4, 0));
+    CHECK(orchard_framebuffer_view(&machine, ORCHARD_FRAME_PACKED_LSB, after, sizeof(after)) == ORCHARD_OK);
+    bool same = true;
+    for (unsigned i = 0; i < sizeof(before); ++i) if (before[i] != after[i]) same = false;
+    CHECK(same); /* Both valid patterns preserve pre-dither inspection levels. */
+    CHECK(o_phys_write(&machine, 0x4d00004c, 4, 0x12210)); /* Live STN write. */
+    CHECK(machine.stop.status == ORCHARD_OK && !machine.soc.lcd_frames);
+    const uint32_t invalid[] = {1, 0x12211, 0x7ffff};
+    for (unsigned i = 0; i < 3; ++i) {
+        orchard_reset(&machine);
+        CHECK(!o_phys_write(&machine, 0x4d00004c, 4, invalid[i]));
+        CHECK(machine.stop.status == ORCHARD_UNSUPPORTED_LCD && machine.soc.lcd[19] == 0);
+    }
+    orchard_reset(&machine);
+    CHECK(o_phys_read(&machine, 0x4d00004c, 4, &value) && value == 0);
+}
+
+static void completed_scan_observer(void) {
+    orchard_reset(&machine);
+    uint8_t frame[131 * 80], raw[131 * 80], segments[6];
+    CHECK(orchard_lcd_observe(NULL, true, ORCHARD_FRAME_PACKED_LSB) == ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_lcd_observe(&machine, true, (orchard_frame_view)2) == ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_lcd_published_frame(&machine, frame, 1) == ORCHARD_BAD_ARGUMENT);
+    CHECK(orchard_lcd_published_annunciators(NULL, segments) == ORCHARD_BAD_ARGUMENT);
+    machine.soc.lcd[0] = 0x221;
+    machine.soc.lcd[1] = 79u << 14;
+    machine.soc.lcd[5] = O_BOOT_SRAM_BASE >> 1;
+    machine.soc.lcd[6] = 80u * 20u / 2u;
+    machine.soc.lcd[7] = 10;
+    for (unsigned i = 0; i < 1600; ++i) machine.boot_sram[i] = 255;
+    CHECK(orchard_lcd_observe(&machine, true, ORCHARD_FRAME_PACKED_LSB) == ORCHARD_OK);
+    CHECK(!machine.lcd_output.valid);
+    /* Complete one line-zero event, then let the guest clear its live buffer
+       before the later browser request. The published frame stays intact. */
+    machine.soc.lcd_line = 0; machine.soc.lcd_phase = 35;
+    o_lcd_tick(&machine);
+    CHECK(machine.soc.lcd_frames == 1 && machine.lcd_output.valid);
+    for (unsigned i = 0; i < 1600; ++i) machine.boot_sram[i] = 0;
+    CHECK(orchard_lcd_published_frame(&machine, frame, sizeof(frame)) == ORCHARD_OK);
+    CHECK(orchard_lcd_published_annunciators(&machine, segments) == ORCHARD_OK);
+    CHECK(orchard_framebuffer_view(&machine, ORCHARD_FRAME_PACKED_LSB, raw, sizeof(raw)) == ORCHARD_OK);
+    CHECK(frame[0] == 255 && frame[10479] == 255 && raw[0] == 0 && raw[10479] == 0);
+    CHECK(segments[0] == 255 && segments[5] == 255);
+    CHECK(machine.stop.status == ORCHARD_OK);
+    machine.soc.lcd_line = 0; machine.soc.lcd_phase = 35;
+    o_lcd_tick(&machine);
+    CHECK(orchard_lcd_published_frame(&machine, frame, sizeof(frame)) == ORCHARD_OK);
+    CHECK(frame[0] == 0 && frame[10479] == 0); /* Genuine blank is published. */
+    for (unsigned i = 0; i < 1600; ++i) machine.boot_sram[i] = 255;
+    machine.soc.lcd_line = 0; machine.soc.lcd_phase = 35; o_lcd_tick(&machine);
+    uint32_t disabled = 0x220;
+    CHECK(o_lcd_register(&machine, 0x4d000000u, 4, &disabled, true));
+    CHECK(!machine.lcd_output.valid);
+    CHECK(orchard_lcd_published_frame(&machine, frame, sizeof(frame)) == ORCHARD_OK && frame[0] == 0);
+    uint32_t enabled = 0x221;
+    CHECK(o_lcd_register(&machine, 0x4d000000u, 4, &enabled, true));
+    CHECK(!machine.lcd_output.valid);
+    CHECK(orchard_lcd_published_frame(&machine, frame, sizeof(frame)) == ORCHARD_OK && frame[0] == 255);
+    machine.soc.lcd_line = 0; machine.soc.lcd_phase = 35; o_lcd_tick(&machine);
+    orchard_lcd_observer_reset(&machine);
+    CHECK(!machine.lcd_output.valid && machine.lcd_output.enabled);
+    CHECK(orchard_lcd_observe(&machine, false, ORCHARD_FRAME_PACKED_LSB) == ORCHARD_OK);
+    CHECK(!machine.lcd_output.enabled);
+    orchard_reset(&machine);
+}
+
 
 EXPORT("regression") unsigned orchard_lcd_input_regression(void) {
     checks = failures = first_failure = 0;
     if (!orchard_init(&machine, sizeof(machine), 6)) return 1;
-    gpio_internal_pullups(); gpio_bias_and_lcd_probe(); lcd_views_and_absolute_lanes();
+    gpio_internal_pullups(); gpio_bias_and_lcd_probe(); lcd_views_and_absolute_lanes(); documented_dither_patterns(); completed_scan_observer();
     return failures;
 }
 EXPORT("checks") unsigned orchard_lcd_input_checks(void) { return checks; }

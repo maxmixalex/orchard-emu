@@ -1,0 +1,615 @@
+{
+  "schema": "orchard-uart-irda-r23-v1",
+  "date": "2026-10-24",
+  "physical_hardware_validated": false,
+  "guest_rom_patched": false,
+  "guest_ram_patched": false,
+  "rom_and_pixels_in_repository": false,
+  "sources": [
+    {
+      "url": "https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf",
+      "sections": [
+        "chapter11 UART",
+        "chapter9 GPIO",
+        "chapter14 Interrupt Controller",
+        "chapter5 Memory Controller"
+      ],
+      "role": "manufacturer register specification; generic nGCS1 SRAM wiring example only"
+    },
+    {
+      "url": "https://github.com/chwdt/x49gp/blob/master/HP49GP_IO_PORT",
+      "sha256": "2c010d556f0bd0e4d433fa26d5979790bf9cb5a8ea02a2d7cbd31dec0ef4efe2",
+      "role": "standalone board pin notes only; no emulator implementation consulted; no independent physical measurement"
+    },
+    {
+      "url": "https://literature.hpcalc.org/official/hp49gplus48gii-aur-en.pdf",
+      "sections": [
+        "SEND",
+        "RECV",
+        "flag -33"
+      ],
+      "role": "original firmware user operations"
+    },
+    {
+      "url": "https://kermitproject.org/kproto.pdf",
+      "sections": [
+        "6.3"
+      ],
+      "role": "read-only post-transfer CRC16 verification"
+    },
+    {
+      "url": "https://www.cnblogs.com/yanye0xcc/p/14615965.html",
+      "role": "HP39gs physical hardware modification report identifies LY62L12816ML128Kx16 SRAM; it does not establish nGCS1 high-address decode."
+    }
+  ],
+  "synthetic_regression": {
+    "source": "tests/uart.c",
+    "native_checks": 3331,
+    "wasm_checks": 3331,
+    "address_undefined_sanitizer_checks": 3331,
+    "failures": 0,
+    "leak_sanitizer": "not run successfully: sandbox prevents /proc task inspection"
+  },
+  "factory_selftests": [
+    {
+      "model": 1,
+      "preset": "hp39-home",
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "cold_boot": true,
+      "physical_input_only": true,
+      "host_tx_bytes": [
+        0,
+        0,
+        0
+      ],
+      "tests": [
+        {
+          "name": "irda",
+          "result_frame_sha256": "fd2542548dedbe8349a99b7fc7cbf6e7509b0c1bf58732efad10a42042b21a42",
+          "returned_frame_sha256": "9c690eb744c489c65b7cecdc3ff02ac53b8465816c6bc93660a5a75eb76a2fc5",
+          "initial_menu_sha256": "9c690eb744c489c65b7cecdc3ff02ac53b8465816c6bc93660a5a75eb76a2fc5",
+          "returned_to_menu": true,
+          "core_status": 0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "model": 2,
+      "preset": "hp39gs-home",
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "cold_boot": true,
+      "physical_input_only": true,
+      "host_tx_bytes": [
+        0,
+        0,
+        0
+      ],
+      "tests": [
+        {
+          "name": "rs232",
+          "result_frame_sha256": "86e320fdf08f59a730e43862e9177d61c5e760933dbc92022711d079b06ecda9",
+          "returned_frame_sha256": "c10ffaafa06e79a9c23f98ce141658f48547ab795bd750291e1280fc0669baef",
+          "initial_menu_sha256": "c10ffaafa06e79a9c23f98ce141658f48547ab795bd750291e1280fc0669baef",
+          "returned_to_menu": true,
+          "core_status": 0
+        },
+        {
+          "name": "irda",
+          "result_frame_sha256": "41295081afef512f68f936494ee4b99fe7827e999781bdee15dc6f0beeb8a508",
+          "returned_frame_sha256": "c10ffaafa06e79a9c23f98ce141658f48547ab795bd750291e1280fc0669baef",
+          "initial_menu_sha256": "c10ffaafa06e79a9c23f98ce141658f48547ab795bd750291e1280fc0669baef",
+          "returned_to_menu": true,
+          "core_status": 0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "model": 4,
+      "preset": "hp48-home",
+      "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+      "cold_boot": true,
+      "physical_input_only": true,
+      "host_tx_bytes": [
+        0,
+        0,
+        0
+      ],
+      "tests": [
+        {
+          "name": "rs232",
+          "result_frame_sha256": "86e320fdf08f59a730e43862e9177d61c5e760933dbc92022711d079b06ecda9",
+          "returned_frame_sha256": "c10ffaafa06e79a9c23f98ce141658f48547ab795bd750291e1280fc0669baef",
+          "initial_menu_sha256": "c10ffaafa06e79a9c23f98ce141658f48547ab795bd750291e1280fc0669baef",
+          "returned_to_menu": true,
+          "core_status": 0
+        },
+        {
+          "name": "irda",
+          "result_frame_sha256": "41295081afef512f68f936494ee4b99fe7827e999781bdee15dc6f0beeb8a508",
+          "returned_frame_sha256": "c10ffaafa06e79a9c23f98ce141658f48547ab795bd750291e1280fc0669baef",
+          "initial_menu_sha256": "c10ffaafa06e79a9c23f98ce141658f48547ab795bd750291e1280fc0669baef",
+          "returned_to_menu": true,
+          "core_status": 0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "model": 5,
+      "preset": "hp49-home",
+      "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "cold_boot": true,
+      "physical_input_only": true,
+      "host_tx_bytes": [
+        0,
+        0,
+        0
+      ],
+      "tests": [
+        {
+          "name": "irda",
+          "result_frame_sha256": "75d37eb49f6cd2ba4a2f92b0ad79f6d9b548a3cac5ef8b78491151a403117b82",
+          "returned_frame_sha256": "a8c98c6be733e53bdbb8ffa910e912ee648d202899362f2bc4ff2bddf382ddfd",
+          "initial_menu_sha256": "a8c98c6be733e53bdbb8ffa910e912ee648d202899362f2bc4ff2bddf382ddfd",
+          "returned_to_menu": true,
+          "core_status": 0
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "peer_transfers": [
+    {
+      "from": 5,
+      "to": 4,
+      "name": "ORCHARD",
+      "value": 12345,
+      "waited_ticks": 76440000,
+      "file_bytes": 26,
+      "file_sha256": "e71ff07ffc6135a8fef3553b53d7cdddd911159585a0aaed1fdda4c39d3328f7",
+      "file_crc_verified": true,
+      "end_acknowledged": true,
+      "packets": [
+        {
+          "sequence": 0,
+          "type": "S",
+          "check": 1,
+          "data_bytes": 8
+        },
+        {
+          "sequence": 1,
+          "type": "F",
+          "check": 3,
+          "data_bytes": 7
+        },
+        {
+          "sequence": 2,
+          "type": "D",
+          "check": 3,
+          "data_bytes": 28
+        },
+        {
+          "sequence": 3,
+          "type": "Z",
+          "check": 3,
+          "data_bytes": 0
+        },
+        {
+          "sequence": 4,
+          "type": "B",
+          "check": 3,
+          "data_bytes": 0
+        }
+      ]
+    },
+    {
+      "from": 4,
+      "to": 5,
+      "name": "RETURN",
+      "value": 54321,
+      "waited_ticks": 85320000,
+      "file_bytes": 26,
+      "file_sha256": "68b741473c9d18cb1debea6e0bf12cd1458a52a05fc76b8808f7f457bed5c603",
+      "file_crc_verified": true,
+      "end_acknowledged": true,
+      "packets": [
+        {
+          "sequence": 0,
+          "type": "S",
+          "check": 1,
+          "data_bytes": 8
+        },
+        {
+          "sequence": 1,
+          "type": "F",
+          "check": 3,
+          "data_bytes": 6
+        },
+        {
+          "sequence": 2,
+          "type": "D",
+          "check": 3,
+          "data_bytes": 28
+        },
+        {
+          "sequence": 3,
+          "type": "Z",
+          "check": 3,
+          "data_bytes": 0
+        },
+        {
+          "sequence": 4,
+          "type": "B",
+          "check": 3,
+          "data_bytes": 0
+        }
+      ]
+    }
+  ],
+  "peer_transport": {
+    "tool": "tools/verify-irda-peer.mjs",
+    "tool_sha256": "e72466a9ce0f7a1053c8b0734fb60ed952c6dcb5ba98f51fdfae9fb8f8ea3f48",
+    "private_report_sha256": "d18b4e7381c88081410a93ccb47efcec95ec4d5f7eb0dc0c7319f019dae11e96",
+    "quantum_reference_ticks": 512,
+    "host_protocol_responses": false,
+    "readiness_policy": "Route only infrared UART2, no loopback, destination clock and RX enabled; do not retain bytes emitted while destination unavailable",
+    "modes": [
+      {
+        "model": 5,
+        "discarded_while_unready": 9,
+        "modes": [
+          "67,1797,0,0,312",
+          "67,1797,0,0,25"
+        ]
+      },
+      {
+        "model": 4,
+        "discarded_while_unready": 9,
+        "modes": [
+          "67,1797,0,0,312",
+          "67,1797,0,0,25"
+        ]
+      }
+    ],
+    "decoded_capture_bytes": [
+      2499,
+      2526
+    ]
+  },
+  "hp39_sram_exact_control": [
+    {
+      "from": 1,
+      "to": 1,
+      "ram_bytes": 262144,
+      "first_fault_dfsr": 8,
+      "first_fault_address": "0x08040000",
+      "uart2_bytes_before_first_fault": [
+        0,
+        0
+      ],
+      "private_report_sha256": "3c4c828b08aa4ee5567f8ff4154b4d17213f523f2ba42a3d2fe4859a91c790e4",
+      "interpretation": "Same-model SEND setup fails before any peer traffic; this rules out corrupted IrLAP receive payload or cross-version negotiation as the cause of this first fault. Board alias decoding remains an explicit hypothesis."
+    },
+    {
+      "from": 2,
+      "to": 2,
+      "ram_bytes": 262144,
+      "first_fault_dfsr": 8,
+      "first_fault_address": "0x08040000",
+      "uart2_bytes_before_first_fault": [
+        0,
+        0
+      ],
+      "private_report_sha256": "9c4bb32d3525dd158de732c6f77694ef01a5c93f7384c4924533272960080fd8",
+      "interpretation": "Same-model SEND setup fails before any peer traffic; this rules out corrupted IrLAP receive payload or cross-version negotiation as the cause of this first fault. Board alias decoding remains an explicit hypothesis."
+    }
+  ],
+  "limits": [
+    "decoded octets, not optical/serial waveforms or measured baud/UEXTCLK timing",
+    "FIFO idle timeout, UART DMA and send-break remain explicit unsupported operations",
+    "UART0/1 CTS and AFC input gating only; nRTS waveform is not modeled",
+    "HP49g+ transmit board-net attachment is based on pin notes, not independent physical validation",
+    "No native OS device, physical PC-IrDA adapter or printer interface"
+  ],
+  "baseline_obstructions": [
+    {
+      "model": 2,
+      "operation": "RS232 factory test",
+      "observed": "Waited for requested UART0 internal loopback that previous core did not implement; local reproduction was a hang, not the exact reported stop",
+      "ULCON": "0x03",
+      "UCON": "0x725",
+      "UFCON": 0,
+      "UBRDIV": "0x19"
+    },
+    {
+      "model": 2,
+      "operation": "IrDA factory test",
+      "observed": "Unsupported UART2 receive-data read",
+      "pc": "0x00027d7c",
+      "address": "0x50008024",
+      "width": 4
+    },
+    {
+      "model": 5,
+      "operation": "ordinary SEND in infrared mode without board transmit-net attachment",
+      "observed": "Whole GPEDAT read includes undriven GPE12",
+      "pc": "0x0000ccb0",
+      "address": "0x56000044",
+      "mask": "0x1000"
+    }
+  ],
+  "initial_candidate_wasm_sha256": "8c79eebd255cb6e6b0a238ef8e77af2b8726977288f50c12d46b0386b9214e62",
+  "final_witness_wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+  "hp39_sram_mirror_acceptance": {
+    "scope": "Explicit nGCS1 bank1-mirror research condition only in admitted hp39-home/hp39gs-home presets; strict/core default exact; physical SRAM remains262144 bytes; no independent board-address-decode measurement.",
+    "legacy_sessions": "Restore preserves the recorded decode and diagnostic state. Export objects before Restart when moving an exact-mode save to the new preset.",
+    "tool": "tools/verify-hp39-irda-peer.mjs",
+    "pairs": [
+      {
+        "from": 1,
+        "to": 1,
+        "cold_boot": true,
+        "tool_sha256": "ea14ef89f122b0d46fdc8aa38631c5603d9eef8a2f2914a82f8320544cd61c22",
+        "private_report_sha256": "549bdeae87f7b75daf7e31efecb3c0d478629e226a8a282f715bd9b57a0c6418",
+        "arithmetic": "2+3=5, exact expected frame hash",
+        "aplet": "IRTEST",
+        "symbolic_expression": "F1=12345",
+        "transfer_wait_reference_ticks": 45480000,
+        "uart2_bytes": [
+          1664,
+          984
+        ],
+        "discarded_while_unready": [
+          0,
+          0
+        ],
+        "stock_usb_exports": [
+          {
+            "side": 0,
+            "model": 1,
+            "bytes": 620,
+            "sha256": "37e3f8c07e00debcb5fa86cdf350292fe0fef330ddf4a51a4f2169548e50e222",
+            "payload_sha256": "7852955ecfb7f819f4d3c4f6f2b115e13d548c5a5f0f0dabc3ce71f5eb93662b"
+          },
+          {
+            "side": 1,
+            "model": 1,
+            "bytes": 620,
+            "sha256": "37e3f8c07e00debcb5fa86cdf350292fe0fef330ddf4a51a4f2169548e50e222",
+            "payload_sha256": "7852955ecfb7f819f4d3c4f6f2b115e13d548c5a5f0f0dabc3ce71f5eb93662b"
+          }
+        ],
+        "export_equal": true,
+        "recipient_expression_equal": true,
+        "recipient_expression_frame_sha256": "d1a58bcb22f90818144078eb566c90c48a6ba862ee2ef7c0ce1a3d06163052ad",
+        "final_core_status": [
+          0,
+          0
+        ],
+        "passed": true
+      },
+      {
+        "from": 2,
+        "to": 2,
+        "cold_boot": true,
+        "tool_sha256": "ea14ef89f122b0d46fdc8aa38631c5603d9eef8a2f2914a82f8320544cd61c22",
+        "private_report_sha256": "9b2af365ac484b4c0ab80ee4a45dd957e7257459dd6c95341d9ece2a2c91acc4",
+        "arithmetic": "2+3=5, exact expected frame hash",
+        "aplet": "IRTEST",
+        "symbolic_expression": "F1=12345",
+        "transfer_wait_reference_ticks": 44520000,
+        "uart2_bytes": [
+          1677,
+          996
+        ],
+        "discarded_while_unready": [
+          0,
+          0
+        ],
+        "stock_usb_exports": [
+          {
+            "side": 0,
+            "model": 2,
+            "bytes": 620,
+            "sha256": "37e3f8c07e00debcb5fa86cdf350292fe0fef330ddf4a51a4f2169548e50e222",
+            "payload_sha256": "7852955ecfb7f819f4d3c4f6f2b115e13d548c5a5f0f0dabc3ce71f5eb93662b"
+          },
+          {
+            "side": 1,
+            "model": 2,
+            "bytes": 620,
+            "sha256": "37e3f8c07e00debcb5fa86cdf350292fe0fef330ddf4a51a4f2169548e50e222",
+            "payload_sha256": "7852955ecfb7f819f4d3c4f6f2b115e13d548c5a5f0f0dabc3ce71f5eb93662b"
+          }
+        ],
+        "export_equal": true,
+        "recipient_expression_equal": true,
+        "recipient_expression_frame_sha256": "d1a58bcb22f90818144078eb566c90c48a6ba862ee2ef7c0ce1a3d06163052ad",
+        "final_core_status": [
+          0,
+          0
+        ],
+        "passed": true
+      },
+      {
+        "from": 1,
+        "to": 2,
+        "cold_boot": true,
+        "tool_sha256": "ea14ef89f122b0d46fdc8aa38631c5603d9eef8a2f2914a82f8320544cd61c22",
+        "private_report_sha256": "b96912da650d6c5e3a325e789ee55dc6650febbfaf6843c2400c6a7ae5d0e174",
+        "arithmetic": "2+3=5, exact expected frame hash",
+        "aplet": "IRTEST",
+        "symbolic_expression": "F1=12345",
+        "transfer_wait_reference_ticks": 45120000,
+        "uart2_bytes": [
+          1676,
+          996
+        ],
+        "discarded_while_unready": [
+          0,
+          0
+        ],
+        "stock_usb_exports": [
+          {
+            "side": 0,
+            "model": 1,
+            "bytes": 620,
+            "sha256": "37e3f8c07e00debcb5fa86cdf350292fe0fef330ddf4a51a4f2169548e50e222",
+            "payload_sha256": "7852955ecfb7f819f4d3c4f6f2b115e13d548c5a5f0f0dabc3ce71f5eb93662b"
+          },
+          {
+            "side": 1,
+            "model": 2,
+            "bytes": 620,
+            "sha256": "37e3f8c07e00debcb5fa86cdf350292fe0fef330ddf4a51a4f2169548e50e222",
+            "payload_sha256": "7852955ecfb7f819f4d3c4f6f2b115e13d548c5a5f0f0dabc3ce71f5eb93662b"
+          }
+        ],
+        "export_equal": true,
+        "recipient_expression_equal": true,
+        "recipient_expression_frame_sha256": "d1a58bcb22f90818144078eb566c90c48a6ba862ee2ef7c0ce1a3d06163052ad",
+        "final_core_status": [
+          0,
+          0
+        ],
+        "passed": true
+      },
+      {
+        "from": 2,
+        "to": 1,
+        "cold_boot": true,
+        "tool_sha256": "ea14ef89f122b0d46fdc8aa38631c5603d9eef8a2f2914a82f8320544cd61c22",
+        "private_report_sha256": "c7d1b5a0f36e93786ad149aac90d61e78c6948648e316c64afdb8f9da71817df",
+        "arithmetic": "2+3=5, exact expected frame hash",
+        "aplet": "IRTEST",
+        "symbolic_expression": "F1=12345",
+        "transfer_wait_reference_ticks": 45000000,
+        "uart2_bytes": [
+          1665,
+          978
+        ],
+        "discarded_while_unready": [
+          0,
+          0
+        ],
+        "stock_usb_exports": [
+          {
+            "side": 0,
+            "model": 2,
+            "bytes": 620,
+            "sha256": "37e3f8c07e00debcb5fa86cdf350292fe0fef330ddf4a51a4f2169548e50e222",
+            "payload_sha256": "7852955ecfb7f819f4d3c4f6f2b115e13d548c5a5f0f0dabc3ce71f5eb93662b"
+          },
+          {
+            "side": 1,
+            "model": 1,
+            "bytes": 620,
+            "sha256": "37e3f8c07e00debcb5fa86cdf350292fe0fef330ddf4a51a4f2169548e50e222",
+            "payload_sha256": "7852955ecfb7f819f4d3c4f6f2b115e13d548c5a5f0f0dabc3ce71f5eb93662b"
+          }
+        ],
+        "export_equal": true,
+        "recipient_expression_equal": true,
+        "recipient_expression_frame_sha256": "d1a58bcb22f90818144078eb566c90c48a6ba862ee2ef7c0ce1a3d06163052ad",
+        "final_core_status": [
+          0,
+          0
+        ],
+        "passed": true
+      }
+    ],
+    "cold_factory_tests": {
+      "private_report_sha256": "cfd081637b088381ef8729e0dc025fee905cbab8ffe85a6d3edeee3e55767b3b",
+      "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+      "passed": true,
+      "models": [
+        {
+          "model": 1,
+          "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+          "host_tx_bytes": [
+            0,
+            0,
+            0
+          ],
+          "result_frames": [
+            {
+              "label": "home",
+              "sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa"
+            },
+            {
+              "label": "irda",
+              "sha256": "fd2542548dedbe8349a99b7fc7cbf6e7509b0c1bf58732efad10a42042b21a42"
+            },
+            {
+              "label": "irda-returned",
+              "sha256": "9c690eb744c489c65b7cecdc3ff02ac53b8465816c6bc93660a5a75eb76a2fc5"
+            }
+          ]
+        },
+        {
+          "model": 2,
+          "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+          "host_tx_bytes": [
+            0,
+            0,
+            0
+          ],
+          "result_frames": [
+            {
+              "label": "home",
+              "sha256": "23902312bb3b7b3d753a65fa786d54c2b8de05625979bcbea2f9bf2c33880aaa"
+            },
+            {
+              "label": "rs232",
+              "sha256": "86e320fdf08f59a730e43862e9177d61c5e760933dbc92022711d079b06ecda9"
+            },
+            {
+              "label": "rs232-returned",
+              "sha256": "c10ffaafa06e79a9c23f98ce141658f48547ab795bd750291e1280fc0669baef"
+            },
+            {
+              "label": "irda",
+              "sha256": "41295081afef512f68f936494ee4b99fe7827e999781bdee15dc6f0beeb8a508"
+            },
+            {
+              "label": "irda-returned",
+              "sha256": "c10ffaafa06e79a9c23f98ce141658f48547ab795bd750291e1280fc0669baef"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "browser_peer": {
+    "from": 5,
+    "to": 4,
+    "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+    "browser": "156.0.8078.47",
+    "private_report_sha256": "5c3870087c31ebc5900f90a61ef91d24cac459e04a7d9ec8e47069307178d205",
+    "decoded_report_sha256": "997800851723a56c6ba5a0763196713ae2021afb74fee3e6caebd2af2d532090",
+    "emitted_uart2_bytes": [
+      901,
+      1098
+    ],
+    "filename": "ORCHARD",
+    "exact_decoded_file": "%%HP: T(1)A(R)F(.);\r\n12345",
+    "F_D_Z_B_crc16_verified": true,
+    "receiver_ack_sequences": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "visual_review": {
+      "recalled_value": "12345",
+      "receiver_model": 4,
+      "image": "lcd-4.png",
+      "method": "Direct visual inspection of actual production canvas screenshot after physical ON, ORCHARD and ENTER"
+    },
+    "ui_errors": [],
+    "passed": true,
+    "policy_note": "This recorded successful stock-command run used source readiness filtering. Final paired Worker policy additionally preserves already emitted UART2 tail bytes when the sender closes or reconfigures the port; receive readiness remains required."
+  }
+}

@@ -73,3 +73,38 @@ const raw={...core,peripheral_snapshot:undefined};
 source.read(raw,2,0,54);pixels().set(imageB);
 assert.deepEqual([...source.read(raw,2,0,55).pixels],imageB,'Cores without scan metadata remain readable');
 console.log('LCD publication: one immutable image per scan; white/off/error, pause/debug, view/model/reset/rewind, serial carry and memory growth pass.');
+
+// New cores publish from the exact native scan boundary, independently of the
+// Worker's later sampling time. Debug memory inspection remains explicitly raw.
+let published=new Uint8Array(imageA),live=new Uint8Array(imageB),observeCalls=0;
+const completed={...core,timebase_hz:()=>1000,
+  lcd_observe(view){observeCalls++;return 0;},
+  lcd_published_frame(){pixels().set(published);return 0;},
+  lcd_published_annunciators(){return 0;},
+  frame_view(){pixels().set(live);return 0;}};
+source.reset();registers()[0]=1;registers()[4]=1;registers()[5]=0;
+assert.deepEqual([...source.read(completed,1,1,0).pixels],imageA);
+const observations=observeCalls;
+assert.deepEqual([...source.read(completed,1,1,1,true,false).pixels],imageB);
+assert.equal(observeCalls,observations,'Debug reads do not enable the observer');
+live.fill(17);
+assert.deepEqual([...source.read(completed,1,1,2,false,false).pixels],Array(8).fill(17),'Debug reads bypass scan caching');
+
+// Finite response is opt-in, time based and content agnostic. A valid blank
+// fades to white; power-off and errors remain immediate. No wall time is used.
+source.configure({response:'smooth'});published.fill(255);
+source.read(completed,1,1,0);published.fill(0);registers()[4]++;
+const fading=source.read(completed,1,1,35);
+assert.deepEqual([...fading.pixels],Array(8).fill(94),'One 35 ms time constant retains exp(-1) of the previous intensity');
+assert.deepEqual([...published],Array(8).fill(0));
+registers()[4]++;
+assert.deepEqual([...source.read(completed,1,1,350).pixels],Array(8).fill(0),'Valid white becomes fully white without heuristic suppression');
+published.fill(255);registers()[4]++;source.read(completed,1,1,385);
+registers()[0]=0;published.fill(0);
+assert.deepEqual([...source.read(completed,1,1,386).pixels],Array(8).fill(0),'Power off clears the response history immediately');
+registers()[0]=1;published.fill(255);registers()[4]++;
+assert.deepEqual([...source.read(completed,1,1,387).pixels],Array(8).fill(255),'Power on does not reintroduce a retained off frame');
+source.configure({response:'instant'});published.fill(0);
+assert.deepEqual([...source.read(completed,1,1,388).pixels],Array(8).fill(0));
+assert.throws(()=>source.configure({response:'guessed-panel'}));
+console.log('Completed-scan observer exports and optional 35 ms response: raw debugger, valid white, power transitions and preference/reset invalidation pass.');

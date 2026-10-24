@@ -49,11 +49,11 @@ That supports the old witness's narrow OS/aplet execution scope. It does not
 turn the old fixture into native bootloader or complete-ROM evidence. All
 current HP39gs admission checks use the newly received original full image.
 
-## Exact compatibility setup
+## Current compatibility setup
 
 | Setting | Value and boundary |
 | --- | --- |
-| Model memory | 1 MiB NOR, exact 256 KiB SRAM; no bank mirror |
+| Model memory | 1 MiB NOR and 256 KiB physical SRAM; current HOME preset explicitly selects the bounded nGCS1 mirror hypothesis |
 | NOR component selection | `sst39vf800a`, an explicit part-identification hypothesis |
 | Keyboard | Apples physical matrix and dedicated modifier switches |
 | External inputs | GPD mask `0xcc7f` low; GPF mask `0x8e` low while disconnected; GPG0 low |
@@ -62,7 +62,8 @@ current HP39gs admission checks use the newly received original full image.
 | LCD compatibility | Counted idle-zero read at LCD `+0x68`; packed-LSB memory interpretation |
 | Browser preset | `hp39gs-home`, allowed only for this exact model/full-ROM hash |
 
-The fixed startup witness uses 198,000,000 virtual ticks. At 50 million ticks
+The historical r20 startup witness used exact SRAM decoding and
+198,000,000 virtual ticks. At 50 million ticks
 it presses F6/OK at Memory Clear, then enters `1+1`, opens APLET and returns
 HOME. Two independent native runs and two WASM runs agree on complete reported
 state, peripheral hashes and the final frame. The result has stop 0, DFSR/FAR
@@ -73,6 +74,31 @@ state, peripheral hashes and the final frame. The result has stop 0, DFSR/FAR
 Separate physical modifier presses observe SHIFT at segment 1 and ALPHA at
 segment 3, including release/toggle repetitions. This supports the model's UI
 segment mapping, not an independent physical-panel wiring measurement.
+
+## R23 serial and infrared continuation
+
+Original RS232 and IrDA factory selftests now complete and return through
+physical ENTER to the same factory menu. Their internal loopback uses the
+S3C2410 UART registers; the host does not inject a PASS result.
+
+Ordinary infrared SEND exposed an independent memory-decoding boundary:
+exact-mode HP39gs reaches an ARM data abort at `0x08040000` before emitting any
+UART2 byte. The same fault occurs with an HP39gs recipient, so this first fault
+cannot be caused by cross-version negotiation or received packet contents.
+The current `hp39gs-home` preset explicitly selects `bank1-mirror`, mapping the
+same 256 KiB cells only inside nGCS1. This is a board-decoding hypothesis, not a
+physical wiring certification; strict/core default decoding remains exact.
+
+With that condition, cold startup, arithmetic, APLET editing, both factory
+tests and menu returns pass. All four HP39g+/HP39gs sender/receiver combinations
+transfer a named `IRTEST` aplet with `F1=12345`. Stock USB SEND exports from
+source and recipient compare byte-for-byte, and the recipient's symbolic view
+matches the sender. See [UART/IrDA evidence](uart-irda.md#hp39-family-sram-decoding)
+and [current NOR writes](nor-write.md) for the independent flash-test work.
+
+Existing saves retain their recorded decoder. For an older exact-mode session,
+export the objects before Restart and import them after the current preset has
+been applied. Restore preserves saved board configuration and diagnostic state.
 
 ## Browser and portable continuation
 

@@ -1,0 +1,438 @@
+{
+  "schema": "orchard-hp39-programs-r23-v1",
+  "recorded_on": "2026-10-24",
+  "candidate_wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+  "reference_wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+  "method": {
+    "original_roms": true,
+    "normal_physical_keys": true,
+    "stock_usb_transfers": true,
+    "rom_patched": false,
+    "guest_memory_patched": false,
+    "hardware_validated": false,
+    "browser_end_to_end": false,
+    "raw_private_frames_checkpoints_excluded": true
+  },
+  "arkalite": {
+    "source_url": "https://www.hpcalc.org/hp39/games/arkalite40.zip",
+    "archive_sha256": "eebf2468764928ac0b89588a8787b6b3adb24f0c296cb6ac9e9765145afa480c",
+    "package_unmodified": true,
+    "class": "Original HP39/40G application; guest Saturn path",
+    "native_run_harness_sha256": "8489853b600dc6d34011d66b47a7a3cbdd8c3bb42f05a748dd4994631776b8fa",
+    "runs": [
+      {
+        "model": 1,
+        "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+        "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+        "inputs": [
+          {
+            "name": "LIB1537L.000",
+            "bytes": 37,
+            "sha": "8f49c8b596a9d126f253f1fdb9ae8e4bc6a76d607b0ffd4eac1f0a6c734a060c"
+          },
+          {
+            "name": "ARKALITE.000",
+            "bytes": 3671,
+            "sha": "1f4cda18268ba3be4e60fd4044770a38696c26b85f26aed911580243e1c82312"
+          }
+        ],
+        "wire_tool_sha256": "25c6d01fee0f86645ecd1e9220113a7051c2360edf78dfb70b9a48404b4b3701",
+        "wire_report_sha256": "1c316faa977289cfc09499caed14f7be11fea720c78dfff1740d0a074a9b88cf",
+        "wire_aplet_equal": true,
+        "wire_library_payload_equal": true,
+        "automatic_physical_keys": [
+          {
+            "tick": 187008320,
+            "scans": [
+              39
+            ]
+          },
+          {
+            "tick": 196240704,
+            "scans": [
+              44
+            ]
+          },
+          {
+            "tick": 199050560,
+            "scans": [
+              6
+            ]
+          }
+        ],
+        "run_report_sha256": "d5c19fcf4eba77f94ba4e3578fb6be98b7f1d97622c886e978bd3b81825dfd40",
+        "steps": [
+          {
+            "name": "installed",
+            "virtual_ticks": 3000000,
+            "frame_sha256": "005ebd8c7b308d61042bc466567d305a8003478999a2ea5b18cfa3dd21305e05",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          },
+          {
+            "name": "started",
+            "virtual_ticks": 27000000,
+            "frame_sha256": "6c27bf838e97cca74460b705b850dcf311f390ca5dc543d28176db3073785cf2",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          },
+          {
+            "name": "after-enter",
+            "virtual_ticks": 51000000,
+            "frame_sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          },
+          {
+            "name": "left",
+            "virtual_ticks": 67000000,
+            "frame_sha256": "1607f922a751fc54f8fa4c411cac7cb917998a95f5d9ea382eee3ee88974358f",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          },
+          {
+            "name": "right",
+            "virtual_ticks": 83000000,
+            "frame_sha256": "d03ef5758324378ac52c5857e5fc0f86b76aba1ac9a0b71981398c88d6da38cb",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          },
+          {
+            "name": "quit",
+            "virtual_ticks": 117000000,
+            "frame_sha256": "f0a9bba8bc5d46c60bc7316f09f1cc0cdc8100bbfb78d3a0314d6c73f9ea8b2b",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          },
+          {
+            "name": "arithmetic",
+            "virtual_ticks": 177000000,
+            "frame_sha256": "82cb43f44987c6388c3d41cb8f2944e60e9da50a6ddb47c8ff185e7e63c791d0",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          }
+        ],
+        "checked_arithmetic": "HOME 1+1=2",
+        "passed": true
+      },
+      {
+        "model": 2,
+        "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+        "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+        "inputs": [
+          {
+            "name": "LIB1537L.000",
+            "bytes": 37,
+            "sha": "8f49c8b596a9d126f253f1fdb9ae8e4bc6a76d607b0ffd4eac1f0a6c734a060c"
+          },
+          {
+            "name": "ARKALITE.000",
+            "bytes": 3671,
+            "sha": "1f4cda18268ba3be4e60fd4044770a38696c26b85f26aed911580243e1c82312"
+          }
+        ],
+        "wire_tool_sha256": "25c6d01fee0f86645ecd1e9220113a7051c2360edf78dfb70b9a48404b4b3701",
+        "wire_report_sha256": "8b722e19f7549caff51249d2e085db559d8c955e569d99c0aa5ea3f52be42d6b",
+        "wire_aplet_equal": true,
+        "wire_library_payload_equal": true,
+        "automatic_physical_keys": [
+          {
+            "tick": 221193536,
+            "scans": [
+              39
+            ]
+          },
+          {
+            "tick": 231228736,
+            "scans": [
+              44
+            ]
+          },
+          {
+            "tick": 233637184,
+            "scans": [
+              6
+            ]
+          }
+        ],
+        "run_report_sha256": "79fd8963270302cbd663df0bdf6ec93284ebb4f15d17a7d5872663a083d9cd0a",
+        "steps": [
+          {
+            "name": "installed",
+            "virtual_ticks": 3000000,
+            "frame_sha256": "d49003d6b26f935372a782588c07535909f9eff0bec04a9d4c9d66f420c31d68",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          },
+          {
+            "name": "started",
+            "virtual_ticks": 27000000,
+            "frame_sha256": "6c27bf838e97cca74460b705b850dcf311f390ca5dc543d28176db3073785cf2",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          },
+          {
+            "name": "after-enter",
+            "virtual_ticks": 51000000,
+            "frame_sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          },
+          {
+            "name": "left",
+            "virtual_ticks": 67000000,
+            "frame_sha256": "1f1bb2374aa9742b5410ed5e0e7a74157a94d1643c7d7b4b3ebe3777f91dc842",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          },
+          {
+            "name": "right",
+            "virtual_ticks": 83000000,
+            "frame_sha256": "4a054cab0003cc51f01f1b19ca0945bbc583ee90f203bfbc70f4b1633fe4bc7f",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          },
+          {
+            "name": "quit",
+            "virtual_ticks": 117000000,
+            "frame_sha256": "9e0e547a23e5feb578d1dfd0051c1092b539114d6dd5bf27ae5a2f3b6c7fc8a3",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          },
+          {
+            "name": "arithmetic",
+            "virtual_ticks": 177000000,
+            "frame_sha256": "82cb43f44987c6388c3d41cb8f2944e60e9da50a6ddb47c8ff185e7e63c791d0",
+            "data_fault_status": 0,
+            "stop_reason": 0
+          }
+        ],
+        "checked_arithmetic": "HOME 1+1=2",
+        "passed": true
+      }
+    ]
+  },
+  "gbp_original": {
+    "package_origin": "User-provided GBP39 Player 0.3 source and transfer package",
+    "aplet_sha256": "096985f550cdcf54a41fba68c6c418831715711bcf66ca7b00f33af94d7939a6",
+    "native_arm": true,
+    "wire_integrity_evidence": "hp39-wire-batch-r23.json",
+    "first_fault_harness_sha256": "523ad79158f26804f4388e0428d55c77463d178c7d055dc29391820d0f55a5c1",
+    "first_fault_runs": [
+      {
+        "model": 1,
+        "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+        "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+        "checkpoint_sha256": "06e566df377831269a849749d2fb6adc2fc32566588b9c1c210d6adf433c1c9f",
+        "report_sha256": "e816d175f4458e470132dd936807d11d5e32ad0bc9fbbcb54d55860c684af840",
+        "physical_key_scan": 40,
+        "first_fault_after_scheduler_steps": 7117623,
+        "before": {
+          "pc": "0x0803ca04",
+          "cpsr": "0x80000010",
+          "cp15_control": "0xc000107f",
+          "sp": "0x0902dfd4",
+          "r7": "0x090007f2",
+          "r0": "0x00000000",
+          "r12": "0x00000000"
+        },
+        "after": {
+          "data_fault_status": 1,
+          "data_fault_address": "0x090007f2",
+          "pc": "0x00000010",
+          "cpsr": "0x80000097"
+        }
+      },
+      {
+        "model": 2,
+        "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+        "wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+        "checkpoint_sha256": "675c970162661acc5b0429e7cc9ac7e9164c92bed92f39c1bbefaf144074b3ef",
+        "report_sha256": "61f8d1dfc7a0ba565dc009fff2c676654585c3b291c9dbd0f5c2a189cafa6569",
+        "physical_key_scan": 40,
+        "first_fault_after_scheduler_steps": 6447987,
+        "before": {
+          "pc": "0x0803ca04",
+          "cpsr": "0x80000010",
+          "cp15_control": "0xc000107f",
+          "sp": "0x0902cfd4",
+          "r7": "0x090007f2",
+          "r0": "0x00000000",
+          "r12": "0x00000000"
+        },
+        "after": {
+          "data_fault_status": 1,
+          "data_fault_address": "0x090007f2",
+          "pc": "0x00000010",
+          "cpsr": "0x80000097"
+        }
+      },
+      {
+        "model": 2,
+        "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+        "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+        "checkpoint_sha256": "675c970162661acc5b0429e7cc9ac7e9164c92bed92f39c1bbefaf144074b3ef",
+        "report_sha256": "9c368684827333b39e1136d052975a5c6e566258aefa964acaa20f6b21c4411a",
+        "physical_key_scan": 40,
+        "first_fault_after_scheduler_steps": 6447987,
+        "before": {
+          "pc": "0x0803ca04",
+          "cpsr": "0x80000010",
+          "cp15_control": "0xc000107f",
+          "sp": "0x0902cfd4",
+          "r7": "0x090007f2",
+          "r0": "0x00000000",
+          "r12": "0x00000000"
+        },
+        "after": {
+          "data_fault_status": 1,
+          "data_fault_address": "0x090007f2",
+          "pc": "0x00000010",
+          "cpsr": "0x80000097"
+        }
+      }
+    ],
+    "faulting_instruction": "str ip, [r7, r0, lsl #2]",
+    "loader_offset": "0x000000a4",
+    "original_got_size": "0x0000001c",
+    "original_data_size": "0x000003d6",
+    "loader_bss_base": "0x090007f2",
+    "elf_bss_base": "0x090007f4",
+    "diagnosis": "Original linker script does not include final .data word alignment in __data_size; original loader word-clears an unaligned address with alignment checking enabled."
+  },
+  "gbp_alignment_variant": {
+    "label": "GBP39 ALIGN4: alignment-fixed diagnostic rebuild for 39gs",
+    "original_release": false,
+    "aplet_sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc",
+    "main_source_unchanged": true,
+    "main_source_sha256": "6183b9fb679da2bfd8e5a647806a2de44ec2f04a5236171fe16b6781bf9c6ebf",
+    "patch_sha256": "d64a96ca89e4562491bf524620bf19bac83e85218f94a55b2f899d447b408b19",
+    "corrected_data_size": "0x000003d8",
+    "corrected_bss_base": "0x090007f4",
+    "compiler": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin",
+    "linker": "Ubuntu LLD 18.1.3 (compatible with GNU linkers)",
+    "original_loader_archive_sha256": "e6e6833fbcfbba37d8e9e58842f73c9ad3cafbac1c1bb2ed13fd0cbcd1f76141",
+    "original_loader_archive_url": "https://sourceforge.net/projects/hpgcc/files/hpgcc/HPGCC-1.1%20with%2039G%20support%20for%20Windows/",
+    "build_provenance_sha256": "0a50b44d181c771fd44af16a0a2380b6e1efdaa1e5f765ba066d88f4fb33e570",
+    "packaged_script_reproduced_identical_aplet": true,
+    "private_zip": {
+      "name": "gbp39-v0.3-align4-39gs-test.zip",
+      "bytes": 264964,
+      "sha256": "0e9abca0c5c388686d3cc75390b3b9fdf53d6d36e4db1709793fdad1e8330aaa",
+      "contains_rom_or_checkpoint": false
+    },
+    "installation_reference_wasm_sha256": "51aded73e5d6cae3862fda4beec946118903dda97a39fccaa9fcf740214c8189",
+    "installation_report_sha256": "4cdd929506f8582ed5140f29ca6a790b2a2c10715611bba73f36bc90fc798c5c",
+    "candidate_execution_wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+    "candidate_harness_sha256": "0043cf9ded03cbcea8f4dba50487c6627afbcff32951bd114f876cc3e2e343ce",
+    "candidate_report_sha256": "82923ca5ee059c78e016a2652c7d9efadf6416e705bb7a8db0f1d455603545ad",
+    "candidate_39gs_steps": [
+      {
+        "name": "installed",
+        "virtual_ticks": 3000000,
+        "frame_sha256": "fa3430329c2eb600dfccaa020d69d76b27875d943184155bd89190b8f8da0331",
+        "data_fault_status": 0,
+        "stop_reason": 0
+      },
+      {
+        "name": "song-select",
+        "virtual_ticks": 27000000,
+        "frame_sha256": "c629421f132788f0a2849a1d0cd6d79647a0068c6c1666e727eb66c80c7b98bb",
+        "data_fault_status": 0,
+        "stop_reason": 0
+      },
+      {
+        "name": "next-song",
+        "virtual_ticks": 39000000,
+        "frame_sha256": "da33f2443617c3414df209b5b7a752872f3554d1122a299336ab98d277f18ec9",
+        "data_fault_status": 0,
+        "stop_reason": 0
+      },
+      {
+        "name": "previous-song",
+        "virtual_ticks": 51000000,
+        "frame_sha256": "c629421f132788f0a2849a1d0cd6d79647a0068c6c1666e727eb66c80c7b98bb",
+        "data_fault_status": 0,
+        "stop_reason": 0
+      },
+      {
+        "name": "game-start",
+        "virtual_ticks": 57000000,
+        "frame_sha256": "6e94751dfbad723f6ada8e1080bdfdf500cb738ce9f6c94ae20794c7230c9eab",
+        "data_fault_status": 0,
+        "stop_reason": 0
+      },
+      {
+        "name": "game-middle",
+        "virtual_ticks": 81000000,
+        "frame_sha256": "a518826b166fac959c2146fe2032e2cc160c660aff0cf9a0ab725b474f21cb2e",
+        "data_fault_status": 0,
+        "stop_reason": 0
+      },
+      {
+        "name": "game-four-seconds",
+        "virtual_ticks": 105000000,
+        "frame_sha256": "7898b39c7089e4e29c591bef751d34e8ddb89531e5db122e790f22d530bb0579",
+        "data_fault_status": 0,
+        "stop_reason": 0
+      },
+      {
+        "name": "quit",
+        "virtual_ticks": 139000000,
+        "frame_sha256": "716c4753c1e42b4e792cd8cc3e2f9e9027dca2428782f98e578046dcd03579d6",
+        "data_fault_status": 0,
+        "stop_reason": 0
+      },
+      {
+        "name": "arithmetic",
+        "virtual_ticks": 199000000,
+        "frame_sha256": "3d74d84d096aca2df92fd38dbfef9c0c651292e224ff4c627ecdb583230ef826",
+        "data_fault_status": 0,
+        "stop_reason": 0
+      }
+    ],
+    "candidate_39gs_passed": true,
+    "raw_game_samples": {
+      "count": 240,
+      "nominal_sample_hz": 60,
+      "seconds": 4,
+      "empty_frames": 0,
+      "dark_pixels_min": 893,
+      "dark_pixels_max": 1031,
+      "distinct_frame_hashes": 117
+    },
+    "remaining_39gplus_exit_fault": {
+      "model": 1,
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+      "checkpoint_sha256": "2298aeb5d436443ff82af4d269aea04c968ba49a96c6fa8a72e37044649c717b",
+      "report_sha256": "c8c4a232f0b682128d6e343ae67bb53edea119c38f5e00d7eb3bddbb97391829",
+      "physical_key_scan": 56,
+      "first_fault_after_scheduler_steps": 2765,
+      "before": {
+        "pc": "0x00022a04",
+        "cpsr": "0x60000092",
+        "cp15_control": "0xc000107f",
+        "sp": "0x0902decc",
+        "r7": "0x0000abcb",
+        "r0": "0x07100008",
+        "r12": "0x09000656"
+      },
+      "after": {
+        "data_fault_status": 7,
+        "data_fault_address": "0x0902dec8",
+        "pc": "0x00000010",
+        "cpsr": "0x60000097"
+      }
+    },
+    "remaining_39gplus_faulting_instruction": "stmdb sp!, {lr}",
+    "remaining_39gplus_scope": "The variant enters and runs on 39g+, but normal ON exit triggers a page translation fault in the ROM IRQ return path; cause is not assigned to the application or emulator."
+  },
+  "limits": [
+    "Application variants and original packages have separate hashes and outcomes.",
+    "Native 39gs execution was replayed from a stock-Wire installation checkpoint; Arkalite candidate installation was separately cold-booted on both ROMs.",
+    "Frame samples are raw simulated LCD output, not physical LCD quality or host performance measurements.",
+    "Successful short game interaction does not establish exhaustive game completion, audio accuracy or all third-party compatibility.",
+    "39g+ variant exit remains a reproducible failure; no complete compatibility claim."
+  ]
+}

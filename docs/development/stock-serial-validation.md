@@ -14,7 +14,7 @@ UART0 非 FIFO 发送空缓冲区的 **level 中断**补齐后，原版 HP48gII 
 
 ### 先前的 UART0 修复
 
-根因对应一个具体硬件缺口：原版系统消费初始化包后启用了 TXD0 子中断，但旧核心从未产生该源。Samsung 手册规定 `UCON0[9]=1`、发送模式 `01`、非 FIFO 时，发送缓冲区为空应持续请求；屏蔽不阻止 pending 锁存，W1C 后条件仍在则重新触发。现有功能发送器立即把字节交给宿主队列，因此宿主尚未读取的字节不代表硬件发送缓冲区仍占用。实现与边界见[虚拟连接](virtual-link.md#current-functional-uart0)。
+根因对应一个具体硬件缺口：原版系统消费初始化包后启用了 TXD0 子中断，但旧核心从未产生该源。Samsung 手册规定 `UCON0[9]=1`、发送模式 `01`、非 FIFO 时，发送缓冲区为空应持续请求；屏蔽不阻止 pending 锁存，W1C 后条件仍在则重新触发。现有功能发送器立即把字节交给宿主队列，因此宿主尚未读取的字节不代表硬件发送缓冲区仍占用。先前实现与边界见[虚拟连接](virtual-link.md#initial-uart0-implementation-historical)，当前三通道实现见 [UART 与 IrDA](uart-irda.md)。
 
 [汇总证据](evidence/serial-file-transfer-r14.json) 将直接协议验证与生产浏览器验证分开记录。首次修复验证使用以下旧 SERVER checkpoint、同一原版 ROM 和最终 Kermit 引擎，候选 WASM 为 `ce9f81ac640cbeeb1cd249d841d06ada633b6b36454ec29cd11cf39b2ddbc830`（97,726 字节）。上传 `OR14S` 和 GET 均完整结束；返回 45 字节，其中 37 字节对象正文与上传原件完全相同，只有传输头第 7 字节由 C 变为 B。全程输出 189 个 UART 字节，diagnostic stop 为 0。
 

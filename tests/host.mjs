@@ -43,7 +43,8 @@ try{
   const closed=once(owner.s,'close');owner.s.write(urb(4,1,1,65537));await closed;
   console.log('USB/IP: split TCP headers, guest-generated descriptors, exclusive import, real EP0 URB, cancel and oversized rejection pass. No OS attach tested.');
  }finally{clearInterval(pump);for(const s of sockets)s.destroy();await server.close();}
- const uartRom=new Uint8Array(1048576).fill(255),words=[0xea000000,0xe1a00000,0xe59f0028,0xe3a01000,0xe5801000,0xe59f0020,0xe5901010,0xe3110001,0x0afffffc,0xe5d01024,0xe5c01020,0xeafffff9,0xe1a00000,0xe1a00000,0x53000000,0x50000000];words.forEach((v,i)=>new DataView(uartRom.buffer).setUint32(i*4,v,true));
+ // Generated UART guest explicitly enables 8-bit PIO receive/transmit.
+ const uartRom=new Uint8Array(1048576).fill(255),words=[0xea000000,0xe1a00000,0xe59f0038,0xe3a01000,0xe5801000,0xe59f0030,0xe3a01003,0xe5801000,0xe3a01005,0xe5801004,0xe5901010,0xe3110001,0x0afffffc,0xe5d01024,0xe5c01020,0xeafffff9,0xe1a00000,0xe1a00000,0x53000000,0x50000000];words.forEach((v,i)=>new DataView(uartRom.buffer).setUint32(i*4,v,true));
  const u=await core(1,uartRom),serial=createSerialServer(u),port2=await serial.listen(0),peer=await client(port2);
  try{assert.equal(serial.server.address().address,'127.0.0.1');pump=setInterval(()=>{serial.poll();assert.equal(u.run(1024),0);serial.poll();},1);
   const bytes=Buffer.from([65,0,255,13,10]);peer.s.write(bytes);assert.deepEqual(await peer.read(bytes.length),bytes);

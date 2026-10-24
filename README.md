@@ -16,8 +16,9 @@ Its original FILES manager can read and write an [emulated SD card](docs/develop
 All four admitted original systems also complete their normal inactivity
 shutdown and [ON wakeup](docs/development/power-management.md), retaining their
 previous calculation and accepting new input after wake.
-HP39g+ uses a separately selected
-1 MiB NOR and exact SRAM, not the HP48gII mirroring hypothesis. LCD `+0x68`,
+HP39g+ uses a separately selected 1 MiB NOR and 256 KiB physical SRAM.
+The admitted 39/48/49 presets explicitly select a bank-1 low-address mirror;
+strict mode keeps exact decoding and no extra RAM capacity is granted. LCD `+0x68`,
 component identification, panel interpretation and pad/ADC conditions remain
 unverified hardware assumptions.
 This is conditional functional operation, not complete six-model support.
@@ -46,8 +47,10 @@ research controls live in the separate **[developer workbench](https://maxmixale
 Both pages use the same optimized core, not different levels of emulation.
 At startup use the top-right soft key for NO/OK as prompted; wait for HOME
 before entering calculations. **Save** exports the paused machine to a timestamped
-`.ord` file without its ROM. Open the same ROM and choose **Restore**, then
-Resume, to continue without another cold boot. Automatic local saves are off
+`.ord` file. Open the same ROM and choose **Restore** to resume under the current
+focus/visibility policy. A prominent pause bar provides a direct resume action.
+Sessions omit the complete original ROM but can contain changed flash sectors;
+keep them private. Automatic local saves are off
 by default and can be enabled in **Settings → Storage**; loading the same ROM
 then offers to restore its saved state. See [saved sessions](docs/development/sessions.md).
 
@@ -57,19 +60,24 @@ original file; the standard file input stores a clearly labelled browser-local
 copy instead. The last ROM reopens when permission allows. If the browser needs
 permission again, use **Continue reading**; startup never opens a permission prompt.
 The switch and **Forget saved ROM locations and copies** are separate from calculator-state
-autosave. ROMs remain on this device and outside exported sessions. See
+autosave. ROMs remain on this device; sessions separately record any changed flash sectors. See
 [local ROM storage](docs/development/rom-storage.md).
 
-On HP49g+, **SD card** opens a persistent sidebar. It creates a 16 MiB FAT16
+On HP49g+, **Connections → SD card** opens a persistent sidebar. It creates a 16 MiB FAT16
 card or imports a supported 1–32 MiB raw image; the original calculator accesses
 it as port 3. **Prepare card files** browses, extracts, adds, renames and deletes
 files or empty folders in an unmounted draft. **Choose local folder** recursively
 copies a directory into a 16 or 32 MiB card, with an explicit preview of 8.3
 aliases for long or non-ASCII names. Files retain their exact bytes and accept
-any extension. With direct directory access, **Eject to edit / sync** enables
-explicit re-read and write-back; conflicts preserve existing local files, and
-card deletions never silently delete host files. The association lasts for the
-page session. See [directory SD cards](docs/development/directory-sd.md).
+any extension. With direct directory access, synchronization compares the saved
+baseline with both the current directory and card. Additions, edits, deletions
+and renames propagate in either direction after a reviewable preview; conflicts
+require a choice or retain both versions. The directory handle, aliases and
+baseline persist across reloads and reattach only to the matching card identity.
+A mounted card is paused and ejected before synchronization, then reinserted;
+running resumes only when it was running before and the current policy allows it.
+This is explicit directory synchronization, not an operating-system mounted drive.
+See [directory SD cards](docs/development/directory-sd.md).
 
 Export the image for a separate card backup. Manual and automatic sessions
 include the whole inserted card. HP48gII has no SD slot; HP50g still requires
@@ -125,15 +133,16 @@ in `licenses/hp-calcs-svg`; see [licensing](docs/development/licensing.md).
 
 ## Settings and connections
 
-Settings switches immersive, **immersive landscape** and traditional view,
-scale, pause-on-focus/background,
+Settings switches immersive, **immersive landscape**, traditional and
+**traditional landscape** view, scale, nearest/bilinear/bicubic/Lanczos screen
+resampling, optional 35 ms LCD response, pause-on-focus/background,
 per-model key sequences, local ROM recall and optional automatic calculator
 saves. Normal uses a
 fixed functional time rate instead of running clocks at maximum host speed;
 physical timing is still being refined. CPU research details stay in the
 developer workbench. Save exports `<model>-<yyyymmdd-hhmmss>.ord`; Restore also
 accepts earlier `.orchard` files. Remembered ROMs stay in the browser's local
-storage; exported sessions omit ROMs and no ROM is uploaded.
+storage; no ROM is uploaded. Changed flash sectors are private session data.
 Landscape splits the unchanged skin below the six FN keys, keeping those
 soft keys with the screen on the left and the remaining keyboard on the right.
 [Firmware sound](docs/development/buzzer.md)
@@ -161,7 +170,11 @@ catalog entry point is restored when the stock SEND omits it, while original
 directory aliases and object bytes are preserved. Raw data retains
 UART and USB packets. **Wire** provides a faster upload route: choose
 **RECV → HP39/40 (Wire)** on HP39g+, or **RECV → HP39/40 (USB)** on HP39gs,
-for each object, sending required libraries before the aplet. `HP39AscC` ASCII Notes are
+for each object, sending required libraries before the aplet. Optional
+**Automatically open the next RECV** observes the verified stock catalog/menu
+and sends real keys for the next same-catalog USB object. Unknown screens,
+manual input and errors stop that automation; retries never press ENTER blindly.
+`HP39AscC` ASCII Notes are
 converted to the binary string format accepted by Wire. For a Note, first open
 **SHIFT → 0 (NOTEPAD)** and use that catalog's RECV menu. Both original ROMs
 pass installation, EDIT and exact content round trips. Reverse downloads still
@@ -180,7 +193,22 @@ Browser connections are internal to the emulator and do not create desktop
 USB or serial devices. See
 [file transfer](docs/development/file-transfer.md),
 [interaction](docs/development/interaction.md), [sessions](docs/development/sessions.md),
-and [the infrared assessment](docs/development/infrared.md).
+and [infrared](docs/development/infrared.md).
+
+**Connections → Infrared** pairs two calculators in tabs of the same browser
+origin. One creates a code and the other joins it; select the normal IR send
+and receive functions on the calculators. Original firmware handles discovery,
+IrCOMM and object transfer over the modeled UART2 path. HP49g+ and HP48gII
+complete transfers in both directions. HP39g+/HP39gs same-model and cross-model
+aplet transfers also preserve complete object bytes. Old 39-series sessions
+retain their saved exact SRAM decode; export wanted objects, Restart from the
+original ROM to use the new preset, then reimport them before using this path.
+Linked tabs keep running in the
+background; Pause, reset, session replacement or disconnect ends the link.
+This models decoded serial bytes and does not access a physical infrared adapter.
+Original RS232/IrDA factory loopback diagnostics also pass on the applicable
+four admitted systems. [NOR programming](docs/development/nor-write.md) lets
+both original 39gs and 49g+ complete quick and full FLASH WRITE tests.
 
 The [HP39gs full ROM capture package](docs/development/hp39gs-rom-dump.md)
 now includes a revised reader with visible block progress, bounded USB waits,
@@ -200,7 +228,7 @@ The [HP49g+ capture package](docs/development/flash-capture.md) has now produced
 the user's 2 MiB image used by the new model's startup and transfer validation.
 
 
-## React user interface and local device bridge
+## React user interface
 
 The user frontend uses React + Mantine, with English/Chinese settings,
 traditional Shift/Alpha legends and matrix PNG capture. The wider keyboard
@@ -210,22 +238,15 @@ the operating system's resolved characters; available layout labels and a
 capture fallback avoid assuming QWERTY. Existing `.ord`/legacy sessions and
 opt-in autosave remain compatible.
 
-The Worker publishes one sampled image per observed completed LCD scan, and
+The core captures the image at the completed LCD-scan boundary, and
 the Canvas coalesces updates at browser animation frames. This prevents UI
 requests from showing several different partial RAM redraws during one scan.
-Live display, captures and recording use the same published image; genuine
-blank frames remain visible. See [LCD presentation](docs/development/lcd.md#host-presentation-synchronized-to-the-scan-counter)
+An optional response filter smooths the live image; native PNG captures and
+recording keep the raw published pixels. Genuine blank frames remain visible.
+See [LCD presentation](docs/development/lcd.md#host-presentation-synchronized-to-the-scan-counter)
 for its timing and physical-panel limits.
-The loopback host package (`npm run build:host`) now also connects the current
-browser calculator to a local USB/IP client: run `node host/bridge.mjs`, then
-use **Connections → Local device** with its printed address and token. It
-forwards requests to the same Worker and memory, including genuine USB errors,
-cancellation and re-enumeration after a guest reset. The separate command-line
-calculator and raw serial entry point remain available. Generated guests pass
-real Chrome Worker/HTTP/USB-IP tests, and unchanged HP48gII/HP49g+ ROMs complete
-object round trips through the same bridge modules in Node. Original HP49g+
-also completes exact SEND/GET/FINISH through the production Chrome page and
-Worker, then returns to arithmetic. OS attachment,
-HP driver binding and unmodified Conn3x still require a
-supported computer. See [frontend](docs/development/react-ui.md) and
-[host mode](docs/development/host-mode.md). No firmware or driver is bundled.
+The local-device UI has been removed at the user's request. Native USB/IP,
+OS-driver attachment and Conn3x integration are no longer planned work.
+The earlier helper and regression records remain archived for reproducibility;
+they are not a current browser feature. See [frontend](docs/development/react-ui.md)
+and [archived host research](docs/development/host-mode.md).

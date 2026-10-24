@@ -1,0 +1,264 @@
+{
+  "schema": "orchard-browser-acceptance-r23",
+  "date": "2026-10-24",
+  "scope": "Local production build; original ROMs and screenshots remain private. Generated-guest diagnostic fixtures are separate. No future deployed acceptance is implied.",
+  "production_wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+  "original_rom_workflows": [
+    {
+      "name": "Original HP49g+ production SD",
+      "private_report_sha256": "d6e1d9d91c8b0ff30cc58efde7baefc789df4aaae32460823ea1c22a18dbe5ff",
+      "passed": true,
+      "model": {
+        "id": 5,
+        "name": "hp49gplus",
+        "width": 131,
+        "height": 80,
+        "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab"
+      },
+      "assets": {
+        "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+        "README.txt": "07d3f330406b287eea05d02865818498d07466236d065cf5a0336237ca3e931e",
+        "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+        "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+        "calculator.css": "a6758eb130d9cb6503315913c0af0473abf37461d8f17f02d1ce99b0839e40e7",
+        "calculator.js": "7c20f8e68c19f7bdb961843bf01ef71311fd7d642bf9555cc9afb56b427f0dea",
+        "catalog.js": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8",
+        "debug.html": "134082d0e77b5fae7486ce9783610edaa448a7060fe95d19ae1d27d79b54682b",
+        "file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+        "host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+        "host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+        "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+        "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+        "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+        "hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+        "hp48.js": "14590b079838824b7bc9359d0a49f14cfb7bb5a5c2a7321529658e35dd4238f8",
+        "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+        "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+        "lcd-frames.js": "b9dbbafaa686d3e0282ee3f935205d20bee5b864b6e5b7c90e4e17b4dfa162fe",
+        "licenses/frontend.txt": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+        "licenses/hp-calcs-svg/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "licenses/hp-calcs-svg/NOTICE.txt": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+        "licenses/hp-calcs-svg/README.md": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+        "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+        "main.js": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35",
+        "orchard.wasm": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+        "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+        "preferences.js": "2a68b46423babf91328fb1f70e4e2a8606f18248dc1a303c88da49a505f6ce6e",
+        "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+        "sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+        "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+        "session.js": "5113f2b8208a2a7e0fabc2a0d7c218cd675bb38df6a9a82c91d4abd6ef5dd522",
+        "skin.js": "b63ffb7b17bcb971d283daea4672f93dfb84ad9fc79fa09aa0bd2dce7b7416d0",
+        "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+        "skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+        "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+        "skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+        "skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+        "skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+        "skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+        "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+        "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+        "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+        "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+        "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+        "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "worker.js": "84d27615dc41c079a99dbb7f26ba2f2ba6dc917e8a0c2a6292fb7c4dc74bdc0c"
+      },
+      "browser_version": "156.0.8078.47",
+      "page_errors": [],
+      "stages": [
+        "cold-boot-and-empty-slot-files",
+        "create-card-and-stock-files",
+        "stock-file-copy-to-card-and-recall",
+        "export-image-and-complete-session",
+        "atomic-eject-to-edit-and-persistent-sidebar-draft",
+        "automatic-save-with-media-and-reload",
+        "read-only-import"
+      ],
+      "session": {
+        "schema": 1,
+        "model": 5,
+        "romHash": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+        "preset": "hp49-home",
+        "frameView": 1,
+        "stateHash": "97c7d4d07794a9f67030df161735bdc4cadaba0ce0d1618c76ab5bcd117e5800",
+        "checkpoint_version": 6,
+        "checkpoint_bytes": 17314948,
+        "file_sha256": "4e110f6df9f339e103dd6bfd4f2029bd2c3f5b2274c7d1398c208faa7426c7d7"
+      },
+      "manual_restore_auto_resumed": true,
+      "automatic_restore_auto_resumed": true,
+      "manual_session_media_exact": true,
+      "automatic_session_media_exact": true,
+      "atomic_edit_preserves_media": true,
+      "hidden_sidebar_retains_draft": true,
+      "automatic_rom_reopen": true,
+      "card_image_sha256": "5d78404dc28a1991f91e6ff9ab42cdc644bef20d4f28310afd6f32a493ddba81"
+    },
+    {
+      "name": "Original HP49g+ production arithmetic and legacy migration",
+      "private_report_sha256": "0e6b71975fc288c03057b66e2400aeb57f1351e7996f585efbaf53c289bcf34c",
+      "passed": true,
+      "model": {
+        "id": 5,
+        "name": "hp49gplus",
+        "width": 131,
+        "height": 80,
+        "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab"
+      },
+      "assets": {
+        "orchard.wasm": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+        "calculator.js": "7c20f8e68c19f7bdb961843bf01ef71311fd7d642bf9555cc9afb56b427f0dea",
+        "worker.js": "84d27615dc41c079a99dbb7f26ba2f2ba6dc917e8a0c2a6292fb7c4dc74bdc0c",
+        "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+        "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+        "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+        "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+        "hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+        "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7"
+      },
+      "browser_version": "156.0.8078.47",
+      "page_errors": [],
+      "restore_auto_resumed": true,
+      "saved_lcd_restored_exactly": true,
+      "legacy_restore_auto_resumed": true,
+      "legacy_session": {
+        "input": {
+          "schema": 1,
+          "model": 5,
+          "romHash": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+          "preset": "hp49-home",
+          "frameView": 1,
+          "stateHash": "408d2d7037fef3c2c5ba595f63494cf8de81dac10bb67d93b6e5efa3127a2609",
+          "checkpoint_version": 5,
+          "checkpoint_bytes": 17310571,
+          "file_sha256": "4a4be0744ae4d1b2912a434af2643a3e69da5e2a0d02ddd989fafce29160cc60"
+        },
+        "resaved": {
+          "schema": 1,
+          "model": 5,
+          "romHash": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+          "preset": "hp49-home",
+          "frameView": 1,
+          "stateHash": "8cdeb8ccdbfeb7a88717dedb4accbc80c733f1d323c9d3bfc96861b3e65c37c3",
+          "checkpoint_version": 6,
+          "checkpoint_bytes": 17314948,
+          "file_sha256": "49586976bc618043204e9edbe9fd2a4b575683a1b7aed8bba945763f716b683f"
+        }
+      }
+    },
+    {
+      "name": "Original HP39gs production arithmetic and layouts",
+      "private_report_sha256": "66fd1a5b78bbddfd1ad065eb9b7d9f1e3914d40ec7c5afb69c8eca4c17e4ea92",
+      "passed": true,
+      "model": {
+        "id": 2,
+        "name": "hp39gs",
+        "width": 131,
+        "height": 64,
+        "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff"
+      },
+      "assets": {
+        "orchard.wasm": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+        "calculator.js": "7c20f8e68c19f7bdb961843bf01ef71311fd7d642bf9555cc9afb56b427f0dea",
+        "worker.js": "84d27615dc41c079a99dbb7f26ba2f2ba6dc917e8a0c2a6292fb7c4dc74bdc0c",
+        "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "file-transfer.js": "a41dc40deb9d899ca0674912b89145f9b17c874b6ecdf22b29f0d6f1df824a78",
+        "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+        "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+        "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+        "hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+        "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7"
+      },
+      "browser_version": "156.0.8078.47",
+      "page_errors": [],
+      "restore_auto_resumed": true,
+      "saved_lcd_restored_exactly": true
+    }
+  ],
+  "visual_review": [
+    "HP39gs and HP49g+ 1+1=2 and 7*8=56",
+    "HP49g+ SD TEST recalled as42",
+    "390px traditional layout and prominent pause bar",
+    "HP39gs immersive landscape APLET interaction"
+  ],
+  "components": {
+    "passed": true,
+    "scripts": 12,
+    "browser_version": "156.0.8078.47",
+    "native_picker_ui_automated": false
+  },
+  "generated_guest_worker": {
+    "passed": true,
+    "profiles": 6,
+    "audiences": [
+      "calculator",
+      "debug"
+    ],
+    "private_report_sha256": "ff666e72cffad3490175451e7bd90c44ba43a9b7bf5c82198dbaa3d0a3ecd7ec"
+  },
+  "diagnostic_trace": {
+    "directed": {
+      "passed": true,
+      "generated_guest": true,
+      "original_rom_reproduced": false,
+      "call_results_equal": true,
+      "complete_checkpoint_equal": true,
+      "exact_key_ticks": true,
+      "immutable_stop_capture": true,
+      "held_key_stop_preserved": true,
+      "release_changes_checkpoint": true,
+      "held_key_calls": 3,
+      "held_key_run_calls": 1,
+      "idle_stop_replay": true,
+      "clocked_stop_replay": true,
+      "host_audio_calls_excluded": true,
+      "host_audio_checkpoint_equal": true,
+      "audio_waveform_levels": [
+        0,
+        1,
+        0
+      ],
+      "audio_replay_checkpoint_equal": true,
+      "unknown_audio_api_rejected": true,
+      "uart_channel_payloads_replayed": true,
+      "uart_snapshot_checkpoint_equal": true,
+      "irda_attachment_replayed": true,
+      "uart_channel_bytes": 2,
+      "unknown_lcd_api_rejected": true,
+      "completed_scan_differs_from_live": true,
+      "host_lcd_calls_excluded": true,
+      "host_lcd_checkpoint_equal": true,
+      "lcd_replay_checkpoint_equal": true,
+      "isolated_epochs": true,
+      "negative_checks": 23,
+      "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+      "calls": 7,
+      "run_calls": 2,
+      "stop": [
+        9,
+        16,
+        3891265776,
+        16,
+        3891265776
+      ]
+    },
+    "instrumented_browser": {
+      "passed": true,
+      "private_report_sha256": "411d275b8058517336329d9752d814b84e592c7eceb15ad19ce44b5f608e0a27",
+      "immediate_stop_api_calls": 7,
+      "timeout_api_calls": 64780,
+      "complete_checkpoint_equal": true,
+      "page_errors": [],
+      "worker_errors": []
+    }
+  },
+  "post_acceptance_asset_difference": {
+    "README.txt": {
+      "tested": "07d3f330406b287eea05d02865818498d07466236d065cf5a0336237ca3e931e",
+      "final": "cb0d0ae27f02735654a50a54c28b69dc37d9721ab42d686880c5241d17804d3b",
+      "reason": "Clarify that sessions omit the complete original ROM but may contain changed flash sectors."
+    }
+  }
+}

@@ -7,7 +7,8 @@
 #define EXPORT(n) __attribute__((export_name(n)))
 #endif
 static orchard_machine a,b;
-static uint8_t original[600000],expected[600000],actual[600000];
+#define V6_FIELDS 4377u
+static uint8_t original[600000+8200],expected[600000+8200],actual[600000+8200];
 static unsigned checks,failures,first;
 #define CHECK(x) do {++checks;if(!(x)){if(!failures)first=__LINE__;++failures;}}while(0)
 static bool equal(const void *x,const void *y,size_t n){const uint8_t *a=x,*b=y;for(size_t i=0;i<n;i++)if(a[i]!=b[i])return false;return true;}
@@ -16,6 +17,7 @@ static void put(uint8_t *p,uint32_t v){for(unsigned i=0;i<4;i++)p[i]=(uint8_t)(v
 static void init(unsigned model){
  CHECK(orchard_init(&a,sizeof a,model)==&a);a.loaded=true;put(a.flash,0xeafffffe);
  for(unsigned i=4;i<a.profile->flash_bytes;i++)a.flash[i]=(uint8_t)(i*17);
+ o_copy(a.flash_base,a.flash,a.profile->flash_bytes);
  for(unsigned i=0;i<a.profile->ram_bytes;i++)a.ram[i]=(uint8_t)(i*13);
  for(unsigned i=0;i<O_BOOT_SRAM_SIZE;i++)a.boot_sram[i]=(uint8_t)(i*23);
  a.soc.wtcon=0;a.cpu.cpsr=O_SVC|O_F|O_I;
@@ -30,6 +32,7 @@ static void init(unsigned model){
  a.soc.rtc.phase=11734421;a.soc.rtc.divider=254;a.soc.rtc.reg[1]=0x81;
  a.soc.tcon=1;a.soc.count[0]=123;a.soc.tcntb[0]=456;
  a.soc.lcd_probe68_idle_zero=true;a.soc.lcd_probe68_reads=99;
+ a.soc.lcd[19]=0x12210; /* Documented DITHMODE persists with the full LCD register file. */
  a.sram_alias_reads=77;a.sram_alias_writes=12;
 }
 static void export_to(uint8_t *p,size_t n){CHECK(orchard_checkpoint_save(&a,p,n)==ORCHARD_OK);}
@@ -42,7 +45,7 @@ static void legacy_pwm(void){
  size_t n=orchard_checkpoint_size(&a),ram_offset=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE;
  export_to(original,n);
  for(unsigned version=1;version<=3;version++){
-  size_t removed=76+64+(version<3?709:0)+(version==1?52:0),legacy_n=n-removed;
+  size_t removed=V6_FIELDS+76+64+(version<3?709:0)+(version==1?52:0),legacy_n=n-removed;
   o_copy(actual,original,ram_offset-removed);
   o_copy(actual+ram_offset-removed,original+ram_offset,n-ram_offset);
   put(actual+8,version);put(actual+12,(uint32_t)legacy_n);
@@ -56,9 +59,9 @@ static void legacy_pwm(void){
  /* A legacy format cannot distinguish a reset MPLL word from software
     writing the same value. Migration explicitly chooses unconfigured. */
  a.soc.clock[1]=0x5c080;a.soc.mpll_configured=1;export_to(original,n);
- o_copy(actual,original,ram_offset-140);o_copy(actual+ram_offset-140,original+ram_offset,n-ram_offset);
- put(actual+8,3);put(actual+12,(uint32_t)n-140);put(actual+28,crc(actual+32,n-140-32));
- CHECK(orchard_checkpoint_load(&a,actual,n-140)==ORCHARD_OK);
+ o_copy(actual,original,ram_offset-V6_FIELDS-140);o_copy(actual+ram_offset-V6_FIELDS-140,original+ram_offset,n-ram_offset);
+ put(actual+8,3);put(actual+12,(uint32_t)n-V6_FIELDS-140);put(actual+28,crc(actual+32,n-V6_FIELDS-140-32));
+ CHECK(orchard_checkpoint_load(&a,actual,n-V6_FIELDS-140)==ORCHARD_OK);
  CHECK(!a.soc.mpll_configured&&a.soc.clock[1]==0x5c080);
  /* v4 already represents the exact active PWM cycle and PLL history. Only
     new SPI/reset state is defaulted; do not apply the lossy v1-v3 migration. */
@@ -68,10 +71,10 @@ static void legacy_pwm(void){
  a.soc.count[2]=0;a.soc.phase[2]=1;a.soc.active_compare[2]=1;
  a.soc.pending_count[2]=5;a.soc.pending_compare[2]=2;a.soc.reload_pending=4;
  export_to(original,n);
- o_copy(actual,original,ram_offset-76);o_copy(actual+ram_offset-76,original+ram_offset,n-ram_offset);
- put(actual+8,4);put(actual+12,(uint32_t)n-76);put(actual+28,crc(actual+32,n-76-32));
+ o_copy(actual,original,ram_offset-V6_FIELDS-76);o_copy(actual+ram_offset-V6_FIELDS-76,original+ram_offset,n-ram_offset);
+ put(actual+8,4);put(actual+12,(uint32_t)n-V6_FIELDS-76);put(actual+28,crc(actual+32,n-V6_FIELDS-76-32));
  a.soc.spi[0].status=0;a.soc.spi[0].remaining=1;a.soc.wtreset=77;
- CHECK(orchard_checkpoint_load(&a,actual,n-76)==ORCHARD_OK);
+ CHECK(orchard_checkpoint_load(&a,actual,n-V6_FIELDS-76)==ORCHARD_OK);
  CHECK(a.soc.active_compare[2]==1&&a.soc.pending_count[2]==5&&a.soc.pending_compare[2]==2&&a.soc.reload_pending==4);
  CHECK(a.soc.pclk_phase==7&&a.soc.mpll_configured==1);
  CHECK(a.soc.spi[0].status==1&&a.soc.spi[0].pin==2&&!a.soc.spi[0].remaining&&!a.soc.wtreset);
@@ -107,7 +110,7 @@ EXPORT("regression") unsigned regression(void){
   original[n-1]^=1;CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);original[n-1]^=1;
   CHECK(orchard_checkpoint_load(&a,original,0)==ORCHARD_BAD_ARGUMENT);
   CHECK(orchard_checkpoint_load(&a,original,n+1)==ORCHARD_BAD_ARGUMENT);
-  a.flash[777]^=1;CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);a.flash[777]^=1;
+  a.flash_base[777]^=1;CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);a.flash_base[777]^=1;
   /* Valid checksum but illegal CPU mode still fails. */
   uint32_t cpsr=o_read_le(original+96,4);put(original+96,0);put(original+28,crc(original+32,n-32));
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
@@ -117,7 +120,7 @@ EXPORT("regression") unsigned regression(void){
   original[256]=2;put(original+28,crc(original+32,n-32));
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
   original[256]=0;
-  size_t head=n-ram_bytes-O_BOOT_SRAM_SIZE-76-64-709-52-31-1032-8;
+  size_t head=n-ram_bytes-O_BOOT_SRAM_SIZE-V6_FIELDS-76-64-709-52-31-1032-8;
   CHECK(o_read_le(original+head,4)==1020);
   put(original+head,0xffffffffu);put(original+28,crc(original+32,n-32));
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
@@ -127,8 +130,8 @@ EXPORT("regression") unsigned regression(void){
      v1/v2 lack FIFO/media and v1 lacks SDI. Preserve every legacy byte. */
   export_to(original,n);
   size_t ram_offset=n-ram_bytes-O_BOOT_SRAM_SIZE;
-  for(unsigned version=1;version<=4;version++){
-   size_t removed=76+(version<4?64:0)+(version<3?709:0)+(version==1?52:0),legacy_n=n-removed;
+  for(unsigned version=1;version<=5;version++){
+   size_t removed=V6_FIELDS+(version<5?76:0)+(version<4?64:0)+(version<3?709:0)+(version==1?52:0),legacy_n=n-removed;
    o_copy(actual,original,ram_offset-removed);
    o_copy(actual+ram_offset-removed,original+ram_offset,n-ram_offset);
    put(actual+8,version);put(actual+12,(uint32_t)legacy_n);
@@ -142,20 +145,20 @@ EXPORT("regression") unsigned regression(void){
    export_to(actual,n);CHECK(equal(original,actual,n));
   }
   /* Correct-CRC, invalid SD phase must be rejected atomically. */
-  put(original+ram_offset-76-64-709-4,3);put(original+28,crc(original+32,n-32));
+  put(original+ram_offset-V6_FIELDS-76-64-709-4,3);put(original+28,crc(original+32,n-32));
   CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
   export_to(original,n);CHECK(equal(original,actual,n));
   /* DMA remains unsupported. Repaired CRCs cannot bypass that restriction. */
   const uint32_t active_data_modes[]={0x8000,0x9001,0xa001,0xbfff};
   for(unsigned i=0;i<sizeof active_data_modes/sizeof active_data_modes[0];i++) {
-   put(original+ram_offset-76-64-709-52+7*4,active_data_modes[i]);
+   put(original+ram_offset-V6_FIELDS-76-64-709-52+7*4,active_data_modes[i]);
    put(original+28,crc(original+32,n-32));
    CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
    export_to(original,n);CHECK(equal(original,actual,n));
   }
   const uint32_t bad_extension[][2]={{36,64},{40,65},{48,5},{52,1},{68,99},{72,0},{76,513},{80,3},{96,512}};
   for(unsigned i=0;i<sizeof bad_extension/sizeof bad_extension[0];i++) {
-   put(original+ram_offset-76-64-709+bad_extension[i][0],bad_extension[i][1]);
+   put(original+ram_offset-V6_FIELDS-76-64-709+bad_extension[i][0],bad_extension[i][1]);
    put(original+28,crc(original+32,n-32));
    CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
    export_to(original,n);CHECK(equal(original,actual,n));
@@ -170,7 +173,7 @@ EXPORT("regression") unsigned regression(void){
   a.soc.count[0]=1;export_to(original,n);export_to(actual,n);
   const uint32_t bad_clock_pwm[][2]={{0,1},{4,2},{8,65536},{24,65536},{44,65536},{60,32},{60,1}};
   for(unsigned i=0;i<sizeof bad_clock_pwm/sizeof bad_clock_pwm[0];i++){
-   put(original+ram_offset-76-64+bad_clock_pwm[i][0],bad_clock_pwm[i][1]);
+   put(original+ram_offset-V6_FIELDS-76-64+bad_clock_pwm[i][0],bad_clock_pwm[i][1]);
    put(original+28,crc(original+32,n-32));
    CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
    export_to(original,n);CHECK(equal(original,actual,n));
@@ -180,7 +183,7 @@ EXPORT("regression") unsigned regression(void){
   const uint32_t bad_spi[][2]={{0,0x40},{4,2},{4,0},{8,0},{12,256},{16,256},
       {20,256},{24,1},{28,1},{28,16},{32,1},{32,256},{72,129}};
   for(unsigned i=0;i<sizeof bad_spi/sizeof bad_spi[0];i++){
-   put(original+ram_offset-76+bad_spi[i][0],bad_spi[i][1]);
+   put(original+ram_offset-V6_FIELDS-76+bad_spi[i][0],bad_spi[i][1]);
    put(original+28,crc(original+32,n-32));
    CHECK(orchard_checkpoint_load(&a,original,n)==ORCHARD_BAD_ARGUMENT);
    export_to(original,n);CHECK(equal(original,actual,n));

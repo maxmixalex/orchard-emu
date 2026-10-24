@@ -80,12 +80,11 @@ updates the canvas only for changed pixels/palette, and changes key/indicator
 DOM state independently. Typed-array palette copies avoid allocating a
 subarray object for every pixel. This does not alter guest LCD timing.
 
-The Worker now samples pixels and annunciators at an observed completed LCD
-scan and reuses that image for other publications during the same scan.
+The core now captures pixels at the actual completed LCD scan boundary; the Worker reuses that image for other publications during the same scan.
 Paused/stopped inspection, disable and reset/restore have explicit invalidation
 paths. This addresses partial RAM redraws being published repeatedly within
 one scan; it does not hide genuine blank frames or emulate physical panel
-response. Capture and recording use the same published image as the live LCD.
+response. Optional 35 ms response smooths the live image, while capture and recording retain raw published pixels.
 See [LCD presentation](lcd.md#host-presentation-synchronized-to-the-scan-counter)
 for original-ROM checkpoint comparisons and bounded browser checks.
 
@@ -97,7 +96,7 @@ one original-file handle per model where supported, or an explicitly labelled
 browser-local copy for the standard file input. Disabling automatic recall does
 not delete existing records; **Forget saved ROM locations and copies** removes them. Original
 files are read only, startup does not request permission, exported sessions
-omit ROMs, and no ROM is uploaded. See [local ROM storage](rom-storage.md).
+omit the complete original ROM but can contain modified flash sectors; no ROM is uploaded. See [local ROM storage](rom-storage.md).
 The [SD sidebar](sd-cards.md) creates/imports/exports/ejects a card image
 for the supported HP49g+ system, with write protection and guest block counters.
 Both manual and automatic sessions retain its entire contents.
@@ -106,13 +105,7 @@ Its file-preparation mode operates on a separate unmounted image with explicit
 of files or empty folders. Filesystem edits return a new image only after the
 full operation succeeds; a mounted card remains exclusively owned by the Worker.
 The [directory workflow](directory-sd.md) adds recursive 16/32 MiB import with a
-reviewable 8.3 mapping and page-session directory associations. An atomic
-copy/validation/eject operation returns the mounted card as a draft before
-explicit re-read or conflict-aware additive write-back becomes available.
-An active local-device bridge disables only the live-card controls, with an
-SD-specific translated explanation. The unmounted editor and its directory
-operations remain available. Both controller and Worker enforce this ownership
-boundary, including delayed insertion reads and dirty-card confirmation.
+reviewable 8.3 mapping and persistent directory handles, aliases and synchronization baselines. An atomic copy/validation/eject returns mounted media before a three-way preview applies additions, edits, deletions and renames in either direction. Conflicts require a decision, preview races are rechecked, and execution resumes only under the prior running state and current focus policy. The local-device UI is retired.
 
 ## Verification boundaries
 

@@ -77,6 +77,7 @@ static void instruction_intervals(void) {
        must walk it again and fault instead of executing a speculative opcode. */
     init();a->cpu.r[15]=0x00900000;a->cpu.control|=1;
     a->cpu.ttb=0x50000000;a->cpu.domain=UINT32_MAX;
+    a->soc.uart[0][0]=3;a->soc.uart[0][1]=5;
     put(a->flash,0xe2800001);CHECK(o_q_push(&a->soc.rx,2));
     *b=*a;compare(2);CHECK(a->cpu.exceptions==1);
     /* A successful last-page instruction commits before the next fetch fails;
@@ -158,6 +159,7 @@ EXPORT("regression") unsigned regression(void) {
     const uint32_t uart_value[]={0x204,0,1,0,2,0x7fd,~(1u<<28),1u<<28,1u<<28,0x81};
     for(unsigned split=0;split<2;split++) for(unsigned i=0;i<sizeof(uart_addr)/sizeof(uart_addr[0]);i++) {
         guest_mmio(uart_addr[i],uart_value[i],true); put(a->ram+8,0xeafffffe);
+        a->soc.uart[0][0]=3;
         a->soc.uart[0][1]=i==0?0:0x204;
         a->soc.uart[0][2]=i==3?1:0;
         a->soc.intsubmsk=i==5?0x7ff:0x7fd;
@@ -165,7 +167,7 @@ EXPORT("regression") unsigned regression(void) {
         *b=*a;
         if(split){compare(1);compare(1);compare(1);}else compare(3);
         compare(35); compare(400);
-        if(i!=1 && i!=2) CHECK((a->soc.subsrcpnd&2u)!=0);
+        if(i!=1) CHECK((a->soc.subsrcpnd&2u)!=0);
         if(i==9) CHECK(a->soc.tx.count==1 && a->soc.tx.data[0]==0x81);
         o_schedule_plan(a);CHECK(a->quiet_left>0);o_schedule_sync(a);same();
     }

@@ -40,15 +40,19 @@ export function keyRows(model) {
 export function applySetup(core, model, preset) {
   if (preset === 'strict') return;
   if (!isPlayable(model, preset)) throw new Error('This HOME research setup does not match the selected model.');
+  // Admitted39 SEND setup reads beyond the 256KiB cell array before any link
+  // traffic. Select the bounded nGCS1 decode hypothesis explicitly; strict
+  // setup and the core model default keep exact decoding. See uart-irda.md.
   const operations = preset === 'hp39-home' ? [
-    ['keyboard_attach',1], ['nor_select',2], ['gpio_inputs',5,0x8e,0],
+    ['keyboard_attach',1], ['nor_select',2], ['sram_select',1], ['gpio_inputs',5,0x8e,0],
     ['adc_input',0,1,1023], ['lcd_probe68',1],
   ] : preset === 'hp39gs-home' ? [
-    ['keyboard_attach',1], ['nor_select',2],
+    ['keyboard_attach',1], ['nor_select',2], ['sram_select',1],
     ['gpio_inputs',3,0xcc7f,0], ['gpio_inputs',5,0x8e,0], ['gpio_inputs',6,1,0],
     ['gpio_bias',6,0xf800,0xf800], ['adc_input',0,1,1023], ['adc_input',7,1,512], ['lcd_probe68',1],
   ] : preset === 'hp49-home' ? [
     ['keyboard_attach',1], ['nor_select',1], ['sram_select',1],
+    ...(typeof core.irda_attach==='function'?[['irda_attach',1]]:[]),
     ['gpio_inputs',3,0xcc7f,0], ['gpio_inputs',4,0xc000,0xc000],
     ['gpio_inputs',5,0x8e,0], ['gpio_inputs',6,1,0],
     ['gpio_bias',6,0xf800,0xf800], ['adc_input',0,1,1023], ['adc_input',7,1,512], ['lcd_probe68',1],

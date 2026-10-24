@@ -9,13 +9,16 @@ import i18n from '../web/i18n.js';
 import {SDCard} from '../web/SDCard.jsx';
 import {CalculatorController} from '../web/controller.js';
 import {CALCULATORS} from '../web/catalog.js';
-import {addSDFiles,deleteSDEntry,listSDDirectory} from '../web/sd-filesystem.js';
+import {addSDFiles,deleteSDEntry,listSDDirectory,readSDFile} from '../web/sd-filesystem.js';
+import {createSDImage} from '../web/sd-card.js';
+import {DirectoryStore} from '../web/directory-storage.js';
 let card=null;
 const messages=[];window.__messages=messages;window.__i18n=i18n;
 const worker={terminate(){},postMessage(data){
   const message=structuredClone(data);messages.push(message);
   queueMicrotask(()=>{
-    if(message.type==='sd-insert'){
+    if(message.type==='run'||message.type==='pause')controller.patch({running:message.type==='run'});
+    else if(message.type==='sd-insert'){
       card=message.bytes;
       controller.patch({sd:{present:true,bytes:card.length,writeProtected:message.writeProtected,dirty:false,readBlocks:0,writtenBlocks:0}});
       controller.receive({type:'sd-complete',action:'insert',name:message.name,generation:message.generation});
@@ -31,6 +34,17 @@ const controller=new CalculatorController({database:null,worker,download(bytes,n
 }});
 controller.patch({model:CALCULATORS.find(model=>model.id===5),ready:true,loaded:true,prefs:{...controller.state.prefs,autosave:false}});
 window.__controller=controller;
+window.__storedDirectory=()=>new DirectoryStore().read(controller.state.model.hash);
+window.__cardFile=path=>Array.from(readSDFile(card,path));
+window.__saveCard=async()=>{
+  const origin=await navigator.storage.getDirectory(),file=await origin.getFileHandle('saved-card.img',{create:true}),stream=await file.createWritable();
+  await stream.write(card);await stream.close();
+};
+window.__restoreCard=async(blank=false)=>{
+  const origin=await navigator.storage.getDirectory();window.__directoryRoot=await origin.getDirectoryHandle('fixture-source');
+  card=blank?createSDImage():new Uint8Array(await(await(await origin.getFileHandle('saved-card.img')).getFile()).arrayBuffer());
+  controller.sdDirectory=null;controller.patch({sd:{present:true,bytes:card.length,writeProtected:false,dirty:false,readBlocks:0,writtenBlocks:0}});
+};
 window.__setHostFile=async(path,bytes)=>{
   const names=path.split('/');let parent=window.__directoryRoot;
   for(const name of names.slice(0,-1))parent=await parent.getDirectoryHandle(name,{create:true});

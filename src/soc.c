@@ -108,6 +108,7 @@ static void pwm_tick(orchard_machine *m) {
     }
 }
 void o_soc_tick(orchard_machine *m) {
+    o_nor_tick(m);
     o_soc *s = &m->soc;
     bool power_off=(s->clock[3]&8u)!=0;
     m->power_wake=0;
@@ -147,14 +148,7 @@ void o_soc_tick(orchard_machine *m) {
         pwm_tick(m);
         if(m->stop.status!=ORCHARD_OK)return;
     }
-    if (s->rx.count && (s->uart[0][1] & 3u) == 1u) s->subsrcpnd |= 1u;
-    /* S3C2410A 11-11/12/15: non-FIFO TX-empty is a level source when
-       UCON0[9]=1 and TX mode[3:2]=01. UTXH0 writes immediately leave the
-       functional transmitter; tx is a host capture queue, not the holding
-       register. SUBSRCPND latches even while INTSUBMSK masks propagation.
-       Pulse, FIFO and baud timing are outside this functional subset. */
-    if ((s->uart[0][1] & 0x20cu) == 0x204u && !(s->uart[0][2] & 1u))
-        s->subsrcpnd |= 2u;
+    o_uart_tick(m);
 }
 static uint32_t *plain_register(o_soc *s, uint32_t address) {
     if (address >= 0x48000000u && address <= 0x48000030u) return &s->memc[(address & 0xffu) / 4u];
@@ -194,40 +188,6 @@ static bool timer_register(orchard_machine *m, uint32_t address, uint32_t *value
     else *value = *reg;
     return true;
 }
-static bool uart_register(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value, bool write) {
-    if (address < 0x50000000u || address >= 0x5000c000u) return false;
-    unsigned ch = (address - 0x50000000u) / 0x4000u;
-    unsigned off = address & 0x3fffu;
-    if ((off & 3u) || off > 0x28u) return false;
-    o_soc *s = &m->soc;
-    if (off != 0x20 && off != 0x24 && width != 4) return false;
-    if (write) {
-        if (off == 0x20 && ch == 0) {
-            if (!o_q_push(&s->tx, (uint8_t)*value)) {
-                o_stop(m, ORCHARD_IO_FULL, address, *value); return false;
-            }
-            return true;
-        }
-        if (off <= 0x0c || off == 0x28) {
-            s->uart[ch][off / 4] = *value;
-            if (off == 8 && ch == 0 && (*value & 2u)) o_zero(&s->rx, sizeof(s->rx));
-            return true;
-        }
-        return false;
-    }
-    if (off <= 0x0c || off == 0x28) *value = s->uart[ch][off / 4];
-    else if (off == 0x10) *value = 6u | ((ch == 0 && s->rx.count) ? 1u : 0u);
-    else if (off == 0x14) *value = 0; /* No line errors in the functional byte stream. */
-    else if (off == 0x18) {
-        unsigned n = ch == 0 ? s->rx.count : 0;
-        *value = n >= 16 ? 1u << 8 : n;
-    } else if (off == 0x24 && ch == 0) {
-        uint8_t byte = 0;
-        (void)o_q_pop(&s->rx, &byte);
-        *value = byte;
-    } else return false;
-    return true;
-}
 bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t *value) {
     o_schedule_sync(m);
     o_soc *s = &m->soc;
@@ -242,7 +202,8 @@ bool o_mmio_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
     if (o_adc_register(m, address, width, value, false)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
     if (o_rtc_register(m, address, width, value, false)) return true;
-    if (uart_register(m, address, width, value, false)) return true;
+    if (o_uart_register(m, address, width, value, false)) return true;
+    if (m->stop.status != ORCHARD_OK) return false;
     if (width == 4 && !(address & 3u)) {
         /* These NOR-booting boards expose no NAND medium. The bounded
            controller subset retains only the disabled NFCONF=0 state;
@@ -288,7 +249,7 @@ bool o_mmio_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t
     if (m->stop.status != ORCHARD_OK) return false;
     if (o_rtc_register(m, address, width, &value, true)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
-    if (uart_register(m, address, width, &value, true)) return true;
+    if (o_uart_register(m, address, width, &value, true)) return true;
     if (m->stop.status != ORCHARD_OK) return false;
     if (width == 4 && !(address & 3u)) {
         /* S3C2410A 6-6: NFCONF bit 15 enables the NAND controller. A zero
