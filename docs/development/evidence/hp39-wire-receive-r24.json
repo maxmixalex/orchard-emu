@@ -1,0 +1,440 @@
+{
+  "schema": "orchard-hp39-wire-receive-r24-v1",
+  "recorded_on": "2026-10-24",
+  "scope": "Continuous calculator-to-host Wire reception through production USB/FileTransfer, original-ROM physical SEND actions; separate from host-to-calculator auto-RECV uploads.",
+  "acceptance": {
+    "models": [
+      1,
+      2
+    ],
+    "transport": "usb",
+    "received_kinds_with_original_rom": [
+      "B",
+      "C",
+      "H"
+    ],
+    "program_D": "Structural admission and synthetic regression only; no original-ROM program SEND claim.",
+    "multipart_input": "Separately identified GBP39 v0.3 ALIGN4 diagnostic rebuild supplied as test input; this is transfer identity validation, not a claim that the original GBP v0.3 executable runs.",
+    "multipart_archive_sha256": "0e9abca0c5c388686d3cc75390b3b9fdf53d6d36e4db1709793fdad1e8330aaa",
+    "limits": {
+      "files": 16,
+      "aggregate_bytes": 8388608,
+      "object_bytes": 2097152,
+      "guest_seconds": 900,
+      "nested_depth": 32,
+      "object_nodes": 100000,
+      "reply_queue_items": 4
+    }
+  },
+  "models": [
+    {
+      "model": 1,
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+      "tool_sha256": "ec6e74f46b3aaf73b0367a92371cb3594ac7214ca4a8fa1ee3455683fe33adfa",
+      "cold_boot": true,
+      "guest_memory_patched": false,
+      "host_timing_sample": false,
+      "hardware_validated": false,
+      "sources": {
+        "web/hp48.js": "14590b079838824b7bc9359d0a49f14cfb7bb5a5c2a7321529658e35dd4238f8",
+        "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "web/file-transfer.js": "b08edcd0d3142c59ee6807e3b3031fa907c9367c2544e0a02c0030ec659adcd9",
+        "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+        "web/hp39-wire-receive.js": "8de548941878ecf54fb194d40942171d2de68e3c345acafe91980190e3da7fe1",
+        "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3"
+      },
+      "inputs": [
+        {
+          "name": "First.arbitrary",
+          "bytes": 280,
+          "sha256": "3697a4035f8380cb5b855ef15ab45c5cb2c74ba4a07e6be19f4b6124299560ec"
+        },
+        {
+          "name": "Second.arbitrary",
+          "bytes": 80,
+          "sha256": "1ebabf591cabc3a9528d5dbb0d788033637afd890dcc152f95fb460577cf9827"
+        },
+        {
+          "name": "LIBRARY.any",
+          "bytes": 1489,
+          "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+        },
+        {
+          "name": "APLET.any",
+          "bytes": 13352,
+          "sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc"
+        }
+      ],
+      "received": [
+        {
+          "tick": 254480448,
+          "name": "Orchard_Two-3-1.note",
+          "bytes": 75,
+          "sha256": "8095a44e359bfe75ab728b7e252e18fb9318654eb1b50c097e1a2f5c97563637",
+          "request": 3
+        },
+        {
+          "tick": 299069696,
+          "name": "Orchard_One-3-2.note",
+          "bytes": 269,
+          "sha256": "fea412cc3b197478d18ad897b241d5c19c5f935758ba97232ebc60ccb4a18e2e",
+          "request": 3
+        },
+        {
+          "tick": 525162304,
+          "name": "LIB275L-6-1.L39",
+          "bytes": 1484,
+          "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f",
+          "request": 6
+        },
+        {
+          "tick": 581130048,
+          "name": "GBP39_ALIGN4-6-2.apt",
+          "bytes": 13352,
+          "sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc",
+          "request": 6
+        },
+        {
+          "tick": 662417152,
+          "name": "LIB275L-6-3.L39",
+          "bytes": 1484,
+          "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f",
+          "request": 6
+        },
+        {
+          "tick": 718384896,
+          "name": "GBP39_ALIGN4-6-4.apt",
+          "bytes": 13352,
+          "sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc",
+          "request": 6
+        }
+      ],
+      "two_notes_exact": true,
+      "notes_one_listener": true,
+      "multipart_two_sends_exact": true,
+      "multipart_one_listener": true,
+      "stop_kept_files": true,
+      "arithmetic_after_transfer": true,
+      "arithmetic_work_area_sha256": "4f424d9352b6962f8d3d8ec76203f9d7c60136d66caf9b85774d8c6227717bea",
+      "passed": true,
+      "report_sha256": "2129bba34b92bd38dd9f44d9ec670ced809e95959b3fab42cc30bcc589a0d7fe",
+      "final_dfsr": 0,
+      "final_stop": 0,
+      "listener_requests": {
+        "3": {
+          "completed_files": 2,
+          "bytes": 344
+        },
+        "6": {
+          "completed_files": 4,
+          "bytes": 29672
+        }
+      }
+    },
+    {
+      "model": 2,
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+      "tool_sha256": "ec6e74f46b3aaf73b0367a92371cb3594ac7214ca4a8fa1ee3455683fe33adfa",
+      "cold_boot": true,
+      "guest_memory_patched": false,
+      "host_timing_sample": false,
+      "hardware_validated": false,
+      "sources": {
+        "web/hp48.js": "14590b079838824b7bc9359d0a49f14cfb7bb5a5c2a7321529658e35dd4238f8",
+        "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "web/file-transfer.js": "b08edcd0d3142c59ee6807e3b3031fa907c9367c2544e0a02c0030ec659adcd9",
+        "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+        "web/hp39-wire-receive.js": "8de548941878ecf54fb194d40942171d2de68e3c345acafe91980190e3da7fe1",
+        "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3"
+      },
+      "inputs": [
+        {
+          "name": "First.arbitrary",
+          "bytes": 280,
+          "sha256": "3697a4035f8380cb5b855ef15ab45c5cb2c74ba4a07e6be19f4b6124299560ec"
+        },
+        {
+          "name": "Second.arbitrary",
+          "bytes": 80,
+          "sha256": "1ebabf591cabc3a9528d5dbb0d788033637afd890dcc152f95fb460577cf9827"
+        },
+        {
+          "name": "LIBRARY.any",
+          "bytes": 1489,
+          "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+        },
+        {
+          "name": "APLET.any",
+          "bytes": 13352,
+          "sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc"
+        }
+      ],
+      "received": [
+        {
+          "tick": 309006400,
+          "name": "Orchard_Two-3-1.note",
+          "bytes": 75,
+          "sha256": "8095a44e359bfe75ab728b7e252e18fb9318654eb1b50c097e1a2f5c97563637",
+          "request": 3
+        },
+        {
+          "tick": 381817088,
+          "name": "Orchard_One-3-2.note",
+          "bytes": 269,
+          "sha256": "fea412cc3b197478d18ad897b241d5c19c5f935758ba97232ebc60ccb4a18e2e",
+          "request": 3
+        },
+        {
+          "tick": 619738944,
+          "name": "LIB275L-6-1.L39",
+          "bytes": 1484,
+          "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f",
+          "request": 6
+        },
+        {
+          "tick": 675600192,
+          "name": "GBP39_ALIGN4-6-2.apt",
+          "bytes": 13352,
+          "sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc",
+          "request": 6
+        },
+        {
+          "tick": 788352768,
+          "name": "LIB275L-6-3.L39",
+          "bytes": 1484,
+          "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f",
+          "request": 6
+        },
+        {
+          "tick": 844205824,
+          "name": "GBP39_ALIGN4-6-4.apt",
+          "bytes": 13352,
+          "sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc",
+          "request": 6
+        }
+      ],
+      "two_notes_exact": true,
+      "notes_one_listener": true,
+      "multipart_two_sends_exact": true,
+      "multipart_one_listener": true,
+      "stop_kept_files": true,
+      "arithmetic_after_transfer": true,
+      "arithmetic_work_area_sha256": "4f424d9352b6962f8d3d8ec76203f9d7c60136d66caf9b85774d8c6227717bea",
+      "passed": true,
+      "report_sha256": "d2c45d74869d8c35603dd9f462c20504ac8a56625d890a13ef7a1d746e9c0057",
+      "final_dfsr": 0,
+      "final_stop": 0,
+      "listener_requests": {
+        "3": {
+          "completed_files": 2,
+          "bytes": 344
+        },
+        "6": {
+          "completed_files": 4,
+          "bytes": 29672
+        }
+      }
+    }
+  ],
+  "browser": {
+    "test": "tests/browser-components.py",
+    "test_sha256": "48783bc7b7dc1cb0bef052eba045650c4173471c4daf19540c9f22939435ad68",
+    "passed": true,
+    "scope": "Offline production React/Mantine/controller fixture: Wire receive entry, one request and two complete-file events, Stop/error preservation, model-specific SEND recovery, no serial reverse-Wire entry; not a ROM/Worker browser end-to-end claim.",
+    "cjk_font": "Isolated Noto Sans CJK SC fontconfig; no font added to product assets."
+  },
+  "regressions": [
+    "npm run test:tools",
+    "npm run test:frontend",
+    "npm run test:pages",
+    "npm run check",
+    "CLANG=clang-18 npm run build"
+  ],
+  "privacy": "Original ROMs, LCD frames, checkpoints, USB payload captures and returned third-party objects remain private. This record contains hashes, sizes, protocol state claims and exact-comparison assertions only.",
+  "limitations": [
+    "HP40gs and serial reverse Wire are not enabled.",
+    "Unknown top-level object prologs or multipart index layouts are rejected without guessing a trailing-byte boundary.",
+    "Stopping or failing a listener preserves already received files; ON may still be required to exit the calculator SEND screen.",
+    "Guest-time durations and functional emulation are not physical hardware or browser wall-clock performance validation."
+  ],
+  "regression_build_scope": {
+    "worktree_wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+    "note": "The worktree build and broad ROM-free/component regressions use the unchanged r23 core. Both original-ROM receive witnesses explicitly select the final r24 74a8c4f2 core through --wasm. Root integration owns the final combined build gates."
+  },
+  "final_protocol_rerun": {
+    "recorded_on": "2026-10-24",
+    "scope": "Cold boots repeated after bounded final-EOT ACK linger was integrated. Production FileTransfer/VirtualUSB and actual original-ROM physical SENDs; Node host, not the browser Controller or cancellation barrier. Earlier results above keep their original source identity.",
+    "passed": true,
+    "models": [
+      {
+        "model": 1,
+        "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+        "wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+        "tool_sha256": "ec6e74f46b3aaf73b0367a92371cb3594ac7214ca4a8fa1ee3455683fe33adfa",
+        "cold_boot": true,
+        "guest_memory_patched": false,
+        "host_timing_sample": false,
+        "hardware_validated": false,
+        "sources": {
+          "web/hp48.js": "14590b079838824b7bc9359d0a49f14cfb7bb5a5c2a7321529658e35dd4238f8",
+          "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+          "web/file-transfer.js": "b08edcd0d3142c59ee6807e3b3031fa907c9367c2544e0a02c0030ec659adcd9",
+          "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+          "web/hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+          "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3"
+        },
+        "received": [
+          {
+            "tick": 254480448,
+            "name": "Orchard_Two-3-1.note",
+            "bytes": 75,
+            "sha256": "8095a44e359bfe75ab728b7e252e18fb9318654eb1b50c097e1a2f5c97563637",
+            "request": 3
+          },
+          {
+            "tick": 299069696,
+            "name": "Orchard_One-3-2.note",
+            "bytes": 269,
+            "sha256": "fea412cc3b197478d18ad897b241d5c19c5f935758ba97232ebc60ccb4a18e2e",
+            "request": 3
+          },
+          {
+            "tick": 525162304,
+            "name": "LIB275L-6-1.L39",
+            "bytes": 1484,
+            "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f",
+            "request": 6
+          },
+          {
+            "tick": 581130048,
+            "name": "GBP39_ALIGN4-6-2.apt",
+            "bytes": 13352,
+            "sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc",
+            "request": 6
+          },
+          {
+            "tick": 662417152,
+            "name": "LIB275L-6-3.L39",
+            "bytes": 1484,
+            "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f",
+            "request": 6
+          },
+          {
+            "tick": 718384896,
+            "name": "GBP39_ALIGN4-6-4.apt",
+            "bytes": 13352,
+            "sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc",
+            "request": 6
+          }
+        ],
+        "two_notes_exact": true,
+        "notes_one_listener": true,
+        "multipart_two_sends_exact": true,
+        "multipart_one_listener": true,
+        "stop_kept_files": true,
+        "arithmetic_after_transfer": true,
+        "arithmetic_work_area_sha256": "4f424d9352b6962f8d3d8ec76203f9d7c60136d66caf9b85774d8c6227717bea",
+        "passed": true,
+        "report_sha256": "dca5f099bfa6487c61d34b6b13361205cc5eafd74930e21b556aa2a39517d84c",
+        "completed_files": 6,
+        "completed_bytes": 30016,
+        "listener_requests": {
+          "3": {
+            "files": 2,
+            "bytes": 344
+          },
+          "6": {
+            "files": 4,
+            "bytes": 29672
+          }
+        }
+      },
+      {
+        "model": 2,
+        "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+        "wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+        "tool_sha256": "ec6e74f46b3aaf73b0367a92371cb3594ac7214ca4a8fa1ee3455683fe33adfa",
+        "cold_boot": true,
+        "guest_memory_patched": false,
+        "host_timing_sample": false,
+        "hardware_validated": false,
+        "sources": {
+          "web/hp48.js": "14590b079838824b7bc9359d0a49f14cfb7bb5a5c2a7321529658e35dd4238f8",
+          "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+          "web/file-transfer.js": "b08edcd0d3142c59ee6807e3b3031fa907c9367c2544e0a02c0030ec659adcd9",
+          "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+          "web/hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+          "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3"
+        },
+        "received": [
+          {
+            "tick": 309006400,
+            "name": "Orchard_Two-3-1.note",
+            "bytes": 75,
+            "sha256": "8095a44e359bfe75ab728b7e252e18fb9318654eb1b50c097e1a2f5c97563637",
+            "request": 3
+          },
+          {
+            "tick": 381817088,
+            "name": "Orchard_One-3-2.note",
+            "bytes": 269,
+            "sha256": "fea412cc3b197478d18ad897b241d5c19c5f935758ba97232ebc60ccb4a18e2e",
+            "request": 3
+          },
+          {
+            "tick": 619738944,
+            "name": "LIB275L-6-1.L39",
+            "bytes": 1484,
+            "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f",
+            "request": 6
+          },
+          {
+            "tick": 675600192,
+            "name": "GBP39_ALIGN4-6-2.apt",
+            "bytes": 13352,
+            "sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc",
+            "request": 6
+          },
+          {
+            "tick": 788352768,
+            "name": "LIB275L-6-3.L39",
+            "bytes": 1484,
+            "sha256": "71cb30788d45b8eb70e808daaac8decd499074db3b51629ed136105bef4ea83f",
+            "request": 6
+          },
+          {
+            "tick": 844205824,
+            "name": "GBP39_ALIGN4-6-4.apt",
+            "bytes": 13352,
+            "sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc",
+            "request": 6
+          }
+        ],
+        "two_notes_exact": true,
+        "notes_one_listener": true,
+        "multipart_two_sends_exact": true,
+        "multipart_one_listener": true,
+        "stop_kept_files": true,
+        "arithmetic_after_transfer": true,
+        "arithmetic_work_area_sha256": "4f424d9352b6962f8d3d8ec76203f9d7c60136d66caf9b85774d8c6227717bea",
+        "passed": true,
+        "report_sha256": "48ac02d3ef5bb2ec5102d0f7e08f415b8c18978bc702699ba9c69ba6a398a9ec",
+        "completed_files": 6,
+        "completed_bytes": 30016,
+        "listener_requests": {
+          "3": {
+            "files": 2,
+            "bytes": 344
+          },
+          "6": {
+            "files": 4,
+            "bytes": 29672
+          }
+        }
+      }
+    ],
+    "browser_record": "hp39-wire-browser-r24.json"
+  }
+}

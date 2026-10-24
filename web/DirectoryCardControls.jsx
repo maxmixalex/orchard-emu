@@ -7,7 +7,7 @@ import {readDirectoryHandle,readDirectoryFiles,createDirectoryCard,requestDirect
 import {identifyDirectoryCard,planDirectorySync,applyDirectorySync,directorySyncSummary} from './directory-sync.js';
 
 export function DirectoryCardControls({image,association,disabled,onDraft,onAssociation,onBusy,
-  store,storageKey,savedDirectory,onSaved,autoSync=false,onSyncInsert}){
+  store,storageKey,savedDirectory,onSaved,autoSync=false,onSyncInsert,onSyncCancel,onSyncApply}){
   const {t}=useTranslation(),input=useRef(null),epoch=useRef(0),lastProgress=useRef(0),automatic=useRef(false),working=useRef(false);
   const [busy,setBusy]=useState(false),[failure,setFailure]=useState(null),[progress,setProgress]=useState(null);
   const [size,setSize]=useState(image.length===32*1024*1024?'32':'16'),[snapshot,setSnapshot]=useState(null),[preview,setPreview]=useState(null),[page,setPage]=useState(1);
@@ -117,13 +117,14 @@ export function DirectoryCardControls({image,association,disabled,onDraft,onAsso
       {summary.conflicts>0&&<Text size="xs" c="dimmed">{t('sdDirectoryUnresolved')}</Text>}
       <Group gap="xs"><Button disabled={locked} onClick={()=>void run(async options=>{
         if(summary.toLocal>0)await requestDirectoryPermission(association.handle,'readwrite');
+        if(!options.isCurrent())return;onSyncApply?.();
         const next=await applyDirectorySync(plan,choices,options);
         next.association=identifyDirectoryCard(next.bytes,next.association);
         const saved=await remember(next.association,options);if(!options.isCurrent())return;
         onDraft({bytes:next.bytes,name:sdImageName(association.name),association:next.association});setPlan(null);setResult(next);
         if(saved&&onSyncInsert&&!next.failed.length&&!next.conflicts.length)await onSyncInsert(next.bytes,sdImageName(association.name),next.association);
       })}>{t(onSyncInsert?'sdDirectorySyncInsert':'sdDirectorySyncApply')}</Button>
-        <Button variant="subtle" disabled={locked} onClick={()=>setPlan(null)}>{t('cancel')}</Button></Group>
+        <Button variant="subtle" disabled={locked} onClick={()=>{if(onSyncCancel)void onSyncCancel();else setPlan(null);}}>{t('cancel')}</Button></Group>
     </Stack>}
     {result&&<Stack gap={4} role="status">
       <Text size="sm">{t('sdDirectorySynced',{count:result.completed.length,conflicts:result.conflicts.length,failed:result.failed.length})}</Text>

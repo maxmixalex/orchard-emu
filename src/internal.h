@@ -158,13 +158,26 @@ typedef struct {
     o_rtc rtc;
 } o_soc;
 
-/* Host memoization, NOT guest TLB state. A hit revalidates both live table
- * words and the full translation context. Offsets survive machine relocation;
- * only side-effect-free, non-aliased physical table storage is admitted. */
+/* ARM920T translation state (DDI 0151C 2.3.12/14, 3.1, 3.3.12).
+ * mask records the actual entry size, including unequal-AP subpages. */
 typedef struct {
-    uint32_t virtual_page, physical_page, control, ttb, domain, access;
-    uint32_t first_offset, first_word, second_offset, second_word;
-} o_translation;
+    uint32_t virtual_base, physical_base, mask;
+    uint8_t ap, domain;
+    bool valid, preserved;
+} o_tlb_entry;
+#define O_TLB_ENTRIES 64u
+#define O_TLB_LOCKDOWN_MASK UINT32_C(0xfff00001)
+typedef struct {
+    o_tlb_entry entry[O_TLB_ENTRIES];
+    uint32_t lockdown; /* Base[31:26], victim[25:20], preserve[0]. */
+} o_tlb;
+/* Host lookup hints only. Exact MVA tags and invalidation on guest-bank
+ * mutation preserve the reference scan's priority for overlapping entries. */
+typedef struct {
+    uint32_t virtual_page;
+    uint8_t index;
+    bool valid;
+} o_tlb_hint;
 #define O_TRANSLATIONS 64u
 
 /* Optional host presentation only. PWM counter/compare state lives in o_soc. */
@@ -193,7 +206,8 @@ struct orchard_machine {
     uint32_t quiet_left, deferred_ticks; /* Host-only, flushed at public boundaries. */
     bool idle_write_enabled; /* Host-only policy scope; never saved in a checkpoint. */
     uint32_t power_wake; /* Transient wake requests; consumed within one SoC tick. */
-    o_translation translations[O_TRANSLATIONS];
+    o_tlb_hint translations[2][O_TRANSLATIONS];
+    o_tlb tlb[2]; /* Data, instruction; architectural checkpoint state. */
     o_buzzer buzzer;
     o_lcd_output lcd_output;
     o_cpu cpu;

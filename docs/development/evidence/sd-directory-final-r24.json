@@ -1,0 +1,310 @@
+{
+  "schema": "orchard-sd-directory-browser-v1",
+  "passed": true,
+  "automatic_checks_passed": true,
+  "visual_review_required": false,
+  "original_rom": true,
+  "production_worker": true,
+  "rom_ram_patches": false,
+  "performance_sample": false,
+  "model": {
+    "id": 5,
+    "name": "hp49gplus",
+    "width": 131,
+    "height": 80,
+    "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab"
+  },
+  "assets": {
+    "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+    "README.txt": "db93522959e9bdfab941554285089b7467db5c73ab81d1159ba2f3e1e535f162",
+    "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+    "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+    "calculator.css": "a6758eb130d9cb6503315913c0af0473abf37461d8f17f02d1ce99b0839e40e7",
+    "calculator.js": "ce9404f04ad13200ec5ef6d9ea357d849b9a253a14775421044f745eb81aea6b",
+    "catalog.js": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8",
+    "debug.html": "134082d0e77b5fae7486ce9783610edaa448a7060fe95d19ae1d27d79b54682b",
+    "file-transfer.js": "b08edcd0d3142c59ee6807e3b3031fa907c9367c2544e0a02c0030ec659adcd9",
+    "host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+    "host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+    "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+    "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+    "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+    "hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+    "hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+    "hp48.js": "14590b079838824b7bc9359d0a49f14cfb7bb5a5c2a7321529658e35dd4238f8",
+    "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+    "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+    "lcd-frames.js": "b9dbbafaa686d3e0282ee3f935205d20bee5b864b6e5b7c90e4e17b4dfa162fe",
+    "licenses/frontend.txt": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+    "licenses/hp-calcs-svg/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "licenses/hp-calcs-svg/NOTICE.txt": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+    "licenses/hp-calcs-svg/README.md": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+    "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+    "main.js": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35",
+    "orchard.wasm": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+    "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+    "preferences.js": "2a68b46423babf91328fb1f70e4e2a8606f18248dc1a303c88da49a505f6ce6e",
+    "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+    "sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+    "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+    "session.js": "c16703077319fae40b9059b970a73e9ec4ee615d9b6534058d53e816766528d1",
+    "skin.js": "b63ffb7b17bcb971d283daea4672f93dfb84ad9fc79fa09aa0bd2dce7b7416d0",
+    "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+    "skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+    "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+    "skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+    "skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+    "skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+    "skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+    "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+    "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+    "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+    "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+    "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+    "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+    "worker.js": "82b96dd0005a7a9cbc7dc7874315a6351314d9aac22c541b434e97871adea7f0"
+  },
+  "stages": [
+    "original-rom-cold-boot-and-real-directory",
+    "mounted-cancel-and-back-preserve-original-media",
+    "original-files-reads-host-object-and-writes-test",
+    "bidirectional-preview-apply-and-reinsert",
+    "session-reload-reattaches-persisted-directory-handle"
+  ],
+  "expected_checkpoint_version": 7,
+  "picker_adapter": "Real OPFS FileSystemDirectoryHandle; native OS picker and permission prompts not automated",
+  "tools": {
+    "probe-sd-directory-browser.py": "767a90e4d022aecdbb9a9e2a9553c1ec7af3cc409584f362cd66b1eb609580d9"
+  },
+  "browser_version": "156.0.8078.47",
+  "startup": [
+    {
+      "screen": "recover-memory",
+      "sha256": "fae0d5b7244ea34f005f289dc8f06e1e2a1ac6401ec6b99f668565c4b7eef34d",
+      "ticks": 62454000,
+      "stopped": false,
+      "waited_ticks": 2223984,
+      "physical_scan": 40
+    },
+    {
+      "screen": "memory-clear",
+      "sha256": "3da35b0b5d18324cdea109155e260245ae8ed2fabbe36d38d707879d519dbf1f",
+      "ticks": 105505200,
+      "stopped": false,
+      "waited_ticks": 27888768,
+      "physical_scan": 40
+    },
+    {
+      "screen": "home",
+      "sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+      "ticks": 122156399,
+      "stopped": false,
+      "waited_ticks": 2252399,
+      "physical_scan": null
+    }
+  ],
+  "initial_binding": {
+    "name": "orchard-original-rom",
+    "serial": 63078368,
+    "sameEntry": true,
+    "mappings": [
+      {
+        "source": "ANSWER",
+        "card": "/ANSWER",
+        "type": "file"
+      }
+    ],
+    "baseline": [
+      {
+        "source": "ANSWER",
+        "type": "file"
+      }
+    ]
+  },
+  "mounted_cancel": {
+    "original_media_sha256": "2f9cdab6e27832360c7f4b4c45ac8282ad12e3f28dca84b77ff005bc885af54c",
+    "all_bytes_equal": true,
+    "readonly_preserved": true,
+    "association_preserved": true,
+    "running_cancel_resumes": true,
+    "paused_back_stays_paused": true
+  },
+  "firmware_write": {
+    "sd": {
+      "bytes": 16777216,
+      "present": true,
+      "writeProtected": false,
+      "dirty": true,
+      "cardState": 3,
+      "lastCommand": 7,
+      "commands": 1729,
+      "readBlocks": 453,
+      "writtenBlocks": 15
+    },
+    "file": "TEST",
+    "sha256": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42"
+  },
+  "bidirectional_plan": "1 changes to card, 1 to folder, 0 conflicts\n\nLocal path\tAction\nLOCAL\t\n\nAdd to card\n\n\nTEST\t\n\nAdd to folder\n\nApply and insert card\nCancel",
+  "bidirectional_sync": {
+    "card_files": [
+      "ANSWER",
+      "LOCAL",
+      "TEST"
+    ],
+    "directory_files": [
+      "ANSWER",
+      "LOCAL",
+      "TEST"
+    ],
+    "exact_file_sha256": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42",
+    "running_resumed": true
+  },
+  "session": {
+    "model": 5,
+    "romHash": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+    "stateHash": "4300c1bb7fef6cc2fa55d2c6a2727bd19c54f2516d412259ab83a60c1c405caa",
+    "checkpoint_version": 7,
+    "checkpoint_bytes": 17317004,
+    "file_sha256": "f97b3638061f53902d49c916ea1eb04c19a8985e7b459730bf7aade310f119c3"
+  },
+  "reload_reassociation": {
+    "automatic_rom_copy_reopen": true,
+    "session_media_exact": true,
+    "saved_handle_same_entry": true,
+    "picker_calls": [
+      {
+        "id": "orchard-sd",
+        "mode": "read"
+      }
+    ],
+    "new_local_file_synced": "AFTER",
+    "running_resumed": true
+  },
+  "final_snapshot": {
+    "loaded": true,
+    "running": true,
+    "stopped": false,
+    "model": 5,
+    "width": 131,
+    "height": 80,
+    "pending": 0,
+    "active": null,
+    "sd": {
+      "bytes": 16777216,
+      "present": true,
+      "writeProtected": false,
+      "dirty": true,
+      "cardState": 3,
+      "lastCommand": 7,
+      "commands": 2227,
+      "readBlocks": 584,
+      "writtenBlocks": 25
+    },
+    "ticks": 392939038
+  },
+  "visual_review_files": [
+    "lcd-host-answer-42.png",
+    "lcd-after-reload-42.png",
+    "files-firmware-created-test.png",
+    "files-after-reload-sync.png"
+  ],
+  "page_errors": [],
+  "worker_errors": [],
+  "request_methods": [
+    "GET"
+  ],
+  "visual_review": {
+    "reviewed_utc": "2026-10-24T06:25:28.554675+00:00",
+    "reviewer": "assistant visual inspection of actual browser screenshots",
+    "images": {
+      "startup-2-home.png": {
+        "sha256": "5e55d480edfeeb2c3f931032502d705f1b52a8718830b0b1b785aab245569b3d",
+        "observation": "Original HP49g+ reached its blank ALG HOME screen after recognized Recover and Memory Clear prompts, each confirmed before physical F6."
+      },
+      "lcd-host-answer-42.png": {
+        "sha256": "f00c365123bdf19c66e2ef9dc777cd5299f9951efe26eadb0849ab06f604b425",
+        "observation": "Original HOME displays 42 after physical FILES/RCL of host-created ANSWER."
+      },
+      "files-firmware-created-test.png": {
+        "sha256": "d692332a5a986ee69d09fee208464f3502a99258fc57bf44d09dc53831573da9",
+        "observation": "Original Filer visibly lists ANSWER and firmware-created TEST, both INTG."
+      },
+      "files-after-reload-sync.png": {
+        "sha256": "dd633fb1abe4788847264aa7687d003bc916731d3318f7c853b39b75002bdcb4",
+        "observation": "After v7 restore and another folder synchronization, original Filer lists ANSWER, TEST, LOCAL and AFTER; ANSWER remains selected."
+      },
+      "lcd-after-reload-42.png": {
+        "sha256": "c6debc99949138ab681e6b4871e96eef7acc826c31f06f566580c7216ad62985",
+        "observation": "RCL of the retained ANSWER selection after reload appends 42 to the HOME history."
+      },
+      "bidirectional-preview.png": {
+        "sha256": "b5237df2ccef8faa79b6853fa26c5bd6f271bdae8e8da22c2598018bd53c84df",
+        "observation": "Preview explicitly shows LOCAL Add to card and TEST Add to folder, one change each way and zero conflicts; calculator is paused and its card ejected during review."
+      }
+    }
+  },
+  "frozen_integration_commit": "ba7c6b0f3b945d5c68bcc09828ab7d5a6d5d7d97",
+  "asset_count": 48,
+  "production_assets_unchanged": true,
+  "limits": [
+    "Real OPFS FileSystemDirectoryHandle; only showDirectoryPicker is adapted. Native operating-system folder selection and its permission prompts were not automated.",
+    "All guest file reads and writes run the unchanged original ROM in the production Worker; no synthesized Worker acknowledgements, RAM patches or physical SD timing claim in this firmware witness.",
+    "The final RCL retains ANSWER selection. New AFTER bytes are independently verified in exported FAT media and the actual original Filer listing.",
+    "The failure scenarios below are a separate component fixture with explicit Worker acknowledgements; they are not presented as ROM execution."
+  ],
+  "image_hashes": {
+    "back-restored.img": "2f9cdab6e27832360c7f4b4c45ac8282ad12e3f28dca84b77ff005bc885af54c",
+    "bidirectional-synced.img": "bffb2b572d970a84324d3bf14d08544e2ace9d9ae36613f2c33f7cd51878ab2b",
+    "cancel-restored.img": "2f9cdab6e27832360c7f4b4c45ac8282ad12e3f28dca84b77ff005bc885af54c",
+    "firmware-write.img": "387faf05796c632007ef18be77b35a92fd978552b2b99a27614776e26508c907",
+    "initial-readonly.img": "2f9cdab6e27832360c7f4b4c45ac8282ad12e3f28dca84b77ff005bc885af54c",
+    "reloaded-after-sync.img": "650d44dab39ed63c9403b065cfc3a18fd72d3bdced09044d05bd519ae9fa446d",
+    "reloaded-before-sync.img": "bffb2b572d970a84324d3bf14d08544e2ace9d9ae36613f2c33f7cd51878ab2b"
+  },
+  "component_cancel_regression": {
+    "passed": true,
+    "browser": "156.0.8078.47",
+    "checks": [
+      "Cancel restores every original card byte, read-only state, directory handle and running state",
+      "Back from an unapplied mounted sync restores the card and preserves a previously paused machine",
+      "Cancel restores the original saved handle even after another folder was selected as the uncommitted draft",
+      "Rejected reinsertion keeps a downloadable exact draft; retry restores it and then resumes",
+      "After another folder replaces the draft, quota failure still reinserts the exact original card and reports a translated storage error",
+      "Combined quota and insertion failure keeps the original filename, read-only state and downloadable bytes; retry restores the original association and running state",
+      "Ordinary eject-to-edit Back remains an explicit discard with no automatic reinsertion",
+      "Same-model reset and restore invalidate the old synchronization without reinserting its media"
+    ],
+    "page_errors": [],
+    "card_sha256": "c6ca45122b9825d265d2a1f42cd6559605c2b7de1b980d6f5946203d3f6b88f4",
+    "picker_adapter": "Real OPFS DirectoryHandle; native picker dialog not automated",
+    "guest_adapter": "Explicit Worker acknowledgements and injected rejection; no ROM execution",
+    "source_sha256": {
+      "tests/browser-sd-sync-cancel.py": "4237eb3baba6a4345ebffc5a1393c5535c9f788734e9196f4978ecedcd6f70a0",
+      "tests/sd-directory-fixture.jsx": "3455947235b3718ed0b4a43e53277cc0303ca780d78af4868bb10e3a4e640281",
+      "web/SDCard.jsx": "eac81cbb2e2b32169334eac8febfc98d778fe21b5d840d70bd6363ed7ac58303",
+      "web/SDCardFiles.jsx": "dd3e2eb74491510b66e3bf71ed5447a719fca23467a8a32bbdd846e02bb9d449",
+      "web/DirectoryCardControls.jsx": "929c80047151040c4400fe1e517f05d5064abf1968cad1b60d41a5b97cbe1526",
+      "web/controller.js": "52252b7d63296e470a40d79618b43080933d6b9c6a3b01311f3366ca257795f8"
+    }
+  },
+  "scope": "Final frozen R24 production directory SD workflow with original HP49g+ ROM and native v7 sessions, plus separately labeled component failure regressions.",
+  "private_artifacts_committed": false,
+  "reproduce": "python3 tools/probe-sd-directory-browser.py --rom /private/hp49gplus-full.bin --expected-wasm 74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a --expected-checkpoint-version 7 --output /private/new-directory",
+  "prior_failed_witnesses": [
+    {
+      "output": "sd-directory-integrated-v7",
+      "result": "failed",
+      "cause": "The old two-tap startup helper left the ROM at Memory Clear. No SD commands executed; not a passing firmware workflow."
+    },
+    {
+      "output": "sd-directory-integrated-v7-confirmed",
+      "result": "failed",
+      "cause": "The initial asynchronous fingerprint polling gate returned before a recognized startup frame; the tool failed before sending a startup key."
+    },
+    {
+      "output": "sd-directory-integrated-v7-stable-startup",
+      "result": "failed",
+      "cause": "The gate exhausted observation attempts during the native CAS splash. Fixed by a separate per-transition guest-tick deadline and physical-input limit."
+    }
+  ]
+}

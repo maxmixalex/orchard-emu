@@ -70,6 +70,21 @@ const pending=disposed.controller.insertSD({name:'late',size:original.length,arr
 disposed.controller.dispose();resolveDisposed(original.buffer.slice(0));await pending;
 check(()=>assert.equal(disposed.inserts().length,0));
 check(()=>assert.equal(disposed.worker.terminated,true));
+// Reset and restore keep the calculator generation, but replace the active
+// session. An earlier asynchronous file read or eject confirmation must never
+// insert/eject media in the new session.
+for(const action of ['reset','checkpoint-load']){
+  const renewed=fixture(),rc=renewed.controller;let finish;
+  const epoch=rc.state.sessionEpoch,generation=rc.generation;
+  const reading=rc.insertSD({name:'old-card',size:original.length,arrayBuffer:()=>new Promise(resolve=>{finish=resolve;})},true);
+  rc.send(action);check(()=>assert.equal(rc.generation,generation));check(()=>assert.equal(rc.state.sessionEpoch,epoch+1));
+  finish(original.buffer.slice(0));const accepted=await reading;check(()=>assert.equal(accepted,false));
+  check(()=>assert.equal(renewed.inserts().length,0));check(()=>assert.equal(rc.sdInsertDirectory,null));rc.dispose();
+  const pendingEject=fixture(),pc=pendingEject.controller;
+  pc.patch({sd:{present:true,bytes:original.length,dirty:true}});
+  const eject=pc.ejectSD();pc.send(action);pc.answer(true);await eject;
+  check(()=>assert.equal(pendingEject.messages.filter(message=>message.type==='sd-eject').length,0));pc.dispose();
+}
 const noSlot=fixture(4);let read=false;
 await noSlot.controller.insertSD({name:'no slot',size:original.length,arrayBuffer:async()=>{read=true;return original.buffer;}},false);
 check(()=>assert.equal(read,false));check(()=>assert.equal(noSlot.inserts().length,0));noSlot.controller.dispose();

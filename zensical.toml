@@ -10,6 +10,7 @@ nav = [
   { "Development" = [
     "index.md",
     "development/architecture.md",
+    "development/arm920t-tlb.md",
     "development/cpu-oracle.md",
     "development/models.md",
     "development/roadmap.md",

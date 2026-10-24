@@ -1,6 +1,28 @@
 # Performance and the two frontends
 
-## Quiet CPU candidates evaluated and withdrawn (2026-10-23)
+## r24 functional TLB and retained reference (2026-10-24)
+
+The new architectural TLB fixes a native-return correctness failure. Its
+optimized lookup is checked against a build of the **same v7 core** with
+`ORCHARD_REFERENCE=1`; neither side discards TLB state to obtain equality.
+Three alternating cold-start runs per variant execute a fixed 20 million
+reference ticks, with complete canonical checkpoints, CPU/device snapshots,
+LCD and UART output equal after every run.
+
+| Original ROM | Reference median | Production median | Reference / production |
+| --- | ---: | ---: | ---: |
+| 39g+ | 4.956 s | 0.713 s | 6.95 |
+| 48gII | 4.503 s | 0.692 s | 6.51 |
+
+These Node/V8 measurements compare the retained reference configuration with
+all current production fast paths. The reference flag disables several
+pre-existing optimizations: the ratios are **not an r23-to-r24 improvement**,
+not a measurement of TLB hints alone, and not browser input latency or physical
+calculator timing. The workload covers a bounded startup interval without user
+input. Raw timings, exact binaries and equality checks are retained in
+[performance-tlb-r24.json](evidence/performance-tlb-r24.json).
+
+## Historical quiet CPU candidates evaluated and withdrawn (2026-10-23)
 
 This round implemented the continuous ARM execution idea from the earlier
 instruction profile, then **withdrew both final candidates** after the bounded
@@ -616,6 +638,10 @@ USB/LCD/ADC and original-firmware regressions remain mandatory. Configure
 optimizations. This option does not change the guest hardware configuration.
 
 ## Execution hot paths: continuation from 2042ad8
+
+The translation memo described in this historical section was superseded in r24
+by [architectural ARM920T TLB state](arm920t-tlb.md). Current host lookup hints
+never revalidate live descriptors or implicitly invalidate a changed mapping.
 
 A new Clang `-pg` profile of 30M HP39g+ ticks on exact `2042ad8`
 puts physical reads, CPU dispatch/checkpoints and translation at roughly

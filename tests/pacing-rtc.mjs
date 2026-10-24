@@ -28,8 +28,8 @@ function saved(c) {
 }
 function calendar(c, bytes) {
   // Versions 2–6 append SDI, media, clock, SPI/reset and UART/NOR state after RTC.
-  const offset = bytes.length - c.profile(1, 1) - 4096 - 52 - 709 - 64 - 76 - 4377 - 31;
-  assert.equal(new DataView(bytes.buffer).getUint32(8, true), 6);
+  const offset = bytes.length - c.profile(1, 1) - 4096 - 52 - 709 - 64 - 76 - 4377 - 2056 - 31;
+  assert.equal(new DataView(bytes.buffer).getUint32(8, true), 7);
   return [...bytes.slice(offset + 12, offset + 15)];
 }
 for (const policy of ['run','run_idle','run_clocked']) for (const speed of [0.5, 1, 2]) {

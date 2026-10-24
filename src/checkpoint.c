@@ -1,15 +1,16 @@
 /* SPDX-License-Identifier: MIT
  * Versioned little-endian checkpoints. Explicit field order, no C padding,
- * host pointers, translation/EINT caches or unchanged NOR bytes. Two-phase
+ * host pointers, TLB lookup hints/EINT caches or unchanged NOR bytes. Two-phase
  * import validates header, CRC and all index-bearing state before mutation.
  */
 #include "internal.h"
 #define HEADER 32u
-#define VERSION 6u
+#define VERSION 7u
 #define FLASH_SECTOR 4096u
 static const uint8_t magic[8] = {'O','R','C','H','S','T','0','1'};
 typedef struct {
     o_cpu cpu;
+    o_tlb tlb[2];
     o_soc soc;
     uint64_t ticks, reads, writes;
     uint32_t nor, decode, sequence, status, pc, instruction, address, detail;
@@ -134,6 +135,18 @@ static void fields(codec *c, saved *s, unsigned version) {
         U32(n->suspend_wait);U32(n->erase_remaining);U32(n->erase_address);U32(n->erase_length);
         U32(s->flash_sectors);
     }
+    if(version>=7u) {
+        /* Append-only architectural translation state. Older formats start
+         * with empty TLBs, as their cores always re-read live descriptors. */
+        for(unsigned bank=0;bank<2;bank++) {
+            o_tlb *tlb=&s->tlb[bank];U32(tlb->lockdown);
+            for(unsigned i=0;i<O_TLB_ENTRIES;i++) {
+                o_tlb_entry *e=&tlb->entry[i];
+                U32(e->virtual_base);U32(e->physical_base);U32(e->mask);
+                U8(e->ap);U8(e->domain);BOOL(e->valid);BOOL(e->preserved);
+            }
+        }
+    }
 }
 static size_t scalar_size(unsigned version) { saved s; o_zero(&s,sizeof s); codec c={0}; fields(&c,&s,version); return c.pos; }
 /* Reflected CRC-32 (polynomial 0xedb88320), advanced eight bits at once.
@@ -206,6 +219,7 @@ orchard_status orchard_checkpoint_save(const orchard_machine *m, void *buffer, s
         return ORCHARD_BAD_ARGUMENT;
     uint8_t *out=buffer;
     saved s; o_zero(&s,sizeof s); s.cpu=m->cpu; s.soc=m->soc;
+    o_copy(s.tlb,m->tlb,sizeof s.tlb);
     s.ticks=m->ticks; s.reads=m->sram_alias_reads; s.writes=m->sram_alias_writes;
     s.nor=m->nor_device; s.decode=m->sram_decode; s.sequence=m->nor_sequence; s.id_mode=m->nor_id_mode;
     s.status=m->stop.status; s.pc=m->stop.pc; s.instruction=m->stop.instruction;
@@ -227,6 +241,17 @@ orchard_status orchard_checkpoint_save(const orchard_machine *m, void *buffer, s
 }
 static bool valid(const saved *s, const orchard_machine *m) {
     const o_soc *d=&s->soc;
+    for(unsigned bank=0;bank<2;bank++) {
+        const o_tlb *tlb=&s->tlb[bank];
+        if(tlb->lockdown&~O_TLB_LOCKDOWN_MASK)return false;
+        for(unsigned i=0;i<O_TLB_ENTRIES;i++) {
+            const o_tlb_entry *e=&tlb->entry[i];
+            if(e->ap>3||e->domain>15||(e->valid&&!e->mask)||
+               (e->mask&&e->mask!=0x3ffu&&e->mask!=0xfffu&&e->mask!=0x3fffu&&
+                e->mask!=0xffffu&&e->mask!=0xfffffu)||
+               ((e->virtual_base|e->physical_base)&e->mask))return false;
+        }
+    }
     if(!o_mode_valid(s->cpu.cpsr)||s->status>ORCHARD_UNSUPPORTED_USB||s->nor>ORCHARD_NOR_SST39VF800A||
         s->decode>ORCHARD_SRAM_BANK1_MIRROR||s->sequence>6||
         (s->nor==ORCHARD_NOR_SST39VF800A && m->profile->flash_bytes!=0x100000)||
@@ -350,6 +375,7 @@ orchard_status orchard_checkpoint_load(orchard_machine *m, const void *buffer, s
     const uint8_t *in=buffer;
     /* Validation complete. There are no fallible operations beyond this point. */
     m->cpu=s.cpu;m->soc=s.soc;m->ticks=s.ticks;
+    o_copy(m->tlb,s.tlb,sizeof m->tlb);
     m->sram_alias_reads=s.reads;m->sram_alias_writes=s.writes;
     m->nor_device=(orchard_nor_device)s.nor;m->sram_decode=(orchard_sram_decode)s.decode;
     m->nor_sequence=s.sequence;m->nor_id_mode=s.id_mode;

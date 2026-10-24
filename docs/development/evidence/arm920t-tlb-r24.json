@@ -1,0 +1,695 @@
+{
+  "schema": "orchard-arm920t-tlb-r24-v1",
+  "recorded_on": "2026-10-24",
+  "implementation_commit": "9db779d3b28740b1096b15ebf33e4d03da3f00a1",
+  "candidate_wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+  "scope": {
+    "original_roms": true,
+    "guest_memory_patched": false,
+    "rom_patched": false,
+    "physical_capacity_changed": false,
+    "physical_hardware_validated": false,
+    "browser_end_to_end": false,
+    "private_rom_trace_frame_checkpoint_payloads_excluded": true
+  },
+  "primary_reference": {
+    "url": "https://documentation-service.arm.com/static/5e8e2a5b88295d1e18d381bb",
+    "document": "ARM DDI 0151C",
+    "sections": [
+      "2.3.12",
+      "2.3.14",
+      "2.3.16",
+      "3.1.2",
+      "3.3.12",
+      "3.6",
+      "3.7",
+      "3.9.2"
+    ],
+    "fault_order_reference": [
+      "Figure 3-14",
+      "Table 3-9"
+    ]
+  },
+  "diagnosis": {
+    "baseline_wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+    "native_trace_tool_sha256": "969695fe5ccafe9980b6b18f617a1a6721a632f4e2ddb65827b444cdc1649ea5",
+    "private_trace_sha256": "6f0b1e1c31888f7e7eb3c383e8fffb970d08766fa90baff472605424d45c1305",
+    "first_fault_after_on_steps": 2494,
+    "cp15_instructions_in_on_to_fault_trace": 0,
+    "pte_change": {
+      "scheduler_step": 2193,
+      "rom_pc": "0x0000e7c4",
+      "instruction": "strb r1, [r2]",
+      "virtual_store_address": "0x07f00243",
+      "byte_written": 0,
+      "l1_physical_address": "0x40000240",
+      "before": "0x0800c011",
+      "after": "0x0000c011"
+    },
+    "first_fault": {
+      "rom_pc": "0x00022a04",
+      "instruction": "stmdb sp!, {lr}",
+      "irq_sp": "0x0902decc",
+      "dfsr": 7,
+      "far": "0x0902dec8"
+    },
+    "fix": "Retain the previously filled DTLB translation until architectural invalidation/replacement; do not re-read live PTEs on every hit"
+  },
+  "program": {
+    "label": "GBP39 ALIGN4 diagnostic rebuild",
+    "original_release": false,
+    "archive_sha256": "0e9abca0c5c388686d3cc75390b3b9fdf53d6d36e4db1709793fdad1e8330aaa",
+    "aplet_sha256": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc",
+    "main_source_unchanged": true,
+    "original_gbp_03_alignment_issue_retained": true,
+    "original_program_diagnosis": "hp39-programs-r23.json"
+  },
+  "native_return_runs": [
+    {
+      "model": 1,
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+      "installation": {
+        "cold_boot": true,
+        "wasm_sha256": "121cd17f8ced8889b99cbe33f42f03ae9b5aa85466cf1525bd08ed31fc3d0904",
+        "report_sha256": "1306a91114c9c0ca59d305a73b125379ec53bde85ba231b1a093723009e350ea",
+        "aplet_roundtrip_equal": true,
+        "library_payload_equal": true,
+        "input_files": [
+          {
+            "name": "lib275.sys",
+            "bytes": 1489,
+            "sha": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+          },
+          {
+            "name": "gbpplayer.apt",
+            "bytes": 13352,
+            "sha": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc"
+          }
+        ]
+      },
+      "run_report_sha256": "673a90e61ad545175370c3fddcf26a120f19d4b36be259862a5d2377991a9aab",
+      "run_tool_sha256": "e869d6a34b172602c41b7042336cd5f295ba0eb37ec91885b9f30342b552c0d3",
+      "input_checkpoint_sha256": "d945fd91b406801da2b854cdf2a60757fe8d13ef5ee3d9bbe7b8095376a1e2da",
+      "input_checkpoint_version": 7,
+      "checkpoint_version": 7,
+      "game_checkpoint_sha256": "a22b7762bad68433d0fe4709b02535f446493eb99714865bdfb71f876e881411",
+      "restored_return_identical": true,
+      "frames": [
+        {
+          "name": "installed",
+          "tick": 362805760,
+          "elapsed_ticks": 3000000,
+          "frame_sha256": "a415aa57c07baaa96874d894f64225f5632e08787ff469328ce1fbf06694e178",
+          "dfsr": 0,
+          "far": 0,
+          "pc": 300,
+          "sp": 134219000,
+          "stop": 0
+        },
+        {
+          "name": "song-select",
+          "tick": 386805760,
+          "elapsed_ticks": 27000000,
+          "frame_sha256": "c629421f132788f0a2849a1d0cd6d79647a0068c6c1666e727eb66c80c7b98bb",
+          "dfsr": 0,
+          "far": 0,
+          "pc": 134466800,
+          "sp": 151183052,
+          "stop": 0
+        },
+        {
+          "name": "game",
+          "tick": 416805760,
+          "elapsed_ticks": 57000000,
+          "frame_sha256": "a518826b166fac959c2146fe2032e2cc160c660aff0cf9a0ab725b474f21cb2e",
+          "dfsr": 0,
+          "far": 0,
+          "pc": 134467824,
+          "sp": 151183052,
+          "stop": 0
+        },
+        {
+          "name": "after-on",
+          "tick": 466805760,
+          "elapsed_ticks": 107000000,
+          "frame_sha256": "716c4753c1e42b4e792cd8cc3e2f9e9027dca2428782f98e578046dcd03579d6",
+          "dfsr": 0,
+          "far": 0,
+          "pc": 158232,
+          "sp": 134250472,
+          "stop": 0
+        },
+        {
+          "name": "home",
+          "tick": 480805760,
+          "elapsed_ticks": 121000000,
+          "frame_sha256": "716c4753c1e42b4e792cd8cc3e2f9e9027dca2428782f98e578046dcd03579d6",
+          "dfsr": 0,
+          "far": 0,
+          "pc": 158360,
+          "sp": 134250472,
+          "stop": 0
+        },
+        {
+          "name": "one-plus-one",
+          "tick": 526805760,
+          "elapsed_ticks": 167000000,
+          "frame_sha256": "3d74d84d096aca2df92fd38dbfef9c0c651292e224ff4c627ecdb583230ef826",
+          "dfsr": 0,
+          "far": 0,
+          "pc": 17612,
+          "sp": 134250388,
+          "stop": 0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "model": 2,
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+      "installation": {
+        "cold_boot": true,
+        "wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+        "report_sha256": "4c7bf1d03525716fd355ed1cbc72e819d04d2ea4226d81eddc5d62f98d71a0a8",
+        "aplet_roundtrip_equal": true,
+        "library_payload_equal": true,
+        "input_files": [
+          {
+            "name": "lib275.sys",
+            "bytes": 1489,
+            "sha": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1"
+          },
+          {
+            "name": "gbpplayer.apt",
+            "bytes": 13352,
+            "sha": "707e3892fef703780f95a84cd39ea2faa1393192e6812577496043503aa061dc"
+          }
+        ]
+      },
+      "run_report_sha256": "cea5fdd3b0a61c4ac880fdb5266a03d6c0f1ba593790de3823b5bd2107c612fc",
+      "run_tool_sha256": "e869d6a34b172602c41b7042336cd5f295ba0eb37ec91885b9f30342b552c0d3",
+      "input_checkpoint_sha256": "597f26975464a7125eb62790d9e8b4f81691fc6d2fdc19a583663c555e5e1a39",
+      "input_checkpoint_version": 6,
+      "checkpoint_version": 7,
+      "game_checkpoint_sha256": "486ed9a2f8581503cf15ae49ceb634fda35d083ef8a50df9dc837666c765373f",
+      "restored_return_identical": true,
+      "frames": [
+        {
+          "name": "installed",
+          "tick": 390478336,
+          "elapsed_ticks": 3000000,
+          "frame_sha256": "fa3430329c2eb600dfccaa020d69d76b27875d943184155bd89190b8f8da0331",
+          "dfsr": 0,
+          "far": 0,
+          "pc": 107820,
+          "sp": 134250444,
+          "stop": 0
+        },
+        {
+          "name": "song-select",
+          "tick": 414478336,
+          "elapsed_ticks": 27000000,
+          "frame_sha256": "c629421f132788f0a2849a1d0cd6d79647a0068c6c1666e727eb66c80c7b98bb",
+          "dfsr": 0,
+          "far": 0,
+          "pc": 134466800,
+          "sp": 151178956,
+          "stop": 0
+        },
+        {
+          "name": "game",
+          "tick": 444478336,
+          "elapsed_ticks": 57000000,
+          "frame_sha256": "a518826b166fac959c2146fe2032e2cc160c660aff0cf9a0ab725b474f21cb2e",
+          "dfsr": 0,
+          "far": 0,
+          "pc": 134467228,
+          "sp": 151178956,
+          "stop": 0
+        },
+        {
+          "name": "after-on",
+          "tick": 494478336,
+          "elapsed_ticks": 107000000,
+          "frame_sha256": "716c4753c1e42b4e792cd8cc3e2f9e9027dca2428782f98e578046dcd03579d6",
+          "dfsr": 0,
+          "far": 0,
+          "pc": 73856,
+          "sp": 134250396,
+          "stop": 0
+        },
+        {
+          "name": "home",
+          "tick": 508478336,
+          "elapsed_ticks": 121000000,
+          "frame_sha256": "716c4753c1e42b4e792cd8cc3e2f9e9027dca2428782f98e578046dcd03579d6",
+          "dfsr": 0,
+          "far": 0,
+          "pc": 73856,
+          "sp": 134250396,
+          "stop": 0
+        },
+        {
+          "name": "one-plus-one",
+          "tick": 554478336,
+          "elapsed_ticks": 167000000,
+          "frame_sha256": "3d74d84d096aca2df92fd38dbfef9c0c651292e224ff4c627ecdb583230ef826",
+          "dfsr": 0,
+          "far": 0,
+          "pc": 211976,
+          "sp": 134218996,
+          "stop": 0
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "core_regression": {
+    "native_ctest_suites": 24,
+    "native_wasm_assertions_per_host": 1182695,
+    "mmu_tlb_assertions_per_host": 812,
+    "native_wasm_log_sha256": "a52eec003c899d9bf451c6c1a5176896bead565499bb9cefb0b26ffe52b5b320",
+    "reference_suites_passed": 24,
+    "reference_note": "One built test executable initially lacked its executable bit; after correcting that artifact permission its targeted rerun passed. No test assertions were changed for that issue.",
+    "asan_ubsan_suites": [
+      "mmu-tlb",
+      "checkpoint",
+      "execution",
+      "scheduler"
+    ],
+    "asan_ubsan_passed": true,
+    "leak_sanitizer_enabled": false,
+    "leak_sanitizer_reason": "LSan cannot run under the environment ptrace; ASAN_OPTIONS=detect_leaks=0 retains address/undefined checks",
+    "asan_log_sha256": "1498edb7bbc18bbe4317b2cbf5b1763d79b62106d13b3e7a15274a7bb449a1fd",
+    "unicorn_rerun": false
+  },
+  "hp49_workflows": {
+    "report_sha256": "7db9ba135722e6260e66c52efb1d28f689fcd7ff167ab610f14aeb740e23479c",
+    "tool_sha256": "46a04d45adab5ae0648baf6b956763b048ef153ab84e8153ad283db33b854016",
+    "wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+    "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+    "stages": [
+      {
+        "name": "home",
+        "tick": 160000000,
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0
+      },
+      {
+        "name": "version",
+        "tick": 206000000,
+        "frame_sha256": "bef9069bbed7d994b37bbb8d12feb46114936b64101e6f93f4b7501c31e6d237",
+        "stop": 0
+      },
+      {
+        "name": "factor",
+        "tick": 286200000,
+        "frame_sha256": "8c4c67757137cc527e4c7a9ee8955029af85252491a1127f8bba92b7e75347ba",
+        "stop": 0
+      },
+      {
+        "name": "apps",
+        "tick": 293600000,
+        "frame_sha256": "45bffac03251f577ea6a14676e047e7bce52912542e3f7c815d5c080fbb88377",
+        "stop": 0
+      },
+      {
+        "name": "apps-return",
+        "tick": 301000000,
+        "frame_sha256": "8c4c67757137cc527e4c7a9ee8955029af85252491a1127f8bba92b7e75347ba",
+        "stop": 0
+      },
+      {
+        "name": "mode",
+        "tick": 308400000,
+        "frame_sha256": "fede67d0bc1b92e424b8741441eec2853bd58ac77bcc0d8df971d742349dbe2b",
+        "stop": 0
+      },
+      {
+        "name": "mode-return",
+        "tick": 315800000,
+        "frame_sha256": "8c4c67757137cc527e4c7a9ee8955029af85252491a1127f8bba92b7e75347ba",
+        "stop": 0
+      },
+      {
+        "name": "plot",
+        "tick": 555600000,
+        "frame_sha256": "4456afd374894f168ce36162995dd0569ef2276075edf9bb6c01b2c84967820c",
+        "stop": 0
+      },
+      {
+        "name": "plot-return",
+        "tick": 563000000,
+        "frame_sha256": "452d0448886b565a68844beae881cd43eedec5e113f7d1e14a422aa5e25e3e2e",
+        "stop": 0
+      }
+    ],
+    "resume": {
+      "bytes": 539788,
+      "reset_restore_equal": true,
+      "native_wasm_equal": true,
+      "before_sha256": "1c0c5a9c067b5a1eeb9fb06bec18f4c63e114aa545c2a332a99a2ff72686a907",
+      "after_sha256": "7bdac0e06e7e07476e46c0bb6e9a9feacba909d103105f75c851b27da7d1b0ab"
+    },
+    "passed": true
+  },
+  "sd_and_hp48_files": {
+    "report_sha256": "a3f42712774108790a31f2c477e9e62c75c3f4e62bd05f47a11c5644dbd10a75",
+    "tool_sha256": "75c8570f617c3d20c66695dcea34b7a874567684198f067ccc87fd218c2e6dee",
+    "wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+    "roms": {
+      "hp49gplus": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+      "hp48gii": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937"
+    },
+    "card_image_bytes": 16777216,
+    "continuation": {
+      "checkpoint_bytes": 17317004,
+      "version": 7,
+      "partial_sector_bytes": 27,
+      "delta_ticks": 100000,
+      "before_sha256": "f4e7f9a326dbe26c2a22d0923c0f242b5287313695ba7e66e95dd46fe9044d17",
+      "after_sha256": "e695b304914eca4bc737a68983029c86dacc688f73b9fe3f5d12396e950c7f3a",
+      "native_wasm_equal": true,
+      "full_card_included": true
+    },
+    "exported": {
+      "image_sha256": "e47614163eac1f432bdcc10b705ff12a23eb138b7b771b612e5b8827ef0fa0b1",
+      "file": "TEST",
+      "file_bytes": 15,
+      "file_sha256": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42",
+      "filesystem": "FAT16",
+      "fat_copies_equal": true,
+      "writes_before_copy": 0,
+      "writes_after_copy": 7
+    },
+    "fresh_card_reimport": true,
+    "hp48": {
+      "cold_boot": true,
+      "files_navigation": true,
+      "returned_home": true,
+      "sd_slot": false,
+      "card_rejected": true
+    },
+    "strict_boundary_probe": {
+      "tick": 184994413,
+      "pc": 260116,
+      "opcode": 3851620356,
+      "dfsr": 8,
+      "far": 134742016,
+      "physical_ram_bytes": 524288
+    },
+    "stages": [
+      {
+        "name": "hp49-home",
+        "machine": "hp49",
+        "tick": 160000000,
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp49-files-no-card",
+        "machine": "hp49",
+        "tick": 184800000,
+        "frame_sha256": "bdcc263a4a0d43f220fff1a48a8b366a5f6919edeb3b7503c09b0037bdb94ba6",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp49-files-no-card-up",
+        "machine": "hp49",
+        "tick": 192200000,
+        "frame_sha256": "31cf57c318cbfb06a581d75873c34022d61b634d36578fe4657087cafad090fd",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp49-files-no-card-return",
+        "machine": "hp49",
+        "tick": 199600000,
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp49-files-with-card",
+        "machine": "hp49",
+        "tick": 224400000,
+        "frame_sha256": "a9c21ad46dab1b83bbb67af2c91e42d2f7f141d043826ddde32dc43ea850deed",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp49-created-test-42",
+        "machine": "hp49",
+        "tick": 270600000,
+        "frame_sha256": "a1a514e8d87df70a4be85073d28061d0fdd13b435f46ffe1af67cc8ff4ab2d5b",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp49-home-test-selected",
+        "machine": "hp49",
+        "tick": 297800000,
+        "frame_sha256": "8a343bd812857475a0e31fae2dd96bd2fb21316be4ffdce08a031ba9e58f7014",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp49-copy-destination-sd",
+        "machine": "hp49",
+        "tick": 312600000,
+        "frame_sha256": "526d0eb490e4fbd6a1e7dbbbf3ba6f168cfcfe6e333ff01c25ab8cf09649f238",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp49-copy-complete",
+        "machine": "hp49",
+        "tick": 330000000,
+        "frame_sha256": "cd3dc82364b582abd7b2dc78c892014049f20d31e985bdae276b63ca114ce246",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp49-sd-test-selected",
+        "machine": "hp49",
+        "tick": 369200000,
+        "frame_sha256": "ee501906210e9dd2f91a20eb3c445163e006cead9579fb831794092af98a3311",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp49-sd-recalled-42",
+        "machine": "hp49",
+        "tick": 389000000,
+        "frame_sha256": "a6264d8850d44be94b23205730d647fe353d2f349188f6c4c0b4fabdb391d416",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp49-fresh-home",
+        "machine": "hp49-fresh",
+        "tick": 160000000,
+        "frame_sha256": "b1320269ea9173a797b454cba1ed79e4a2817574932d4b286bdb21415ec1d97d",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp49-fresh-sd-test",
+        "machine": "hp49-fresh",
+        "tick": 204600000,
+        "frame_sha256": "01733b6a07d0703ab003dd04e8ed8d5c01dd842621b815f8b0c1ec5595ef44fa",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp49-fresh-recalled-42",
+        "machine": "hp49-fresh",
+        "tick": 224400000,
+        "frame_sha256": "e01013055e51a5d9a50820786b7ba3eb821eb74dfc614949dda98a4d22dc5b97",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp48-home",
+        "machine": "hp48",
+        "tick": 160000000,
+        "frame_sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp48-files",
+        "machine": "hp48",
+        "tick": 184800000,
+        "frame_sha256": "913cf167763953fb952d182d075ab89df5ebfa0c0dafdc5a33d0456ced3835a3",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp48-files-up",
+        "machine": "hp48",
+        "tick": 192200000,
+        "frame_sha256": "3f623da8b6c4d0326194be9974eef39b48e9cd81a478b8f1e60a8318167268b2",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp48-files-return",
+        "machine": "hp48",
+        "tick": 199600000,
+        "frame_sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      },
+      {
+        "name": "hp48-after-files-one-plus-one",
+        "machine": "hp48",
+        "tick": 214200000,
+        "frame_sha256": "f643bed4bd878d2d87975d1dc8462162492775030c948600f9f43d39d838ea54",
+        "stop": 0,
+        "dfsr": 0,
+        "far": 0
+      }
+    ],
+    "passed": true
+  },
+  "hp49_plot_return_baseline_control": {
+    "r17_expected_frame_sha256": "eeaa7fae390582e8b7e7cbaa6aa36c677b897c7f0290958f13cf85efcca59527",
+    "frozen_r23_wasm_sha256": "4bd0b8bba8ae7c71b116bb4a2c4396478e01730d9283bedc1f62a11f100db6e9",
+    "candidate_wasm_sha256": "121cd17f8ced8889b99cbe33f42f03ae9b5aa85466cf1525bd08ed31fc3d0904",
+    "observed_frame_sha256": "452d0448886b565a68844beae881cd43eedec5e113f7d1e14a422aa5e25e3e2e",
+    "all_stage_frames_equal": true,
+    "final_cpu_snapshots_equal": true,
+    "r23_report_sha256": "4a76034ba5929da368760cc2c3b99887dfe9af92fed0839d2446a9efc5b3091d",
+    "candidate_report_sha256": "628436e6cee81dbb1e9a294105bd39fa6af56853246990afc8af8f9d08d6cef3",
+    "note": "Both current and frozen r23 reproduce the same normal HOME image; the r17 golden was stale before this TLB change. Final candidate was retested with the independently revalidated golden."
+  },
+  "independent_arm_guest_regression": {
+    "tool": "tests/tlb-wasm.mjs",
+    "assertions": 25,
+    "wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+    "tool_sha256": "226ebf6b775d7f5c385b24a4224075c27c19ef2ade50e7bc99e4c629a09e596e",
+    "run_by": "integration agent",
+    "passed": true,
+    "scope": [
+      "Actual ARM MCR/MRC and memory accesses",
+      "Separate I/D maintenance",
+      "TTBR/MMU retain mappings",
+      "Valid-translation protection faults retain state",
+      "Invalid walk does not cache",
+      "Warm v7 restore while live PTE is invalid",
+      "Overlapping mapping host-hint determinism; not a claimed physical-hardware priority"
+    ]
+  },
+  "usb_kermit_roundtrip": {
+    "report_sha256": "2ca9b66a770ad740d61da42feb0ce744e03d3fb3cbfd7481598d01c379dcddfb",
+    "tool_sha256": "7eb179c5c8db916bd23c802b77a736090353eb2c39f828aeb1cd211491b4a727",
+    "wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+    "generated_object_hex": "4850485034392d5814268000004200",
+    "physical_keys_only": true,
+    "guest_memory_patched": false,
+    "browser_end_to_end": false,
+    "runs": [
+      {
+        "model": 5,
+        "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+        "cold_boot": true,
+        "transfers": [
+          {
+            "mode": "send",
+            "name": "TLCHECK",
+            "start_tick": 283584320,
+            "end_tick": 343503680,
+            "bytes": 15,
+            "received_sha256": null
+          },
+          {
+            "mode": "get",
+            "name": "TLCHECK",
+            "start_tick": 346503680,
+            "end_tick": 351721984,
+            "bytes": 15,
+            "received_sha256": "b40a705f97657cdc0aa45ba42fe511d90d667e44f5c3b35f4226afbebf38db9a"
+          },
+          {
+            "mode": "finish",
+            "start_tick": 354721984,
+            "end_tick": 356178112,
+            "bytes": 0,
+            "received_sha256": null
+          }
+        ],
+        "object_payload_byte_equal": true,
+        "input_header": "HPHP49-X",
+        "returned_header": "HPHP49-C",
+        "header_revision_changed": true,
+        "recalled_42_frame_sha256": "63f981e8868a755cda0965be409d320b0bf26272c4bd7ae531cd4e579cbd1467",
+        "final_dfsr": 0,
+        "final_stop": 0,
+        "passed": true
+      },
+      {
+        "model": 4,
+        "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+        "cold_boot": true,
+        "transfers": [
+          {
+            "mode": "send",
+            "name": "TLCHECK",
+            "start_tick": 283584320,
+            "end_tick": 344129344,
+            "bytes": 15,
+            "received_sha256": null
+          },
+          {
+            "mode": "get",
+            "name": "TLCHECK",
+            "start_tick": 347129344,
+            "end_tick": 352960000,
+            "bytes": 15,
+            "received_sha256": "1a0ade1c2dc89c03a5a07d4bc5928c1c0bcc7fe8cb3851e68326f375240f55af"
+          },
+          {
+            "mode": "finish",
+            "start_tick": 355960000,
+            "end_tick": 357549248,
+            "bytes": 0,
+            "received_sha256": null
+          }
+        ],
+        "object_payload_byte_equal": true,
+        "input_header": "HPHP49-X",
+        "returned_header": "HPHP49-B",
+        "header_revision_changed": true,
+        "recalled_42_frame_sha256": "bc0dc4442899f96fb7b9a7c9241c4b00a41f257c8fe7b675e7f0b2ccdd1a57f3",
+        "final_dfsr": 0,
+        "final_stop": 0,
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "note": "Generated exact-integer 42 object sent through stock Kermit SERVER using production FileTransfer/VirtualUSB, then GET, FINISH and physical recall. Firmware exports HPHP49-C on 49g+ and HPHP49-B on 48gII from an HPHP49-X input. The seven-byte object body matches exactly; the complete wrapper is intentionally not claimed byte-identical. Final LCDs were visually checked."
+  }
+}

@@ -23,7 +23,7 @@ const args = [
 const result = spawnSync(process.env.CLANG || 'clang', args, { cwd: root, stdio: 'inherit' });
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
-for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'session.js', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js', 'usb-device.js', 'host-bridge-client.js', 'host-bridge-protocol.js', 'kermit.js', 'file-transfer.js', 'hp39-files.js', 'hp39-transfer.js', 'hp39-archive.js', 'hp39-wire.js', 'transfer-errors.js', 'sd-card.js', 'sd-filesystem.js', 'buzzer-worker.js', 'buzzer-audio.js', 'lcd-frames.js']) {
+for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'lifecycle.js', 'debug.html', 'session.js', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js', 'usb-device.js', 'host-bridge-client.js', 'host-bridge-protocol.js', 'kermit.js', 'file-transfer.js', 'hp39-files.js', 'hp39-transfer.js', 'hp39-archive.js', 'hp39-wire.js', 'hp39-wire-receive.js', 'transfer-errors.js', 'sd-card.js', 'sd-filesystem.js', 'buzzer-worker.js', 'buzzer-audio.js', 'lcd-frames.js']) {
   await copyFile(resolve(root, 'web', file), resolve(out, file));
 }
 await copyFile(resolve(root, "LICENSE"), resolve(out, "LICENSE"));
@@ -89,7 +89,11 @@ with required libraries before the aplet. Optional automatic next RECV uses veri
 HP39/40 (USB). Follow the displayed model/connection-specific instructions.
 For Notes, open SHIFT > 0 (NOTEPAD) before RECV; ASCII Notes are converted to
 the binary string objects required by Wire, preserving the calculator encoding.
-Downloads still use SEND > Disk drive. Settings > Transfer contains the optional
+HP39g+/HP39gs USB also receives through Wire: start Receive from calculator,
+then use the stock SEND > HP39/40 (Wire/USB) menu for each object. The listener
+continues until Stop and requests required libraries. Completed files remain
+after a later error or cancellation, up to 16 files and 8 MiB in the download list.
+Settings > Transfer contains the optional
 Unlimited during transfers switch. It accelerates active protocol work, restoring the selected speed between
 files, while waiting for RECV and on every completion/error/cancel path.
 Original HP39g+ and HP39gs both pass Note Wire installation and exact stock
@@ -105,7 +109,7 @@ Firmware-driven buzzer sound starts after a user gesture. Mute and volume are
 available in Settings. The HP49g+ BEEP path uses the shared guest PCLK/PWM model;
 physical board-clock calibration remains open. Pausing clears pending sound.
 The four admitted original systems can automatically power off and resume with
-ON while retaining their previous calculation. New v6 sessions retain UART/NOR state, changed flash sectors, PWM/SPI phase and held watchdog reset; v1/v2/v3/v4/v5 sessions remain readable with
+ON while retaining their previous calculation. New v7 sessions retain instruction/data TLBs, UART/NOR state, changed flash sectors, PWM/SPI phase and held watchdog reset; v1/v2/v3/v4/v5/v6 sessions remain readable with
 documented migration. Factory-test entry uses real firmware key handling and
 SPI registers; watchdog exits execute the original reset vector. Applicable original RS232/IRDA diagnostics pass; original HP39gs/49g+ quick and full FLASH WRITE tests pass with actual NOR programming and erase.
 The developer workbench is debug.html. It retains strict hardware mode,

@@ -14,6 +14,34 @@ function fixture(){
 }
 const file=(name='TEST',bytes=Uint8Array.from([...new TextEncoder().encode('HPHP49-C'),0,1,127,128,255]))=>({name,size:bytes.length,arrayBuffer:async()=>bytes.slice().buffer});
 
+// One explicit Wire receive request keeps all completed objects across later
+// SENDs, cancellation and a failed restart. Upload queue continuation is a
+// separate direction and must not intercept this action.
+for(const ending of ['cancelled','error']){
+ const {c,sent,emit,downloads}=fixture();c.patch({model:CALCULATORS.find(m=>m.id===2)});
+ await c.startTransfer('receive','usb',{protocol:'hp39-wire'});
+ const request=c.transferRequest,start=sent.find(m=>m.type==='file-transfer-start');
+ assert.equal(start.mode,'receive');assert.equal(start.protocol,'hp39-wire');assert.equal(c.state.transfer.direction,'receive');assert.equal(c.uploadQueue,null);
+ emit({type:'file-transfer-status',request,active:true,phase:'listening',direction:'receive',protocol:'hp39-wire',filesCompleted:0,receivedBytes:0});
+ for(const [name,bytes] of [['One-1-1.note',Uint8Array.of(1,0,255)],['Two-1-2.note',Uint8Array.of(2,255,0)]]){
+  emit({type:'file-transfer-received',request,name,bytes});
+  emit({type:'file-transfer-status',request,active:true,phase:'listening',direction:'receive',protocol:'hp39-wire',filesCompleted:c.received.size,receivedBytes:3*c.received.size});
+ }
+ assert.equal(c.state.receivedFiles.length,2);assert.equal(c.state.transfer.active,true);assert.equal(c.state.transfer.filesCompleted,2);
+ if(ending==='cancelled'){
+  c.cancelTransfer();assert.equal(c.state.transfer.phase,'cancelling');assert(c.state.transfer.active);
+  emit({type:'file-transfer-cancelled',request});
+ }else emit({type:'file-transfer-status',request,active:false,phase:'error',errorCode:'wireReceiveObject'});
+ assert.equal(c.state.transfer.active,false);assert.equal(c.state.receivedFiles.length,2);
+ for(const f of c.state.receivedFiles)c.downloadTransferredFile(f.id);await Promise.resolve();
+ assert.deepEqual(downloads.map(f=>f.bytes),[Uint8Array.of(1,0,255),Uint8Array.of(2,255,0)]);
+ await c.startTransfer('receive','usb',{protocol:'hp39-wire'});
+ assert.equal(sent.at(-1).receiveBudget.files,MAX_RECEIVE_FILES-2);assert(c.transferRequest>request);
+ emit({type:'file-transfer-received',request,name:'stale',bytes:Uint8Array.of(3)});assert.equal(c.received.size,2);
+ emit({type:'file-transfer-status',request:c.transferRequest,active:false,phase:'error',errorCode:'wireReceiveTimeout'});
+ assert.equal(c.received.size,2);c.dispose();
+}
+
 // Note packing changes the transmitted length. A local read error followed by
 // retry must update the queue's byte totals once, while a later remote failure
 // reuses the same packed bytes without reading or converting the file again.
@@ -102,7 +130,8 @@ for(const invalidate of ['cancel','generation','dispose']){
  assert(c.state.transfer.active);
  if(invalidate==='cancel')c.cancelTransfer();else if(invalidate==='generation')c.create();else c.dispose();
  release(Uint8Array.of(42).buffer);await waiting;
- assert(!sent.some(m=>m.type==='file-transfer-start'),invalidate);c.dispose();
+ assert(!sent.some(m=>m.type==='file-transfer-start'),invalidate);
+ assert.equal(c.transferCancelRequest,null,'Local preflight never waits for a Worker cancellation barrier');c.dispose();
 }
 // Session IDs isolate late completions even within the same machine generation.
 for(const transport of ['usb','serial'])for(const origin of ['user','worker']){
@@ -140,12 +169,33 @@ for(const phase of ['error','cancelled','complete']){
 }
 {
  const {c,emit}=fixture();await c.startTransfer('receive','usb');const old=c.transferRequest;
- c.cancelTransfer();await c.startTransfer('receive','usb');const current=c.transferRequest;
+ c.cancelTransfer();await c.startTransfer('receive','usb');assert.equal(c.transferRequest,old,'A cancellation reserves the current receive budget');
+ emit({type:'file-transfer-cancelled',request:old});await c.startTransfer('receive','usb');const current=c.transferRequest;
  emit({type:'file-transfer-status',request:old,active:false,phase:'complete'});
  emit({type:'file-transfer-received',request:old,name:'OLD',bytes:Uint8Array.of(99)});
  assert.equal(c.state.transfer.request,current);assert(c.state.transfer.active);assert.equal(c.received.size,0);
  emit({type:'file-transfer-status',generation:c.generation-1,request:current,active:false,phase:'complete'});
  assert(c.state.transfer.active);c.dispose();
+}
+// Destructive lifecycle boundaries cannot leave a cancellation barrier alive,
+// and a failed post must not wait for an acknowledgement that cannot arrive.
+for(const ending of ['create','reset','links-reset','dispose','fatal','worker-error','operation-error','post-error']){
+ const {c,sent,emit}=fixture();await c.startTransfer('receive','usb');const request=c.transferRequest;
+ emit({type:'file-transfer-received',request,name:'KEEP',bytes:Uint8Array.of(7)});
+ if(ending==='post-error'){
+  const post=c.worker.postMessage;c.worker.postMessage=data=>{if(data.type==='file-transfer-cancel')throw Error('Cancel post failed');post(data);};
+ }
+ c.cancelTransfer();
+ if(ending!=='post-error'){assert.equal(c.transferCancelRequest,request);assert.equal(c.state.transfer.phase,'cancelling');}
+ if(ending==='create')c.create();else if(ending==='reset')c.send('reset');else if(ending==='links-reset')c.linksReset();
+ else if(ending==='dispose')c.dispose();else if(ending==='fatal')emit({type:'fatal',message:'Worker failed'});
+ else if(ending==='worker-error')c.worker.onerror();else if(ending==='operation-error')emit({type:'error',message:'Operation failed'});
+ assert.equal(c.transferCancelRequest,null,ending);assert.equal(c.transferStartedRequest,null,ending);
+ const retained=c.received.size;
+ emit({type:'file-transfer-received',request,name:'LATE',bytes:Uint8Array.of(8)});emit({type:'file-transfer-cancelled',request});
+ assert.equal(c.received.size,retained,ending);assert(ending==='dispose'?c.dead:!c.state.transfer?.active,ending);
+ if(ending==='post-error'){assert.equal(c.state.transfer.phase,'error');assert.equal(c.received.size,1);}
+ c.dispose();
 }
 // No automatic download. Each explicit download keeps exact bytes; names cannot
 // become host paths, and a reset invalidates every retained file identifier.

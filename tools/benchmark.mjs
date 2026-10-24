@@ -54,6 +54,6 @@ for(const [model,name,preset,budget,expected] of [[1,'39g+.bin','hp39-home',2300
 }
 const output={schema:'orchard-identical-work-benchmark-v1',host:process.version,platform:process.platform,architecture:process.arch,
  baseline_wasm:sha(inputs[0]),candidate_wasm:sha(inputs[1]),full_stock_replay:full,measures:'core execution in Node/V8; excludes loading, WASM compilation and browser task scheduling; no real-calculator timing comparison',reports};
-output.checkpoint_comparison='Exact v1/v2 checksum and schema validation, followed by v1 migration with only the documented SDI reset fields inserted; every canonical byte is compared.';
+output.checkpoint_comparison='Checksum and schema validation followed by the documented legacy migrations; every canonical byte, including v7 architectural TLB entries and replacement state, is compared. Host lookup hints are never checkpoint state.';
 output.checkpoint_equivalence_sha256=sha(await readFile(new URL('./checkpoint-equivalence.mjs',import.meta.url)));
 await writeFile(outPath,JSON.stringify(output,null,2)+'\n',{flag:'wx'});

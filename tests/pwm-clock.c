@@ -202,7 +202,7 @@ static void checkpoint_cases(void){
  for(unsigned gated=0;gated<2;gated++){
   wr(&a,0x4c00000cu,gated?a.soc.clock[3]&~0x100u:a.soc.clock[3]|0x100u);
   size_t n=orchard_checkpoint_size(&a);CHECK(n<=sizeof before);CHECK(orchard_checkpoint_save(&a,before,n)==ORCHARD_OK);
-  CHECK(word(before+8)==6);step(9);CHECK(orchard_checkpoint_load(&a,before,n)==ORCHARD_OK);
+  CHECK(word(before+8)==7);step(9);CHECK(orchard_checkpoint_load(&a,before,n)==ORCHARD_OK);
   CHECK(orchard_checkpoint_save(&a,after,n)==ORCHARD_OK);CHECK(equal(before,after,n));
   CHECK(a.soc.pclk_phase==11&&a.soc.reload_pending==4&&a.soc.pending_count[2]==5&&a.soc.pending_compare[2]==2&&a.soc.active_compare[2]==0);
   b=a;CHECK(orchard_buzzer_enable(&b,false)==ORCHARD_OK);
@@ -218,7 +218,7 @@ static void checkpoint_cases(void){
  /* The 64-byte v4 extension is bounded and imports atomically, including
     with a valid repaired CRC; no invalid new field can partly change RAM. */
  size_t n=orchard_checkpoint_size(&a);CHECK(orchard_checkpoint_save(&a,before,n)==ORCHARD_OK);
- size_t extension=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE-4377u-76u-64u;
+ size_t extension=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE-2056u-4377u-76u-64u;
  static const unsigned offsets[]={0,4,8,24,44,60};
  static const uint32_t invalid[]={16,2,65536,65536,65536,32};
  for(unsigned i=0;i<6;i++){

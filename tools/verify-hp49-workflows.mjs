@@ -73,7 +73,9 @@ try{
   type('STEQ');for(const scan of [58,4,16,29,19,45])tap(scan);tap(6);run(15000000);
   type('ERASE');tap(6);run(5000000);type('DRAW');tap(6);run(80000000);
   type('PICTURE');tap(6);run(10000000);await picture('plot','4456afd374894f168ce36162995dd0569ef2276075edf9bb6c01b2c84967820c');
-  tap(56);run(5000000);await picture('plot-return','eeaa7fae390582e8b7e7cbaa6aa36c677b897c7f0290958f13cf85efcca59527');
+  // This sample was rechecked on frozen r23 and the TLB candidate; the old
+  // r17 frame predates later timer/IRQ changes. Both current runs agree.
+  tap(56);run(5000000);await picture('plot-return','452d0448886b565a68844beae881cd43eedec5e113f7d1e14a422aa5e25e3e2e');
   report.sram_alias_reads=c.sram_alias_reads().toString();report.sram_alias_writes=c.sram_alias_writes().toString();
   assert.equal(report.sram_alias_reads,'0');assert.equal(report.sram_alias_writes,'0');
   report.lcd_unverified_reads=c.lcd_probe68_reads().toString();

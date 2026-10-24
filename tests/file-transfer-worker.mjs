@@ -8,10 +8,13 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {Pacer} from '../web/pacing.js';
 import {FileTransfer} from '../web/file-transfer.js';
+import {CalculatorController} from '../web/controller.js';
+import {CALCULATORS} from '../web/catalog.js';
 import {transferError,transferErrorDetails} from '../web/transfer-errors.js';
 import {BuzzerStream} from '../web/buzzer-worker.js';
 import {LCDFrames} from '../web/lcd-frames.js';
 import {packet,PARAMETERS} from '../web/kermit.js';
+import {prepareHp39WireFile,hp39WireBlock} from '../web/hp39-wire.js';
 import {TapQueue,HP48_ROM,isPlayable,setupHash,applySetup} from '../web/hp48.js';
 
 const source=readFileSync(new URL('../web/worker.js',import.meta.url),'utf8')
@@ -38,14 +41,40 @@ function fixture({model=4}={}){
     encodeSession:async()=>new Uint8Array(32),decodeSession:async()=>({model:4,romHash:HP48_ROM,preset:'hp48-home',frameView:1,state:new Uint8Array(32)})};
   const context=vm.createContext(scope);vm.runInContext(source+'\ncore=initialCore;',context);
   const send=data=>scope.self.onmessage({data:{generation:1,...data}});
-  send({type:'create',model,preset:model===1?'hp39-home':'hp48-home',audience:'calculator'});
+  send({type:'create',model,preset:model===1?'hp39-home':model===2?'hp39gs-home':'hp48-home',audience:'calculator'});
   vm.runInContext("loaded=true;romHash=HP48_ROM;",context);
   send({type:'configure',speed:0});send({type:'run'});send({type:'serial-connect',connected:true});send({type:'usb-connect',connected:true});
-  const inspect=vm.runInContext('()=>({running,generation,active:transfer.active,request:transfer.request,speed:pacer.speed,requestedSpeed,transferUnlimited,transferBoosted:transferBoosted()})',context);
+  const inspect=vm.runInContext('()=>({running,generation,active:transfer.active,pending:transfer.pending,request:transfer.request,speed:pacer.speed,requestedSpeed,transferUnlimited,transferBoosted:transferBoosted()})',context);
   return {send,output,writes,inspect,incoming,uartIncoming,pump(){const [id,fn]=jobs.entries().next().value;assert(fn);jobs.delete(id);fn();}};
 }
 function start(f,request=1,extra={}){f.send({type:'file-transfer-start',request,transport:'usb',mode:'receive',...extra});}
 function final(f,request){return f.output.filter(e=>e.type==='file-transfer-status'&&e.request===request).at(-1);}
+
+for(const model of [1,2]){
+  const f=fixture({model});f.send({type:'configure',speed:.5,transferUnlimited:true});start(f,1,{protocol:'hp39-wire'});
+  assert.equal(final(f,1).phase,'listening');assert.equal(f.inspect().speed,.5);f.pump();
+  for(let index=0;index<2;index++){
+    const bytes=prepareHp39WireFile('NOTE',text(`HP39AscC 1 ${index}Wire note ${index}.`)).bytes,padded=new Uint8Array(128);padded.set(bytes);
+    f.incoming.push(hp39WireBlock(1,padded));f.pump();assert.equal(f.inspect().speed,0,'Receiving boosts; waiting for the next SEND does not');
+    f.pump();f.incoming.push(Uint8Array.of(4));f.pump();
+    const files=f.output.filter(e=>e.type==='file-transfer-received');assert.equal(files.length,index+1);assert.deepEqual(files[index].bytes,bytes);
+    assert.equal(final(f,1).phase,'listening');assert.equal(f.inspect().speed,.5);assert(f.inspect().active);f.pump();f.pump();
+  }
+  f.send({type:'file-transfer-cancel',request:1});assert.equal(f.inspect().active,false);assert.equal(f.inspect().speed,.5);
+  assert.equal(f.output.filter(e=>e.type==='file-transfer-received').length,2);
+}
+for(const model of [1,2])for(const boundary of ['files','bytes']){
+  const f=fixture({model}),bytes=prepareHp39WireFile('NOTE',text('HP39AscC 1 NLast note.')).bytes,padded=new Uint8Array(128);padded.set(bytes);
+  f.send({type:'configure',speed:.5,transferUnlimited:true});
+  start(f,1,{protocol:'hp39-wire',receiveBudget:{files:boundary==='files'?1:16,bytes:boundary==='bytes'?bytes.length:8*1024*1024}});f.pump();
+  f.incoming.push(hp39WireBlock(1,padded));f.pump();assert.equal(f.inspect().speed,0);f.pump();
+  f.incoming.push(Uint8Array.of(4));f.pump();assert.equal(final(f,1).phase,'complete');
+  assert.equal(f.inspect().active,false);assert(f.inspect().pending,'Completed receiver still owns final EOT recovery');
+  assert.equal(f.inspect().speed,.5);assert.equal(f.inspect().transferBoosted,false,'Terminal ACK recovery is never accelerated');
+  f.pump();f.incoming.push(Uint8Array.of(4));f.pump();f.pump();
+  assert.equal(f.inspect().speed,.5);assert.equal(f.output.filter(e=>e.type==='file-transfer-received').length,1);
+  f.send({type:'file-transfer-cancel',request:1});assert.equal(f.inspect().pending,false);assert.equal(f.inspect().speed,.5);
+}
 
 for(const extra of [{mode:'send',name:'ROM',bytes:new Uint8Array(16)},{mode:'unknown'},{transport:'invalid'}]){
   const f=fixture();start(f,1,extra);assert.equal(final(f,1).phase,'error');assert.equal(final(f,1).active,false);
@@ -120,7 +149,9 @@ for(const mode of ['receive','directory','finish']){
   const f=fixture();start(f);const before=f.output.length;
   f.send({type:'file-transfer-start',request:1,transport:'usb',mode:'receive'});
   f.send({type:'file-transfer-cancel',generation:0,request:1});
-  f.send({type:'file-transfer-cancel',request:2});assert(f.inspect().active);assert.equal(f.output.length,before);
+  assert.equal(f.output.length,before,'Old-generation cancellation has no effect');
+  f.send({type:'file-transfer-cancel',request:2});assert(f.inspect().active);
+  assert.deepEqual(f.output.slice(before).map(e=>({...e})),[{type:'file-transfer-cancelled',generation:1,request:2}],'A nonexistent request is confirmed without cancelling another owner');
   const count=f.writes.length;f.send({type:'usb-send',bytes:text('raw')});assert.equal(f.output.at(-1).accepted,0);assert.equal(f.writes.length,count);
   for(const p of [packet(0,'S',PARAMETERS),packet(1,'F',text('OBJECT')),packet(2,'D',text('HPHP49-Cdata')),packet(3,'Z')]){
     f.incoming.push(p);f.pump();assert(!f.output.some(e=>e.type==='file-transfer-received'));
@@ -132,6 +163,59 @@ for(const mode of ['receive','directory','finish']){
   assert(!f.output.some(e=>e.type==='uart-output'),'Owned Kermit bytes must not leak into the raw terminal');
   start(f,2);f.send({type:'file-transfer-cancel',request:1});assert(f.inspect().active);
   f.send({type:'file-transfer-cancel',request:2});assert.equal(final(f,2).phase,'cancelled');
+}
+for(const rejected of [false,true]){
+  const f=fixture();if(rejected)start(f,7,{mode:'send',name:'INVALID',bytes:new Uint8Array(1)});
+  f.send({type:'file-transfer-cancel',request:7});assert.equal(f.output.at(-1).type,'file-transfer-cancelled');
+  assert.equal(f.output.at(-1).request,7);assert.equal(f.inspect().active,false,'Cancellation confirms even when no session was created');
+}
+// Run the real Controller, Worker handler and FileTransfer together, but defer
+// delivery of Worker messages. The user task can run before an already-posted
+// file message; FIFO only orders messages from the Worker with each other.
+for(const model of [1,2])for(const ending of ['stop','pause','protocol-error','capacity-complete']){
+  const f=fixture({model}),sent=[],downloads=[];let delivered=f.output.length;
+  const c=new CalculatorController({worker:{postMessage:data=>{sent.push(data);f.send(data);},terminate(){}},
+    download:(bytes,name)=>downloads.push({bytes,name})});
+  c.generation=1;c.patch({model:CALCULATORS.find(m=>m.id===model),ready:true,loaded:true,running:true,usb:true,usbReady:true});
+  const deliver=()=>c.receive(f.output[delivered++]);
+  const flush=()=>{while(delivered<f.output.length)deliver();};
+  const sendNote=index=>{
+    const bytes=prepareHp39WireFile('NOTE',text(`HP39AscC 1 NCompleted note ${index}.`)).bytes,padded=new Uint8Array(128);padded.set(bytes);
+    f.incoming.push(hp39WireBlock(1,padded));f.pump();f.pump();f.incoming.push(Uint8Array.of(4));f.pump();f.pump();f.pump();return bytes;
+  };
+  await c.startTransfer('receive','usb',{protocol:'hp39-wire'});flush();f.pump();
+  const request=c.transferRequest,earlier=ending==='capacity-complete'?15:1;
+  for(let i=0;i<earlier;i++){sendNote(i);flush();}
+  assert.equal(c.received.size,earlier);
+  const last=sendNote(earlier);
+  assert.equal(f.output.filter(e=>e.type==='file-transfer-received').length,earlier+1,'Worker has completed and posted the file before Stop');
+  assert.equal(c.received.size,earlier,'Main-thread delivery is deliberately delayed');
+  if(ending==='protocol-error'){
+    f.incoming.push(hp39WireBlock(1,new Uint8Array(128)));f.pump();f.pump();f.incoming.push(Uint8Array.of(4));f.pump();
+    assert.equal(final(f,request).phase,'error');
+  }else if(ending==='capacity-complete')assert.equal(final(f,request).phase,'complete');
+  if(ending==='pause')c.pause();else c.cancelTransfer();
+  assert.equal(c.state.transfer.phase,'cancelling');assert.equal(c.transferRequest,request);assert(c.state.transfer.active);
+  const starts=sent.filter(e=>e.type==='file-transfer-start').length;
+  await c.startTransfer('receive','usb',{protocol:'hp39-wire'});c.clearTransferredFiles();
+  assert.equal(sent.filter(e=>e.type==='file-transfer-start').length,starts);assert.equal(c.received.size,earlier);
+  c.receive({type:'file-transfer-cancelled',generation:0,request});c.receive({type:'file-transfer-cancelled',generation:1,request:request+1});
+  assert.equal(c.state.transfer.phase,'cancelling','Unrelated barriers cannot release this request');
+  while(f.output[delivered]?.type!=='file-transfer-cancelled'){
+    assert(delivered<f.output.length,'Worker must emit its explicit cancellation barrier');deliver();
+    assert.equal(c.state.transfer.phase,'cancelling','Queued completion/error cannot close the request before its barrier');
+    assert.equal(c.transferRequest,request);
+  }
+  assert.equal(c.received.size,earlier+1,'All completed files ahead of the barrier are retained');
+  deliver();flush();assert.equal(c.state.transfer.phase,'cancelled');assert.equal(c.state.transfer.active,false);assert.equal(c.transferCancelRequest,null);
+  c.downloadTransferredFile(c.state.receivedFiles.at(-1).id);await Promise.resolve();assert.deepEqual(downloads.at(-1).bytes,last);
+  const retained=c.received.size;
+  c.receive({type:'file-transfer-received',generation:1,request,name:'AFTER',bytes:Uint8Array.of(99)});assert.equal(c.received.size,retained);
+  if(ending==='capacity-complete')c.clearTransferredFiles();
+  await c.startTransfer('receive','usb',{protocol:'hp39-wire'});const next=c.transferRequest;
+  assert(next>request);assert.equal(sent.filter(e=>e.type==='file-transfer-start').at(-1).receiveBudget.files,16-c.received.size);
+  c.receive({type:'file-transfer-cancelled',generation:1,request});c.receive({type:'file-transfer-received',generation:1,request,name:'OLD',bytes:Uint8Array.of(99)});
+  assert.equal(c.transferRequest,next);assert(c.state.transfer.active);flush();c.cancelTransfer();flush();c.dispose();
 }
 // The actual Worker applies the speed override after the protocol handshake,
 // and restores it synchronously before a terminal message reaches the UI.

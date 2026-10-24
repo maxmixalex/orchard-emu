@@ -45,6 +45,11 @@ switch restores the user's chosen speed while waiting for the next RECV and
 on completion or interruption. Optional automatic next RECV uses verified
 original-menu observations and physical keys for same-catalog USB batches;
 it stops at unknown screens, manual intervention or errors.
+HP39g+/HP39gs USB also supports continuous reverse Wire reception: one
+**Receive from calculator** action accepts successive stock SEND operations,
+requests required aplet libraries and keeps each complete file until cleared.
+Stop, later errors and cancellation retain earlier files. The shared download
+budget is 16 files and 8 MiB; serial and HP40gs reverse Wire remain unavailable.
 Transfer failures carry stable translated
 messages; unknown errors have a translated summary and collapsed technical
 details. See [file transfer](file-transfer.md).
@@ -88,7 +93,8 @@ The old [helper documentation](host-mode.md) is an archived r22 record.
 
 Restore automatically resumes a valid unstopped session when the current
 focus/visibility policy allows it. A persistent paused bar and direct resume
-button make a paused machine explicit. Version-6 saves include changed flash
+button make a paused machine explicit. Version-7 saves include architectural
+instruction/data TLB state alongside changed flash
 sectors as well as RAM and SD media; treat them as private calculator data.
 
 ## Build and use

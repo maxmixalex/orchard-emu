@@ -39,12 +39,12 @@ battery-backed storage or continuation of an external USB host connection.
 
 The C API is `orchard_checkpoint_size/save/load`. The core format uses an
 explicit little-endian field stream, not `memcpy` of a C struct. Native and
-WASM share the schema. A 32-byte header contains `ORCHST01`, version 6, exact
+WASM share the schema. A 32-byte header contains `ORCHST01`, version 7, exact
 length, model, ROM CRC32, physical SRAM size and a payload CRC32. The body
 contains explicitly enumerated architectural scalars, active SRAM and the
 4 KiB internal SRAM. Without a card or modified flash sectors, 256 KiB machines
-produce **275,588 bytes** before the small browser envelope; 512 KiB machines
-produce **537,732 bytes**. An inserted card adds its complete image length.
+produce **277,644 bytes** before the small browser envelope; 512 KiB machines
+produce **539,788 bytes**. An inserted card adds its complete image length.
 Each modified flash sector adds 4,100 bytes: its 4-byte aligned offset followed
 by 4,096 bytes of data. Version 2 added 52 bytes of
 SDI state; version 3 added 709 bytes for media metadata and controller/FIFO/
@@ -55,11 +55,15 @@ states and a 4-byte watchdog reset-pulse countdown. Its RAM began at byte 4971.
 Version 6 appends **4,377 scalar bytes**: 204 bytes of UART holding/FIFO, event and modem state,
 4,128 bytes for UART1/2 host queues, one canonical IrDA board-attachment boolean,
 40 bytes of NOR operation state and a 4-byte modified-sector count.
-RAM begins at byte **9348**; the changed-sector records follow RAM, internal
+Version 6 RAM began at byte **9348**; the changed-sector records follow RAM, internal
 SRAM and the optional SD image. Records are strictly ordered, unique and bounded
 by the loaded model's NOR capacity.
-Exports always use version 6; the browser envelope remains version 1. The loader
-continues to accept exact version-1/2/3/4/5 files. Legacy length, checksum, model
+Version 7 appends **2,056 bytes** for the architectural ARM920T TLBs: each bank
+has its 4-byte CP15 c10 register and 64 explicit 16-byte entries (virtual/physical
+bases, coverage mask, AP, domain, valid and preserved bits). RAM now begins at
+byte **11404**. Lookup hints are host-only and are not serialized.
+Exports always use version 7; the browser envelope remains version 1. The loader
+continues to accept exact version-1/2/3/4/5/6 files. Legacy length, checksum, model
 and field validation still apply.
 
 Versions 1–3 did not record the clock/PWM state. Their migration preserves
@@ -86,6 +90,14 @@ board attachment is retained because the older formats did not record it.
 Version 6 preserves UART hardware buffers, interrupt events, modem state and queued UART1/2 data, an in-flight word program or erase, and suspended erase/program state. UART transport remains atomic decoded bytes; serial bit timing and FIFO receive timeout are not implemented. The ROM CRC remains bound to the immutable original input, independently
 of subsequent flash programming. A load validates every record before restoring
 the original array and applying its sector deltas. See [NOR writes](nor-write.md).
+
+Versions 1–6 contain no architectural TLB state. Their migration initializes both
+banks and CP15 c10 registers to zero; it does not invent mappings by walking the
+saved tables. Subsequent accesses refill normally. Version 7 preserves a warm
+translation even when the backing descriptor has changed or become invalid,
+as well as replacement and preservation state. This can affect subsequent guest
+execution, so comparisons must not discard these fields as a host optimization.
+See [ARM920T translation state](arm920t-tlb.md).
 
 The browser envelope (`ORCHARD1`) adds versioned JSON metadata with the exact
 ROM SHA-256, model, compatibility configuration, display mode and state SHA-256.

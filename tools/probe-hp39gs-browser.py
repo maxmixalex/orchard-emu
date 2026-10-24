@@ -170,7 +170,7 @@ def main():
                 saved = args.output/'saved.ord'
                 pending.value.save_as(saved)
                 report['save'] = session_metadata(saved)
-                assert report['save']['model'] == 2 and report['save']['preset'] == 'hp39gs-home' and report['save']['checkpoint_version'] == 6
+                assert report['save']['model'] == 2 and report['save']['preset'] == 'hp39gs-home' and report['save']['checkpoint_version'] == 7
                 page.wait_for_function('window.__transferProbe.snapshot?.running===false')
                 saved_frame = frame(page)
                 page.get_by_role('button', name='Resume', exact=True).click()

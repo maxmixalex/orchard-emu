@@ -53,6 +53,7 @@ orchard_machine *orchard_init(void *arena, size_t bytes, unsigned model_id) {
 void orchard_reset(orchard_machine *m) {
     if (!m) return;
     o_zero(m->translations, sizeof(m->translations));
+    o_zero(m->tlb, sizeof(m->tlb));
     o_cpu_reset(&m->cpu);
     o_soc_reset(&m->soc);
     o_zero(m->ram, m->profile->ram_bytes);
@@ -108,6 +109,7 @@ static void retained_reset(orchard_machine *m, uint32_t sources, bool watchdog) 
     }
     s->usb.connected=old.usb.connected;
     o_zero(m->translations,sizeof m->translations);
+    o_zero(m->tlb,sizeof m->tlb);
     m->quiet_left=m->deferred_ticks=m->power_wake=0;
     o_buzzer_reset(m);
     orchard_lcd_observer_reset(m);

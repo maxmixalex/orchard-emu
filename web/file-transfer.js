@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import {Hp39FileServer,prepareHp39Files} from './hp39-transfer.js';
 import {Hp39WireSender,validateHp39WireFile} from './hp39-wire.js';
+import {Hp39WireReceiver} from './hp39-wire-receive.js';
 import {inspectHp39File,validateHp39Filename} from './hp39-files.js';
 import {transferError} from './transfer-errors.js';
 import { KermitSession, MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES, validateFilename, validateReceiveBudget } from './kermit.js';
@@ -8,6 +9,8 @@ export { MAX_FILE_BYTES, MAX_RECEIVE_FILES, MAX_RECEIVE_BYTES, MAX_LISTING_BYTES
 export const MAX_UPLOAD_FILES = 16;
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 export const isHp39 = model => [1,2,3].includes(model);
+// Continuous Wire reception is verified against these original USB ROMs.
+export const canReceiveHp39Wire = (model,transport) => [1,2].includes(model)&&transport==='usb';
 export function transferCapabilities(model,transport='usb') {
   const link=['usb','serial'].includes(transport),hp39=isHp39(model)&&(transport==='usb'||model!==1&&transport==='serial');
   const supported=model===4&&link||model===5&&transport==='usb';
@@ -37,10 +40,11 @@ export class FileTransfer {
     if (!transferCapabilities(this.model,data.transport)[data.mode]) throw transferError('unsupportedOperation','This file operation is not available for the selected calculator and connection.');
     if(data.protocol!==undefined&&data.protocol!=='hp39-wire')throw Error('Invalid file-transfer protocol.');
     const wire=data.protocol==='hp39-wire';
-    if(wire&&(!isHp39(this.model)||data.mode!=='send'))throw Error('Wire upload requires an HP39/40 calculator.');
+    if(wire&&(!isHp39(this.model)||!['send','receive'].includes(data.mode)||
+      data.mode==='receive'&&!canReceiveHp39Wire(this.model,data.transport)))throw transferError('unsupportedOperation','This Wire operation is not available for the selected calculator and connection.');
     const receiveBudget=validateReceiveBudget(data.receiveBudget);
     if (data.mode==='send') validateUpload(this.model,data.name,data.bytes);
-    if(wire)validateHp39WireFile(data.name,data.bytes);
+    if(wire&&data.mode==='send')validateHp39WireFile(data.name,data.bytes);
     if (data.mode==='get') validateFilename(data.name);
     if(data.mode==='serve')prepareHp39Files(data.files);
     if (data.transport==='usb') {this.usb.endpoint(true);this.usb.endpoint(false);}
@@ -58,8 +62,9 @@ export class FileTransfer {
       }
       this.progressAt=now;this.lastProgress={...state};this.notify({type:'file-transfer-status',request:this.request,transport:this.currentTransport,...state});
     };
-    const Session=wire?Hp39WireSender:isHp39(this.model)?Hp39FileServer:KermitSession;
+    const Session=wire?(data.mode==='receive'?Hp39WireReceiver:Hp39WireSender):isHp39(this.model)?Hp39FileServer:KermitSession;
     this.session=new Session({hz:this.core.timebase_hz(),write:bytes=>this.write(bytes),notify:status,receiveBudget,
+      receiveId:data.request,
       end:data.transport==='usb'?13:null,
       onPacket:p=>{
         // Stock HP48gII USB can consume and then lose an application packet

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Portable local file envelope. Integrity checks are not a signature/authentication.
 const MAGIC=new TextEncoder().encode('ORCHARD1');
-// v6 checkpoints include only changed NOR sectors in addition to RAM/devices.
+// v6+ checkpoints include changed NOR sectors in addition to RAM/devices;
+// v7 also retains architectural instruction/data TLB state.
 export const MAX_BASE_STATE=600000+2*1024*1024+2048;
 export const MAX_STATE=MAX_BASE_STATE+32*1024*1024;
 const MAX_META=4096;

@@ -1,0 +1,372 @@
+{
+  "schema": "orchard-hp39-wire-production-browser-r24-v1",
+  "recorded_utc": "2026-10-24T06:25:45.308970+00:00",
+  "passed": true,
+  "scope": "Original HP39g+ and HP39gs, production Chrome UI and Worker: one USB Wire listener accepts two successive stock SEND actions, then Stop acknowledgement and complete downloaded files are verified.",
+  "integration_commit": "ba7c6b0f3b945d5c68bcc09828ab7d5a6d5d7d97",
+  "browser_version": "156.0.8078.47",
+  "production_worker": true,
+  "synthetic_worker_messages": false,
+  "rom_ram_patches": false,
+  "browser_cold_boot": false,
+  "preparation_cold_boot": true,
+  "preparation_method": "Each private v7 session was created with the final core by cold-booting its unchanged full original ROM, using physical keyboard inputs and ordinary production USB Wire uploads of two self-authored Notes. The core checkpoint was saved without editing guest state, with USB disconnected and NOTE CATALOG visible.",
+  "browser_method": "The ordinary ROM input and Restore confirmation load that same-ROM session. Visible Connect USB, transfer menu, Receive, Stop and Download controls are used. Stock SEND and later arithmetic use only on-screen physical calculator keys. A bounded read-only NativeWorker message observer records status and copies the last LCD frame; no Worker request or result is synthesized.",
+  "file_comparison": "Both entire HP39BinC downloads compare byte for byte against their respective prepared binary Notes, including the headers, high bytes, literal backslash and trailing NUL. No header differences are waived in these two cases.",
+  "performance_sample": false,
+  "hardware_validated": false,
+  "asset_count": 48,
+  "asset_identity": "All 48 files in the production server root were hashed before and after each witness and independently compared with the frozen integration dist. These are the served-file manifest hashes, not separate hashes of browser response bodies.",
+  "assets": {
+    "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+    "README.txt": "db93522959e9bdfab941554285089b7467db5c73ab81d1159ba2f3e1e535f162",
+    "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+    "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+    "calculator.css": "a6758eb130d9cb6503315913c0af0473abf37461d8f17f02d1ce99b0839e40e7",
+    "calculator.js": "ce9404f04ad13200ec5ef6d9ea357d849b9a253a14775421044f745eb81aea6b",
+    "catalog.js": "c9ceb77618dc6fe0f55f53c561ae28e270deb4c43ec58f95444908e036fc72f8",
+    "debug.html": "134082d0e77b5fae7486ce9783610edaa448a7060fe95d19ae1d27d79b54682b",
+    "file-transfer.js": "b08edcd0d3142c59ee6807e3b3031fa907c9367c2544e0a02c0030ec659adcd9",
+    "host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+    "host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+    "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+    "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+    "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+    "hp39-wire-receive.js": "d0bc501c068aaefe8e2dde5b24871c749228c348b57c8dfd7e8d5084ff4eb81a",
+    "hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+    "hp48.js": "14590b079838824b7bc9359d0a49f14cfb7bb5a5c2a7321529658e35dd4238f8",
+    "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+    "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+    "lcd-frames.js": "b9dbbafaa686d3e0282ee3f935205d20bee5b864b6e5b7c90e4e17b4dfa162fe",
+    "licenses/frontend.txt": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+    "licenses/hp-calcs-svg/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "licenses/hp-calcs-svg/NOTICE.txt": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+    "licenses/hp-calcs-svg/README.md": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+    "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+    "main.js": "452bac1e1fb0a34bec834a611b4b952f04e321a52f1053eeadf56f97994d8c35",
+    "orchard.wasm": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+    "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+    "preferences.js": "2a68b46423babf91328fb1f70e4e2a8606f18248dc1a303c88da49a505f6ce6e",
+    "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+    "sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+    "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+    "session.js": "c16703077319fae40b9059b970a73e9ec4ee615d9b6534058d53e816766528d1",
+    "skin.js": "b63ffb7b17bcb971d283daea4672f93dfb84ad9fc79fa09aa0bd2dce7b7416d0",
+    "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+    "skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+    "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+    "skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+    "skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+    "skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+    "skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+    "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+    "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+    "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+    "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+    "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+    "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+    "worker.js": "82b96dd0005a7a9cbc7dc7874315a6351314d9aac22c541b434e97871adea7f0"
+  },
+  "private_tools": {
+    "prepare-wire-browser.mjs": "d41758b08f879a4c3517e1ea2206d0d73258f03fc09f1fc508c0fd7c28bc3959",
+    "verify-wire-browser.py": "0c61b4b222bf8e607d458667c688c610907c28c025f15b856dca125ce35be7d5"
+  },
+  "models": [
+    {
+      "model": 1,
+      "name": "HP 39g+",
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "preparation_report_sha256": "8ae43b23c8df9122458047b4c95b55770960222f54d51da9715ec8e4e842e386",
+      "preparation_source_sha256": {
+        "web/hp48.js": "14590b079838824b7bc9359d0a49f14cfb7bb5a5c2a7321529658e35dd4238f8",
+        "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "web/file-transfer.js": "b08edcd0d3142c59ee6807e3b3031fa907c9367c2544e0a02c0030ec659adcd9",
+        "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+        "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+        "web/session.js": "5113f2b8208a2a7e0fabc2a0d7c218cd675bb38df6a9a82c91d4abd6ef5dd522"
+      },
+      "source_session": {
+        "name": "notepad-ready.ord",
+        "bytes": 277869,
+        "sha256": "bd482e83a4ec07569aba09d598da53d71bd2771d2b101508e80b00224831e560",
+        "checkpoint_version": 7,
+        "checkpoint_sha256": "ccea6047fdf8691eefe27297e82129dbcf487401abba911eae40c10b8a90b286"
+      },
+      "source_notes": [
+        {
+          "title": "Orchard One",
+          "source": "First.arbitrary",
+          "source_bytes": 280,
+          "source_sha256": "3697a4035f8380cb5b855ef15ab45c5cb2c74ba4a07e6be19f4b6124299560ec",
+          "expected": "Orchard_One.note",
+          "expected_bytes": 269,
+          "expected_sha256": "fea412cc3b197478d18ad897b241d5c19c5f935758ba97232ebc60ccb4a18e2e"
+        },
+        {
+          "title": "Orchard Two",
+          "source": "Second.arbitrary",
+          "source_bytes": 80,
+          "source_sha256": "1ebabf591cabc3a9528d5dbb0d788033637afd890dcc152f95fb460577cf9827",
+          "expected": "Orchard_Two.note",
+          "expected_bytes": 75,
+          "expected_sha256": "8095a44e359bfe75ab728b7e252e18fb9318654eb1b50c097e1a2f5c97563637"
+        }
+      ],
+      "browser_report_sha256": "f0dd8a071d691dbff2e7338f7e8e5faf85290f0bae63322b77d9f88c67d5619a",
+      "calculator_transfer_menu_label": "HP39/40 (Wire) (send and receive)",
+      "receive_button_activations": 1,
+      "listener_request": 4,
+      "same_listener_two_distinct_files": true,
+      "received_events": [
+        {
+          "type": "file-transfer-received",
+          "generation": 2,
+          "request": 4,
+          "name": "Orchard_Two-4-1.note",
+          "bytes": 75,
+          "tick": 292676351
+        },
+        {
+          "type": "file-transfer-received",
+          "generation": 2,
+          "request": 4,
+          "name": "Orchard_One-4-2.note",
+          "bytes": 269,
+          "tick": 335146576
+        }
+      ],
+      "listening_counts_observed": [
+        0,
+        1,
+        2
+      ],
+      "worker_cancel_acknowledged": true,
+      "worker_cancel_ack": {
+        "type": "file-transfer-cancelled",
+        "generation": 2,
+        "request": 4,
+        "tick": 361688351
+      },
+      "receive_control_enabled_after_ack": true,
+      "stop_preserved_all_files": true,
+      "downloads": [
+        {
+          "name": "Orchard_Two-4-1.note",
+          "title": "Orchard Two",
+          "bytes": 75,
+          "sha256": "8095a44e359bfe75ab728b7e252e18fb9318654eb1b50c097e1a2f5c97563637",
+          "exact_file_equal": true
+        },
+        {
+          "name": "Orchard_One-4-2.note",
+          "title": "Orchard One",
+          "bytes": 269,
+          "sha256": "fea412cc3b197478d18ad897b241d5c19c5f935758ba97232ebc60ccb4a18e2e",
+          "exact_file_equal": true
+        }
+      ],
+      "total_download_bytes": 344,
+      "browser_physical_scans": [
+        38,
+        44,
+        6,
+        44,
+        38,
+        44,
+        6,
+        48,
+        26,
+        5,
+        26,
+        6
+      ],
+      "arithmetic_after_transfer": true,
+      "arithmetic_work_area_sha256": "4f424d9352b6962f8d3d8ec76203f9d7c60136d66caf9b85774d8c6227717bea",
+      "final_snapshot": {
+        "generation": 2,
+        "loaded": true,
+        "running": true,
+        "stopped": false,
+        "model": 1,
+        "width": 131,
+        "height": 64,
+        "pending": 0,
+        "active": null,
+        "tick": 417891520,
+        "frameSerial": 2827,
+        "frameStatus": 0,
+        "effectiveSpeed": 1,
+        "transferBoosted": false
+      },
+      "page_errors": [],
+      "worker_errors": [],
+      "protocol_error_count": 0,
+      "stable_visual_review": {
+        "stopped-with-downloads.png": {
+          "sha256": "e049b48f4c7276d7251d95141eae02a03a93a6bb0fafce98802d8c91447e0de2",
+          "observation": "The original NOTE CATALOG still contains both Notes. The production sidebar shows two retained received files, 344 bytes total, both Download controls and the enabled Receive control after Stop."
+        },
+        "one-plus-one.png": {
+          "sha256": "79757f86f75f732f351355730c1406a7f964c9f2bf91595552073fc5a9cc3516",
+          "observation": "After disconnecting USB, the original calculator HOME screen visibly shows 1+1 and result 2, while the application remains Running."
+        }
+      },
+      "passed": true
+    },
+    {
+      "model": 2,
+      "name": "HP 39gs",
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "preparation_report_sha256": "94f654fafec68d610932cee83eaad965adafef28e1f483efce67494d8a43b203",
+      "preparation_source_sha256": {
+        "web/hp48.js": "14590b079838824b7bc9359d0a49f14cfb7bb5a5c2a7321529658e35dd4238f8",
+        "web/virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "web/file-transfer.js": "b08edcd0d3142c59ee6807e3b3031fa907c9367c2544e0a02c0030ec659adcd9",
+        "web/hp39-wire.js": "380d0069a4ea11ae2aa4e5a32a7226e70117f62f433b82c180a1c4f11b7738f6",
+        "web/hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+        "web/session.js": "5113f2b8208a2a7e0fabc2a0d7c218cd675bb38df6a9a82c91d4abd6ef5dd522"
+      },
+      "source_session": {
+        "name": "notepad-ready.ord",
+        "bytes": 277871,
+        "sha256": "a34e0bcb4c6ab38b0c0848ed064b5bee4ab98f411fc693fa9e25685b8485d67f",
+        "checkpoint_version": 7,
+        "checkpoint_sha256": "43eff2cddbe1c68ca5ba5dc5d64f983ad960ef3a0add7e493b1cd37f03a3fd32"
+      },
+      "source_notes": [
+        {
+          "title": "Orchard One",
+          "source": "First.arbitrary",
+          "source_bytes": 280,
+          "source_sha256": "3697a4035f8380cb5b855ef15ab45c5cb2c74ba4a07e6be19f4b6124299560ec",
+          "expected": "Orchard_One.note",
+          "expected_bytes": 269,
+          "expected_sha256": "fea412cc3b197478d18ad897b241d5c19c5f935758ba97232ebc60ccb4a18e2e"
+        },
+        {
+          "title": "Orchard Two",
+          "source": "Second.arbitrary",
+          "source_bytes": 80,
+          "source_sha256": "1ebabf591cabc3a9528d5dbb0d788033637afd890dcc152f95fb460577cf9827",
+          "expected": "Orchard_Two.note",
+          "expected_bytes": 75,
+          "expected_sha256": "8095a44e359bfe75ab728b7e252e18fb9318654eb1b50c097e1a2f5c97563637"
+        }
+      ],
+      "browser_report_sha256": "cd02fc42eaba01ff8f0fa4b61aac9af67c8d3a4a0abde887c6043885a54e4dd7",
+      "calculator_transfer_menu_label": "HP39/40 (USB) (send and receive)",
+      "receive_button_activations": 1,
+      "listener_request": 4,
+      "same_listener_two_distinct_files": true,
+      "received_events": [
+        {
+          "type": "file-transfer-received",
+          "generation": 2,
+          "request": 4,
+          "name": "Orchard_Two-4-1.note",
+          "bytes": 75,
+          "tick": 345946432
+        },
+        {
+          "type": "file-transfer-received",
+          "generation": 2,
+          "request": 4,
+          "name": "Orchard_One-4-2.note",
+          "bytes": 269,
+          "tick": 418914656
+        }
+      ],
+      "listening_counts_observed": [
+        0,
+        1,
+        2
+      ],
+      "worker_cancel_acknowledged": true,
+      "worker_cancel_ack": {
+        "type": "file-transfer-cancelled",
+        "generation": 2,
+        "request": 4,
+        "tick": 444626368
+      },
+      "receive_control_enabled_after_ack": true,
+      "stop_preserved_all_files": true,
+      "downloads": [
+        {
+          "name": "Orchard_Two-4-1.note",
+          "title": "Orchard Two",
+          "bytes": 75,
+          "sha256": "8095a44e359bfe75ab728b7e252e18fb9318654eb1b50c097e1a2f5c97563637",
+          "exact_file_equal": true
+        },
+        {
+          "name": "Orchard_One-4-2.note",
+          "title": "Orchard One",
+          "bytes": 269,
+          "sha256": "fea412cc3b197478d18ad897b241d5c19c5f935758ba97232ebc60ccb4a18e2e",
+          "exact_file_equal": true
+        }
+      ],
+      "total_download_bytes": 344,
+      "browser_physical_scans": [
+        38,
+        44,
+        6,
+        44,
+        38,
+        44,
+        6,
+        48,
+        26,
+        5,
+        26,
+        6
+      ],
+      "arithmetic_after_transfer": true,
+      "arithmetic_work_area_sha256": "4f424d9352b6962f8d3d8ec76203f9d7c60136d66caf9b85774d8c6227717bea",
+      "final_snapshot": {
+        "generation": 2,
+        "loaded": true,
+        "running": true,
+        "stopped": false,
+        "model": 2,
+        "width": 131,
+        "height": 64,
+        "pending": 0,
+        "active": null,
+        "tick": 498215279,
+        "frameSerial": 2844,
+        "frameStatus": 0,
+        "effectiveSpeed": 1,
+        "transferBoosted": false
+      },
+      "page_errors": [],
+      "worker_errors": [],
+      "protocol_error_count": 0,
+      "stable_visual_review": {
+        "stopped-with-downloads.png": {
+          "sha256": "dfbfd2a59334752efb8ef12b82514fe725e414e0df2c49273777fe71b14d5ab4",
+          "observation": "The original NOTE CATALOG still contains both Notes. The production sidebar shows two retained received files, 344 bytes total, both Download controls and the enabled Receive control after Stop."
+        },
+        "one-plus-one.png": {
+          "sha256": "0c2968be0200e2660fab6f49ee9149dc6e7f8024608f7b1fe5de05bde0476ace",
+          "observation": "After disconnecting USB, the original calculator HOME screen visibly shows 1+1 and result 2, while the application remains Running."
+        }
+      },
+      "passed": true
+    }
+  ],
+  "independent_review": {
+    "completed": true,
+    "scope": "A separate read-only agent verified preparation/session/source hashes, all 48 final assets, complete downloaded bytes, same-request received events, the real cancellation acknowledgement, final state, error absence and stable final screenshots.",
+    "blocking_findings": []
+  },
+  "limits": [
+    "The browser restores genuine cold-boot-generated sessions; it does not repeat the complete cold boot inside Chrome.",
+    "This browser witness covers ordinary Note SEND for the two specified original ROMs over USB. Multipart aplets/libraries, programs, serial, capacity limits and fault injection have separate evidence or remain outside this witness.",
+    "The actual Stop acknowledgement and retention path is exercised here. Deliberately delayed cross-thread delivery and capacity-boundary races remain covered by the dedicated Controller/Worker and component regressions.",
+    "The read-only observer adds main-thread work. The run is a functional witness, not an unobserved performance measurement.",
+    "Intermediate SEND-menu screenshots can show an earlier published LCD frame and are not used as visual proof of the selected transport. Stable post-transfer download and arithmetic screenshots were reviewed.",
+    "Private ROMs, session bytes, returned Note files and screenshots are not included in this public evidence."
+  ],
+  "private_artifacts_committed": false
+}

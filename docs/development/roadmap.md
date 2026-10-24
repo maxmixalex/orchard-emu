@@ -62,8 +62,12 @@ See [CPU oracle](cpu-oracle.md).
 Remaining work covers decode restrictions, pipeline PC semantics, shift/carry/
 overflow edges, ARM/Thumb changes, banked registers, privilege and exception
 returns; CP15, FCSE, descriptor permissions, domains, aborts and vector relocation;
-precise partial transfer/writeback, cache/TLB behavior and implementation-defined
-cases. Unsupported behavior must remain explicit.
+precise partial transfer/writeback, cache contents/timing and implementation-defined
+cases. Separate 64-entry instruction/data TLBs now retain guest translations,
+implement the documented CP15 invalidation and lockdown operations, and survive
+version-7 checkpoints. This functional subset and its independent instruction
+cases are described in [ARM920T translation](arm920t-tlb.md); it is not complete
+cache, pipeline or hardware-timing conformance. Unsupported behavior remains explicit.
 
 **Gate:** independently derived cases and bounded instruction differentials pass,
 failures reduce to precise input/state witnesses, and sanitizers pass. Comparing
@@ -119,7 +123,12 @@ and USB compatibility conditions are part of that witness. The user's complete
 HP39gs 2.22 NOR now independently completes this workflow, including 64 double
 reads matching its original bytes. The earlier derived fixture remains
 historical OS-level evidence, distinct from the newly received native boot area.
-Neither witness establishes arbitrary native-application support.
+Neither witness establishes arbitrary native-application support. The separately
+identified GBP 0.3 ALIGN4 diagnostic build now also exits to HOME and completes
+`1+1=2` on both original 39g+ and 39gs systems. Its 39g+ return exposed a guest
+translation that must survive an in-memory page-table change until TLB
+invalidation; the core now retains it without patching the ROM or guest RAM.
+The original GBP package's unaligned loader is a separate unresolved boundary.
 
 The independent [HP49g+ native workflow](hp49-native.md) installs the pinned
 SDK ARMToolbox library and example through ordinary stock USB transfers. It
@@ -174,8 +183,8 @@ uses its full 131×80 dimensions in both views and capture export.
 One Worker owns execution. Bounded slices, explicit pacing, input queues,
 operation/generation isolation and cancellation remain invariant. LCD pixels
 and annunciators are captured inside the core at completed-scan boundaries and coalesced into browser animation frames. Optional 35 ms live response does not change raw captures, recordings or guest state; genuine blank/off frames remain represented. This is presentation policy, not physical panel calibration.
-Version-6 sessions include complete SD media, all UART state/queues, pending NOR operations and modified flash sectors alongside fractional PCLK, PWM/SPI and watchdog state. Successful restore resumes under the current lifecycle policy; a prominent pause bar remains whenever execution is paused.
-Version-1/2/3/4/5 files remain importable with explicit legacy timing/device
+Version-7 sessions include architectural instruction/data TLBs alongside complete SD media, all UART state/queues, pending NOR operations, modified flash sectors, fractional PCLK, PWM/SPI and watchdog state. Successful restore resumes under the current lifecycle policy; a prominent pause bar remains whenever execution is paused.
+Version-1/2/3/4/5/6 files remain importable with explicit legacy timing/device
 migration; see [sessions](sessions.md). Binary IndexedDB
 autosaves retain the card and migrate the former small localStorage records.
 Original-ROM and native/WASM continuation are independently checked. Actual
@@ -192,7 +201,7 @@ loops or ROM upload. One desktop run is not all-browser acceptance.
 
 ## M6 — Virtual PC connectivity
 
-**Stock object workflows, HP39 Disk drive and direct Wire upload implemented.** HP48gII
+**Stock object workflows, HP39 Disk drive and direct Wire send/receive implemented.** HP48gII
 USB/UART0 and HP49g+ USB support upload, GET, calculator SEND/Receive, directory,
 FINISH and sequential upload batches. Limits and per-file results are explicit.
 HP48 export may change its transport-header revision; payload bytes match.
@@ -211,7 +220,12 @@ aliases or object bytes, so the returned bundle can be imported into a fresh
 machine. Direct Wire upload uses the stock D-handshake / CRC-16/KERMIT block
 protocol, validates a whole package first, and uploads its library before the
 aplet. Each object needs a fresh stock RECV selection. Optional automatic next RECV recognizes validated stock catalog/menu frames and presses physical keys for same-catalog USB batches. User input, errors and unknown/modal screens cancel automation; retry never sends blind ENTER. This is a faster upload
-path; reverse SEND remains the separate Kermit workflow. The original complete
+path. On the original 39g+ and 39gs USB connection, a single Wire listener now
+accepts successive calculator SEND operations, including Notes and aplet/library
+dependency negotiation. Completed files remain available after Stop or an error;
+the shared receive budget is 16 files and 8 MiB. Object boundaries are parsed
+instead of treating the last XMODEM block's padding as file content. Serial
+reverse Wire and original 40gs behavior remain unverified. The original complete
 HP39gs now has its own Disk installation and native-reader return witness;
 HP40gs still needs its complete NOR. ASCII Notes are converted to the binary
 Saturn string format accepted by Wire; original 39g+ and 39gs install, EDIT and
@@ -238,6 +252,10 @@ update, delete and rename using baseline/local/card comparisons and conflict
 choices. Preview revalidation and partial-failure protection avoid silently
 replacing a concurrently changed file. Mounted synchronization pauses and
 ejects the image before edits, then reinserts it and conditionally resumes.
+Before changes are applied, Cancel or Back restores the original media, write
+protection, directory association and prior running intent. A reset, session
+restore or model change invalidates the old transaction; a failed insertion
+retains the recoverable draft.
 It does not create an OS block device or mutate a mounted filesystem behind
 the guest cache. See [directory synchronization](directory-sd.md).
 
@@ -275,7 +293,7 @@ repeatable packaging and documented limitations. All-model certification and phy
 ## Performance work
 
 Correctness and real workload measurements govern optimization. Existing CPU,
-translation memo, scheduler, WFI and rendering optimizations retain reference
+TLB lookup, scheduler, WFI and rendering optimizations retain reference
 paths and exact-state comparisons. [Operand-pair profiles](arm-block-profile.md)
 identify independent MOV pairs and an ADD-to-CMP dependency as candidates;
 structural instruction counts are not speedups. A new path needs identical

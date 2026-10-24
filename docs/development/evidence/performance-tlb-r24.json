@@ -1,0 +1,125 @@
+{
+  "schema": "orchard-reference-throughput-r24",
+  "date": "2026-10-24",
+  "scope": "Same architectural v7 core: ORCHARD_REFERENCE=1 versus all production fast paths. Fixed startup without input; not a before/after release speedup, TLB-only speedup, browser latency or hardware calibration.",
+  "host": "v24.19.0",
+  "platform": "linux",
+  "architecture": "x64",
+  "baseline_wasm_sha256": "8e427f30b29ec4e0c5455e6b589a58f84fa482dcaf8db9fdf83a73699fae6a0a",
+  "candidate_wasm_sha256": "74a8c4f299b522aa134b25072493db2bd5cd29a436281b8275f74c8608d8197a",
+  "source_report_sha256": "fa544dd6dbaec17da143f237d7fd46d656718a9fef482464cda682a0df90341a",
+  "tool_sha256": "e4693e8cdf6b1142c1c3d154bfd14567335b06ea0e29a943eabf02ccb46ecb89",
+  "checkpoint_comparison": "Checksum and schema validation followed by the documented legacy migrations; every canonical byte, including v7 architectural TLB entries and replacement state, is compared. Host lookup hints are never checkpoint state.",
+  "cases": [
+    {
+      "model": 1,
+      "ticks": 20000000,
+      "events": [],
+      "baseline_ms": [
+        5257.0962070000005,
+        4956.10401,
+        4836.5865969999995
+      ],
+      "candidate_ms": [
+        746.1294230000003,
+        694.3245670000006,
+        713.43707
+      ],
+      "speedup": 6.946799119927985,
+      "wire_checkpoints": [
+        {
+          "variant": "baseline",
+          "repeat": 1,
+          "version": 7,
+          "sha256": "6459d47df13ed7f690f372f711cd84a200bbaa885287a1962f1b3f5aeb2538d1"
+        },
+        {
+          "variant": "candidate",
+          "repeat": 1,
+          "version": 7,
+          "sha256": "6459d47df13ed7f690f372f711cd84a200bbaa885287a1962f1b3f5aeb2538d1"
+        },
+        {
+          "variant": "candidate",
+          "repeat": 2,
+          "version": 7,
+          "sha256": "6459d47df13ed7f690f372f711cd84a200bbaa885287a1962f1b3f5aeb2538d1"
+        },
+        {
+          "variant": "baseline",
+          "repeat": 2,
+          "version": 7,
+          "sha256": "6459d47df13ed7f690f372f711cd84a200bbaa885287a1962f1b3f5aeb2538d1"
+        },
+        {
+          "variant": "baseline",
+          "repeat": 3,
+          "version": 7,
+          "sha256": "6459d47df13ed7f690f372f711cd84a200bbaa885287a1962f1b3f5aeb2538d1"
+        },
+        {
+          "variant": "candidate",
+          "repeat": 3,
+          "version": 7,
+          "sha256": "6459d47df13ed7f690f372f711cd84a200bbaa885287a1962f1b3f5aeb2538d1"
+        }
+      ],
+      "canonical_checkpoint_equal": true
+    },
+    {
+      "model": 4,
+      "ticks": 20000000,
+      "events": [],
+      "baseline_ms": [
+        4553.993020999998,
+        4450.491671,
+        4502.951062
+      ],
+      "candidate_ms": [
+        691.6171989999966,
+        685.8812109999999,
+        694.7738160000008
+      ],
+      "speedup": 6.510756338203819,
+      "wire_checkpoints": [
+        {
+          "variant": "baseline",
+          "repeat": 1,
+          "version": 7,
+          "sha256": "3c6a11ba18c87eacb9568157caef35391b3fc76e1d0a091355cce780a143e169"
+        },
+        {
+          "variant": "candidate",
+          "repeat": 1,
+          "version": 7,
+          "sha256": "3c6a11ba18c87eacb9568157caef35391b3fc76e1d0a091355cce780a143e169"
+        },
+        {
+          "variant": "candidate",
+          "repeat": 2,
+          "version": 7,
+          "sha256": "3c6a11ba18c87eacb9568157caef35391b3fc76e1d0a091355cce780a143e169"
+        },
+        {
+          "variant": "baseline",
+          "repeat": 2,
+          "version": 7,
+          "sha256": "3c6a11ba18c87eacb9568157caef35391b3fc76e1d0a091355cce780a143e169"
+        },
+        {
+          "variant": "baseline",
+          "repeat": 3,
+          "version": 7,
+          "sha256": "3c6a11ba18c87eacb9568157caef35391b3fc76e1d0a091355cce780a143e169"
+        },
+        {
+          "variant": "candidate",
+          "repeat": 3,
+          "version": 7,
+          "sha256": "3c6a11ba18c87eacb9568157caef35391b3fc76e1d0a091355cce780a143e169"
+        }
+      ],
+      "canonical_checkpoint_equal": true
+    }
+  ]
+}

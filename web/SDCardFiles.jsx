@@ -8,7 +8,7 @@ import {DirectoryCardControls} from './DirectoryCardControls.jsx';
 
 // A draft owns its image bytes. Mounted SD media stays exclusively in the Worker.
 export function SDCardFiles({disabled,insertDisabled=false,download,onInsert,onBack,initialDraft=null,
-  store,storageKey,savedDirectory,onSaved}){
+  store,storageKey,savedDirectory,onSaved,onSyncCancel,onSyncApply}){
   const {t}=useTranslation(),imageInput=useRef(null),filesInput=useRef(null),epoch=useRef(0);
   const [image,setImage]=useState(()=>initialDraft?.bytes||createSDImage()),[imageName,setImageName]=useState(initialDraft?.name||'orchard-sd.img');
   const [association,setAssociation]=useState(initialDraft?.association||null);
@@ -58,6 +58,7 @@ export function SDCardFiles({disabled,insertDisabled=false,download,onInsert,onB
     <DirectoryCardControls image={image} association={association} disabled={locked} onBusy={setReading} onAssociation={setAssociation}
       store={store} storageKey={storageKey} savedDirectory={savedDirectory} onSaved={onSaved}
       autoSync={Boolean(initialDraft?.sync)} onSyncInsert={initialDraft?.sync?onInsert:undefined}
+      onSyncCancel={initialDraft?.sync?onSyncCancel:undefined} onSyncApply={onSyncApply}
       onDraft={draft=>{setImage(draft.bytes);setImageName(draft.name);setAssociation(draft.association);setSelected([]);changePath('/');}}/>
     <Text size="sm" role="status">{t('sdDraftSpace',{size:directory.bytes/1024/1024,free:directory.freeBytes.toLocaleString()})}</Text>
     <Group justify="space-between">

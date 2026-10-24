@@ -24,6 +24,7 @@ static void same(void) {
     o_soc x=a->soc,y=b->soc;
     o_zero(&x.eint_cache,sizeof(x.eint_cache)); o_zero(&y.eint_cache,sizeof(y.eint_cache));
     CHECK(!different(&a->cpu,&b->cpu,sizeof(a->cpu)));
+    CHECK(!different(a->tlb,b->tlb,sizeof(a->tlb)));
     CHECK(!different(&x,&y,sizeof(x)));
     CHECK(!different(&a->stop,&b->stop,sizeof(a->stop)));
     CHECK(!different(a->ram,b->ram,sizeof(a->ram)));
@@ -73,13 +74,13 @@ static void instruction_intervals(void) {
     init();a->cpu.r[15]=0x4c000000;
     for(unsigned i=0;i<6;i++)a->soc.clock[i]=0x12800001;
     *b=*a;compare(6);compare(1);
-    /* A page-table descriptor read from UART is consumed once. A second fetch
-       must walk it again and fault instead of executing a speculative opcode. */
+    /* A page-table descriptor read from UART is consumed once. The next fetch
+       uses the guest ITLB entry without repeating that device read. */
     init();a->cpu.r[15]=0x00900000;a->cpu.control|=1;
     a->cpu.ttb=0x50000000;a->cpu.domain=UINT32_MAX;
     a->soc.uart[0][0]=3;a->soc.uart[0][1]=5;
     put(a->flash,0xe2800001);CHECK(o_q_push(&a->soc.rx,2));
-    *b=*a;compare(2);CHECK(a->cpu.exceptions==1);
+    *b=*a;compare(2);CHECK(a->cpu.exceptions==0 && a->soc.rx.count==0);
     /* A successful last-page instruction commits before the next fetch fails;
        the fault still consumes its exact quantum and retains the first result. */
     init();a->cpu.r[15]=a->profile->flash_bytes-4;
@@ -95,17 +96,19 @@ static void instruction_intervals(void) {
         put(a->ram,0xe1a00000);put(a->ram+4,0xe5812000);put(a->ram+8,0xe2800001);
         *b=*a;compare(3);CHECK(a->cpu.r[0]==9);
     }
-    /* A guest STR changes the already-memoized instruction descriptor. The
-       following fetch uses the new mapping or takes its permission fault. */
+    /* A guest STR changes a descriptor while the ITLB retains its old
+       mapping. Guest c8 maintenance makes the new mapping/fault visible. */
     for(unsigned fault=0;fault<2;fault++) {
         init();a->cpu.r[15]=0x10000000;a->cpu.control|=1;
         a->cpu.ttb=O_RAM_BASE+0x4000;a->cpu.domain=UINT32_MAX;
         a->cpu.r[1]=O_RAM_BASE+0x4400;a->cpu.r[2]=fault?0:O_RAM_BASE|0xc02;
         put(a->ram+0x4200,O_RAM_BASE|0xc02);put(a->ram+0x4400,0xc02);
         put(a->flash,0xe1a00000);put(a->flash+4,0xe5812000);put(a->flash+8,0xe2800001);
-        put(a->ram+8,0xe2800009);
+        put(a->flash+12,0xee080f15); /* MCR p15,0,r0,c8,c5,0 */
+        put(a->ram+16,0xe2800009);
         *b=*a;compare(3);
-        CHECK(fault?a->cpu.exceptions==1:a->cpu.r[0]==9);
+        CHECK(a->cpu.exceptions==0&&a->cpu.r[0]==1);
+        compare(2);CHECK(fault?a->cpu.exceptions==1:a->cpu.r[0]==10);
     }
 }
 EXPORT("regression") unsigned regression(void) {

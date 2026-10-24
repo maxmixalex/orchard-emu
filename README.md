@@ -177,8 +177,11 @@ manual input and errors stop that automation; retries never press ENTER blindly.
 `HP39AscC` ASCII Notes are
 converted to the binary string format accepted by Wire. For a Note, first open
 **SHIFT → 0 (NOTEPAD)** and use that catalog's RECV menu. Both original ROMs
-pass installation, EDIT and exact content round trips. Reverse downloads still
-use **SEND → Disk drive**. Original-ROM HP39
+pass installation, EDIT and exact content round trips. On HP39g+/HP39gs USB,
+**Receive from calculator** in Wire mode stays listening across successive
+**SEND → HP39/40 (Wire/USB)** operations, including aplet dependency libraries.
+Completed files remain available after a later error or Stop; the download
+list is bounded to 16 files and 8 MiB. Original-ROM HP39
 file-transfer and ZIP round-trip verification uses the complete HP39g+ NOR.
 HP39gs has its own original-ROM Disk installation and native-reader return
 witness; HP40gs still needs its complete original NOR. File choosers accept
