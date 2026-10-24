@@ -70,8 +70,17 @@ bool o_sram_read(orchard_machine *m, uint32_t address, unsigned width, uint32_t 
 bool o_sram_write(orchard_machine *m, uint32_t address, unsigned width, uint32_t value) {
     uint32_t offset;
     if ((width != 1 && width != 2 && width != 4) || !span(m, address, width, &offset)) return false;
-    uint32_t mask = m->profile->ram_bytes - 1u;
-    for (unsigned i = 0; i < width; ++i) m->ram[(offset + i) & mask] = (uint8_t)(value >> (8u * i));
+#if !defined(ORCHARD_REFERENCE) && defined(__BYTE_ORDER__) && \
+    __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && (defined(__GNUC__) || defined(__clang__))
+    if (width == 4 && 4u <= m->profile->ram_bytes - offset) {
+        /* A complete chip span permits an unaligned-safe word store. */
+        __builtin_memcpy(m->ram + offset, &value, 4);
+    } else
+#endif
+    {
+        uint32_t mask = m->profile->ram_bytes - 1u;
+        for (unsigned i = 0; i < width; ++i) m->ram[(offset + i) & mask] = (uint8_t)(value >> (8u * i));
+    }
     if (aliased(m, address, width)) ++m->sram_alias_writes;
     return true;
 }

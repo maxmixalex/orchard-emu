@@ -63,16 +63,46 @@ static void nor(void) {
     CHECK(m.stop.status==ORCHARD_OK && m.cpu.r[15]==O_RAM_BASE+0x104);
     CHECK(m.flash[0]==19 && m.flash[1]==56 && m.flash[2]==93 && m.flash[3]==130);
 }
+/* These contiguous cases have a sentinel on each side of the word. */
+static void sram_word(uint32_t address, uint32_t offset, bool alias) {
+    m.ram[offset-1]=0xa5;
+    m.ram[offset]=m.ram[offset+1]=m.ram[offset+2]=m.ram[offset+3]=0xcc;
+    m.ram[offset+4]=0x5a;
+    uint64_t writes=orchard_sram_alias_writes(&m);
+    CHECK(o_phys_write(&m,address,4,0x78563412));
+    CHECK(m.ram[offset]==0x12 && m.ram[offset+1]==0x34 &&
+          m.ram[offset+2]==0x56 && m.ram[offset+3]==0x78);
+    CHECK(m.ram[offset-1]==0xa5 && m.ram[offset+4]==0x5a);
+    CHECK(orchard_sram_alias_writes(&m)==writes+(alias?1u:0u));
+}
 static void sram(unsigned model) {
     CHECK(orchard_init(&m,sizeof m,model)!=NULL);
     uint32_t bytes=m.profile->ram_bytes, value=0xabcdef01;
     CHECK(m.sram_decode==ORCHARD_SRAM_EXACT);
     CHECK(!o_phys_read(&m,O_RAM_BASE+bytes,4,&value) && value==0xabcdef01);
     CHECK(!o_phys_write(&m,O_RAM_BASE+bytes,4,0));
+    for (unsigned lane=1;lane<4;++lane)
+        sram_word(O_RAM_BASE+0x100u+lane,0x100u+lane,false);
+    m.ram[bytes-5]=0xa5; m.ram[0]=0x5a;
+    uint64_t writes=orchard_sram_alias_writes(&m);
+    CHECK(o_phys_write(&m,O_RAM_BASE+bytes-4,4,0x78563412));
+    CHECK(m.ram[bytes-4]==0x12 && m.ram[bytes-3]==0x34 &&
+          m.ram[bytes-2]==0x56 && m.ram[bytes-1]==0x78);
+    CHECK(m.ram[bytes-5]==0xa5 && m.ram[0]==0x5a);
+    CHECK(orchard_sram_alias_writes(&m)==writes);
+    for (unsigned remaining=1;remaining<4;++remaining) {
+        CHECK(!o_phys_write(&m,O_RAM_BASE+bytes-remaining,4,0xfedcba98));
+        CHECK(m.ram[bytes-4]==0x12 && m.ram[bytes-3]==0x34 &&
+              m.ram[bytes-2]==0x56 && m.ram[bytes-1]==0x78);
+        CHECK(m.ram[bytes-5]==0xa5 && m.ram[0]==0x5a);
+        CHECK(orchard_sram_alias_writes(&m)==writes && m.stop.status==ORCHARD_OK);
+    }
     CHECK(orchard_sram_select(NULL,ORCHARD_SRAM_EXACT)==ORCHARD_BAD_ARGUMENT);
     CHECK(orchard_sram_select(&m,(orchard_sram_decode)2)==ORCHARD_BAD_ARGUMENT);
     CHECK(orchard_sram_select(&m,ORCHARD_SRAM_BANK1_MIRROR)==ORCHARD_OK);
     CHECK(m.profile->ram_bytes==bytes);
+    for (unsigned lane=1;lane<4;++lane)
+        sram_word(O_RAM_BASE+2*bytes+0x100u+lane,0x100u+lane,true);
     for (unsigned width=1;width<=4;width*=2) {
         uint32_t mask=width==4?UINT32_MAX:(1u<<(width*8u))-1u;
         for(unsigned j=0;j<64;++j) {
@@ -88,8 +118,14 @@ static void sram(unsigned model) {
             CHECK(o_phys_read(&m,O_RAM_BASE+offset,width,&value) && value==((~pattern)&mask));
         }
     }
-    CHECK(o_phys_write(&m,O_RAM_BASE+bytes-2,4,0x12345678));
-    CHECK(m.ram[bytes-2]==0x78 && m.ram[bytes-1]==0x56 && m.ram[0]==0x34 && m.ram[1]==0x12);
+    for (unsigned copy=1;copy<=2;++copy) {
+        m.ram[bytes-3]=0xa5; m.ram[2]=0x5a;
+        writes=orchard_sram_alias_writes(&m);
+        CHECK(o_phys_write(&m,O_RAM_BASE+copy*bytes-2,4,0x12345678));
+        CHECK(m.ram[bytes-2]==0x78 && m.ram[bytes-1]==0x56 && m.ram[0]==0x34 && m.ram[1]==0x12);
+        CHECK(m.ram[bytes-3]==0xa5 && m.ram[2]==0x5a);
+        CHECK(orchard_sram_alias_writes(&m)==writes+1);
+    }
     uint8_t out[4]={0};uint64_t reads=orchard_sram_alias_reads(&m);
     CHECK(orchard_read_memory(&m,O_RAM_BASE+2*bytes-2,out,4)==ORCHARD_OK);
     CHECK(out[0]==0x78 && out[1]==0x56 && out[2]==0x34 && out[3]==0x12);
