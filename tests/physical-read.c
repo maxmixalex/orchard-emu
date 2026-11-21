@@ -109,7 +109,7 @@ static void boundaries(unsigned model, unsigned decode, bool id) {
 }
 EXPORT("regression") unsigned run(void) {
     checks = failures = first_failure = 0;
-    for (unsigned model = 1; model <= 6; ++model)
+    for (unsigned model = 1; model <= ORCHARD_MODEL_COUNT; ++model)
         for (unsigned decode = 0; decode < 2; ++decode)
             for (unsigned id = 0; id < 2; ++id) boundaries(model, decode, id != 0);
     return failures;

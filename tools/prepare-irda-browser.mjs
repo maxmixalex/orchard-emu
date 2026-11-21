@@ -22,7 +22,7 @@ const wasm=await readFile(wasmPath);
 await mkdir(out,{recursive:false});
 const report={schema:'orchard-original-irda-browser-preparation-v1',passed:false,
  cold_boot:true,physical_input_only:true,guest_memory_patched:false,host_protocol_responses:false,
- transport_tested:false,checkpoint_version:7,preparation_tool_sha256:hash(await readFile(fileURLToPath(import.meta.url))),wasm_sha256:hash(wasm),keys:[],frames:[],sources:{},roms:[]};
+ transport_tested:false,checkpoint_version:8,preparation_tool_sha256:hash(await readFile(fileURLToPath(import.meta.url))),wasm_sha256:hash(wasm),keys:[],frames:[],sources:{},roms:[]};
 for(const name of ['tools/verify-serial-selftests.mjs','tools/verify-irda-peer.mjs'])
  report.sources[name]=hash(await readFile(join(root,name)));
 const machines=[];
@@ -45,7 +45,7 @@ async function save(m,label){
  await writeFile(join(out,`${label}-${m.model}.pgm`),Buffer.concat([Buffer.from(`P5\n131 ${height}\n255\n`),pixels.map(n=>255-n)]),{flag:'wx'});
  assert.equal(m.c.checkpoint_save(),0);
  const checkpoint=new Uint8Array(m.c.memory.buffer,m.c.checkpoint_buffer(),m.c.checkpoint_size()).slice();
- assert.equal(new DataView(checkpoint.buffer,checkpoint.byteOffset,checkpoint.byteLength).getUint32(8,true),7);
+ assert.equal(new DataView(checkpoint.buffer,checkpoint.byteOffset,checkpoint.byteLength).getUint32(8,true),8);
  await writeFile(join(out,`${label}-${m.model}.checkpoint`),checkpoint,{flag:'wx'});
  const session=await encodeSession({model:m.model,romHash:m.romHash,preset:m.preset,frameView:1,state:checkpoint});
  await writeFile(join(out,`${label}-${m.model}.ord`),session,{flag:'wx'});

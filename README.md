@@ -23,17 +23,26 @@ component identification, panel interpretation and pad/ADC conditions remain
 unverified hardware assumptions.
 This is conditional functional operation, not complete six-model support.
 
+The supplied [hardware-mod firmware](docs/development/hardware-mod-roms.md)
+also enables experimental HP40gs and HP50gm entries. They are visibly labelled
+and accepted by exact complete-image hashes. HP50gm has a separate 512 KiB SRAM,
+64-row configuration; it does not substitute for an original HP50g capture.
+
 The current compatibility continuation runs the unchanged HP-GCC Tetris+ on
 39g+ through installation, play, return and arithmetic; Arkalite and Hanoi
-also return correctly on both admitted 39-series ROMs; Arkalite's browser
-acceptance uses an explicitly held DEL, with short-click failures retained. Native 2048, BabalPlus
+also return correctly on both admitted 39-series ROMs. Arkalite additionally
+passes six real-browser short-DEL trials; the historical failure's cause is
+still unresolved. Native 2048, BabalPlus
 and conversion programs provide separate 49g+ coverage. The original SDK example
 also executes through the correct [48gII ARMToolbox library](docs/development/hp48-native.md),
 returns to arithmetic and reconnects over USB. See the
-[program and browser acceptance record](docs/development/compatibility-r25.md)
+[current program and browser acceptance record](docs/development/compatibility-r26.md)
 for exact scope, input identities and remaining roadmap work.
 The subsequent [ARM920T review](docs/development/core-next-r25.md) also restores
-the documented CP15 ID-read aliases while keeping unsupported encodings explicit.
+the documented CP15 ID-read aliases. Architecturally undefined ARM/Thumb
+instructions now enter the guest UND exception, while unsupported privileged
+operations remain explicit. PCLK UART FIFO receive timeouts and version-8
+sessions extend the peripheral and continuation model.
 
 ## Browser
 
@@ -204,7 +213,9 @@ Serial Wire uses 128-byte XMODEM blocks, which the original HP39gs accepts for
 library installation; USB retains its 1 KiB blocks. Original-ROM HP39
 file-transfer and ZIP round-trip verification uses the complete HP39g+ NOR.
 HP39gs has its own original-ROM Disk installation and native-reader return
-witness; HP40gs still needs its complete original NOR. File choosers accept
+witness. The hardware-mod HP40gs also completes Wire/Disk installation and
+USB auto-RECV; original-device HP40gs acceptance still needs its own full NOR.
+File choosers accept
 arbitrary filename extensions and identify the actual typed/ZIP content.
 The optional **Settings → Transfer → Unlimited during transfers** switch accelerates active protocol
 work, then restores the selected speed. Waiting for the calculator's next RECV

@@ -168,8 +168,8 @@ static void checkpoint_and_reference(void){
  check_translation(0x10000123,false,false,true,0x08000123,0);
  check_translation(0x10000123,false,true,true,0x08000123,0);
  section(0x10000000,0x08100000,3,0);b=a;
- size_t n=orchard_checkpoint_size(&a);CHECK(n==277644&&n<sizeof saved);
- CHECK(orchard_checkpoint_save(&a,saved,n)==ORCHARD_OK);CHECK(o_read_le(saved+8,4)==7);
+ size_t n=orchard_checkpoint_size(&a);CHECK(n==277668&&n<sizeof saved);
+ CHECK(orchard_checkpoint_save(&a,saved,n)==ORCHARD_OK);CHECK(o_read_le(saved+8,4)==8);
  flush(7);a.tlb[0].entry[0].valid=false;CHECK(orchard_checkpoint_load(&a,saved,n)==ORCHARD_OK);
  CHECK(equal(a.tlb,b.tlb,sizeof a.tlb));
  check_translation(0x10000123,false,false,true,0x08000123,0);
@@ -184,8 +184,8 @@ static void checkpoint_and_reference(void){
   CHECK(equal(a.tlb,b.tlb,sizeof a.tlb));
  }
  /* v6 lacked TLB state. Its explicit migration is empty TLBs/reset c10. */
- o_copy(legacy,saved,9348);o_copy(legacy+9348,saved+11404,n-11404);put(legacy+8,6);repair(legacy,n-2056);
- CHECK(orchard_checkpoint_load(&a,legacy,n-2056)==ORCHARD_OK);CHECK(count(0)==0&&count(1)==0&&!a.tlb[0].lockdown&&!a.tlb[1].lockdown);
+ o_copy(legacy,saved,9348);o_copy(legacy+9348,saved+11428,n-11428);put(legacy+8,6);repair(legacy,n-2080);
+ CHECK(orchard_checkpoint_load(&a,legacy,n-2080)==ORCHARD_OK);CHECK(count(0)==0&&count(1)==0&&!a.tlb[0].lockdown&&!a.tlb[1].lockdown);
  check_translation(0x10000123,false,false,true,0x08100123,0);
  orchard_reset(&a);CHECK(count(0)==0&&count(1)==0&&!a.tlb[0].lockdown);
 }

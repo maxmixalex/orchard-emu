@@ -6,6 +6,7 @@ import {readFile, writeFile, mkdir} from 'node:fs/promises';
 import {resolve, basename} from 'node:path';
 import {createHash} from 'node:crypto';
 import {HP39_ROM, HP39GS_ROM, applySetup} from '../web/hp48.js';
+import {hardwareModSetup} from '../web/hardware-mod.js';
 import {inspectHp39File} from '../web/hp39-files.js';
 import {VirtualUSB} from '../web/virtual-usb.js';
 import {FileTransfer} from '../web/file-transfer.js';
@@ -28,15 +29,18 @@ const profiles={
   hanoi:{sha256:'4b84e3946e159f960db128cc56257f3d7df6351ea7e593ba4ac247e0f6ace4c6',url:'https://www.hpcalc.org/hp39/games/hanoi39.zip'},
 };
 assert.equal(sha(program),profiles[scenario].sha256,'Scenario requires its unchanged downloaded program');
-const model=sha(rom)===HP39_ROM?1:sha(rom)===HP39GS_ROM?2:0;
-assert(model,'Use an unchanged admitted HP39g+/HP39gs ROM');
+const mod40=hardwareModSetup('hp40gs-mod-home');
+const model=sha(rom)===HP39_ROM?1:sha(rom)===HP39GS_ROM?2:sha(rom)===mod40.hash?3:0;
+assert(model,'Use an exact admitted HP39g+/HP39gs or HP40gs hardware-mod ROM');
 if(scenario==='tetris')assert.equal(model,1,'The original Tetris+ package declares HP39g+ only');
+if(model===3)assert.equal(scenario,'arkalite','HP40gs hardware-mod program coverage is currently limited to Arkalite');
+const preset={1:'hp39-home',2:'hp39gs-home',3:mod40.preset}[model];
 assert.equal(inspectHp39File(program).kind,'B');
 await mkdir(out);
 const {instance:{exports:c}}=await WebAssembly.instantiate(wasm,{});
 assert.equal(c.create(model),0);new Uint8Array(c.memory.buffer,c.rom_buffer(),rom.length).set(rom);assert.equal(c.load(rom.length),0);
-applySetup(c,model,model===1?'hp39-home':'hp39gs-home');
-const report={schema:'orchard-hp39-original-program-v1',model,program:basename(programPath),rom_sha256:sha(rom),
+applySetup(c,model,preset);
+const report={schema:'orchard-hp39-original-program-v1',model,preset,experimental_hardware_mod:model===3,original_stock_image:model!==3,program:basename(programPath),rom_sha256:sha(rom),
   source_url:profiles[scenario].url,program_sha256:sha(program),wasm_sha256:sha(wasm),original_program_unchanged:true,cold_boot:!checkpointPath,
   guest_memory_patched:false,browser_end_to_end:false,keys:[],frames:[],transfers:[],passed:false};
 let tick=0,request=0,transferError='';

@@ -1,0 +1,75 @@
+{
+  "schema": "orchard-browser-ci-evidence-v1",
+  "round": "r26",
+  "scope": "Browser test environment reproducibility; no calculator firmware or runtime application changes",
+  "ci_failure": {
+    "workflow": "Build",
+    "run_id": 44853941617,
+    "job_id": 136691554322,
+    "branch": "main",
+    "test": "tests/browser-sd-directory.py",
+    "line": 143,
+    "operation": "Locator.set_input_files(directory)",
+    "timeout_ms": 10000,
+    "locator_resolved": true,
+    "playwright": "1.57.0",
+    "browser": "157.0.8103.78",
+    "browser_version_evidence": "Preceding browser-sd-files report in the same job, log line1186",
+    "causality": "Timeout not reproduced locally; incompatible pairing is observed but not proved to be the immediate cause"
+  },
+  "official_pair": {
+    "playwright": "1.57.0",
+    "chromium_revision": "1200",
+    "chromium_version": "143.0.7499.4",
+    "source": "Bundled Playwright browsers.json"
+  },
+  "local_results": [
+    {
+      "playwright": "1.57.0",
+      "browser": "150.0.7871.181",
+      "browser_distribution": "Debian Chromium headless shell",
+      "unchanged_directory_test_passed": true,
+      "checks": 8,
+      "page_errors": 0
+    },
+    {
+      "playwright": "1.57.0",
+      "browser": "143.0.7499.4",
+      "browser_distribution": "Playwright-managed Chromium headless shell revision1200",
+      "unchanged_directory_test_passed": true,
+      "checks": 8,
+      "page_errors": 0,
+      "private_report_basename": "ci-pw157-matched-directory.json",
+      "private_report_sha256": "71ca16fe3ad1d25fa7d58d39ea6cb70552598ea4be74eab1e9b740ccb78a545b"
+    }
+  ],
+  "workflow_change": {
+    "requirements_pin_changed": false,
+    "install": "python -m playwright install --with-deps chromium",
+    "select": "playwright.chromium.executable_path exported as CHROMIUM via GITHUB_ENV",
+    "record": "Driver package version, selected executable and its --version output",
+    "artifact": "build/browser-environment.json",
+    "runtime_app_changed": false,
+    "test_file_changed": false,
+    "directory_picker_skipped": false,
+    "timeout_increased": false
+  },
+  "validation": {
+    "workflow_yaml_parsed": true,
+    "bash_syntax": true,
+    "embedded_python_syntax": true,
+    "exact_version_recording_block_executed": true,
+    "github_env_export_matches_managed_path": true,
+    "managed_full_chromium_version": "Google Chrome for Testing 143.0.7499.4",
+    "artifact_path_included": true,
+    "github_hosted_execution": "Pending next CI run",
+    "local_full_chromium_launch": "Container prohibits process-singleton socket; paired headless-shell was used for the unchanged functional test"
+  },
+  "sources": [
+    "https://playwright.dev/python/docs/browsers",
+    "https://playwright.dev/python/docs/ci",
+    "https://github.com/microsoft/playwright/blob/v1.57.0/packages/playwright-core/src/server/dom.ts",
+    "https://github.com/microsoft/playwright/blob/v1.57.0/packages/playwright-core/browsers.json"
+  ],
+  "private_material_included": false
+}

@@ -2,7 +2,8 @@
 // Artwork is a separate Apache-2.0 asset; preserve its own NOTICE and provenance.
 import {bindCalculatorKey} from './key-input.js';
 const NS='http://www.w3.org/2000/svg';
-const SLUGS=['','hp39gplus','hp39gs','hp40gs','hp48gii','hp49gplus','hp50g'];
+// The 50gm uses its donor's 64-line case/key geometry, with a distinct model title.
+const SLUGS=['','hp39gplus','hp39gs','hp40gs','hp48gii','hp49gplus','hp50g','hp48gii'];
 const ATTRS=new Set(['d','x','y','width','height','rx','ry','cx','cy','r']);
 const NAMES=['I/O','Left shift','Right shift','Alpha','Battery','Busy'];
 const LANDSCAPE_GAP=24;

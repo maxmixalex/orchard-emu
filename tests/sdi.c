@@ -157,7 +157,7 @@ static void media_tests(unsigned model) {
 }
 EXPORT("regression") unsigned regression(void) {
     checks=failures=first=0;
-    for(unsigned model=1;model<=6;model++) {
+    for(unsigned model=1;model<=ORCHARD_MODEL_COUNT;model++) {
         init(model); CHECK(rd(0x24)==0x2000); CHECK(rd(0x10)==0);
         wr(0,0xffffffffu); CHECK(rd(0)==0x1d); wr(4,0x101); CHECK(rd(4)==1);
         wr(8,0x12345678u); CHECK(rd(8)==0x12345678u);

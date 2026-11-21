@@ -13,7 +13,7 @@ export const isHp39 = model => [1,2,3].includes(model);
 export const canReceiveHp39Wire = (model,transport) => [1,2].includes(model)&&transport==='usb'||model===2&&transport==='serial';
 export function transferCapabilities(model,transport='usb') {
   const link=['usb','serial'].includes(transport),hp39=isHp39(model)&&(transport==='usb'||model!==1&&transport==='serial');
-  const supported=model===4&&link||model===5&&transport==='usb';
+  const supported=model===4&&link||[5,7].includes(model)&&transport==='usb';
   return Object.freeze({send:supported||hp39,receive:supported||hp39,get:supported,directory:supported,finish:supported,serve:hp39});
 }
 export function validateUpload(model, name, bytes) {

@@ -32,7 +32,7 @@ function compileRegression(name, testModule, extraFlags = []) {
   ]);
 }
 let totalAssertions = 0, physicalReadAssertions = 0;
-for (const name of ['regression', 'mmu-tlb', 'lcd-input', 'lcd-adc', 'usb', 'sdi', 'spi', 'uart', 'watchdog-reset', 'buzzer', 'power', 'pwm-clock', 'nor-bus', 'nor-write', 'physical-read', 'memory', 'segments-nor', 'performance', 'execution', 'cpu-transactions', 'scheduler', 'checkpoint']) {
+for (const name of ['regression', 'undefined', 'mmu-tlb', 'lcd-input', 'lcd-adc', 'usb', 'sdi', 'spi', 'uart', 'uart-timeout', 'watchdog-reset', 'buzzer', 'power', 'pwm-clock', 'nor-bus', 'nor-write', 'physical-read', 'memory', 'segments-nor', 'performance', 'execution', 'cpu-transactions', 'scheduler', 'checkpoint']) {
   const testModule = resolve(build, `${name}.wasm`);
   compileRegression(name, testModule);
   const { instance: { exports: test } } = await WebAssembly.instantiate(await readFile(testModule), {});
@@ -55,11 +55,13 @@ assert.equal(experimentalPhysicalRead.regression(), 0, `Experimental physical-re
 assert.equal(experimentalPhysicalRead.checks(), physicalReadAssertions, 'The experimental WASM must execute the same physical-read assertions');
 console.log(`Experimental physical-read regression: ${physicalReadAssertions} additional WASM-only assertions pass (excluded from the default per-host total)`);
 
-// Minimal independent guest: reset -> MMIO -> ARM/Thumb/BX PC -> SWI -> WFI.
+// Independent guest: reset -> MMIO -> Thumb UND/return -> BX PC -> ARM
+// UND/return -> SWI -> WFI. Every model runs the actual handlers on both hosts.
 // This fixture is generated in a temporary directory and is never packaged.
 function syntheticNor(size, height) {
   const rom = Buffer.alloc(size, 0xff);
   rom.writeUInt32LE(0xea000006, 0); // B 0x20
+  rom.writeUInt32LE(0xe1b0f00e, 4); // UND vector: MOVS PC,LR
   rom.writeUInt32LE(0xe1b0f00e, 8); // SWI vector: MOVS PC,LR
   let pc = 0x20;
   const literals = [];
@@ -82,10 +84,13 @@ function syntheticNor(size, height) {
   const targetLiteral = literals.length;
   load(0, 0); word(0xe12fff10); // BX r0
   literals[targetLiteral].value = pc | 1;
+  rom.writeUInt16LE(0xde00, pc); pc += 2; // Undefined Thumb instruction
+  rom.writeUInt16LE(0x46c0, pc); pc += 2; // MOV r8,r8, retaining BX PC alignment
   rom.writeUInt16LE(0x2407, pc); pc += 2; // MOVS r4,#7
   rom.writeUInt16LE(0x3401, pc); pc += 2; // ADDS r4,#1
   rom.writeUInt16LE(0x4778, pc); pc += 2; // word-aligned BX PC
   rom.writeUInt16LE(0x46c0, pc); pc += 2; // skipped Thumb padding
+  word(0xe6000010); // Undefined ARM instruction
   word(0xef000000); // SWI
   word(0xee070f90); // MCR p15,0,r0,c7,c0,4: WFI
   const sleepPc = pc;
@@ -101,8 +106,8 @@ function syntheticNor(size, height) {
 const dir = await mkdtemp(resolve(tmpdir(), 'orchard-regression-'));
 try {
   const { instance: { exports: c } } = await WebAssembly.instantiate(await readFile(resolve(root, 'dist/orchard.wasm')), {});
-  const names = ['hp39gplus', 'hp39gs', 'hp40gs', 'hp48gii', 'hp49gplus', 'hp50g'];
-  for (let id = 1; id <= 6; ++id) {
+  const names = ['hp39gplus', 'hp39gs', 'hp40gs', 'hp48gii', 'hp49gplus', 'hp50g', 'hp50gm'];
+  for (let id = 1; id <= names.length; ++id) {
     assert.equal(c.create(id), 0);
     const size = c.profile(id, 0), width = c.profile(id, 2), height = c.profile(id, 3);
     const { rom, sleepPc } = syntheticNor(size, height);
@@ -115,7 +120,7 @@ try {
     ]));
     assert.equal(run.boot_verified, false);
     assert.equal(run.status, 'budget-exhausted');
-    assert.equal(run.sleeping, true); assert.equal(run.exceptions, '1');
+    assert.equal(run.sleeping, true); assert.equal(run.exceptions, '3');
     assert.equal(parseInt(run.pc, 16), sleepPc);
     assert.equal((await readFile(uartOut)).toString(), 'O!');
     new Uint8Array(c.memory.buffer, c.rom_buffer(), size).set(rom);
@@ -129,7 +134,7 @@ try {
       assert.equal(state[7], 0x5aa5); assert.equal(state[4], 8); assert.equal(state[15], sleepPc);
       assert.equal(state[16], parseInt(run.cpsr, 16));
       assert.equal(state[20], Number(run.instructions)); assert.equal(state[22], 1000);
-      assert.equal(state[24], 1); assert.equal(state[26], 1);
+      assert.equal(state[24], 3); assert.equal(state[26], 1);
       const count = c.uart_receive();
       assert.equal(Buffer.from(c.memory.buffer, c.uart_output(), count).toString(), 'O!');
       assert.equal(c.frame(), 0);

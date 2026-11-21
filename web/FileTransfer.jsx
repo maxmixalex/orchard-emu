@@ -4,6 +4,7 @@ import {Button,Group,NativeSelect,Progress,Stack,Switch,Text,TextInput} from '@m
 import {useTranslation} from 'react-i18next';
 import {transferCapabilities,canReceiveHp39Wire} from './file-transfer.js';
 import {hp39TransferMenus} from './hp39-transfer-ui.js';
+import {canAutoReceiveHp39Wire} from './hp39-wire-auto.js';
 
 const size=n=>new Intl.NumberFormat(undefined,{maximumFractionDigits:1}).format(n/1024)+' KiB';
 const number=n=>new Intl.NumberFormat().format(Math.max(0,Math.floor(n||0)));
@@ -74,7 +75,7 @@ export function FileTransfer({controller,state,transport}){
       data={[{value:'disk',label:t('fileTransferDisk',{disk:menus.disk})},{value:'wire',label:t(canReceiveHp39Wire(state.model.id,transport)?'fileTransferWireBoth':'fileTransferWire',{menu:menus.wire})}]}/>}
     <Text size="sm" c="dimmed">{t(wire?'fileTransferWireHelp':hp39?'fileTransfer39Help':!supported?'fileTransferUnavailable':transport==='serial'?'fileTransferSerialHelp':'fileTransferHelp',{menu:menus.wire,disk:menus.disk})}</Text>
     {wireReceive&&<Text size="sm" c="dimmed">{t('fileTransferWireReceiveHelp',{menu:menus.wire})}</Text>}
-    {wire&&transport==='usb'&&[1,2].includes(state.model.id)&&<Switch label={t('fileTransferAutoReceive')} description={t('fileTransferAutoReceiveHelp')}
+    {wire&&canAutoReceiveHp39Wire(state.model.id,transport)&&<Switch label={t('fileTransferAutoReceive')} description={t('fileTransferAutoReceiveHelp')}
       checked={autoReceive} disabled={active} onChange={event=>setAutoReceive(event.currentTarget.checked)}/>}
     {supported&&<>
       <Group align="end"><Button variant="default" disabled={active} onClick={()=>{input.current.value='';input.current.click();}}>{t('chooseTransferFile')}</Button>

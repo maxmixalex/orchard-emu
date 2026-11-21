@@ -7,37 +7,46 @@ import {readFile, writeFile, mkdir} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {HP48_ROM, applySetup} from '../web/hp48.js';
+import {hardwareModSetup} from '../web/hardware-mod.js';
 import {VirtualUSB} from '../web/virtual-usb.js';
 import {FileTransfer} from '../web/file-transfer.js';
 import {readFirmware, sha256} from './rom-inputs.mjs';
 
-const usage = 'Usage: node tools/verify-hp48-native.mjs FULL-48GII-NOR.bin HPGCC-SDK-DIRECTORY NEW-OUTPUT-DIRECTORY';
+const usage = 'Usage: node tools/verify-hp48-native.mjs FULL-NOR.bin HPGCC-SDK-DIRECTORY NEW-OUTPUT-DIRECTORY [--hp50gm]';
 if (process.argv.length === 3 && process.argv[2] === '--help') {
   console.log(usage + '\nCold boots the admitted private ROM, installs the unmodified SDK Library 275 in RAM port 0 over virtual USB,\nruns template/main.hp through stock ARMToolbox, returns with ON, calculates 1+1, and checks USB after return.\nRequires the pinned patched-hpgcc-1.1-sdk-for-hp39gs SDK; no firmware or SDK files are downloaded.');
   process.exit(0);
 }
-if (process.argv.length !== 5) throw new Error(usage);
+if (![5, 6].includes(process.argv.length) || process.argv.length === 6 && process.argv[5] !== '--hp50gm') throw new Error(usage);
+const modified = process.argv.includes('--hp50gm');
+const config = modified ? {...hardwareModSetup('hp50gm-home'), library: 'LIB275.LIB',
+  libraryHash: '7d204b746d0ded75e92da3d8e323637c2846fcd8f159dde2ba25ba8bdc0db637',
+  exportHeader: 'HPHP49-C', aliasReads: '0'} : {
+  model: 4, preset: 'hp48-home', hash: HP48_ROM, library: 'L275_48.LIB',
+  libraryHash: '9469877dbc9791f2d87993fc596d6c34c966cc91a9bbc99e63b43cacdadba188',
+  exportHeader: 'HPHP49-B', aliasReads: '1'};
 const root = fileURLToPath(new URL('../', import.meta.url));
 const sdk = resolve(process.argv[3]), output = resolve(process.argv[4]);
 const romPath = resolve(process.argv[2]);
 const wasmPath = process.env.ORCHARD_WASM || resolve(root, 'dist/orchard.wasm');
 const [rom, wasm, library, program] = await Promise.all([
   readFirmware(romPath), readFile(wasmPath),
-  readFile(resolve(sdk, 'L275_48.LIB')), readFile(resolve(sdk, 'template/main.hp')),
+  readFile(resolve(sdk, config.library)), readFile(resolve(sdk, 'template/main.hp')),
 ]);
-assert.equal(sha256(rom), HP48_ROM, 'Requires the admitted complete HP48gII original NOR');
-assert.equal(sha256(library), '9469877dbc9791f2d87993fc596d6c34c966cc91a9bbc99e63b43cacdadba188', 'Unexpected ARMToolbox fixture');
+assert.equal(sha256(rom), config.hash, 'Requires the exact complete NOR for the selected configuration');
+assert.equal(sha256(library), config.libraryHash, 'Unexpected ARMToolbox fixture');
 assert.equal(sha256(program), '423be27dbfa7f12f5645b666c0d389da28b1bfd9424813d00981601ce099248b', 'Unexpected HP-GCC example fixture');
 await mkdir(output); // Never overwrite earlier evidence or another user's files.
 const {instance: {exports: c}} = await WebAssembly.instantiate(wasm, {});
-assert.equal(c.create(4), 0);
+assert.equal(c.create(config.model), 0);
 new Uint8Array(c.memory.buffer, c.rom_buffer(), rom.length).set(rom);
 assert.equal(c.load(rom.length), 0);
-applySetup(c, 4, 'hp48-home');
+applySetup(c, config.model, config.preset);
 
 const report = {
-  schema: 'orchard-hp48-native-stock-v1', model: 4, preset: 'hp48-home',
-  rom_sha256: HP48_ROM, wasm_sha256: sha256(wasm),
+  schema: 'orchard-hp48-native-stock-v1', model: config.model, preset: config.preset,
+  hardware_modified: modified, stock_model_verified: !modified,
+  rom_sha256: config.hash, wasm_sha256: sha256(wasm),
   tool_sha256: sha256(await readFile(fileURLToPath(import.meta.url))),
   host_modules_sha256: Object.fromEntries(await Promise.all(
     ['hp48.js', 'virtual-usb.js', 'file-transfer.js', 'kermit.js'].map(async name =>
@@ -49,7 +58,7 @@ const report = {
   original_programs_unchanged: true,
   expected_frames_visually_reviewed: true,
   sdk_source: 'https://github.com/lobakkang/patched-hpgcc-1.1-sdk-for-hp39gs/tree/7fa1503912338ea0fdf1d39eb584770f4d121cd2',
-  library: {bytes: library.length, sha256: sha256(library), sdk_file: 'L275_48.LIB', destination: 'RAM port 0'},
+  library: {bytes: library.length, sha256: sha256(library), sdk_file: config.library, destination: 'RAM port 0'},
   native_program: {bytes: program.length, sha256: sha256(program), sdk_file: 'template/main.hp'},
   keys: [], stages: [], transfers: [], usb_events: [], passed: false,
 };
@@ -69,7 +78,7 @@ let tick = 0, previous = -1, request = 0, received = null;
 const usb = new VirtualUSB(c, c.timebase_hz(), event => {
   report.usb_events.push({tick, ...event});
 });
-const transfer = new FileTransfer({core: c, usb, model: 4, notify: event => {
+const transfer = new FileTransfer({core: c, usb, model: config.model, notify: event => {
   if (event.type === 'file-transfer-received') received = event.bytes.slice();
 }});
 function run(n) {
@@ -172,25 +181,24 @@ try {
   report.arithmetic_after_return_verified = true;
   command('SERVER'); connect();
   const returned = operation('get', 'ARMTOOL');
-  // The admitted HP48gII ROM exports revision B even for a revision C input.
-  // Check that exact original-OS header behavior separately from the object;
-  // no other byte difference is accepted and neither guest input is changed.
+  // The HP48gII OS exports revision B for a revision C input; 50gm preserves C.
+  // Require each firmware's exact header and unchanged object payload.
   const exported = Buffer.from(returned);
   assert.equal(library.subarray(0, 8).toString('ascii'), 'HPHP49-C');
-  assert.equal(exported.subarray(0, 8).toString('ascii'), 'HPHP49-B');
+  assert.equal(exported.subarray(0, 8).toString('ascii'), config.exportHeader);
   assert.deepEqual(exported.subarray(8), library.subarray(8), 'USB GET after native return changed the library object');
   report.usb_after_return = {get_completed: true, bytes: returned.length,
-    binary_file_byte_equal: false, object_payload_byte_equal: true,
-    header_revision: {input: 'HPHP49-C', output: 'HPHP49-B', only_changed_byte: 7},
+    binary_file_byte_equal: modified, object_payload_byte_equal: true,
+    header_revision: {input: 'HPHP49-C', output: config.exportHeader, only_changed_byte: modified ? null : 7},
     exported_sha256: sha256(exported)};
   operation('finish'); usb.disconnect(); transfer.resetUsb(tick); run(10000000);
   await picture('final-home');
   report.sram_alias_reads = c.sram_alias_reads().toString();
   report.sram_alias_writes = c.sram_alias_writes().toString();
-  assert.equal(report.sram_alias_reads, '1'); assert.equal(report.sram_alias_writes, '0');
+  assert.equal(report.sram_alias_reads, config.aliasReads); assert.equal(report.sram_alias_writes, '0');
   assert.equal(sha256(await readFirmware(romPath)), report.rom_sha256, 'ROM changed during acceptance');
   assert.equal(sha256(await readFile(wasmPath)), report.wasm_sha256, 'WASM changed during acceptance');
-  assert.equal(sha256(await readFile(resolve(sdk, 'L275_48.LIB'))), report.library.sha256, 'Library changed during acceptance');
+  assert.equal(sha256(await readFile(resolve(sdk, config.library))), report.library.sha256, 'Library changed during acceptance');
   assert.equal(sha256(await readFile(resolve(sdk, 'template/main.hp'))), report.native_program.sha256, 'Program changed during acceptance');
   report.application_results_verified = true;
   report.passed = true;
@@ -201,4 +209,4 @@ try {
 }
 report.final_tick = tick; report.final_state = state();
 await writeFile(resolve(output, 'report.json'), JSON.stringify(report, null, 2) + '\n', {flag: 'wx'});
-console.log('HP48 native ARM workflow', report.passed ? 'PASSED' : 'FAILED');
+console.log(modified ? 'HP50gm native ARM workflow' : 'HP48 native ARM workflow', report.passed ? 'PASSED' : 'FAILED');

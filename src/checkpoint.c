@@ -5,7 +5,7 @@
  */
 #include "internal.h"
 #define HEADER 32u
-#define VERSION 7u
+#define VERSION 8u
 #define FLASH_SECTOR 4096u
 static const uint8_t magic[8] = {'O','R','C','H','S','T','0','1'};
 typedef struct {
@@ -147,6 +147,10 @@ static void fields(codec *c, saved *s, unsigned version) {
             }
         }
     }
+    if(version>=8u)for(unsigned ch=0;ch<3;ch++) {
+        U32(d->uart_state[ch].rx_timeout_remaining);
+        U32(d->uart_state[ch].rx_timeout_latched);
+    }
 }
 static size_t scalar_size(unsigned version) { saved s; o_zero(&s,sizeof s); codec c={0}; fields(&c,&s,version); return c.pos; }
 /* Reflected CRC-32 (polynomial 0xedb88320), advanced eight bits at once.
@@ -261,6 +265,15 @@ static bool valid(const saved *s, const orchard_machine *m) {
         const o_uart *u=&d->uart_state[ch];
         if(u->rx_head>=16||u->tx_head>=16||u->rx_count>16||u->tx_count>16||u->errors>1||
            u->rx_event>1||u->tx_event>1||(u->modem&~0x11u)||u->modem_known>1)return false;
+        if(u->rx_timeout_remaining>37748736u||u->rx_timeout_latched>1||
+           (u->rx_timeout_remaining&&u->rx_timeout_latched)||
+           ((u->rx_timeout_remaining||u->rx_timeout_latched)&&
+            (!u->rx_count||!(d->uart[ch][2]&1u)||(d->uart[ch][1]&0x483u)!=0x81u)))return false;
+        if(u->rx_timeout_remaining) {
+            uint32_t line=d->uart[ch][0];
+            uint32_t bits=7u+(line&3u)+((line&32u)?1u:0u)+((line&4u)?1u:0u);
+            if(d->uart[ch][10]>65535u||u->rx_timeout_remaining>3u*bits*16u*(d->uart[ch][10]+1u))return false;
+        }
     }
     for(unsigned ch=0;ch<2;ch++)if(d->uart_rx[ch].head>=O_QUEUE||d->uart_tx[ch].head>=O_QUEUE||
         d->uart_rx[ch].count>O_QUEUE||d->uart_tx[ch].count>O_QUEUE)return false;

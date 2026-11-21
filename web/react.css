@@ -58,6 +58,7 @@ canvas#lcd{display:block;width:100%;height:auto;image-rendering:pixelated;image-
 .device-sidebar-tabs{min-width:0}
 .device-sidebar pre{max-width:100%}
 .rom-access-notice{padding:8px 20px;background:var(--mantine-color-yellow-0);flex-shrink:0}
+.model-provenance{padding:6px 20px;background:var(--mantine-color-gray-0);border-bottom:1px solid var(--mantine-color-default-border);flex-shrink:0;max-height:64px;overflow:auto}
 @media(max-width:760px){
  .app-header{padding:8px 10px;gap:6px}.brand{font-size:20px}.app-header [role=status]{display:none}
  .app-toolbar{padding:6px 10px;gap:6px}.app-toolbar>p{display:none}.app-toolbar button{padding-inline:10px;font-size:12px}
@@ -66,6 +67,7 @@ canvas#lcd{display:block;width:100%;height:auto;image-rendering:pixelated;image-
  .calculator-body[data-panel-open=true] #workspace{min-height:240px;flex:1 0 45%;overflow:auto}
  .device-sidebar{width:100%;max-height:55%;min-height:200px;border-left:0;border-top:1px solid var(--mantine-color-default-border);padding:10px 12px;flex:1 0 55%}
  .rom-access-notice{padding:8px 10px}
+ .model-provenance{padding:6px 10px}
 }
 @media(max-height:500px) and (orientation:landscape){
  .app-header{padding:5px 12px}.app-toolbar{padding:4px 12px}.app-toolbar>p{display:none}.app-shell footer{padding-block:3px}

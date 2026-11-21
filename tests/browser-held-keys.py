@@ -107,8 +107,26 @@ with sync_playwright() as p:
                 assert [(m['type'],m.get('scan')) for m in messages()]==[('key-down',45),('key-up',None)],(view,paired,departure,messages())
                 departures.append({'view':view,'irda_paired':paired,'departure':departure,'next_click_scan':45})
     other.close();page.evaluate('()=>{const c=window.__controller;c.patch({irda:{...c.state.irda,active:false}})}');settled()
+    # Real DOM input plus the production queue on an explicit synthetic clock:
+    # typing a character during a held direction must not prevent a subsequent
+    # pointer hold from reaching its own contact. The character remains finite
+    # and runs only after both physical controls have been released.
+    page.evaluate('()=>{const c=window.__controller;c.patch({prefs:{...c.state.prefs,view:"traditional-landscape"}})}');settled()
+    frame();page.locator('#calculator').focus();clear();page.evaluate('window.__enableContactFixture()')
+    page.keyboard.down('ArrowLeft');page.keyboard.press('a')
+    pos=point(45);page.mouse.move(**pos);page.mouse.down()
+    contacts=lambda:page.evaluate('window.__contactEvents')
+    assert contacts()==[{'scan':43,'down':True,'tick':0},{'scan':45,'down':True,'tick':0}],contacts()
+    page.evaluate('window.__advanceContacts(3000000)');assert len(contacts())==2
+    page.mouse.up();page.keyboard.up('ArrowLeft')
+    assert contacts()[2:]==[{'scan':45,'down':False,'tick':3000000},{'scan':43,'down':False,'tick':3000000}]
+    macro=next(m['scans'] for m in messages() if m['type']=='tap-sequence')
+    for tick in [3600000,5100000,5700000,7200000]:page.evaluate('tick=>window.__advanceContacts(tick)',tick)
+    assert contacts()[4:]==[{'scan':macro[0],'down':True,'tick':3600000},{'scan':macro[0],'down':False,'tick':5100000},
+                          {'scan':macro[1],'down':True,'tick':5700000},{'scan':macro[1],'down':False,'tick':7200000}],contacts()
+    mixed_contacts=contacts();page.evaluate('delete window.__contactMessage')
     frame();page.locator('#calculator').focus();page.keyboard.down('ArrowLeft');clear();page.evaluate('window.__unmount()')
     assert any(m['type']=='release' for m in messages());clear();page.keyboard.up('ArrowLeft');assert not messages()
     assert not errors,errors
-    report={'passed':True,'scope':'Production UI and controller in Chromium, synthetic Worker snapshots; actual ROM hold witness is separate','keyboard_repeat_suppressed':True,'finite_macros':True,'pointer_capture_and_cancel':True,'multitouch_independent_owners':True,'pause_blur_modal_view_unmount_release':True,'background_pointer_release':departures,'page_errors':errors}
+    report={'passed':True,'scope':'Production UI and controller in Chromium, synthetic Worker snapshots; mixed-input contact observer uses an explicit synthetic guest clock; actual ROM hold witness is separate','keyboard_repeat_suppressed':True,'finite_macros':True,'pointer_capture_and_cancel':True,'multitouch_independent_owners':True,'pause_blur_modal_view_unmount_release':True,'background_pointer_release':departures,'mixed_macro_contacts':mixed_contacts,'page_errors':errors}
     (OUT/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report));browser.close()

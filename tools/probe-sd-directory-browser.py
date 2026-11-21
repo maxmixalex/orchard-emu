@@ -139,7 +139,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--rom', required=True, type=Path)
     parser.add_argument('--expected-wasm', required=True)
-    parser.add_argument('--expected-checkpoint-version', required=True, type=int, choices=(6, 7),
+    parser.add_argument('--expected-checkpoint-version', required=True, type=int, choices=(6, 7, 8),
                         help='Assert the exact checkpoint version emitted by this integrated build')
     parser.add_argument('--output', required=True, type=Path)
     args = parser.parse_args()

@@ -92,7 +92,7 @@ try{
       worker.onerror=e=>reject(Error(e.message||'Native scheduler Worker failed'));
     });
   }finally{clearTimeout(timer);worker.terminate();URL.revokeObjectURL(url);}
-  for(const model of [1,2,3,4,5,6])for(const audience of ['calculator','debug'])report.workers.push(await checkWorker(model,audience));
+  for(const model of [1,2,3,4,5,6,7])for(const audience of ['calculator','debug'])report.workers.push(await checkWorker(model,audience));
   report.passed=true;
 }catch(error){report.passed=false;report.error=error.message;report.stack=error.stack;}
 document.querySelector('#result').textContent=JSON.stringify(report,null,2);

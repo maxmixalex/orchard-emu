@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Portable local file envelope. Integrity checks are not a signature/authentication.
+import { HARDWARE_MOD_ROMS, hardwareModSetup } from './hardware-mod.js';
 const MAGIC=new TextEncoder().encode('ORCHARD1');
 // v6+ checkpoints include changed NOR sectors in addition to RAM/devices;
 // v7 also retains architectural instruction/data TLB state.
@@ -12,14 +13,16 @@ export async function sha256(bytes){
   return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
 }
 function metadata(m){
-  if(!m||m.schema!==1||![1,2,3,4,5,6].includes(m.model)||
+  if(!m||m.schema!==1||![1,2,3,4,5,6,7].includes(m.model)||
      !/^[0-9a-f]{64}$/.test(m.romHash)||!/^[0-9a-f]{64}$/.test(m.stateHash)||
-     !['strict','hp39-home','hp39gs-home','hp48-home','hp49-home'].includes(m.preset)||![0,1].includes(m.frameView)||
+     !['strict','hp39-home','hp39gs-home','hp48-home','hp49-home',...HARDWARE_MOD_ROMS.map(v=>v.preset)].includes(m.preset)||![0,1].includes(m.frameView)||
      (m.preset==='hp39-home'&&m.model!==1)||(m.preset==='hp39gs-home'&&m.model!==2)||(m.preset==='hp48-home'&&m.model!==4)||(m.preset==='hp49-home'&&m.model!==5))
     throw new Error('This is not a compatible Orchard session.');
+  const variant=hardwareModSetup(m.preset);
+  if(variant && variant.model!==m.model)throw new Error('This hardware-modification session uses a different model profile.');
 }
 export async function encodeSession({model,romHash,preset,frameView,state}){
-  if(!(state instanceof Uint8Array)||!state.length||state.length>([5,6].includes(model)?MAX_STATE:MAX_BASE_STATE))throw new Error('Invalid session size.');
+  if(!(state instanceof Uint8Array)||!state.length||state.length>([5,6,7].includes(model)?MAX_STATE:MAX_BASE_STATE))throw new Error('Invalid session size.');
   const m={schema:1,model,romHash,preset,frameView,stateHash:await sha256(state)};metadata(m);
   const text=new TextEncoder().encode(JSON.stringify(m));
   const out=new Uint8Array(12+text.length+state.length);
@@ -36,7 +39,7 @@ export async function decodeSession(buffer){
   try{m=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes.subarray(12,12+n)));}
   catch{throw new Error('The session header is damaged.');}
   metadata(m);
-  if(bytes.length-12-n>([5,6].includes(m.model)?MAX_STATE:MAX_BASE_STATE))throw new Error('Invalid session size for this calculator.');
+  if(bytes.length-12-n>([5,6,7].includes(m.model)?MAX_STATE:MAX_BASE_STATE))throw new Error('Invalid session size for this calculator.');
   const state=bytes.slice(12+n);
   if(await sha256(state)!==m.stateHash)throw new Error('The session file is damaged or incomplete.');
   return {...m,state};

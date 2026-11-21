@@ -148,6 +148,8 @@ void o_soc_tick(orchard_machine *m) {
         pwm_tick(m);
         if(m->stop.status!=ORCHARD_OK)return;
     }
+    if(s->uart_state[0].rx_timeout_remaining||s->uart_state[1].rx_timeout_remaining||
+       s->uart_state[2].rx_timeout_remaining)o_uart_timeout_advance(m,edges);
     o_uart_tick(m);
 }
 static uint32_t *plain_register(o_soc *s, uint32_t address) {

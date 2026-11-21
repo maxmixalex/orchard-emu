@@ -21,7 +21,7 @@ static int read_checkpoint(const char *path, void *data, size_t capacity, size_t
 }
 int main(int argc,char **argv){
     if(argc!=6)return 64;
-    char *end;unsigned long model=strtoul(argv[1],&end,10);if(!*argv[1]||*end||model>6)return 64;
+    char *end;unsigned long model=strtoul(argv[1],&end,10);if(!*argv[1]||*end||model>ORCHARD_MODEL_COUNT)return 64;
     const orchard_profile *p=orchard_get_profile((unsigned)model);if(!p)return 64;
     for(const char *s=argv[4];*s;s++)if(*s<'0'||*s>'9')return 64;
     errno=0;unsigned long budget=strtoul(argv[4],&end,10);if(errno||!*argv[4]||*end||budget>500000000)return 64;

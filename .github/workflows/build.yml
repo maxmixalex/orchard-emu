@@ -103,11 +103,31 @@ jobs:
           go test ./...
           go vet ./...
           GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /tmp/orchard-hp39-receiver.exe .
+      - name: Install matched Playwright Chromium
+        run: |
+          python3 -m venv build/browser-venv
+          build/browser-venv/bin/pip install -r tools/requirements-browser.txt
+          # A pinned driver requires its bundled browser revision, not the
+          # rolling Google Chrome supplied by the GitHub runner image.
+          # https://playwright.dev/python/docs/browsers
+          build/browser-venv/bin/python -m playwright install --with-deps chromium
+          build/browser-venv/bin/python - <<'PYCODE'
+          import importlib.metadata, json, os, subprocess
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as playwright:
+              executable = playwright.chromium.executable_path
+          report = {'playwright': importlib.metadata.version('playwright'),
+                    'browser': subprocess.check_output([executable, '--version'], text=True).strip(),
+                    'executable': executable, 'selection': 'Playwright-managed Chromium'}
+          with open(os.environ['GITHUB_ENV'], 'a') as environment:
+              environment.write(f'CHROMIUM={executable}\n')
+          Path('build/browser-environment.json').write_text(json.dumps(report, indent=2)+'\n')
+          print(json.dumps(report, indent=2))
+          PYCODE
       - name: Browser receiver and production Worker regression
         run: |
           node tests/timer-receiver.mjs
-          python3 -m venv build/browser-venv
-          build/browser-venv/bin/pip install -r tools/requirements-browser.txt
           build/browser-venv/bin/python tests/browser-components.py
           build/browser-venv/bin/python tests/sd-storage-browser.py
           build/browser-venv/bin/python tests/browser-landscape.py
@@ -131,6 +151,7 @@ jobs:
         with:
           name: orchard-browser-evidence
           path: |
+            build/browser-environment.json
             build/browser-worker.json
             build/browser-ui.png
             build/browser-stop-recovery.json

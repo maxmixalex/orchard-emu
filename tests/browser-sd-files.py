@@ -132,7 +132,9 @@ with sync_playwright() as p:
     complete=save_card('browser-managed.img')
     passed('delete confirmation/cancel works; nonempty folders rejected; files and empty folders deleted')
 
-    page.locator('#sd-draft-image').set_input_files({'name':'BROKEN.custom','mimeType':'application/octet-stream','buffer':bytes(len(complete))})
+    broken_image=OUT/'BROKEN.custom'
+    broken_image.write_bytes(bytes(len(complete)))
+    page.locator('#sd-draft-image').set_input_files(str(broken_image))
     page.get_by_role('alert').wait_for()
     button('Open folder PROGRAMS').wait_for()
     assert save_card('browser-after-bad-image.img')==complete
@@ -145,7 +147,11 @@ with sync_playwright() as p:
 
     button('Start a new blank card').click()
     assert button('Open folder PROGRAMS').count()==0
-    page.locator('#sd-draft-image').set_input_files({'name':'source.any-suffix','mimeType':'application/octet-stream','buffer':complete})
+    # Use the real file-input path for the multi-megabyte card, as a user does.
+    # In-memory CDP payload encoding can exhaust the action deadline before
+    # the browser even dispatches the input event. Preserve identical bytes.
+    imported_image=OUT/'source.any-suffix';imported_image.write_bytes(complete)
+    page.locator('#sd-draft-image').set_input_files(str(imported_image))
     button('Open folder PROGRAMS').wait_for()
     assert page.get_by_label('Image filename',exact=True).input_value()=='source.any-suffix.img'
     button('Open folder PROGRAMS').click()

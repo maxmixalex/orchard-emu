@@ -120,7 +120,7 @@ static void idle_steps(uint32_t n) {
 }
 static void exercise_idle(bool use_ratio) {
     idle_uses_ratio=use_ratio;
-    for (unsigned model=1;model<=6;++model) {
+    for (unsigned model=1;model<=ORCHARD_MODEL_COUNT;++model) {
         /* The writing instruction completes, then all remaining issue slots
            sleep. Peripheral time keeps moving at every supported ratio. */
         for (unsigned mode=0;mode<4;++mode) if (mode!=2)
@@ -185,7 +185,7 @@ static void exercise_idle(bool use_ratio) {
         idle_program(model,3,3); duplicate(); idle_steps(63);
         size_t n=orchard_checkpoint_size(&a); CHECK(n<=sizeof saved);
         CHECK(orchard_checkpoint_save(&a,saved,n)==ORCHARD_OK);
-        CHECK(saved[8]==7 && saved[9]==0 && saved[10]==0 && saved[11]==0);
+        CHECK(saved[8]==8 && saved[9]==0 && saved[10]==0 && saved[11]==0);
         a.cpu.sleeping=false; a.soc.clock[3]=0; a.idle_write_enabled=true;
         CHECK(orchard_checkpoint_load(&a,saved,n)==ORCHARD_OK); same_state();
         a.soc.srcpnd=b.soc.srcpnd=1u<<10;
@@ -227,7 +227,7 @@ static void exercise_one_slot(void) {
     CHECK(orchard_run_idle(NULL,1).status==ORCHARD_BAD_ARGUMENT);
     CHECK(orchard_init(&a,sizeof a,1)==&a);
     CHECK(orchard_run_idle(&a,1).status==ORCHARD_NO_ROM);
-    for (unsigned model=1;model<=6;++model) {
+    for (unsigned model=1;model<=ORCHARD_MODEL_COUNT;++model) {
         /* CP15 mode does not change this policy's one-slot budget. Reserved
            clock-source encodings still cannot drive the shared PCLK domain. */
         for (unsigned mode=0;mode<4;++mode) for (unsigned div=0;div<8;++div) {
@@ -259,7 +259,7 @@ static void exercise_clocked(void) {
     CHECK(orchard_clock_slots(NULL)==0);
     CHECK(orchard_init(&a,sizeof a,1)==&a);
     CHECK(orchard_run_clocked(&a,1).status==ORCHARD_NO_ROM);
-    for (unsigned model=1;model<=6;++model) {
+    for (unsigned model=1;model<=ORCHARD_MODEL_COUNT;++model) {
         for (unsigned mode=0;mode<4;++mode) for (unsigned div=0;div<8;++div) {
             init(model,div); a.cpu.control|=mode<<30; duplicate();
             unsigned slots=clocked_ratio[mode][div];
@@ -334,7 +334,7 @@ static void exercise_clocked(void) {
 static void exercise(void) {
     CHECK(orchard_run_divided(NULL,1).status==ORCHARD_BAD_ARGUMENT);
     CHECK(orchard_clock_divisor(NULL)==0);
-    for (unsigned model=1;model<=6;++model) {
+    for (unsigned model=1;model<=ORCHARD_MODEL_COUNT;++model) {
         for (unsigned div=0;div<4;++div) {
             const unsigned ratio[4]={1,2,2,4};
             init(model,div); duplicate();

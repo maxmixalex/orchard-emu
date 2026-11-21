@@ -34,9 +34,11 @@ def main():
     parser.add_argument('--rom',required=True,type=Path);parser.add_argument('--game-checkpoint',required=True,type=Path)
     parser.add_argument('--scenario',choices=['arkalite','tetris'],default='arkalite')
     parser.add_argument('--exit-hold-ticks',type=int,default=0,help='Explicitly hold DEL/ON for this many observed guest ticks; zero retains an ordinary short click')
+    parser.add_argument('--exit-phase-ticks',type=int,default=0,help='Wait this many additional observed guest ticks before the physical DEL/ON click; does not change minimum key dwell')
     parser.add_argument('--expected-wasm',required=True);parser.add_argument('--output',required=True,type=Path)
     args=parser.parse_args();rom=args.rom.read_bytes();digest=sha(rom)
     if not 0<=args.exit_hold_ticks<=120000000:parser.error('--exit-hold-ticks must be 0–120000000')
+    if not 0<=args.exit_phase_ticks<=12000000:parser.error('--exit-phase-ticks must be 0–12000000')
     if digest not in MODELS:parser.error('Use an unchanged admitted HP39g+ or HP39gs ROM')
     model,preset=MODELS[digest];state=args.game_checkpoint.read_bytes();assert state[:8]==b'ORCHST01'
     if args.scenario=='tetris' and model!=1:parser.error('The original Tetris+ program supports HP39g+ only')
@@ -46,7 +48,7 @@ def main():
     session=args.output/'game.ord';session.write_bytes(b'ORCHARD1'+struct.pack('<I',len(meta))+meta+state)
     report={'schema':'orchard-held-game-browser-v1','passed':False,'model':model,'scenario':args.scenario,'rom_sha256':digest,'checkpoint_sha256':sha(state),'assets':assets,
             'production_worker':True,'guest_memory_patched':False,'performance_sample':False,'holds':[],
-            'exit_input':{'mode':'hold' if args.exit_hold_ticks else 'short-click','requested_hold_ticks':args.exit_hold_ticks},'physical_inputs':[]}
+            'exit_input':{'mode':'hold' if args.exit_hold_ticks else 'short-click','requested_hold_ticks':args.exit_hold_ticks,'requested_phase_ticks':args.exit_phase_ticks},'physical_inputs':[]}
     server=ThreadingHTTPServer(('127.0.0.1',0),functools.partial(Handler,directory=str(ROOT/'dist')))
     threading.Thread(target=server.serve_forever,daemon=True).start();page=None;errors=[]
     def snapshot():return page.evaluate('window.__hold.snapshot')
@@ -118,7 +120,11 @@ def main():
                 assert [m['type'] for m in commands]==['key-down','key-up'],commands
                 report['holds'].append({'source':source,'key':name,'scan':scan,'held_ticks':held['ticks']-start,'released_ticks':released['ticks'],'before':before,'held':played,'commands':commands})
                 print('HELD',name,report['holds'][-1],flush=True)
-            page.set_viewport_size({'width':1360,'height':940});physical(0 if args.scenario=='arkalite' else 56,args.exit_hold_ticks);settle(60000000)
+            page.set_viewport_size({'width':1360,'height':940})
+            phase_start=snapshot()['ticks'];report['exit_input']['phase_start_tick']=phase_start
+            if args.exit_phase_ticks:ticks(phase_start+args.exit_phase_ticks)
+            report['exit_input']['phase_observed_tick']=snapshot()['ticks']
+            physical(0 if args.scenario=='arkalite' else 56,args.exit_hold_ticks);settle(60000000)
             report['game_return']=capture('del-return');physical(48);settle(12000000);report['home_return']=capture('home-return')
             for scan in [26,5,26,6]:physical(scan)
             settle(12000000);report['stock_return']=capture('one-plus-one')

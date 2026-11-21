@@ -6,7 +6,7 @@ import json, os, shutil, threading
 from playwright.sync_api import sync_playwright
 
 ROOT=Path(__file__).resolve().parent.parent
-ALLOWED={'/web/'+p for p in ('autosave.js','preferences.js','session.js','hp48.js')}
+ALLOWED={'/web/'+p for p in ('autosave.js','preferences.js','session.js','hp48.js','hardware-mod.js')}
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path=self.path.split('?',1)[0]
@@ -33,6 +33,10 @@ try:
           const a=new AutoSaveStore(localStorage),b=new AutoSaveStore(localStorage);
           await a.write('b'.repeat(64),2,small,null,'hp39gs');
           check((await b.read('b'.repeat(64))).model===2,'HP39gs binary autosave is accepted and readable');
+          for(const model of [3,7]){
+            const hash=String(model).repeat(64);await a.write(hash,model,small,null,'hardware-mod');
+            const record=await b.read(hash);check(record.model===model&&record.file[2]===3,'Hardware-mod binary save retains its distinct model');
+          }
           check((await a.read(hash)).token==='legacy','Legacy save remains readable');
           const file=new Uint8Array(16*1024*1024+500000);file[0]=23;file[file.length-1]=97;
           const start=performance.now();await a.write(hash,5,file,'legacy','binary');

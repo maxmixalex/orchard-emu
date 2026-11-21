@@ -111,8 +111,10 @@ function indexReply(libraries){
 }
 function libraryId(bytes,info){
   const number=nibbles(bytes),start=info.payloadOffset*2,characters=number(start+10,2),at=start+12+2*characters;
-  if(number(at,2)!==characters)throw malformed('Invalid Wire library name length.');
-  return number(at+2,3);
+  // Named libraries repeat their character count after the name. A zero-count
+  // library omits that byte; its three-nibble ID follows the count directly.
+  if(characters&&number(at,2)!==characters)throw malformed('Invalid Wire library name length.');
+  return number(at+(characters?2:0),3);
 }
 
 /** One user-started listener accepts successive stock SEND operations.

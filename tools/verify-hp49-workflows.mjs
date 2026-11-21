@@ -7,25 +7,43 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {HP49_ROM,applySetup} from '../web/hp48.js';
+import {hardwareModSetup} from '../web/hardware-mod.js';
 import {readFirmware,sha256} from './rom-inputs.mjs';
 
-const usage='Usage: node tools/verify-hp49-workflows.mjs FULL-49GPLUS-NOR.bin NEW-OUTPUT-DIRECTORY';
+const usage='Usage: node tools/verify-hp49-workflows.mjs FULL-NOR.bin NEW-OUTPUT-DIRECTORY [--hp50gm]';
 if(process.argv.length===3&&process.argv[2]==='--help'){
   console.log(usage+'\nCold boots the pinned private ROM and checks stock CAS, menus, plot and native/WASM resume.\nBuild the native orchard-checkpoint-replay and production WASM first. No firmware is fetched.');
   process.exit(0);
 }
-if(process.argv.length!==4)throw new Error(usage);
+if(![4,5].includes(process.argv.length)||process.argv.length===5&&process.argv[4]!=='--hp50gm')throw new Error(usage);
+const modified=process.argv.includes('--hp50gm');
+const config=modified?hardwareModSetup('hp50gm-home'):{model:5,preset:'hp49-home',hash:HP49_ROM};
+const height=modified?64:80;
+// Independently viewed 64-line modified-OS results; no pixels are cropped from
+// the 80-line stock expectations and no guest state is changed by this table.
+const modFrames={
+  home:'47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd',
+  version:'def6b8999f4d725b4ecf52b5a8a9b8b6f5c45deeae60865473bb347a59ff0733',
+  factor:'ef522c6ec859f6c0f031e93b5b84e6ab6e28b04662bbb59cb2317a9b39f707d4',
+  apps:'4fc17d51baf7e29f10faff317491243ba70e9954c379b1d667f1ad05931a41c4',
+  'apps-return':'ef522c6ec859f6c0f031e93b5b84e6ab6e28b04662bbb59cb2317a9b39f707d4',
+  mode:'589397a8b94ba1a1459300354836e2bdeeb0327c2e9a7326af1da16e19029e11',
+  'mode-return':'ef522c6ec859f6c0f031e93b5b84e6ab6e28b04662bbb59cb2317a9b39f707d4',
+  plot:'095a75d3c481b6c36d423701f370a71e61af3144fd64d33ed00d2f505abfea12',
+  'plot-return':'d39bfd059d87cc78436d626e0607e4d8c048ebcac1d83fc54291bdd6e06b586d',
+};
 const root=fileURLToPath(new URL('../',import.meta.url));
 const output=resolve(process.argv[3]),rom=await readFirmware(resolve(process.argv[2]));
-assert.equal(sha256(rom),HP49_ROM,'Requires the admitted complete HP49g+ original NOR');
-const wasm=await readFile(resolve(root,'dist/orchard.wasm'));
+assert.equal(sha256(rom),config.hash,'Requires the exact complete NOR for the selected configuration');
+const wasm=await readFile(process.env.ORCHARD_WASM||resolve(root,'dist/orchard.wasm'));
 const native=resolve(root,process.env.ORCHARD_BUILD_DIR||'build',process.platform==='win32'?'orchard-checkpoint-replay.exe':'orchard-checkpoint-replay');
 await mkdir(output); // Retain previous successes and failures; never overwrite them.
 const {instance:{exports:c}}=await WebAssembly.instantiate(wasm,{});
-assert.equal(c.create(5),0);
+assert.equal(c.create(config.model),0);
 new Uint8Array(c.memory.buffer,c.rom_buffer(),rom.length).set(rom);
-assert.equal(c.load(rom.length),0);applySetup(c,5,'hp49-home');
-const report={schema:'orchard-hp49-stock-workflows-v1',model:5,preset:'hp49-home',rom_sha256:HP49_ROM,
+assert.equal(c.load(rom.length),0);applySetup(c,config.model,config.preset);
+const report={schema:'orchard-hp49-stock-workflows-v1',model:config.model,preset:config.preset,rom_sha256:config.hash,
+  hardware_modified:modified,stock_model_verified:!modified,
   wasm_sha256:sha256(wasm),tool_sha256:sha256(await readFile(fileURLToPath(import.meta.url))),
   physical_input_only:true,ram_bytes:524288,frame_view:'packed-lsb',canonical_hardware_boot:false,
   keys:[],stages:[],passed:false};
@@ -38,11 +56,12 @@ const alphabet=[35,36,37,38,39,40,41,46,47,48,49,50,28,21,14,7,29,22,15,8,1,30,2
 function type(text){assert.match(text,/^[A-Z]+$/);for(const char of text){tap(57);tap(alphabet[char.charCodeAt(0)-65]);}}
 async function picture(name,expected){
   assert.equal(c.frame_view(1),0);
-  const pixels=new Uint8Array(c.memory.buffer,c.frame_buffer(),131*80).slice(),hash=sha256(pixels);
-  await writeFile(resolve(output,name+'.pgm'),Buffer.concat([Buffer.from('P5\n131 80\n255\n'),Buffer.from(pixels.map(v=>255-v))]),{flag:'wx'});
+  const pixels=new Uint8Array(c.memory.buffer,c.frame_buffer(),131*height).slice(),hash=sha256(pixels);
+  await writeFile(resolve(output,name+'.pgm'),Buffer.concat([Buffer.from(`P5\n131 ${height}\n255\n`),Buffer.from(pixels.map(v=>255-v))]),{flag:'wx'});
   report.stages.push({name,tick,frame_sha256:hash,stop:state()[28]});
   console.log(name,tick,hash);
-  if(expected)assert.equal(hash,expected,'Stock LCD differs at '+name);
+  if(modified)expected=modFrames[name];
+  if(expected)assert.equal(hash,expected,'Firmware LCD differs at '+name);
 }
 function checkpoint(){assert.equal(c.checkpoint_save(),0);return new Uint8Array(c.memory.buffer,c.checkpoint_buffer(),c.checkpoint_size()).slice();}
 function restore(bytes){new Uint8Array(c.memory.buffer,c.checkpoint_buffer(),bytes.length).set(bytes);assert.equal(c.checkpoint_load(bytes.length),0);const s=state();tick=s[22]+s[23]*2**32;}
@@ -64,7 +83,7 @@ try{
   // Native consumes the exact same immutable snapshot, not a separately read ROM.
   const snapshot=resolve(output,'private-full-nor.bin');await writeFile(snapshot,rom,{flag:'wx'});
   const nativeAfter=resolve(output,'native-after.checkpoint');
-  const child=spawnSync(native,['5',snapshot,beforePath,'1000000',nativeAfter],{encoding:'utf8',timeout:60000,maxBuffer:1024*1024});
+  const child=spawnSync(native,[String(config.model),snapshot,beforePath,'1000000',nativeAfter],{encoding:'utf8',timeout:60000,maxBuffer:1024*1024});
   if(child.error)throw child.error;
   assert.equal(child.status,0,child.stderr||'Native checkpoint replay failed');
   assert.deepEqual(await readFile(nativeAfter),Buffer.from(after),'Native/WASM full checkpoint differs');
@@ -83,4 +102,4 @@ try{
 }catch(error){report.error=error.message;process.exitCode=1;console.error(error.message);}
 report.final_tick=tick;report.final_state=state();
 await writeFile(resolve(output,'report.json'),JSON.stringify(report,null,2)+'\n',{flag:'wx'});
-console.log('HP49 stock workflows',report.passed?'PASSED':'FAILED');
+console.log(modified?'HP50gm modified-OS workflows':'HP49 stock workflows',report.passed?'PASSED':'FAILED');

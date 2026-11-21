@@ -198,7 +198,7 @@ static void board_tx_net(void){
 static void unsupported_modes(void){
  for(unsigned ch=0;ch<3;ch++)for(unsigned mode=0;mode<4;mode++){
   init();wr(ch,0,3);wr(ch,4,5);if(mode==3)wr(ch,8,7);
-  const uint32_t values[4]={0x15,6,9,0x85};
+  const uint32_t values[4]={0x15,6,9,0x485};
   CHECK(!o_mmio_write(&a,base(ch)+4,4,values[mode]));
   CHECK(a.stop.status==ORCHARD_UNIMPLEMENTED_MMIO&&a.stop.address==base(ch)+4);
   CHECK(a.soc.uart[ch][1]==5);

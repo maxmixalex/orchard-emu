@@ -15,7 +15,7 @@ BUILDER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(BUILDER)
 PREFIX = 'hp49gplus-flash-read-v1/'
 FILES = {'LICENSE', 'README-zh.md', 'SHA256SUMS', 'manifest.json',
-         'tools/flash-capture.mjs', 'tools/rom-inputs.mjs'} | {
+         'tools/flash-capture.mjs', 'tools/rom-inputs.mjs', 'web/hardware-mod.js'} | {
     f'OR49{program}.{extension}' for program in 'PTAB' for extension in ('hp', 'rpl')}
 
 
@@ -34,7 +34,7 @@ class PackageTest(unittest.TestCase):
                          f'{digest}  {published.name}\n')
         with zipfile.ZipFile(published) as archive:
             self.assertEqual(set(archive.namelist()),
-                             {PREFIX + name for name in FILES | {'ORCHARD/', 'tools/'}})
+                             {PREFIX + name for name in FILES | {'ORCHARD/', 'tools/', 'web/'}})
             for entry in archive.infolist():
                 self.assertEqual(entry.date_time, (1980, 1, 1, 0, 0, 0))
                 self.assertEqual(entry.compress_type, zipfile.ZIP_STORED)

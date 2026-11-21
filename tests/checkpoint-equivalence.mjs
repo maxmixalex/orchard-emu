@@ -12,7 +12,7 @@ function repairCRC(bytes) {
   new DataView(bytes.buffer).setUint32(28, (~crc) >>> 0, true);
 }
 let checks = 0;
-for (let model = 1; model <= 6; ++model) {
+for (let model = 1; model <= 7; ++model) {
   const ramBytes = model >= 5 ? 0x80000 : 0x40000;
   const old = new Uint8Array(4070 + ramBytes + 4096);
   old.set(new TextEncoder().encode('ORCHST01'));
@@ -25,9 +25,9 @@ for (let model = 1; model <= 6; ++model) {
   repairCRC(old);
   const original = old.slice(), migrated = canonicalCheckpoint(old);
   assert.deepEqual(old, original);
-  assert.equal(migrated.length, old.length + 52 + 709 + 64 + 76 + 4377 + 2056);
+  assert.equal(migrated.length, old.length + 52 + 709 + 64 + 76 + 4377 + 2056 + 24);
   assert.deepEqual(migrated.subarray(32, 4070), old.subarray(32, 4070));
-  assert.deepEqual(migrated.subarray(11404), old.subarray(4070));
+  assert.deepEqual(migrated.subarray(11428), old.subarray(4070));
   const reset = new Uint8Array(52); reset[21] = 0x20;
   assert.deepEqual(migrated.subarray(4070, 4122), reset);
   assert.deepEqual(canonicalCheckpoint(migrated), migrated);
@@ -40,7 +40,7 @@ for (let model = 1; model <= 6; ++model) {
   v3.set(migrated.subarray(0, 4831));v3.set(old.subarray(4070), 4831);
   const v3View=new DataView(v3.buffer);v3View.setUint32(8,3,true);v3View.setUint32(12,v3.length,true);repairCRC(v3);
   assert.deepEqual(canonicalCheckpoint(v3), migrated);
-  assert.equal(new DataView(migrated.buffer).getUint32(8,true),7);
+  assert.equal(new DataView(migrated.buffer).getUint32(8,true),8);
   assert.deepEqual(migrated.subarray(4831,4839),new Uint8Array(8));
   assert.deepEqual(migrated.subarray(4839,4855),old.subarray(1903,1919));
   assert.deepEqual(migrated.subarray(4855,4895),new Uint8Array(40));
@@ -73,10 +73,17 @@ for (let model = 1; model <= 6; ++model) {
   assert.notDeepEqual(canonicalCheckpoint(liveSPI),migrated);
   const heldReset=migrated.slice();new DataView(heldReset.buffer).setUint32(4967,91,true);repairCRC(heldReset);
   assert.notDeepEqual(canonicalCheckpoint(heldReset),migrated);
-  const v6=new Uint8Array(migrated.length-2056);
-  v6.set(migrated.subarray(0,9348));v6.set(migrated.subarray(11404),9348);
+  const v6=new Uint8Array(migrated.length-2080);
+  v6.set(migrated.subarray(0,9348));v6.set(migrated.subarray(11428),9348);
   const v6View=new DataView(v6.buffer);v6View.setUint32(8,6,true);v6View.setUint32(12,v6.length,true);repairCRC(v6);
   assert.deepEqual(canonicalCheckpoint(v6),migrated);
+  const v7=new Uint8Array(migrated.length-24);
+  v7.set(migrated.subarray(0,11404));v7.set(migrated.subarray(11428),11404);
+  const v7View=new DataView(v7.buffer);v7View.setUint32(8,7,true);v7View.setUint32(12,v7.length,true);repairCRC(v7);
+  assert.deepEqual(canonicalCheckpoint(v7),migrated);
+  const timeout=migrated.slice();new DataView(timeout.buffer).setUint32(11404,123,true);repairCRC(timeout);
+  assert.notDeepEqual(canonicalCheckpoint(timeout),migrated);
+  checks += 2;
   const warmTLB=migrated.slice();warmTLB[9348+3]=4;repairCRC(warmTLB);
   assert.notDeepEqual(canonicalCheckpoint(warmTLB),migrated);
   checks += 25;
@@ -94,16 +101,16 @@ card.set(new TextEncoder().encode('ORCHST01'));
 const cv = new DataView(card.buffer);
 for(const [offset,value] of [[8,3],[12,card.length],[16,5],[24,0x80000],[4825,1048576]])cv.setUint32(offset,value,true);
 card[card.length-1]=0xa5;repairCRC(card);
-const v7Card=canonicalCheckpoint(card);
-assert.equal(v7Card.length,card.length+64+76+4377+2056);++checks;
-assert.deepEqual(v7Card.subarray(11404),card.subarray(4831));++checks;
-assert.deepEqual(canonicalCheckpoint(v7Card),v7Card);++checks;
-assert.equal(new DataView(v7Card.buffer).getUint32(4825,true),1048576);++checks;
-const suppliedBuffer=Buffer.from(v7Card),independent=canonicalCheckpoint(suppliedBuffer);
+const v8Card=canonicalCheckpoint(card);
+assert.equal(v8Card.length,card.length+64+76+4377+2056+24);++checks;
+assert.deepEqual(v8Card.subarray(11428),card.subarray(4831));++checks;
+assert.deepEqual(canonicalCheckpoint(v8Card),v8Card);++checks;
+assert.equal(new DataView(v8Card.buffer).getUint32(4825,true),1048576);++checks;
+const suppliedBuffer=Buffer.from(v8Card),independent=canonicalCheckpoint(suppliedBuffer);
 independent[independent.length-1]^=1;
-assert.deepEqual(new Uint8Array(suppliedBuffer),v7Card);++checks;
+assert.deepEqual(new Uint8Array(suppliedBuffer),v8Card);++checks;
 const changed=card.slice();changed[changed.length-1]^=1;repairCRC(changed);
 assert.notDeepEqual(canonicalCheckpoint(changed),canonicalCheckpoint(card));++checks;
 cv.setUint32(4825,1048575,true);repairCRC(card);
 assert.throws(()=>canonicalCheckpoint(card));++checks;
-console.log(JSON.stringify({checks, failures: 0, models: 6}));
+console.log(JSON.stringify({checks, failures: 0, models: 7}));

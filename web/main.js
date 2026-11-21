@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 import { keyRows, shortcut, setupHash, isPlayable } from './hp48.js';
+import { HARDWARE_MOD_ROMS, hardwareModSetup } from './hardware-mod.js';
 import { SkinView } from './skin.js';
 import { bindLifecycle } from './lifecycle.js';
 const $=id=>document.getElementById(id), hex=n=>n.toString(16).padStart(8,'0');
 const count=(lo,hi)=>(BigInt(hi)<<32n)|BigInt(lo);
 const worker=new Worker(new URL('worker.js',import.meta.url),{type:'module'});
+for(const variant of HARDWARE_MOD_ROMS){
+  const option=document.createElement('option');option.value=variant.preset;option.textContent=`${variant.label} · research`;$('preset').append(option);
+}
 let generation=0,ready=false,machineReady=false,loaded=false,running=false,stopped=false,busy=false;
 let current=null,currentFile=null,fingerprint='',uartText='';
 const canvas=$('lcd'),context=canvas.getContext('2d',{alpha:false});
@@ -35,6 +39,7 @@ function controls(){
   $('preset').querySelector('[value="hp39-home"]').disabled=$('model').value!=='1';
   $('preset').querySelector('[value="hp39gs-home"]').disabled=$('model').value!=='2';
   $('preset').querySelector('[value="hp49-home"]').disabled=$('model').value!=='5';
+  for(const variant of HARDWARE_MOD_ROMS)$('preset').querySelector(`[value="${variant.preset}"]`).disabled=Number($('model').value)!==variant.model;
   $('finish').disabled=$('model').value!=='6';
   $('rom').disabled=!ready||!machineReady||busy;
   $('run').disabled=!loaded||stopped||busy;$('run').textContent=running?'Pause':'Run';
@@ -58,8 +63,11 @@ function recreate(){
   if($('preset').value==='hp39-home')$('setup-note').textContent='HP39g+ D1.55 experiment: 1 MiB SST39VF800A hypothesis, exact 256 KiB SRAM (no mirroring), F-pad input, AIN0=1023, counted LCD +0x68 hypothesis. Not measured board defaults.';
   if($('preset').value==='hp39gs-home')$('setup-note').textContent='HP39gs complete hardware capture: 1 MiB SST39VF800A hypothesis, exact 256 KiB SRAM (no mirroring), declared D/F/G inputs and G bias, ADC codes 1023/512, counted LCD +0x68 hypothesis. No ROM modification.';
   if($('preset').value==='hp49-home')$('setup-note').textContent='HP49g+ hardware capture: fixed 512 KiB SRAM with explicit bank1 address mirroring, an initially empty SD slot, E-pad inputs and other declared board conditions. No ROM modification.';
+  const variant=hardwareModSetup($('preset').value);
+  if(variant)$('setup-note').textContent=`${variant.description} Explicit bank1 mirror, GPIO/ADC and LCD assumptions are inherited from the matching memory profile. This does not establish original HP40gs or HP50g support.`;
   $('boot-help').textContent=['hp39-home','hp39gs-home'].includes($('preset').value)?'HP39g+ / HP39gs: press Run. At Memory Clear press F6 (OK), then wait for HOME before entering a calculation.':['hp48-home','hp49-home'].includes($('preset').value)?'HP48gII / HP49g+: press Run. At Try To Recover Memory? press F6 (NO), then F6 (OK) at Memory Clear. Wait for HOME.':'Select an explicit experimental setup for an available model, or use strict mode for hardware debugging. A skin is not a support claim.';
-  $('view').value=experiment?'1':'0';$('machine-title').textContent=$('model').selectedOptions[0].textContent;
+  if(variant)$('boot-help').textContent=variant.model===7?'HP50gm hardware mod: press Run, then F6 at each memory-recovery prompt. The visible display is 64 lines; the optional SD slot is empty.':'Archive/mod ROM: press Run. At Memory Clear press F6 (OK), then wait for HOME. HP40gs software exposes CAS through the bottom-right menu key.';
+  $('view').value=experiment?'1':'0';$('machine-title').textContent=variant?.label??$('model').selectedOptions[0].textContent;
   for(const button of keyButtons.values())button.setAttribute('aria-pressed','false');
   controls();message('create',{model:Number($('model').value),preset:$('preset').value});
 }
@@ -100,7 +108,7 @@ function stateView(data){
   $('stop').textContent=stopped?`${data.reason}\nPC ${hex(s[29])} · instruction ${hex(s[30])}\nAddress ${hex(s[31])} · detail ${hex(s[32])}`:`No diagnostic stop.\nData fault status ${hex(s[18])} · address ${hex(s[19])}`;
   $('frame-status').textContent=data.frameStatus?`LCD unavailable · code ${data.frameStatus}`:`${data.width} × ${data.height} · ${data.frameView?'packed LSB inspection':'controller stream'}`;
   $('aliases').textContent=`${data.aliasReads} / ${data.aliasWrites}`;$('lcd-reads').textContent=data.lcdReads;
-  $('assumption-status').textContent=isPlayable(data.model,data.preset)?`${data.model===1?'HP39g+':'HP48gII'} HOME experiment · unverified hardware assumptions`:'Strict defaults · no HOME preset';
+  $('assumption-status').textContent=isPlayable(data.model,data.preset)?`${hardwareModSetup(data.preset)?.label??({1:'HP39g+',2:'HP39gs',4:'HP48gII',5:'HP49g+'}[data.model])} HOME experiment · unverified hardware assumptions`:'Strict defaults · no HOME preset';
   $('key-status').textContent=!isPlayable(data.model,data.preset)?'Keypad requires a matching HOME setup.':!loaded?'Load the documented complete NOR.':!running?'Press Run to enable key taps.':data.pending?`${data.pending} tap(s) pending`:'Ready for a key tap';
   for(const [scan,b] of keyButtons)b.setAttribute('aria-pressed',String(scan===data.active));
   $('segment-status').textContent=skin.update(data.active,data.annunciators,data.annunciatorStatus,data.model);

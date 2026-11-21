@@ -14,6 +14,10 @@ native ARM applications through one original MIT C17 core for native and WASM
 hosts. Provide usable calculator controls, persistent sessions and virtual PC
 file transfer, without ROM patches or host-side Saturn interception.
 
+User-supplied hardware-modified firmware can extend experimental coverage under
+its own identity and hardware profile. Such results do not substitute for the
+six independent original-device captures in M4.
+
 External emulators remain research or separate-process comparison tools.
 Firmware and private calculator data remain outside source, releases and Pages.
 
@@ -25,7 +29,9 @@ Firmware and private calculator data remain outside source, releases and Pages.
 | HP48gII USB revision | Unchanged cold boot, arithmetic, sessions, USB and UART0 Kermit workflows, two-file browser batches, no-card FILES navigation, inactivity shutdown and ON resume | Explicit SRAM mirror/LCD assumptions; no physical SD slot; broader keypad, power-mode and long-run checks |
 | HP49g+ | User's full 2 MiB capture, unchanged cold boot, 131×80 display, arithmetic, CAS, graphing, sessions, USB/native ARM workflows, FILES and SD image read/write, shared-PCLK BEEP, inactivity shutdown and ON resume | Explicit SRAM mirror/LCD conditions; physical IrDA timing, SD DMA/SDHC, unsupported flash modes and physical-board calibration remain open |
 | HP39gs | User's complete 1 MiB capture and its own bootloader, HOME arithmetic, APLET, browser sessions, Disk/Wire installation including Notes, native ROMstream dump/return/USB reuse, inactivity shutdown and ON resume | Explicit SRAM/GPIO/ADC/LCD conditions; broader transfer, sound, native-program and sustained-use coverage |
-| HP40gs / HP50g | Model profiles and scoped boot-region/updater research | Complete original NORs and independent stock acceptance |
+| HP40gs hardware-mod firmware | Complete user-supplied image with donor HP39gs boot region; HOME arithmetic and CAS on native/WASM with cold replay | Separate experimental provenance; original HP40gs capture, wider applications and peripheral acceptance |
+| HP50gm hardware-mod firmware | Separate model 7 with 2 MiB NOR, 512 KiB SRAM, 131×64 display and SD; native ARM/USB return, CAS, graphing and arithmetic | Separate experimental provenance; wider peripheral and recovery acceptance; not an original HP50g witness |
+| Original HP40gs / HP50g | Original-device profiles and scoped boot-region/updater research | Complete original NORs and independent stock acceptance |
 
 Details: [HP39g+ startup](hp39-startup.md), [HP39gs startup](hp39gs-startup.md), [HP48 startup](startup.md),
 [HP49 startup](hp49-startup.md), [SD cards](sd-cards.md), [file transfer](file-transfer.md),
@@ -47,6 +53,11 @@ changes. Its acceptance matrix separates downloaded native programs, guest
 Saturn/RPL programs, production-browser workflows and generated regressions.
 These completed flows expand the gates below; they do not convert missing
 original images or unmeasured board behavior into a percentage of support.
+
+The [r26 continuation](compatibility-r26.md) adds two separately identified
+hardware-mod configurations, guest UND exceptions, PCLK FIFO receive timeout,
+v8 sessions and mixed held/macro input. Its six-configuration production-browser
+matrix and actual native/Saturn/RPL workflows retain distinct build identities.
 
 ## M0 — Repository, contracts and reproducibility
 
@@ -86,6 +97,11 @@ The subsequent source review also implements the six missing documented CP15
 ID-read aliases, with fixed instruction encodings and independent expectations.
 The [core follow-up](core-next-r25.md) retains its distinct build identity and
 separates this completed fix from the remaining exception and abort work.
+The r26 continuation implements architecturally undefined ARM/Thumb encodings
+and absent-coprocessor traps through the guest UND vector, preserving exception
+banking, return addresses, high vectors and condition-failed behavior. It does
+not reinterpret explicitly unsupported privileged operations or UNPREDICTABLE
+operands as successfully implemented instructions.
 
 **Gate:** independently derived cases and bounded instruction differentials pass,
 failures reduce to precise input/state witnesses, and sanitizers pass. Comparing
@@ -178,7 +194,9 @@ A recovery menu, guest PASS word or boot-only erased backing is insufficient.
 
 ## M4 — Independent acceptance for all six models
 
-**Four images admitted to the user catalog; six-model gate open.** Each model
+**Four original images and two separately labelled experimental hardware-mod
+images are admitted to the user catalog; the six-original-model gate remains
+open.** Each model
 needs its own immutable full-NOR identity, memory bounds, display/keys, reset
 and native return evidence. The HP48gII target is the USB revision.
 
@@ -190,6 +208,10 @@ its unchanged original bootloader, all 64 block hashes and separate native/WASM
 execution witnesses. No repeat capture or preliminary probe is required.
 HP40gs and HP50g acquisition continue
 independently; padded updaters and foreign bootloaders are not full original NORs.
+The supplied 40gs and 50gm hardware-mod images can nevertheless be used directly
+under exact full-image hashes. Their admission, KINPO updater handling and
+separate 512 KiB/64-row model are recorded in [hardware-mod firmware](hardware-mod-roms.md).
+An updater alone is never silently padded into an accepted full image.
 
 **Gate:** six independent original-image cold-boot, interaction and ARM-return
 witnesses with accurate model-specific hardware limits.
@@ -217,8 +239,8 @@ uses its full 131×80 dimensions in both views and capture export.
 One Worker owns execution. Bounded slices, explicit pacing, input queues,
 operation/generation isolation and cancellation remain invariant. LCD pixels
 and annunciators are captured inside the core at completed-scan boundaries and coalesced into browser animation frames. Optional 35 ms response does not change guest state; genuine blank/off frames remain represented. This is presentation policy, not physical panel calibration.
-Version-7 sessions include architectural instruction/data TLBs alongside complete SD media, all UART state/queues, pending NOR operations, modified flash sectors, fractional PCLK, PWM/SPI and watchdog state. Successful restore resumes under the current lifecycle policy; a prominent pause bar remains whenever execution is paused.
-Version-1/2/3/4/5/6 files remain importable with explicit legacy timing/device
+Version-8 sessions add all three UART receive-timeout deadlines/latches to architectural instruction/data TLBs, complete SD media, all UART state/queues, pending NOR operations, modified flash sectors, fractional PCLK, PWM/SPI and watchdog state. Successful restore resumes under the current lifecycle policy; a prominent pause bar remains whenever execution is paused.
+Version-1/2/3/4/5/6/7 files remain importable with explicit legacy timing/device
 migration; see [sessions](sessions.md). Binary IndexedDB
 autosaves retain the card and migrate the former small localStorage records.
 Original-ROM and native/WASM continuation are independently checked. Actual
@@ -229,8 +251,9 @@ their own release; multi-touch and simultaneous keys have independent owners.
 Minimum guest-time dwell protects brief clicks, while character macros remain
 finite. Blur, pause, cancellation and teardown release contacts. Original
 Arkalite and Tetris+ production-browser runs exercise sustained movement and
-subsequent arithmetic. Arkalite's combined-core browser return witness uses an
-explicitly held DEL; ordinary short-DEL failures remain recorded and unresolved. Settings actions remain visible at narrow and short
+subsequent arithmetic. The r25 combined-core Arkalite witness used held DEL;
+six additional r26 short-click trials pass, while the historical short-DEL
+failure remains unresolved. Settings actions remain visible at narrow and short
 sizes, Mantine menu navigation no longer reaches the guest, and short landscape
 traditional mode scrolls usable keys rather than shrinking the whole keyboard.
 
@@ -273,7 +296,12 @@ HP39gs serial Wire now also sends libraries and receives successive Notes and
 multipart aplet/library groups; serial uses the stock receiver's supported
 128-byte blocks. Original 40gs behavior remains unverified. The original complete
 HP39gs now has its own Disk installation and native-reader return witness;
-HP40gs still needs its complete NOR. ASCII Notes are converted to the binary
+Original HP40gs still needs its complete NOR. The separately identified
+40gs hardware-mod image now has cold Wire/Disk installation, native-reader
+return and actual browser USB auto-RECV evidence, using its own strict menu
+fingerprints without the 39gs Down step. Reverse Wire parsing also accepts
+valid zero-title libraries while preserving nonempty-title length and
+requested-ID validation. ASCII Notes are converted to the binary
 Saturn string format accepted by Wire; original 39g+ and 39gs install, EDIT and
 export the same content through the NOTEPAD catalog. This does not compile
 ASCII programs or aplets. HP39 receive sessions also retry a fully emitted ACK

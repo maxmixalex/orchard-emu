@@ -218,8 +218,6 @@ static void cp15_identification(void) {
         {0xee000f50u, ORCHARD_UNSUPPORTED_CP15}, /* MCR to read-only c0. */
         {0xee140f50u, ORCHARD_UNSUPPORTED_CP15}, /* Reserved CRn=4. */
         {0xee100e50u, ORCHARD_UNSUPPORTED_CP15}, /* Not CP15. */
-        {0xe6000010u, ORCHARD_UNPREDICTABLE},   /* ARM undefined space. */
-        {0xe16f0f10u, ORCHARD_UNPREDICTABLE},   /* CLZ is not ARMv4T. */
     };
     for (unsigned reference = 0; reference < 2; ++reference) {
         void (*step)(orchard_machine *) = reference ? o_cpu_step_reference : o_cpu_step;
@@ -244,8 +242,8 @@ static void cp15_identification(void) {
             CHECK(machine.cpu.cpsr == (O_SVC | O_I | O_F | reads[i].flags));
             CHECK(machine.cpu.instructions == 1 && machine.cpu.exceptions == 0);
         }
-        /* Keep the current explicit diagnostic policy for undefined/unmodeled
-         * instructions. Guest UND delivery is a separate documented M1 task. */
+        /* Privileged reserved/unmodeled CP15 operations keep diagnostics.
+         * Defined UND delivery is exercised by tests/undefined.c. */
         for (unsigned i = 0; i < sizeof rejected / sizeof rejected[0]; ++i) {
             instruction(rejected[i].op, false, 0x100);
             machine.cpu.r[0] = 0xa5a5a5a5u;
@@ -259,9 +257,9 @@ static void cp15_identification(void) {
         o_set_cpsr(&machine.cpu, O_USR);
         machine.cpu.r[0] = 0xa5a5a5a5u;
         step(&machine);
-        CHECK(machine.stop.status == ORCHARD_UNSUPPORTED_CP15);
-        CHECK(machine.cpu.r[0] == 0xa5a5a5a5u && machine.cpu.cpsr == O_USR);
-        CHECK(machine.cpu.r[15] == O_RAM_BASE + 0x100u);
+        CHECK(machine.stop.status == ORCHARD_OK);
+        CHECK(machine.cpu.r[0] == 0xa5a5a5a5u && machine.cpu.cpsr == (O_UND | O_I));
+        CHECK(machine.cpu.r[15] == 4 && machine.cpu.r[14] == O_RAM_BASE + 0x104u);
         instruction(0x0e100f50u, false, 0x100); /* EQ, with Z clear. */
         machine.cpu.r[0] = 0xa5a5a5a5u;
         step(&machine);
@@ -357,7 +355,7 @@ static void watchdog(void) {
 }
 static void queues_and_profiles(void) {
     uint8_t output[8];
-    for (unsigned id = 1; id <= 6; ++id) {
+    for (unsigned id = 1; id <= ORCHARD_MODEL_COUNT; ++id) {
         CHECK(orchard_init(&machine, sizeof(machine), id) == &machine);
         CHECK(orchard_run(&machine, 1).status == ORCHARD_NO_ROM);
         CHECK(orchard_load_rom(&machine, machine.flash, 1) == ORCHARD_BAD_ROM_SIZE);

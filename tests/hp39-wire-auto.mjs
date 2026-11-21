@@ -2,7 +2,7 @@
 // State-machine fixtures only. Real unmodified-ROM frame recognition and
 // protocol ACK evidence are reported separately in hp39-wire-batch-r23.json.
 import assert from 'node:assert/strict';
-import {Hp39WireAutoReceive,recognizeHp39WireScreen} from '../web/hp39-wire-auto.js';
+import {Hp39WireAutoReceive,recognizeHp39WireScreen,canAutoReceiveHp39Wire} from '../web/hp39-wire-auto.js';
 import {hp39TransferMenus} from '../web/hp39-transfer-ui.js';
 import {CalculatorController} from '../web/controller.js';
 import {CALCULATORS} from '../web/catalog.js';
@@ -20,7 +20,26 @@ check(()=>assert.deepEqual(driver.observe(frame(6300000,'receive-initial')),[44]
 check(()=>assert.equal(driver.observe(frame(7000000,'receive-wire')),null));
 check(()=>assert.deepEqual(driver.observe(frame(8300000,'receive-wire')),[6]));
 check(()=>assert.equal(driver.active,false));check(()=>assert.equal(driver.observe(frame(10000000,'receive-wire')),null));
-for(const extra of [{model:3},{transport:'serial'},{kind:'C'},{kind:'D'},{previousKind:'C'}])check(()=>assert.equal(make(extra).active,false));
+for(const extra of [{model:4},{model:7},{transport:'serial'},{kind:'C'},{kind:'D'},{previousKind:'C'}])check(()=>assert.equal(make(extra).active,false));
+for(const model of [1,2,3]){
+  check(()=>assert.equal(canAutoReceiveHp39Wire(model,'usb'),true));
+  check(()=>assert.equal(canAutoReceiveHp39Wire(model,'serial'),false));
+  const sequence=make({model});
+  sequence.observe(frame(0,'aplet-catalog'));
+  check(()=>assert.deepEqual(sequence.observe(frame(1300000,'aplet-catalog')),[39]));
+  sequence.observe(frame(3000000,'receive-initial'));
+  check(()=>assert.deepEqual(sequence.observe(frame(4300000,'receive-initial')),model===3?null:[44]));
+  check(()=>assert.equal(sequence.observe(frame(5000000,'receive-wire',{active:6})),null));
+  sequence.observe(frame(6000000,'receive-wire'));
+  check(()=>assert.deepEqual(sequence.observe(frame(7300000,'receive-wire')),[6]));
+  check(()=>assert.equal(sequence.active,false));
+  const mismatch=make({model});
+  for(let tick=0;tick<=360000000;tick+=12000000)check(()=>assert.equal(mismatch.observe(frame(tick,null)),null));
+  check(()=>assert.equal(mismatch.observe(frame(360000001,'receive-wire')),null));
+  check(()=>assert.equal(mismatch.active,false));
+  const interrupted=make({model});interrupted.observe(frame(0,'aplet-catalog'));interrupted.cancel();
+  check(()=>assert.equal(interrupted.observe(frame(2000000,'aplet-catalog')),null));
+}
 for(const bad of [{running:false},{stopped:true},{tick:NaN}]){
   const guarded=make();check(()=>assert.equal(guarded.observe(frame(0,'aplet-catalog',bad)),null));check(()=>assert.equal(guarded.active,false));
 }
@@ -28,16 +47,17 @@ const unknown=make();for(let tick=0;tick<=360000000;tick+=12000000)check(()=>ass
 check(()=>assert.equal(unknown.observe(frame(360000001,'aplet-catalog')),null));check(()=>assert.equal(unknown.active,false));
 const backwards=make();backwards.observe(frame(1000000,'aplet-catalog'));backwards.observe(frame(0,'aplet-catalog'));check(()=>assert.equal(backwards.active,false));
 const cancelled=make();cancelled.observe(frame(0,'aplet-catalog'));cancelled.cancel();check(()=>assert.equal(cancelled.observe(frame(2000000,'aplet-catalog')),null));
-for(const value of [0,255])check(()=>assert.equal(recognizeHp39WireScreen({width:131,height:64,pixels:new Uint8Array(131*64).fill(value)},2),null));
+for(const model of [1,2,3])for(const value of [0,255])check(()=>assert.equal(recognizeHp39WireScreen({width:131,height:64,pixels:new Uint8Array(131*64).fill(value)},model),null));
 check(()=>assert.deepEqual(hp39TransferMenus(1),{wire:'HP39/40 (Wire)',disk:'Disk drive…'}));
 check(()=>assert.deepEqual(hp39TransferMenus(2),{wire:'HP39/40 (USB)',disk:'USB Disk drive…'}));
 check(()=>assert.deepEqual(hp39TransferMenus(2,'serial'),{wire:'HP39/40 (Ser)',disk:'Ser. Disk drive…'}));
+check(()=>assert.deepEqual(hp39TransferMenus(3),{wire:'HP39/40 (USB)',disk:'USB Disk drive…'}));
 
 const bytes=new TextEncoder().encode('HP39BinB\x04TESTopaque-body');
 const file=name=>({file:{name,size:bytes.length,arrayBuffer:async()=>bytes.slice().buffer}});
-for(const enabled of [false,true]){
+for(const model of [1,2,3])for(const enabled of [false,true]){
   const sent=[],c=new CalculatorController({database:null,worker:{postMessage:message=>sent.push(message),terminate(){}}});
-  c.patch({model:CALCULATORS.find(model=>model.id===2),ready:true,loaded:true,running:true,usb:true,usbReady:true});
+  c.patch({model:CALCULATORS.find(value=>value.id===model),ready:true,loaded:true,running:true,usb:true,usbReady:true});
   const emit=data=>c.receive({generation:c.generation,...data});
   const complete=()=>emit({type:'file-transfer-status',request:c.transferRequest,active:false,phase:'complete',transferred:bytes.length,total:bytes.length});
   await c.startHp39Server('usb',[file('FIRST'),file('SECOND'),file('THIRD')],{protocol:'wire',autoReceive:enabled});

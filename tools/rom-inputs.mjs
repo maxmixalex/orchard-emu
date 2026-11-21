@@ -2,9 +2,10 @@
 // File identities and local-only research image preparation; no network access.
 import { open } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { HARDWARE_MOD_ROMS } from '../web/hardware-mod.js';
 
-export const models = ['hp39gplus', 'hp39gs', 'hp40gs', 'hp48gii', 'hp49gplus', 'hp50g'];
-export const capacities = [0x100000, 0x100000, 0x200000, 0x200000, 0x200000, 0x200000];
+export const models = ['hp39gplus', 'hp39gs', 'hp40gs', 'hp48gii', 'hp49gplus', 'hp50g', 'hp50gm'];
+export const capacities = [0x100000, 0x100000, 0x200000, 0x200000, 0x200000, 0x200000, 0x200000];
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const fixtures = [
   ['a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff', 'full-nor-dump', [2], 0x100000, 'User HP39gs complete V2 double-read hardware capture'],
@@ -19,7 +20,37 @@ const fixtures = [
   ['6e56e35054c06931ef8091403c1fcbde7743a7342e12aaf6082b0257dbe9d7b3', 'firmware-update', [2], 995328, 'HP39gs 2.22 updater'],
   ['6fcf63b4d0cae2e59fa8b24b74052bf33812cbea960294429b1032cb98585f7b', 'firmware-update', [3], 1241088, 'HP40gs 2.22 updater'],
   ['b08235fbf7d6ab3c5ad64b82d3ffe7004f942fafe90d0449ab3b0e5c3b0bc8a0', 'firmware-update', [5, 6], 1294336, 'HP49g+/HP50g 2.15 updater'],
+  ...HARDWARE_MOD_ROMS.map(f => [f.hash, 'hardware-mod-nor', [f.model], f.bytes, f.label, {
+    archive: 'ROM-for-HW-mod-39gs.zip', hardware: f.board, firmware: f.firmware,
+    research_preset: f.preset, description: f.description, stock_model_verified: false,
+  }]),
+  ['790d4bd26bcda98333920808bc927d142774b89409382fa4b8957653995aad4e', 'firmware-update', [3], 1241088, 'HP39gs-to-HP40gs updater requiring 2 MiB donor NOR', { hardware:'hp39gs-modified', firmware:'hp40gs', stock_model_verified:false }],
+  ['52cd4ed0c83adb80510a3bb066ba0b7b7c1291afdffa36afdd1885d30bc32829', 'firmware-update', [4], 1241088, 'HP48gII-target HP40gs conversion updater', { hardware:'hp48gii-compatible-modified', firmware:'hp40gs', stock_model_verified:false }],
+  ['dc85d74bf101413d86a9aab3e5359be6f150f9ff0cfbc0205b96fde861d2dcef', 'firmware-update', [4], 2080768, 'HP48gII 2.08/92 updater from hardware-modification archive'],
+  ['55783a684753e7f87f2091047ae86f2465b0dfb260aff6bc75c2c77495ae8b0f', 'firmware-update', [4], 1425408, 'HP48gII 2.10/92 updater from hardware-modification archive'],
+  ['cf5c6875db0b8f74bd1c9ebb2bcae0bd139debceaf1f18b7f2a987e166e021fe', 'firmware-update', [7], 1425408, 'HP50gm 2.10 menu-fix updater for a 64-line hardware mod', { hardware:'hp48gii-compatible-modified', firmware:'hp50gm', stock_model_verified:false }],
+  ['492817eb13b7d54a82be2f69a43b21eb089c3741aa504d68da9d4bcec9de715a', 'firmware-update', [2], 1027840, 'HP39gs 2.22 updater from hardware-modification archive'],
+  ['93ad03907dffeba958ef3083a2b6bdd95de67cfcd74e0ba4ad14be161af46da4', 'firmware-update', [2], 1028000, 'HP39gs 2.23 alternate-font updater from hardware-modification archive'],
 ];
+const UPDATE_MARKERS = ['KINPOHP39G+IMAGE', 'KINPOHP40G+IMAGE', 'KINPOHP48GIIMAGE', 'KINPOUPDATEIMAGE'];
+const INSTALLED_MARKER = 'Kinposhcopyright';
+const FLASH_OS_OFFSET = 0x4000, UPDATE_HEADER_BYTES = 24;
+
+function inspectUpdate(data, marker) {
+  if (!UPDATE_MARKERS.includes(marker)) return null;
+  const result = { flash_offset:FLASH_OS_OFFSET, header_bytes:UPDATE_HEADER_BYTES,
+    checksum_scope:'native-region-only', valid:false, error:null };
+  if (data.length < UPDATE_HEADER_BYTES) return { ...result, error:'truncated-header' };
+  const length = data.readUInt32LE(16), expected = data.readUInt32LE(20);
+  Object.assign(result, { native_bytes:length, checksum_expected:expected,
+    native_end:UPDATE_HEADER_BYTES + length });
+  if (!length) return { ...result, error:'empty-native-region' };
+  if (length > data.length - UPDATE_HEADER_BYTES) return { ...result, error:'truncated-native-region' };
+  let actual = 0;
+  for (const value of data.subarray(UPDATE_HEADER_BYTES, UPDATE_HEADER_BYTES + length)) actual = (actual + value) >>> 0;
+  Object.assign(result, { checksum_actual:actual, trailing_bytes:data.length - UPDATE_HEADER_BYTES - length });
+  return { ...result, valid:actual === expected, error:actual === expected ? null : 'native-checksum-mismatch' };
+}
 export function inspectInput(bytes) {
   if (!(bytes instanceof Uint8Array) || bytes.length < 4 || bytes.length > 0x200000)
     throw new Error('Expected 4 bytes to 2 MiB of local firmware data');
@@ -29,20 +60,21 @@ export function inspectInput(bytes) {
   const word = data.readUInt32LE(0);
   const reset = ((word & 0xff000000) >>> 0) === 0xea000000 || ((word & 0xff7ff000) >>> 0) === 0xe51ff000;
   const marker = data.subarray(0, 16).toString('latin1');
-  const update = ['KINPOHP39G+IMAGE', 'KINPOHP40G+IMAGE', 'KINPOUPDATEIMAGE'].includes(marker);
+  const update = inspectUpdate(data, marker);
   const bootHash = data.length >= 0x4000 ? sha256(data.subarray(0, 0x4000)) : null;
   const boot = fixtures.find(f => f[1] === 'arm-boot-region' && f[0] === bootHash);
   return { bytes: data.length, sha256: hash, kind: found?.[1] ?? (update ? 'firmware-update' : 'unidentified'),
     models: found ? found[2].map(id => models[id - 1]) : [], identified_fixture: found?.[4] ?? null,
+    variant: found?.[5] ?? null,
     plausible_arm_vector: reset, first_word: word.toString(16).padStart(8, '0'),
-    update_marker: update ? marker : null, boot_verified: false,
+    update_marker: update ? marker : null, update, boot_verified: false,
     // A known prefix does not authenticate the rest of a full-size image.
     native_boot_region: boot ? { bytes: 0x4000, sha256: bootHash,
       models: boot[2].map(id => models[id - 1]), identified_fixture: boot[4] } : null };
 }
 // Consumed only with inspectInput's freshly computed result, never a user JSON.
 export function assertModelIdentity(id, source) {
-  if (!Number.isInteger(id) || id < 1 || id > 6) throw new Error('Unknown model');
+  if (!Number.isInteger(id) || id < 1 || id > models.length) throw new Error('Unknown model');
   if (source.models.length && !source.models.includes(models[id - 1])) throw new Error('Known firmware belongs to another model');
   if (source.native_boot_region && !source.native_boot_region.models.includes(models[id - 1]))
     throw new Error('Known native boot region belongs to another model');
@@ -62,8 +94,31 @@ export function prepareInput(id, bytes, kind) {
   }
   if (kind !== 'full-nor' || bytes.length !== capacities[id - 1] || !source.plausible_arm_vector)
     throw new Error('Expected exact-capacity ARM NOR; updater and boot-region inputs are different formats');
-  return { source, image: Buffer.from(bytes), input_kind: source.kind === 'full-nor-dump' ? 'full-nor-dump' : 'unverified-full-size-image',
+  return { source, image: Buffer.from(bytes), input_kind: ['full-nor-dump', 'hardware-mod-nor'].includes(source.kind) ? source.kind : 'unverified-full-size-image',
     construction: null };
+}
+
+// Explicit local research assembly. A complete donor NOR is required; this
+// never invents a bootloader, changes a target marker, or certifies stock boot.
+export function prepareFirmwareUpdate(id, baseBytes, updateBytes) {
+  const base = prepareInput(id, baseBytes, 'full-nor'), source = inspectInput(updateBytes);
+  assertModelIdentity(id, source);
+  if (!source.update?.valid) throw new Error(`Invalid firmware updater: ${source.update?.error ?? 'unrecognized marker'}`);
+  const image = Buffer.from(base.image), update = Buffer.from(updateBytes);
+  if (update.length > image.length - FLASH_OS_OFFSET) throw new Error('Firmware updater exceeds the selected physical NOR capacity');
+  if (image.subarray(FLASH_OS_OFFSET, FLASH_OS_OFFSET + 16).toString('latin1') !== INSTALLED_MARKER)
+    throw new Error('Base NOR has no recognized installed firmware region');
+  if (!image.subarray(0, FLASH_OS_OFFSET).includes(Buffer.from(source.update_marker, 'ascii')))
+    throw new Error('Firmware updater target does not match the supplied native bootloader');
+  image.set(update, FLASH_OS_OFFSET);
+  image.write(INSTALLED_MARKER, FLASH_OS_OFFSET, 'ascii');
+  return { source, base_source:base.source, image, input_kind:'locally-installed-firmware-update', construction:{
+    boot_preserved:true, preserved_regions:[[0, FLASH_OS_OFFSET], [FLASH_OS_OFFSET + update.length, image.length]],
+    installed_region:[FLASH_OS_OFFSET, FLASH_OS_OFFSET + update.length],
+    installed_marker:INSTALLED_MARKER, updater_bytes_preserved_from:16,
+    reconstructed_full_dump:false, stock_model_verified:false,
+    note:'Local research assembly preserves the donor bootloader and untouched tail; it is not a hardware acquisition or a simulation of USB flashing.',
+  } };
 }
 export function parseGpio(text) {
   if (!text) return [];

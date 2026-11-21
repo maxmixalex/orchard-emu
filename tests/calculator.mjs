@@ -10,7 +10,13 @@ assert(html.includes('calculator.js'));assert(html.includes('id="root"'));
 assert((await read('calculator.js')).includes('debug.html'));
 assert(debug.includes('CPU registers')&&debug.includes('Boot setup')&&debug.includes('main.js'));
 assert(!html.includes('main.js'));
-assert.deepEqual(CALCULATORS.map(c=>c.id),[1,2,4,5]);
+assert.deepEqual(CALCULATORS.map(c=>c.id),[1,2,4,5,3,7]);
+assert.deepEqual(CALCULATORS.slice(0,4).map(c=>c.name),['HP 39g+','HP 39gs','HP 48gII','HP 49g+']);
+assert(!CALCULATORS.some(c=>c.id===6),'A donor-hardware conversion cannot admit stock HP50g');
+for(const [id,preset,hash] of [[3,'hp40gs-mod-home','9041a8c187667833b220281bee1311c97cf2a0297d483882684ebd166a85c311'],[7,'hp50gm-home','b30a9ffb90996f0291b10a902a72d3a122db9c87fa5a55aa6ffdf07276b82db5']]){
+ const c=CALCULATORS.find(c=>c.id===id);assert.equal(c.hash,hash);assert.equal(c.preset,preset);
+ assert.equal(c.experimental,true);assert.equal(c.lcdHeight,64);assert.equal(c.infrared,false);assert.match(c.name,/mod/);
+}
 assert(CALCULATORS.every(c=>c.hash.length===64 && c.name && c.help));
 for(const b of [null,new ArrayBuffer(8),new ArrayBuffer(1048576)])await assert.rejects(identifyROM(b));
 const w=new Worker(new URL('./web-worker-node.mjs',import.meta.url));

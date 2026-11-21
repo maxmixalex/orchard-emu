@@ -23,8 +23,8 @@ offline transfer observer follows the CRC16 block-check format in section 6.3
 of the [Kermit protocol specification](https://kermitproject.org/kproto.pdf).
 It analyzes captured guest traffic after a transfer and sends no responses.
 
-This is a functional, decoded-byte implementation. Baud divisors and clock
-selection remain guest-visible registers, but no unmeasured UEXTCLK frequency,
+This is a functional, decoded-byte implementation. PCLK-selected FIFO receive
+timeout uses the programmed baud divisor. No unmeasured UEXTCLK frequency,
 serial bit waveform, optical pulse width, propagation delay, collision model,
 parity fault or transceiver shutdown polarity is fabricated. Passing a firmware
 diagnostic does not establish physical hardware timing accuracy.
@@ -63,12 +63,67 @@ The implementation covers:
   enabled, provided the corresponding GPIO mux and electrical input are known.
   The nRTS output waveform is not implemented.
 
-DMA modes, send-break, and enabled FIFO receive timeout explicitly stop as
-unsupported. A FIFO timeout requires a defined baud-time model. UART2 has no
+DMA modes, send-break, and UEXTCLK-selected FIFO receive timeout explicitly
+stop as unsupported. UART2 has no
 modem interface: its historically accepted zero write to the reserved `UMCON`
 location is preserved; nonzero writes and `UMSTAT` reads are unsupported.
 Invalid register offsets, an unserviceable full TX holding/FIFO slot, and host
 capture overflow retain explicit failure behavior.
+
+## PCLK FIFO receive idle timeout
+
+With FIFO enabled, `UCON[1:0]=01`, timeout enabled in bit 7 and PCLK selected
+in bit 10, a nonempty receiver counts PCLK edges since its last admitted octet.
+Samsung chapter 11, pp. 11-3 and 11-5 defines the condition as no received data
+for three word times, with a nonempty FIFO below its receive trigger level.
+The functional interval is:
+
+```text
+3 × (1 start + 5..8 data + optional parity + 1..2 stop bits)
+  × 16 × (UBRDIV + 1) PCLK edges
+```
+
+The complete frame follows the line format on pp. 11-7 and 11-10. This model
+starts at decoded-byte admission into the chip buffer; it does not reconstruct
+when a physical start or stop bit crossed a pin. A host-staged octet that has
+not entered that buffer has not restarted the timer. The maximum configured
+interval is 37,748,736 PCLK edges. The scheduler stops at the first reference
+tick that contains the expiry edge, including fractional or faster PCLK ratios.
+
+A new received byte restarts the interval, including a loopback byte rejected
+by a full FIFO. A partial `URXH` read preserves the remaining idle time or
+latched expiry; draining the FIFO clears both. The manual identifies receive
+activity, not CPU reads, as the idle-time condition and does not specify a
+read-triggered restart. Keeping the old age for unread bytes is this model's
+explicit functional contract. Writes to ULCON, UCON, UFCON or UBRDIV restart
+from the new configuration; receive reset, disabling RX/timeout/FIFO, or a
+complete drain cancels it. Clock gating pauses the countdown rather than
+consuming unclocked edges. Exact asynchronous reconfiguration behavior still
+requires silicon observations.
+
+Expiry below the trigger requests the ordinary receive subinterrupt. Pulse
+mode emits one event for that interval, including when a partial read first
+brings an already idle FIFO below its trigger; later reads below the trigger
+do not repeat that pulse. Level mode remains asserted while the
+expired, below-trigger FIFO contains data. Clearing interrupt-controller
+pending bits does not drain the receiver. New received data clears the old
+expiry and starts a fresh interval. These are functional interrupt conditions,
+not a claim about electrical pulse width.
+
+Checkpoint v8 appends two 32-bit values per UART: remaining PCLK edges and the
+expiry latch. Old versions initialize these fields to zero and preserve all
+state they represented. Validation rejects contradictory or out-of-range
+countdowns before replacing a machine. Native/reference continuation compares
+the complete serialized state, including fractional PCLK phase and all three
+deadlines. See [saved sessions](sessions.md) and the [r26 core record](core-r26.md).
+
+`tests/uart-timeout.c` covers all three UARTs, all four FIFO trigger levels,
+eight line formats, pulse/level behavior, exact deadline boundaries, new-byte
+restart, partial/drained reads, reset/disable, clock gating, PCLK ratios of
+1/2 and 9/2, the maximum divisor, channel isolation, checkpoint continuation,
+legacy migration and rejection of UEXTCLK timeout. The 7,431 assertions run in
+native, reference, sanitizer and isolated WASM builds. Existing decoded UEXTCLK
+streams remain available with FIFO timeout disabled. No UEXTCLK rate is guessed.
 
 ## Host API and routing
 
@@ -169,6 +224,8 @@ attaches the board-note connection between GPE12/SPIMOSI0 and GPH6/TXD2.
 Attaching is permitted for the HP49g+/50g profiles, but the original-ROM
 witness currently covers HP49g+ only. The admitted `hp49-home` preset selects
 it. Strict setup and other profiles do not silently acquire this connection.
+The explicit HP50gm modification profile is excluded: its donor-board IrDA
+transceiver and this particular shared net have not been established.
 
 GPIO output latches, supplied external levels, pull-ups and weak board bias
 resolve on the shared net. Opposing strong levels report contention; opposed

@@ -2,7 +2,8 @@
  * S3C2410A manual (2004), chapter 11: three independent UARTs, holding/FIFO
  * registers, polling/IRQ sources, internal loopback and modem input status.
  * The host boundary carries decoded octets. It does not synthesize optical
- * reflection, serial line errors, baud timing or an unmeasured UEXTCLK rate.
+ * reflection, serial line errors or an unmeasured UEXTCLK rate. FIFO receive
+ * idle time uses the programmed PCLK divisor and functional frame duration.
  */
 #include "internal.h"
 
@@ -14,6 +15,21 @@ static unsigned capacity(const o_soc *s,unsigned ch) { return s->uart[ch][2]&1u?
 static unsigned rx_level(const o_soc *s,unsigned ch) { return s->uart[ch][2]&1u?4u*(((s->uart[ch][2]>>4u)&3u)+1u):1u; }
 static unsigned tx_level(const o_soc *s,unsigned ch) { return s->uart[ch][2]&1u?4u*((s->uart[ch][2]>>6u)&3u):0u; }
 static uint8_t data_mask(const o_soc *s,unsigned ch) { return (uint8_t)((1u<<(5u+(s->uart[ch][0]&3u)))-1u); }
+static bool timeout_enabled(const o_soc *s,unsigned ch) {
+    return (s->uart[ch][1]&0x483u)==0x81u && (s->uart[ch][2]&1u);
+}
+static void timeout_restart(o_soc *s,unsigned ch) {
+    o_uart *u=&s->uart_state[ch];
+    u->rx_timeout_remaining=u->rx_timeout_latched=0;
+    if(!timeout_enabled(s,ch)||!u->rx_count)return;
+    /* Samsung 11-3/11-5: three idle words; 11-7/11-10 define the serial
+       frame and PCLK divisor. Arrival is the decoded-byte admission boundary,
+       not a reconstructed waveform. Format/divisor changes restart this
+       functional interval; clock gating retains its remaining PCLK edges. */
+    uint32_t line=s->uart[ch][0];
+    uint32_t bits=1u+5u+(line&3u)+((line&32u)?1u:0u)+((line&4u)?2u:1u);
+    u->rx_timeout_remaining=3u*bits*16u*(s->uart[ch][10]+1u);
+}
 orchard_status orchard_irda_attach(orchard_machine *m,bool attached) {
     if(!m||!m->profile||(attached&&m->profile->id!=5u&&m->profile->id!=6u))return ORCHARD_BAD_ARGUMENT;
     o_schedule_sync(m);m->soc.irda_attached=attached;return ORCHARD_OK;
@@ -58,12 +74,14 @@ static void receive(o_soc *s,unsigned ch,uint8_t byte) {
     unsigned limit=capacity(s,ch),before=u->rx_count;
     if(before==limit) {
         u->errors|=1u;
+        timeout_restart(s,ch);
         /* A non-FIFO overrun replaces the unread holding byte. In FIFO mode
            the full queue retains its unread entries and rejects the new byte. */
         if(limit==1u)u->rx[u->rx_head]=byte&data_mask(s,ch);
         return;
     }
     push(u->rx,u->rx_head,&u->rx_count,byte&data_mask(s,ch));
+    timeout_restart(s,ch);
     if(before<rx_level(s,ch)&&u->rx_count>=rx_level(s,ch))u->rx_event=1u;
 }
 static bool modem(orchard_machine *m,unsigned ch,bool required) {
@@ -90,6 +108,8 @@ static bool modem(orchard_machine *m,unsigned ch,bool required) {
 }
 static bool service(orchard_machine *m,unsigned ch) {
     o_soc *s=&m->soc; o_uart *u=&s->uart_state[ch];uint32_t control=s->uart[ch][1];
+    if(!timeout_enabled(s,ch)||!u->rx_count)
+        u->rx_timeout_remaining=u->rx_timeout_latched=0;
     if(!clocked(s,ch))return true;
     if(!modem(m,ch,ch<2u&&(s->uart[ch][3]&16u)!=0))return false;
     /* Host staging is flow-controlled; these queued octets have not arrived
@@ -115,13 +135,26 @@ static bool service(orchard_machine *m,unsigned ch) {
     }
     return true;
 }
+void o_uart_timeout_advance(orchard_machine *m,uint32_t pclk_edges) {
+    o_soc *s=&m->soc;
+    for(unsigned ch=0;ch<3;ch++) {
+        o_uart *u=&s->uart_state[ch];
+        if(!clocked(s,ch)||!u->rx_timeout_remaining)continue;
+        if(pclk_edges<u->rx_timeout_remaining)u->rx_timeout_remaining-=pclk_edges;
+        else {
+            u->rx_timeout_remaining=0;u->rx_timeout_latched=1;
+            if(u->rx_count<rx_level(s,ch))u->rx_event=1;
+        }
+    }
+}
 void o_uart_tick(orchard_machine *m) {
     o_soc *s=&m->soc;
     for(unsigned ch=0;ch<3;ch++) {
         if(!service(m,ch))return;
         if(!clocked(s,ch))continue;
         o_uart *u=&s->uart_state[ch];uint32_t control=s->uart[ch][1],shift=ch*3u;
-        if((control&3u)==1u&&((control&0x100u)?u->rx_count>=rx_level(s,ch):u->rx_event))s->subsrcpnd|=1u<<shift;
+        bool timed_out=u->rx_timeout_latched&&u->rx_count&&u->rx_count<rx_level(s,ch);
+        if((control&3u)==1u&&((control&0x100u)?u->rx_count>=rx_level(s,ch)||timed_out:u->rx_event))s->subsrcpnd|=1u<<shift;
         if((control&12u)==4u&&((control&0x200u)?u->tx_count<=tx_level(s,ch):u->tx_event))s->subsrcpnd|=2u<<shift;
         if((control&0x40u)&&u->errors)s->subsrcpnd|=4u<<shift;
         u->rx_event=u->tx_event=0;
@@ -133,6 +166,8 @@ bool o_uart_pending(const o_soc *s) {
         const o_queue *rx=ch?&s->uart_rx[ch-1u]:&s->rx;
         if(!clocked(s,ch))continue;
         if(u->rx_event||u->tx_event)return true;
+        if((control&0x103u)==0x101u&&u->rx_timeout_latched&&u->rx_count&&
+           u->rx_count<rx_level(s,ch)&&!(s->subsrcpnd&(1u<<(ch*3u))))return true;
         if((control&3u)&&!(control&32u)&&rx->count&&u->rx_count<capacity(s,ch))return true;
         if((control&12u)&&u->tx_count&&!(ch<2u&&(s->uart[ch][3]&16u)&&!(u->modem&1u)))return true;
     }
@@ -155,15 +190,15 @@ bool o_uart_register(orchard_machine *m,uint32_t address,unsigned width,uint32_t
         if(off==0u)s->uart[ch][0]=*value&0x7fu;
         else if(off==4u) {
             /* Byte streams cannot supply a break waveform or DMA requests.
-               FIFO idle timeout additionally needs measured baud timing. */
+               UEXTCLK has no supplied rate, so its FIFO timeout stays explicit. */
             if((*value&16u)||(*value&3u)>1u||((*value>>2u)&3u)>1u||
-               ((*value&128u)&&(s->uart[ch][2]&1u))) {
+               ((*value&0x480u)==0x480u&&(s->uart[ch][2]&1u))) {
                 o_stop(m,ORCHARD_UNIMPLEMENTED_MMIO,address,*value);return false;
             }
             s->uart[ch][1]=*value&0x7efu;
         }
         else if(off==8u) {
-            if((*value&1u)&&(s->uart[ch][1]&128u)) {
+            if((*value&1u)&&(s->uart[ch][1]&0x480u)==0x480u) {
                 o_stop(m,ORCHARD_UNIMPLEMENTED_MMIO,address,*value);return false;
             }
             if(!(*value&1u)&&(((*value&2u)?0u:u->rx_count)>1u||
@@ -173,7 +208,10 @@ bool o_uart_register(orchard_machine *m,uint32_t address,unsigned width,uint32_t
             /* UFCON resets the chip FIFO, not future host-staged octets.
                Clearing input here made delivery depend on host chunking:
                a following IrLAP frame could disappear with the old FIFO. */
-            if(*value&2u)u->rx_head=u->rx_count=u->errors=u->rx_event=0;
+            if(*value&2u) {
+                u->rx_head=u->rx_count=u->errors=u->rx_event=0;
+                u->rx_timeout_remaining=u->rx_timeout_latched=0;
+            }
             if(*value&4u)u->tx_head=u->tx_count=u->tx_event=0;
             s->uart[ch][2]=*value&0xf1u;
         } else if(off==0xcu) {
@@ -183,6 +221,7 @@ bool o_uart_register(orchard_machine *m,uint32_t address,unsigned width,uint32_t
             s->uart[ch][3]=ch==2u?0u:*value&17u;
         } else if(off==0x28u)s->uart[ch][10]=*value&0xffffu;
         else return false;
+        if(off==0||off==4||off==8||off==0x28u)timeout_restart(s,ch);
         return service(m,ch);
     }
     if(off<=0xcu||off==0x28u)*value=s->uart[ch][off/4u];
@@ -194,7 +233,13 @@ bool o_uart_register(orchard_machine *m,uint32_t address,unsigned width,uint32_t
         if(!modem(m,ch,true))return false;
         *value=u->modem;u->modem&=1u;
     } else if(off==0x24u) {
+        unsigned before=u->rx_count;
         *value=u->rx_count?pop(u->rx,&u->rx_head,&u->rx_count):0u;
+        /* An already idle FIFO can first satisfy the timeout condition when
+           a read takes it below trigger. Emit that transition once in pulse
+           mode too, without treating the read as a new received byte. */
+        if(u->rx_timeout_latched&&before>=rx_level(s,ch)&&u->rx_count&&
+           u->rx_count<rx_level(s,ch))u->rx_event=1;
         return service(m,ch);
     } else return false;
     return true;

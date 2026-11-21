@@ -37,7 +37,7 @@ export function validatePreferences(value) {
   if(!value.mappings || typeof value.mappings!=='object'||Array.isArray(value.mappings))throw new Error('Invalid keyboard mappings.');
   p.mappings={};
   for(const [model,map] of Object.entries(value.mappings)) {
-    if(!['1','2','4','5'].includes(model)||!map||typeof map!=='object'||Array.isArray(map)||Object.keys(map).length>160)throw new Error('Invalid keyboard mappings.');
+    if(!['1','2','3','4','5','7'].includes(model)||!map||typeof map!=='object'||Array.isArray(map)||Object.keys(map).length>160)throw new Error('Invalid keyboard mappings.');
     p.mappings[model]={};
     for(const [code,sequence] of Object.entries(map)) {
       if(!validBinding(code,sequence))throw new Error('Invalid key sequence.');
@@ -62,12 +62,12 @@ export function defaultBindings(model,layout) {
   for(const [label,scan] of keyRows(model).flat())if(/^\d$/.test(label)){map['Digit'+label]=[scan];map['Numpad'+label]=[scan];}
   Object.assign(map,{Enter:[6],NumpadEnter:[6],Backspace:[0],Escape:[56],Period:[20],NumpadDecimal:[20],
     'Shift+Equal':[5],Minus:[4],Slash:[2],'Shift+Digit8':[3],NumpadAdd:[5],NumpadSubtract:[4],NumpadMultiply:[3],NumpadDivide:[2],
-    ArrowUp:[42],ArrowLeft:[43],ArrowDown:[44],ArrowRight:[45],Space:model===1||model===2?[58,5]:[13]});
+    ArrowUp:[42],ArrowLeft:[43],ArrowDown:[44],ArrowRight:[45],Space:[1,2,3].includes(model)?[58,5]:[13]});
   for(let n=1;n<=6;n++)map['F'+n]=[34+n];
   // HP39g+ printed alpha legends, pinned hp-calcs-svg resolved_design.json.
-  if(model===1||model===2){const alpha=[28,21,14,7,29,22,15,8,1,30,23,16,9,2,57,24,17,10,3,25,18,11,4,26,19,12];
+  if([1,2,3].includes(model)){const alpha=[28,21,14,7,29,22,15,8,1,30,23,16,9,2,57,24,17,10,3,25,18,11,4,26,19,12];
     for(let i=0;i<26;i++){const code='Key'+String.fromCharCode(65+i);map[code]=[58,alpha[i]];}}
-  if(model===4||model===5){
+  if([4,5,7].includes(model)){
     // HP48gII/HP49g+ alpha positions; A-F are the six menu keys.
     const alpha=[35,36,37,38,39,40,41,46,47,48,49,50,28,21,14,7,29,22,15,8,1,30,23,16,9,2];
     for(let i=0;i<26;i++)map['Key'+String.fromCharCode(65+i)]=[57,alpha[i]];
@@ -92,7 +92,7 @@ function characterBinding(model,key){
   if(/^[a-z]$/i.test(key))return defaultBindings(model)['Key'+key.toUpperCase()]??null;
   const scans={'+':5,'-':4,'−':4,'*':3,'×':3,'/':2,'÷':2,'.':20};
   if(Object.hasOwn(scans,key))return [scans[key]];
-  return key===' '?(model===1||model===2?[58,5]:[13]):null;
+  return key===' '?([1,2,3].includes(model)?[58,5]:[13]):null;
 }
 export function bindings(p,model,layout){return {...defaultBindings(model,layout),...(p.mappings[String(model)]||{})};}
 // Explicit user bindings remain physical and model-specific. Default printable
@@ -114,7 +114,7 @@ export function resolveKeyBinding(p,model,event){
   return defaultBindings(model)[code]??null;
 }
 export function sessionName(model,now=new Date()) {
-  const slug={1:'hp39gplus',2:'hp39gs',3:'hp40gs',4:'hp48gii',5:'hp49gplus',6:'hp50g'}[model];
+  const slug={1:'hp39gplus',2:'hp39gs',3:'hp40gs-mod',4:'hp48gii',5:'hp49gplus',6:'hp50g',7:'hp50gm'}[model];
   if(!slug||!Number.isFinite(now.getTime()))throw new Error('Invalid session identity.');
   const pad=n=>String(n).padStart(2,'0');
   return `${slug}-${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.ord`;
@@ -137,7 +137,7 @@ export function readAuto(storage,hash) {
   if(text.length>850000)throw new Error('Local save too large.');
   const r=JSON.parse(text);
   if(r?.version!==1||r.romHash!==hash||typeof r.token!=='string'||r.token.length>100||
-    !Number.isFinite(r.savedAt)||!Number.isInteger(r.model)||!['1','2','4','5'].includes(String(r.model)))throw new Error('Damaged local save.');
+     !Number.isFinite(r.savedAt)||!Number.isInteger(r.model)||!['1','2','3','4','5','7'].includes(String(r.model)))throw new Error('Damaged local save.');
   return {...r,file:fromBase64(r.data)};
 }
 export function writeAuto(storage,hash,model,file,expectedToken,token,now=Date.now()) {

@@ -31,6 +31,7 @@ function fixture(hostHz,{speed=1,model=1,audience='calculator',preset=model===1?
     profile:(_,field)=>[4,8,1,1][field],
     run:n=>run('legacy',n),run_clocked:n=>run('clocked',n),run_idle:n=>run('idle',n),
     keyboard_matrix:(col,row,down)=>{presses.push({scan:col*7+row,down,tick:clock});return 0;},
+    keyboard_dedicated:(pin,down)=>{presses.push({scan:56+[0,4,5,6].indexOf(pin),down,tick:clock});return 0;},
     frame_buffer:()=>512,annunciator_buffer:()=>600,timebase_hz:()=>12000000
   },{get:(o,k)=>k in o?o[k]:()=>0});
   class Scheduler {
@@ -188,3 +189,23 @@ for(const speed of [.5,1,2,0]){
   assert.equal(f.jobs.size,0);
 }
 console.log('Worker held input: real down/up commands at all four rates preserve sustained contacts, short-click debounce and pause cleanup.');
+
+for(const speed of [.5,1,2,0]){
+  const f=fixture(150000000,{speed});
+  f.send({type:'key-down',source:'keyboard:ArrowLeft',scan:43});
+  f.send({type:'tap-sequence',scans:[58,28]});
+  f.send({type:'key-down',source:'pointer:2',scan:45});
+  assert.deepEqual(f.presses,[{scan:43,down:1,tick:0},{scan:45,down:1,tick:0}],
+    'A waiting character macro must not block a second physical hold');
+  pumpUntil(f,()=>f.input().tick>=3000000);assert.equal(f.presses.length,2);
+  const released=f.input().tick;
+  f.send({type:'key-up',source:'pointer:2'});f.send({type:'key-up',source:'keyboard:ArrowLeft'});
+  pumpUntil(f,()=>f.input().pending===0);
+  assert.deepEqual(f.presses.slice(2),[
+    {scan:45,down:0,tick:released},{scan:43,down:0,tick:released},
+    {scan:58,down:1,tick:released+600000},{scan:58,down:0,tick:released+2100000},
+    {scan:28,down:1,tick:released+2700000},{scan:28,down:0,tick:released+4200000}
+  ]);
+  f.send({type:'pause'});assert.equal(f.jobs.size,0);
+}
+console.log('Worker mixed input: waiting macros preserve simultaneous contacts and execute once in order after release at all four rates.');

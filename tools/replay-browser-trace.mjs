@@ -21,7 +21,7 @@ export function validateBrowserTrace(trace) {
   assert.deepEqual(trace.problems, [], 'Trace reports incomplete coverage');
   assert(Number.isSafeInteger(trace.epoch) && trace.epoch > 0, 'Invalid epoch');
   assert(Number.isSafeInteger(trace.generation) && trace.generation >= 0, 'Invalid generation');
-  assert(Number.isInteger(trace.model) && trace.model >= 1 && trace.model <= 6, 'Invalid model');
+  assert(Number.isInteger(trace.model) && trace.model >= 1 && trace.model <= 7, 'Invalid model');
   assert.equal(trace.context?.generation, trace.generation, 'Capture belongs to a different generation');
   assert.equal(trace.context?.model, trace.model, 'Capture belongs to a different model');
   assert(Array.isArray(trace.calls) && trace.calls.length <= 1000000, 'Invalid call array');

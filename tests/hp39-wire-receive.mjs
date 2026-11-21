@@ -20,6 +20,13 @@ function library(id){
   const title='Library',inner=[...word(title.length,2),...bytesToNibbles(text(title)),...word(title.length,2),...word(id,3)];
   return typed('H','LIB'+id,[...word(0x02b40),...word(5+inner.length),...inner]);
 }
+// Independently constructed header matching the 37-byte, title-free library
+// framing observed in the unchanged LIB1537L.000. No program bytes are copied.
+// Empty internal names omit the repeated name-length byte before the ID.
+function unnamedLibrary(id){
+  const inner=[...word(0,2),...word(id,3),...word(0),...word(0),...word(0),...word(0),...word(0,4)];
+  return typed('H','LIB1537L',[...word(0x02b40),...word(5+inner.length),...inner]);
+}
 function aplet(title,first=list([...word(0x12345),...string([0,255,0])]),second=string([0,1,2,0])){
   const a=[0,0,...first],b=[0,0,...second],last=18+a.length+5;
   return typed('B',title,[...word(0x02a96),...word(0x7ff,3),...word(last-8),...word(0),...a,...word(a.length),...b]);
@@ -30,7 +37,7 @@ function index(title,libraries){
 const response=ids=>typed('I','',list(ids.flatMap(id=>[...word(0x02911),...word(id)])));
 const pad=(bytes,size=128)=>{const out=new Uint8Array(Math.ceil(bytes.length/size)*size).fill(0xa5);out.set(bytes);return out;};
 
-for(const original of [note('N',[255,0,127,0]),typed('D','P',string([65,0])),aplet('Test'),library(275),index('Test',[275])]){
+for(const original of [note('N',[255,0,127,0]),typed('D','P',string([65,0])),aplet('Test'),library(275),unnamedLibrary(1537),index('Test',[275])]){
   assert.deepEqual(inspectHp39WireObject(pad(original)).bytes,original,'Nonzero final padding must not enter the host file');
   assert.deepEqual(inspectHp39WireObject(original,{paddingLimit:0}).bytes,original);
   assert.throws(()=>inspectHp39WireObject(pad(original,1024),{paddingLimit:127}));
@@ -113,6 +120,36 @@ for(const check of [21,67,68]){
   }
   f.send(main);assert.deepEqual(f.drain(),Uint8Array.of(6,68));assert.equal(f.files.length,3);
   assert.deepEqual(f.files.map(f=>f.bytes),[library(7),library(9),main]);f.s.cancel();
+}
+function dependencyReply(f,ids){
+  f.receive(Uint8Array.of(68));
+  const reply=f.drain();assert.equal(reply[0],1);
+  assert.deepEqual(inspectHp39WireObject(reply.subarray(3,131),{paddingLimit:127}).bytes,response(ids));
+  f.receive(Uint8Array.of(6));assert.deepEqual(f.drain(),Uint8Array.of(4));
+  f.receive(Uint8Array.of(6));assert.deepEqual(f.drain(),Uint8Array.of(68));
+}
+{
+  const f=fixture(),lib=unnamedLibrary(1537),main=aplet('EmptyTitle');
+  assert.equal(lib.length,37);
+  f.send(index('EmptyTitle',[1537]));assert.deepEqual(f.drain(),Uint8Array.of(6));
+  dependencyReply(f,[1537]);f.send(lib);
+  assert.equal(f.s.phase,'negotiating','Zero-title library ID must be read immediately after its zero count');
+  assert.deepEqual(f.drain(),Uint8Array.of(6));dependencyReply(f,[]);
+  f.send(main);assert.deepEqual(f.drain(),Uint8Array.of(6,68));
+  assert.deepEqual(f.files.map(file=>file.bytes),[lib,main]);f.s.cancel();
+}
+{
+  const inner=[...word(3,2),...bytesToNibbles(text('Lib')),...word(2,2),...word(1537,3)];
+  const badNamed=typed('H','LIB1537L',[...word(0x02b40),...word(5+inner.length),...inner]);
+  const shortInner=[...word(0,2),...word(1537,2)];
+  const truncatedId=typed('H','LIB1537L',[...word(0x02b40),...word(5+shortInner.length),...shortInner]);
+  for(const [lib,message] of [[badNamed,'Invalid Wire library name length.'],
+    [truncatedId,'Truncated Wire negotiation.'],[unnamedLibrary(1538),'The calculator sent an unrequested Wire library.']]){
+    const f=fixture();f.send(index('Rejected',[1537]));f.drain();dependencyReply(f,[1537]);f.send(lib);
+    assert.equal(f.s.phase,'error');assert.equal(f.statuses.at(-1).error,message);
+    assert.equal(f.statuses.at(-1).errorCode,'wireReceiveObject');
+    assert.equal(f.files.length,0);assert.deepEqual(f.drain(),new Uint8Array(),'Malformed library receives no successful EOT ACK');
+  }
 }
 {
   const f=fixture();f.send(note('Keep',[1]));f.drain();

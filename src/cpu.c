@@ -54,6 +54,11 @@ void o_exception(o_cpu *c, unsigned mode, uint32_t vector, uint32_t link) {
     c->sleeping = false;
     ++c->exceptions;
 }
+void o_undefined(o_cpu *c) {
+    uint32_t link = c->r[15] + (c->cpsr & O_T ? 2u : 4u);
+    o_exception(c, O_UND, 4, link);
+    c->next_pc = c->r[15];
+}
 uint32_t o_getr(const o_cpu *c, unsigned r) {
     return r == 15 ? c->r[15] + (c->cpsr & O_T ? 4u : 8u) : c->r[r];
 }
@@ -352,9 +357,36 @@ static void block_transfer(orchard_machine *m, uint32_t op) {
         o_putr(c, 15, loaded_pc);
     }
 }
+static bool arm_undefined_transfer(uint32_t op) {
+    return (op & 0x0e000010u) == 0x06000010u;
+}
+/* ARM920T DDI 0151C 2.2.2 implements the complete ARMv4T extension
+ * spaces as UND. DDI 0100I A3.16 distinguishes unallocated decode bits
+ * [27:20]/[7:4] from malformed operands of an allocated instruction;
+ * the latter retain their separate UNPREDICTABLE diagnostics below. */
+static bool arm_undefined_encoding(uint32_t op) {
+    if (arm_undefined_transfer(op)) return true;
+    if ((op & 0x0e000090u) == 0x00000090u) {
+        unsigned kind = (op >> 5) & 3u;
+        if (kind) return !(op & (1u << 20)) && kind != 1;
+        if (!(op & (1u << 24)))
+            return (op & 0x00c00000u) == 0x00400000u; /* Multiply extension. */
+        return (op & 0x0fb00000u) != 0x01000000u; /* SWP/SWPB decode. */
+    }
+    if ((op & 0x0d900000u) == 0x01000000u) {
+        /* Allocated MRS, MSR register/immediate and BX decode bits. */
+        if ((op & 0x0fb000f0u) == 0x01000000u ||
+            (op & 0x0fb000f0u) == 0x01200000u ||
+            (op & 0x0fb00000u) == 0x03200000u ||
+            (op & 0x0ff000f0u) == 0x01200010u) return false;
+        return true;
+    }
+    return (op & 0x0fa00000u) == 0x0c000000u; /* Coprocessor extension. */
+}
 static void arm(orchard_machine *m, uint32_t op) {
     o_cpu *c = &m->cpu;
     if (!o_condition(c, op >> 28)) return;
+    if (arm_undefined_encoding(op)) { o_undefined(c); return; }
     if ((op & 0x0ffffff0u) == 0x012fff10u) {
         unsigned rm = op & 15u;
         if (rm == 15) { unpredictable(m, op); return; }
@@ -385,12 +417,21 @@ static void arm(orchard_machine *m, uint32_t op) {
         if (op & (1u << 24)) c->r[14] = c->r[15] + 4u;
         c->next_pc = c->r[15] + 8u + offset;
     } else if ((op & 0x0f000010u) == 0x0e000010u) {
-        if (((op >> 8) & 15u) != 15 || !o_cp15(m, op))
+        unsigned coprocessor = (op >> 8) & 15u;
+        /* No external coprocessor is attached. On-chip CP14 debug remains
+         * unmodeled; unsupported privileged CP15 operations stay explicit. */
+        if (coprocessor < 14 || (coprocessor == 15 && (c->cpsr & 31u) == O_USR))
+            o_undefined(c);
+        else if (coprocessor != 15 || !o_cp15(m, op))
             o_stop(m, ORCHARD_UNSUPPORTED_CP15, c->r[15], op);
     } else if ((op & 0x0f000000u) == 0x0f000000u) {
         uint32_t link = c->r[15] + 4u;
         o_exception(c, O_SVC, 8, link);
         c->next_pc = c->r[15];
+    } else if (((op >> 8) & 15u) != 14) {
+        /* CP15 CDP/LDC/STC trap (DDI 0151C 2.3.2), as do instructions
+         * addressed to absent external coprocessors. */
+        o_undefined(c);
     } else o_stop(m, ORCHARD_UNSUPPORTED_INSTRUCTION, c->r[15], op);
 }
 /* These classes cannot call the bus, change a register bank, or raise a
@@ -447,7 +488,8 @@ static void cpu_step(orchard_machine *m, bool fast) {
      * registers, rather than copying all banks/CP15 state on every LDR/STR.
      * The preceding path already consumed condition-failed instructions.
      * Halfword/SWP/LDM/STM/Thumb and bank-changing instructions stay below. */
-    if (fast && width == 4 && (instruction & 0x0c000000u) == 0x04000000u) {
+    if (fast && width == 4 && (instruction & 0x0c000000u) == 0x04000000u &&
+        !arm_undefined_transfer(instruction)) {
         uint32_t previous_pc = c->next_pc, previous_far = c->far, previous_fsr = c->dfsr;
         c->next_pc = pc + 4u;
         single_transfer(m, instruction, false);
