@@ -26,9 +26,12 @@ the calculator's machine generation. Disconnecting while the Worker is accepting
 a packet in parts prevents an older retry from delivering its suffix to a new
 pairing; late results and old promise completions cannot acknowledge or close
 the new link. Already queued output chunks are combined up to 1,024 bytes before
-the next send. One packet per direction remains in flight and the total queued
-limit stays at 16 KiB. This reduces repeated browser round trips without changing
+the next send. Up to eight packets per direction may be in flight. Each packet
+is acknowledged in order, within the same 16 KiB limit for unsent and
+unacknowledged bytes. This reduces repeated browser round trips without changing
 byte order, retaining unavailable reception, or adding a batching delay.
+The current v3 transport is incompatible with older v1/v2 pages; refresh both
+calculator tabs before pairing after an update.
 
 The HP39g+/HP39gs HOME presets also pass actual aplet transfer in all four
 same-model and cross-model directions. Their explicitly selected nGCS1 SRAM

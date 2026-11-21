@@ -84,7 +84,9 @@ The core now captures pixels at the actual completed LCD scan boundary; the Work
 Paused/stopped inspection, disable and reset/restore have explicit invalidation
 paths. This addresses partial RAM redraws being published repeatedly within
 one scan; it does not hide genuine blank frames or emulate physical panel
-response. Optional 35 ms response smooths the live image, while capture and recording retain raw published pixels.
+response. Optional 35 ms response is shared by the live image, PNG captures and
+recordings. Spatial display scaling does not affect exported pixels, and neither
+presentation option changes guest state.
 See [LCD presentation](lcd.md#host-presentation-synchronized-to-the-scan-counter)
 for original-ROM checkpoint comparisons and bounded browser checks.
 

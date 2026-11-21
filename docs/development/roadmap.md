@@ -207,7 +207,7 @@ Connections and SD use a persistent sidebar that preserves drafts while the
 calculator remains accessible. ROM recall is independently controlled in
 Storage settings: read-only handles reopen original files where permitted,
 and a labelled browser-local copy supports the ordinary file-input fallback.
-[Landscape modes](landscape.md) keep six function keys beside the display in both immersive and traditional appearances. Narrow portrait traditional landscape stacks the main keypad below a sticky LCD/FN pane. Four scaling kernels and optional 35 ms live response are selectable; raw capture/recording pixels remain independent of these display choices. [Firmware sound](buzzer.md) observes GPB2/Timer2 edges with
+[Landscape modes](landscape.md) keep six function keys beside the display in both immersive and traditional appearances. Narrow portrait traditional landscape stacks the main keypad below a sticky LCD/FN pane. Four scaling kernels and optional 35 ms response are selectable. Spatial display scaling does not affect exported pixels; the selected response is shared by the live display, PNG captures and recordings. [Firmware sound](buzzer.md) observes GPB2/Timer2 edges with
 gesture-gated Web Audio, mute and volume. Shared PCLK and buffered PWM now
 produce the original HP49g+ BEEP's register-derived period; physical board
 clock and speaker measurements remain open.
@@ -216,7 +216,7 @@ uses its full 131×80 dimensions in both views and capture export.
 
 One Worker owns execution. Bounded slices, explicit pacing, input queues,
 operation/generation isolation and cancellation remain invariant. LCD pixels
-and annunciators are captured inside the core at completed-scan boundaries and coalesced into browser animation frames. Optional 35 ms live response does not change raw captures, recordings or guest state; genuine blank/off frames remain represented. This is presentation policy, not physical panel calibration.
+and annunciators are captured inside the core at completed-scan boundaries and coalesced into browser animation frames. Optional 35 ms response does not change guest state; genuine blank/off frames remain represented. This is presentation policy, not physical panel calibration.
 Version-7 sessions include architectural instruction/data TLBs alongside complete SD media, all UART state/queues, pending NOR operations, modified flash sectors, fractional PCLK, PWM/SPI and watchdog state. Successful restore resumes under the current lifecycle policy; a prominent pause bar remains whenever execution is paused.
 Version-1/2/3/4/5/6 files remain importable with explicit legacy timing/device
 migration; see [sessions](sessions.md). Binary IndexedDB
