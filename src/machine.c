@@ -9,7 +9,10 @@ static const orchard_profile profiles[] = {
     {3, "hp40gs", "HP 40gs", "hp39", 0x200000, 0x40000, 131, 64, false},
     {4, "hp48gii", "HP 48gII (USB revision)", "hp48", 0x200000, 0x40000, 131, 64, false},
     {5, "hp49gplus", "HP 49g+", "hp4950", 0x200000, 0x80000, 131, 80, true},
-    {6, "hp50g", "HP 50g", "hp4950", 0x200000, 0x80000, 131, 80, true}
+    {6, "hp50g", "HP 50g", "hp4950", 0x200000, 0x80000, 131, 80, true},
+    /* wjchen's 50gm requires a 512 KiB SRAM replacement, retains the donor's
+       64-line LCD and can add an SD slot. It is not an HP50g stock profile. */
+    {7, "hp50gm", "HP 50gm (hardware mod)", "hp50gm", 0x200000, 0x80000, 131, 64, true}
 };
 
 void o_zero(void *p, size_t size) {
@@ -22,7 +25,7 @@ void o_copy(void *dst, const void *src, size_t size) {
     for (size_t i = 0; i < size; ++i) d[i] = s[i];
 }
 const orchard_profile *orchard_get_profile(unsigned id) {
-    return id >= 1 && id <= 6 ? &profiles[id - 1] : NULL;
+    return id >= 1 && id <= sizeof profiles / sizeof profiles[0] ? &profiles[id - 1] : NULL;
 }
 size_t orchard_machine_size(void) { return sizeof(orchard_machine); }
 size_t orchard_machine_alignment(void) { return _Alignof(orchard_machine); }

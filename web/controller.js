@@ -5,7 +5,7 @@ import {prepareHp39Files,MAX_HP39_HOST_FILES} from './hp39-transfer.js';
 import {readHp39Archive,writeHp39Archive,isHp39Archive,MAX_HP39_ARCHIVE_BYTES} from './hp39-archive.js';
 import {inspectHp39File,validateHp39Filename} from './hp39-files.js';
 import {prepareHp39WireFile} from './hp39-wire.js';
-import {Hp39WireAutoReceive} from './hp39-wire-auto.js';
+import {Hp39WireAutoReceive,canAutoReceiveHp39Wire} from './hp39-wire-auto.js';
 import {transferError,transferErrorDetails} from './transfer-errors.js';
 import { CALCULATORS, identifyROM } from './catalog.js';
 import { MAX_SESSION_BYTES } from './session.js';
@@ -56,7 +56,7 @@ export class CalculatorController {
     if(type==='file-transfer-start')this.transferStartedRequest=extra.request;}
   unlockAudio(){if(!this.dead)void this.audio.unlock();}
   connectIrDA(value){
-    if(this.dead||!this.state.loaded||this.state.busy||this.state.stopped)return;
+    if(this.dead||!this.state.loaded||this.state.busy||this.state.stopped||this.state.model.infrared===false)return;
     this.disconnectIrDA();
     try{
       const code=value?irdaCode(value):newIrdaCode();
@@ -220,7 +220,7 @@ export class CalculatorController {
     }catch(e){if(!this.dead&&token===this.generation){this.patch({busy:false});this.report('sessionError',e.message);}}
   }
   async insertSD(file=null,writeProtected=false,association=null){
-    const s=this.state;if(this.dead||!s.loaded||s.busy||![5,6].includes(s.model.id)||s.sd?.present||s.transfer?.active||s.uploadBatch?.active)return false;
+    const s=this.state;if(this.dead||!s.loaded||s.busy||![5,6,7].includes(s.model.id)||s.sd?.present||s.transfer?.active||s.uploadBatch?.active)return false;
     if(s.hostBridge?.active){this.report('sdHostBridgeBusy');return false;}
     const token=this.generation,epoch=s.sessionEpoch;this.autoPending=null;this.sdInsertDirectory=association;this.patch({busy:true});
     try{
@@ -415,7 +415,7 @@ export class CalculatorController {
         if(total>MAX_UPLOAD_BYTES)throw transferError('hp39UploadLimit','The selected HP39 files exceed 8 MiB.');
         const invalid=entries.findIndex(entry=>entry.error);
         const queue={generation,request,transport,protocol:'hp39-wire',entries,index:invalid<0?0:invalid,completedBytes:0,preflight:invalid>=0,
-          autoReceive:autoReceive===true&&transport==='usb'&&[1,2].includes(this.state.model.id),continueReceive:false};
+          autoReceive:autoReceive===true&&canAutoReceiveHp39Wire(this.state.model.id,transport),continueReceive:false};
         this.uploadQueue=queue;
         this.patch({uploadBatch:{active:true,recoverable:false,protocol:'hp39-wire',completed:0,total,transferred:0,
           items:entries.map(entry=>({name:entry.name,size:entry.size,phase:'queued',transferred:0}))}});

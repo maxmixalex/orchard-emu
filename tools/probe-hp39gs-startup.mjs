@@ -47,7 +47,9 @@ assert.equal(report.result.fault_address, '00000000');
 assert.equal(report.result.key_events_applied, events.length);
 assert.equal(report.sram_alias_reads, '0');
 assert.equal(report.sram_alias_writes, '0');
-assert.equal(report.lcd_unverified_reads, '12');
+// Revalidated on the pre-UND c8fa3bc core and its successor: complete native
+// states and LCD bytes agree; the earlier count 12 was a stale diagnostic.
+assert.equal(report.lcd_unverified_reads, '18');
 assert.equal(report.frame_sha256, '15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759');
 assert(report.native_wasm_equal && report.native_replay_equal && report.wasm_replay_equal);
 report.startup_witness = {

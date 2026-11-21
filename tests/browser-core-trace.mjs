@@ -10,7 +10,8 @@ const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const wasm = await readFile(new URL('../dist/orchard.wasm', import.meta.url));
 const rom = new Uint8Array(1048576).fill(255), view = new DataView(rom.buffer);
 view.setUint32(0, 0xea000002, true); // Branch to the explicit diagnostic stop.
-view.setUint32(16, 0xe7f000f0, true);
+// Malformed allocated MRS remains UNPREDICTABLE; undefined space enters UND.
+view.setUint32(16, 0xe10f0100, true);
 const metadata = {generation: 7, model: 1, preset: 'strict'};
 let captured, epochs = [];
 async function make(options = {}, firmware = rom, model = 1) {
@@ -42,7 +43,7 @@ assert.equal(c.keyboard_matrix(3, 3, 0), 0);
 assert.equal(c.run(1), 9);
 assert(captured && captured.complete && captured.reason === 'core-stop');
 assert.equal(captured.final_words[22], 2);
-assert.deepEqual(captured.final_words.slice(28), [9, 16, 0xe7f000f0, 16, 0xe7f000f0]);
+assert.deepEqual(captured.final_words.slice(28), [9, 16, 0xe10f0100, 16, 0xe10f0100]);
 assert.deepEqual(captured.calls.filter(r => r.name === 'keyboard_matrix').map(r => [r.before, r.after, r.args]),
   [[0, 0, [3, 3, 1]], [1, 1, [3, 3, 0]]]);
 const valid = artifact(captured);
@@ -126,7 +127,7 @@ assert(heldReport.every_call_result_equal && heldReport.complete_checkpoint_equa
 // including a stopped call that consumes fewer quanta than requested.
 const clockedRom = rom.slice(), clockedView = new DataView(clockedRom.buffer);
 for(let at=16;at<48;at+=4)clockedView.setUint32(at,0xe1a00000,true);
-clockedView.setUint32(48,0xe7f000f0,true);
+clockedView.setUint32(48,0xe10f0100,true);
 for (const policy of ['run_idle','run_clocked']) {
   const core = await make({},clockedRom);
   const stopTick=Math.ceil(10/(policy==='run_clocked'?core.clock_slots():1));
@@ -150,7 +151,7 @@ for (const [address, word] of [
   [20, 0xe3a01010], [24, 0xe5801000], // GPB2 output mode.
   [28, 0xe3a01004], [32, 0xe5801004], // Drive GPB2 high.
   [36, 0xe3a01000], [40, 0xe5801004], // Drive GPB2 low.
-  [44, 0xe1a00000], [48, 0xe7f000f0], [56, 0x56000010],
+  [44, 0xe1a00000], [48, 0xe10f0100], [56, 0x56000010],
 ]) audioView.setUint32(address, word, true);
 const audio = await make({}, audioRom);
 assert.equal(audio.buzzer_enable(1), 0);
@@ -198,7 +199,7 @@ const uartRom = new Uint8Array(2097152).fill(255), uartView = new DataView(uartR
 [
   0xea000000, 0xeafffffe, 0xe59f002c, 0xe3a01000, 0xe5801000,
   0xe59f0024, 0xe3a01043, 0xe5801000, 0xe3a01005, 0xe5801004,
-  0xe5d01024, 0xe5c01020, 0xe5d01024, 0xe5c01020, 0xe7f000f0,
+  0xe5d01024, 0xe5c01020, 0xe5d01024, 0xe5c01020, 0xe10f0100,
   0x53000000, 0x50008000,
 ].forEach((word, index) => uartView.setUint32(index * 4, word, true));
 const uart = await make({}, uartRom, 5);

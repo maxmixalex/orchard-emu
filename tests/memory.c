@@ -128,7 +128,7 @@ static void sram(unsigned model) {
 }
 EXPORT("regression") unsigned run(void) {
     checks=failures=first_failure=0;
-    nor();for(unsigned id=1;id<=6;++id)sram(id);
+    nor();for(unsigned id=1;id<=ORCHARD_MODEL_COUNT;++id)sram(id);
     return failures;
 }
 EXPORT("checks") unsigned get_checks(void) {return checks;}

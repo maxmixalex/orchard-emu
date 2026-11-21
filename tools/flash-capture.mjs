@@ -188,10 +188,12 @@ export async function createCapturePackage(directory) {
     }
   }
   await mkdir(resolve(directory, 'tools'));
+  await mkdir(resolve(directory, 'web'));
   for (const [file, source] of [
     ['README-zh.md', '../docs/development/flash-capture.md'],
     ['LICENSE', '../LICENSE'], ['tools/flash-capture.mjs', './flash-capture.mjs'],
     ['tools/rom-inputs.mjs', './rom-inputs.mjs'],
+    ['web/hardware-mod.js', '../web/hardware-mod.js'],
   ]) {
     const content = await readFile(new URL(source, import.meta.url));
     await writeFile(resolve(directory, file), content, { flag: 'wx' });

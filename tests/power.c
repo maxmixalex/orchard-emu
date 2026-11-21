@@ -56,7 +56,7 @@ static void woke(uint32_t expected){
 }
 EXPORT("regression") unsigned regression(void){
  checks=failures=first=0;
- for(unsigned id=1;id<=6;id++){
+ for(unsigned id=1;id<=ORCHARD_MODEL_COUNT;id++){
   init(id);CHECK(orchard_run(&a,1).status==ORCHARD_OK);CHECK(a.cpu.instructions==1 && a.cpu.r[15]==0x104);
   asleep(12000000);CHECK(a.soc.rtc.reg[12]==1); /* Independent RTC still counts. */
   size_t n=orchard_checkpoint_size(&a);CHECK(n<sizeof checkpoint);

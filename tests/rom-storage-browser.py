@@ -11,7 +11,7 @@ import json, os, shutil, threading
 from playwright.sync_api import sync_playwright
 
 ROOT=Path(__file__).resolve().parent.parent
-ALLOWED={'/web/'+p for p in ('rom-storage.js','catalog.js','hp48.js')}
+ALLOWED={'/web/'+p for p in ('rom-storage.js','catalog.js','hp48.js','hardware-mod.js')}
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path=self.path.split('?',1)[0]

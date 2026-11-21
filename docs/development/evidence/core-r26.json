@@ -1,0 +1,595 @@
+{
+  "schema": "orchard-core-r26-v1",
+  "production_wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+  "checkpoint_version": 8,
+  "checkpoint_added_bytes": 24,
+  "native_release": {
+    "ctest_passed": 26,
+    "ctest_failed": 0,
+    "counted_assertions": 1289801,
+    "separate_collector_test": true
+  },
+  "reference": {
+    "ctest_passed": 26,
+    "ctest_failed": 0,
+    "counted_assertions": 1289801,
+    "separate_collector_test": true
+  },
+  "undefined": {
+    "fixed_expectation_assertions": 17504,
+    "expectation_source": "ARM920T DDI0151C 2.2.2/2.3.2; ARM DDI0100I A2.6.3/A3.16",
+    "guest_handler_executes_and_returns": true,
+    "low_and_high_vectors": true,
+    "arm_and_thumb_resume": true,
+    "unpredictable_and_unmodeled_operations_remain_distinct": true
+  },
+  "uart_timeout": {
+    "fixed_expectation_assertions": 7431,
+    "channels": 3,
+    "fifo_trigger_levels": [
+      4,
+      8,
+      12,
+      16
+    ],
+    "line_formats": 8,
+    "pclk_ratios_tested": [
+      "1",
+      "1/2",
+      "9/2"
+    ],
+    "maximum_interval_pclk_edges": 37748736,
+    "uextclk_frequency_invented": false,
+    "physical_timing_claimed": false,
+    "idle_threshold_crossing": {
+      "initial_reproduction_checks": 6567,
+      "before_fix_failures": 3,
+      "affected_mode": "pulse",
+      "description": "A partial read first lowers an already idle FIFO below trigger; emit one timeout event, not one on every subsequent read.",
+      "final_regression_all_channels_and_triggers": true
+    }
+  },
+  "checkpoint_comparator": {
+    "checks": 259,
+    "profiles": 7,
+    "failures": 0,
+    "legacy_versions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "normalizes_tlb_or_timeout_state": false
+  },
+  "sanitizer": {
+    "asan_options": "detect_leaks=0:halt_on_error=1",
+    "initial_full_run": {
+      "passed": 22,
+      "timed_out": [
+        "checkpoint",
+        "scheduler",
+        "execution",
+        "clock-domain"
+      ],
+      "timeout_seconds": 30,
+      "sanitizer_diagnostics": false
+    },
+    "original_bound_rerun_pass_seconds": {
+      "checkpoint": 22.66,
+      "scheduler": 27.37,
+      "execution": 17.4
+    },
+    "original_clock_bound_rerun_failed": true,
+    "clock_standalone_measurement": {
+      "wall_seconds": 38.996,
+      "returncode": 0,
+      "original_ctest_timeout_seconds": 30,
+      "original_ctest_gate_passed": false,
+      "asan_options": "detect_leaks=0:halt_on_error=1"
+    },
+    "clock_ctest_timeout_seconds": 60,
+    "clock_timeout_applies_only_to_sanitizer": true,
+    "clock_build_overlap_60s_attempt": "timeout, retained",
+    "clock_contended_pass_seconds": 46.75,
+    "clock_quiet_pass_seconds": 47.13,
+    "clock_assertions": 39489,
+    "updated_uart_timeout_pass_seconds": 2.26,
+    "updated_uart_timeout_assertions": 7431,
+    "clean_single_full_run_claimed": false,
+    "all_required_case_bodies_completed_without_sanitizer_diagnostic": true
+  },
+  "independent_oracle": {
+    "schema": "orchard-cpu-differential-v1",
+    "unicorn": "2.1.4",
+    "cpu_model": "TI925T",
+    "target_scope": "defined shared ARMv4T instruction subset",
+    "seed": "0x9202410",
+    "samples": 1000,
+    "cases": 17075,
+    "transport_rejections": 12,
+    "groups": {
+      "arm-alu-0": 1267,
+      "arm-alu-1": 1389,
+      "arm-alu-2": 1344,
+      "arm-block": 1000,
+      "arm-branch": 1000,
+      "arm-half-signed": 1500,
+      "arm-memory": 1000,
+      "arm-swap": 500,
+      "branch-exchange": 60,
+      "multiply": 1000,
+      "pc-immediate": 15,
+      "thumb-alu": 2000,
+      "thumb-block": 1000,
+      "thumb-branch": 1000,
+      "thumb-memory": 1500,
+      "thumb-shift-immediate": 1000,
+      "thumb-stack": 500
+    },
+    "corpus_sha256": "85710d4d9963872cb74fa052ae982ecccb6f31611e3b16e1ed854ee94bb4c81f",
+    "native_sha256": "af192b19fa3e46cf4c82bc04c589ae69380fad5179839389739aed3b85899912",
+    "test_wasm_sha256": "d9dff6e23de6df65fbc921830f939ea497057a5aea2e68d62471fa3876905a64",
+    "native_wasm_equal": true,
+    "unicorn_equal": true,
+    "mismatches": 0,
+    "skipped": 0,
+    "arm920t_full_conformance": false,
+    "firmware_used": false
+  },
+  "source_sha256": {
+    "src/cpu.c": "0dfb7af770fec9feba0f9a5c96c7ee02ae38c94767c32101a45f48a4ca36f8fa",
+    "src/thumb.c": "13fe89a2a13e55a416b4e8eae986fb94d76487b016a8aa97e3de520b22e14ba2",
+    "src/uart.c": "a434aa7a13c3fcc37b954cbb07d1d2529a27e1ff5955fe4168d7ce4d1efe5d68",
+    "src/checkpoint.c": "49498d42fe8e1ce6be9bb2ceb6e0048ed27175b62bce549982e30ef4440b1a2d",
+    "src/scheduler.c": "e36ceaeb342e51fcae42934f836e82f4fa4d6286285d366882aa52acbadb3dce",
+    "src/soc.c": "fcb80a081679cdc97f6ce737eb0ba624522015877ba729ee992c94ac6718d1ee",
+    "src/internal.h": "de09c9c514af43b9aec1c608da2e2da8052416ac48bb9204917d115f8d5d2dff",
+    "tests/undefined.c": "4c1435aa05c98b24baa62bc229673ed9d524fec49f9c5b36ebeeb1ff00bc28b8",
+    "tests/uart-timeout.c": "a7b7fa5649df3cfd3c7a53477e5394ac36bcf4114cca38784101181a5ac7d33e",
+    "tests/checkpoint.c": "10de4e870eeb7cc03562b9161547087a6d0e009c8ec322cc4a05803d15c071aa",
+    "tests/clock-domains.cmake": "863dcfb486016bf197b706dbc6d5ec1722ac2b1871c92a0bc4cce8359e1b17a5",
+    "tools/checkpoint-equivalence.mjs": "87a42a843ce9d0f71ce21845e8619b0d017a1022050012fec9ddf16ed46fd660",
+    "tests/checkpoint-equivalence.mjs": "ac35ca3f1d26c11fc2459717ea741749cc26888dca53da5eab2bffcb495e4aa2",
+    "tests/browser-core-trace.mjs": "311b408dd1aa158c3fb4613f912a9c6f295caf3f66c837e75e2311c9b622d015",
+    "tests/browser-stop-recovery.py": "9fc9d82d44a87634e2ba7a13dfc1001adc9cb20c9a7facd7942840f52e21946d"
+  },
+  "private_log_sha256": {
+    "build-core-stage4-LastTest.log": "9884de842fc887cdc7c04091f2f5cfba3b836f33af1cfba97421cf1fac79b23a",
+    "build-core-reference-stage4-LastTest.log": "db6ea0316aca6a1a4ed56a664e2a7ac7006a59fd1c19cfe9b09e7c03fe276333",
+    "sanitizer-stage3-first-LastTest.log": "65c1c6e683830fbd4270cd827397ffe5d7b18deb873c917860a4559ea561f8b3",
+    "sanitizer-stage4-rerun-LastTest.log": "2f49b688aea90ae10c1b6e95dd1c9d9f603bd186361a09ba762446fa10d894a1",
+    "sanitizer-stage4-uart-LastTest.log": "1916096db3909c10f80f5890fe6439f99b1520b2c24ecf86826ae2e3866d4ee0",
+    "sanitizer-stage4-clock60-LastTest.log": "13ae82cdcc1c4223c0830a2f0562ee2aeba44603aa67f0535cff0640c2984b91",
+    "sanitizer-stage4-clock60-contended2-LastTest.log": "e1233b5a2b1052d3dd6b331828d0017e00c70f4d86a21de70ea2c6b285f5631e",
+    "sanitizer-stage4-clock60-quiet-LastTest.log": "6781af23a0441544595905bf27a4d231790198848e19ee82899336ad2ef6e615"
+  },
+  "limitations": [
+    "Synthetic profiles do not establish original-ROM or physical-board compatibility.",
+    "Unicorn TI925T comparisons cover a defined shared ARMv4T subset, not ARM920T exceptions/system coprocessors or MMIO.",
+    "UEXTCLK FIFO timeout, serial/optical waveforms, DMA and send-break remain outside scope.",
+    "Original ROMs, applications, LCD pixels and raw checkpoints are excluded from this public metadata."
+  ],
+  "original_v7_migration": {
+    "schema": "orchard-v8-original-migration-r26",
+    "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+    "source_wasm_sha256": "8149548168ca58d3060cdf4a470f65cc3c3f05816add3b30173fc2bbc6631a80",
+    "rows": [
+      {
+        "model": 4,
+        "stage": "native-running",
+        "source_version": 7,
+        "result_version": 8,
+        "source_bytes": 277644,
+        "result_bytes": 277668,
+        "represented_state_equal": true,
+        "restored_continuation_ticks": 10000,
+        "restored_continuation_equal": true
+      },
+      {
+        "model": 4,
+        "stage": "returned-home",
+        "source_version": 7,
+        "result_version": 8,
+        "source_bytes": 277644,
+        "result_bytes": 277668,
+        "represented_state_equal": true,
+        "restored_continuation_ticks": 10000,
+        "restored_continuation_equal": true
+      },
+      {
+        "model": 4,
+        "stage": "final-home",
+        "source_version": 7,
+        "result_version": 8,
+        "source_bytes": 277644,
+        "result_bytes": 277668,
+        "represented_state_equal": true,
+        "restored_continuation_ticks": 10000,
+        "restored_continuation_equal": true
+      },
+      {
+        "model": 5,
+        "stage": "native-running",
+        "source_version": 7,
+        "result_version": 8,
+        "source_bytes": 539788,
+        "result_bytes": 539812,
+        "represented_state_equal": true,
+        "restored_continuation_ticks": 10000,
+        "restored_continuation_equal": true
+      },
+      {
+        "model": 5,
+        "stage": "returned-home",
+        "source_version": 7,
+        "result_version": 8,
+        "source_bytes": 539788,
+        "result_bytes": 539812,
+        "represented_state_equal": true,
+        "restored_continuation_ticks": 10000,
+        "restored_continuation_equal": true
+      },
+      {
+        "model": 5,
+        "stage": "final-home",
+        "source_version": 7,
+        "result_version": 8,
+        "source_bytes": 539788,
+        "result_bytes": 539812,
+        "represented_state_equal": true,
+        "restored_continuation_ticks": 10000,
+        "restored_continuation_equal": true
+      }
+    ],
+    "passed": true
+  },
+  "serial_wire_regression": {
+    "model": 2,
+    "transport": "serial",
+    "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+    "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+    "cold_boot": true,
+    "guest_memory_patched": false,
+    "host_timing_sample": false,
+    "hardware_validated": false,
+    "multipart": true,
+    "passed": true,
+    "two_notes_exact": true,
+    "notes_one_listener": true,
+    "stop_kept_files": true,
+    "multipart_two_sends_exact": true,
+    "multipart_one_listener": true,
+    "arithmetic_after_transfer": true,
+    "arithmetic_work_area_sha256": "4f424d9352b6962f8d3d8ec76203f9d7c60136d66caf9b85774d8c6227717bea",
+    "received": [
+      {
+        "tick": 281168704,
+        "name": "Orchard_Two-3-1.note",
+        "bytes": 75,
+        "sha256": "8095a44e359bfe75ab728b7e252e18fb9318654eb1b50c097e1a2f5c97563637",
+        "request": 3
+      },
+      {
+        "tick": 354055424,
+        "name": "Orchard_One-3-2.note",
+        "bytes": 269,
+        "sha256": "fea412cc3b197478d18ad897b241d5c19c5f935758ba97232ebc60ccb4a18e2e",
+        "request": 3
+      },
+      {
+        "tick": 579163712,
+        "name": "LIB1537L-6-1.L39",
+        "bytes": 37,
+        "sha256": "8f49c8b596a9d126f253f1fdb9ae8e4bc6a76d607b0ffd4eac1f0a6c734a060c",
+        "request": 6
+      },
+      {
+        "tick": 622597696,
+        "name": "Arkalite-6-2.apt",
+        "bytes": 3671,
+        "sha256": "1f4cda18268ba3be4e60fd4044770a38696c26b85f26aed911580243e1c82312",
+        "request": 6
+      },
+      {
+        "tick": 733329152,
+        "name": "LIB1537L-6-3.L39",
+        "bytes": 37,
+        "sha256": "8f49c8b596a9d126f253f1fdb9ae8e4bc6a76d607b0ffd4eac1f0a6c734a060c",
+        "request": 6
+      },
+      {
+        "tick": 776754944,
+        "name": "Arkalite-6-4.apt",
+        "bytes": 3671,
+        "sha256": "1f4cda18268ba3be4e60fd4044770a38696c26b85f26aed911580243e1c82312",
+        "request": 6
+      }
+    ],
+    "retained_before_fix_failure": {
+      "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+      "two_notes_exact": true,
+      "multipart_error": "Invalid Wire library name length.",
+      "cause": "Host receiver assumed an internal title-length trailer even when the library title length was zero.",
+      "guest_core_stop": false
+    }
+  },
+  "trace_recovery": {
+    "fixture_encoding": "e10f0100",
+    "fixture_reason": "Malformed allocated MRS remains UNPREDICTABLE9; defined undefined instruction encodings enter guest UND.",
+    "node_trace": {
+      "passed": true,
+      "generated_guest": true,
+      "original_rom_reproduced": false,
+      "call_results_equal": true,
+      "complete_checkpoint_equal": true,
+      "exact_key_ticks": true,
+      "immutable_stop_capture": true,
+      "held_key_stop_preserved": true,
+      "release_changes_checkpoint": true,
+      "held_key_calls": 3,
+      "held_key_run_calls": 1,
+      "idle_stop_replay": true,
+      "clocked_stop_replay": true,
+      "host_audio_calls_excluded": true,
+      "host_audio_checkpoint_equal": true,
+      "audio_waveform_levels": [
+        0,
+        1,
+        0
+      ],
+      "audio_replay_checkpoint_equal": true,
+      "unknown_audio_api_rejected": true,
+      "uart_channel_payloads_replayed": true,
+      "uart_snapshot_checkpoint_equal": true,
+      "irda_attachment_replayed": true,
+      "uart_channel_bytes": 2,
+      "unknown_lcd_api_rejected": true,
+      "completed_scan_differs_from_live": true,
+      "host_lcd_calls_excluded": true,
+      "host_lcd_checkpoint_equal": true,
+      "lcd_replay_checkpoint_equal": true,
+      "isolated_epochs": true,
+      "negative_checks": 23,
+      "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+      "calls": 7,
+      "run_calls": 2,
+      "stop": [
+        9,
+        16,
+        3775856896,
+        16,
+        3775856896
+      ]
+    },
+    "browser": [
+      {
+        "passed": true,
+        "browser": "150.0.7871.181",
+        "generated_guest": true,
+        "production_worker": true,
+        "instrumented": false,
+        "performance_sample": false,
+        "stop": {
+          "code": 9,
+          "pc": "00000010",
+          "instruction": "e10f0100",
+          "address": "00000010",
+          "detail": "e10f0100"
+        },
+        "ticks": "2",
+        "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+        "original_observation_preserved": true,
+        "screenshot_failure_preserves_observation": true,
+        "unstopped_guard": true,
+        "page_errors": [],
+        "worker_errors": [],
+        "diagnostic_trace": false,
+        "report_sha256": "42440fd1b802e4e598d70bd6c69a8149f8f86306e0e6be030c6e4bb92091e10a"
+      },
+      {
+        "passed": true,
+        "browser": "150.0.7871.181",
+        "generated_guest": true,
+        "production_worker": false,
+        "instrumented": true,
+        "performance_sample": false,
+        "stop": {
+          "code": 9,
+          "pc": "00000010",
+          "instruction": "e10f0100",
+          "address": "00000010",
+          "detail": "e10f0100"
+        },
+        "ticks": "2",
+        "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+        "original_observation_preserved": true,
+        "screenshot_failure_preserves_observation": true,
+        "unstopped_guard": true,
+        "page_errors": [],
+        "worker_errors": [],
+        "diagnostic_trace": true,
+        "report_sha256": "c0bf83259f9fc204f9a5a1e139fecd5e0f67f53a758f82617b5c5af31e634466",
+        "active_timeout_trace": {
+          "complete_checkpoint_equal": true,
+          "original_observation_preserved": true,
+          "missing_pause_ack_rejected": true,
+          "changed_generation_rejected": true,
+          "replay": {
+            "schema": "orchard-browser-core-replay-v1",
+            "passed": true,
+            "instrumented": true,
+            "performance_sample": false,
+            "model": 1,
+            "epoch": 2,
+            "generation": 3,
+            "calls": 35404,
+            "run_calls": 8839,
+            "key_transition_calls": 0,
+            "uart_bytes": 0,
+            "every_call_result_equal": true,
+            "complete_checkpoint_equal": true,
+            "start_tick": 0,
+            "end_tick": 9051136,
+            "stop": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "rom_sha256": "4b62e4e4e9ce9c7a3e5050ef80feed798e4d491677fb5009429c295443162320",
+            "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+            "captured_wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+            "same_wasm": true,
+            "initial_sha256": "b7208d68d6dfd02b8ff67a6ec8dc0b0954649f43e79cc603c44f85024c8a51f1",
+            "final_sha256": "f63d2847cb07cd085159db906c61938818765fd026c5d226a70f921f14118c14"
+          }
+        },
+        "immediate_stop_trace": {
+          "schema": "orchard-browser-core-replay-v1",
+          "passed": true,
+          "instrumented": true,
+          "performance_sample": false,
+          "model": 1,
+          "epoch": 1,
+          "generation": 2,
+          "calls": 7,
+          "run_calls": 1,
+          "key_transition_calls": 0,
+          "uart_bytes": 0,
+          "every_call_result_equal": true,
+          "complete_checkpoint_equal": true,
+          "start_tick": 0,
+          "end_tick": 2,
+          "stop": [
+            9,
+            16,
+            3775856896,
+            16,
+            3775856896
+          ],
+          "rom_sha256": "643c32977b343bafd27d278cdace078368b731e497184bda20fe8e83a7ad26fa",
+          "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+          "captured_wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+          "same_wasm": true,
+          "initial_sha256": "3a4b6794863921d6fdc44f03660589b9215f6f0f61ece1a3f7766784124d7344",
+          "final_sha256": "a8d0f630d114916f23e4eceb19375d70da5dc9d5e16d7d5a06eaadd14b7f204a"
+        }
+      }
+    ]
+  },
+  "final_native_wasm_parity": {
+    "passed": true,
+    "production_wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+    "command": "npm run test:wasm",
+    "default_per_host_assertions": 1250312,
+    "clock_per_host_assertions": 39489,
+    "combined_per_host_assertions": 1289801,
+    "experimental_physical_read_additional_wasm_only_assertions": 254128,
+    "experimental_physical_read_included_in_default_total": false,
+    "synthetic_profiles": 7,
+    "tlb_instruction_driven_cases": 25,
+    "suite_assertions": [
+      {
+        "suite": "regression",
+        "assertions_each_host": 105060
+      },
+      {
+        "suite": "undefined",
+        "assertions_each_host": 17504
+      },
+      {
+        "suite": "mmu-tlb",
+        "assertions_each_host": 812
+      },
+      {
+        "suite": "lcd-input",
+        "assertions_each_host": 13155
+      },
+      {
+        "suite": "lcd-adc",
+        "assertions_each_host": 4597
+      },
+      {
+        "suite": "usb",
+        "assertions_each_host": 54175
+      },
+      {
+        "suite": "sdi",
+        "assertions_each_host": 12701
+      },
+      {
+        "suite": "spi",
+        "assertions_each_host": 5069
+      },
+      {
+        "suite": "uart",
+        "assertions_each_host": 5455
+      },
+      {
+        "suite": "uart-timeout",
+        "assertions_each_host": 7431
+      },
+      {
+        "suite": "watchdog-reset",
+        "assertions_each_host": 705
+      },
+      {
+        "suite": "buzzer",
+        "assertions_each_host": 4263
+      },
+      {
+        "suite": "power",
+        "assertions_each_host": 1010
+      },
+      {
+        "suite": "pwm-clock",
+        "assertions_each_host": 2906
+      },
+      {
+        "suite": "nor-bus",
+        "assertions_each_host": 1966
+      },
+      {
+        "suite": "nor-write",
+        "assertions_each_host": 293
+      },
+      {
+        "suite": "physical-read",
+        "assertions_each_host": 254128
+      },
+      {
+        "suite": "memory",
+        "assertions_each_host": 25888
+      },
+      {
+        "suite": "segments-nor",
+        "assertions_each_host": 1258
+      },
+      {
+        "suite": "performance",
+        "assertions_each_host": 121078
+      },
+      {
+        "suite": "execution",
+        "assertions_each_host": 97455
+      },
+      {
+        "suite": "cpu-transactions",
+        "assertions_each_host": 456945
+      },
+      {
+        "suite": "scheduler",
+        "assertions_each_host": 54420
+      },
+      {
+        "suite": "checkpoint",
+        "assertions_each_host": 2038
+      }
+    ],
+    "log_sha256": "2fd963e5acca8bea49f32ff2e69441ccd626d9d072bae1f90eca1c60afd2eaad"
+  }
+}

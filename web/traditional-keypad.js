@@ -6,7 +6,7 @@ const NS='http://www.w3.org/2000/svg';
 const ATTRS=new Set(['d','x','y','width','height','rx','ry','cx','cy','r']);
 const legend=value=>({'double-colon':'∷','return-arrow':'↵',uparrow:'↑',downarrow:'↓'}[value]||value);
 const svg=(name,attrs={})=>{const node=document.createElementNS(NS,name);for(const [k,v] of Object.entries(attrs))node.setAttribute(k,String(v));return node;};
-export const MODEL_SLUGS=['','hp39gplus','hp39gs','hp40gs','hp48gii','hp49gplus','hp50g'];
+export const MODEL_SLUGS=['','hp39gplus','hp39gs','hp40gs','hp48gii','hp49gplus','hp50g','hp48gii'];
 const measure=root=>{const b=root.getBBox();return {x:b.x-8,y:b.y-8,width:b.width+16,height:b.height+16};};
 const dimensions=(node,bounds)=>{node.setAttribute('viewBox',Object.values(bounds).join(' '));node.style.aspectRatio=`${bounds.width}/${bounds.height}`;};
 const reveal=node=>{for(const name of ['position','visibility','left','top'])node.style.removeProperty(name);};

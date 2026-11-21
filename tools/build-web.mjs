@@ -23,7 +23,7 @@ const args = [
 const result = spawnSync(process.env.CLANG || 'clang', args, { cwd: root, stdio: 'inherit' });
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
-for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'skin.js', 'key-input.js', 'lifecycle.js', 'debug.html', 'session.js', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js', 'usb-device.js', 'host-bridge-client.js', 'host-bridge-protocol.js', 'kermit.js', 'file-transfer.js', 'hp39-files.js', 'hp39-transfer.js', 'hp39-archive.js', 'hp39-wire.js', 'hp39-wire-receive.js', 'transfer-errors.js', 'sd-card.js', 'sd-filesystem.js', 'buzzer-worker.js', 'buzzer-audio.js', 'lcd-frames.js', 'irda-input.js']) {
+for (const file of ['index.html', 'style.css', 'main.js', 'worker.js', 'hp48.js', 'hardware-mod.js', 'skin.js', 'key-input.js', 'lifecycle.js', 'debug.html', 'session.js', 'catalog.js', 'preferences.js', 'pacing.js', 'task-scheduler.js', 'virtual-usb.js', 'usb-device.js', 'host-bridge-client.js', 'host-bridge-protocol.js', 'kermit.js', 'file-transfer.js', 'hp39-files.js', 'hp39-transfer.js', 'hp39-archive.js', 'hp39-wire.js', 'hp39-wire-receive.js', 'transfer-errors.js', 'sd-card.js', 'sd-filesystem.js', 'buzzer-worker.js', 'buzzer-audio.js', 'lcd-frames.js', 'irda-input.js']) {
   await copyFile(resolve(root, 'web', file), resolve(out, file));
 }
 await copyFile(resolve(root, "LICENSE"), resolve(out, "LICENSE"));

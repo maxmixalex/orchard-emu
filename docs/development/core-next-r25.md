@@ -32,11 +32,11 @@ reserved registers are not made permissive.
 `tests/regression.c::cp15_identification` contains eight fixed instruction words
 and independently specified expected values. It exercises both dispatchers,
 ordinary destinations, the `Rd=PC` flag-transfer form and a condition-failed
-control. Separate cases retain the current rejection of unprivileged access,
-nonzero `CRm`/`opcode_1`, register-0 writes, reserved register 4, non-CP15 access
-and ARMv4T undefined encodings. Those rejection assertions record the present
-diagnostic policy; they do not claim that a host stop is the architectural
-undefined-instruction exception.
+control. At that revision, separate cases retained the diagnostic rejection of
+unprivileged access, nonzero `CRm`/`opcode_1`, register-0 writes, reserved
+register 4, non-CP15 access and ARMv4T undefined encodings. The defined
+undefined cases now enter the guest exception handler in [r26](core-r26.md);
+unsupported privileged CP15 and unpredictable cases remain distinct.
 
 The added cases contribute 226 assertions. They produce 96 failures against
 the prior core, all in the six missing ID aliases, and are included in the
@@ -96,66 +96,34 @@ are Node/production-WASM results. Browser interaction and the unresolved
 historical infrared timing cases require their own evidence; neither is
 inferred from the core gates or the FIFO fix.
 
-## Next implementation priorities
+## Follow-up implementation status
 
-### M1: Deliver defined undefined-instruction exceptions
+### M1 implemented in r26: Defined undefined-instruction exceptions
 
-`src/cpu.c::arm` and `src/thumb.c::o_thumb` currently stop the host for several
-encodings which should enter the guest's undefined-instruction handler.
-For example, ARM `0xe6000010` and Thumb `0xde00` reach the current diagnostic
-paths. ARM920T DDI 0151C section 2.2.2 establishes the ARMv4T extension spaces;
-section 2.3.2 also specifies a trap for unprivileged CP15 access.
+The defined ARMv4T extension spaces, unallocated Thumb words, absent external
+coprocessors and specified CP15 traps now enter the guest UND handler. The
+shared decoder retains separate unpredictable and unmodeled-operation
+boundaries. Fixed ARM/Thumb instructions execute handlers at both vector
+locations, return through `MOVS pc,lr`, and resume the next instruction.
 
-Implement a shared ARMv4T decode classification, then use the existing
-`o_exception` bank/vector machinery for only the architecturally defined
-undefined cases. Keep `arm_without_checkpoint` consistent with that
-classification. An arbitrary unimplemented peripheral, an unpredictable
-register combination and an undefined instruction must remain distinguishable.
-This is a next implementation task, not part of the ID-alias correction.
+The [r26 core record](core-r26.md) describes the exact scope and its 17,504
+native/WASM assertions. It does not claim full ARM920T conformance. The
+multiple-access abort review below remains separate follow-up work.
 
-Acceptance needs no calculator ROM: execute fixed ARM/Thumb words, a
-condition-failed ARM control, user-mode CP15 access and an ARMv5-only encoding.
-At both vector locations, assert UND mode, saved CPSR, the next-instruction
-link, ARM state, IRQ masking and preserved FIQ masking. A generated handler
-must execute `MOVS pc,lr` and resume the following instruction, including
-return to Thumb. These exception-entry/return requirements are specified in
-[ARM Architecture Reference Manual, ARM DDI 0100I](https://e2e.ti.com/cfs-file/__key/communityserver-discussions-components-files/1023/ARM-Architecture.pdf),
-section A2.6.3. Both dispatchers and WASM must agree with fixed expectations.
-Stock/native workflows then provide regression coverage, not the exception
-oracle.
+### M2 implemented in r26: PCLK FIFO receive idle timeout
 
-### M2: Add bounded UART FIFO idle timeout from the functional clock
+Each UART now derives its FIFO receive idle timeout from the programmed PCLK
+baud divisor and complete functional frame length. Per-channel countdown and
+expiry state survive checkpoint v8, clock gating and exact restored
+continuation. The [UART contract](uart-irda.md#pclk-fifo-receive-idle-timeout)
+defines decoded-byte admission, partial reads, restart and cancellation.
+The fixed deadline and migration regression contributes 7,431 assertions.
 
-`src/uart.c::o_uart_register` explicitly rejects UCON receive-timeout enable
-when FIFO mode is active. `service` handles decoded octets atomically and
-UBRDIV currently has no timing effect. This is a defined missing functional
-mode, independently of any browser relay failure.
-
-The [Samsung S3C2410A User's Manual](https://www.keil.com/dd/docs/datashts/samsung/s3c2410_um.pdf),
-chapter 11, pp. 11-3, 11-5, 11-7 and 11-11, specifies FIFO receive timeout,
-its receive-IRQ routing, the three-word interval and the PCLK baud divisor.
-The first implementable scope is PCLK-selected UARTs with an explicit
-functional character-time contract. Add per-channel phase/deadline state,
-checkpoint serialization, reset and clock-gating behavior. Keep UEXTCLK
-outside that scope until its input rate is supplied. Exact transition behavior
-not settled by the manual needs a measured input, rather than a convenient
-timeout constant.
-
-In particular, the original infrared path's observed `UCON=0x705` selects
-UEXTCLK through bit 10, rather than PCLK. Chapter 11, p. 11-11 identifies its
-GPH8 input, but the present startup presets supply no frequency for that pin.
-The observed UBRDIV values 312 and 25 therefore do not justify assigning a
-physical character time from the functional PCLK. Preserving observed sender batch
-timestamps and gaps at the host transport boundary is separate from inventing
-an external clock or a UART waveform.
-
-Use ROM-free FIFO cases with one byte below each trigger level; assert no
-timeout just before the derived deadline and the receive IRQ at the deadline.
-Cover new-byte restart, drain/reset cancellation, disabled FIFO/timeout,
-independent channels, PCLK ratios and exact restored continuation. Retain the
-original serial self-tests and complete two-calculator transfers as regression
-gates. A timeout implementation does not establish optical pulse timing or
-explain a historical malformed packet without a matching trace.
+UEXTCLK FIFO timeout remains unsupported: the original infrared path's observed
+`UCON=0x705` selects that unsupplied external clock. Sender batch timestamps
+and transport intervals do not establish a physical baud rate. Physical
+optical timing, ambiguous silicon transition details and unmeasured board
+inputs remain outside this functional implementation.
 
 The broader board gate still requires physical observations for the declared
 SRAM mirror, GPIO/ADC inputs, LCD panel mapping and the LCD `+0x68` behavior.
@@ -163,11 +131,15 @@ Sources, revision identity and raw measurements must accompany any replacement
 of those assumptions. The functional clock convention alone does not establish
 a calculator's physical oscillator or serial timing.
 
+## Remaining implementation priorities
+
 ### M4: Admit HP40gs and HP50g only from their own complete NORs
 
 The missing prerequisite is a trustworthy original input for each machine.
-`src/machine.c` contains their profiles, but `web/hp48.js` and the catalog
-intentionally do not promote them. The existing
+`src/machine.c` contains their profiles, but the catalog does not admit an
+original full-NOR identity for either. The r26 HP40gs and HP50gm entries are
+explicit hardware modifications; they do not satisfy this original-capture
+gate. The existing
 [native-ROM inventory](native-roms.md) has a HP40gs updater and a HP50g native
 boot region/updater, not either complete acquired NOR.
 
@@ -198,7 +170,7 @@ DDI 0100I section A2.6.6 leaves other multiple-load destinations unpredictable.
 The latter also requires an unchanged base when a no-writeback load included
 that base before the failing access.
 
-Further M1 work should pin the mandatory contract with faults at the first,
+A separate multiple-access follow-up should pin the mandatory contract with faults at the first,
 middle and last access across a small/tiny-page permission boundary. Concrete
 inputs include `LDMIA r0,{r0,r1,r2}`, writeback loads/stores in all four ARM
 addressing modes and Thumb `POP` with PC last. Check base, fault address/status,

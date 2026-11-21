@@ -1,0 +1,3250 @@
+{
+  "schema": "orchard-input-r26-v1",
+  "private_firmware_program_pixels_or_checkpoints_included": false,
+  "mixed_input_fix": {
+    "base_commit": "53a10ecbff7206ff3126ecd95b9b23f13fb8a352",
+    "previous_contacts": [
+      {
+        "scan": 43,
+        "down": true,
+        "tick": 0
+      }
+    ],
+    "candidate_contacts": [
+      {
+        "scan": 43,
+        "down": true,
+        "tick": 0
+      },
+      {
+        "scan": 45,
+        "down": true,
+        "tick": 10
+      }
+    ],
+    "minimum_dwell_changed": false
+  },
+  "browser_component": {
+    "passed": true,
+    "scope": "Production UI and controller in Chromium, synthetic Worker snapshots; mixed-input contact observer uses an explicit synthetic guest clock; actual ROM hold witness is separate",
+    "keyboard_repeat_suppressed": true,
+    "finite_macros": true,
+    "pointer_capture_and_cancel": true,
+    "multitouch_independent_owners": true,
+    "pause_blur_modal_view_unmount_release": true,
+    "background_pointer_release": [
+      {
+        "view": "traditional-landscape",
+        "irda_paired": false,
+        "departure": "blur",
+        "next_click_scan": 45
+      },
+      {
+        "view": "traditional-landscape",
+        "irda_paired": false,
+        "departure": "hidden",
+        "next_click_scan": 45
+      },
+      {
+        "view": "traditional-landscape",
+        "irda_paired": true,
+        "departure": "blur",
+        "next_click_scan": 45
+      },
+      {
+        "view": "traditional-landscape",
+        "irda_paired": true,
+        "departure": "hidden",
+        "next_click_scan": 45
+      },
+      {
+        "view": "immersive",
+        "irda_paired": false,
+        "departure": "blur",
+        "next_click_scan": 45
+      },
+      {
+        "view": "immersive",
+        "irda_paired": false,
+        "departure": "hidden",
+        "next_click_scan": 45
+      },
+      {
+        "view": "immersive",
+        "irda_paired": true,
+        "departure": "blur",
+        "next_click_scan": 45
+      },
+      {
+        "view": "immersive",
+        "irda_paired": true,
+        "departure": "hidden",
+        "next_click_scan": 45
+      }
+    ],
+    "mixed_macro_contacts": [
+      {
+        "scan": 43,
+        "down": true,
+        "tick": 0
+      },
+      {
+        "scan": 45,
+        "down": true,
+        "tick": 0
+      },
+      {
+        "scan": 45,
+        "down": false,
+        "tick": 3000000
+      },
+      {
+        "scan": 43,
+        "down": false,
+        "tick": 3000000
+      },
+      {
+        "scan": 58,
+        "down": true,
+        "tick": 3600000
+      },
+      {
+        "scan": 58,
+        "down": false,
+        "tick": 5100000
+      },
+      {
+        "scan": 28,
+        "down": true,
+        "tick": 5700000
+      },
+      {
+        "scan": 28,
+        "down": false,
+        "tick": 7200000
+      }
+    ],
+    "page_errors": []
+  },
+  "arkalite_phase_design": {
+    "seed": 236049,
+    "lcg_multiplier": 1664525,
+    "lcg_increment": 1013904223,
+    "lcg_modulus": 4294967296,
+    "offset_modulus": 2000001,
+    "requested_extra_guest_ticks": [
+      0,
+      1340472,
+      1922205
+    ],
+    "contact_timing": "Ordinary DOM pointer events; offsets are observed guest-time waits, not exact contact scheduling."
+  },
+  "arkalite_browser": [
+    {
+      "passed": true,
+      "model": 1,
+      "scenario": "arkalite",
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "checkpoint_sha256": "fbfc15f1f12adea707a23c1e2c37b715d6ec35d30881b6311764aa80c7f157c1",
+      "assets": {
+        "orchard.wasm": "8149548168ca58d3060cdf4a470f65cc3c3f05816add3b30173fc2bbc6631a80",
+        "calculator.js": "e386388a422f2665223e7efa74557c99f53a0ad54442f51075ec0b156c921692",
+        "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256",
+        "hp48.js": "2c5c618d69e725d001c09db28e3dd70059eeee58a26c1e65624cada35eac57ca",
+        "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09"
+      },
+      "production_worker": true,
+      "guest_memory_patched": false,
+      "performance_sample": false,
+      "exit_input": {
+        "mode": "short-click",
+        "requested_hold_ticks": 0
+      },
+      "holds": [
+        {
+          "source": "keyboard",
+          "key": "left",
+          "scan": 43,
+          "held_ticks": 12358832,
+          "released_ticks": 410068288,
+          "before": {
+            "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414",
+            "paddle_x": 65.5
+          },
+          "held": {
+            "sha256": "82f438f48f709c7b3ed95c28530461710373feb7fcec7dd69c80c022803fdc70",
+            "arithmetic_area_sha256": "ddce9249f6e992743da3686519ec1e0cd2c06f8826e1d67af76256c197943cf9",
+            "paddle_x": 5.5
+          },
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "keyboard:ArrowLeft",
+              "scan": 43
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "keyboard:ArrowLeft",
+              "cancel": false
+            }
+          ]
+        },
+        {
+          "source": "touch",
+          "key": "right",
+          "scan": 45,
+          "held_ticks": 12299264,
+          "released_ticks": 411760127,
+          "before": {
+            "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414",
+            "paddle_x": 65.5
+          },
+          "held": {
+            "sha256": "72fde5407808f66b27bd9078e9762e00a8d575acecb46714ad2e742957bc8a09",
+            "arithmetic_area_sha256": "fa3e84b1fb4c45e70585d5969dc1614c5eace1103535362d54ddc658dea3a6e7",
+            "paddle_x": 124.5
+          },
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:2",
+              "scan": 45
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:2",
+              "cancel": false
+            }
+          ]
+        }
+      ],
+      "physical_inputs": [
+        {
+          "scan": 0,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 412612351,
+          "after_tick": 417395503,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 0
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 413689599,
+              "keys": [
+                0
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 415275615,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 48,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 481290317,
+          "after_tick": 485409709,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 48
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 481718349,
+              "keys": [
+                48
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 483251117,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 26,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 499890509,
+          "after_tick": 504126637,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 26
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 500410701,
+              "keys": [
+                26
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 502113453,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 5,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 504126637,
+          "after_tick": 508886029,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 5
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 504803501,
+              "keys": [
+                5
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 506377229,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 26,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 509152269,
+          "after_tick": 513781613,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 26
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 509777933,
+              "keys": [
+                26
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 511597421,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 6,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 514196333,
+          "after_tick": 518506189,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 6
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 514507629,
+              "keys": [
+                6
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 516366029,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        }
+      ],
+      "stock_return": {
+        "sha256": "82cb43f44987c6388c3d41cb8f2944e60e9da50a6ddb47c8ff185e7e63c791d0",
+        "arithmetic_area_sha256": "59a6894b2f4bd4cad5e07a5310e3cbb5a46ccaf521c4b25b3dbe08012ee13015",
+        "paddle_x": 69.28205128205128,
+        "matches_original_native_one_plus_one": true
+      },
+      "final_snapshot": {
+        "loaded": true,
+        "model": 1,
+        "running": true,
+        "stopped": false,
+        "activeKeys": [],
+        "pending": 0,
+        "ticks": 533133869
+      },
+      "errors": [],
+      "browser": "150.0.7871.181",
+      "tool_sha256": "877fccdca0c847746aab3c8fc81ad59842f164d3832c18902a13289e2cda972e",
+      "private_report_sha256": "250be97b87c0cd2f924071385520c8dd2f547604534d7f745fcb9165f14c4fcc"
+    },
+    {
+      "passed": true,
+      "model": 1,
+      "scenario": "arkalite",
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "checkpoint_sha256": "fbfc15f1f12adea707a23c1e2c37b715d6ec35d30881b6311764aa80c7f157c1",
+      "assets": {
+        "orchard.wasm": "8149548168ca58d3060cdf4a470f65cc3c3f05816add3b30173fc2bbc6631a80",
+        "calculator.js": "e386388a422f2665223e7efa74557c99f53a0ad54442f51075ec0b156c921692",
+        "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256",
+        "hp48.js": "2c5c618d69e725d001c09db28e3dd70059eeee58a26c1e65624cada35eac57ca",
+        "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09"
+      },
+      "production_worker": true,
+      "guest_memory_patched": false,
+      "performance_sample": false,
+      "exit_input": {
+        "mode": "short-click",
+        "requested_hold_ticks": 0,
+        "requested_phase_ticks": 1340472,
+        "phase_start_tick": 411408559,
+        "phase_observed_tick": 412752047
+      },
+      "holds": [
+        {
+          "source": "keyboard",
+          "key": "left",
+          "scan": 43,
+          "held_ticks": 12197296,
+          "released_ticks": 411584832,
+          "before": {
+            "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414",
+            "paddle_x": 65.5
+          },
+          "held": {
+            "sha256": "1cb6c1b6d70f229b2e764d9913eca7d92073508409ad8f402f10c3dcf7aa0c6c",
+            "arithmetic_area_sha256": "9797b569281d621aab46378e1b59c503b036e63e535d7c7a9e11e9a21626d502",
+            "paddle_x": 5.5
+          },
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "keyboard:ArrowLeft",
+              "scan": 43
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "keyboard:ArrowLeft",
+              "cancel": false
+            }
+          ]
+        },
+        {
+          "source": "touch",
+          "key": "right",
+          "scan": 45,
+          "held_ticks": 12091823,
+          "released_ticks": 411408559,
+          "before": {
+            "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414",
+            "paddle_x": 65.5
+          },
+          "held": {
+            "sha256": "64b4c426fec8d5f49d89a7ff8946d3b58f2bf6470d0e432c53edf838d186bfc4",
+            "arithmetic_area_sha256": "9fcdde0d0380f08feca2d063eb343145216fabc6645fe34bbf8271b8203bfd43",
+            "paddle_x": 124.5
+          },
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:2",
+              "scan": 45
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:2",
+              "cancel": false
+            }
+          ]
+        }
+      ],
+      "physical_inputs": [
+        {
+          "scan": 0,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 412752047,
+          "after_tick": 417697647,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 0
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 413825199,
+              "keys": [
+                0
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 415499471,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 48,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 480109055,
+          "after_tick": 484634639,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 48
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 480770559,
+              "keys": [
+                48
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 482367839,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 26,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 498916911,
+          "after_tick": 503773438,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 26
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 499812639,
+              "keys": [
+                26
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 501519839,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 5,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 503773438,
+          "after_tick": 508863663,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 5
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 504538863,
+              "keys": [
+                5
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 506298575,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 26,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 508863663,
+          "after_tick": 513096735,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 26
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 509279039,
+              "keys": [
+                26
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 510994079,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 6,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 513096735,
+          "after_tick": 517955039,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 6
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 513965039,
+              "keys": [
+                6
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 515750639,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        }
+      ],
+      "stock_return": {
+        "sha256": "82cb43f44987c6388c3d41cb8f2944e60e9da50a6ddb47c8ff185e7e63c791d0",
+        "arithmetic_area_sha256": "59a6894b2f4bd4cad5e07a5310e3cbb5a46ccaf521c4b25b3dbe08012ee13015",
+        "paddle_x": 69.28205128205128,
+        "matches_original_native_one_plus_one": true
+      },
+      "final_snapshot": {
+        "loaded": true,
+        "model": 1,
+        "running": true,
+        "stopped": false,
+        "activeKeys": [],
+        "pending": 0,
+        "ticks": 532399087
+      },
+      "errors": [],
+      "browser": "150.0.7871.181",
+      "tool_sha256": "79a052a8360a4f50cd0c7a9f9d72f94c32e76fbbfa48b625bd6bc6cff4342222",
+      "private_report_sha256": "30eab7b461c601503ff921b4de393ce3cd7526c452268d41f0b90883b05eddde"
+    },
+    {
+      "passed": true,
+      "model": 1,
+      "scenario": "arkalite",
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "checkpoint_sha256": "fbfc15f1f12adea707a23c1e2c37b715d6ec35d30881b6311764aa80c7f157c1",
+      "assets": {
+        "orchard.wasm": "8149548168ca58d3060cdf4a470f65cc3c3f05816add3b30173fc2bbc6631a80",
+        "calculator.js": "e386388a422f2665223e7efa74557c99f53a0ad54442f51075ec0b156c921692",
+        "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256",
+        "hp48.js": "2c5c618d69e725d001c09db28e3dd70059eeee58a26c1e65624cada35eac57ca",
+        "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09"
+      },
+      "production_worker": true,
+      "guest_memory_patched": false,
+      "performance_sample": false,
+      "exit_input": {
+        "mode": "short-click",
+        "requested_hold_ticks": 0,
+        "requested_phase_ticks": 1922205,
+        "phase_start_tick": 412978798,
+        "phase_observed_tick": 415289966
+      },
+      "holds": [
+        {
+          "source": "keyboard",
+          "key": "left",
+          "scan": 43,
+          "held_ticks": 12068336,
+          "released_ticks": 409051072,
+          "before": {
+            "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414",
+            "paddle_x": 65.5
+          },
+          "held": {
+            "sha256": "d1fbf9a12732b3da8df791e4d2b0807da4d72715a33afe7be82553b526b18e80",
+            "arithmetic_area_sha256": "4aa74826f8640fc5115976c514551fa707db2700e8f68ab467af797d57297a17",
+            "paddle_x": 5.5
+          },
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "keyboard:ArrowLeft",
+              "scan": 43
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "keyboard:ArrowLeft",
+              "cancel": false
+            }
+          ]
+        },
+        {
+          "source": "touch",
+          "key": "right",
+          "scan": 45,
+          "held_ticks": 12153856,
+          "released_ticks": 412978798,
+          "before": {
+            "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414",
+            "paddle_x": 65.5
+          },
+          "held": {
+            "sha256": "a85bbc0b2214408be13f376f4b1d2064b98615fef6140dfec86058f5b4d4ecf5",
+            "arithmetic_area_sha256": "9797b569281d621aab46378e1b59c503b036e63e535d7c7a9e11e9a21626d502",
+            "paddle_x": 124.5
+          },
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:2",
+              "scan": 45
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:2",
+              "cancel": false
+            }
+          ]
+        }
+      ],
+      "physical_inputs": [
+        {
+          "scan": 0,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 415698542,
+          "after_tick": 420589006,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 0
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 416367214,
+              "keys": [
+                0
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 418033102,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 48,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 482832846,
+          "after_tick": 487424302,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 48
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 483281358,
+              "keys": [
+                48
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 485031214,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 26,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 501290589,
+          "after_tick": 506137021,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 26
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 502256221,
+              "keys": [
+                26
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 503879101,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 5,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 506137021,
+          "after_tick": 511840541,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 5
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 506660285,
+              "keys": [
+                5
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 508387613,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 26,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 511840541,
+          "after_tick": 516569245,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 26
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 512983325,
+              "keys": [
+                26
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 514508477,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 6,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 517086909,
+          "after_tick": 521630301,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 6
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 517678429,
+              "keys": [
+                6
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 519484701,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        }
+      ],
+      "stock_return": {
+        "sha256": "82cb43f44987c6388c3d41cb8f2944e60e9da50a6ddb47c8ff185e7e63c791d0",
+        "arithmetic_area_sha256": "59a6894b2f4bd4cad5e07a5310e3cbb5a46ccaf521c4b25b3dbe08012ee13015",
+        "paddle_x": 69.28205128205128,
+        "matches_original_native_one_plus_one": true
+      },
+      "final_snapshot": {
+        "loaded": true,
+        "model": 1,
+        "running": true,
+        "stopped": false,
+        "activeKeys": [],
+        "pending": 0,
+        "ticks": 536369613
+      },
+      "errors": [],
+      "browser": "150.0.7871.181",
+      "tool_sha256": "79a052a8360a4f50cd0c7a9f9d72f94c32e76fbbfa48b625bd6bc6cff4342222",
+      "private_report_sha256": "a0b657e8bd480c5da2f5f64528de32f3a1d1b6090fc66adb2aaa097f2f3c93c0"
+    },
+    {
+      "passed": true,
+      "model": 2,
+      "scenario": "arkalite",
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "checkpoint_sha256": "3a7956091bde2f1340461da610cee3259ed669eaff02b0dcbeb1bf12d77f0e40",
+      "assets": {
+        "orchard.wasm": "8149548168ca58d3060cdf4a470f65cc3c3f05816add3b30173fc2bbc6631a80",
+        "calculator.js": "e386388a422f2665223e7efa74557c99f53a0ad54442f51075ec0b156c921692",
+        "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256",
+        "hp48.js": "2c5c618d69e725d001c09db28e3dd70059eeee58a26c1e65624cada35eac57ca",
+        "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09"
+      },
+      "production_worker": true,
+      "guest_memory_patched": false,
+      "performance_sample": false,
+      "exit_input": {
+        "mode": "short-click",
+        "requested_hold_ticks": 0
+      },
+      "holds": [
+        {
+          "source": "keyboard",
+          "key": "left",
+          "scan": 43,
+          "held_ticks": 12089263,
+          "released_ticks": 440749792,
+          "before": {
+            "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414",
+            "paddle_x": 65.5
+          },
+          "held": {
+            "sha256": "770b59ca85ee70b636d086ecb37caa82fc4fb3c19c3cdef9ee70a7c8a0355da3",
+            "arithmetic_area_sha256": "598906884a44f595e92a567a422074ded873aa6d8eb380859c9b166ef20ef3da",
+            "paddle_x": 5.5
+          },
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "keyboard:ArrowLeft",
+              "scan": 43
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "keyboard:ArrowLeft",
+              "cancel": false
+            }
+          ]
+        },
+        {
+          "source": "touch",
+          "key": "right",
+          "scan": 45,
+          "held_ticks": 12126048,
+          "released_ticks": 442562960,
+          "before": {
+            "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414",
+            "paddle_x": 65.5
+          },
+          "held": {
+            "sha256": "949c21f5f5aca34c9824408945cee1656d26c3eceacc6f26757bfecc93343be2",
+            "arithmetic_area_sha256": "4ed02f75183bae29feddf6e9d85c6ec7b39dd508f230cf72d837798aa39aae20",
+            "paddle_x": 124.5
+          },
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:2",
+              "scan": 45
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:2",
+              "cancel": false
+            }
+          ]
+        }
+      ],
+      "physical_inputs": [
+        {
+          "scan": 0,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 443435168,
+          "after_tick": 447474368,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 0
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 444555008,
+              "keys": [
+                0
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 445355712,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 48,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 510919247,
+          "after_tick": 514724351,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 48
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 511881807,
+              "keys": [
+                48
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 512665103,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 26,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 528378271,
+          "after_tick": 531877215,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 26
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 528787871,
+              "keys": [
+                26
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 529481055,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 5,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 531877215,
+          "after_tick": 535639327,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 5
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 532308319,
+              "keys": [
+                5
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 533035295,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 26,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 535864607,
+          "after_tick": 539438303,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 26
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 536157471,
+              "keys": [
+                26
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 536952031,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 6,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 539438303,
+          "after_tick": 543057711,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 6
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 539964447,
+              "keys": [
+                6
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 540804110,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        }
+      ],
+      "stock_return": {
+        "sha256": "82cb43f44987c6388c3d41cb8f2944e60e9da50a6ddb47c8ff185e7e63c791d0",
+        "arithmetic_area_sha256": "59a6894b2f4bd4cad5e07a5310e3cbb5a46ccaf521c4b25b3dbe08012ee13015",
+        "paddle_x": 69.28205128205128,
+        "matches_original_native_one_plus_one": true
+      },
+      "final_snapshot": {
+        "loaded": true,
+        "model": 2,
+        "running": true,
+        "stopped": false,
+        "activeKeys": [],
+        "pending": 0,
+        "ticks": 558238911
+      },
+      "errors": [],
+      "browser": "150.0.7871.181",
+      "tool_sha256": "877fccdca0c847746aab3c8fc81ad59842f164d3832c18902a13289e2cda972e",
+      "private_report_sha256": "47fae26ec0d6a4751c52a0d42ccd1c233a3efa6c9c6d0ce3e1a967f90e99ed71"
+    },
+    {
+      "passed": true,
+      "model": 2,
+      "scenario": "arkalite",
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "checkpoint_sha256": "3a7956091bde2f1340461da610cee3259ed669eaff02b0dcbeb1bf12d77f0e40",
+      "assets": {
+        "orchard.wasm": "8149548168ca58d3060cdf4a470f65cc3c3f05816add3b30173fc2bbc6631a80",
+        "calculator.js": "e386388a422f2665223e7efa74557c99f53a0ad54442f51075ec0b156c921692",
+        "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256",
+        "hp48.js": "2c5c618d69e725d001c09db28e3dd70059eeee58a26c1e65624cada35eac57ca",
+        "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09"
+      },
+      "production_worker": true,
+      "guest_memory_patched": false,
+      "performance_sample": false,
+      "exit_input": {
+        "mode": "short-click",
+        "requested_hold_ticks": 0,
+        "requested_phase_ticks": 1340472,
+        "phase_start_tick": 441739008,
+        "phase_observed_tick": 443356928
+      },
+      "holds": [
+        {
+          "source": "keyboard",
+          "key": "left",
+          "scan": 43,
+          "held_ticks": 12082176,
+          "released_ticks": 443988736,
+          "before": {
+            "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414",
+            "paddle_x": 65.5
+          },
+          "held": {
+            "sha256": "457154622ef226a6c11183e3f408fbfefd448d91befc2f6211f225839d876673",
+            "arithmetic_area_sha256": "0cdeffa6ed2ed2d4016e81fa49afc21a0faa0befcfa605c052a3492fb11c6f59",
+            "paddle_x": 38.333333333333336
+          },
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "keyboard:ArrowLeft",
+              "scan": 43
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "keyboard:ArrowLeft",
+              "cancel": false
+            }
+          ]
+        },
+        {
+          "source": "touch",
+          "key": "right",
+          "scan": 45,
+          "held_ticks": 12062720,
+          "released_ticks": 441739008,
+          "before": {
+            "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414",
+            "paddle_x": 65.5
+          },
+          "held": {
+            "sha256": "5a9275304395f2eedf16ba4210aa65b14ac1b07eb8fbc8db060c714aeaf382d4",
+            "arithmetic_area_sha256": "8cca0724093f5c38330036b009d2b7e6b13b12c9d0f14d797033a31bc1a1e061",
+            "paddle_x": 124.5
+          },
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:2",
+              "scan": 45
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:2",
+              "cancel": false
+            }
+          ]
+        }
+      ],
+      "physical_inputs": [
+        {
+          "scan": 0,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 443725568,
+          "after_tick": 447200960,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 0
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 444400384,
+              "keys": [
+                0
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 445184704,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 48,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 509383360,
+          "after_tick": 512857728,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 48
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 509814464,
+              "keys": [
+                48
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 510537344,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 26,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 527434368,
+          "after_tick": 530911808,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 26
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 527863424,
+              "keys": [
+                26
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 528594496,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 5,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 530911808,
+          "after_tick": 535002624,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 5
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 531618368,
+              "keys": [
+                5
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 532366848,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 26,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 535002624,
+          "after_tick": 538648000,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 26
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 535858688,
+              "keys": [
+                26
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 536550848,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 6,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 539296192,
+          "after_tick": 542859648,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 6
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 539786688,
+              "keys": [
+                6
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 540522880,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        }
+      ],
+      "stock_return": {
+        "sha256": "82cb43f44987c6388c3d41cb8f2944e60e9da50a6ddb47c8ff185e7e63c791d0",
+        "arithmetic_area_sha256": "59a6894b2f4bd4cad5e07a5310e3cbb5a46ccaf521c4b25b3dbe08012ee13015",
+        "paddle_x": 69.28205128205128,
+        "matches_original_native_one_plus_one": true
+      },
+      "final_snapshot": {
+        "loaded": true,
+        "model": 2,
+        "running": true,
+        "stopped": false,
+        "activeKeys": [],
+        "pending": 0,
+        "ticks": 556687744
+      },
+      "errors": [],
+      "browser": "150.0.7871.181",
+      "tool_sha256": "79a052a8360a4f50cd0c7a9f9d72f94c32e76fbbfa48b625bd6bc6cff4342222",
+      "private_report_sha256": "263d491b53c7121af5f26c7e317e9dc1ad65870494780592ff1a4a8b0eb8983a"
+    },
+    {
+      "passed": true,
+      "model": 2,
+      "scenario": "arkalite",
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "checkpoint_sha256": "3a7956091bde2f1340461da610cee3259ed669eaff02b0dcbeb1bf12d77f0e40",
+      "assets": {
+        "orchard.wasm": "8149548168ca58d3060cdf4a470f65cc3c3f05816add3b30173fc2bbc6631a80",
+        "calculator.js": "e386388a422f2665223e7efa74557c99f53a0ad54442f51075ec0b156c921692",
+        "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256",
+        "hp48.js": "2c5c618d69e725d001c09db28e3dd70059eeee58a26c1e65624cada35eac57ca",
+        "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09"
+      },
+      "production_worker": true,
+      "guest_memory_patched": false,
+      "performance_sample": false,
+      "exit_input": {
+        "mode": "short-click",
+        "requested_hold_ticks": 0,
+        "requested_phase_ticks": 1922205,
+        "phase_start_tick": 443869408,
+        "phase_observed_tick": 445961440
+      },
+      "holds": [
+        {
+          "source": "keyboard",
+          "key": "left",
+          "scan": 43,
+          "held_ticks": 12250272,
+          "released_ticks": 446895455,
+          "before": {
+            "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414",
+            "paddle_x": 65.5
+          },
+          "held": {
+            "sha256": "5befb9aa7c3ec7a019ff042d58d06ec12e424bce4703b4b3059db65a5213949c",
+            "arithmetic_area_sha256": "59dfa2995d925b36ff808220ebc636094ae86e05f58ff7fe6a7bf3cf473d3a90",
+            "paddle_x": 5.5
+          },
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "keyboard:ArrowLeft",
+              "scan": 43
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "keyboard:ArrowLeft",
+              "cancel": false
+            }
+          ]
+        },
+        {
+          "source": "touch",
+          "key": "right",
+          "scan": 45,
+          "held_ticks": 12126208,
+          "released_ticks": 443396320,
+          "before": {
+            "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+            "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414",
+            "paddle_x": 65.5
+          },
+          "held": {
+            "sha256": "18d0ffbc31869f775dd4d715edaab2da4b582af4d895c99eae7edeaed4522ed8",
+            "arithmetic_area_sha256": "9c0f0c829d8442eb7f7d2787ed6aea4cb0c6fabf054c84f400246db8d4c380ce",
+            "paddle_x": 124.5
+          },
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:2",
+              "scan": 45
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:2",
+              "cancel": false
+            }
+          ]
+        }
+      ],
+      "physical_inputs": [
+        {
+          "scan": 0,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 446364896,
+          "after_tick": 449906848,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 0
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 446772448,
+              "keys": [
+                0
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 447540384,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 48,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 512380543,
+          "after_tick": 515772991,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 48
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 512922239,
+              "keys": [
+                48
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 513651263,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 26,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 529419839,
+          "after_tick": 532918783,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 26
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 529809983,
+              "keys": [
+                26
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 530576895,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 5,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 532918783,
+          "after_tick": 536818111,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 5
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 533390847,
+              "keys": [
+                5
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 534129087,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 26,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 536818111,
+          "after_tick": 540639615,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 26
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 537487807,
+              "keys": [
+                26
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 538296703,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        },
+        {
+          "scan": 6,
+          "mode": "short-click",
+          "held_ticks": null,
+          "before_tick": 540639615,
+          "after_tick": 543954239,
+          "commands": [
+            {
+              "type": "key-down",
+              "generation": 2,
+              "source": "pointer:1",
+              "scan": 6
+            },
+            {
+              "type": "key-up",
+              "generation": 2,
+              "source": "pointer:1",
+              "cancel": false
+            }
+          ],
+          "observed_contacts": [
+            {
+              "restore": 2,
+              "tick": 541104511,
+              "keys": [
+                6
+              ],
+              "pending": 1
+            },
+            {
+              "restore": 2,
+              "tick": 541899071,
+              "keys": [],
+              "pending": 0
+            }
+          ]
+        }
+      ],
+      "stock_return": {
+        "sha256": "82cb43f44987c6388c3d41cb8f2944e60e9da50a6ddb47c8ff185e7e63c791d0",
+        "arithmetic_area_sha256": "59a6894b2f4bd4cad5e07a5310e3cbb5a46ccaf521c4b25b3dbe08012ee13015",
+        "paddle_x": 69.28205128205128,
+        "matches_original_native_one_plus_one": true
+      },
+      "final_snapshot": {
+        "loaded": true,
+        "model": 2,
+        "running": true,
+        "stopped": false,
+        "activeKeys": [],
+        "pending": 0,
+        "ticks": 556463423
+      },
+      "errors": [],
+      "browser": "150.0.7871.181",
+      "tool_sha256": "79a052a8360a4f50cd0c7a9f9d72f94c32e76fbbfa48b625bd6bc6cff4342222",
+      "private_report_sha256": "6ea5d5b3c4164424fdb89beec03256cf84292f55ee4469c99304522f20ab5301"
+    }
+  ],
+  "earlier_undefined_core_native_programs": [
+    {
+      "passed": true,
+      "model": 2,
+      "program": "ARKALITE.000",
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "source_url": "https://www.hpcalc.org/hp39/games/arkalite40.zip",
+      "program_sha256": "1f4cda18268ba3be4e60fd4044770a38696c26b85f26aed911580243e1c82312",
+      "wasm_sha256": "13bc6cb48b0877eadcdd3d6a904a219a0deef58957c0fa981708783ec3317143",
+      "original_program_unchanged": true,
+      "cold_boot": false,
+      "guest_memory_patched": false,
+      "browser_end_to_end": false,
+      "restored_continuation_exact": true,
+      "arithmetic_result_verified": true,
+      "inputs_unchanged": true,
+      "tool_sha256": "b93a740934ee15f865638534361241b20eb114aec534c78545fa80c91e889ed0",
+      "private_report_sha256": "cbdb9d892c8c2a006d61994253cabd7276f66bde98d8629cd246837e5fd99bf8"
+    },
+    {
+      "passed": true,
+      "model": 1,
+      "program": "ARKALITE.000",
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "source_url": "https://www.hpcalc.org/hp39/games/arkalite40.zip",
+      "program_sha256": "1f4cda18268ba3be4e60fd4044770a38696c26b85f26aed911580243e1c82312",
+      "wasm_sha256": "13bc6cb48b0877eadcdd3d6a904a219a0deef58957c0fa981708783ec3317143",
+      "original_program_unchanged": true,
+      "cold_boot": false,
+      "guest_memory_patched": false,
+      "browser_end_to_end": false,
+      "restored_continuation_exact": true,
+      "arithmetic_result_verified": true,
+      "inputs_unchanged": true,
+      "tool_sha256": "b93a740934ee15f865638534361241b20eb114aec534c78545fa80c91e889ed0",
+      "private_report_sha256": "26f15b056de78322564adb0b08ea0e7b2a74698e4c6fb0008ff61048b56ad1a4"
+    },
+    {
+      "passed": true,
+      "model": 1,
+      "program": "Tetris.000",
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "source_url": "https://www.hpcalc.org/hp39/games/tetris39gpls.zip",
+      "program_sha256": "2bf02af38f7ecb65900cc1ef2776484212a4fb2b9710b97b85f32c2fd828315e",
+      "wasm_sha256": "13bc6cb48b0877eadcdd3d6a904a219a0deef58957c0fa981708783ec3317143",
+      "original_program_unchanged": true,
+      "cold_boot": true,
+      "guest_memory_patched": false,
+      "browser_end_to_end": false,
+      "restored_continuation_exact": true,
+      "arithmetic_result_verified": true,
+      "inputs_unchanged": true,
+      "tool_sha256": "b93a740934ee15f865638534361241b20eb114aec534c78545fa80c91e889ed0",
+      "private_report_sha256": "a2303ab1d6d37d8e8b417384bf83602d7f9bda9139e3685a9f5ceabe20783846"
+    },
+    {
+      "passed": true,
+      "model": 2,
+      "program": "HANOI000.000",
+      "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+      "source_url": "https://www.hpcalc.org/hp39/games/hanoi39.zip",
+      "program_sha256": "4b84e3946e159f960db128cc56257f3d7df6351ea7e593ba4ac247e0f6ace4c6",
+      "wasm_sha256": "13bc6cb48b0877eadcdd3d6a904a219a0deef58957c0fa981708783ec3317143",
+      "original_program_unchanged": true,
+      "cold_boot": true,
+      "guest_memory_patched": false,
+      "browser_end_to_end": false,
+      "restored_continuation_exact": true,
+      "arithmetic_result_verified": true,
+      "inputs_unchanged": true,
+      "tool_sha256": "b93a740934ee15f865638534361241b20eb114aec534c78545fa80c91e889ed0",
+      "private_report_sha256": "8a3ed1226023561ac3b43624230bed474a0cb98ac1f23bfccbf09aa6d343e586"
+    },
+    {
+      "passed": true,
+      "model": 1,
+      "program": "HANOI000.000",
+      "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+      "source_url": "https://www.hpcalc.org/hp39/games/hanoi39.zip",
+      "program_sha256": "4b84e3946e159f960db128cc56257f3d7df6351ea7e593ba4ac247e0f6ace4c6",
+      "wasm_sha256": "13bc6cb48b0877eadcdd3d6a904a219a0deef58957c0fa981708783ec3317143",
+      "original_program_unchanged": true,
+      "cold_boot": true,
+      "guest_memory_patched": false,
+      "browser_end_to_end": false,
+      "restored_continuation_exact": true,
+      "arithmetic_result_verified": true,
+      "inputs_unchanged": true,
+      "tool_sha256": "b93a740934ee15f865638534361241b20eb114aec534c78545fa80c91e889ed0",
+      "private_report_sha256": "5077c6661df1f8f480152081f0cac559720e7581765f984a920c960acfd6e6cb"
+    }
+  ],
+  "boundary": "Six new short-click browser successes do not explain or supersede the historical r25 short-DEL failures. The mixed-macro starvation fix has its own isolated reproduction.",
+  "hp40gs_hardware_mod_arkalite_final": {
+    "model": 3,
+    "preset": "hp40gs-mod-home",
+    "rom_sha256": "9041a8c187667833b220281bee1311c97cf2a0297d483882684ebd166a85c311",
+    "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+    "experimental_hardware_mod": true,
+    "original_stock_image": false,
+    "guest_memory_patched": false,
+    "browser_end_to_end": false,
+    "physical_hardware_validated": false,
+    "wire_install_and_disk_send": {
+      "passed": true,
+      "private_report_sha256": "9cc264e2dd513114e065397cad4c05d11ae7a1c64f97dfc4e820697a6cc74469",
+      "tool_sha256_at_execution": "441ea09c07fe35c3605e086095cc421323ca6727159f0580a6180b8b88a97d2c",
+      "manual_second_receive": true,
+      "aplet_bytes_equal": true,
+      "library_body_equal": true,
+      "inputs": [
+        {
+          "name": "LIB1537L.000",
+          "bytes": 37,
+          "sha": "8f49c8b596a9d126f253f1fdb9ae8e4bc6a76d607b0ffd4eac1f0a6c734a060c"
+        },
+        {
+          "name": "ARKALITE.000",
+          "bytes": 3671,
+          "sha": "1f4cda18268ba3be4e60fd4044770a38696c26b85f26aed911580243e1c82312"
+        }
+      ],
+      "frames": [
+        {
+          "name": "catalog-before",
+          "tick": 158000000,
+          "sha": "6915581915d96fc0a4718f3746ae15b1053a102f7fb525dd2649613751d7e756"
+        },
+        {
+          "name": "receive-default",
+          "tick": 165000000,
+          "sha": "7251f3e15cb0ee5ce1f5362f4f34537923e526e03b2bc4da910940aa509eddf8"
+        },
+        {
+          "name": "receive-menu",
+          "tick": 165000000,
+          "sha": "7251f3e15cb0ee5ce1f5362f4f34537923e526e03b2bc4da910940aa509eddf8"
+        },
+        {
+          "name": "library-ack",
+          "tick": 206322752,
+          "sha": "5deab2df2e5aa5a0e0b39e3bc2af7636b648fd7ca04e3dabc09eefa304ffa10b"
+        },
+        {
+          "name": "library-catalog",
+          "tick": 206322752,
+          "sha": "5deab2df2e5aa5a0e0b39e3bc2af7636b648fd7ca04e3dabc09eefa304ffa10b"
+        },
+        {
+          "name": "second-receive-default",
+          "tick": 225322752,
+          "sha": "ec2b9d1d6404a11556680d14fa035fe308f998fc9e1488de0eee24ec6f8f58ed"
+        },
+        {
+          "name": "second-receive-menu",
+          "tick": 225322752,
+          "sha": "ec2b9d1d6404a11556680d14fa035fe308f998fc9e1488de0eee24ec6f8f58ed"
+        },
+        {
+          "name": "aplet-catalog",
+          "tick": 358489600,
+          "sha": "d49003d6b26f935372a782588c07535909f9eff0bec04a9d4c9d66f420c31d68"
+        },
+        {
+          "name": "send-disk-menu",
+          "tick": 373489600,
+          "sha": "23e137209a46792332aae276196ad1566e7fa62cc7bdd5490ce38ca3348f4cd4"
+        },
+        {
+          "name": "send-name",
+          "tick": 380489600,
+          "sha": "b2c0c06068bd7c02d0d7a1d89cb28f26022261240dc4866daefc91f8d139c7ea"
+        }
+      ],
+      "received_file_identities": [
+        {
+          "tick": 777795712,
+          "type": "file-transfer-received",
+          "name": "ARKALITE.000",
+          "length": 3671,
+          "sha": "1f4cda18268ba3be4e60fd4044770a38696c26b85f26aed911580243e1c82312"
+        },
+        {
+          "tick": 797997184,
+          "type": "file-transfer-received",
+          "name": "LIB1537L.000",
+          "length": 37,
+          "sha": "8f49c8b596a9d126f253f1fdb9ae8e4bc6a76d607b0ffd4eac1f0a6c734a060c"
+        },
+        {
+          "tick": 827029632,
+          "type": "file-transfer-received",
+          "name": "HP39DIR.000",
+          "length": 63,
+          "sha": "c7f9aa1843e4f8f41940f2ed76d726005f4563b7536377f10b9126df0071922e"
+        }
+      ],
+      "source_sha256": {
+        "hp39-wire-auto.js": "98bd82192c71e156110fad7d020eb7ce634a0657b930f580b72237710d44f293",
+        "file-transfer.js": "4a77e98787c042d476c9b9b089a17a70af18f0835a72d914c31839d05b2e69ff",
+        "hp39-wire.js": "8c3b409f3d2c4ee31f49a9a95a2c42b0677d0d276e3337a9c19239f2e6fd4b8d",
+        "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+        "hp48.js": "4da95f45b5cbb1cd93f0031b1356edb3b0ccb1bb80fb33203534edbf1d9719e3"
+      }
+    },
+    "program": {
+      "passed": true,
+      "source_url": "https://www.hpcalc.org/hp39/games/arkalite40.zip",
+      "program_sha256": "1f4cda18268ba3be4e60fd4044770a38696c26b85f26aed911580243e1c82312",
+      "original_program_unchanged": true,
+      "input_checkpoint_sha256": "8e279ff4672a445c00676f91de4b09df216fbabf22dddf9c2f1b1ae3d280522a",
+      "arithmetic_result_verified": true,
+      "restored_continuation_exact": true,
+      "inputs_unchanged": true,
+      "tool_sha256": "e5cd26fc1bdee6c5e466b3ca81a3121e30ebc0f730f44a022b46947a45300b3d"
+    },
+    "program_report_sha256": "dfa5ecfe699bab59946ffcf787465cc14f28c1811f11e9bbdc5ab2337a419ab0",
+    "program_frames": [
+      {
+        "name": "installed",
+        "tick": 361489600,
+        "sha256": "d49003d6b26f935372a782588c07535909f9eff0bec04a9d4c9d66f420c31d68",
+        "arithmetic_area_sha256": "a6b04bcbfeb8dafc228e84dae4a7bd6a5d32e4d2c327205dd9d0ecc7d4de9c99"
+      },
+      {
+        "name": "title",
+        "tick": 385489600,
+        "sha256": "6c27bf838e97cca74460b705b850dcf311f390ca5dc543d28176db3073785cf2",
+        "arithmetic_area_sha256": "3d61ba17a944e2dfd9e2fd229ee477f804c511cee0106b5f20fc1f07b1755e35"
+      },
+      {
+        "name": "game",
+        "tick": 413489600,
+        "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+        "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414"
+      },
+      {
+        "name": "played",
+        "tick": 439889600,
+        "sha256": "4a054cab0003cc51f01f1b19ca0945bbc583ee90f203bfbc70f4b1633fe4bc7f",
+        "arithmetic_area_sha256": "0cdeffa6ed2ed2d4016e81fa49afc21a0faa0befcfa605c052a3492fb11c6f59"
+      },
+      {
+        "name": "returned",
+        "tick": 503889600,
+        "sha256": "9e0e547a23e5feb578d1dfd0051c1092b539114d6dd5bf27ae5a2f3b6c7fc8a3",
+        "arithmetic_area_sha256": "f6029d630cac2feaa4997d5f568d0b8e45b3916128d323880030ef1c48864213"
+      },
+      {
+        "name": "one-plus-one",
+        "tick": 565889600,
+        "sha256": "6e23de5c0516c316f6ac4b71a08e55dcdfcc118b3736546301c7d6555d9eed8a",
+        "arithmetic_area_sha256": "59a6894b2f4bd4cad5e07a5310e3cbb5a46ccaf521c4b25b3dbe08012ee13015"
+      },
+      {
+        "name": "played-restored",
+        "tick": 439889600,
+        "sha256": "4a054cab0003cc51f01f1b19ca0945bbc583ee90f203bfbc70f4b1633fe4bc7f",
+        "arithmetic_area_sha256": "0cdeffa6ed2ed2d4016e81fa49afc21a0faa0befcfa605c052a3492fb11c6f59"
+      },
+      {
+        "name": "returned-restored",
+        "tick": 503889600,
+        "sha256": "9e0e547a23e5feb578d1dfd0051c1092b539114d6dd5bf27ae5a2f3b6c7fc8a3",
+        "arithmetic_area_sha256": "f6029d630cac2feaa4997d5f568d0b8e45b3916128d323880030ef1c48864213"
+      },
+      {
+        "name": "one-plus-one-restored",
+        "tick": 565889600,
+        "sha256": "6e23de5c0516c316f6ac4b71a08e55dcdfcc118b3736546301c7d6555d9eed8a",
+        "arithmetic_area_sha256": "59a6894b2f4bd4cad5e07a5310e3cbb5a46ccaf521c4b25b3dbe08012ee13015"
+      }
+    ],
+    "program_contacts": [
+      {
+        "tick": 361489600,
+        "scan": 40,
+        "down": true
+      },
+      {
+        "tick": 363489600,
+        "scan": 40,
+        "down": false
+      },
+      {
+        "tick": 385489600,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "tick": 387489600,
+        "scan": 6,
+        "down": false
+      },
+      {
+        "tick": 413489600,
+        "scan": 43,
+        "down": true
+      },
+      {
+        "tick": 425489600,
+        "scan": 43,
+        "down": false
+      },
+      {
+        "tick": 426689600,
+        "scan": 45,
+        "down": true
+      },
+      {
+        "tick": 438689600,
+        "scan": 45,
+        "down": false
+      },
+      {
+        "tick": 439889600,
+        "scan": 0,
+        "down": true
+      },
+      {
+        "tick": 441889600,
+        "scan": 0,
+        "down": false
+      },
+      {
+        "tick": 503889600,
+        "scan": 48,
+        "down": true
+      },
+      {
+        "tick": 505889600,
+        "scan": 48,
+        "down": false
+      },
+      {
+        "tick": 519889600,
+        "scan": 26,
+        "down": true
+      },
+      {
+        "tick": 521889600,
+        "scan": 26,
+        "down": false
+      },
+      {
+        "tick": 523889600,
+        "scan": 5,
+        "down": true
+      },
+      {
+        "tick": 525889600,
+        "scan": 5,
+        "down": false
+      },
+      {
+        "tick": 527889600,
+        "scan": 26,
+        "down": true
+      },
+      {
+        "tick": 529889600,
+        "scan": 26,
+        "down": false
+      },
+      {
+        "tick": 531889600,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "tick": 533889600,
+        "scan": 6,
+        "down": false
+      },
+      {
+        "tick": 413489600,
+        "scan": 43,
+        "down": true
+      },
+      {
+        "tick": 425489600,
+        "scan": 43,
+        "down": false
+      },
+      {
+        "tick": 426689600,
+        "scan": 45,
+        "down": true
+      },
+      {
+        "tick": 438689600,
+        "scan": 45,
+        "down": false
+      },
+      {
+        "tick": 439889600,
+        "scan": 0,
+        "down": true
+      },
+      {
+        "tick": 441889600,
+        "scan": 0,
+        "down": false
+      },
+      {
+        "tick": 503889600,
+        "scan": 48,
+        "down": true
+      },
+      {
+        "tick": 505889600,
+        "scan": 48,
+        "down": false
+      },
+      {
+        "tick": 519889600,
+        "scan": 26,
+        "down": true
+      },
+      {
+        "tick": 521889600,
+        "scan": 26,
+        "down": false
+      },
+      {
+        "tick": 523889600,
+        "scan": 5,
+        "down": true
+      },
+      {
+        "tick": 525889600,
+        "scan": 5,
+        "down": false
+      },
+      {
+        "tick": 527889600,
+        "scan": 26,
+        "down": true
+      },
+      {
+        "tick": 529889600,
+        "scan": 26,
+        "down": false
+      },
+      {
+        "tick": 531889600,
+        "scan": 6,
+        "down": true
+      },
+      {
+        "tick": 533889600,
+        "scan": 6,
+        "down": false
+      }
+    ],
+    "warm_after_checkpoint_version": 8,
+    "warm_after_checkpoint_sha256": "6416a52c2eaa629840ac713d0820b30ab68a338cc4fdd12595b3cd7f4c73b995",
+    "warm_restored_checkpoint_sha256": "6416a52c2eaa629840ac713d0820b30ab68a338cc4fdd12595b3cd7f4c73b995",
+    "independent_visual_review": [
+      "running Arkalite game",
+      "HOME 1+1=2 with CAS softkey",
+      "RECEIVE USB/Ser/USB Disk/Ser Disk menu"
+    ],
+    "menu_boundaries": {
+      "usb_selection_down_presses": 0,
+      "usb_disk_selection_down_presses": 2,
+      "infrared_menu_observed": false,
+      "automatic_wire_continuation_admitted": false,
+      "continuous_wire_reception_admitted": false
+    },
+    "exploratory_stage2_runs": "Stopped after observing the wrong reused menu selection, then superseded by the complete final-core run; no pass or emulator regression claim."
+  },
+  "hardware_mod_ui_checks": {
+    "passed": true,
+    "production_browser_matrix_reported_separately": true,
+    "component_model_ids": [
+      3,
+      7
+    ],
+    "viewport_widths": [
+      320,
+      390,
+      720,
+      1360
+    ],
+    "checks": [
+      "experimental provenance",
+      "64-row canvas and correct keypad geometry",
+      "manual HP39 Wire upload and Disk serving availability",
+      "unverified continuous Wire receive and automatic continuation remain hidden on model3",
+      "USB object directory availability on model7",
+      "shared model7 SD sidebar",
+      "unverified infrared hidden",
+      "no horizontal document overflow",
+      "distinct binary IndexedDB autosaves survive another reader"
+    ],
+    "tools": {
+      "tests/browser-components.py": "2bdd693486e25ea543f897fe6cc532eee7f2bc54d9e4379e62e7ad6af8f5ebc2",
+      "tests/sd-storage-browser.py": "cdb53a4f332ada0d5ae3df50a9b4f42fa467e43d01b28df7c5aa5ee42ea28ec7",
+      "tests/calculator.mjs": "698aa255a579aff37c0a975d6c5aae5b6ae056b8a0313f52b690e15ddf724645",
+      "tests/preferences.mjs": "c559584748a5078296a219f55017334e5f61fc4b61ef88896e0d10474fb4d4c3"
+    },
+    "scope_build_wasm": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+    "superseded_auto_receive_gate": "The original manual-only model3 gate described here was extended and separately verified in hp40gs_usb_auto_receive_stage4."
+  },
+  "hp40gs_usb_auto_receive_stage4": {
+    "passed": true,
+    "experimental_hardware_mod": true,
+    "original_stock_image": false,
+    "model": 3,
+    "preset": "hp40gs-mod-home",
+    "rom_sha256": "9041a8c187667833b220281bee1311c97cf2a0297d483882684ebd166a85c311",
+    "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+    "menu_region": [
+      17,
+      4,
+      95,
+      48
+    ],
+    "usb_selected_fingerprints": [
+      "0x5291d6d5",
+      "0x4f4f761b"
+    ],
+    "original_model_fingerprints_changed": false,
+    "usb_only": true,
+    "object_kinds": [
+      "H",
+      "B"
+    ],
+    "state_controller_assertions": 230,
+    "retained_frame_checks": [
+      "Both 40gs USB-selected menu variants recognized",
+      "40gs catalog recognized",
+      "40gs transfer dialog rejected",
+      "Original39g+/39gs initial and Wire menus unchanged",
+      "Cross-model menus rejected",
+      "One changed dialog pixel rejected"
+    ],
+    "source_sha256": {
+      "web/hp39-wire-auto.js": "692e193d262578ed3c841fc7e841c1418e4124bfae8cab07bf9d1248f5e79c43",
+      "web/controller.js": "83322dbff819df3805380cc1584c67073679a3030a01ee305341a583903e9015",
+      "web/FileTransfer.jsx": "6ffa0ae75b16e34ceb70a3f45d0020b7c574ea39486d1f0f4cafa93f304a444c",
+      "tests/hp39-wire-auto.mjs": "1196f64601f1f497d076b100a64f5f278026e65c0375274c7a0348a3f11555a7",
+      "tests/browser-components.py": "42247f98ceb39ca7e58774d5e15ba8eb6e94fc089fb1beb423742101b7d20b0e"
+    },
+    "browser": {
+      "passed": true,
+      "cold_boot": true,
+      "production_worker": true,
+      "guest_memory_patched": false,
+      "synthetic_worker_messages": false,
+      "hardware_validated": false,
+      "performance_sample": false,
+      "source_url": "https://www.hpcalc.org/hp39/games/arkalite40.zip",
+      "library_sha256": "8f49c8b596a9d126f253f1fdb9ae8e4bc6a76d607b0ffd4eac1f0a6c734a060c",
+      "aplet_sha256": "1f4cda18268ba3be4e60fd4044770a38696c26b85f26aed911580243e1c82312",
+      "assets": {
+        "LICENSE": "9fc943b045ca865e0597d3a29c94a2a1c87e86b5ea5dcc5f9593f968ed1b4f9f",
+        "README.txt": "6cae0b5efd9a4a6e15d9e253783fa880147f67f90ec9f89508c8f3b0c4ad2e11",
+        "buzzer-audio.js": "c60cadd9c762be41fd7a23cf9f6d05b565209083874b8c8aedde1c9e6f85323e",
+        "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+        "calculator.css": "1c75c58eb863009addf91b2c31bafd50ac866707278c539fb1d7c3bef3c352bf",
+        "calculator.js": "a2aabdace99511b6783e8ae3d5707eaa54b856b3e8d6868a7fd0a35ac2539cad",
+        "catalog.js": "89ca209d3c4b8facb99a2f9f55380897bc77b1b69e625069b680efe21a7ebcf2",
+        "debug.html": "4c2cc0a61419df383376c2cf7b5e0720fb20949cd321f7cd32d10b43b4c75166",
+        "file-transfer.js": "4a77e98787c042d476c9b9b089a17a70af18f0835a72d914c31839d05b2e69ff",
+        "hardware-mod.js": "42aa93a1b81528e4325e4c9b202744e3edeb3aa9ef505b1a24420fff4f320bf2",
+        "host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+        "host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+        "hp39-archive.js": "5e0d3a815ef5e721bd83720fe759b28e1375a123a71b1bee3e54c79a07842b1a",
+        "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+        "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+        "hp39-wire-receive.js": "3f2845efdef62b6123640490b8d08e8de01f051d0ab4d8ce8b2f08742f46b62e",
+        "hp39-wire.js": "8c3b409f3d2c4ee31f49a9a95a2c42b0677d0d276e3337a9c19239f2e6fd4b8d",
+        "hp48.js": "4da95f45b5cbb1cd93f0031b1356edb3b0ccb1bb80fb33203534edbf1d9719e3",
+        "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+        "irda-input.js": "6ad8506f1888aec03401081165e052c921f389e326cd8e9efb00028d539870ac",
+        "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+        "key-input.js": "cf50840e8e85c4aacf4d324505e0db359f05df1c522de82df9a9de2a8dae3f09",
+        "lcd-frames.js": "b9dbbafaa686d3e0282ee3f935205d20bee5b864b6e5b7c90e4e17b4dfa162fe",
+        "licenses/frontend.txt": "2e53fea156f3d65c66cc746f478fafca71d4350494db5360f5d97c2309e5e4cd",
+        "licenses/hp-calcs-svg/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "licenses/hp-calcs-svg/NOTICE.txt": "442e863b3debca7bcfcfc453de72691019e7b322dcb18e365aa5145718973868",
+        "licenses/hp-calcs-svg/README.md": "4592758699e42977531f337e62d58953c7086c14b3a7712b2fac32366638c40c",
+        "lifecycle.js": "4f38d8523db66ed69e4d5532230a368d9ec01bf42cb83823e18487a455ac6013",
+        "main.js": "6b960a4c7d2f61451bb0660b1f07fe36f5bddc366f7991c4c72a49de7d9564be",
+        "orchard.wasm": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+        "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+        "preferences.js": "b3c58e0761e2c1145032fe787ab31859677047203b74b6537aaaab03801c6bd8",
+        "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+        "sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+        "serve.mjs": "7b8e4b28980f902cec971dee3eeb4a67e83700eada7a4ff47cc07cbb4d603ba7",
+        "session.js": "676b1053063438b49ad7a5385969ca1d9f97b451b2491abc8d60cfb411caccba",
+        "skin.js": "90d1cd0d622b60872030d31572537445a988ed7507b935d456834b2bfacf1154",
+        "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+        "skins/hp39gs.svg": "f31824281ce732416cdea0e5f427af372d0f150db050e9df34889aa08f409458",
+        "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2",
+        "skins/hp48gii.svg": "b80a92d63af52dc4924b6175fdb7fe4946bdbb6edf88daccd5b5c24087c3081f",
+        "skins/hp49gplus.svg": "1a1adb404f398e2ac8a7275cb53aede00e09ae91526e380f5746814eaf484d71",
+        "skins/hp50g-blue.svg": "dc67d2ab65f382dab8e7de4dcb3e45e71ac93504da47939ac851dd46dd5f842e",
+        "skins/hp50g.svg": "1d5930f2ccee11ab869d539afa8749821cf3613083a750365ceb59d3559b2433",
+        "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+        "style.css": "fca3cf6a4e7d7fe5ff5f95363f50a59b7bf9da017404cea290fbba26d7fa6e86",
+        "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+        "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+        "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+        "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256"
+      },
+      "browser_assets": {
+        "index.html": "f59037240349590910d98f03d7dd927a8812261f23e23f57365be32477d7a282",
+        "calculator.css": "1c75c58eb863009addf91b2c31bafd50ac866707278c539fb1d7c3bef3c352bf",
+        "calculator.js": "a2aabdace99511b6783e8ae3d5707eaa54b856b3e8d6868a7fd0a35ac2539cad",
+        "worker.js": "20afd6411b6ce6449cdb48fb06793a345e363e4747ad4cae19055ad64a36e256",
+        "task-scheduler.js": "7cb715837bb39da873c1e9b5485baec66dc7776fad80b356cc13863139aa92c7",
+        "pacing.js": "d4e9b524bacafebad28d6711dd17504e9563f23bd989f744614ffa38913a5952",
+        "skins/manifest.json": "26232ec37205d3b605a051fb132413be5e3f7dd72960c1863e25c267dc21ba75",
+        "virtual-usb.js": "9a3b322e0cb461c76203450e74d7c0230bdcedb754ee28384053bb6015eef373",
+        "skins/hp39gplus.svg": "baff2a5ed16575de916c237175bc9e1942048adb3b8a1424d38f7fbfea941d26",
+        "file-transfer.js": "4a77e98787c042d476c9b9b089a17a70af18f0835a72d914c31839d05b2e69ff",
+        "transfer-errors.js": "d535a91e0b354d939864ed50a87a4f7312203e9a823efabce6be89bf2bc16ba7",
+        "buzzer-worker.js": "2dc91c8dbce8d5c40dd3ce554eff136310e00ff814b7d2ca42d685d3f72d3591",
+        "host-bridge-client.js": "70f19940335b07109417d1a3f80c74c43d33f5a8c6d035f402af51d84156a277",
+        "host-bridge-protocol.js": "5c1cd588f6ea70a743617994d946d25628e209145bbaa85d0c936414284a6b88",
+        "lcd-frames.js": "b9dbbafaa686d3e0282ee3f935205d20bee5b864b6e5b7c90e4e17b4dfa162fe",
+        "session.js": "676b1053063438b49ad7a5385969ca1d9f97b451b2491abc8d60cfb411caccba",
+        "irda-input.js": "6ad8506f1888aec03401081165e052c921f389e326cd8e9efb00028d539870ac",
+        "sd-card.js": "abaa1ff7ff9b9a677b03d317bb43faee6d56f0cc32d20cea7aad87fff9a04003",
+        "sd-filesystem.js": "974746855e7aceb81360ec3a89de889fcb5a3573138dee68d796d0f8466da334",
+        "hp48.js": "4da95f45b5cbb1cd93f0031b1356edb3b0ccb1bb80fb33203534edbf1d9719e3",
+        "hp39-wire.js": "8c3b409f3d2c4ee31f49a9a95a2c42b0677d0d276e3337a9c19239f2e6fd4b8d",
+        "hp39-wire-receive.js": "3f2845efdef62b6123640490b8d08e8de01f051d0ab4d8ce8b2f08742f46b62e",
+        "hp39-transfer.js": "7f1fd7d9d5f1f83f7984ac69ad8af3ed4ad4fbcdf4e931f83ed988bfefb4c62e",
+        "hp39-files.js": "68678ca21d0b198313d16b9859dd06eaa48ac58563588799fc667eb188e548a3",
+        "hardware-mod.js": "42aa93a1b81528e4325e4c9b202744e3edeb3aa9ef505b1a24420fff4f320bf2",
+        "usb-device.js": "981b1a44ce09999cd535a03bb8fb28cf39c5383fe611f3f9a1dad25327d6c03e",
+        "kermit.js": "585cffb0f51d5c31d2dd4fb7ad9da0d689c1e318248de126cff328c30c350de3",
+        "orchard.wasm": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+        "skins/hp40gs.svg": "ecb8da9372a255a6a5b1c52e2fdf00665f923cc1474a4076d986069d30fce2f2"
+      },
+      "browser_version": "150.0.7871.181",
+      "automatic_commands": [
+        {
+          "type": "tap-sequence",
+          "generation": 2,
+          "scans": [
+            39
+          ],
+          "observed_tick": 196584192
+        },
+        {
+          "type": "tap-sequence",
+          "generation": 2,
+          "scans": [
+            6
+          ],
+          "observed_tick": 206521024
+        }
+      ],
+      "automatic_scans": [
+        [
+          39
+        ],
+        [
+          6
+        ]
+      ],
+      "upload_terminal_events": [
+        {
+          "generation": 2,
+          "type": "file-transfer-status",
+          "request": 4,
+          "transport": "usb",
+          "active": false,
+          "phase": "complete",
+          "protocol": "hp39-wire",
+          "direction": "send",
+          "name": "LIB1537L.000",
+          "objectKind": "H",
+          "transferred": 37,
+          "total": 37,
+          "effectiveSpeed": 0,
+          "transferBoosted": false
+        },
+        {
+          "generation": 2,
+          "type": "file-transfer-status",
+          "request": 5,
+          "transport": "usb",
+          "active": false,
+          "phase": "complete",
+          "protocol": "hp39-wire",
+          "direction": "send",
+          "name": "ARKALITE.000",
+          "objectKind": "B",
+          "transferred": 3671,
+          "total": 3671,
+          "effectiveSpeed": 0,
+          "transferBoosted": false
+        }
+      ],
+      "downloads": [
+        {
+          "name": "ARKALITE.000",
+          "kind": "B",
+          "bytes": 3671,
+          "sha256": "1f4cda18268ba3be4e60fd4044770a38696c26b85f26aed911580243e1c82312"
+        },
+        {
+          "name": "LIB1537L.000",
+          "kind": "H",
+          "bytes": 37,
+          "sha256": "8f49c8b596a9d126f253f1fdb9ae8e4bc6a76d607b0ffd4eac1f0a6c734a060c"
+        },
+        {
+          "name": "HP39DIR.000",
+          "kind": "A",
+          "bytes": 63,
+          "sha256": "c7f9aa1843e4f8f41940f2ed76d726005f4563b7536377f10b9126df0071922e"
+        }
+      ],
+      "aplet_bytes_equal": true,
+      "library_body_equal": true,
+      "frames": [
+        {
+          "name": "catalog-before",
+          "sha256": "6915581915d96fc0a4718f3746ae15b1053a102f7fb525dd2649613751d7e756",
+          "arithmetic_area_sha256": "eb47a6b373061db4c1c163e5162361affe72b4754fcd87f5f46b823552dbf7fa",
+          "tick": 163868544
+        },
+        {
+          "name": "first-usb-menu",
+          "sha256": "7251f3e15cb0ee5ce1f5362f4f34537923e526e03b2bc4da910940aa509eddf8",
+          "arithmetic_area_sha256": "e5413c3bc02e9f765fa210f915860820da1107cc84e1e6daa38c318c4d84c9ff",
+          "tick": 173485888
+        },
+        {
+          "name": "auto-installed",
+          "sha256": "d49003d6b26f935372a782588c07535909f9eff0bec04a9d4c9d66f420c31d68",
+          "arithmetic_area_sha256": "a6b04bcbfeb8dafc228e84dae4a7bd6a5d32e4d2c327205dd9d0ecc7d4de9c99",
+          "tick": 343693952
+        },
+        {
+          "name": "send-disk-menu",
+          "sha256": "23e137209a46792332aae276196ad1566e7fa62cc7bdd5490ce38ca3348f4cd4",
+          "arithmetic_area_sha256": "b05b2fc68990a27b12dbb8b701dff1c78743a67ab4a0f5de98412193bd7970b5",
+          "tick": 362669504
+        },
+        {
+          "name": "title",
+          "sha256": "6c27bf838e97cca74460b705b850dcf311f390ca5dc543d28176db3073785cf2",
+          "arithmetic_area_sha256": "3d61ba17a944e2dfd9e2fd229ee477f804c511cee0106b5f20fc1f07b1755e35",
+          "tick": 765550848
+        },
+        {
+          "name": "game",
+          "sha256": "a944548c097dfe2f59dd108f96df96d844857e51bb06afeeae2d109fbd2fbbf2",
+          "arithmetic_area_sha256": "9c56d722238c0be4bcfe92210db8547ffad777e74a7d1924ab835f73b34b9414",
+          "tick": 796687552
+        },
+        {
+          "name": "played",
+          "sha256": "cffc4e8788e88415d591e9bcaed1492e759b6a24910e931857c93e17754d954b",
+          "arithmetic_area_sha256": "2adef7f0adabfe784b1cb6df9061dae30bad6bc2c7ac0cde4226725bba3ce8af",
+          "tick": 833920192
+        },
+        {
+          "name": "returned",
+          "sha256": "f0a9bba8bc5d46c60bc7316f09f1cc0cdc8100bbfb78d3a0314d6c73f9ea8b2b",
+          "arithmetic_area_sha256": "846589895fe9e70ee20839f7317880305b883ddc2f372e0dbe9c92ef3e1680dc",
+          "tick": 902892672
+        },
+        {
+          "name": "one-plus-one",
+          "sha256": "6e23de5c0516c316f6ac4b71a08e55dcdfcc118b3736546301c7d6555d9eed8a",
+          "arithmetic_area_sha256": "59a6894b2f4bd4cad5e07a5310e3cbb5a46ccaf521c4b25b3dbe08012ee13015",
+          "tick": 967680832
+        }
+      ],
+      "physical_keys": [
+        {
+          "scan": 40,
+          "before_tick": 60796928,
+          "after_tick": 64562112
+        },
+        {
+          "scan": 49,
+          "before_tick": 134788032,
+          "after_tick": 139128704
+        },
+        {
+          "scan": 39,
+          "before_tick": 163868544,
+          "after_tick": 167640896
+        },
+        {
+          "scan": 6,
+          "before_tick": 178399040,
+          "after_tick": 182437632
+        },
+        {
+          "scan": 38,
+          "before_tick": 345675392,
+          "after_tick": 349367872
+        },
+        {
+          "scan": 44,
+          "before_tick": 352585280,
+          "after_tick": 356540928
+        },
+        {
+          "scan": 44,
+          "before_tick": 356540928,
+          "after_tick": 360380864
+        },
+        {
+          "scan": 6,
+          "before_tick": 362669504,
+          "after_tick": 367294848
+        },
+        {
+          "scan": 6,
+          "before_tick": 370340224,
+          "after_tick": 374388032
+        },
+        {
+          "scan": 40,
+          "before_tick": 736728384,
+          "after_tick": 741495040
+        },
+        {
+          "scan": 6,
+          "before_tick": 765550848,
+          "after_tick": 769395904
+        },
+        {
+          "scan": 0,
+          "before_tick": 834642112,
+          "after_tick": 838926464
+        },
+        {
+          "scan": 48,
+          "before_tick": 903473280,
+          "after_tick": 908169280
+        },
+        {
+          "scan": 26,
+          "before_tick": 920308800,
+          "after_tick": 923486208
+        },
+        {
+          "scan": 5,
+          "before_tick": 923486208,
+          "after_tick": 926957504
+        },
+        {
+          "scan": 26,
+          "before_tick": 926957504,
+          "after_tick": 931152768
+        },
+        {
+          "scan": 6,
+          "before_tick": 931152768,
+          "after_tick": 935060288
+        }
+      ],
+      "arithmetic_result_verified": true,
+      "inputs_unchanged": true,
+      "page_errors": [],
+      "tool_sha256": "6b6fef1406909c82eaf16f9ed2164e20303c43ec8756e5824181f6af50fe3fe5"
+    },
+    "browser_private_report_sha256": "c557c7697fd3d0cb862c864d9f3a923a898f63a18a0e56482255a520e951fe7b",
+    "browser_worker_errors": [],
+    "independently_viewed": [
+      "Arkalite running",
+      "HOME 1+1=2 with CAS softkey"
+    ],
+    "preliminary_harness_failures": [
+      {
+        "report_sha256": "44567e700002058f1d966b92f996a4e83225e6cc82229a0d08e4815c5952aa20",
+        "cause": "Exact switch accessible-name lookup omitted the help description. Stopped before uploads; no production change."
+      },
+      {
+        "report_sha256": "261ddc909a9b8dcc76e5aea1a315a8a3dedfccafd1f229c47d77226b57d2a7e2",
+        "cause": "Full functional flow passed, then response / was not mapped to index.html for asset verification. No production change."
+      }
+    ],
+    "limits": [
+      "No model3 infrared admission",
+      "No model3 serial automatic continuation",
+      "No model3 continuous Wire reception",
+      "No additional ROM revisions",
+      "No stock HP40gs hardware claim",
+      "Historical original39 short-DEL root cause remains open"
+    ]
+  },
+  "six_model_browser_matrix_visual_review_209b": {
+    "source_reports_left_unchanged": true,
+    "images_viewed": 6,
+    "scope": "Only the specified post-held-self-test arithmetic screenshots; source canvas dimensions are retained from each report and their display proportions were visually checked. Not a stage4 matrix rerun.",
+    "cases": [
+      {
+        "model": {
+          "id": 1,
+          "name": "hp39gplus",
+          "width": 131,
+          "height": 64,
+          "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+          "preset": "hp39-home",
+          "experimental_hardware_mod": false,
+          "original_stock_image": true
+        },
+        "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+        "private_report_sha256": "4f6abd320015d4feec6da3e66413d06edbad7cd9d5136a0a2f7c3bde7f9555cb",
+        "screenshot_name": "held-Escape-F4-exit-arithmetic.png",
+        "screenshot_sha256": "6e0cdff7b1b1b4ee38159bae2653247b232bab4251e49866dc0649e99d73c44f",
+        "independently_viewed": true,
+        "entered_expression": "1+1",
+        "observed_result": "2",
+        "visible_model_and_provenance_consistent": true,
+        "no_clipped_or_obscured_lcd": true,
+        "notes": "HP39g+ title and blue case; visible 1+1 and 2; 64-row layout fits."
+      },
+      {
+        "model": {
+          "id": 2,
+          "name": "hp39gs",
+          "width": 131,
+          "height": 64,
+          "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+          "preset": "hp39gs-home",
+          "experimental_hardware_mod": false,
+          "original_stock_image": true
+        },
+        "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+        "private_report_sha256": "eeaf366c817cf7224b32b29c340bb8fbd3bbd6e3c8206826034ab4c04a9752b3",
+        "screenshot_name": "held-Escape-F4-exit-arithmetic.png",
+        "screenshot_sha256": "0f56e152bf5933fb033830c1b9167f778b366ee75efc05d1456f90a09b2281ef",
+        "independently_viewed": true,
+        "entered_expression": "1+1",
+        "observed_result": "2",
+        "visible_model_and_provenance_consistent": true,
+        "no_clipped_or_obscured_lcd": true,
+        "notes": "HP39gs title and grey case; visible 1+1 and 2; 64-row layout fits."
+      },
+      {
+        "model": {
+          "id": 4,
+          "name": "hp48gii",
+          "width": 131,
+          "height": 64,
+          "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+          "preset": "hp48-home",
+          "experimental_hardware_mod": false,
+          "original_stock_image": true
+        },
+        "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+        "private_report_sha256": "cee7b4c5d65dffcba8c1a4da2d9cf5a5a9862010295e04ce9733c97e528afb89",
+        "screenshot_name": "held-Escape-F4-exit-arithmetic.png",
+        "screenshot_sha256": "23dd347d6a9908f372feb0b14ec7105c24877f5fec839394efaebd5f7b4fffce",
+        "independently_viewed": true,
+        "entered_expression": "1+1",
+        "observed_result": "2",
+        "visible_model_and_provenance_consistent": true,
+        "no_clipped_or_obscured_lcd": true,
+        "notes": "HP48gII title and case; visible ALG 1+1 and 2; 64-row layout fits."
+      },
+      {
+        "model": {
+          "id": 5,
+          "name": "hp49gplus",
+          "width": 131,
+          "height": 80,
+          "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+          "preset": "hp49-home",
+          "experimental_hardware_mod": false,
+          "original_stock_image": true
+        },
+        "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+        "private_report_sha256": "0de7176202edcc91c96b5d35f48904f7915da950081941d9b66c148cdf1826ec",
+        "screenshot_name": "held-Escape-F4-exit-arithmetic.png",
+        "screenshot_sha256": "061cc0f02b00d6af5420f2261ca5186f87a35033d88a80e22f693d999744201b",
+        "independently_viewed": true,
+        "entered_expression": "1+1",
+        "observed_result": "2",
+        "visible_model_and_provenance_consistent": true,
+        "no_clipped_or_obscured_lcd": true,
+        "notes": "HP49g+ title and case; visible ALG 1+1 and 2; taller 80-row layout fits."
+      },
+      {
+        "model": {
+          "id": 3,
+          "name": "hp40gs-mod",
+          "width": 131,
+          "height": 64,
+          "rom_sha256": "9041a8c187667833b220281bee1311c97cf2a0297d483882684ebd166a85c311",
+          "preset": "hp40gs-mod-home",
+          "experimental_hardware_mod": true,
+          "original_stock_image": false
+        },
+        "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+        "private_report_sha256": "80d8d14d17a614abbfc8462e1a33b46bada93515e4b2790b6612b0be324cfaf1",
+        "screenshot_name": "held-Escape-F4-exit-arithmetic.png",
+        "screenshot_sha256": "ec65340be4496c17bb9e3c63301e5c26932d412027605beeadde02b89fd37eac",
+        "independently_viewed": true,
+        "entered_expression": "1+1",
+        "observed_result": "2",
+        "visible_model_and_provenance_consistent": true,
+        "no_clipped_or_obscured_lcd": true,
+        "notes": "HP40gs mod label, modified39gs/2 MiB/64-row provenance and CAS softkey; visible 1+1 and 2."
+      },
+      {
+        "model": {
+          "id": 7,
+          "name": "hp50gm",
+          "width": 131,
+          "height": 64,
+          "rom_sha256": "b30a9ffb90996f0291b10a902a72d3a122db9c87fa5a55aa6ffdf07276b82db5",
+          "preset": "hp50gm-home",
+          "experimental_hardware_mod": true,
+          "original_stock_image": false
+        },
+        "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+        "private_report_sha256": "605b234985ca2f76d38223de20636114a183e6f1b03285cd6b433b0cde339777",
+        "screenshot_name": "held-Escape-F4-exit-arithmetic.png",
+        "screenshot_sha256": "a1b31963437c93a6401bc23aba45a94cc9a300eefdc1d4b24d1650fdc71618ca",
+        "independently_viewed": true,
+        "entered_expression": "1+1",
+        "observed_result": "2",
+        "visible_model_and_provenance_consistent": true,
+        "no_clipped_or_obscured_lcd": true,
+        "notes": "HP50gm mod label with HP48gII-based/512 KiB/64-row/optional SD provenance; HP48gII donor artwork remains visible; ALG 1+1 and 2."
+      }
+    ]
+  },
+  "six_model_landscape_component_check": {
+    "passed": true,
+    "synthetic_lcd_no_rom_or_worker": true,
+    "test_sha256": "58fd7fbbac237479af998d28a5fea7a6c8ebf8b6c042ed74e6b018138165c038",
+    "results_sha256": "dff3076d8cfdbfc21e31fdd13aaf750a115dd818072a771d77f278fe4a34f750",
+    "cases": [
+      {
+        "model": "HP 39g+",
+        "id": 1,
+        "preset": "hp39-home",
+        "artwork": "hp39gplus",
+        "lcdRows": 64,
+        "experimentalHardwareMod": false,
+        "splitY": 581.25,
+        "screenKeys": 6,
+        "keyboardKeys": 45,
+        "viewports": 4
+      },
+      {
+        "model": "HP 39gs",
+        "id": 2,
+        "preset": "hp39gs-home",
+        "artwork": "hp39gs",
+        "lcdRows": 64,
+        "experimentalHardwareMod": false,
+        "splitY": 581.25,
+        "screenKeys": 6,
+        "keyboardKeys": 45,
+        "viewports": 4
+      },
+      {
+        "model": "HP 48gII",
+        "id": 4,
+        "preset": "hp48-home",
+        "artwork": "hp48gii",
+        "lcdRows": 64,
+        "experimentalHardwareMod": false,
+        "splitY": 581.1250002992098,
+        "screenKeys": 6,
+        "keyboardKeys": 45,
+        "viewports": 4
+      },
+      {
+        "model": "HP 49g+",
+        "id": 5,
+        "preset": "hp49-home",
+        "artwork": "hp49gplus",
+        "lcdRows": 80,
+        "experimentalHardwareMod": false,
+        "splitY": 581.2000002992493,
+        "screenKeys": 6,
+        "keyboardKeys": 45,
+        "viewports": 4
+      },
+      {
+        "model": "HP 40gs \u00b7 mod",
+        "id": 3,
+        "preset": "hp40gs-mod-home",
+        "artwork": "hp40gs",
+        "lcdRows": 64,
+        "experimentalHardwareMod": true,
+        "splitY": 581.25,
+        "screenKeys": 6,
+        "keyboardKeys": 45,
+        "viewports": 4
+      },
+      {
+        "model": "HP 50gm \u00b7 mod",
+        "id": 7,
+        "preset": "hp50gm-home",
+        "artwork": "hp48gii",
+        "lcdRows": 64,
+        "experimentalHardwareMod": true,
+        "splitY": 581.1250002992098,
+        "screenKeys": 6,
+        "keyboardKeys": 45,
+        "viewports": 4
+      }
+    ],
+    "geometry_assertions_preserved": true,
+    "zoom_percent": [
+      50,
+      100,
+      180
+    ],
+    "fixture_corrections": [
+      "Use explicit firmware-to-artwork mapping; modified labels differ from case artwork names.",
+      "Use explicit LCD row counts; model7 is64 rows.",
+      "Do not overwrite original48gII screenshots with model7 donor-artwork screenshots."
+    ]
+  }
+}

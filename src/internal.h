@@ -114,6 +114,7 @@ typedef struct {
     uint8_t rx[16], tx[16];
     uint32_t rx_head,rx_count,tx_head,tx_count;
     uint32_t errors,rx_event,tx_event,modem,modem_known;
+    uint32_t rx_timeout_remaining,rx_timeout_latched;
 } o_uart;
 
 /* Host optimization state only. Exact input comparison, not a hash or a
@@ -242,6 +243,7 @@ bool o_mode_valid(uint32_t mode);
 void o_set_cpsr(o_cpu *c, uint32_t value);
 uint32_t *o_spsr(o_cpu *c);
 void o_exception(o_cpu *c, unsigned mode, uint32_t vector, uint32_t link);
+void o_undefined(o_cpu *c);
 void o_cpu_step(orchard_machine *m);
 /* Full-checkpoint dispatcher retained for test/reference comparison. */
 void o_cpu_step_reference(orchard_machine *m);
@@ -277,6 +279,7 @@ void o_fault(o_cpu *c, uint32_t address, unsigned status, unsigned domain, bool 
 void o_soc_reset(o_soc *s);
 void o_soc_tick(orchard_machine *m);
 void o_uart_tick(orchard_machine *m);
+void o_uart_timeout_advance(orchard_machine *m, uint32_t pclk_edges);
 bool o_uart_pending(const o_soc *s);
 void o_irda_gpio_sample(const orchard_machine *m,unsigned port,
                        uint32_t *known,uint32_t *levels,uint32_t *conflicts);

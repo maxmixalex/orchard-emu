@@ -12,6 +12,12 @@ See [startup](development/startup.md)
 for the immutable input, physical-key schedule and remaining SRAM/LCD/pad
 assumptions. This is not canonical physical-board or all-six-model acceptance.
 
+Two separately labelled [hardware-mod firmware](development/hardware-mod-roms.md)
+entries extend the normal calculator to HP40gs and the 512 KiB/64-row HP50gm.
+The [r26 continuation](development/compatibility-r26.md) records their exact
+identities, ARM/non-ARM applications, browser workflows and remaining gates.
+Original HP40gs/HP50g acquisition remains a separate goal.
+
 [HP49g+ support](development/hp49-startup.md) uses the user's complete 2 MiB
 capture, fixed 512 KiB SRAM with an explicit bank-1 mirror condition, and an
 [SD controller with card images](development/sd-cards.md). Its original OS
@@ -32,10 +38,9 @@ original-file handle where supported or a labelled browser-local copy, while
 explicit conflict-aware write-back after ejection. The
 [LCD presentation cache](development/lcd.md#host-presentation-synchronized-to-the-scan-counter)
 publishes at observed completed scans to reduce partial-redraw flicker.
-The optional [local device bridge](development/host-mode.md) connects that same
-Worker to a loopback USB/IP helper. Original HP49g+ completes an exact object
-round trip through the production Chrome page; OS USB/IP attachment, HP driver
-binding and unmodified Conn3x remain separate gates.
+The separate [local device bridge research](development/host-mode.md) preserves
+its loopback USB/IP evidence; native host-device integration was retired in r23
+and is not a current calculator UI feature.
 
 [Immersive landscape](development/landscape.md),
 [firmware-driven sound](development/buzzer.md), optional transfer-only Unlimited,

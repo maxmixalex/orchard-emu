@@ -157,7 +157,7 @@ try{
   assert.deepEqual(initial,[...Array.from({length:check-1},(_,i)=>i+1),0x70],
     'Guest emits the failing assertion with bit7 set; expected all pre-save cases.');
   const checkpoint=save(a),b=await machine();
-  assert.equal(new DataView(checkpoint.buffer).getUint32(8,true),7,'Architectural TLB requires v7 state');
+  assert.equal(new DataView(checkpoint.buffer).getUint32(8,true),8,'Current state retains TLB and UART timeout');
   new Uint8Array(b.memory.buffer,b.checkpoint_buffer(checkpoint.length),checkpoint.length).set(checkpoint);
   assert.equal(b.checkpoint_load(checkpoint.length),0);assert.deepEqual(save(b),checkpoint);
   for(const c of [a,b]){

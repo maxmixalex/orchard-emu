@@ -1,0 +1,175 @@
+{
+  "schema": "orchard-r26-compatibility-summary-v1",
+  "date": "2026-11-21",
+  "firmware_included": false,
+  "program_binaries_included": false,
+  "guest_memory_or_pixels_included": false,
+  "complete_feature_percentage": null,
+  "final_local_wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+  "browser_matrix": {
+    "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+    "private_report_sha256": "534b55708513560934c66b536172ae570b24c45daf10b997c6c16365be5a8a9d",
+    "distribution_files": 51,
+    "all_distribution_bytes_unchanged": true,
+    "cases": [
+      {
+        "model": 1,
+        "name": "hp39gplus",
+        "firmware_kind": "original-capture",
+        "rom_sha256": "95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67",
+        "rom_unchanged": true,
+        "passed": true,
+        "seconds": 109.263,
+        "private_report_sha256": "4f6abd320015d4feec6da3e66413d06edbad7cd9d5136a0a2f7c3bde7f9555cb",
+        "session_roundtrip": true,
+        "self_test_entry_exit": true,
+        "rom_reopened": true
+      },
+      {
+        "model": 2,
+        "name": "hp39gs",
+        "firmware_kind": "original-capture",
+        "rom_sha256": "a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff",
+        "rom_unchanged": true,
+        "passed": true,
+        "seconds": 100.186,
+        "private_report_sha256": "eeaf366c817cf7224b32b29c340bb8fbd3bbd6e3c8206826034ab4c04a9752b3",
+        "session_roundtrip": true,
+        "self_test_entry_exit": true,
+        "rom_reopened": true
+      },
+      {
+        "model": 4,
+        "name": "hp48gii",
+        "firmware_kind": "original-capture",
+        "rom_sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+        "rom_unchanged": true,
+        "passed": true,
+        "seconds": 98.35,
+        "private_report_sha256": "cee7b4c5d65dffcba8c1a4da2d9cf5a5a9862010295e04ce9733c97e528afb89",
+        "session_roundtrip": true,
+        "self_test_entry_exit": true,
+        "rom_reopened": true
+      },
+      {
+        "model": 5,
+        "name": "hp49gplus",
+        "firmware_kind": "original-capture",
+        "rom_sha256": "3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab",
+        "rom_unchanged": true,
+        "passed": true,
+        "seconds": 88.601,
+        "private_report_sha256": "0de7176202edcc91c96b5d35f48904f7915da950081941d9b66c148cdf1826ec",
+        "session_roundtrip": true,
+        "self_test_entry_exit": true,
+        "rom_reopened": true
+      },
+      {
+        "model": 3,
+        "name": "hp40gs-mod",
+        "firmware_kind": "hardware-modified",
+        "rom_sha256": "9041a8c187667833b220281bee1311c97cf2a0297d483882684ebd166a85c311",
+        "rom_unchanged": true,
+        "passed": true,
+        "seconds": 92.579,
+        "private_report_sha256": "80d8d14d17a614abbfc8462e1a33b46bada93515e4b2790b6612b0be324cfaf1",
+        "session_roundtrip": true,
+        "self_test_entry_exit": true,
+        "rom_reopened": true
+      },
+      {
+        "model": 7,
+        "name": "hp50gm",
+        "firmware_kind": "hardware-modified",
+        "rom_sha256": "b30a9ffb90996f0291b10a902a72d3a122db9c87fa5a55aa6ffdf07276b82db5",
+        "rom_unchanged": true,
+        "passed": true,
+        "seconds": 97.636,
+        "private_report_sha256": "605b234985ca2f76d38223de20636114a183e6f1b03285cd6b433b0cde339777",
+        "session_roundtrip": true,
+        "self_test_entry_exit": true,
+        "rom_reopened": true
+      }
+    ],
+    "passed": true,
+    "independent_visual_review": {
+      "record": "input-r26.json",
+      "all_six_arithmetic_results": "1+1=2",
+      "original_reports_unchanged": true
+    }
+  },
+  "program_and_protocol_records": [
+    {
+      "name": "original-HP49-applications",
+      "scope": "Unchanged native Thumb2048, Saturn BabalPlus and RPL conversions; install, interaction, return and arithmetic",
+      "passed": true,
+      "private_report_sha256": "3963392a2909b16325c7fa77aa2b8524a46bcf6137fc824b245fbcd360d7687d",
+      "wasm_sha256": "13bc6cb48b0877eadcdd3d6a904a219a0deef58957c0fa981708783ec3317143"
+    },
+    {
+      "name": "original-SD-and-FILES",
+      "scope": "HP49g+ guest SD write/export/fresh-boot recall and HP48gII no-card FILES",
+      "passed": true,
+      "private_report_sha256": "45cf20cdf4f19c16ec08c0d4830a6b4436a61fa5835330db25e3a50a5aa1c574",
+      "wasm_sha256": "8149548168ca58d3060cdf4a470f65cc3c3f05816add3b30173fc2bbc6631a80"
+    },
+    {
+      "name": "original-FLASH-full",
+      "scope": "Original HP39gs and HP49g+ ROM verification, quick and full FLASH WRITE",
+      "passed": true,
+      "private_report_sha256": "fb3ff1b20e63b7f74e1073d7e268fecf8a59549a6c4f8cbe420997bb1f1548be",
+      "wasm_sha256": "8149548168ca58d3060cdf4a470f65cc3c3f05816add3b30173fc2bbc6631a80"
+    },
+    {
+      "name": "stage3-original-serial-selftests",
+      "scope": "Four original models factory RS232/IRDA and return",
+      "passed": true,
+      "private_report_sha256": "c62e27d050ff4982091f373772cc78d7b44184a0e567f488c2e471887469c5a5",
+      "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f"
+    },
+    {
+      "name": "stage4-HP39gs-serial-Wire",
+      "scope": "Cold stock upload, two Notes plus two multipart library/aplet SEND groups, exact six objects, Stop and HOME arithmetic",
+      "passed": true,
+      "private_report_sha256": "0be8eaf7db7416496b371fbae4925a12e27bab97fa9fbb540ac677dc73682580",
+      "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3"
+    },
+    {
+      "name": "stage4-HP40gs-automatic-USB",
+      "scope": "Actual browser cold automatic library/aplet upload, exact Disk exports, Arkalite, DEL and HOME arithmetic",
+      "passed": true,
+      "private_report_sha256": "c557c7697fd3d0cb862c864d9f3a923a898f63a18a0e56482255a520e951fe7b",
+      "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3"
+    },
+    {
+      "name": "stage4-original-serial-selftests",
+      "scope": "Four original ROMs: RS232/IRDA factory self-tests and return",
+      "passed": true,
+      "private_report_sha256": "0ae1db1ab898207c4e379a8c22d63be09f1d694349ccd2b8c8ab5b81ac531773",
+      "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3"
+    },
+    {
+      "name": "stage4-original-IrDA-peer",
+      "scope": "Actual HP49g+/HP48gII guest infrared forward/reverse transfer and recall; no host protocol responses",
+      "passed": true,
+      "private_report_sha256": "db0fc26cb2b8a0fce58d31817feb1a3d9e787f123cfee267e6aead80126b7378",
+      "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3"
+    }
+  ],
+  "component_records": [
+    "core-r26.json",
+    "hardware-mod-r26.json",
+    "input-r26.json",
+    "browser-ci-r26.json"
+  ],
+  "publication_boundary": "Local evidence does not establish deployment. Use successful Build and Pages runs and the observed revision/asset manifest for the associated source revision.",
+  "remaining": {
+    "original_HP40gs_full_capture": false,
+    "original_HP50g_full_capture": false,
+    "all_browser_engines_validated": false,
+    "physical_board_calibration_complete": false,
+    "historical_Arkalite_short_DEL_cause_resolved": false,
+    "historical_malformed_IR_Y3_cause_resolved": false,
+    "global_reliability_percentage_measured": false
+  }
+}

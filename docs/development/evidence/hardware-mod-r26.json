@@ -1,0 +1,781 @@
+{
+  "schema": "orchard-hardware-mod-evidence-v1",
+  "round": "r26",
+  "build_stage": "stage3-before-UART-pulse-and-auto-RECV-followups",
+  "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+  "scope": "Fixed privately held archive ROMs and explicitly configured donor-board profiles; no stock HP50g claim.",
+  "private_material_included": false,
+  "rom_bytes_included": false,
+  "guest_data_included": false,
+  "screenshots_included": false,
+  "archive": {
+    "filename": "ROM-for-HW-mod-39gs.zip",
+    "sha256": "1a07055a43027d388a4a6a6431744b3943ca67241a3af308c4a09da231eb6991",
+    "members": [
+      {
+        "archive_member": "hp39gs/usb/39gsUSB升40gs固件[需要换ROM芯片].bin",
+        "bytes": 1241088,
+        "sha256": "790d4bd26bcda98333920808bc927d142774b89409382fa4b8957653995aad4e",
+        "kind": "firmware-update",
+        "models": [
+          "hp40gs"
+        ],
+        "update": {
+          "native_bytes": 226568,
+          "trailing_bytes": 1014496,
+          "checksum_scope": "native-region-only",
+          "native_checksum_valid": true
+        }
+      },
+      {
+        "archive_member": "hp39gs/usb/48giiUSB降40gs固件.bin",
+        "bytes": 1241088,
+        "sha256": "52cd4ed0c83adb80510a3bb066ba0b7b7c1291afdffa36afdd1885d30bc32829",
+        "kind": "firmware-update",
+        "models": [
+          "hp48gii"
+        ],
+        "update": {
+          "native_bytes": 226568,
+          "trailing_bytes": 1014496,
+          "checksum_scope": "native-region-only",
+          "native_checksum_valid": true
+        }
+      },
+      {
+        "archive_member": "hp39gs/usb/48gII_208_92_2M_USB.bin",
+        "bytes": 2080768,
+        "sha256": "dc85d74bf101413d86a9aab3e5359be6f150f9ff0cfbc0205b96fde861d2dcef",
+        "kind": "firmware-update",
+        "models": [
+          "hp48gii"
+        ],
+        "update": {
+          "native_bytes": 171304,
+          "trailing_bytes": 1909440,
+          "checksum_scope": "native-region-only",
+          "native_checksum_valid": true
+        }
+      },
+      {
+        "archive_member": "hp39gs/usb/48gII_210_92_USB.bin",
+        "bytes": 1425408,
+        "sha256": "55783a684753e7f87f2091047ae86f2465b0dfb260aff6bc75c2c77495ae8b0f",
+        "kind": "firmware-update",
+        "models": [
+          "hp48gii"
+        ],
+        "update": {
+          "native_bytes": 171304,
+          "trailing_bytes": 1254080,
+          "checksum_scope": "native-region-only",
+          "native_checksum_valid": true
+        }
+      },
+      {
+        "archive_member": "hp39gs/usb/50gm_210_menu_fix_beta.bin",
+        "bytes": 1425408,
+        "sha256": "cf5c6875db0b8f74bd1c9ebb2bcae0bd139debceaf1f18b7f2a987e166e021fe",
+        "kind": "firmware-update",
+        "models": [
+          "hp50gm"
+        ],
+        "update": {
+          "native_bytes": 217384,
+          "trailing_bytes": 1208000,
+          "checksum_scope": "native-region-only",
+          "native_checksum_valid": true
+        }
+      },
+      {
+        "archive_member": "hp39gs/usb/hp39gs_v2.22_update.bin",
+        "bytes": 1027840,
+        "sha256": "492817eb13b7d54a82be2f69a43b21eb089c3741aa504d68da9d4bcec9de715a",
+        "kind": "firmware-update",
+        "models": [
+          "hp39gs"
+        ],
+        "update": {
+          "native_bytes": 224216,
+          "trailing_bytes": 803600,
+          "checksum_scope": "native-region-only",
+          "native_checksum_valid": true
+        }
+      },
+      {
+        "archive_member": "hp39gs/usb/hp39gs_v2.23_with_8px_font.bin",
+        "bytes": 1028000,
+        "sha256": "93ad03907dffeba958ef3083a2b6bdd95de67cfcd74e0ba4ad14be161af46da4",
+        "kind": "firmware-update",
+        "models": [
+          "hp39gs"
+        ],
+        "update": {
+          "native_bytes": 224216,
+          "trailing_bytes": 803760,
+          "checksum_scope": "native-region-only",
+          "native_checksum_valid": true
+        }
+      },
+      {
+        "archive_member": "hp39gs/编程器固件/48gii rom.bin",
+        "bytes": 2097152,
+        "sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+        "kind": "full-nor-dump",
+        "models": [
+          "hp48gii"
+        ]
+      },
+      {
+        "archive_member": "hp39gs/编程器固件/50gm_CNA0000000_JTAG.raw",
+        "bytes": 2097152,
+        "sha256": "b30a9ffb90996f0291b10a902a72d3a122db9c87fa5a55aa6ffdf07276b82db5",
+        "kind": "hardware-mod-nor",
+        "models": [
+          "hp50gm"
+        ]
+      },
+      {
+        "archive_member": "hp39gs/编程器固件/dump39gs.bin",
+        "bytes": 1048576,
+        "sha256": "1d0f323c289c67ee197e6f7983e771eec1ef70c8a174422fd5257f79fb3b80f3",
+        "kind": "hardware-mod-nor",
+        "models": [
+          "hp39gs"
+        ]
+      },
+      {
+        "archive_member": "hp39gs/编程器固件/dump39gs（字库）.bin",
+        "bytes": 1048576,
+        "sha256": "a6abaa2ce5a257886691ca3aac3fb10aa43c5d29fc6bf57121b880906b2b5b1b",
+        "kind": "hardware-mod-nor",
+        "models": [
+          "hp39gs"
+        ]
+      },
+      {
+        "archive_member": "hp39gs/编程器固件/dump40gs.bin",
+        "bytes": 2097152,
+        "sha256": "9041a8c187667833b220281bee1311c97cf2a0297d483882684ebd166a85c311",
+        "kind": "hardware-mod-nor",
+        "models": [
+          "hp40gs"
+        ]
+      },
+      {
+        "archive_member": "hp39gs/编程器固件/dump48gii.bin",
+        "bytes": 2097152,
+        "sha256": "4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937",
+        "kind": "full-nor-dump",
+        "models": [
+          "hp48gii"
+        ]
+      }
+    ]
+  },
+  "profiles": [
+    {
+      "model": 3,
+      "preset": "hp40gs-mod-home",
+      "board": "modified HP39gs donor",
+      "nor_bytes": 2097152,
+      "ram_bytes": 262144,
+      "lcd": [
+        131,
+        64
+      ],
+      "stock_model_verified": false
+    },
+    {
+      "model": 7,
+      "preset": "hp50gm-home",
+      "board": "modified 64-line HP48gII-compatible donor",
+      "nor_bytes": 2097152,
+      "ram_bytes": 524288,
+      "lcd": [
+        131,
+        64
+      ],
+      "sd_slot": true,
+      "sd_initially_present": false,
+      "stock_model_verified": false
+    }
+  ],
+  "setup_conditions": [
+    "Explicit bank1 SRAM mirror decode",
+    "Explicit GPIO inputs/bias and ADC sample codes",
+    "Packed-LSB LCD interpretation",
+    "LCD +0x68 idle-zero probe",
+    "Donor-board electrical wiring not independently measured"
+  ],
+  "updater_assembly": {
+    "tested_pair": "dump40gs.bin plus 39gs-target 40gs conversion updater",
+    "output_sha256": "9041a8c187667833b220281bee1311c97cf2a0297d483882684ebd166a85c311",
+    "byte_equal_to_input_raw": true,
+    "boot_preserved": true,
+    "trailing_data_preserved": true,
+    "physical_acquisition": false,
+    "usb_flash_sequence_verified": false
+  },
+  "results": [
+    {
+      "case": "hp39gs-archive-home-cold-replay",
+      "passed": true,
+      "private_report_basename": "hp39gs-archive-final.json",
+      "private_report_sha256": "b9622e24a0e011550cc14a1132beb08e33a00f444a631bf4ec359ed442926a9c",
+      "rom_sha256": "1d0f323c289c67ee197e6f7983e771eec1ef70c8a174422fd5257f79fb3b80f3",
+      "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+      "native_binary_sha256": "d5c8a27cdd697e32d0321e50e235fda1398ed75e920fe715c2a2838cb5f978a1",
+      "frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+      "ticks_per_run": 198000000,
+      "runs": 4,
+      "native_wasm_equal": true,
+      "native_cold_replay_equal": true,
+      "wasm_cold_replay_equal": true,
+      "visible_result": "HOME: 1+1 = 2",
+      "guest_memory_patched": false,
+      "stock_model_verified": false
+    },
+    {
+      "case": "hp39gs-font-home-cold-replay",
+      "passed": true,
+      "private_report_basename": "hp39gs-font-final.json",
+      "private_report_sha256": "1b55cfb53e13485fba023f002bda844a3365574dbec10cf6a40a9cfb62c1f414",
+      "rom_sha256": "a6abaa2ce5a257886691ca3aac3fb10aa43c5d29fc6bf57121b880906b2b5b1b",
+      "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+      "native_binary_sha256": "d5c8a27cdd697e32d0321e50e235fda1398ed75e920fe715c2a2838cb5f978a1",
+      "frame_sha256": "15c75f8dac2d8f7305338d281651523c95e11f80f564ba6cdb22031756f50759",
+      "ticks_per_run": 198000000,
+      "runs": 4,
+      "native_wasm_equal": true,
+      "native_cold_replay_equal": true,
+      "wasm_cold_replay_equal": true,
+      "visible_result": "HOME: 1+1 = 2",
+      "guest_memory_patched": false,
+      "stock_model_verified": false
+    },
+    {
+      "case": "hp40gs-mod-home-cold-replay",
+      "passed": true,
+      "private_report_basename": "hp40gs-cas-cold-final.json",
+      "private_report_sha256": "d832c4a88f91e91e6c600f76b9d7e3f5a2fb90c420bde678319d26b22508a4f9",
+      "rom_sha256": "9041a8c187667833b220281bee1311c97cf2a0297d483882684ebd166a85c311",
+      "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+      "native_binary_sha256": "d5c8a27cdd697e32d0321e50e235fda1398ed75e920fe715c2a2838cb5f978a1",
+      "frame_sha256": "00bf6ab563c0f525c573321bdd2f951674133cec1ea74a5444d3811b4d5bd4f9",
+      "ticks_per_run": 310000000,
+      "runs": 4,
+      "native_wasm_equal": true,
+      "native_cold_replay_equal": true,
+      "wasm_cold_replay_equal": true,
+      "visible_result": "HOME: 1+1 = 2; enter CAS and evaluate 1/3 + 1/6 = 1/2",
+      "guest_memory_patched": false,
+      "stock_model_verified": false
+    },
+    {
+      "case": "hp50gm-home-cold-replay",
+      "passed": true,
+      "private_report_basename": "hp50gm-cold-final.json",
+      "private_report_sha256": "14be10d0fadd858c9db3ca233cbc04bf536731c7029d42acb88bacc49d7c609d",
+      "rom_sha256": "b30a9ffb90996f0291b10a902a72d3a122db9c87fa5a55aa6ffdf07276b82db5",
+      "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+      "native_binary_sha256": "d5c8a27cdd697e32d0321e50e235fda1398ed75e920fe715c2a2838cb5f978a1",
+      "frame_sha256": "53a2eda0fe1c185236eda700cfaa6328fbb14bd89c8ffbe0b5ffde097bf527e9",
+      "ticks_per_run": 300000000,
+      "runs": 4,
+      "native_wasm_equal": true,
+      "native_cold_replay_equal": true,
+      "wasm_cold_replay_equal": true,
+      "visible_result": "64-line HOME: 1+2 = 3; 7*8 = 56, with 512 KiB SRAM",
+      "guest_memory_patched": false,
+      "stock_model_verified": false
+    },
+    {
+      "case": "hp40gs-native",
+      "passed": true,
+      "private_report_directory_basename": "hp40gs-native-final",
+      "private_report_sha256": "7656ad67e79dd658d6fb4b5982b8b269a24279bfa7b5e1d6ffe794040b266d43",
+      "model": 3,
+      "preset": "hp40gs-mod-home",
+      "rom_sha256": "9041a8c187667833b220281bee1311c97cf2a0297d483882684ebd166a85c311",
+      "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+      "tool_sha256": "0056144f4dfe07b43cb5e77ddab1a2cac5cab05623d00a6f18e7ce6fc38192bc",
+      "guest_memory_patched": false,
+      "stock_model_verified": false,
+      "native_reader_launched": true,
+      "native_exit": "E03 cable lost, physical ON acknowledgement",
+      "returned_home": true,
+      "arithmetic_after_return": true,
+      "aplet_file_equal": true,
+      "library_body_equal": true,
+      "library_alias_preserved": true,
+      "program_inputs": [
+        {
+          "name": "LIB275L.000",
+          "bytes": 1489,
+          "sha256": "88b0d556ae86784dc0e3ede7f53a45ece12d2513128b4fc96b9655bf881dcdd1",
+          "kind": "H"
+        },
+        {
+          "name": "HPGCC000.000",
+          "bytes": 10344,
+          "sha256": "298732caeba57a240acf135f1260c6f1cf1899e024fb734f3b4d2c4f92cadcc1",
+          "kind": "B"
+        }
+      ],
+      "frames": [
+        {
+          "stage": "memory-clear",
+          "sha256": "27c642f79508e9bedceffa8f7ab38ed25c0386461e16bad608939c1fdaf878c7",
+          "stop": 0
+        },
+        {
+          "stage": "home",
+          "sha256": "bacf4329701b98a3785014ac976740c013864676121179dcd5335329dd22dc70",
+          "stop": 0
+        },
+        {
+          "stage": "receive-usb-menu",
+          "sha256": "7251f3e15cb0ee5ce1f5362f4f34537923e526e03b2bc4da910940aa509eddf8",
+          "stop": 0
+        },
+        {
+          "stage": "wire-complete-1",
+          "sha256": "5deab2df2e5aa5a0e0b39e3bc2af7636b648fd7ca04e3dabc09eefa304ffa10b",
+          "stop": 0
+        },
+        {
+          "stage": "receive-usb-menu-2",
+          "sha256": "00305668b0a2f912acc155f25163c7ad03a0bc1b95db9893dc77bec0c799a086",
+          "stop": 0
+        },
+        {
+          "stage": "wire-complete-2",
+          "sha256": "b4bf30a1fb0529e666343d82e1e6b4ea0dbe624bd419ab0724a69cf7ad30900a",
+          "stop": 0
+        },
+        {
+          "stage": "installed-aplet",
+          "sha256": "dcd15436e32c34a297e3c9522b3bc687ef7fe83556d0161ff50ca1b65a3e7fb2",
+          "stop": 0
+        },
+        {
+          "stage": "send-disk-menu",
+          "sha256": "ee2533f0e470b96aad41dfbfd4fca83b9dcd4ca3af6b9d368acdad5a1b93d08d",
+          "stop": 0
+        },
+        {
+          "stage": "send-name",
+          "sha256": "d0449c11d4178a20627b886ad771adfc1e9f7b8ebfd208ed42a13590334f1aa5",
+          "stop": 0
+        },
+        {
+          "stage": "after-send",
+          "sha256": "dcd15436e32c34a297e3c9522b3bc687ef7fe83556d0161ff50ca1b65a3e7fb2",
+          "stop": 0
+        },
+        {
+          "stage": "aplet-before-enter",
+          "sha256": "cbfb1472d296cd0c16a90ce8162dd49ace1faba2a9b7a8a76e6ac18a6c5a0338",
+          "stop": 0
+        },
+        {
+          "stage": "waiting-for-usb",
+          "sha256": "59704edb9722237e560d80224c6d1e68f7dc68d527a44329e92be2a952994fef",
+          "stop": 0
+        },
+        {
+          "stage": "native-reader-connected",
+          "sha256": "e677c2e8f0aa5a8bd1565a13151625aad1f70362f373d66ad38ccbfdbc8eeb0e",
+          "stop": 0
+        },
+        {
+          "stage": "native-reader-cable-lost",
+          "sha256": "b55b5ae57c5c40da11cec9a287d9f9d50bd91ea991720805e3cdb0340517b537",
+          "stop": 0
+        },
+        {
+          "stage": "home-after-native-return",
+          "sha256": "7628f713eadcbf5ff01d2c1c086326a8bd6b1d36fe7a9c63b8dc897f6cea7d86",
+          "stop": 0
+        },
+        {
+          "stage": "one-plus-one-after-return",
+          "sha256": "ed6e1dfbd748417bdc15f5f1f50175c7389c7ce51e9a6d1321bae26ffaad8f0b",
+          "stop": 0
+        }
+      ],
+      "final_tick": 1921783552
+    },
+    {
+      "case": "hp50gm-native",
+      "passed": true,
+      "private_report_directory_basename": "hp50gm-native-final",
+      "private_report_sha256": "78db63e0dfb2bd425872d222cddda7f40d689d47925f21f24fb4f1c263ef67d4",
+      "model": 7,
+      "preset": "hp50gm-home",
+      "rom_sha256": "b30a9ffb90996f0291b10a902a72d3a122db9c87fa5a55aa6ffdf07276b82db5",
+      "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+      "tool_sha256": "f49f9fc53bf8f8aefe890ec56cd80c23b51e7f429317d0190fc27e17d02be0f2",
+      "guest_memory_patched": false,
+      "stock_model_verified": false,
+      "application_results_verified": true,
+      "native_return_verified": true,
+      "arithmetic_after_return_verified": true,
+      "library": {
+        "bytes": 4474,
+        "sha256": "7d204b746d0ded75e92da3d8e323637c2846fcd8f159dde2ba25ba8bdc0db637",
+        "sdk_file": "LIB275.LIB",
+        "destination": "RAM port 0"
+      },
+      "native_program": {
+        "bytes": 12536,
+        "sha256": "423be27dbfa7f12f5645b666c0d389da28b1bfd9424813d00981601ce099248b",
+        "sdk_file": "template/main.hp",
+        "visible_text": "Hello From Lobakkang",
+        "execution_verified": true
+      },
+      "usb_after_return": {
+        "get_completed": true,
+        "bytes": 4474,
+        "binary_file_byte_equal": true,
+        "object_payload_byte_equal": true,
+        "header_revision": {
+          "input": "HPHP49-C",
+          "output": "HPHP49-C",
+          "only_changed_byte": null
+        },
+        "exported_sha256": "7d204b746d0ded75e92da3d8e323637c2846fcd8f159dde2ba25ba8bdc0db637"
+      },
+      "sram_alias_reads": "0",
+      "sram_alias_writes": "0",
+      "frames": [
+        {
+          "stage": "wired-home",
+          "sha256": "a3c5eb6d03253a32c0ad5a687502eaf6fec10e4ad1dc7c06e3904fb6c563faad",
+          "stop": 0
+        },
+        {
+          "stage": "installed",
+          "sha256": "c21d63f6fde437f5bc38b32507043eaa1fbdf2c334aeeb4911d00406796f854a",
+          "stop": 0
+        },
+        {
+          "stage": "native-running",
+          "sha256": "0dca1d694e9f0fb347c10fafcab44b19f009cdca015d510235cd37a1955d188a",
+          "stop": 0
+        },
+        {
+          "stage": "returned-home",
+          "sha256": "5944f5eee52246376d0c05b8dd38917107b2965e4cf484474a79f58d31bf99e7",
+          "stop": 0
+        },
+        {
+          "stage": "one-plus-one",
+          "sha256": "bbff9ce170d4414b382c8dfd4ba5bb7a822cc29e703000d4eed74f0a7953eb85",
+          "stop": 0
+        },
+        {
+          "stage": "final-home",
+          "sha256": "bbff9ce170d4414b382c8dfd4ba5bb7a822cc29e703000d4eed74f0a7953eb85",
+          "stop": 0
+        }
+      ],
+      "final_tick": 1777870496
+    },
+    {
+      "case": "hp50gm-cas",
+      "passed": true,
+      "private_report_directory_basename": "hp50gm-cas-final",
+      "private_report_sha256": "05c69ace946dfc5daed95ae069490391435fc33781079c6a7d89dafd69fccc0b",
+      "model": 7,
+      "preset": "hp50gm-home",
+      "rom_sha256": "b30a9ffb90996f0291b10a902a72d3a122db9c87fa5a55aa6ffdf07276b82db5",
+      "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+      "tool_sha256": "3555d2915d1e71bf0afc25531c220f7bd6e7d7448408813713826c151b87ff70",
+      "guest_memory_patched": false,
+      "stock_model_verified": false,
+      "resume": {
+        "bytes": 539812,
+        "reset_restore_equal": true,
+        "native_wasm_equal": true,
+        "before_sha256": "c91df11e5def63351d2e02695cfeb80e6e38e52da46f65a89368de6aa22d91d7",
+        "after_sha256": "af7e531e493e4867379074dfd8d695b5c51465c347ced36bc12de3c14dd376dc"
+      },
+      "sram_alias_reads": "0",
+      "sram_alias_writes": "0",
+      "frames": [
+        {
+          "stage": "home",
+          "sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+          "stop": 0
+        },
+        {
+          "stage": "version",
+          "sha256": "def6b8999f4d725b4ecf52b5a8a9b8b6f5c45deeae60865473bb347a59ff0733",
+          "stop": 0
+        },
+        {
+          "stage": "factor",
+          "sha256": "ef522c6ec859f6c0f031e93b5b84e6ab6e28b04662bbb59cb2317a9b39f707d4",
+          "stop": 0
+        },
+        {
+          "stage": "apps",
+          "sha256": "4fc17d51baf7e29f10faff317491243ba70e9954c379b1d667f1ad05931a41c4",
+          "stop": 0
+        },
+        {
+          "stage": "apps-return",
+          "sha256": "ef522c6ec859f6c0f031e93b5b84e6ab6e28b04662bbb59cb2317a9b39f707d4",
+          "stop": 0
+        },
+        {
+          "stage": "mode",
+          "sha256": "589397a8b94ba1a1459300354836e2bdeeb0327c2e9a7326af1da16e19029e11",
+          "stop": 0
+        },
+        {
+          "stage": "mode-return",
+          "sha256": "ef522c6ec859f6c0f031e93b5b84e6ab6e28b04662bbb59cb2317a9b39f707d4",
+          "stop": 0
+        },
+        {
+          "stage": "plot",
+          "sha256": "095a75d3c481b6c36d423701f370a71e61af3144fd64d33ed00d2f505abfea12",
+          "stop": 0
+        },
+        {
+          "stage": "plot-return",
+          "sha256": "d39bfd059d87cc78436d626e0607e4d8c048ebcac1d83fc54291bdd6e06b586d",
+          "stop": 0
+        }
+      ],
+      "final_tick": 563000000
+    },
+    {
+      "case": "hp50gm-sd",
+      "passed": true,
+      "private_report_directory_basename": "hp50gm-sd-final",
+      "private_report_sha256": "fff04d8593e2d54c08acf3db413f54d82007c9eafb65c0e568ceb19d70e47cb6",
+      "model": 7,
+      "preset": "hp50gm-home",
+      "rom_sha256": "b30a9ffb90996f0291b10a902a72d3a122db9c87fa5a55aa6ffdf07276b82db5",
+      "wasm_sha256": "209bce3c0cc3b7940d921aed8730dfb096ed7cb5600714e0eacc62ae3621239f",
+      "tool_sha256": "d80e7fe493181f926c4522c5e96d55ef9471329c08ea2749eabf8054ef5c5577",
+      "guest_memory_patched": false,
+      "stock_model_verified": false,
+      "native_sha256": "22c98e17e1f383408fe8ef335867a091f9039f48ca3bf46bcfdf6ebf0763508d",
+      "continuation": {
+        "checkpoint_bytes": 17317028,
+        "version": 8,
+        "partial_sector_bytes": 112,
+        "delta_ticks": 100000,
+        "before_sha256": "bd955ab5a851c23189a07293a5f2c9eae309056d30e191eac63abe66580c382b",
+        "after_sha256": "35a2e818b052690a5dc1c2602ae72c497f60f9ab53a0105d1d5bb04ddf9e7782",
+        "native_wasm_equal": true,
+        "full_card_included": true
+      },
+      "exported": {
+        "image_sha256": "e47614163eac1f432bdcc10b705ff12a23eb138b7b771b612e5b8827ef0fa0b1",
+        "file": "TEST",
+        "file_bytes": 15,
+        "file_sha256": "82a66674e2543cb3a46a3a85e004c106df3979ca37485309a8edc13df8ceff42",
+        "filesystem": "FAT16",
+        "fat_copies_equal": true,
+        "writes_before_copy": 0,
+        "writes_after_copy": 7
+      },
+      "fresh_card_reimport": true,
+      "frames": [
+        {
+          "stage": "hp50gm-home",
+          "sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+          "stop": 0
+        },
+        {
+          "stage": "hp50gm-files-no-card",
+          "sha256": "8339aaadb709c2b517761c667ac28748e619a11ee86aaafb143a03df1215acfd",
+          "stop": 0
+        },
+        {
+          "stage": "hp50gm-files-no-card-up",
+          "sha256": "2265f2afbac5959067d5dca266a97ec3ab0ed85e3850cbbf80ae7ae5df47ba71",
+          "stop": 0
+        },
+        {
+          "stage": "hp50gm-files-no-card-return",
+          "sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+          "stop": 0
+        },
+        {
+          "stage": "hp50gm-files-with-card",
+          "sha256": "061de6989c5b26779c8f3b13aa6220b6474adb709471ffaae5b24a16098df3e2",
+          "stop": 0
+        },
+        {
+          "stage": "hp50gm-created-test-42",
+          "sha256": "cc9ce8cdd36ce905f869b2c54a18e6a7679bbe4e6fe6d728fc28092d00bd3f9a",
+          "stop": 0
+        },
+        {
+          "stage": "hp50gm-home-test-selected",
+          "sha256": "d99deaafd87ed142058c554cc3f5bb41fb9f973b381a700405b9f974a837531b",
+          "stop": 0
+        },
+        {
+          "stage": "hp50gm-copy-destination-sd",
+          "sha256": "fc6e5cc128232b41a0c38d2687b76b95fc20ec191ebae4f75619927d42f99e46",
+          "stop": 0
+        },
+        {
+          "stage": "hp50gm-copy-complete",
+          "sha256": "3248ddcc55c53a1dcc8bc55630fbee5dbf400098363e8b3af7c9b26cb8d62184",
+          "stop": 0
+        },
+        {
+          "stage": "hp50gm-sd-test-selected",
+          "sha256": "901516a3f98bb3861b92838fc0692feafd0d439aaa2882feeb5ef3c9fda9a861",
+          "stop": 0
+        },
+        {
+          "stage": "hp50gm-sd-recalled-42",
+          "sha256": "22544cbd06694f6056d8af43436ca3360b5361090e5444431d52af172f49704e",
+          "stop": 0
+        },
+        {
+          "stage": "hp50gm-fresh-home",
+          "sha256": "47a7e742901f75d8ca2a32a08058d5a66e5d4ae07eceb91c1fa5913f144752cd",
+          "stop": 0
+        },
+        {
+          "stage": "hp50gm-fresh-sd-test",
+          "sha256": "d9942948f1b1ddd331d8b022599a40b5fe6eb9be9fd3b46d3e2aa2524a5a4adb",
+          "stop": 0
+        },
+        {
+          "stage": "hp50gm-fresh-recalled-42",
+          "sha256": "f4c0f9406a0a39d1427cc84e9bfdc37e85cf69c25a95086d950aa3328a13d91e",
+          "stop": 0
+        }
+      ],
+      "fresh_machine_final_tick": 224400000
+    }
+  ],
+  "rom_free_checks": {
+    "rom_tools_checks": 216,
+    "kermit": "passed including model7 USB enabled and serial disabled",
+    "flash_package_reproduction": "passed",
+    "flash_package_sha256": "061920db45c8ae8b8c3231f024c4b1244e4c8221de0f05fc84dbda38489a6bd9",
+    "updater_cli_filesystem_guarantees": {
+      "input_paths_cannot_be_outputs": true,
+      "existing_output_preserved": true,
+      "existing_report_preserved": true,
+      "new_image_rolled_back_on_report_failure": true,
+      "new_successful_image_matches_api_result": true
+    },
+    "unknown_normal_catalog_roms_rejected_bytes": [
+      1048576,
+      2097152
+    ]
+  },
+  "historical_failures_not_counted_as_passes": [
+    {
+      "case": "50gm with HP48gII 256KiB profile",
+      "result": "blank LCD and exception loop; corrected by separate 512KiB model7"
+    },
+    {
+      "case": "50gm with L275_48.LIB",
+      "result": "program reached DEADBEEF sentinel; corrected by unmodified LIB275.LIB 49g+/50g variant"
+    },
+    {
+      "case": "40gs-mod with original39gs RECEIVE menu offsets",
+      "result": "selected Serial rather than USB; corrected only physical navigation; guest program unchanged"
+    },
+    {
+      "case": "50gm SD first stage3 run with pre-rebuild native oracle",
+      "result": "native rejected v8 snapshot; freshly rebuilt matching native oracle replayed identical snapshot byte-for-byte"
+    },
+    {
+      "case": "debug-only browser attempt",
+      "result": "failed expected HOME frame assertion; not accepted; ordinary calculator browser matrix is the separate UI gate"
+    }
+  ],
+  "remaining_limits": [
+    "Stock HP50g model6 remains without admitted complete original ROM",
+    "Original physical HP40gs hardware acquisition not established by a conversion ROM",
+    "Seven valid updater checksums are not seven boot acceptances",
+    "50gm menu-fix beta is inspected but not an admitted full image",
+    "50gm serial/IR not admitted",
+    "No aggregate compatibility percentage inferred"
+  ],
+  "primary_sources": [
+    "https://www.cncalc.org/thread-24766-1-1.html",
+    "https://blog.lyc8503.net/post/hp39gs-modify/",
+    "https://github.com/lobakkang/patched-hpgcc-1.1-sdk-for-hp39gs/tree/7fa1503912338ea0fdf1d39eb584770f4d121cd2"
+  ],
+  "additional_protocol_regression": {
+    "component": "web/hp39-wire-receive.js",
+    "trigger": "Original HP39gs serial multipart SEND of a 37-byte library with zero-character internal title",
+    "fix": "Omit the repeated name-length field only when the character count is zero; preserve named-library validation",
+    "self_authored_fixture_bytes": 37,
+    "tests": [
+      "Complete zero-title library and dependent aplet multipart exchange",
+      "Nonempty repeated-name-length mismatch rejected",
+      "Truncated library ID rejected",
+      "Unrequested zero-title library ID rejected",
+      "Malformed final object never receives a successful EOT ACK"
+    ],
+    "pre_fix_regression_failed": true,
+    "post_fix_regression_passed": true,
+    "real_serial_retest": {
+      "passed": true,
+      "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+      "evidence": "core-r26.json",
+      "private_report_basename": "hp39gs-serial-wire-stage4/report.json",
+      "notes_byte_equal": 2,
+      "multipart_library_bytes": 37,
+      "multipart_aplet_bytes": 3671,
+      "objects_received": 6,
+      "full_aplet_and_library_payload_equal": true,
+      "home_arithmetic_after_return": "1+1=2"
+    }
+  },
+  "stage4_host_validation": {
+    "wasm_sha256": "bb53704a128319df23a0340da4bf7e8767d1a98ae8337a3b4d8572750d4ec7a3",
+    "private_report_basename": "browser-worker-stage4.json",
+    "private_report_sha256": "9be414e0decbb8588d5a9eb6092cad5a569c43e8ba133667ff6fdcf660c08986",
+    "production_http_worker_cases": 14,
+    "models": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "audiences": [
+      "calculator",
+      "debug"
+    ],
+    "generated_arm_fixture_only": true,
+    "private_firmware_used": false,
+    "run_pause_step_reset_checkpoint": true,
+    "rates": [
+      0.5,
+      2,
+      0,
+      1
+    ],
+    "window_and_worker_timer_fallback": true,
+    "page_errors": 0,
+    "normal_settings_keyboard_keys": 104,
+    "source_dist_modules_equal": true,
+    "unknown_rom_hashes_rejected": true,
+    "stock_hp50g_still_not_in_calculator_catalog": true,
+    "null_preset_inputs_rejected": true,
+    "model7_usb_enabled_serial_disabled": true,
+    "zero_title_library_protocol_regression_passed": true
+  }
+}

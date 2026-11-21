@@ -1,6 +1,81 @@
 # Continuation handoff
 
-## Current r24 continuation from 3952185 (2026-10-24)
+## Current r26 continuation (2026-11-21)
+
+Start with the [r26 acceptance matrix](compatibility-r26.md),
+[core continuation](core-r26.md), [hardware-mod audit](hardware-mod-roms.md),
+and [input continuation](input-r26.md). The older sections below are historical;
+their unavailable-image, checkpoint-version and input-status descriptions are
+not the current state.
+
+The current work builds on merged r25 implementation `53a10ecb` and the
+LCD/infrared documentation correction `c8fa3bc0` (merged through PR #40).
+It implements guest ARM/Thumb UND exceptions, PCLK UART FIFO timeout and v8
+checkpoint state, overlapping held-key admission behind queued macros, and
+normal-UI admission of the supplied 40gs/50gm hardware-mod images. The public
+evidence preserves intermediate WASM identities rather than attributing every
+earlier application run to the last binary.
+
+### Inputs and identities to preserve
+
+- Original HP39g+, HP39gs, HP48gII USB revision and HP49g+ full NORs already
+  exist and have independent witnesses. Do not repeat acquisition requests.
+- The supplied hardware-mod archive contains complete 40gs and 50gm images,
+  alternative 39gs full images, duplicate 48gII bytes, and distinct KINPO
+  update containers. They are not interchangeable input types.
+- The exact accepted 40gs and 50gm hashes, boot provenance, capacities and
+  native-entry evidence are in `hardware-mod-roms.md`. Model 7 requires 512 KiB
+  SRAM and a 64-row LCD. The rejected 256 KiB 50gm experiment is retained as a
+  counterexample, not its current profile.
+- HP50gm's successful native ARM witness uses LIB275; do not substitute the
+  HP48gII ARMToolbox package simply because the bootloader targets that family.
+- Model 6 remains original HP50g. A successful 50gm run does not acquire or
+  validate a full original HP50g capture. The same distinction applies to
+  original HP40gs and the donor-boot 40gs hardware-mod image.
+
+### Repeatable acceptance
+
+`tools/verify-browser-matrix.py` takes repeated private `--rom` paths and an
+optional `--dist` directory, validates immutable inputs/assets, then exercises
+the real production Window/Worker, ordinary file picker, calculator/sidebar,
+complete session restore, automatic ROM recall, factory-test entry/exit and
+storage lifecycle. Use a new private output directory. The six accepted
+configurations are models 1, 2, 4, 5, 3 and 7, with original and modified
+provenance retained separately. Synthetic controller coverage also includes
+the distinct original-HP50g model 6.
+
+Core validation includes optimized/reference/sanitizer CTests, native/WASM
+state comparison, the independent pinned Unicorn oracle, exact checkpoint
+migration and original program/protocol workflows. Do not count a timeout as
+a passing sanitizer run. The recorded busy-run deadline failures and isolated
+reruns are separate evidence. A local build, successful remote Build and
+published Pages revision must each retain their own identity.
+
+The new programs reach actual guest results: 40gs Arkalite installs through
+Wire, exports exact objects through Disk, responds to Left/Right and returns to
+`1+1=2`; 40gs ROMstream reaches its native USB descriptor and returns; 50gm
+runs the unchanged SDK ARM program, returns, exports its exact library, and
+writes an SD object that a fresh boot recalls. Their detailed command/expected
+frame/state records remain separate from the browser matrix.
+
+### Next research and implementation
+
+Retain the historical Arkalite short-DEL and malformed infrared Y3
+counterexamples. New successful samples do not explain either cause. The
+supplied 40gs firmware has no IR RECEIVE item: its initial item is USB, so
+blindly extending a 39-series infrared menu script would test the wrong
+transport. Continue original-peer retry/cancel and additional browser-engine
+coverage with actual workflows. Keep unmeasured board assumptions, original
+40gs/50g acquisition, external-clock UART timeout and remaining SD/NOR modes
+separate from implemented functional behavior. Native host-device integration
+was deliberately retired; it is not an unfinished current UI feature.
+
+No all-feature reliability or completion percentage has been established.
+Public evidence excludes firmware, full memory/checkpoints, application
+binaries and guest images. Preserve those publication boundaries while using
+the existing private inputs to reproduce and extend the functional gates.
+
+## Historical r24 continuation from 3952185 (2026-10-24)
 
 The preceding r23 release is merged as
 `395218554f18069bdf3936619edb0ae32aafa070` in

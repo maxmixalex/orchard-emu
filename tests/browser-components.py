@@ -458,9 +458,56 @@ with sync_playwright() as p:
  page.wait_for_function('window.__controller.state.transfer.phase==="cancelled"')
  assert page.get_by_role('button',name='接收计算器文件',exact=True).is_enabled()
  page.get_by_role('button',name='收起侧栏',exact=True).click()
+ # Hardware modifications keep explicit provenance and their donor geometry.
+ # This fixture checks real DOM routing/availability, not firmware execution.
+ for index,model,slug in [(8,3,'hp40gs'),(9,7,'hp48gii')]:
+  select_model(model);resolve_manifest(index);keys_ready(slug)
+  assert '实验性硬件改装版本' in page.locator('.model-provenance').inner_text()
+  assert 'mod' in page.get_by_role('combobox',name='计算器',exact=True).input_value()
+  assert page.locator('#lcd').get_attribute('height')=='64'
+  page.evaluate('()=>window.__controller.patch({loaded:true,running:false,busy:false,serial:true,usb:true,usbReady:true})')
+  page.get_by_role('button',name='连接',exact=True).click()
+  assert page.get_by_role('tab',name='红外',exact=True).count()==0
+  page.get_by_role('combobox',name='连接类型',exact=True).click()
+  page.get_by_role('option',name='USB',exact=True).click()
+  if model==3:
+   page.get_by_label('计算器传输菜单',exact=True).select_option('wire')
+   assert 'HP39/40 (USB)' in page.get_by_label('计算器传输菜单',exact=True).inner_text()
+   assert page.get_by_role('switch',name='自动继续接收 aplet 和库',exact=False).count()==1
+   page.get_by_role('switch',name='自动继续接收 aplet 和库',exact=False).check()
+   assert page.get_by_role('button',name='接收计算器文件',exact=True).count()==0
+   page.get_by_test_id('transfer-file').set_input_files([
+    {'name':'LIB.mod','mimeType':'application/octet-stream','buffer':hp39_library},
+    {'name':'SECOND.mod','mimeType':'application/octet-stream','buffer':hp39_library}])
+   assert page.get_by_role('button',name='通过 Wire 上传',exact=True).is_enabled()
+   page.get_by_role('button',name='通过 Wire 上传',exact=True).click()
+   # File reads publish active/preparing before the actual queue exists.
+   page.wait_for_function('''()=>{
+    const c=window.__controller,q=c.uploadQueue,t=c.state.transfer;
+    return q&&q.generation===c.generation&&q.request===c.transferRequest&&
+      t?.request===q.request&&t.active&&t.phase==='negotiating';
+   }''')
+   assert page.evaluate('window.__controller.uploadQueue.autoReceive')
+   page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"complete"})}')
+   assert page.evaluate('window.__controller.state.transfer.autoReceive&&window.__controller.wireAutoReceive.active')
+   page.get_by_role('button',name='取消传输',exact=True).click()
+   page.wait_for_function('window.__controller.state.transfer.phase==="cancelled"')
+   assert not page.evaluate('Boolean(window.__controller.wireAutoReceive?.active)')
+   assert page.evaluate('window.__controller.uploadQueue') is None
+   page.get_by_label('计算器传输菜单',exact=True).select_option('disk')
+   assert page.get_by_role('button',name='接收计算器文件',exact=True).is_enabled()
+  else:
+   assert page.get_by_role('button',name='按名称取回对象',exact=True).count()==1
+   assert page.get_by_role('button',name='读取计算器目录',exact=True).is_enabled()
+   assert page.get_by_role('tab',name='SD 卡',exact=True).count()==1
+  for width in [320,390,720,1360]:
+   page.set_viewport_size({'width':width,'height':900})
+   page.wait_for_timeout(100)
+   assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth'),(model,width)
+  page.get_by_role('button',name='收起侧栏',exact=True).click()
  # Unmount also invalidates an outstanding load and removes frame/resize work.
- select_model(4);page.wait_for_function('window.__manifestRequests.length===9')
- page.evaluate('window.__unmount()');resolve_manifest(8)
+ select_model(4);page.wait_for_function('window.__manifestRequests.length===11')
+ page.evaluate('window.__unmount()');resolve_manifest(10)
  page.evaluate('window.dispatchEvent(new Event("resize"))')
  assert page.locator('.traditional-geometry').count()==0
  assert page.evaluate('window.__controller.frames.size')==0

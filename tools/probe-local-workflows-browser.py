@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Private original-ROM witness for local storage, sidebars and system chords.
+"""Private exact-ROM witness for local storage, sidebars and system chords.
 
 Uses the production page and Worker without changing guest memory or messages.
 The ROM enters through the page's real standard file input: this validates its
@@ -34,6 +34,8 @@ MODELS = {
     'a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff': (2, 'hp39gs', 64, 1048576),
     '4899102743d3420dc517ae1b489fe2405229be616dbdb1b9f00cc1d0aeae1937': (4, 'hp48gii', 64, 2097152),
     '3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab': (5, 'hp49gplus', 80, 2097152),
+    '9041a8c187667833b220281bee1311c97cf2a0297d483882684ebd166a85c311': (3, 'hp40gs-mod', 64, 2097152),
+    'b30a9ffb90996f0291b10a902a72d3a122db9c87fa5a55aa6ffdf07276b82db5': (7, 'hp50gm', 64, 2097152),
 }
 
 
@@ -86,8 +88,9 @@ def session_roundtrip(page, model, output):
     assert checkpoint[:8] == b'ORCHST01'
     assert helper.sha(checkpoint) == metadata['stateHash']
     assert metadata['model'] == model['id'] and metadata['romHash'] == model['rom_sha256']
+    assert metadata['preset'] == model['preset'], 'The saved session lost its exact board preset'
     version = int.from_bytes(checkpoint[8:12], 'little')
-    assert version == 7
+    assert version == 8
     page.wait_for_function('''n=>window.__transferProbe.snapshots>n&&
       window.__transferProbe.snapshot?.running===false''', arg=before)
     saved_tick = page.evaluate('window.__transferProbe.snapshot.ticks')
@@ -134,6 +137,7 @@ def main():
     parser.add_argument('--rom', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--expected-wasm', required=True)
+    parser.add_argument('--dist', type=Path, default=ROOT/'dist', help='Exact production asset directory to serve and hash (defaults to dist)')
     parser.add_argument('--url')
     parser.add_argument('--expected-revision')
     parser.add_argument('--self-test', action='store_true', help='Also exercise the toolbar and held Escape+F4, then exit by ON+F3')
@@ -141,10 +145,14 @@ def main():
     args = parser.parse_args()
     digest = helper.sha(args.rom.read_bytes())
     if digest not in MODELS or args.rom.stat().st_size != MODELS[digest][3]:
-        parser.error('--rom must be an admitted, complete original image')
+        parser.error('--rom must match an admitted complete original or explicitly labelled hardware-mod image')
     identifier, name, height, _ = MODELS[digest]
-    model = {'id':identifier, 'name':name, 'width':131, 'height':height, 'rom_sha256':digest}
-    assets = {n:helper.sha((ROOT/'dist'/n).read_bytes()) for n in sorted(pages.ASSETS)}
+    presets={1:'hp39-home',2:'hp39gs-home',3:'hp40gs-mod-home',4:'hp48-home',5:'hp49-home',7:'hp50gm-home'}
+    model = {'id':identifier, 'name':name, 'width':131, 'height':height, 'rom_sha256':digest,
+             'preset':presets[identifier], 'experimental_hardware_mod':identifier in (3,7),
+             'original_stock_image':identifier not in (3,7)}
+    asset_root=args.dist.resolve()
+    assets = {n:helper.sha((asset_root/n).read_bytes()) for n in sorted(pages.ASSETS)}
     if assets['orchard.wasm'] != args.expected_wasm:
         parser.error('--expected-wasm must match the production dist build')
     if args.url:
@@ -165,7 +173,7 @@ def main():
         base = args.url.rstrip('/')+'/'
         report.update(published_url=base, published_revision=args.expected_revision)
     else:
-        server = ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(helper.Handler, directory=str(ROOT/'dist')))
+        server = ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(helper.Handler, directory=str(asset_root)))
         threading.Thread(target=server.serve_forever, daemon=True).start()
         base = f'http://127.0.0.1:{server.server_port}/'
     errors, requests, responses = [], [], []
@@ -221,6 +229,11 @@ def main():
                 page.locator('#rom').set_input_files(str(args.rom.resolve()))
                 page.wait_for_function('window.__transferProbe.snapshot?.loaded===true')
                 helper.verify_model(page, model)
+                if model['experimental_hardware_mod']:
+                    notice=page.locator('.model-provenance')
+                    assert notice.is_visible() and 'Experimental hardware modification' in notice.inner_text()
+                    assert 'mod' in page.get_by_role('combobox',name='Calculator',exact=True).input_value()
+                    report['hardware_mod_provenance_visible']=True
                 cold_boot(page, model)
                 page.screenshot(path=str(args.output/'home.png'))
                 report['home_frame'] = frame(page)
@@ -248,12 +261,15 @@ def main():
                 assert not sidebar.is_visible()
                 page.get_by_role('button', name='Connections', exact=True).click()
                 assert sidebar.get_by_role('textbox', name='Data', exact=True).input_value() == '01 02 03'
-                if identifier == 5:
+                if identifier in (5,7):
                     sidebar.get_by_role('tab', name='SD card', exact=True).click()
                     sidebar.get_by_text('No card inserted', exact=True).wait_for()
                     sidebar.get_by_role('tab', name='Connections', exact=True).click()
                     assert sidebar.get_by_role('textbox', name='Data', exact=True).input_value() == '01 02 03'
                     report['sd_and_connections_share_sidebar'] = True
+                if model['experimental_hardware_mod']:
+                    assert sidebar.get_by_role('tab', name='Infrared', exact=True).count()==0
+                    report['unverified_infrared_not_offered']=True
                 page.set_viewport_size({'width':390, 'height':844})
                 page.evaluate('()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))')
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')

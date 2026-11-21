@@ -57,4 +57,24 @@ c.dispose();console.log('System keys: overlapping ON/F4 and ON/F3 contacts, exac
   assert.throws(()=>q.press('',43,0));assert.throws(()=>q.press('x',60,0));
   assert.throws(()=>q.release('x',NaN));
 }
-console.log('Held input: sustained and overlapping physical contacts, shared-key ownership, rapid repeated clicks, ordered macros and immediate cancellation pass.');
+// Typing a character while a direction is held queues its finite macro. A
+// second physical direction must still reach the keypad before the first is
+// released; neither waiting macros nor another owner can consume that hold.
+{
+  const events=[],q=new TapQueue((scan,down,tick)=>events.push({scan,down,tick}),100,30);
+  q.press('keyboard:ArrowLeft',43,0);q.pushMany([58,28]);
+  q.press('pointer:1',45,10);q.press('keyboard:ArrowRight',45,20);q.update(1000);
+  assert.deepEqual(events,[{scan:43,down:true,tick:0},{scan:45,down:true,tick:10}]);
+  q.release('pointer:1',1000);assert(q.held.has(45));
+  q.release('keyboard:ArrowRight',1010);q.release('keyboard:ArrowLeft',1020);
+  assert.deepEqual(events.slice(-2),[{scan:45,down:false,tick:1010},{scan:43,down:false,tick:1020}]);
+  for(let tick=1021;tick<=1280;tick++)q.update(tick);
+  assert.deepEqual(events.slice(4),[{scan:58,down:true,tick:1050},{scan:58,down:false,tick:1150},
+    {scan:28,down:true,tick:1180},{scan:28,down:false,tick:1280}]);
+  assert.equal(q.pending,0);assert.equal(q.pressed.size,0);assert.equal(q.held.size,0);
+  q.press('keyboard:ArrowLeft',43,1400);q.pushMany([58,28]);q.press('pointer:2',45,1410);
+  q.release('pointer:2',1411,true);q.clear(1412);q.update(9999);
+  assert.deepEqual(events.slice(-2),[{scan:45,down:false,tick:1411},{scan:43,down:false,tick:1412}]);
+  assert.equal(q.pending,0);assert.equal(q.pressed.size,0);assert.equal(q.held.size,0);
+}
+console.log('Held input: overlapping contacts remain responsive across queued macros; shared ownership, finite macro order, rapid clicks and cancellation pass.');

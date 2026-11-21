@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include "internal.h"
 
-static void fail(orchard_machine *m, uint16_t op) {
-    o_stop(m, ORCHARD_UNSUPPORTED_INSTRUCTION, m->cpu.r[15], op);
+static void unpredictable(orchard_machine *m, uint16_t op) {
+    o_stop(m, ORCHARD_UNPREDICTABLE, m->cpu.r[15], op);
 }
 static void memop(orchard_machine *m, unsigned kind, unsigned rd, uint32_t address) {
     o_cpu *c = &m->cpu;
@@ -73,7 +73,8 @@ void o_thumb(orchard_machine *m, uint16_t op) {
         else if (kind == 1) (void)o_add(c, a, ~b, 1, true);
         else if (kind == 2) o_putr(c, rd, b);
         else {
-            if (op & 0x87u) { fail(m, op); return; }
+            if (op & 0x80u) { o_undefined(c); return; } /* ARMv5 BLX space. */
+            if (op & 7u) { unpredictable(m, op); return; }
             /* Samsung manual 4-15: word-aligned Thumb BX PC enters ARM at
                PC+4. The halfword-only aligned case is unpredictable. */
             if (rs == 15 && (c->r[15] & 2u)) {
@@ -106,7 +107,7 @@ void o_thumb(orchard_machine *m, uint16_t op) {
         if (op & 0x100u) list |= 1u << (pop ? 15u : 14u);
         unsigned count = 0;
         for (unsigned i = 0; i < 16; ++i) count += (list >> i) & 1u;
-        if (!count) { fail(m, op); return; }
+        if (!count) { unpredictable(m, op); return; }
         uint32_t address = pop ? c->r[13] : c->r[13] - count * 4u;
         for (unsigned r = 0; r < 16; ++r) {
             if (!(list & (1u << r))) continue;
@@ -122,7 +123,7 @@ void o_thumb(orchard_machine *m, uint16_t op) {
         unsigned rb = (op >> 8) & 7u;
         uint32_t list = op & 255u, address = c->r[rb];
         bool load = (op & 0x800u) != 0;
-        if (!list) { fail(m, op); return; }
+        if (!list) { unpredictable(m, op); return; }
         /* Match ARM STM's documented original-base compatibility choice. */
         for (unsigned r = 0; r < 8; ++r) {
             if (!(list & (1u << r))) continue;
@@ -138,7 +139,7 @@ void o_thumb(orchard_machine *m, uint16_t op) {
             uint32_t link = c->r[15] + 2u;
             o_exception(c, O_SVC, 8, link);
             c->next_pc = c->r[15];
-        } else if (condition == 14) fail(m, op);
+        } else if (condition == 14) o_undefined(c);
         else if (o_condition(c, condition)) {
             uint32_t offset = (op & 255u) << 1;
             if (offset & 256u) offset |= 0xfffffe00u;
@@ -156,5 +157,5 @@ void o_thumb(orchard_machine *m, uint16_t op) {
         uint32_t target = c->r[14] + (op & 0x7ffu) * 2u;
         c->r[14] = (c->r[15] + 2u) | 1u;
         o_putr(c, 15, target);
-    } else fail(m, op);
+    } else o_undefined(c); /* Unallocated ARMv4T Thumb instruction space. */
 }

@@ -37,8 +37,10 @@ for(const name of ['', '..', '../x', 'a/b', 'a\\b', 'C:x','x\n','\u0100', 'x'.re
 assert.equal(validateFilename('A\xe9'), 'A\xe9');
 assert.deepEqual(transferCapabilities(4),{send:true,receive:true,get:true,directory:true,finish:true,serve:false});
 assert.deepEqual(transferCapabilities(4,'serial'),{send:true,receive:true,get:true,directory:true,finish:true,serve:false});
-for(const model of [0,6,7])for(const transport of ['usb','serial'])
+for(const model of [0,6,8])for(const transport of ['usb','serial'])
   assert(Object.values(transferCapabilities(model,transport)).every(enabled=>!enabled));
+assert.deepEqual(transferCapabilities(7,'usb'),{send:true,receive:true,get:true,directory:true,finish:true,serve:false});
+assert(Object.values(transferCapabilities(7,'serial')).every(enabled=>!enabled));
 assert(Object.values(transferCapabilities(4,'invalid')).every(enabled=>!enabled));
 assert.throws(()=>validateUpload(4,'ROM',new Uint8Array(10)));
 assert.throws(()=>validateUpload(1,'A',bytes('HPHP49-Canything')));

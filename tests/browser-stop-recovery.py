@@ -274,7 +274,7 @@ def main():
                            cwd=ROOT, text=True, check=True, timeout=60)
             rom = bytearray(b'\xff' * 1048576)
             struct.pack_into('<I', rom, 0, 0xea000002)  # ARM branch to 0x10.
-            struct.pack_into('<I', rom, 16, 0xe7f000f0)  # Explicit diagnostic stop.
+            struct.pack_into('<I', rom, 16, 0xe10f0100)  # Malformed MRS: explicit UNPREDICTABLE stop, not guest UND.
             rom_path = tmp / 'generated-stop.bin'
             rom_path.write_bytes(rom)
             with sync_playwright() as p:
@@ -326,7 +326,7 @@ def main():
                         assert trace_report['reason'] == 'core-stop'
                         assert trace_report['replay']['end_tick'] == 2
                         assert trace_report['replay']['complete_checkpoint_equal']
-                        assert trace_report['replay']['stop'] == [9, 16, 0xe7f000f0, 16, 0xe7f000f0]
+                        assert trace_report['replay']['stop'] == [9, 16, 0xe10f0100, 16, 0xe10f0100]
                     # Losing the screenshot must not skip the original JSON or
                     # the independent LCD capture attempt.
                     class ScreenshotFailure:
@@ -363,8 +363,8 @@ def main():
                         command_seq:command.seq,saved_marker_seq:saved.seq,snapshot_seq:snap.seq};
                     }''', arg=save_floor).json_value()
                     diagnostic = json.loads(Path(recovery['diagnostic_file']).read_text())
-                    assert diagnostic['stop'] == {'code': 9, 'pc': '00000010', 'instruction': 'e7f000f0',
-                                                  'address': '00000010', 'detail': 'e7f000f0'}, diagnostic
+                    assert diagnostic['stop'] == {'code': 9, 'pc': '00000010', 'instruction': 'e10f0100',
+                                                  'address': '00000010', 'detail': 'e10f0100'}, diagnostic
                     assert diagnostic['rom_sha256'] == hashlib.sha256(rom).hexdigest()
                     assert len(diagnostic['words']) == 33
                     assert original.read_bytes() == before, 'Recovery replaced the original failed observation'

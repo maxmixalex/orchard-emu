@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Scan coordinates are hardware facts; provenance: docs/development/web.md.
+import { hardwareModSetup } from './hardware-mod.js';
 export const HP39_ROM = '95920417d4dee311e6113f11720de11018da166a8a777d9255fbff2dd6433f67';
 export const HP39GS_ROM = 'a431b5d61af36aeaffec02a395da648b01507c3b5acc9d325f113384483680ff';
 export const HP49_ROM = '3283731a0553400e2a2a04e213b0c6583f4f9d38466ce5185a40ce0b2f7a44ab';
@@ -25,10 +26,11 @@ const shortcuts = new Map([
 ]);
 export function shortcut(key) { return shortcuts.get(key); }
 export function setupHash(preset) {
-  return preset === 'hp48-home' ? HP48_ROM : preset === 'hp39-home' ? HP39_ROM : preset === 'hp39gs-home' ? HP39GS_ROM : preset === 'hp49-home' ? HP49_ROM : null;
+  return preset === 'hp48-home' ? HP48_ROM : preset === 'hp39-home' ? HP39_ROM : preset === 'hp39gs-home' ? HP39GS_ROM : preset === 'hp49-home' ? HP49_ROM : hardwareModSetup(preset)?.hash ?? null;
 }
 export function isPlayable(model, preset) {
-  return (model === 4 && preset === 'hp48-home') || (model === 1 && preset === 'hp39-home') || (model === 2 && preset === 'hp39gs-home') || (model === 5 && preset === 'hp49-home');
+  const variant = hardwareModSetup(preset);
+  return (model === 4 && preset === 'hp48-home') || (model === 1 && preset === 'hp39-home') || (model === 2 && preset === 'hp39gs-home') || (model === 5 && preset === 'hp49-home') || Boolean(variant && variant.model === model);
 }
 export function keyRows(model) {
   if (model !== 1 && model !== 2 && model !== 3) return KEY_ROWS;
@@ -57,7 +59,8 @@ export function applySetup(core, model, preset) {
     ['gpio_inputs',5,0x8e,0], ['gpio_inputs',6,1,0],
     ['gpio_bias',6,0xf800,0xf800], ['adc_input',0,1,1023], ['adc_input',7,1,512], ['lcd_probe68',1],
   ] : [
-    ['keyboard_attach',1], ['nor_select',1], ['sram_select',1],
+    ['keyboard_attach',1], ['nor_select',hardwareModSetup(preset)?.nor ?? 1], ['sram_select',1],
+    ...(preset === 'hp50gm-home' ? [['gpio_inputs',4,0xc000,0xc000]] : []),
     ['gpio_inputs',3,0xcc7f,0], ['gpio_inputs',5,0x8e,0], ['gpio_inputs',6,1,0],
     ['gpio_bias',6,0xf800,0xf800], ['adc_input',0,1,1023], ['adc_input',7,1,512], ['lcd_probe68',1],
   ];
@@ -85,9 +88,10 @@ export class TapQueue {
     if(this.pressed.has(source))return;
     if(this.pending>=32)throw new Error('Key queue full; wait for the pending taps.');
     const key={id:++this.nextPress,source,scan,released:false,releaseAt:Infinity};this.pressed.set(source,key);
-    // Genuine overlapping holds may close several contacts. A rapid sequence
-    // whose previous key is already released retains the tested debounce gap.
-    if(!this.queue.length&&this.direct.size&&[...this.direct.values()].some(key=>!key.released))this.startPress(key,tick);
+    // Physical contacts overlap even while a character macro is waiting for
+    // the existing hold to end. Otherwise that queued macro can indefinitely
+    // block a second held key. Released clicks still retain their debounce gap.
+    if(this.direct.size&&[...this.direct.values()].some(key=>!key.released))this.startPress(key,tick);
     else this.queue.push(key);
     this.update(tick);
   }

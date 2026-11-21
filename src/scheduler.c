@@ -37,6 +37,9 @@ void o_schedule_plan(orchard_machine *m) {
     if (s->clock[3]&8u) { m->quiet_left=n>0?n-1u:0; return; }
     uint32_t num,den;
     if(!o_pclk_ratio(s,&num,&den)){m->quiet_left=0;return;}
+    for(unsigned ch=0;ch<3;ch++)
+        if((s->clock[3]&(0x400u<<ch))&&s->uart_state[ch].rx_timeout_remaining)
+            pclk_bound(&n,s->uart_state[ch].rx_timeout_remaining,s,num,den);
     if(s->clock[3]&0x40000u)for(unsigned channel=0;channel<2;channel++)
         if(s->spi[channel].remaining&&(s->spi[channel].control&0x18u)==0x18u)
             pclk_bound(&n,s->spi[channel].remaining,s,num,den);
@@ -65,6 +68,9 @@ void o_schedule_sync(orchard_machine *m) {
     s->rtc.phase += n * 32768u;
     if (s->clock[3]&8u) return;
     uint32_t pclk=o_pclk_advance(s,n);
+    for(unsigned ch=0;ch<3;ch++)
+        if((s->clock[3]&(0x400u<<ch))&&s->uart_state[ch].rx_timeout_remaining)
+            s->uart_state[ch].rx_timeout_remaining-=pclk;
     if(s->clock[3]&0x40000u)for(unsigned channel=0;channel<2;channel++)
         if(s->spi[channel].remaining&&(s->spi[channel].control&0x18u)==0x18u)
             s->spi[channel].remaining-=pclk;

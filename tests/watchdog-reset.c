@@ -37,7 +37,7 @@ static void compare(unsigned ticks){
  CHECK(equal(left,right,n));
 }
 static void vector_and_pulse(void){
- for(unsigned model=1;model<=6;model++)for(unsigned both=0;both<2;both++){
+ for(unsigned model=1;model<=ORCHARD_MODEL_COUNT;model++)for(unsigned both=0;both<2;both++){
   init(model);a.soc.intmsk=~(1u<<9);a.cpu.cpsr&=~O_I;arm(both?0x25:0x21);
   run(15);CHECK(!a.soc.wtreset&&a.cpu.r[15]==0x200&&a.cpu.r[3]==0x99);
   uint64_t instructions=a.cpu.instructions,exceptions=a.cpu.exceptions;
@@ -142,7 +142,7 @@ static void checkpoint_and_scheduler(void){
   if(stopped)o_stop(&a,ORCHARD_UNIMPLEMENTED_RESET,0x53000000u,0x21);
   size_t n=orchard_checkpoint_size(&a),ram=n-a.profile->ram_bytes-O_BOOT_SRAM_SIZE;
   CHECK(orchard_checkpoint_save(&a,saved,n)==ORCHARD_OK);
-  size_t remove=2056+4377+(version<5?76:0)+(version<4?64:0)+(version<3?709:0)+(version==1?52:0),oldn=n-remove;
+  size_t remove=24+2056+4377+(version<5?76:0)+(version<4?64:0)+(version<3?709:0)+(version==1?52:0),oldn=n-remove;
   o_copy(left,saved,ram-remove);o_copy(left+ram-remove,saved+ram,n-ram);
   put(left+8,version);put(left+12,(uint32_t)oldn);put(left+28,crc(left+32,oldn-32));
   CHECK(orchard_checkpoint_load(&a,left,oldn)==ORCHARD_OK);

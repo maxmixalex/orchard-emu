@@ -17,11 +17,13 @@ for(const screenScaling of ['nearest','linear','cubic','lanczos']){
 }
 assert.deepEqual(validatePreferences({...defaults(),mappings:{'2':{KeyA:[58,28]}}}).mappings,{'2':{KeyA:[58,28]}});
 assert.deepEqual(validatePreferences({...defaults(),mappings:{'5':{KeyA:[57,35]}}}).mappings,{'5':{KeyA:[57,35]}});
+assert.deepEqual(validatePreferences({...defaults(),mappings:{'3':{KeyA:[6]},'7':{KeyA:[48]}}}).mappings,{'3':{KeyA:[6]},'7':{KeyA:[48]}});
 for(const update of [{version:2},{zoom:NaN},{zoom:181},{zoom:0},{view:'hidden'},{speed:Infinity},{speed:3},{interval:1},{autosave:1},
  {transferUnlimited:1},{sound:null},{rememberROM:'true'},{volume:NaN},{volume:Infinity},{volume:'0.5'},{volume:-0.1},{volume:1.1},{screenScaling:'browser-high'},{lcdResponse:35},
  {mappings:[]},{mappings:{'6':{KeyA:[58]}}},{mappings:{'1':{KeyA:[55]}}},{mappings:{'1':{KeyA:Array(9).fill(6)}}}])assert.throws(()=>validatePreferences({...defaults(),...update}));
 assert.deepEqual(defaultBindings(1).KeyA,[58,28]);assert.deepEqual(defaultBindings(4).KeyA,[57,35]);
 assert.deepEqual(defaultBindings(2),defaultBindings(1));
+assert.deepEqual(defaultBindings(3),defaultBindings(2));assert.deepEqual(defaultBindings(7),defaultBindings(5));
 assert.deepEqual(defaultBindings(5).KeyA,[57,35]);assert.deepEqual(defaultBindings(5).KeyZ,[57,2]);
 assert.deepEqual(bindings({...defaults(),mappings:{'1':{KeyA:[58,28],Enter:[]}}},1).Enter,[]);
 assert.equal(keyCode({code:'KeyA',shiftKey:false}), 'KeyA');assert.equal(keyCode({code:'KeyA',ctrlKey:true,shiftKey:true}),'Ctrl+Shift+KeyA');
@@ -29,6 +31,8 @@ assert.equal(keyCode({code:'KeyA',isComposing:true}),null);assert(!validBinding(
 assert.equal(sessionName(1,new Date(2026,9,3,1,2,3)), 'hp39gplus-20261003-010203.ord');
 assert.equal(sessionName(4,new Date(2026,11,31,23,59,59)), 'hp48gii-20261231-235959.ord');
 assert.equal(sessionName(5,new Date(2026,9,23,1,2,3)), 'hp49gplus-20261023-010203.ord');
+assert.equal(sessionName(3,new Date(2026,9,23,1,2,3)), 'hp40gs-mod-20261023-010203.ord');
+assert.equal(sessionName(7,new Date(2026,9,23,1,2,3)), 'hp50gm-20261023-010203.ord');
 assert.throws(()=>sessionName(0));
 const data=Uint8Array.from({length:600000},(_,i)=>i%256);assert.deepEqual(fromBase64(toBase64(data)),data);
 for(const bad of ['%foo','!!!!','a', 'a'.repeat(850000)])assert.throws(()=>fromBase64(bad));
@@ -39,6 +43,7 @@ const hash='a'.repeat(64);assert.equal(readAuto(store,hash),null);
 writeAuto(store,hash,1,data,null,'tab1:1',10);assert.deepEqual(readAuto(store,hash).file,data);
 const hp49hash='5'.repeat(64);writeAuto(store,hp49hash,5,data,null,'hp49:1',11);assert.equal(readAuto(store,hp49hash).model,5);
 const hp39gshash='2'.repeat(64);writeAuto(store,hp39gshash,2,data,null,'hp39gs:1',12);assert.equal(readAuto(store,hp39gshash).model,2);
+for(const model of [3,7]){const hash=String(model).repeat(64);writeAuto(store,hash,model,data,null,'mod:1',12);assert.equal(readAuto(store,hash).model,model);}
 const before=store.getItem(autoKey(hash));assert.throws(()=>writeAuto(store,hash,1,data,null,'tab2:1'));assert.equal(store.getItem(autoKey(hash)),before);
 store.full=true;assert.throws(()=>writeAuto(store,hash,1,data,'tab1:1','tab1:2'));assert.equal(store.getItem(autoKey(hash)),before);store.full=false;
 writeAuto(store,hash,1,data,'tab1:1','tab2:2');assert.equal(readAuto(store,hash).token,'tab2:2');

@@ -11,6 +11,9 @@ extern "C" {
 
 typedef struct orchard_machine orchard_machine;
 
+/* IDs 1..6 retain the stock-model ABI; 7 is the separate HP50gm hardware mod. */
+#define ORCHARD_MODEL_COUNT 7u
+
 typedef enum {
     ORCHARD_OK = 0,
     ORCHARD_BAD_ARGUMENT,
@@ -33,7 +36,7 @@ typedef enum {
 } orchard_status;
 
 typedef struct {
-    unsigned id;                 /* Matches hpclang's stable model IDs. */
+    unsigned id;                 /* Stock IDs 1..6 match hpclang; extensions follow. */
     const char *slug;
     const char *name;
     const char *family;

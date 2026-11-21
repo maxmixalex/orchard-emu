@@ -27,14 +27,14 @@ static void usage(FILE *out) {
           "74 = host I/O error. None of these is a stock-OS boot certificate.\n", out);
 }
 static const orchard_profile *find_model(const char *slug) {
-    for (unsigned id = 1; id <= 6; ++id) {
+    for (unsigned id = 1; id <= ORCHARD_MODEL_COUNT; ++id) {
         const orchard_profile *p = orchard_get_profile(id);
         if (strcmp(p->slug, slug) == 0) return p;
     }
     return NULL;
 }
 static void models(void) {
-    for (unsigned id = 1; id <= 6; ++id) {
+    for (unsigned id = 1; id <= ORCHARD_MODEL_COUNT; ++id) {
         const orchard_profile *p = orchard_get_profile(id);
         printf("%-12s  %-23s  NOR=%u KiB RAM=%u KiB LCD=%ux%u  boot=unverified\n",
                p->slug, p->name, p->flash_bytes / 1024u, p->ram_bytes / 1024u,

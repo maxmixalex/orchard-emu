@@ -69,7 +69,7 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
    const scrollCase=p.view==='immersive'&&matchMedia('(max-width:760px)').matches&&box.parentElement?.dataset.panelOpen==='true';
    const caseWidth=Math.round((scrollCase?width:Math.min(width,height*(w/h||.497)))*p.zoom/100*dpr)/dpr;
    host.current.style.setProperty('--case-width',`${caseWidth}px`);
-   const lcdHeight=last?.height??(model.id>=5?80:64),lcdWidth=last?.width??131;
+   const lcdHeight=last?.height??model.lcdHeight??(model.id===5?80:64),lcdWidth=last?.width??131;
    // Traditional keys now use measured SVG geometry. Fit the LCD and that
    // geometry together; the old HTML-row height does not resize an SVG keypad.
    const bounds=keypad.current?.bounds,keyRatio=bounds?bounds.height/bounds.width:1.5,
@@ -116,7 +116,7 @@ const CalculatorDisplay=memo(function CalculatorDisplay({controller,model,prefs,
   <div className="calculator-screen">
   <div className="calculator-stage" ref={stage} id="skin-stage">
    <div className="skin-screen"><div className="skin-content"><img className="skin-image" alt={model.name} hidden/><svg className="skin-keys skin-screen-keys"/>
-    <div className="glass-overlay"><Indicators/><canvas id="lcd" width="131" height={model.id>=5?80:64}/></div></div></div>
+    <div className="glass-overlay"><Indicators/><canvas id="lcd" width="131" height={model.lcdHeight??(model.id===5?80:64)}/></div></div></div>
    <div className="skin-keyboard"><div className="skin-content"><img className="skin-keyboard-image" alt="" aria-hidden="true" hidden/><svg className="skin-keys"/></div></div>
   </div>
   <div className="traditional-softkeys" ref={softHost}/>
@@ -159,10 +159,11 @@ function Settings({controller,state,onClose}){
 function Connections({controller,state,target,onTargetChange}){
  const {t}=useTranslation();const [format,setFormat]=useState('hex'),[text,setText]=useState(''),[tab,setTab]=useState('files');
  const active=Boolean(state.transfer?.active||state.uploadBatch?.active);
+ useEffect(()=>{if(state.model.infrared===false&&tab==='irda')setTab('files');},[state.model.id,tab]);
  function send(){try{let bytes;if(format==='text')bytes=new TextEncoder().encode(text);else{const value=text.trim();if(!/^[a-f\d]{2}(?:\s+[a-f\d]{2})*$/i.test(value))throw Error('hex');bytes=Uint8Array.from(value.split(/\s+/).map(x=>parseInt(x,16)));}
   if(bytes.length>(target==='serial'?1024:64))throw Error('length');controller.send(target==='serial'?'uart':'usb-send',{bytes});}catch{controller.report('invalidBytes');}}
  return <Stack>
-  <Tabs value={tab} onChange={setTab} keepMounted keepMountedMode="display-none"><Tabs.List><Tabs.Tab value="files">{t('transferFiles')}</Tabs.Tab><Tabs.Tab value="irda">{t('irda')}</Tabs.Tab><Tabs.Tab value="bytes">{t('rawConnection')}</Tabs.Tab></Tabs.List>
+  <Tabs value={tab} onChange={setTab} keepMounted keepMountedMode="display-none"><Tabs.List><Tabs.Tab value="files">{t('transferFiles')}</Tabs.Tab>{state.model.infrared!==false&&<Tabs.Tab value="irda">{t('irda')}</Tabs.Tab>}<Tabs.Tab value="bytes">{t('rawConnection')}</Tabs.Tab></Tabs.List>
   {tab!=='irda'&&<Stack mt="md">
   <Group justify="space-between"><div><Text size="sm" fw={500}>{t('serial')}</Text><Text size="xs" c="dimmed">{t(state.serial?'connected':'disconnected')}</Text></div><Button variant="default" aria-label={`${t(state.serial?'disconnect':'connect')} ${t('serial')}`} onClick={()=>controller.connectLink('serial',!state.serial)}>{t(state.serial?'disconnect':'connect')}</Button></Group>
   <Group justify="space-between"><div><Text size="sm" fw={500}>USB</Text><Text size="xs" c="dimmed">{t(state.usbReady?'connected':state.usb?'connecting':'disconnected')}</Text></div><Button variant="default" aria-label={`${t(state.usb?'disconnect':'connect')} USB`} onClick={()=>controller.connectLink('usb',!state.usb)}>{t(state.usb?'disconnect':'connect')}</Button></Group>
@@ -170,7 +171,7 @@ function Connections({controller,state,target,onTargetChange}){
   <Select label={t('target')} value={target} onChange={value=>{if(value)onTargetChange(value);}} disabled={active} data={['serial','usb'].map(k=>({value:k,label:t(k)}))}/>
   </Stack>}
   <Tabs.Panel value="files" pt="md"><FileTransfer controller={controller} state={state} transport={target}/></Tabs.Panel>
-  <Tabs.Panel value="irda" pt="md"><IrDAConnection controller={controller} state={state}/></Tabs.Panel>
+  {state.model.infrared!==false&&<Tabs.Panel value="irda" pt="md"><IrDAConnection controller={controller} state={state}/></Tabs.Panel>}
   <Tabs.Panel value="bytes" pt="md"><Stack><Text size="sm" c="dimmed">{t('linkNotice')}</Text>
   <Select label={t('format')} value={format} onChange={setFormat} disabled={active} data={['hex','text'].map(k=>({value:k,label:t(k)}))}/>
   <Textarea label={t('data')} value={text} onChange={e=>setText(e.currentTarget.value)} maxLength={4096}/>
@@ -181,7 +182,7 @@ function Connections({controller,state,target,onTargetChange}){
 export function App({controller}){
  const {t}=useTranslation(),compact=useMediaQuery('(max-width: 48em), (max-height: 500px) and (orientation: landscape)'),state=useSyncExternalStore(controller.subscribe,controller.getSnapshot,controller.getSnapshot),[settings,setSettings]=useState(false),[panel,setPanel]=useState(null),[connectionTarget,setConnectionTarget]=useState('usb');
  const rom=useRef(null),session=useRef(null),inputReset=useRef(null),pointerReset=useRef(null),modalOpen=settings||Boolean(state.dialog),modalRef=useRef(modalOpen);modalRef.current=modalOpen;
- const connections=panel==='connections',hasSD=[5,6].includes(state.model.id);
+ const connections=panel==='connections',hasSD=[5,6,7].includes(state.model.id);
  useEffect(()=>{if(panel==='sd'&&!hasSD)setPanel('connections');},[panel,hasSD]);
  useEffect(()=>{const held=new Map(),release=()=>{held.clear();pointerReset.current?.();controller.release();};
   inputReset.current=release;
@@ -208,7 +209,7 @@ export function App({controller}){
  const enabled=state.loaded&&state.running&&!state.stopped&&!state.busy;
  const paused=state.loaded&&!state.running&&!state.stopped&&!state.busy,systemDisabled=!state.loaded||state.busy||state.stopped||state.transfer?.active||state.uploadBatch?.active;
  return <div className={`app-shell ${styles.shell}`}><header className="app-header"><a className="brand" href="./">Orchard<span> BETA</span></a>
-  <Select aria-label={t('model')} value={String(state.model.id)} onChange={v=>controller.select(v)} data={CALCULATORS.map(c=>({value:String(c.id),label:c.name}))} disabled={!state.ready||state.busy} w={132}/>
+  <Select aria-label={t('model')} value={String(state.model.id)} onChange={v=>controller.select(v)} data={CALCULATORS.map(c=>({value:String(c.id),label:c.name}))} disabled={!state.ready||state.busy} w={state.model.experimental?166:132}/>
   <Button onClick={()=>controller.chooseROM(()=>{rom.current.value='';rom.current.click();})} disabled={!state.ready||state.busy}>{t('open')}</Button><div className="header-spacer"/>
   <Text size="xs" c="dimmed" role="status">{t(state.busy?'loading':!state.ready?'loading':state.stopped?'stopped':!state.loaded?'noROM':state.running?'running':'paused')}</Text>
   <Tooltip label={<><div>{t('helpText')}</div><div>{t('boot'+state.model.id)}</div></>} multiline w={320} events={{hover:true,focus:true,touch:true}}><ActionIcon variant="subtle" color="gray" aria-label={t('help')}><HelpIcon/></ActionIcon></Tooltip>
@@ -228,6 +229,7 @@ export function App({controller}){
    <RecordingControl controller={controller} state={state} onDownload={downloadFile} compact={compact}/>
    <Button variant={connections?'light':'subtle'} aria-expanded={connections} aria-controls="device-sidebar" disabled={!state.loaded||state.busy} onClick={()=>setPanel(connections?null:'connections')}>{t('connections')}</Button></Group><Text size="xs" c="dimmed" role="status">{state.note?t(state.note):''}</Text></div>
   {!settings&&<ROMAccessNotice controller={controller} state={state}/>}
+  {state.model.experimental&&<Text size="xs" className="model-provenance"><strong>{t('hardwareModExperimental')}</strong> {t(state.model.notice)}</Text>}
   {!connections&&<TransferStatus state={state} compact onOpen={()=>{setConnectionTarget(state.transfer.transport||'usb');setPanel('connections');}}/>}
   {paused&&<div className={styles.pausedBar} role="status"><PauseIcon/><Text size="sm" fw={600}>{t('paused')}</Text><Button variant="default" size="compact-sm" onClick={()=>controller.toggle()}>{t('resumeSimulation')}</Button></div>}
   <div className="calculator-body" data-panel-open={Boolean(panel)}>

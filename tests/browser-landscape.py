@@ -9,6 +9,10 @@ OUT.mkdir(parents=True,exist_ok=True)
 subprocess.run(['node','--input-type=module','-e', '''import {build} from 'esbuild'; await build({entryPoints:['tests/ui-fixture.jsx'],bundle:true,format:'iife',target:'es2022',outfile:'build/landscape/fixture.js',define:{'process.env.NODE_ENV':'"production"','import.meta.url':'"https://offline.invalid/calculator.js"'}});'''],cwd=ROOT,check=True)
 models=json.loads(subprocess.check_output(['node','--input-type=module','-e',"import {CALCULATORS} from './web/catalog.js'; console.log(JSON.stringify(CALCULATORS));"],cwd=ROOT))
 manifest=json.loads((ROOT/'dist/skins/manifest.json').read_text())
+# Firmware identity and its case artwork are separate for hardware conversions.
+ARTWORK={1:'hp39gplus',2:'hp39gs',3:'hp40gs',4:'hp48gii',5:'hp49gplus',7:'hp48gii'}
+LCD_ROWS={1:64,2:64,3:64,4:64,5:80,7:64}
+MOD_PRESETS={3:'hp40gs-mod-home',7:'hp50gm-home'}
 with sync_playwright() as p:
  chrome=os.environ.get('CHROMIUM') or next((path for name in ['google-chrome','chromium','chromium-browser','google-chrome-stable'] if (path:=shutil.which(name))),None)
  if not chrome:raise RuntimeError('Set CHROMIUM to a real Chrome/Chromium executable')
@@ -24,11 +28,11 @@ with sync_playwright() as p:
  def view(name,zoom=100):
   page.evaluate('([view,zoom])=>{const c=window.__controller;c.patch({prefs:{...c.state.prefs,view,zoom}})}',[name,zoom])
   page.wait_for_function('(view)=>document.querySelector("#calculator")?.dataset.view===view',arg=name);settled()
- def frame():
-  page.evaluate("""()=>{const c=window.__controller,height=c.state.model.id>=5?80:64;
+ def frame(height):
+  page.evaluate("""height=>{const c=window.__controller;
    c.receive({type:'snapshot',generation:c.generation,loaded:true,running:true,stopped:false,width:131,height,frameStatus:0,
    pixels:Uint8Array.from({length:131*height},(_,i)=>Math.floor(i/131)%9===0||i%131%13===0?255:0),
-   active:26,annunciators:new Uint8Array([0,255,0,0,0,255]),annunciatorStatus:0});}""");settled()
+   active:26,annunciators:new Uint8Array([0,255,0,0,0,255]),annunciatorStatus:0});}""",height);settled()
  def pixels():return page.locator('#lcd').evaluate('(c)=>c.toDataURL()')
  def geometry():
   return page.evaluate("""()=>{const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom}};
@@ -63,16 +67,26 @@ with sync_playwright() as p:
  page.wait_for_function('document.querySelectorAll(".skin-key").length===51');settled()
  results=[]
  for model in models:
+  identifier=model['id'];slug=ARTWORK[identifier];spec=manifest['models'][slug];height=LCD_ROWS[identifier]
   page.evaluate('(id)=>{const c=window.__controller;c.patch({loaded:false});c.select(id)}',model['id'])
-  page.wait_for_function('(name)=>document.querySelector(".skin-image")?.alt===name&&document.querySelectorAll(".skin-key").length===51',arg=model['name'])
+  page.wait_for_function('''v=>window.__controller.state.model.id===v.id&&document.querySelector("#skin-stage")?.dataset.model===v.slug&&
+    document.querySelector(".skin-image")?.alt===v.artName&&document.querySelectorAll(".skin-key").length===51''',
+    arg={'id':identifier,'slug':slug,'artName':spec['name']})
+  assert page.get_by_role('combobox',name='Calculator',exact=True).input_value()==model['name']
+  assert page.locator('#lcd').get_attribute('height')==str(height)
+  if identifier in MOD_PRESETS:
+   assert model['experimental'] and model['preset']==MOD_PRESETS[identifier]
+   assert page.locator('.model-provenance').is_visible()
+   assert 'Experimental hardware modification' in page.locator('.model-provenance').inner_text()
+  else:assert page.locator('.model-provenance').count()==0
   page.wait_for_function('[...document.querySelectorAll(".skin-image,.skin-keyboard-image")].every(i=>i.complete&&i.naturalWidth>0)')
-  frame();slug=page.locator('#skin-stage').get_attribute('data-model');spec=manifest['models'][slug];before=pixels()
+  frame(height);before=pixels()
   page.evaluate('window.__lcd=document.querySelector("#lcd");window.__key=document.querySelector(".skin-key[data-scan=\\"26\\"]");window.__softKey=document.querySelector(".skin-key[data-scan=\\"40\\"]")')
   for width,height in [(1360,940),(1360,500),(844,390),(390,844)]:
    page.set_viewport_size({'width':width,'height':height});view('immersive-landscape');g=check_landscape(spec)
    assert g['stage']['h']<=g['workspace']['h']+.1 and g['stage']['w']<=g['workspace']['w']+.1,g
    assert pixels()==before
-   if (width,height) in [(1360,940),(844,390)]:page.screenshot(path=str(OUT/f'{slug}-{width}x{height}.png'))
+   if (width,height) in [(1360,940),(844,390)]:page.screenshot(path=str(OUT/f'model{identifier}-{slug}-{width}x{height}.png'))
   page.set_viewport_size({'width':1360,'height':940});view('immersive-landscape');check_landscape(spec)
   for scan in [35,36,37,38,39,40,26]:
    page.evaluate('window.__messages.length=0');page.locator(f'.skin-key[data-scan="{scan}"]').click()
@@ -94,7 +108,8 @@ with sync_playwright() as p:
   page.locator('#workspace').evaluate('(e)=>e.scrollLeft=e.scrollWidth');settled()
   g=geometry();assert g['stage']['right']<=g['workspace']['right']+.1,g
   page.locator('#workspace').evaluate('(e)=>e.scrollLeft=0')
-  view('immersive-landscape');results.append({'model':model['name'],'splitY':spec['splitY'],'screenKeys':6,'keyboardKeys':45,'viewports':4})
+  view('immersive-landscape');results.append({'model':model['name'],'id':identifier,'preset':model['preset'],'artwork':slug,'lcdRows':LCD_ROWS[identifier],
+    'experimentalHardwareMod':identifier in MOD_PRESETS,'splitY':spec['splitY'],'screenKeys':6,'keyboardKeys':45,'viewports':4})
  # The public selector persists layout and audio preferences through Apply.
  page.get_by_role('button',name='Settings',exact=True).click()
  page.get_by_role('combobox',name='Appearance',exact=True).click();page.get_by_role('option',name='Immersive (landscape)',exact=True).click()

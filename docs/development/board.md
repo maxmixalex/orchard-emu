@@ -9,15 +9,17 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 ## Current implementation
 
 - [x] Four unchanged original NORs reach conditional HOME and basic arithmetic, including the user's complete HP39gs capture and its own bootloader.
+- [x] Exact-hash experimental admission of the supplied 40gs and 50gm hardware-mod images, with visible provenance and separate saved settings/sessions. HP50gm has its own 512 KiB SRAM/64-row profile; original HP50g remains a distinct unadmitted model. KINPO update containers require a matching complete base image and preserve its boot/tail data. See [hardware-mod firmware](hardware-mod-roms.md).
 - [x] User/debug frontends; seven separately licensed skins and guest segments.
 - [x] Scheduler/CPU/memory optimizations with retained reference paths.
 - [x] Separate functional 64-entry ARM920T instruction/data TLBs, CP15 invalidation and lockdown, dynamic protection checks and exact saved translation state. Host lookup hints preserve reference ordering even for overlapping entries. See [ARM920T translation](arm920t-tlb.md).
 - [x] ARM/Thumb multiple-load word ordering with alignment checks retained; explicit deterministic ordinary STM base-in-list compatibility, live LCD divider writes and read-only PWM counter lanes. Original Tetris+ now installs, plays, returns and continues identically after restore. [Memory and peripheral evidence](arm-memory.md).
 - [x] All documented ARM920T CP15 ID-read aliases, retaining the separate cache-type encoding and current privilege/undefined boundaries. A fixed-word regression fails on the previous implementation and passes on both dispatchers. [Core follow-up](core-next-r25.md).
+- [x] Architecturally undefined ARMv4T ARM/Thumb encodings and absent coprocessors enter the guest UND vector, including banked link/SPSR, high vectors and exception return. Condition-failed instructions and explicitly unsupported/unpredictable cases retain their separate behavior.
 - [x] Portable manual sessions, with .ord names and legacy .orchard import.
 - [x] Settings: immersive, immersive landscape, traditional and traditional landscape view, viewport/scale, editable physical key sequences, independent blur/hidden policies; landscape keeps all six FN keys with the LCD.
 - [x] Wider per-model keyboard editor with assigned-key highlights, calculator-side binding badges and target selection; OS-resolved character defaults, layout-map labels and captured-key fallback. See [keyboard settings](keyboard-settings.md).
-- [x] Sustained physical keyboard/pointer contacts, simultaneous keys and independent touches, with brief-click debounce and finite macros. Original Arkalite on 39g+/39gs and native Tetris+ on 39g+ pass actual browser movement, release, return and arithmetic; Arkalite uses held DEL, and ordinary short-DEL failures remain open.
+- [x] Sustained physical keyboard/pointer contacts, simultaneous keys and independent touches, with brief-click debounce and finite macros. A pending finite macro no longer blocks a new physical contact while another contact is held. Original Arkalite on 39g+/39gs and native Tetris+ on 39g+ pass actual browser movement, release, return and arithmetic. Six additional short-DEL trials pass; the historical failure's cause remains open. See [input continuation](input-r26.md).
 - [x] Settings actions stay visible at narrow/short sizes; Mantine navigation does not press guest keys. Short landscape traditional keys keep usable bounds and scroll below a retained LCD where space permits; storage copy and dependent control states are simplified.
 - [x] Persistent Connections/SD sidebar keeps selections and drafts while the calculator remains usable; narrow layouts stack the panel below it.
 - [x] Per-model local ROM recall with read-only original-file handles or labelled browser-local copies, explicit permission continuation and Forget, identity validation and cancellation of stale automatic reads. See [ROM storage](rom-storage.md).
@@ -31,8 +33,10 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [x] Complete-batch preflight and sequential multi-file upload on both transports; two-object stock browser round trips, per-file results and lifecycle cancellation.
 - [x] Exact adjacent/disjoint ARM operand-pair diagnostics with GPR/NZCV dependencies; three historical HP39g+ scene checkpoints remain identical. That profiling work did not add a production instruction-fusion path.
 - [x] Implemented and measured quiet-loop and cold-rollback candidates; withdrew both after Chrome gates failed, retaining the 48,561-check scheduler regression and all timing evidence.
-- [x] HP39/40 Disk drive host, typed-file and alias-preserving catalog validation; original HP39g+ USB installs aplet/library and exports both. The complete HP39gs NOR independently installs the V2 reader; HP40gs remains open.
+- [x] HP39/40 Disk drive host, typed-file and alias-preserving catalog validation; original HP39g+ USB installs aplet/library and exports both. The complete HP39gs NOR independently installs the V2 reader; the supplied 40gs hardware-mod image installs/exports Arkalite and enters/returns from native ROMstream. Original-device HP40gs acceptance remains open.
 - [x] Direct HP39 ZIP import and standard ZIP download, bounded decompression/CRC checks, and reconstruction of the catalog entry omitted by stock SEND.
+- [x] HP40gs hardware-mod USB auto-RECV recognizes both observed exact menu renderings and selects USB directly, preserving unknown-screen/cancel fallback and original-model navigation. Actual browser cold two-file upload, reverse Disk comparison and Arkalite return pass.
+- [x] Zero-title Wire libraries omit the repeated name-length field; the reverse parser now accepts that valid format without weakening nonempty-name, truncated-ID or requested-library checks. Original HP39gs serial multipart SEND returns exact Notes and Arkalite objects.
 - [x] HP39 direct Wire upload with library-first package ordering, per-object RECV instructions and original-ROM SEND/ZIP verification; visible progress and cancellation recovery guidance.
 - [x] One USB Wire listener receives successive original 39g+/39gs SEND operations, exact Notes and multipart aplet/library objects; bounded counts/bytes, retry handling and completed-file retention after Stop or failure.
 - [x] Original HP39gs serial Wire library upload uses supported 128-byte blocks, and one listener receives successive Notes plus multipart aplet/library groups. Real browser Stop acknowledges before retaining/downloading completed files.
@@ -46,16 +50,17 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 - [x] Matching local/card deletions and replacements converge; directory-to-file replacement removes obsolete child baselines so persisted follow-up synchronization does not invent conflicts.
 - [x] HP49g+ SDK native ARM example installed over stock USB, run through ARMToolbox, returned to HOME and followed by arithmetic and USB reconnect.
 - [x] HP48gII runs the unchanged native SDK example through its own original ARMToolbox library, returns to RPN arithmetic, then exports the exact object payload over USB; the firmware's C-to-B file-header change is checked explicitly. See [48gII native return](hp48-native.md).
-- [x] Checkpoint v7 retains architectural instruction/data TLBs, complete SD/UART/NOR in-flight state, modified flash sectors and existing clock/SPI/reset state; v1–v6 imports remain supported with explicit migration. Successful restore conditionally resumes, and paused state has a prominent direct action.
+- [x] Checkpoint v8 retains the remaining/latching state of three PCLK UART receive timeouts alongside architectural instruction/data TLBs, complete SD/UART/NOR in-flight state, modified flash sectors and existing clock/SPI/reset state. v1–v7 imports remain supported with explicit migration. Successful restore conditionally resumes, and paused state has a prominent direct action.
 - [x] Held ON/F4 factory-test entry and ON/F3 exit controls; bounded [SPI](spi.md) register/transfer behavior and [watchdog reset propagation](watchdog-reset.md) retain external SRAM, media and RTC. Factory-test entry does not claim every diagnostic passes.
 - [x] Revised HP39gs ROMstream v2: visible progress, repaired mapping/cable/USB exit paths, one-launch double reads and corresponding source; original HP39g+ and original HP39gs full NORs complete dump/return/USB-reuse workflows. Earlier derived-OS evidence remains distinct.
 - [x] The separately identified GBP 0.3 ALIGN4 diagnostic package returns on both original 39g+ and 39gs systems, then calculates `1+1=2`; 39g+ required retaining the guest's cached translation across a page-table write. The original package's unaligned loader remains separate.
 - [x] Three functional UARTs with FIFO/line-format/clock-gate/interrupt/error/loopback behavior; original factory RS232/IRDA tests and same-origin tab infrared object transfer. See [UART/IrDA](uart-irda.md).
+- [x] PCLK FIFO receive timeout follows the programmed divisor/frame format, honors clock gating and scheduler deadlines, and retains interrupt state across save/restore. Unmeasured UEXTCLK timeout, DMA and break waveforms remain explicit unsupported cases.
 - [x] Infrared receive continuations retain exact connection identity and observed batch timing; a bounded eight-packet window avoids serial host round trips. Empty input queues release the old clock phase when hardware RX closes, preserving already scheduled future bytes. The final 36e2/v3 original 49g+/48gII browser Pause/re-pair/ON workflow completes exact forward/reverse recall and all final acknowledgments; one bad Y3 recovers through firmware retry and remains recorded.
 - [x] NOR word program, sector/block/chip erase, busy polling and VF1601 suspend; original 39gs/49g+ quick and full FLASH WRITE diagnostics pass.
-- [x] Byte-table checkpoint CRC with unchanged format/full validation; independent checks on all six model capacities.
+- [x] Byte-table checkpoint CRC with full validation; independent checks on all seven model capacities, including the separate 512 KiB HP50gm hardware-mod profile.
 - [x] Production Pacer + WASM RTC comparison across rates and host partitions.
-- [x] Explicit optimized sanitizer targets and 24 maintained native/reference/sanitizer suites, including architectural TLB, buzzer, Power_OFF, PCLK/PWM, SPI and watchdog reset checks.
+- [x] Explicit optimized sanitizer targets and maintained native/reference/sanitizer suites, including architectural UND/TLB, UART timeout, buzzer, Power_OFF, PCLK/PWM, SPI and watchdog reset checks.
 - [x] Checked WASM physical reads and bounded caught-up Worker pacing, with same-input comparisons.
 - [x] Actual Chrome Window/Worker smoke coverage plus original-ROM file/restore/keyboard/result observation.
 
@@ -63,7 +68,7 @@ refer to the former repository owner. [Roadmap](roadmap.md) defines gates;
 
 - [ ] Board clock/PLL lock/reset-domain calibration, shared-prescaler startup phase and cursor period; the runtime shared PCLK and Normal pace use an explicit functional reference.
 - [ ] Identify the browser dispatch cost before another MOV-pair or ADD-to-CMP candidate; the r18 quiet-loop/cold-function experiments are withdrawn, not pending admission. Preserve precise faults, interrupts and self-modifying code.
-- [ ] Preserve and diagnose original Arkalite short-DEL failures separately from successful explicit held-DEL exit; the bounded old/new core matrix does not reproduce the browser failure.
+- [ ] Preserve and diagnose original Arkalite short-DEL failures. Six new real-browser short-click trials with distinct guest timing pass, but do not identify or fix the historical failure.
 - [ ] Explain the retained malformed infrared Y3 and extend original-peer retry/cancellation coverage; a completed retrying exchange does not establish zero malformed packets or a reliability percentage.
 - [ ] Extend the bounded Chromium keyboard/touch/download/storage/zoom coverage to additional browser engines and longer sessions; preserve and classify the observed rare HP48 Unlimited post-result stop.
 - [ ] Broader original-OS keypad/Alpha-state coverage, additional power modes and sustained native applications; four-model Power_OFF/ON, HP49g+ warm-start and one native ARM return are now witnessed.
@@ -77,7 +82,7 @@ Do not infer all-model or canonical physical-board support from skins, arithmeti
 packet enumeration, synthetic tests or public asset availability. M0 remains
 accepted; the complete M1–M7 gates remain governed by their own witnesses.
 
-The [r25 acceptance and remaining-work matrix](compatibility-r25.md) ties the
+The [r26 acceptance and remaining-work matrix](compatibility-r26.md) ties the
 new program-driven implementations to their original-ROM and browser results,
 and separates actionable follow-up from missing original images and physical
 calibration. A diagnostic trace or an unmodified download is not itself a

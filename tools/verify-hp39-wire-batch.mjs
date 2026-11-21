@@ -4,25 +4,28 @@ import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {HP39_ROM,HP39GS_ROM,applySetup} from '../web/hp48.js';
+import {hardwareModSetup} from '../web/hardware-mod.js';
 import {resolve,basename} from 'node:path';
 import {VirtualUSB} from '../web/virtual-usb.js';
 import {Hp39WireAutoReceive} from '../web/hp39-wire-auto.js';
 import {inspectHp39File} from '../web/hp39-files.js';
 import {TapQueue} from '../web/hp48.js';
 import {FileTransfer} from '../web/file-transfer.js';
-const usage='Usage: node tools/verify-hp39-wire-batch.mjs FULL-NOR.bin LIBRARY APLET NEW-PRIVATE-OUTPUT [--wasm PATH] [--observe-idle]';
-if(process.argv.length===3&&process.argv[2]==='--help'){console.log(usage+'\nUses original ROM menus, the production Wire sender, physical TapQueue and screen-gated continuation. Exports the installed aplet/library through stock SEND and compares bytes. Outputs private LCDs/checkpoint; do not publish them.');process.exit(0);}
+const usage='Usage: node tools/verify-hp39-wire-batch.mjs FULL-NOR.bin LIBRARY APLET NEW-PRIVATE-OUTPUT [--wasm PATH] [--observe-idle] [--manual-receive]';
+if(process.argv.length===3&&process.argv[2]==='--help'){console.log(usage+'\nUses original ROM menus, the production Wire sender, physical TapQueue and screen-gated continuation (or explicit manual RECV). Also accepts the exact labelled HP40gs hardware-mod image. Exports the installed aplet/library through SEND and compares bytes. Outputs private LCDs/checkpoint; do not publish them.');process.exit(0);}
 const args=process.argv.slice(2);if(args.length<4)throw Error(usage);
-const [romPath,libraryPath,apletPath,out]=args.splice(0,4).map(path=>resolve(path));let wasmPath=resolve('dist/orchard.wasm'),observeIdle=false;
-while(args.length){const option=args.shift();if(option==='--wasm'&&args.length)wasmPath=resolve(args.shift());else if(option==='--observe-idle')observeIdle=true;else throw Error(usage);}
+const [romPath,libraryPath,apletPath,out]=args.splice(0,4).map(path=>resolve(path));let wasmPath=resolve('dist/orchard.wasm'),observeIdle=false,manualReceive=false;
+while(args.length){const option=args.shift();if(option==='--wasm'&&args.length)wasmPath=resolve(args.shift());else if(option==='--observe-idle')observeIdle=true;else if(option==='--manual-receive')manualReceive=true;else throw Error(usage);}
 const sha=value=>createHash('sha256').update(value).digest('hex'),rom=await readFile(romPath),wasm=await readFile(wasmPath);
-const model=sha(rom)===HP39_ROM?1:sha(rom)===HP39GS_ROM?2:0;if(!model)throw Error('Use the admitted complete unchanged HP39g+ or HP39gs NOR.');
+const mod40=hardwareModSetup('hp40gs-mod-home');
+const model=sha(rom)===HP39_ROM?1:sha(rom)===HP39GS_ROM?2:sha(rom)===mod40.hash?3:0;if(!model)throw Error('Use an exact admitted HP39g+, HP39gs or HP40gs hardware-mod NOR.');
+const preset={1:'hp39-home',2:'hp39gs-home',3:mod40.preset}[model];
 const library=new Uint8Array(await readFile(libraryPath)),aplet=new Uint8Array(await readFile(apletPath));
 assert.equal(inspectHp39File(library).kind,'H');assert.equal(inspectHp39File(aplet).kind,'B');await mkdir(out);
 const {instance:{exports:c}}=await WebAssembly.instantiate(wasm,{});assert.equal(c.create(model),0);
-new Uint8Array(c.memory.buffer,c.rom_buffer(),rom.length).set(rom);assert.equal(c.load(rom.length),0);applySetup(c,model,model===2?'hp39gs-home':'hp39-home');
+new Uint8Array(c.memory.buffer,c.rom_buffer(),rom.length).set(rom);assert.equal(c.load(rom.length),0);applySetup(c,model,preset);
 const hz=c.timebase_hz(),state=()=>Array.from(new Uint32Array(c.memory.buffer,c.snapshot(),33));let tick=0,error='',request=0;
-const report={schema:'orchard-hp39-wire-batch-stock-v1',model,wasm:sha(wasm),rom:sha(rom),coldBoot:true,guestMemoryPatched:false,hardwareValidated:false,browserEndToEnd:false,inputs:[{name:basename(libraryPath),bytes:library.length,sha:sha(library)},{name:basename(apletPath),bytes:aplet.length,sha:sha(aplet)}],frames:[],keys:[],events:[]};
+const report={schema:'orchard-hp39-wire-batch-stock-v1',model,preset,experimentalHardwareMod:model===3,originalStockImage:model!==3,manualReceive,wasm:sha(wasm),rom:sha(rom),coldBoot:true,guestMemoryPatched:false,hardwareValidated:false,browserEndToEnd:false,inputs:[{name:basename(libraryPath),bytes:library.length,sha:sha(library)},{name:basename(apletPath),bytes:aplet.length,sha:sha(aplet)}],frames:[],keys:[],events:[]};
 const usb=new VirtualUSB(c,hz,event=>{if(event.error)error=event.error;});
 const returned=[];
 const ft=new FileTransfer({core:c,usb,model,now:()=>tick/hz*1000,notify:event=>{if(event.type==='file-transfer-received'){returned.push(event);report.events.push({tick,type:event.type,name:event.name,length:event.bytes.length,sha:sha(event.bytes)});}else report.events.push({tick,...event});if(event.phase==='error')error=event.error;}});
@@ -35,16 +38,17 @@ async function frame(name){assert.equal(c.frame_view(1),0);let bytes=new Uint8Ar
 await writeFile(`${out}/${name}.pgm`,Buffer.concat([Buffer.from('P5\n131 64\n255\n'),Buffer.from(bytes.map(x=>255-x))]));report.frames.push({name,tick,sha:sha(bytes)});console.log(model,name,tick);}
 try{
 run(60000000);tap(40);run(70000000);tap(49);run(20000000);await frame('catalog-before');
-tap(39);run(3000000);await frame('receive-default');tap(44);await frame('receive-menu');
+tap(39);run(3000000);await frame('receive-default');if(model!==3)tap(44);await frame('receive-menu');
 assert.equal(c.gpio_inputs(5,0x8e,2),0);usb.start(tick);until(()=>usb.phase==='ready',10*hz);
 ft.start({request:++request,mode:'send',protocol:'hp39-wire',transport:'usb',name:basename(libraryPath),bytes:library},tick);tap(6);until(()=>!ft.active,300*hz);assert.equal(ft.session.phase,'complete');
 await frame('library-ack');await frame('library-catalog');
 ft.start({request:++request,mode:'send',protocol:'hp39-wire',transport:'usb',name:basename(apletPath),bytes:aplet},tick);
 if(observeIdle){run(36*hz);report.secondWithoutRecv={stage:ft.session.stage,phase:ft.session.phase,bytes:ft.session.transferred};assert.equal(ft.session.transferred,0);await frame('without-second-recv');}
-auto=new Hp39WireAutoReceive({model,previousKind:'H',kind:'B'});
+if(manualReceive){run(12000000);tap(39);run(3000000);await frame('second-receive-default');if(model!==3)tap(44);await frame('second-receive-menu');tap(6);}
+else auto=new Hp39WireAutoReceive({model,previousKind:'H',kind:'B'});
 until(()=>!ft.active,300*hz);assert.equal(ft.session.phase,'complete');run(120000000);await frame('aplet-catalog');
 assert.equal(c.checkpoint_save(),0);await writeFile(`${out}/installed.checkpoint`,new Uint8Array(c.memory.buffer,c.checkpoint_buffer(),c.checkpoint_size()).slice());
-auto=null;tap(38);run(3000000);for(let index=0;index<(model===1?2:3);index++)tap(44);await frame('send-disk-menu');tap(6);run(3000000);await frame('send-name');
+auto=null;tap(38);run(3000000);for(let index=0;index<(model===2?3:2);index++)tap(44);await frame('send-disk-menu');tap(6);run(3000000);await frame('send-name');
 ft.start({request:++request,mode:'receive',transport:'usb'},tick);tap(6);until(()=>returned.length===3,300*hz);run(12000000);
 const receivedAplet=returned.find(f=>inspectHp39File(f.bytes).kind==='B'),receivedLibrary=returned.find(f=>inspectHp39File(f.bytes).kind==='H');
 assert(receivedAplet&&receivedLibrary);assert.deepEqual(receivedAplet.bytes,aplet);const got=inspectHp39File(receivedLibrary.bytes),original=inspectHp39File(library);assert.deepEqual(receivedLibrary.bytes.subarray(got.payloadOffset),library.subarray(original.payloadOffset));
