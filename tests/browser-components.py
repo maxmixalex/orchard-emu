@@ -481,7 +481,12 @@ with sync_playwright() as p:
     {'name':'SECOND.mod','mimeType':'application/octet-stream','buffer':hp39_library}])
    assert page.get_by_role('button',name='通过 Wire 上传',exact=True).is_enabled()
    page.get_by_role('button',name='通过 Wire 上传',exact=True).click()
-   page.wait_for_function('window.__controller.state.transfer?.active')
+   # File reads publish active/preparing before the actual queue exists.
+   page.wait_for_function('''()=>{
+    const c=window.__controller,q=c.uploadQueue,t=c.state.transfer;
+    return q&&q.generation===c.generation&&q.request===c.transferRequest&&
+      t?.request===q.request&&t.active&&t.phase==='negotiating';
+   }''')
    assert page.evaluate('window.__controller.uploadQueue.autoReceive')
    page.evaluate('()=>{const c=window.__controller;c.receive({type:"file-transfer-status",generation:c.generation,request:c.transferRequest,active:false,phase:"complete"})}')
    assert page.evaluate('window.__controller.state.transfer.autoReceive&&window.__controller.wireAutoReceive.active')
